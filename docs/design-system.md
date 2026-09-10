@@ -112,16 +112,16 @@ repo's aliases and this product's nav structure:
   signed-in user's name instead of a hardcoded placeholder.
 - `app/page.tsx` — wired into `SidebarProvider` / `SidebarInset` with a
   header (`SidebarTrigger` + breadcrumb), replacing the flat placeholder
-  page. Body content is still the scaffold placeholder text, not real
-  dashboard content — building the actual dashboard is separate work (see
-  §3's screen inventory).
+  page. Its body is now a dashboard landing page built to §3/§6's shape
+  (stat cards, charts, connector status, exception list), rendering mock
+  data from `lib/mock-dashboard-data.ts`. It is a layout preview, not a
+  working screen: nothing on it is wired to the backend, because real KPI and
+  reconciliation data is blocked on the PRD's open questions.
 
-`npx tsc --noEmit` passes clean against this addition (verified in a
-throwaway `npm install`, not committed as a lockfile — this repo stays
-Bun-only per the root README/CLAUDE.md). A `next build` couldn't be
-verified in the same pass — the sandbox that did this check had no cached
-SWC binary for its architecture and blocked network for fetching one; run
-`bun run build` locally to confirm before shipping.
+`bun run build` and `bun run lint` both pass, and `bun run lint` now runs
+plain ESLint via `eslint.config.mjs` rather than the deprecated `next lint`
+(which, with no config committed, dropped into an interactive setup prompt).
+The repo stays Bun-only: no npm/yarn lockfile is committed.
 
 ## 5. Visual tokens
 
@@ -155,8 +155,14 @@ Wire into `tailwind.config.ts`'s `theme.extend.colors` the same way
 
 `--destructive` stays reserved for genuine system failures (a crashed
 connector), not conflicts — a conflict is an expected, resolvable state,
-not an error. **Not yet added to code** — still a documented gap, add
-when the reconciliation screens get built for real.
+not an error. **Implemented** in `app/globals.css` (both `:root` and the
+dormant `.dark` block, with the warning/success hues lifted slightly for dark
+contrast) and mapped into `tailwind.config.ts` under `theme.extend.colors.status`,
+so they are usable as `bg-status-warning`, `text-status-missing`, etc. The
+connector-status and exceptions components already consume them.
+
+The same commit added shadcn's standard `--chart-1..5` tokens and `chart.*`
+mapping, which `components/ui/chart.tsx` expects.
 
 **Sidebar tokens — implemented, shadcn defaults.** Pulled from the real
 shadcn-ui registry (`ui/sidebar.tsx`'s own `cssVars`), not hand-guessed —
@@ -224,5 +230,8 @@ deliberately via `--radius`, not by copying this override elsewhere.
   genuinely too dense once built.
 - Role/permission admin screen — no design yet, not yet scheduled.
 - Reconciliation view's field list — blocked on PRD open questions (§3).
-- Semantic status colors (§5) — documented, not yet in code; add when the reconciliation/connector-status screens get built.
-- `next build` not yet verified end-to-end for the sidebar addition (typecheck passed; the build check hit an environment limitation, not a code issue — see §4). Run `bun run build` locally before relying on this.
+- Reconciliation view and connector-status screen — the dashboard's
+  exception list and connector panel are mock previews of these; neither is a
+  real screen yet.
+- `bun run build` and `bun run lint` both verified against the current tree.
+  Re-check after any further dependency change.

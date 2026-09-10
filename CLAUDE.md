@@ -38,14 +38,18 @@ Backend (from `backend/`):
   on a JVM that can parse Java 25 class files, and Gradle 8.x fails to even
   parse the build script on a JDK 25-only machine. Don't "fix" the wrapper
   version down to 8.x.
-- `./gradlew test` requires a live Postgres — run `docker compose up` from
-  the repo root first (`docker-compose.yml` defines it). Without it, the one
-  existing test (`PlatformApplicationTests`) fails at context-load with a
-  Hibernate dialect error, not a real failure.
-- No Java linter/formatter is configured yet (no Checkstyle/Spotless).
+- `./gradlew test` requires a live Postgres with the `goldys` role and
+  database (see README "Verified state"). Tests fail at context-load without
+  one — that's the environment, not the code.
+- `./gradlew spotlessApply` formats Java (google-java-format via Spotless).
+  The `.claude/settings.json` hook runs it after every Java edit, so the tree
+  stays formatted; `spotlessCheck` is the CI-side equivalent.
+- Schema changes go in `src/main/resources/db/migration` (Flyway). Do not
+  change `ddl-auto` back to `update` — it is `validate` on purpose.
 
 Frontend (from `frontend/`, Bun only — no npm/yarn lockfiles):
-- `bun install`, `bun run dev`, `bun run build`, `bun run lint`.
+- `bun install`, `bun run dev`, `bun run build`, `bun run lint` (plain ESLint
+  via `eslint.config.mjs`; `next lint` is deprecated and was removed).
 
 ## Code style
 
@@ -57,9 +61,15 @@ a human collaborator joining later.
 
 ## Gotchas
 
-- `application.yml` sets `hibernate.ddl-auto: update` — local dev only, per
-  its own comment. Don't rely on it beyond that; a schema-stable phase needs
-  Flyway/Liquibase instead.
+- The schema is owned by Flyway migrations, and `application.yml` sets
+  `hibernate.ddl-auto: validate`. Adding a field means writing a new migration
+  in `db/migration`, not letting Hibernate alter the table. An existing dev
+  database created before Flyway existed has to be dropped and recreated.
+- `raw_record.payload` is `jsonb`, which normalises JSON key order and
+  whitespace. Non-JSON payloads are wrapped as `{"raw": "..."}` and survive
+  intact, but for API JSON the log is semantically faithful rather than
+  byte-faithful. Worth resolving before the "audit trail independent of how
+  the data was obtained" claim is load-bearing.
 - Before assuming a source has a clean REST API, check `system-context.md`'s
   "Per-Source Ingestion Reality" table — most in-scope MVP sources
   (Lightspeed, CTB, OpenTable) don't.

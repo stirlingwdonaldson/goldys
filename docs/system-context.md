@@ -14,7 +14,7 @@ It aims to improve on Tenzo's reporting — but note Tenzo plays two roles here,
 
 - **Backend:** Java 25, Spring Boot 3.5.0 (confirmed to support Java 25 — see root `README.md`'s "Verified state"), Spring AI, Spring Data JPA. Built with the committed Gradle wrapper pinned to Gradle 9.5.0 (not an 8.x line) because Gradle itself, not just the Java toolchain it targets, must run on a JVM that can parse Java 25 class files.
 - **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, Recharts/Tremor, shadcn/ui for the component library. Package manager/runtime: Bun (not npm/yarn) — use `bun install`, `bun run`, `bunx shadcn@latest add <component>`.
-- **Database:** PostgreSQL 16+ (`JSONB` for raw staging, normalized tables for canonical/resolved data).
+- **Database:** PostgreSQL 16+ (`JSONB` for raw staging, normalized tables for canonical/resolved data). The schema is owned by versioned Flyway migrations (`backend/src/main/resources/db/migration`) with Hibernate set to `validate`, not by Hibernate auto-DDL — because the raw log is append-only and canonical rows are closed rather than overwritten, every schema change needs to be deliberate and reviewable.
 - **Architecture pattern:** Ports-and-Adapters (hexagonal) at the connector boundary, so each vendor integration is a swappable adapter behind a common port. "Event-driven" here means an append-only log that downstream jobs poll and replay, not a commitment to message-bus infrastructure (Kafka/SQS) — don't introduce one unless a specific throughput or fan-out problem requires it.
 
 ## Data Model: Three Layers
