@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: goldys-platform
+  datasource:
+    url: jdbc:postgresql://localhost:5432/goldys
+    username: goldys
+    password: goldys_local_dev_only
+  jpa:
+    hibernate:
+      # Spec invariant: raw log is append-only and canonical rows are closed,
+      # never overwritten. Do NOT rely on Hibernate's ddl-auto=update in any
+      # environment beyond local dev - use a migration tool (Flyway/Liquibase)
+      # once the schema stabilizes past the scaffold stage.
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.goldys.platform: DEBUG

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <!--
+      TODO: verify this is the Spring Boot version you actually want once
+      Java 25 is installed and you have normal network access - this
+      scaffolding session's outbound access is restricted (Maven Central and
+      spring.io are both blocked from here), so this version was NOT checked
+      against Spring Boot's published Java 25 compatibility matrix. Confirm
+      at https://github.com/spring-projects/spring-boot/wiki/Supported-Versions
+      or the release notes for the version you land on, and bump if needed -
+      Spring Boot's Java-version support trails new JDK releases by some
+      months, so an older Boot 3.x line may not yet declare 25 as supported
+      even though the build might still work.
+    -->
+    <version>3.5.0</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.goldys</groupId>
+  <artifactId>platform</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <name>platform</name>
+  <description>Goldy's unified data platform - backend</description>
+
+  <properties>
+    <java.version>25</java.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!--
+      Spring AI: needed for the Conversational BI / Smart Exporter tool-calling
+      framework (Phase 2, spec Requirements 9-10), not Phase 1. Coordinates and
+      version are deliberately left unpinned here - Spring AI's artifact IDs and
+      BOM version have moved fast; pin the current one when Phase 2 scaffolding
+      (Requirement 11) actually starts, rather than guessing now.
+    -->
+    <!--
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+    </dependency>
+    -->
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

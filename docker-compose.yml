@@ -1,0 +1,17 @@
+# Local dev Postgres only. Not installed/tested from this scaffolding session -
+# this machine currently has no Docker available, so verify `docker compose up`
+# works in your own terminal before relying on it.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: goldys
+      POSTGRES_USER: goldys
+      POSTGRES_PASSWORD: goldys_local_dev_only
+    ports:
+      - "5432:5432"
+    volumes:
+      - goldys_pg_data:/var/lib/postgresql/data
+
+volumes:
+  goldys_pg_data:
