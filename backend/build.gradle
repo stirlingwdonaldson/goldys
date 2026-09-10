@@ -1,0 +1,39 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.goldys'
+version = '0.1.0-SNAPSHOT'
+description = "Goldy's unified data platform - backend"
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	runtimeOnly 'org.postgresql:postgresql'
+
+	// Spring AI: needed for the Conversational BI / Smart Exporter tool-calling
+	// framework (Phase 2, spec Requirements 9-10), not Phase 1. Coordinates and
+	// version are deliberately left unpinned here - Spring AI's artifact IDs and
+	// BOM version have moved fast; pin the current one when Phase 2 scaffolding
+	// (Requirement 11) actually starts, rather than guessing now.
+	// implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

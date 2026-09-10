@@ -28,8 +28,13 @@ Java 25 runtime, no Maven/Gradle, and no Bun installed, so nothing had been
 compiled or run. Since then, with normal tool/network access, this has been
 confirmed:
 
-- `backend`: `mvn compile` succeeds — **Spring Boot 3.5.0 does support Java
-  25**, resolving the version TODO that was in `pom.xml`. `mvn test` fails as
+- `backend`: builds with Gradle (wrapper committed — use `./gradlew`, no
+  local Gradle install required). `./gradlew compileJava` succeeds —
+  **Spring Boot 3.5.0 does support Java 25**, resolving the version TODO
+  that was in the build file. The Gradle wrapper is pinned to Gradle 9.5.0
+  because Gradle itself (not just the Java toolchain it targets) must run on
+  a JVM that understands Java 25 class files — Gradle 8.x fails to even
+  parse the build script on a JDK 25-only machine. `./gradlew test` fails as
   expected without a running Postgres (`PlatformApplicationTests` needs one
   live, per its own javadoc) — start it with `docker compose up` from the
   repo root first, then re-run.
@@ -40,7 +45,7 @@ confirmed:
   bad idea before you rely on it.
 - `docker-compose.yml`: not yet verified end-to-end (no Docker daemon running
   in the session that did this check) — confirm `docker compose up` brings up
-  Postgres cleanly in your own terminal, then re-run `mvn test`.
+  Postgres cleanly in your own terminal, then re-run `./gradlew test`.
 
 Two things the spec calls out as blocking before real feature work starts,
 not just this scaffold: the **entity-matching strategy** (what identifies
