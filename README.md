@@ -16,7 +16,10 @@ Both docs are also kept in the Claude project for this codebase.
   modules are implemented yet — see `PermissionService`, `SourceConnector`,
   `AiTool`/`ToolRegistry` for the extension points.
 - `frontend/` — Next.js (App Router) + TypeScript + Tailwind + shadcn/ui, run
-  with Bun. Placeholder home page only.
+  with Bun. The app shell (shadcn's `sidebar-07` block, adapted to Goldy's
+  nav) is wired up in `app/page.tsx`; page content is still a placeholder.
+  See `docs/design-system.md` for the frontend design decisions this
+  follows.
 - `docker-compose.yml` — local Postgres 16 for dev. Not verified from this
   scaffolding session (no Docker available here) — confirm `docker compose up`
   works in your own terminal.

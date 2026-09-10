@@ -12,7 +12,7 @@ It aims to improve on Tenzo's reporting — but note Tenzo plays two roles here,
 
 ## Technology Stack
 
-- **Backend:** Java 25, Spring Boot 3.x (pin the exact patch once Java 25 support is confirmed against the Spring Boot compatibility matrix — this changed from Java 21 and hasn't been verified against a live network yet), Spring AI, Spring Data JPA.
+- **Backend:** Java 25, Spring Boot 3.5.0 (confirmed to support Java 25 — see root `README.md`'s "Verified state"), Spring AI, Spring Data JPA. Built with the committed Gradle wrapper pinned to Gradle 9.5.0 (not an 8.x line) because Gradle itself, not just the Java toolchain it targets, must run on a JVM that can parse Java 25 class files.
 - **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, Recharts/Tremor, shadcn/ui for the component library. Package manager/runtime: Bun (not npm/yarn) — use `bun install`, `bun run`, `bunx shadcn@latest add <component>`.
 - **Database:** PostgreSQL 16+ (`JSONB` for raw staging, normalized tables for canonical/resolved data).
 - **Architecture pattern:** Ports-and-Adapters (hexagonal) at the connector boundary, so each vendor integration is a swappable adapter behind a common port. "Event-driven" here means an append-only log that downstream jobs poll and replay, not a commitment to message-bus infrastructure (Kafka/SQS) — don't introduce one unless a specific throughput or fan-out problem requires it.
@@ -34,6 +34,7 @@ This is the core invariant of the whole system. Every module description below s
 - **Restricted, tool-mediated AI access:** the conversational AI assistant answers questions through a fixed set of purpose-built tools (e.g. `get_sales_by_period`, `get_labor_cost_variance`), each backed by its own parameterized query against the semantic layer over resolved views. It does not have a generic "run this query/view" tool and never generates freeform SQL — the tool boundary is what keeps it safe, not query parameterization alone.
 - **JSON-driven UI generation:** when building dashboards, the assistant outputs standard JSON widget specifications for the frontend to render, rather than generating executable frontend code directly.
 - **Connector isolation:** each vendor integration lives behind a common port interface; swapping or adding a source should never require changes outside its adapter.
+- **No write-back to source systems:** every connector is one-way, source → platform, permanently — at no phase does the platform write corrected data, updates, or any other payload back into Lightspeed, CTB, OpenTable, or Deputy. Automation Hub's outbound actions (e.g. Slack alerts, exports) are not write-backs to a connected source system and remain the only write path this platform has. This is a permanent architectural constraint, not an MVP-only deferral (see `prd.md` Non-Goals).
 
 ## Build Order & Design Prerequisites
 
@@ -70,8 +71,7 @@ Note CTB is owned by Quantaco, a hospitality analytics competitor — any reques
 
 ## Open Questions / Not Yet Decided
 
-- **User/role model:** whether reporting access needs to differ by role (e.g. wage/labor-cost data visible to management but not general staff) isn't addressed here and needs a decision before the Automation Hub or broader reporting access ships.
-- **Write-back scope:** which external systems the platform is allowed to write to (vs. read-only ingestion) hasn't been enumerated — needed before Automation Hub design starts.
+- **User/role model shape is decided; field-to-role mapping is not.** `prd.md` Requirement 3 fixes the model as department × seniority. What remains open is which specific fields/entities each (department, seniority) combination can see — tracked in `prd.md`'s Open Questions, needed before Requirement 3's permission table is populated and before the reconciliation UI (Requirement 5) is built against it.
 
 ## Working Notes for LLM-Authored Code
 
