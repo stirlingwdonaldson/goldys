@@ -1,2 +1,5 @@
 .DS_Store
 Claude outputs/
+
+# Playwright MCP session output (page snapshots, console logs)
+.playwright-mcp/
