@@ -1,5 +1,6 @@
 package com.goldys.platform.auth;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -41,13 +42,17 @@ public class PermissionServiceImpl implements PermissionService {
     // (e.g. an Owner-only resource might be granted to (ALL, OWNER) rather than
     // (BOH, OWNER) and (FOH, OWNER) separately - both patterns are valid, decide per resource
     // when populating the field-to-role mapping).
-    List<Permission> exact =
+    //
+    // Copy into a fresh list before merging: a query result is not ours to mutate, and repository
+    // returns are not guaranteed mutable (an unmodifiable wrapper or a projection would make the
+    // in-place merge throw, turning "denied" into a 500).
+    List<Permission> permissions =
+        new ArrayList<>(
+            permissionRepository.findByDepartmentAndSeniorityAndResource(
+                role.department(), role.seniority(), resource));
+    permissions.addAll(
         permissionRepository.findByDepartmentAndSeniorityAndResource(
-            role.department(), role.seniority(), resource);
-    List<Permission> allDept =
-        permissionRepository.findByDepartmentAndSeniorityAndResource(
-            Department.ALL, role.seniority(), resource);
-    exact.addAll(allDept);
-    return exact;
+            Department.ALL, role.seniority(), resource));
+    return permissions;
   }
 }
