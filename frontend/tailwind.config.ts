@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 // shadcn/ui's standard tailwind config shape (CSS-variable-driven theme).
 // Run `bunx shadcn@latest init` locally once Bun is installed if you'd
@@ -91,7 +92,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 };
 
 export default config;
