@@ -1,5 +1,8 @@
 build/
 .gradle/
+# Alternate Gradle user home, for environments where the default ~/.gradle is
+# not writable (e.g. sandboxed agent sessions). See README "Verified state".
+.gradle-home/
 *.class
 .idea/
 *.iml

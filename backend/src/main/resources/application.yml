@@ -2,18 +2,26 @@ spring:
   application:
     name: goldys-platform
   datasource:
-    url: jdbc:postgresql://localhost:5432/goldys
-    username: goldys
-    password: goldys_local_dev_only
+    # Defaults match a native local Postgres (and docker-compose.yml's
+    # credentials). Point these elsewhere - docker-compose publishes on 5433,
+    # see its comment - with SPRING_DATASOURCE_URL/USERNAME/PASSWORD.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/goldys}
+    username: ${SPRING_DATASOURCE_USERNAME:goldys}
+    password: ${SPRING_DATASOURCE_PASSWORD:goldys_local_dev_only}
   jpa:
     hibernate:
-      # Spec invariant: raw log is append-only and canonical rows are closed,
-      # never overwritten. Do NOT rely on Hibernate's ddl-auto=update in any
-      # environment beyond local dev - use a migration tool (Flyway/Liquibase)
-      # once the schema stabilizes past the scaffold stage.
-      ddl-auto: update
+      # Schema is owned by the versioned migrations in db/migration, not by
+      # Hibernate. 'validate' makes any drift between the entities and the
+      # migrations fail fast at startup. Auto-DDL is the wrong tool here: the
+      # raw log is append-only and canonical rows are closed rather than
+      # overwritten, so every schema change has to be deliberate and reviewable.
+      # Local dev only, per this file's scope - the dev database is disposable.
+      ddl-auto: validate
     show-sql: false
     open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
 server:
   port: 8080

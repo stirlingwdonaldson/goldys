@@ -1,6 +1,19 @@
-# Local dev Postgres only. Not installed/tested from this scaffolding session -
-# this machine currently has no Docker available, so verify `docker compose up`
-# works in your own terminal before relying on it.
+# Local dev Postgres only.
+#
+# Published on host port 5433, not 5432: a native Postgres (Homebrew, Postgres.app,
+# a system service) commonly already owns 5432, and binding would fail with a
+# confusing "port is already allocated". The app defaults to 5432 for a native
+# instance, so when using this container point it here explicitly:
+#
+#   docker compose up -d
+#   SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/goldys ./gradlew test
+#
+# Still unverified end-to-end: no Docker daemon was running in the sessions that
+# wrote this. Confirm `docker compose up` brings Postgres up and that the
+# migration in backend/src/main/resources/db/migration applies cleanly.
+#
+# The database is disposable - Flyway owns the schema, so prefer
+# `docker compose down -v` over hand-editing tables when something looks wrong.
 services:
   postgres:
     image: postgres:16
@@ -9,7 +22,7 @@ services:
       POSTGRES_USER: goldys
       POSTGRES_PASSWORD: goldys_local_dev_only
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - goldys_pg_data:/var/lib/postgresql/data
 

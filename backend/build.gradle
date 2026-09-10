@@ -25,6 +25,12 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	runtimeOnly 'org.postgresql:postgresql'
 
+	// Schema is owned by versioned migrations, not Hibernate auto-DDL - see
+	// src/main/resources/db/migration and the ddl-auto comment in application.yml.
+	// flyway-database-postgresql is a separate artifact as of Flyway 10.
+	implementation 'org.flywaydb:flyway-core'
+	runtimeOnly 'org.flywaydb:flyway-database-postgresql'
+
 	// Spring AI: needed for the Conversational BI / Smart Exporter tool-calling
 	// framework (Phase 2, spec Requirements 9-10), not Phase 1. Coordinates and
 	// version are deliberately left unpinned here - Spring AI's artifact IDs and
