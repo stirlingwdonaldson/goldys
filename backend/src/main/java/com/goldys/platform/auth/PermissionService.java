@@ -23,7 +23,7 @@ public class PermissionService {
    */
   public void require(UserRole role, ResourceKey resource, PermissionAction action) {
     if (!lookup.isAllowed(role, resource, action)) {
-      throw new AccessDeniedException(resource.value());
+      throw AccessDeniedException.forResource(resource.value());
     }
   }
 }
