@@ -3,57 +3,41 @@
 Data integration and analytics platform for Goldy's, with automated
 reconciliation, dashboards, reporting, exports, and AI-assisted insights.
 
-Scaffold only — see [`docs/`](docs/README.md) (start there: `docs/prd.md`
-for the PRD, `docs/system-context.md` for architecture invariants) before
-writing any real connector, reconciliation, or reporting code against this.
-Both docs are also kept in the Claude project for this codebase.
+The implementation has been cleared for a deliberate Phase 1 rebuild. The
+repository retains build configuration, application configuration, the V1
+Flyway baseline, and product/design context. Follow the approved
+[Phase 1 specification](docs/superpowers/specs/2026-09-19-phase-one-mvp-design.md)
+and [foundation implementation plan](docs/superpowers/plans/2026-09-19-phase-one-foundation.md);
+previously documented classes and screens no longer exist unless a later commit
+restores them.
+
+Read [`docs/system-context.md`](docs/system-context.md) for architecture
+invariants and [`docs/prd.md`](docs/prd.md) for scope and acceptance criteria
+before implementing connectors, reconciliation, or reporting behavior.
 
 ## Layout
 
-- `backend/` — Java 25, Spring Boot. Raw event log, bitemporal canonical
-  layer, and the department × seniority role/permission model are scaffolded
-  (spec Requirements 1–3), with a Flyway-managed schema and tests covering the
-  invariants those layers rest on. No connectors, reconciliation UI, or Phase 2
-  modules are implemented yet — see `PermissionService`, `SourceConnector`,
-  `AiTool`/`ToolRegistry` for the extension points.
-- `frontend/` — Next.js (App Router) + TypeScript + Tailwind + shadcn/ui, run
-  with Bun. The app shell (shadcn's `sidebar-07` block, adapted to Goldy's
-  nav) and a dashboard landing page are wired up in `app/page.tsx`. The
-  dashboard is **mock data only** (`lib/mock-dashboard-data.ts`) — it makes the
-  layout reviewable, and nothing on it comes from the backend. See
-  `docs/design-system.md` for the frontend design decisions this follows.
+- `backend/` — Java 25 and Spring Boot build configuration, application
+  configuration, Gradle wrapper, and the Flyway-managed V1 schema baseline.
+  Application classes and tests are rebuilt incrementally by the approved plan.
+- `frontend/` — Next.js, React, TypeScript, Tailwind, and shadcn/ui
+  configuration, managed with Bun. The application shell and screens are not
+  present in the cleared baseline. See `docs/design-system.md` for retained
+  frontend decisions.
 - `docker-compose.yml` — local Postgres 16 for dev, published on host port
   **5433** so it does not collide with a native Postgres on 5432. Not verified
   end-to-end (no Docker daemon available in the sessions that touched it) —
-  see "Verified state" below for what to confirm.
+  see "Current verification baseline" below for what to confirm.
 
-## Verified state
+## Current verification baseline
 
-Everything below was run on a machine with JDK 25, Bun, and a native
-PostgreSQL 16, and is a statement about what was actually executed — not about
-what the scaffold intends.
-
-- `backend`: `./gradlew test` passes — 20 tests, 0 failures. **A live Postgres
-  is required**: besides the context-load smoke test, the repository tests
-  assert against real `jsonb` and real bitemporal columns rather than a mock.
-  With a native Postgres (`goldys` role, `goldys` database,
-  password `goldys_local_dev_only` — the values `application.yml` defaults to),
-  then from `backend/`:
-
-  ```
-  createdb -O goldys goldys        # role: createuser -L -P goldys
-  ./gradlew test
-  ```
-
-  `docker compose up` is the alternative, but it publishes on **5433**, not
-  5432 — a native Postgres commonly already owns 5432, and binding there fails
-  with a confusing "port is already allocated". Point the app at it explicitly:
-  `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/goldys ./gradlew test`.
-- `backend`: the schema is owned by Flyway (`src/main/resources/db/migration`)
-  with `hibernate.ddl-auto: validate`. Flyway applies
-  `V1__baseline_schema.sql` at startup, then Hibernate verifies the entities
-  match it. A dev database created while `ddl-auto` was still `update` predates
-  the Flyway history table — drop and recreate it once.
+- `backend`: the committed Gradle 9.5.0 wrapper runs on Java 25. The cleared
+  baseline currently has no Java source or tests; the foundation plan restores
+  both before database integration tests are introduced.
+- `backend`: the schema remains owned by Flyway
+  (`src/main/resources/db/migration`) with `hibernate.ddl-auto: validate`.
+  `V1__baseline_schema.sql` is immutable migration history; later behavior uses
+  later migrations.
 - `backend`: builds and tests run on Gradle 9.5.0 via the committed wrapper,
   which is pinned deliberately (Gradle itself, not just the toolchain it
   targets, must parse Java 25 class files — Gradle 8.x fails to even parse the
@@ -61,10 +45,9 @@ what the scaffold intends.
   `spotlessCheck` is the CI-side equivalent. Sessions where `~/.gradle` is not
   writable can set `GRADLE_USER_HOME` to a checkout-local clone —
   `backend/.gradle-home/` is gitignored for exactly that.
-- `frontend`: `bun install`, `bun run build`, and `bun run lint` all pass.
-  Lint is plain ESLint driven by `eslint.config.mjs`; `next lint` is deprecated
-  in Next 15.5 and removed in 16, and with no config committed it used to drop
-  into an interactive setup prompt.
+- `frontend`: configuration and `bun.lock` are retained, but no application
+  entry point exists in the cleared baseline. Build, lint, and type-check claims
+  must be re-established as the application is restored.
 - `frontend`: `tailwind.config.ts` and `components.json` were hand-written to
   match shadcn/ui's conventions rather than generated by its CLI — running
   `bunx shadcn@latest init` locally and diffing against what's here isn't a
@@ -74,9 +57,8 @@ what the scaffold intends.
   `docker compose up` brings Postgres up on 5433 and that the Flyway migration
   applies cleanly on a fresh volume.
 
-Two things the spec calls out as blocking before real feature work starts,
-not just this scaffold: the **entity-matching strategy** (what identifies
-"the same event" across sources) and the **field-to-role permission
-mapping** (which fields each department × seniority combination can see).
-Both are open questions in the PRD — resolve them before implementing
-Requirement 5 (reconciliation UI) against this scaffold.
+Two inputs gate their dependent Phase 1 behavior: the **entity-matching
+strategy** (what identifies "the same event" across sources) and the
+**field-to-role permission mapping** (which fields each department × seniority
+combination can see). The foundation may implement the mechanisms, but must not
+guess matching tolerances, permission seed data, or protected field rendering.

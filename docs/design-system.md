@@ -85,54 +85,27 @@ final field list against a guess.
 
 ## 4. Navigation & layout shell
 
-**Implemented in code** (not just documented — see `frontend/components/`):
-adopted shadcn's `sidebar-07` block as the app shell, sourced from the real
-shadcn-ui registry (not hand-recreated from memory) and adapted to this
-repo's aliases and this product's nav structure:
+The cleared rebuild baseline retains shadcn configuration but no application
+shell or components. When the Phase 1 shell is implemented, use shadcn's
+`sidebar-07` block as the starting point and adapt it to a flat Goldy's
+navigation: Dashboard, Reconciliation, Connectors, and Settings.
 
-- `components/ui/sidebar.tsx` plus its dependencies (`avatar`, `breadcrumb`,
-  `button`, `collapsible`, `dropdown-menu`, `input`, `separator`, `sheet`,
-  `skeleton`, `tooltip`) and `hooks/use-mobile.tsx` — copied verbatim from
-  the block's primitives.
-- `components/app-sidebar.tsx` — seeded with Goldy's nav (Dashboard,
-  Reconciliation, Connectors, Settings) instead of the block's demo data.
-- `components/nav-main.tsx` — simplified from the original: sidebar-07's
-  demo data is a nested Playground/Models/Documentation hierarchy, but this
-  product's screens are a flat list, so the collapsible sub-item behavior
-  was dropped rather than carried as dead code.
-- `components/team-switcher.tsx` — sidebar-07's version assumes
-  multi-workspace use (a dropdown to switch teams, an "Add team" action).
-  Goldy's is a single pub, single workspace, so this is a static header
-  instead of a functional switcher. Revisit properly if multi-venue ever
-  becomes a real requirement — don't just re-enable the dropdown without
-  redesigning what it should actually do.
-- `components/nav-user.tsx` — dropped the "Upgrade to Pro" and "Billing"
-  items from the block's SaaS-demo account menu; neither fits a
-  single-tenant internal tool. Avatar fallback derives initials from the
-  signed-in user's name instead of a hardcoded placeholder.
-- `app/page.tsx` — wired into `SidebarProvider` / `SidebarInset` with a
-  header (`SidebarTrigger` + breadcrumb), replacing the flat placeholder
-  page. Its body is now a dashboard landing page built to §3/§6's shape
-  (stat cards, charts, connector status, exception list), rendering mock
-  data from `lib/mock-dashboard-data.ts`. It is a layout preview, not a
-  working screen: nothing on it is wired to the backend, because real KPI and
-  reconciliation data is blocked on the PRD's open questions.
+Goldy's is a single venue and workspace. Do not carry over multi-workspace,
+"Add team," billing, or upgrade behavior from demo blocks. User identity comes
+from the backend-owned OIDC session, and any avatar fallback derives from the
+current staff profile rather than placeholder data.
 
-`bun run build` and `bun run lint` both pass, and `bun run lint` now runs
-plain ESLint via `eslint.config.mjs` rather than the deprecated `next lint`
-(which, with no config committed, dropped into an interactive setup prompt).
-The repo stays Bun-only: no npm/yarn lockfile is committed.
+Until approved backend DTOs exist, keep restored frontend surfaces minimal;
+do not recreate the deleted mock dashboard and present it as operational data.
+The repository remains Bun-only and uses the committed ESLint configuration.
 
 ## 5. Visual tokens
 
 
-**Base theme: shadcn defaults, unmodified.** Keep the existing scaffold as
-the source of truth — `components.json` (`baseColor: slate`, style
-`default`), `app/globals.css`'s CSS variables, `tailwind.config.ts`'s
-mapping, the default `--radius: 0.5rem`, and shadcn's default font stack.
-Don't hand-tune hues, spacing, or type scale — if something looks off,
-prefer to check whether it's actually a component being used incorrectly
-before reaching for a custom token.
+**Base theme: shadcn defaults, unmodified.** Retained `components.json` uses
+`baseColor: slate` and style `default`. When `app/globals.css` and components
+are restored, use shadcn's default variables, radius, and font stack. Don't
+hand-tune hues, spacing, or type scale before checking component usage.
 
 **One real gap: semantic status colors.** Default shadcn ships
 `primary`/`secondary`/`muted`/`accent`/`destructive` but nothing for
@@ -154,22 +127,13 @@ Wire into `tailwind.config.ts`'s `theme.extend.colors` the same way
 `text-status-missing`, etc.
 
 `--destructive` stays reserved for genuine system failures (a crashed
-connector), not conflicts — a conflict is an expected, resolvable state,
-not an error. **Implemented** in `app/globals.css` (both `:root` and the
-dormant `.dark` block, with the warning/success hues lifted slightly for dark
-contrast) and mapped into `tailwind.config.ts` under `theme.extend.colors.status`,
-so they are usable as `bg-status-warning`, `text-status-missing`, etc. The
-connector-status and exceptions components already consume them.
+connector), not conflicts — a conflict is an expected, resolvable state, not
+an error. Add status tokens to `:root` and Tailwind when the first UI that uses
+them is implemented; do not add dormant dark-mode variants during Phase 1.
 
-The same commit added shadcn's standard `--chart-1..5` tokens and `chart.*`
-mapping, which `components/ui/chart.tsx` expects.
-
-**Sidebar tokens — implemented, shadcn defaults.** Pulled from the real
-shadcn-ui registry (`ui/sidebar.tsx`'s own `cssVars`), not hand-guessed —
-`app/globals.css` and `tailwind.config.ts` now carry the standard
-`--sidebar-*` variables and the `sidebar.*` Tailwind color mapping.
-`--sidebar-background: 0 0% 98%` **is** `#FAFAFA` — the requested sidebar
-color is shadcn's own unmodified default, not a custom override:
+**Sidebar tokens — use shadcn defaults when the shell lands.** Pull the
+`--sidebar-*` variables from the real shadcn registry rather than guessing.
+`--sidebar-background: 0 0% 98%` is `#FAFAFA` and requires no custom override:
 
 ```css
 --sidebar-background: 0 0% 98%;
@@ -182,17 +146,8 @@ color is shadcn's own unmodified default, not a custom override:
 --sidebar-ring: 217.2 91.2% 59.8%;
 ```
 
-(Dark-mode sidebar variants are also in place, dormant, matching this
-doc's "light mode only, for now" stance elsewhere.)
-
-**Card radius — deliberately bumped, cards only.** Real shadcn `Card`
-(`components/ui/card.tsx`) ships `rounded-lg` (i.e. `var(--radius)`,
-currently 8px) — not `rounded-xl` as this doc's first draft assumed.
-Rather than raising the global `--radius` token (which would also round
-buttons/inputs more than intended), `Card`'s className was changed to
-`rounded-xl` (12px) directly, so only cards pick up the extra rounding.
-If a reason ever comes up to round buttons/inputs to match, do that
-deliberately via `--radius`, not by copying this override elsewhere.
+Use shadcn's default card radius. Revisit it only against a real Phase 1 screen,
+not from a deleted preview implementation.
 
 ## 6. Core interaction patterns
 
@@ -230,8 +185,7 @@ deliberately via `--radius`, not by copying this override elsewhere.
   genuinely too dense once built.
 - Role/permission admin screen — no design yet, not yet scheduled.
 - Reconciliation view's field list — blocked on PRD open questions (§3).
-- Reconciliation view and connector-status screen — the dashboard's
-  exception list and connector panel are mock previews of these; neither is a
-  real screen yet.
-- `bun run build` and `bun run lint` both verified against the current tree.
-  Re-check after any further dependency change.
+- Reconciliation view and connector-status screen — neither exists in the
+  cleared baseline; implement them only against approved backend contracts.
+- Re-establish and record `bun run build`, `bun run lint`, and type-check results
+  as frontend slices are restored.
