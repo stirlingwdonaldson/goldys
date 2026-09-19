@@ -1,5 +1,6 @@
 package com.goldys.platform.ingestion;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,4 +12,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {}
 
-interface RawRecordRepository extends JpaRepository<RawRecord, UUID> {}
+interface RawRecordRepository extends JpaRepository<RawRecord, UUID> {
+  List<RawRecord> findByIngestionRunId(UUID ingestionRunId);
+}
