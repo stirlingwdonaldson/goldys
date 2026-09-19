@@ -39,10 +39,17 @@ dependencies {
 	// implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// Testcontainers 1.x defaults docker-java to API 1.32, which Docker 29+
+	// rejects. API 1.40 is supported from Docker 19.03 onward and remains
+	// overridable for unusual environments with -Dapi.version=<version>.
+	systemProperty 'api.version', System.getProperty('api.version', '1.40')
 }
 
 spotless {
