@@ -1,6 +1,6 @@
 # Goldy's Phase 1 MVP Design
 
-**Status:** Approved design, pending written-spec review
+**Status:** Approved
 **Date:** 2026-09-19
 **Scope:** `docs/prd.md` Requirements 1–7 only
 
