@@ -1,81 +1,80 @@
 package com.goldys.platform.auth;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
- * A single (department, seniority, resource) grant (spec Requirement 3). Permissions are defined
- * per axis combination, not per named role, so a new department or seniority value only ever adds
- * rows here - it never requires editing an existing row.
+ * One table-driven grant: a department × seniority × resource triple with independent read and
+ * write flags.
  *
- * <p>"resource" is deliberately a free string (e.g. "canonical_shift.wage_amount",
- * "tool.get_labor_cost_variance") rather than a typed reference, so this table can gate both
- * resolved-view fields (MVP, Requirement 5) and AI tool calls (Phase 2, Requirement 9) with the
- * same mechanism. Populate this table from the field-to-role mapping design session (spec Open
- * Questions) before relying on it for real access control - it ships empty from this scaffold.
+ * <p>Rows ship empty (V1) and are populated only from the stakeholder-approved field-to-role
+ * matrix. There is no ordinal comparison between seniorities and no owner branch anywhere.
  */
 @Entity
 @Table(name = "permission")
-public class Permission {
+class Permission {
+  @Id private UUID id;
 
-  @Id @GeneratedValue private UUID id;
+  @Column(name = "department", nullable = false, updatable = false)
+  private String department;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private Department department;
+  @Column(name = "seniority", nullable = false, updatable = false)
+  private String seniority;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private Seniority seniority;
-
-  /** e.g. "canonical_shift.wage_amount", "tool.get_labor_cost_variance". */
-  @Column(nullable = false)
+  @Column(name = "resource", nullable = false, updatable = false)
   private String resource;
 
-  @Column(nullable = false)
+  @Column(name = "can_read", nullable = false, updatable = false)
   private boolean canRead;
 
-  @Column(nullable = false)
+  @Column(name = "can_write", nullable = false, updatable = false)
   private boolean canWrite;
 
-  protected Permission() {
-    // JPA
-  }
+  protected Permission() {}
 
-  public Permission(
-      Department department,
-      Seniority seniority,
-      String resource,
-      boolean canRead,
-      boolean canWrite) {
-    this.department = department;
-    this.seniority = seniority;
-    this.resource = resource;
+  private Permission(
+      String department, String seniority, String resource, boolean canRead, boolean canWrite) {
+    this.id = UUID.randomUUID();
+    this.department = requireCode("department", department);
+    this.seniority = requireCode("seniority", seniority);
+    this.resource = Objects.requireNonNull(resource, "resource");
     this.canRead = canRead;
     this.canWrite = canWrite;
   }
 
-  public UUID getId() {
-    return id;
+  static Permission grant(
+      String department, String seniority, String resource, boolean canRead, boolean canWrite) {
+    return new Permission(department, seniority, resource, canRead, canWrite);
   }
 
-  public Department getDepartment() {
+  private static String requireCode(String label, String value) {
+    if (value == null) {
+      throw new IllegalArgumentException(label + " must not be null");
+    }
+    return value;
+  }
+
+  String department() {
     return department;
   }
 
-  public Seniority getSeniority() {
+  String seniority() {
     return seniority;
   }
 
-  public String getResource() {
+  String resource() {
     return resource;
   }
 
-  public boolean isCanRead() {
+  boolean canRead() {
     return canRead;
   }
 
-  public boolean isCanWrite() {
+  boolean canWrite() {
     return canWrite;
   }
 }

@@ -1,49 +1,79 @@
 package com.goldys.platform.canonical;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Example canonical entity (spec Requirement 2 / 7). Fields are placeholders - finalize against the
- * entity-matching design session (spec Open Questions) before treating this as authoritative.
- * staffMemberRef and sourceRecordId exist so the entity-matching strategy has somewhere to put its
- * keys.
+ * One version of a canonical shift.
+ *
+ * <p>Fact fields are immutable; a correction closes this row and inserts a successor sharing the
+ * same logical identity. Matching tolerances are deliberately absent until shift matching is
+ * designed from Deputy/OpenTable samples.
  */
 @Entity
 @Table(name = "canonical_shift")
-public class CanonicalShift extends BitemporalEntity {
-
+class CanonicalShift extends BitemporalEntity {
+  @Column(name = "staff_member_ref", updatable = false)
   private UUID staffMemberRef;
+
+  @Column(name = "shift_start", updatable = false)
   private Instant shiftStart;
+
+  @Column(name = "shift_end", updatable = false)
   private Instant shiftEnd;
 
-  protected CanonicalShift() {
-    super();
-  }
+  protected CanonicalShift() {}
 
-  public CanonicalShift(
+  private CanonicalShift(
+      UUID logicalEntityId,
+      String sourceSystem,
+      String sourceRecordRef,
+      UUID rawRecordId,
       Instant validFrom,
       Instant recordedAt,
       UUID staffMemberRef,
       Instant shiftStart,
       Instant shiftEnd) {
-    super(validFrom, recordedAt);
+    super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.staffMemberRef = staffMemberRef;
     this.shiftStart = shiftStart;
     this.shiftEnd = shiftEnd;
   }
 
-  public UUID getStaffMemberRef() {
+  static CanonicalShift create(
+      UUID logicalEntityId,
+      String sourceSystem,
+      String sourceRecordRef,
+      UUID rawRecordId,
+      Instant validFrom,
+      Instant recordedAt,
+      UUID staffMemberRef,
+      Instant shiftStart,
+      Instant shiftEnd) {
+    return new CanonicalShift(
+        logicalEntityId,
+        sourceSystem,
+        sourceRecordRef,
+        rawRecordId,
+        validFrom,
+        recordedAt,
+        staffMemberRef,
+        shiftStart,
+        shiftEnd);
+  }
+
+  UUID staffMemberRef() {
     return staffMemberRef;
   }
 
-  public Instant getShiftStart() {
+  Instant shiftStart() {
     return shiftStart;
   }
 
-  public Instant getShiftEnd() {
+  Instant shiftEnd() {
     return shiftEnd;
   }
 }

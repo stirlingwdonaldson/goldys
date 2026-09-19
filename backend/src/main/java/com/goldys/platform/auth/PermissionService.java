@@ -1,26 +1,29 @@
 package com.goldys.platform.auth;
 
+import org.springframework.stereotype.Service;
+
 /**
- * The single enforcement point for the role/permission model (spec Requirement 3). Both the MVP
- * reconciliation UI (Requirement 5) and, in Phase 2, every AI tool call (Requirement 9) must go
- * through this - do not build a second, parallel permission check anywhere else in the codebase.
+ * The one and only permission enforcement point.
  *
- * <p>OWNER seniority is expected to be granted broad access via explicit Permission rows spanning
- * both BOH and FOH (plus owner-only resources like wage data) - NOT via a hardcoded "Owner bypasses
- * checks" shortcut. Keeping it table-driven is what lets Requirement 3's "add a
- * department/seniority without touching existing permissions" acceptance criterion hold.
+ * <p>Every protected read and override action must route through {@link #require}. There is no
+ * owner bypass and no ordinal seniority comparison here; both would defeat the table-driven model
+ * this service exists to protect.
  */
-public interface PermissionService {
+@Service
+public class PermissionService {
+  private final PermissionLookup lookup;
 
-  /** True if the given role may read the given resource. */
-  boolean canRead(UserRole role, String resource);
+  public PermissionService(PermissionLookup lookup) {
+    this.lookup = lookup;
+  }
 
-  /** True if the given role may write/override the given resource. */
-  boolean canWrite(UserRole role, String resource);
-
-  /** Throws AccessDeniedException if canRead(role, resource) is false. */
-  void requireRead(UserRole role, String resource);
-
-  /** Throws AccessDeniedException if canWrite(role, resource) is false. */
-  void requireWrite(UserRole role, String resource);
+  /**
+   * Authorizes a request, throwing {@link AccessDeniedException} when the role is not explicitly
+   * granted the action on the resource.
+   */
+  public void require(UserRole role, ResourceKey resource, PermissionAction action) {
+    if (!lookup.isAllowed(role, resource, action)) {
+      throw AccessDeniedException.forResource(resource.value());
+    }
+  }
 }

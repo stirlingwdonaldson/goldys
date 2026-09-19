@@ -4,9 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Read this first
 
-This is an early-stage scaffold (raw log, bitemporal canonical layer, and
-permission model only — no connectors, reconciliation UI, or Phase 2 modules
-implemented yet). Before writing real feature code, read `docs/` in order:
+The implementation has been cleared for a deliberate Phase 1 rebuild. The
+repository retains build configuration, application configuration, the V1
+Flyway baseline, and product/design context. Follow the approved Phase 1 spec
+and implementation plans; previously documented classes and screens no longer
+exist unless a later commit restores them.
+
+Before writing feature code, read these documents in order:
 
 1. `docs/PRODUCT.md` — plain-language overview. **Non-normative** — never cite
    it as the basis for an acceptance criterion or architectural decision; if
@@ -15,13 +19,15 @@ implemented yet). Before writing real feature code, read `docs/` in order:
    three-layer data model. **Source of truth for architecture.**
 3. `docs/prd.md` — phased requirements with acceptance criteria. Scopes and
    sequences the architecture doc's decisions; never overrides them.
+4. `docs/superpowers/specs/2026-09-19-phase-one-mvp-design.md` — approved
+   Requirements 1–7 design.
+5. `docs/superpowers/plans/2026-09-19-phase-one-foundation.md` — current
+   foundation implementation sequence and verification gates.
 
-**Two open questions block real feature work** (tracked in `docs/prd.md`'s
-Open Questions): the entity-matching strategy (what identifies "the same
-event" across sources) and the field-to-role permission mapping (which
-fields each department × seniority sees). Don't implement the reconciliation
-UI (PRD Requirement 5) against guessed answers to either — surface the gap
-instead.
+**Two open questions gate their dependent behavior** (tracked in
+`docs/prd.md`): the entity-matching strategy and the field-to-role permission
+mapping. The foundation may implement shared mechanisms, but must not guess
+matching tolerances, permission rows, or protected reconciliation fields.
 
 For backend work, see `.claude/rules/architecture-invariants.md` (loaded
 automatically) for the detailed invariants — raw-log immutability, bitemporal
@@ -38,9 +44,9 @@ Backend (from `backend/`):
   on a JVM that can parse Java 25 class files, and Gradle 8.x fails to even
   parse the build script on a JDK 25-only machine. Don't "fix" the wrapper
   version down to 8.x.
-- `./gradlew test` requires a live Postgres with the `goldys` role and
-  database (see README "Verified state"). Tests fail at context-load without
-  one — that's the environment, not the code.
+- `./gradlew test` runs the current suite. PostgreSQL-specific integration
+  tests use PostgreSQL 16 through the harness introduced by the foundation
+  plan; do not substitute an in-memory database.
 - `./gradlew spotlessApply` formats Java (google-java-format via Spotless).
   The `.claude/settings.json` hook runs it after every Java edit, so the tree
   stays formatted; `spotlessCheck` is the CI-side equivalent.
@@ -65,11 +71,10 @@ a human collaborator joining later.
   `hibernate.ddl-auto: validate`. Adding a field means writing a new migration
   in `db/migration`, not letting Hibernate alter the table. An existing dev
   database created before Flyway existed has to be dropped and recreated.
-- `raw_record.payload` is `jsonb`, which normalises JSON key order and
-  whitespace. Non-JSON payloads are wrapped as `{"raw": "..."}` and survive
-  intact, but for API JSON the log is semantically faithful rather than
-  byte-faithful. Worth resolving before the "audit trail independent of how
-  the data was obtained" claim is load-bearing.
+- The V1 baseline has a JSONB `raw_record.payload`, which cannot preserve
+  exact source bytes. The approved foundation adds authoritative `BYTEA`,
+  digest, and length fields in a later migration; never treat derived JSONB as
+  the audit source.
 - Before assuming a source has a clean REST API, check `system-context.md`'s
   "Per-Source Ingestion Reality" table — most in-scope MVP sources
   (Lightspeed, CTB, OpenTable) don't.

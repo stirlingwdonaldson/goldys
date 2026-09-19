@@ -3,3 +3,6 @@ Claude outputs/
 
 # Playwright MCP session output (page snapshots, console logs)
 .playwright-mcp/
+
+# Local Git worktrees used for isolated feature development
+.worktrees/
