@@ -6,3 +6,8 @@ Claude outputs/
 
 # Local Git worktrees used for isolated feature development
 .worktrees/
+
+# Impeccable ships a ~16MB platform binary that its launcher re-fetches from a
+# version-pinned cache when absent; committing it would bloat every clone with a
+# non-diffable, platform-specific artifact.
+.opencode/skills/impeccable/scripts/bin/
