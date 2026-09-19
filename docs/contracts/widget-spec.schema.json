@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://goldys.local/schemas/widget-spec-v1.json",
+  "title": "GoldysWidgetSpec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "type", "title", "data"],
+  "properties": {
+    "version": { "const": 1 },
+    "type": { "enum": ["stat", "table", "line-chart", "bar-chart"] },
+    "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "description": { "type": "string", "maxLength": 500 },
+    "data": { "type": "array", "items": { "type": "object" } }
+  }
+}
