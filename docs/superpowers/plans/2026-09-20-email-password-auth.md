@@ -823,7 +823,7 @@ class AuthControllerTest {
 
 The `/api/me` and login/logout HTTP behavior is exercised by the integration test (Task 5), not this slice test — importing the full `SecurityConfig` into `@WebMvcTest` would drag in `formLogin()`, which needs an `AuthenticationManager` the web slice does not auto-configure.
 
-- [ ] **Step 10: Update `ReconciliationControllerTest`** — drop `@Import(SecurityConfig.class)`, replace `oidcLogin()` with `authentication(...)` carrying an `AccountUserDetails`, and `@MockBean` → `@MockitoBean`. The `override` test's mock call signature changes to `overrides.save(any(), any(), any(), any(), any(), any())` (six args, unchanged count) and the `AccountUserDetails` must carry an `email`. Replace the `oidc()` helper with:
+- [ ] **Step 10: Update `ReconciliationControllerTest`** — drop `@Import(SecurityConfig.class)`, replace `oidcLogin()` with `authentication(...)` carrying an `AccountUserDetails`, and `@MockBean` → `@MockitoBean`. The `override` test's mock call signature changes to `overrides.save(any(), any(), any(), any(), any())` (five args — the `UserRole`, the actor email, the date, the source, the reason; was six with the OIDC issuer+subject) and the `AccountUserDetails` must carry an `email`. Replace the `oidc()` helper with:
 
 ```java
 private static RequestPostProcessor authenticated(AccountUserDetails user) {
