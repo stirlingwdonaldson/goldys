@@ -103,11 +103,16 @@ class AuthenticationIntegrationTest {
             .andExpect(status().isOk())
             .andReturn();
 
-    // The SPA CSRF handler forces the XSRF-TOKEN cookie on every response; logout echoes it back.
+    // The SPA CSRF handler forces the XSRF-TOKEN cookie on every response; the browser sends the
+    // cookie automatically and the frontend echoes it back in the header. Mimic both.
     Cookie xsrf = loginResult.getResponse().getCookie("XSRF-TOKEN");
     assertThat(xsrf).isNotNull();
 
-    mvc.perform(post("/api/auth/logout").session(session).header("X-XSRF-TOKEN", xsrf.getValue()))
+    mvc.perform(
+            post("/api/auth/logout")
+                .session(session)
+                .cookie(xsrf)
+                .header("X-XSRF-TOKEN", xsrf.getValue()))
         .andExpect(status().isNoContent());
   }
 }
