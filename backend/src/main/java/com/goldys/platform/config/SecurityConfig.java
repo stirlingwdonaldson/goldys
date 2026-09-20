@@ -27,7 +27,11 @@ public class SecurityConfig {
       HttpSecurity http, ObjectProvider<ClientRegistrationRepository> registrations)
       throws Exception {
     http.authorizeHttpRequests(
-        auth -> auth.requestMatchers("/api/health").permitAll().anyRequest().authenticated());
+        auth ->
+            auth.requestMatchers("/api/health", "/api/ingest/lightspeed")
+                .permitAll()
+                .anyRequest()
+                .authenticated());
     if (registrations.getIfAvailable() != null) {
       http.oauth2Login(Customizer.withDefaults());
     }
