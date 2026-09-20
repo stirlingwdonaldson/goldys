@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
+import { PermissionDenied } from "@/components/states/permission-denied";
 import { ReconciliationDrillIn } from "@/components/reconciliation/drill-in";
 
 export default function ReconciliationPage() {
@@ -44,6 +45,7 @@ export default function ReconciliationPage() {
 
   if (loading) return <LoadingState rows={4} />;
   if (error) {
+    if (error.code === "NOT_PERMITTED") return <PermissionDenied subject="reconciliation data" />;
     return (
       <ErrorState
         title="Couldn't load exceptions"
@@ -95,7 +97,7 @@ export default function ReconciliationPage() {
           <button
             key={ex.id}
             type="button"
-            onClick={() => setSelectedId(ex.id.split(":")[0])}
+            onClick={() => setSelectedId(ex.recordId)}
             className="flex items-center justify-between rounded-lg border bg-card p-4 text-left hover:bg-accent"
           >
             <div>

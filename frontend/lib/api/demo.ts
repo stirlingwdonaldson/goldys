@@ -92,6 +92,7 @@ function deriveExceptions(): ReconciliationException[] {
       if (anyMissing || !allEqual) {
         result.push({
           id: `${record.id}:${field.name}`,
+          recordId: record.id,
           entity: record.entity,
           field: field.name,
           sources: field.sources,

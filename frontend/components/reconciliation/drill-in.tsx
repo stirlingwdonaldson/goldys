@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import type { ReconciliationField } from "@/lib/api";
@@ -65,7 +66,9 @@ export function ReconciliationDrillIn({ recordId, onBack, onSave, saving }: Dril
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{field.label}</p>
                 {field.overridden ? (
-                  <Badge variant="secondary">Overridden · {field.authoritativeSource}</Badge>
+                  <Badge className="border-transparent bg-status-success text-status-success-foreground">
+                    Overridden · {field.authoritativeSource}
+                  </Badge>
                 ) : decide ? (
                   <Badge variant="outline">Needs decision</Badge>
                 ) : null}
@@ -76,9 +79,9 @@ export function ReconciliationDrillIn({ recordId, onBack, onSave, saving }: Dril
                   <div key={source.source} className="rounded-md border p-2">
                     <p className="text-xs text-muted-foreground">{source.source}</p>
                     {source.value == null ? (
-                      <p className="mt-1 text-sm text-status-missing">
+                      <Badge className="mt-1 border-transparent bg-status-missing text-status-missing-foreground">
                         No data from {source.source}
-                      </p>
+                      </Badge>
                     ) : (
                       <p className="mt-1 text-sm font-medium">{source.value}</p>
                     )}
@@ -88,7 +91,9 @@ export function ReconciliationDrillIn({ recordId, onBack, onSave, saving }: Dril
 
               {decide ? (
                 <div className="mt-3 flex flex-col gap-2 border-t pt-3">
-                  <p className="text-xs font-medium text-muted-foreground">Set authoritative source</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Set authoritative source
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {field.sources
                       .filter((s) => s.value != null)
@@ -96,6 +101,7 @@ export function ReconciliationDrillIn({ recordId, onBack, onSave, saving }: Dril
                         <button
                           key={source.source}
                           type="button"
+                          aria-pressed={selection[field.name] === source.source}
                           onClick={() =>
                             setSelection((prev) => ({ ...prev, [field.name]: source.source }))
                           }
@@ -109,14 +115,14 @@ export function ReconciliationDrillIn({ recordId, onBack, onSave, saving }: Dril
                         </button>
                       ))}
                   </div>
-                  <input
+                  <Input
                     type="text"
+                    aria-label="Reason for override (optional)"
                     placeholder="Reason (optional)"
                     value={reasons[field.name] ?? ""}
                     onChange={(e) =>
                       setReasons((prev) => ({ ...prev, [field.name]: e.target.value }))
                     }
-                    className="rounded-md border px-3 py-1.5 text-sm"
                   />
                   <Button
                     size="sm"

@@ -28,6 +28,7 @@ export type ExceptionStatus = "conflict" | "missing";
 
 export interface ReconciliationException {
   id: string;
+  recordId: string;
   entity: string;
   field: string;
   sources: SourceValue[];

@@ -5,6 +5,7 @@ import { useApiData } from "@/lib/use-api-data";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
+import { PermissionDenied } from "@/components/states/permission-denied";
 import { StatCard } from "@/components/dashboard/stat-card";
 
 export default function DashboardPage() {
@@ -12,6 +13,7 @@ export default function DashboardPage() {
 
   if (loading) return <LoadingState rows={2} />;
   if (error) {
+    if (error.code === "NOT_PERMITTED") return <PermissionDenied subject="dashboard data" />;
     return (
       <ErrorState
         title="Couldn't load the dashboard"

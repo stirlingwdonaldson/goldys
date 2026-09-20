@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
+import { PermissionDenied } from "@/components/states/permission-denied";
 import type { ConnectorRunStatus } from "@/lib/api";
 
 const STATUS_LABEL: Record<ConnectorRunStatus, string> = {
@@ -15,12 +16,12 @@ const STATUS_LABEL: Record<ConnectorRunStatus, string> = {
   never_run: "Never run",
 };
 
-const STATUS_VARIANT: Record<ConnectorRunStatus, "default" | "secondary" | "destructive" | "outline"> = {
-  success: "secondary",
-  partial: "outline",
-  failed: "destructive",
-  no_new_data: "outline",
-  never_run: "outline",
+const STATUS_CLASS: Record<ConnectorRunStatus, string> = {
+  success: "border-transparent bg-status-success text-status-success-foreground",
+  partial: "border-transparent bg-status-warning text-status-warning-foreground",
+  failed: "border-transparent bg-destructive text-destructive-foreground",
+  no_new_data: "border-transparent bg-muted text-muted-foreground",
+  never_run: "border-transparent bg-muted text-muted-foreground",
 };
 
 export default function ConnectorsPage() {
@@ -28,6 +29,7 @@ export default function ConnectorsPage() {
 
   if (loading) return <LoadingState rows={4} />;
   if (error) {
+    if (error.code === "NOT_PERMITTED") return <PermissionDenied subject="connector status" />;
     return (
       <ErrorState
         title="Couldn't load connector status"
@@ -67,7 +69,7 @@ export default function ConnectorsPage() {
                 {c.lastRunAt ? ` · last run ${new Date(c.lastRunAt).toLocaleString()}` : " · never run"}
               </p>
             </div>
-            <Badge variant={STATUS_VARIANT[c.status]}>{STATUS_LABEL[c.status]}</Badge>
+            <Badge className={STATUS_CLASS[c.status]}>{STATUS_LABEL[c.status]}</Badge>
           </div>
         ))}
       </div>

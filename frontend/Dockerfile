@@ -17,6 +17,11 @@ COPY . .
 # build time because Next.js resolves rewrites when the config is loaded.
 ARG BACKEND_ORIGIN=http://backend:8080
 ENV BACKEND_ORIGIN=$BACKEND_ORIGIN
+
+# Demo mode defaults OFF in the production image (NEXT_PUBLIC_* is inlined at
+# build time). Build with --build-arg NEXT_PUBLIC_DEMO_MODE=true for a demo image.
+ARG NEXT_PUBLIC_DEMO_MODE=false
+ENV NEXT_PUBLIC_DEMO_MODE=$NEXT_PUBLIC_DEMO_MODE
 RUN bun run build
 
 # ---- runtime ----

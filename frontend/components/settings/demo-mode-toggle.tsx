@@ -17,6 +17,7 @@ export function DemoModeToggle() {
         type="button"
         role="switch"
         aria-checked={demo}
+        aria-label="Demo data"
         onClick={() => setDemo(!demo)}
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
           demo ? "bg-primary" : "bg-muted"
