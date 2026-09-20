@@ -51,7 +51,8 @@ public class ConnectorStatusController {
       case "PARTIAL" -> "partial";
       case "FAILED" -> "failed";
       case "NO_NEW_DATA" -> "no_new_data";
-      default -> "never_run";
+      default ->
+          "failed"; // a RUNNING run that never completed (e.g. a crash) is a failure to finish
     };
   }
 
