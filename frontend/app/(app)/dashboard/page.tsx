@@ -1,16 +1,35 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Activity, Scale, Timer, Wrench } from "lucide-react";
-
-export const metadata: Metadata = { title: "Dashboard" };
-
-const indicators = [
-  { label: "Ingestion completeness", hint: "Share of scheduled connector runs that succeed", icon: Activity },
-  { label: "Open conflicts", hint: "Field-level discrepancies awaiting a decision", icon: Scale },
-  { label: "Time to detect failure", hint: "How quickly a failed run becomes visible", icon: Timer },
-  { label: "Manual overrides", hint: "How often staff resolve a conflict by hand", icon: Wrench },
-];
+import { useApiData } from "@/lib/use-api-data";
+import { EmptyState } from "@/components/states/empty-state";
+import { ErrorState } from "@/components/states/error-state";
+import { LoadingState } from "@/components/states/loading-state";
+import { StatCard } from "@/components/dashboard/stat-card";
 
 export default function DashboardPage() {
+  const { data, loading, error, reload } = useApiData((api) => api.getDashboardSummary());
+
+  if (loading) return <LoadingState rows={2} />;
+  if (error) {
+    return (
+      <ErrorState
+        title="Couldn't load the dashboard"
+        message={error.message}
+        correlationId={error.correlationId}
+        onRetry={reload}
+      />
+    );
+  }
+  if (!data) {
+    return (
+      <EmptyState
+        title="No dashboard data"
+        description="Metrics will appear once connectors run and conflicts are surfaced."
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -20,20 +39,31 @@ export default function DashboardPage() {
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {indicators.map((indicator) => (
-          <div key={indicator.label} className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <indicator.icon className="h-4 w-4" aria-hidden="true" />
-              <span>{indicator.label}</span>
-            </div>
-            <p className="mt-3 text-2xl font-semibold">&mdash;</p>
-            <p className="mt-1 text-xs text-muted-foreground">{indicator.hint}</p>
-          </div>
-        ))}
+        <StatCard
+          label="Ingestion completeness"
+          value={data.ingestionCompleteness == null ? "—" : `${data.ingestionCompleteness}%`}
+          hint="Share of scheduled connector runs that succeed"
+          icon={Activity}
+        />
+        <StatCard
+          label="Open conflicts"
+          value={String(data.openConflicts)}
+          hint="Fields awaiting a decision"
+          icon={Scale}
+        />
+        <StatCard
+          label="Time to detect failure"
+          value={data.timeToDetectFailure ?? "—"}
+          hint="How quickly a failed run becomes visible"
+          icon={Timer}
+        />
+        <StatCard
+          label="Manual overrides"
+          value={data.overrideUsage ? String(data.overrideUsage.count) : "—"}
+          hint={data.overrideUsage ? data.overrideUsage.period : "How often staff resolve by hand"}
+          icon={Wrench}
+        />
       </div>
-      <p className="text-sm text-muted-foreground">
-        No data yet &mdash; metrics will populate as connectors run and conflicts are surfaced.
-      </p>
     </div>
   );
 }
