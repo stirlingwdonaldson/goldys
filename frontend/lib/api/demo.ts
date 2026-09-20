@@ -110,6 +110,16 @@ export const demoApi: Api = {
     return connectorStatuses;
   },
 
+  async runConnector(source: string): Promise<ConnectorStatus> {
+    await delay(600);
+    const existing = connectorStatuses.find((c) => c.source === source);
+    if (!existing) throw new ApiError("VALIDATION_FAILED", `Unknown source: ${source}`);
+    existing.lastRunAt = new Date().toISOString();
+    existing.status = "success";
+    existing.failureCount = 0;
+    return existing;
+  },
+
   async saveOverride(input: SaveOverrideInput): Promise<{ ok: true; recordId: string; field: string }> {
     await delay(500);
     const record = records[input.recordId];

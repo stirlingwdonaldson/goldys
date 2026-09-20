@@ -35,18 +35,14 @@ services:
   backend:
     build:
       context: ./backend
-    # OIDC is optional: the file `.env.oidc` carries the provider credentials only
-    # once you have them (see .env.oidc.example). Without it the app runs with
-    # login disabled — the frontend just shows "Sign in".
-    env_file:
-      - path: .env.oidc
-        required: false
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-goldys}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-goldys}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}
-      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-https://platform.swd.sh/login/oauth2/code/goldys}
+      CTB_EMAIL: ${CTB_EMAIL:-}
+      CTB_PASSWORD: ${CTB_PASSWORD:-}
+      LIGHTSPEED_WEBHOOK_TOKEN: ${LIGHTSPEED_WEBHOOK_TOKEN:-}
     restart: unless-stopped
     depends_on:
       postgres:

@@ -6,10 +6,12 @@ import java.security.MessageDigest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -36,8 +38,12 @@ public class LightspeedIngestController {
   @PostMapping("/lightspeed")
   ResponseEntity<Void> lightspeed(
       @RequestBody byte[] body,
-      @RequestHeader(value = "X-Webhook-Token", required = false) String token) {
-    if (!tokenValid(token)) {
+      @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+      @RequestParam(value = "token", required = false) String queryToken) {
+    // Accept the token via header (preferred) or query param — Looker's webhook can't set custom
+    // headers, so the query param lets the secret ride in the webhook URL.
+    String provided = StringUtils.hasText(token) ? token : queryToken;
+    if (!tokenValid(provided)) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     ingestService.ingest(body);

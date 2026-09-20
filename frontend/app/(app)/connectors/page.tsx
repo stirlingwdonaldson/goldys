@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { isApiError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
@@ -25,7 +29,23 @@ const STATUS_CLASS: Record<ConnectorRunStatus, string> = {
 };
 
 export default function ConnectorsPage() {
+  const api = useApi();
   const { data, loading, error, reload } = useApiData((api) => api.listConnectorStatuses());
+  const [running, setRunning] = useState<string | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
+
+  async function run(source: string) {
+    setRunning(source);
+    setRunError(null);
+    try {
+      await api.runConnector(source);
+      await reload();
+    } catch (e) {
+      setRunError(isApiError(e) ? e.message : "Something went wrong running the connector.");
+    } finally {
+      setRunning(null);
+    }
+  }
 
   if (loading) return <LoadingState rows={4} />;
   if (error) {
@@ -56,6 +76,7 @@ export default function ConnectorsPage() {
           In-scope Phase 1 sources and their latest run.
         </p>
       </div>
+      {runError && <p className="text-sm text-destructive">{runError}</p>}
       <div className="rounded-lg border">
         {data.map((c, i) => (
           <div
@@ -69,7 +90,17 @@ export default function ConnectorsPage() {
                 {c.lastRunAt ? ` · last run ${new Date(c.lastRunAt).toLocaleString()}` : " · never run"}
               </p>
             </div>
-            <Badge className={STATUS_CLASS[c.status]}>{STATUS_LABEL[c.status]}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge className={STATUS_CLASS[c.status]}>{STATUS_LABEL[c.status]}</Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => run(c.source)}
+                disabled={running !== null}
+              >
+                {running === c.source ? "Running…" : "Run now"}
+              </Button>
+            </div>
           </div>
         ))}
       </div>
