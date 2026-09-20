@@ -8,8 +8,7 @@ import type {
   SaveOverrideInput,
 } from "./types";
 
-/** Real backend calls. These endpoints don't exist yet, so in live mode the screens
- *  show the existing honest empty/error states until the backend lands. */
+/** Real backend calls. The demo fixtures stay behind the `demo` flag; these hit the live endpoints. */
 export const liveApi: Api = {
   getDashboardSummary: () => fetchApi<DashboardSummary>("/api/dashboard/summary"),
   listReconciliationExceptions: () =>

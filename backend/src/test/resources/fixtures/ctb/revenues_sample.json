@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "revenueId": 1281,
+      "revenueDate": 639230904000000000,
+      "businessDepartmentName": "Beverage",
+      "kitchenRevenueTotal": 3716.4374,
+      "totalSales": 4087.478,
+      "GSTTotal": 371.0406,
+      "outletName": "Goldy's Tavern - DTP"
+    },
+    {
+      "revenueId": 1282,
+      "revenueDate": 639230904000000000,
+      "businessDepartmentName": "Food",
+      "kitchenRevenueTotal": 3699.4703,
+      "totalSales": 4068.4496,
+      "GSTTotal": 368.9793,
+      "outletName": "Goldy's - CTB"
+    }
+  ],
+  "totalCount": 2,
+  "message": { "IsSuccess": true, "Info": "" }
+}

@@ -7,6 +7,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 /**
  * Backend-owned session policy.
@@ -27,7 +28,17 @@ public class SecurityConfig {
       HttpSecurity http, ObjectProvider<ClientRegistrationRepository> registrations)
       throws Exception {
     http.authorizeHttpRequests(
-        auth -> auth.requestMatchers("/api/health").permitAll().anyRequest().authenticated());
+        auth ->
+            auth.requestMatchers("/api/health", "/api/ingest/lightspeed")
+                .permitAll()
+                .anyRequest()
+                .authenticated());
+    // The server-to-server webhook has no session, so it is exempt from CSRF; browser sessions keep
+    // CSRF via a cookie the frontend reads back into the X-XSRF-TOKEN header.
+    http.csrf(
+        csrf ->
+            csrf.ignoringRequestMatchers("/api/ingest/lightspeed")
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
     if (registrations.getIfAvailable() != null) {
       http.oauth2Login(Customizer.withDefaults());
     }

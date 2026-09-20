@@ -10,7 +10,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * <p>Package-private on purpose: other modules read ingestion state through services in this
  * package, not by holding JPA entities.
  */
-interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {}
+interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
+  List<IngestionRun> findAllByOrderByStartedAtDesc();
+}
 
 interface RawRecordRepository extends JpaRepository<RawRecord, UUID> {
   List<RawRecord> findByIngestionRunId(UUID ingestionRunId);
