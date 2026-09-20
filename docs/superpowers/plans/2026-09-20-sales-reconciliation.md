@@ -25,7 +25,7 @@
 
 1. The two sources' daily totals disagree (13 Sep: Lightspeed ~$6.7k higher) → surfaced as a day-level conflict with both values, never averaged or silently won. Pinned in Task 5.
 2. CTB `revenueDate` is a .NET ticks integer → converted to a real date, not misread. Pinned in Task 2.
-3. The Lightspeed CSV has quoted, multi-line `Notes` fields → the parser yields one row per transaction, not one per line. Pinned in Task 1.
+3. The Lightspeed webhook CSV is the Looker `attachment.data` string with a leading row-number column and `$`-formatted amounts → the parser strips the currency/row numbers and yields clean per-sale rows. Pinned in Task 1.
 4. An override is append-only and permission-gated; a denied user gets `NOT_PERMITTED`, never a partial write. Pinned in Task 6.
 5. Retried identical source facts do not create duplicate canonical versions (idempotency). Pinned in Task 4.
 
@@ -39,7 +39,7 @@ backend/src/main/java/com/goldys/platform/
   ingestion/webhook/         WebhookIngestService (persist pushed bytes -> raw log)
   api/                       LightspeedIngestController (POST /api/ingest/lightspeed)
   connectors/
-    lightspeed/              LightspeedSalesFeedParser
+    lightspeed/              LightspeedInsightsCsvParser
     ctb/                     CtbConnector, CtbRevenueParser, CtbClient
   canonical/                 (existing: BitemporalEntity, CanonicalSaleItem, ...)
     CanonicalDailySales.java
@@ -57,7 +57,7 @@ backend/src/main/java/com/goldys/platform/
 backend/src/main/resources/db/migration/
   V5__daily_sales_reconciliation.sql
 backend/src/test/java/com/goldys/platform/
-  connectors/lightspeed/     LightspeedSalesFeedParserTest (fixture CSV)
+  connectors/lightspeed/     LightspeedInsightsCsvParserTest (fixture CSV)
   connectors/ctb/            CtbRevenueParserTest (fixture JSON)
   canonical/                 CanonicalDailySalesIntegrationTest
   reconciliation/            DailySalesReconciliationTest
@@ -68,24 +68,40 @@ frontend/
 
 ---
 
-### Task 1: Lightspeed webhook receiver and Sales Feed parser
+### Task 1: Lightspeed webhook receiver and Insights CSV parser
 
 **Files:**
 - Modify: `backend/build.gradle` (add Apache Commons CSV)
-- Create: `backend/src/main/java/com/goldys/platform/connectors/lightspeed/LightspeedSalesFeedParser.java`
+- Create: `backend/src/main/java/com/goldys/platform/connectors/lightspeed/LightspeedInsightsCsvParser.java`
 - Create: `backend/src/main/java/com/goldys/platform/ingestion/webhook/WebhookIngestService.java`
 - Create: `backend/src/main/java/com/goldys/platform/api/LightspeedIngestController.java`
-- Create: `backend/src/test/java/com/goldys/platform/connectors/lightspeed/LightspeedSalesFeedParserTest.java`
+- Create: `backend/src/test/java/com/goldys/platform/connectors/lightspeed/LightspeedInsightsCsvParserTest.java`
 
 **Interfaces:**
 - Consumes: `RawPayloadService.persist(...)`, `IngestionRunService` (existing foundation services).
-- Produces: `POST /api/ingest/lightspeed` accepting the scheduled CSV (raw body or multipart — capture the exact shape from a test send), persisting bytes byte-faithfully (`FetchMethod.FILE_EXPORT`), then `LightspeedSalesFeedParser.parse(byte[] csv) -> List<LightspeedSale>` where `record LightspeedSale(String saleId, String saleNo, Instant saleDate, String siteName, String terminalName, String customerName, String operator, String notes, String linkedSaleId, BigDecimal netAmount, BigDecimal taxAmount, BigDecimal tip, BigDecimal total)`.
+- Produces: `POST /api/ingest/lightspeed` accepting Looker's webhook envelope, persisting the CSV bytes byte-faithfully (`FetchMethod.FILE_EXPORT`), then `LightspeedInsightsCsvParser.parse(byte[] csv) -> List<LightspeedInsightsSale>`.
+
+**Captured payload shape (from a live test send):** the webhook POSTs a JSON body —
+
+```json
+{
+  "type": "query",
+  "scheduled_plan": { "title": "integration-platform-daily-sales", "query": { "view": "revenue", "filters": { "revenue.sale_date": "1 days" } } },
+  "attachment": { "mimetype": "text/csv", "extension": "csv", "data": ",Reconciliation Date,Reconciliation End Date,..." }
+}
+```
+
+The CSV is a **raw string in `attachment.data`** (not base64). It has a leading empty
+row-number column and currency-formatted amounts (`$1.46`). Relevant columns:
+`Sale Opened Date`, `Sale Type`, `Sale Number`, `Total Tax`, `Total Inc Tax`,
+`Total Adjustment Inc Tax` (plus `Total Revenue`/`Total Cost` which are often empty).
+The daily total is `Σ Total Inc Tax` grouped by `Sale Opened Date`.
 
 > **One-time setup (outside the platform):** in Lightspeed Insights
-> (`https://insights.kounta.com/insights`), build a custom daily-sales report, then
-> **Save and schedule** → destination **Webhook** → the platform's `/api/ingest/lightspeed`
-> URL (reachable via the cloudflared tunnel). Configured once; no recurring scraper.
-> This is a manual/bot one-off, not a scheduled job in the platform.
+> (`https://insights.kounta.com/insights`), the saved Look
+> `integration-platform-daily-sales` is scheduled to **Webhook** → the platform's
+> `/api/ingest/lightspeed` URL (reachable via the cloudflared tunnel). Configured once;
+> no recurring scraper.
 
 - [ ] **Step 1: Add dependency to `backend/build.gradle`**
 
@@ -95,65 +111,69 @@ implementation 'org.apache.commons:commons-csv:1.11.0'
 
 - [ ] **Step 2: Write the failing parser test (fixture CSV)**
 
-Save the sanitized Sales Feed sample (the file the owner provided) as
-`backend/src/test/resources/fixtures/lightspeed/sales_feed_sample.csv`, trimmed to a
-few rows including one with an embedded newline in `Notes`. Then:
+Save the captured `attachment.data` as
+`backend/src/test/resources/fixtures/lightspeed/insights_sales_sample.csv` (a few rows).
+Then:
 
 ```java
-class LightspeedSalesFeedParserTest {
+class LightspeedInsightsCsvParserTest {
   @Test
-  void parsesRowsAndHandlesQuotedMultilineNotes() throws Exception {
+  void parsesRowsStrippingRowNumbersAndCurrency() throws Exception {
     byte[] csv = Files.readAllBytes(Path.of(
-        "src/test/resources/fixtures/lightspeed/sales_feed_sample.csv"));
-    List<LightspeedSale> sales = new LightspeedSalesFeedParser().parse(csv);
-    assertThat(sales).hasSize(3);          // 3 data rows, regardless of embedded newlines
-    assertThat(sales.get(0).saleNo()).isEqualTo("SP-249 0920090517");
-    assertThat(sales.get(0).netAmount()).isEqualByComparingTo("13.64");
-    assertThat(sales.get(0).total()).isEqualByComparingTo("15");
-    assertThat(sales.get(1).notes()).contains("me & u");   // the multi-line note
+        "src/test/resources/fixtures/lightspeed/insights_sales_sample.csv"));
+    List<LightspeedInsightsSale> sales = new LightspeedInsightsCsvParser().parse(csv);
+    assertThat(sales).hasSize(3);
+    assertThat(sales.get(0).saleDate()).isEqualTo(LocalDate.parse("2026-09-20"));
+    assertThat(sales.get(0).saleNumber()).isEqualTo("SP-56 0920042116");
+    assertThat(sales.get(0).totalIncTax()).isEqualByComparingTo("16.00"); // "$16.00" -> 16.00
+    assertThat(sales.get(2).totalIncTax()).isEqualByComparingTo("89.96");
   }
 }
 ```
 
-- [ ] **Step 3: Run RED** — `./gradlew test --tests '*LightspeedSalesFeedParserTest'` (fails: class absent).
+- [ ] **Step 3: Run RED** — `./gradlew test --tests '*LightspeedInsightsCsvParserTest'` (fails: class absent).
 
-- [ ] **Step 4: Implement the parser**
+- [ ] **Step 4: Implement the parser** (handle the leading empty header column, and a `money()` helper that strips `$`/`,` before `new BigDecimal`).
 
 ```java
-public class LightspeedSalesFeedParser {
+public class LightspeedInsightsCsvParser {
   private static final CSVFormat FMT = CSVFormat.DEFAULT.builder()
       .setHeader().setSkipHeaderRecord(true).get();
 
-  public List<LightspeedSale> parse(byte[] csv) {
+  public List<LightspeedInsightsSale> parse(byte[] csv) {
     try (var in = new InputStreamReader(new ByteArrayInputStream(csv), StandardCharsets.UTF_8)) {
-      List<LightspeedSale> out = new ArrayList<>();
+      List<LightspeedInsightsSale> out = new ArrayList<>();
       for (CSVRecord r : FMT.parse(in)) {
-        out.add(new LightspeedSale(
-            r.get("SaleID"), r.get("SaleNo"),
-            Instant.parse(r.get("SaleDate").replace(" ", "T") + "Z"),
-            r.get("SiteName"), r.get("TerminalName"), r.get("CustomerName"),
-            r.get("Operator"), r.get("Notes"), r.get("LinkedSaleID"),
-            new BigDecimal(r.get("Net Amount")), new BigDecimal(r.get("Tax Amount")),
-            new BigDecimal(r.get("Tip")), new BigDecimal(r.get("Total"))));
+        out.add(new LightspeedInsightsSale(
+            LocalDate.parse(r.get("Sale Opened Date")),
+            r.get("Sale Number"), r.get("Sale Type"),
+            money(r.get("Total Inc Tax")),
+            money(r.get("Total Tax")),
+            money(r.get("Total Adjustment Inc Tax"))));
       }
       return out;
     } catch (IOException e) { throw new UncheckedIOException(e); }
+  }
+
+  private static BigDecimal money(String s) {
+    if (s == null || s.isBlank()) return null;
+    return new BigDecimal(s.replace("$", "").replace(",", "").trim());
   }
 }
 ```
 
 - [ ] **Step 5: Implement the webhook receiver** — `LightspeedIngestController` +
-  `WebhookIngestService`: accept the POST body (raw CSV or multipart; handle both),
-  open/complete an `IngestionRun` (`FetchMethod.FILE_EXPORT`, `fetcherIdentity`
-  `lightspeed-insights`), persist the bytes via `RawPayloadService`, then parse into
-  canonical daily totals (delegating to Task 4's service).
+  `WebhookIngestService`: read the JSON body, extract `attachment.data` (the CSV
+  string), open/complete an `IngestionRun` (`FetchMethod.FILE_EXPORT`,
+  `fetcherIdentity` `lightspeed-insights`), persist the CSV bytes via `RawPayloadService`,
+  then parse and aggregate to canonical daily totals (delegating to Task 4's service).
 
 - [ ] **Step 6: Run GREEN + commit**
 
 ```bash
-cd backend && ./gradlew test --tests '*LightspeedSalesFeedParserTest' spotlessCheck
-git add backend/build.gradle backend/src/main/java/com/goldys/platform/connectors/lightspeed backend/src/test/java/com/goldys/platform/connectors/lightspeed backend/src/test/resources/fixtures/lightspeed
-git commit -m "feat: add lightspeed sales feed connector and parser"
+cd backend && ./gradlew test --tests '*LightspeedInsightsCsvParserTest' spotlessCheck
+git add backend/build.gradle backend/src/main/java/com/goldys/platform/connectors/lightspeed backend/src/main/java/com/goldys/platform/ingestion/webhook backend/src/main/java/com/goldys/platform/api/LightspeedIngestController.java backend/src/test/java/com/goldys/platform/connectors/lightspeed backend/src/test/resources/fixtures/lightspeed
+git commit -m "feat: add lightspeed insights webhook receiver and csv parser"
 ```
 
 ---
