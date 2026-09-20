@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ScreenErrorBoundary } from "@/components/states/error-boundary";
+import { DemoBanner } from "@/components/demo-banner";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
 
@@ -14,6 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
+        <DemoBanner />
         <AppHeader />
         <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
           {/* Keying the boundary on the path remounts it per route, so a render

@@ -1,37 +1,75 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useApiData } from "@/lib/use-api-data";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/states/empty-state";
+import { ErrorState } from "@/components/states/error-state";
+import { LoadingState } from "@/components/states/loading-state";
+import { PermissionDenied } from "@/components/states/permission-denied";
+import type { ConnectorRunStatus } from "@/lib/api";
 
-export const metadata: Metadata = { title: "Connectors" };
+const STATUS_LABEL: Record<ConnectorRunStatus, string> = {
+  success: "Success",
+  partial: "Partial",
+  failed: "Failed",
+  no_new_data: "No new data",
+  never_run: "Never run",
+};
 
-const sources = [
-  { name: "Lightspeed", kind: "POS", path: "Back-office scrape" },
-  { name: "Cooking the Books", kind: "Accounting", path: "Invoice export (CSV/XLSX)" },
-  { name: "OpenTable", kind: "Reservations", path: "GuestCenter report pull" },
-  { name: "Deputy", kind: "Rostering", path: "OAuth REST API" },
-];
+const STATUS_CLASS: Record<ConnectorRunStatus, string> = {
+  success: "border-transparent bg-status-success text-status-success-foreground",
+  partial: "border-transparent bg-status-warning text-status-warning-foreground",
+  failed: "border-transparent bg-destructive text-destructive-foreground",
+  no_new_data: "border-transparent bg-muted text-muted-foreground",
+  never_run: "border-transparent bg-muted text-muted-foreground",
+};
 
 export default function ConnectorsPage() {
+  const { data, loading, error, reload } = useApiData((api) => api.listConnectorStatuses());
+
+  if (loading) return <LoadingState rows={4} />;
+  if (error) {
+    if (error.code === "NOT_PERMITTED") return <PermissionDenied subject="connector status" />;
+    return (
+      <ErrorState
+        title="Couldn't load connector status"
+        message={error.message}
+        correlationId={error.correlationId}
+        onRetry={reload}
+      />
+    );
+  }
+  if (!data || data.length === 0) {
+    return (
+      <EmptyState
+        title="No connector data"
+        description="Run status will appear here once ingestion starts."
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-xl font-semibold">Connectors</h1>
         <p className="text-sm text-muted-foreground">
-          In-scope Phase 1 sources. Run status appears here once ingestion starts.
+          In-scope Phase 1 sources and their latest run.
         </p>
       </div>
       <div className="rounded-lg border">
-        {sources.map((source, i) => (
+        {data.map((c, i) => (
           <div
-            key={source.name}
+            key={c.source}
             className={`flex items-center justify-between gap-4 p-4 ${i > 0 ? "border-t" : ""}`}
           >
             <div>
-              <p className="text-sm font-medium">{source.name}</p>
+              <p className="text-sm font-medium">{c.source}</p>
               <p className="text-xs text-muted-foreground">
-                {source.kind} &middot; {source.path}
+                {c.connectorName}
+                {c.lastRunAt ? ` · last run ${new Date(c.lastRunAt).toLocaleString()}` : " · never run"}
               </p>
             </div>
-            <Badge variant="secondary">No ingestion runs yet</Badge>
+            <Badge className={STATUS_CLASS[c.status]}>{STATUS_LABEL[c.status]}</Badge>
           </div>
         ))}
       </div>
