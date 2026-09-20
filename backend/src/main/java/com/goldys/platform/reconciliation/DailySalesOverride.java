@@ -28,11 +28,8 @@ class DailySalesOverride {
   @Column(name = "reason")
   private String reason;
 
-  @Column(name = "actor_oidc_issuer", nullable = false, updatable = false)
-  private String actorOidcIssuer;
-
-  @Column(name = "actor_oidc_subject", nullable = false, updatable = false)
-  private String actorOidcSubject;
+  @Column(name = "actor_email", nullable = false, updatable = false)
+  private String actorEmail;
 
   @Column(name = "recorded_at", nullable = false, updatable = false)
   private Instant recordedAt;
@@ -46,15 +43,13 @@ class DailySalesOverride {
       LocalDate tradingDate,
       String authoritativeSource,
       String reason,
-      String actorOidcIssuer,
-      String actorOidcSubject,
+      String actorEmail,
       Instant recordedAt) {
     this.id = UUID.randomUUID();
     this.tradingDate = Objects.requireNonNull(tradingDate, "tradingDate");
     this.authoritativeSource = Objects.requireNonNull(authoritativeSource, "authoritativeSource");
     this.reason = reason;
-    this.actorOidcIssuer = Objects.requireNonNull(actorOidcIssuer, "actorOidcIssuer");
-    this.actorOidcSubject = Objects.requireNonNull(actorOidcSubject, "actorOidcSubject");
+    this.actorEmail = Objects.requireNonNull(actorEmail, "actorEmail");
     this.recordedAt = Objects.requireNonNull(recordedAt, "recordedAt");
   }
 
@@ -62,11 +57,9 @@ class DailySalesOverride {
       LocalDate tradingDate,
       String authoritativeSource,
       String reason,
-      String actorOidcIssuer,
-      String actorOidcSubject,
+      String actorEmail,
       Instant recordedAt) {
-    return new DailySalesOverride(
-        tradingDate, authoritativeSource, reason, actorOidcIssuer, actorOidcSubject, recordedAt);
+    return new DailySalesOverride(tradingDate, authoritativeSource, reason, actorEmail, recordedAt);
   }
 
   void supersede(Instant at) {
@@ -92,12 +85,8 @@ class DailySalesOverride {
     return reason;
   }
 
-  String actorOidcIssuer() {
-    return actorOidcIssuer;
-  }
-
-  String actorOidcSubject() {
-    return actorOidcSubject;
+  String actorEmail() {
+    return actorEmail;
   }
 
   Instant recordedAt() {

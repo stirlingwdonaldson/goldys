@@ -22,18 +22,6 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-  # OIDC client registration is deployment configuration, not a source-controlled
-  # value. The venue's provider details are a gated input (see the Phase 1 spec,
-  # "Required Inputs and Decision Gates") and are supplied at deploy time as
-  # environment variables:
-  #
-  #   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOLDYS_CLIENT_ID
-  #   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOLDYS_CLIENT_SECRET
-  #   SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_GOLDYS_ISSUER_URI
-  #   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOLDYS_SCOPE=openid,profile,email
-  #
-  # An empty placeholder would fail Spring Boot's provider validation at startup,
-  # so the block is deliberately omitted until those values exist.
 
 server:
   port: 8080

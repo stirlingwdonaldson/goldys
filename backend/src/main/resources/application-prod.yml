@@ -6,8 +6,7 @@
 # http://backend:8080). The edge must send X-Forwarded-Proto: https (Cloudflare
 # does by default); the backend is internal-only, so trusting those headers is safe.
 #
-# The session cookie is Secure because the browser only ever talks HTTPS. The
-# OIDC redirect URI is set explicitly rather than derived, defaulting to prod.
+# The session cookie is Secure because the browser only ever talks HTTPS.
 
 server:
   forward-headers-strategy: framework
@@ -16,14 +15,6 @@ server:
       cookie:
         secure: true
         same-site: lax
-
-spring:
-  security:
-    oauth2:
-      client:
-        registration:
-          goldys:
-            redirect-uri: ${OIDC_REDIRECT_URI:https://platform.swd.sh/login/oauth2/code/goldys}
 
 logging:
   level:
