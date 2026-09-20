@@ -46,7 +46,8 @@ public class SecurityConfig {
         csrf ->
             csrf.ignoringRequestMatchers(
                     "/api/ingest/lightspeed", "/api/auth/signup", "/api/auth/login")
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
 
     http.formLogin(
         form ->
