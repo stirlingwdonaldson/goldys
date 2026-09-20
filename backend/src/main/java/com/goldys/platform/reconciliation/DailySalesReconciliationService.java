@@ -41,6 +41,10 @@ public class DailySalesReconciliationService {
 
     List<DailySalesConflict> out = new ArrayList<>();
     for (Map.Entry<LocalDate, List<SourceTotal>> entry : byDate.entrySet()) {
+      // A date with an override is resolved and drops out of the open-exceptions list.
+      if (overrides.findCurrent(entry.getKey()).isPresent()) {
+        continue;
+      }
       String status = classify(entry.getValue());
       if (!"agreed".equals(status)) {
         out.add(new DailySalesConflict(entry.getKey(), entry.getValue(), status));
