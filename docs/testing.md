@@ -36,6 +36,15 @@ bun run lint
 bun run build
 ```
 
+### Data screens (demo mode)
+
+The Dashboard, Reconciliation, and Connectors screens are driven by a demo-mode
+flag (`NEXT_PUBLIC_DEMO_MODE`, default on) with a Settings toggle and a "Demo data"
+banner. They call a typed `Api` contract with two implementations: `demoApi`
+(fixtures) and `liveApi` (real endpoints, not yet implemented). Verified with
+`bun run typecheck`, `bun run lint`, and `bun run build`; demo fixtures are not
+production data.
+
 ### Application shell (verified)
 
 The Phase 1 shell and non-intrusive error states were verified as follows:
