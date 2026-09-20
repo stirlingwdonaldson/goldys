@@ -51,8 +51,9 @@ Each line above is pinned by a test in the task that owns the code (noted in tha
 - [ ] **Step 1: Write the V7 migration**
 
 ```sql
--- Replace the OIDC-keyed staff_profile with an email-keyed account that carries the
--- password hash and the (department, seniority) pair permission decisions use.
+-- Email-keyed account carrying the password hash and the (department, seniority) pair
+-- permission decisions use. The OIDC-keyed staff_profile is dropped in V8, once the code
+-- that reads it has been re-keyed (the swap is atomic).
 CREATE TABLE user_account (
     id uuid PRIMARY KEY,
     email varchar(255) NOT NULL,
@@ -68,8 +69,6 @@ CREATE TABLE user_account (
 
 CREATE INDEX idx_user_account_role
     ON user_account (department, seniority) WHERE active = true;
-
-DROP TABLE staff_profile;
 ```
 
 - [ ] **Step 2: Write `UserAccount` entity**
@@ -162,24 +161,7 @@ interface UserAccountRepository extends JpaRepository<UserAccount, UUID> {
 }
 ```
 
-- [ ] **Step 4: Write top-level `StaffProfileSummary` (extracted from `StaffProfileService`)**
-
-```java
-package com.goldys.platform.auth;
-
-/** The fields an API response may expose about the current staff identity. */
-public record StaffProfileSummary(String displayName, String department, String seniority) {}
-```
-
-- [ ] **Step 5: Delete `StaffProfile`, `StaffProfileRepository`, `StaffProfileService`**
-
-```bash
-rm backend/src/main/java/com/goldys/platform/auth/StaffProfile.java
-rm backend/src/main/java/com/goldys/platform/auth/StaffProfileRepository.java
-rm backend/src/main/java/com/goldys/platform/auth/StaffProfileService.java
-```
-
-- [ ] **Step 6: Write the repository test**
+- [ ] **Step 4: Write the repository test**
 
 ```java
 package com.goldys.platform.auth;
@@ -220,23 +202,19 @@ class UserAccountRepositoryTest {
 }
 ```
 
-- [ ] **Step 7: Compile and run the unit tests that do not need Docker**
+- [ ] **Step 5: Compile and run the unit tests that do not need Docker**
 
 Run: `cd backend && ./gradlew compileJava spotlessApply spotlessCheck`
 Expected: BUILD SUCCESSFUL (the `UserAccountRepositoryTest` is Testcontainers-gated and does not run here).
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration/V7__user_accounts.sql \
         backend/src/main/java/com/goldys/platform/auth/UserAccount.java \
         backend/src/main/java/com/goldys/platform/auth/UserAccountRepository.java \
-        backend/src/main/java/com/goldys/platform/auth/StaffProfileSummary.java \
-        backend/src/main/java/com/goldys/platform/auth/StaffProfile.java \
-        backend/src/main/java/com/goldys/platform/auth/StaffProfileRepository.java \
-        backend/src/main/java/com/goldys/platform/auth/StaffProfileService.java \
         backend/src/test/java/com/goldys/platform/auth/UserAccountRepositoryTest.java
-git commit -m "feat: replace staff_profile with email-keyed user_account"
+git commit -m "feat: add email-keyed user_account"
 ```
 
 ---
@@ -756,18 +734,37 @@ public class CurrentUserController {
 
 Remove the now-unused imports of `OidcUser` from all four controllers.
 
-- [ ] **Step 6: Write the V8 override-actor migration**
+- [ ] **Step 6: Write the V8 swap migration** (drop `staff_profile` + re-key the override actor)
 
 ```sql
+-- The OIDC-keyed staff_profile is superseded by user_account (V7). Dropping it here keeps the
+-- swap atomic: the code that read it is re-keyed in this same task.
+DROP TABLE staff_profile;
+
 -- The override actor identity was OIDC issuer+subject; with email+password auth it is the email.
 ALTER TABLE daily_sales_override DROP COLUMN actor_oidc_issuer;
 ALTER TABLE daily_sales_override DROP COLUMN actor_oidc_subject;
 ALTER TABLE daily_sales_override ADD COLUMN actor_email varchar(255) NOT NULL;
 ```
 
-- [ ] **Step 7: Re-key the override entity and service**
+- [ ] **Step 7: Re-key the override entity and service** (and delete the old staff-profile files, create the top-level summary)
 
 In `DailySalesOverride`: replace the `actorOidcIssuer` + `actorOidcSubject` fields, constructor args, accessors, and `create(...)` signature with a single `actorEmail` (column `actor_email`). In `DailySalesOverrideService.save`, change the signature to `save(UserRole actor, String actorEmail, LocalDate date, String source, String reason)` and pass `actorEmail` through to `DailySalesOverride.create(...)`. In the "unknown source" check, the email is no longer involved (it is only recorded).
+
+Then delete the three OIDC-keyed files and create the top-level summary (which the re-keyed `AuthController` and `CurrentUserController` return):
+
+```bash
+rm backend/src/main/java/com/goldys/platform/auth/StaffProfile.java
+rm backend/src/main/java/com/goldys/platform/auth/StaffProfileRepository.java
+rm backend/src/main/java/com/goldys/platform/auth/StaffProfileService.java
+```
+
+```java
+package com.goldys.platform.auth;
+
+/** The fields an API response may expose about the current staff identity. */
+public record StaffProfileSummary(String displayName, String department, String seniority) {}
+```
 
 - [ ] **Step 8: Remove the OIDC dependency and config**
 
