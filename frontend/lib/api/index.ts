@@ -13,4 +13,19 @@ export async function getHealth(): Promise<HealthResponse> {
 
 export { ApiError, isApiError } from "./errors";
 export type { ApiErrorCode } from "./errors";
-export type { CurrentUser, HealthResponse, ApiErrorResponse } from "./types";
+export type {
+  Api,
+  ApiErrorResponse,
+  ConnectorRunStatus,
+  ConnectorStatus,
+  CurrentUser,
+  DashboardSummary,
+  ExceptionStatus,
+  HealthResponse,
+  OverrideResult,
+  ReconciliationException,
+  ReconciliationField,
+  ReconciliationRecord,
+  SaveOverrideInput,
+  SourceValue,
+} from "./types";
