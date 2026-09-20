@@ -43,3 +43,15 @@ jobs:
       - name: Type check, lint, and build
         working-directory: frontend
         run: bun run typecheck && bun run lint && bun run build
+
+  docker:
+    name: Docker images (build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t goldys-backend:ci ./backend
+
+      - name: Build frontend image
+        run: docker build -t goldys-frontend:ci ./frontend
