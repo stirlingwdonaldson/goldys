@@ -36,6 +36,31 @@ bun run lint
 bun run build
 ```
 
+### Application shell (verified)
+
+The Phase 1 shell and non-intrusive error states were verified as follows:
+
+- `bun run typecheck`, `bun run lint`, and `bun run build` all pass; the build
+  emits routes for `/`, `/dashboard`, `/reconciliation`, `/connectors`, and
+  `/settings`.
+- The root route redirects (`307`) to `/dashboard`, and all four screens render
+  their honest empty states (no fabricated operational data).
+- The typed API client's error paths were exercised against the dev server with
+  the backend stopped: a non-JSON error body resolves to `UNPARSEABLE_RESPONSE`,
+  a refused connection to `NETWORK_ERROR`, and a missing
+  `correlationId`/`fields` normalizes without a crash.
+
+The Dashboard, Reconciliation, Connectors, and Settings screens are honest
+empty states until the later connector/reconciliation vertical slices land; they
+are not yet backed by operational data.
+
+No real browser rendered the UI in this environment (no Chrome binary is
+installed), so the interactive surfaces — the sidebar active-state highlight,
+the loading skeleton, the toast, the permission-denied and error cards — are
+built and type-checked but not exercised by an automated browser pass. The typed
+client's error branches were verified at runtime against the dev server.
+
+
 ## Local database
 
 ```bash
