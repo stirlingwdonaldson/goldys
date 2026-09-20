@@ -29,9 +29,12 @@ ENV HOSTNAME=0.0.0.0
 
 # Standalone server + static assets. `public/` is empty today (see .gitkeep) but
 # the copy is kept so real public assets work without a Dockerfile change.
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
-COPY --from=build /app/public ./public
+COPY --from=build --chown=node:node /app/.next/standalone ./
+COPY --from=build --chown=node:node /app/.next/static ./.next/static
+COPY --from=build --chown=node:node /app/public ./public
+
+# Run as the unprivileged `node` user (uid 1000) that ships with node:22-alpine.
+USER node
 
 EXPOSE 3000
 CMD ["node", "server.js"]

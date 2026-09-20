@@ -4,6 +4,12 @@
 #
 #   cp .env.example .env.prod    # fill in real values
 #   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+#
+# A distinct project name keeps the prod containers and Postgres volume separate
+# from the dev stack (docker-compose.yml), so a dev `docker compose down -v`
+# never touches production data.
+
+name: goldys-prod
 
 services:
   postgres:
@@ -45,7 +51,10 @@ services:
     environment:
       PORT: "3000"
     ports:
-      - "${PORT:-3000}:3000"
+      # Bind to 127.0.0.1 when the edge reaches this VM over a tunnel
+      # (cloudflared etc.); use 0.0.0.0 only with a host firewall restricting the
+      # port to the edge's IP ranges. See docs/deployment.md.
+      - "${BIND_ADDRESS:-0.0.0.0}:${PORT:-3000}:3000"
     restart: unless-stopped
     depends_on:
       - backend

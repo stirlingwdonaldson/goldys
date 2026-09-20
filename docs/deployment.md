@@ -44,6 +44,18 @@ This builds and runs three containers — `frontend` (published on `${PORT:-3000
    `PORT` in `.env.prod` (default `3000`).
 3. Confirm `https://platform.swd.sh/api/health` returns `{"status":"UP"}`.
 
+The backend relies on forwarded headers to build correct absolute URLs (login
+redirects). Ensure your edge sends `X-Forwarded-Proto: https` (Cloudflare does by
+default) and preserves `X-Forwarded-Host`.
+
+Restrict the origin port: if the edge reaches this VM over a tunnel (e.g.
+`cloudflared`), set `BIND_ADDRESS=127.0.0.1` in `.env.prod`. Otherwise leave it on
+`0.0.0.0` but firewall the `${PORT}` to the edge's IP ranges only — an open
+plain-HTTP origin bypasses TLS and access controls.
+
+After going live, smoke-test a full login and confirm the browser lands back on
+`https://platform.swd.sh/` (never `http://backend:8080/...`).
+
 ## OIDC
 
 Register this exact redirect URI with your identity provider:
@@ -66,14 +78,21 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d backend
 
 ## Database
 
-Postgres data lives in the named volume `goldys_pg_data`. The schema is owned by
-Flyway migrations and applied automatically on backend startup. To reset (dev):
+Postgres data lives in a named Docker volume (`goldys-prod_goldys_pg_data` for the
+production stack). The schema is owned by Flyway migrations and applied
+automatically on backend startup.
+
+The dev and prod stacks use different Compose project names (`goldys` vs
+`goldys-prod`), so their containers and volumes are separate. To reset the dev
+database:
 
 ```bash
-docker compose down -v
+docker compose down -v                      # dev only — safe
 ```
 
-Do NOT run `down -v` in production — it deletes the database.
+Never run the equivalent against the prod stack (`docker compose --env-file
+.env.prod -f docker-compose.prod.yml down -v`) — it deletes the production
+database.
 
 ## Upgrading
 
@@ -97,9 +116,12 @@ overwritten, rolling back code is safe; rolling back a Flyway migration is not
 
 ## Logs & health
 
+Every prod compose subcommand needs `--env-file .env.prod` (the `:?` guards apply
+to `config`, `ps`, `logs`, etc., not just `up`):
+
 ```bash
-docker compose -f docker-compose.prod.yml ps
-docker compose -f docker-compose.prod.yml logs -f backend
+docker compose --env-file .env.prod -f docker-compose.prod.yml ps
+docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
 curl -s https://platform.swd.sh/api/health
 ```
 
