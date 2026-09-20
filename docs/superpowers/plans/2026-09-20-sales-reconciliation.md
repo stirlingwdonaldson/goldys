@@ -4,9 +4,9 @@
 
 **Goal:** Pull daily sales from Lightspeed and CTB into the byte-faithful raw log, canonicalize them to per-source daily totals, reconcile them keyed by trading date, and expose the first real conflicts (e.g. the 13 Sep gap) through the reconciliation screen with a permission-gated manual override.
 
-**Architecture:** Two `SourceConnector` adapters (Lightspeed via Playwright Java scrape, CTB via authenticated HTTP) stream source bytes through the existing ingestion ledger. A new bitemporal `CanonicalDailySales` entity stores one row per (trading date, source). A reconciliation service compares the per-date source totals, derives resolved views, and records append-only overrides. REST endpoints light up the already-built frontend reconciliation screen via `liveApi`.
+**Architecture:** Lightspeed's scheduled CSV is received by a **webhook endpoint** (push, one-time setup in Lightspeed Insights), and CTB is pulled by a `SourceConnector` adapter over authenticated HTTP — both stream source bytes through the existing ingestion ledger. A new bitemporal `CanonicalDailySales` entity stores one row per (trading date, source). A reconciliation service compares the per-date source totals, derives resolved views, and records append-only overrides. REST endpoints light up the already-built frontend reconciliation screen via `liveApi`.
 
-**Tech Stack:** Java 25, Spring Boot 3.5, Gradle 9.5.0, PostgreSQL 16, Flyway, JUnit 5, Testcontainers, Playwright Java (new), Apache Commons CSV (new).
+**Tech Stack:** Java 25, Spring Boot 3.5, Gradle 9.5.0, PostgreSQL 16, Flyway, JUnit 5, Testcontainers, Apache Commons CSV (new).
 
 **Spec:** `docs/superpowers/specs/2026-09-20-sales-reconciliation-design.md`
 **Discovery:** `docs/connectors/source-access.md`
@@ -19,7 +19,7 @@
 - Route override actions through the sole `PermissionService`; denied access is explicit, never silently filtered.
 - Never guess matching tolerances or permission-matrix rows. This slice only does date-keyed matching (deterministic); line-item matching is explicitly out of scope.
 - Never commit credentials, tokens, or unsanitized source data. Credentials are env vars (`LIGHTSPEED_*`, `CTB_*`).
-- Integration tests use Testcontainers/PostgreSQL 16, never H2. Scrapes/HTTP pulls are NOT exercised in tests (fixtures only).
+- Integration tests use Testcontainers/PostgreSQL 16, never H2. Webhook pushes and HTTP pulls are NOT exercised in tests (fixtures only).
 
 ## Review Focus
 
@@ -36,8 +36,10 @@
 ```text
 backend/src/main/java/com/goldys/platform/
   ingestion/port/            (existing: SourceConnector, IngestionSink, FetchedPayload)
+  ingestion/webhook/         WebhookIngestService (persist pushed bytes -> raw log)
+  api/                       LightspeedIngestController (POST /api/ingest/lightspeed)
   connectors/
-    lightspeed/              LightspeedConnector, LightspeedSalesFeedParser
+    lightspeed/              LightspeedSalesFeedParser
     ctb/                     CtbConnector, CtbRevenueParser, CtbClient
   canonical/                 (existing: BitemporalEntity, CanonicalSaleItem, ...)
     CanonicalDailySales.java
@@ -66,26 +68,30 @@ frontend/
 
 ---
 
-### Task 1: Lightspeed connector (scrape) and Sales Feed parser
+### Task 1: Lightspeed webhook receiver and Sales Feed parser
 
 **Files:**
-- Modify: `backend/build.gradle` (add Playwright Java + Apache Commons CSV)
-- Create: `backend/src/main/java/com/goldys/platform/connectors/lightspeed/LightspeedConnector.java`
+- Modify: `backend/build.gradle` (add Apache Commons CSV)
 - Create: `backend/src/main/java/com/goldys/platform/connectors/lightspeed/LightspeedSalesFeedParser.java`
+- Create: `backend/src/main/java/com/goldys/platform/ingestion/webhook/WebhookIngestService.java`
+- Create: `backend/src/main/java/com/goldys/platform/api/LightspeedIngestController.java`
 - Create: `backend/src/test/java/com/goldys/platform/connectors/lightspeed/LightspeedSalesFeedParserTest.java`
 
 **Interfaces:**
-- Consumes: `SourceConnector` (`fetch(String watermark, IngestionSink sink)`), `IngestionSink.accept(FetchedPayload)`.
-- Produces: `LightspeedSalesFeedParser.parse(byte[] csv) -> List<LightspeedSale>` where `record LightspeedSale(String saleId, String saleNo, Instant saleDate, String siteName, String terminalName, String customerName, String operator, String notes, String linkedSaleId, BigDecimal netAmount, BigDecimal taxAmount, BigDecimal tip, BigDecimal total)`.
+- Consumes: `RawPayloadService.persist(...)`, `IngestionRunService` (existing foundation services).
+- Produces: `POST /api/ingest/lightspeed` accepting the scheduled CSV (raw body or multipart — capture the exact shape from a test send), persisting bytes byte-faithfully (`FetchMethod.FILE_EXPORT`), then `LightspeedSalesFeedParser.parse(byte[] csv) -> List<LightspeedSale>` where `record LightspeedSale(String saleId, String saleNo, Instant saleDate, String siteName, String terminalName, String customerName, String operator, String notes, String linkedSaleId, BigDecimal netAmount, BigDecimal taxAmount, BigDecimal tip, BigDecimal total)`.
 
-- [ ] **Step 1: Add dependencies to `backend/build.gradle`**
+> **One-time setup (outside the platform):** in Lightspeed Insights
+> (`https://insights.kounta.com/insights`), build a custom daily-sales report, then
+> **Save and schedule** → destination **Webhook** → the platform's `/api/ingest/lightspeed`
+> URL (reachable via the cloudflared tunnel). Configured once; no recurring scraper.
+> This is a manual/bot one-off, not a scheduled job in the platform.
+
+- [ ] **Step 1: Add dependency to `backend/build.gradle`**
 
 ```groovy
-implementation 'com.microsoft.playwright:playwright:1.49.0'
 implementation 'org.apache.commons:commons-csv:1.11.0'
 ```
-
-(Playwright Java drives a Chromium; note this in the PR body — it is a new production dependency and the runtime image will need a Chromium binary or `playwright install`.)
 
 - [ ] **Step 2: Write the failing parser test (fixture CSV)**
 
@@ -136,7 +142,11 @@ public class LightspeedSalesFeedParser {
 }
 ```
 
-- [ ] **Step 5: Implement the connector** (login → `/sale` → click `#btnReportExport` → stream the downloaded CSV bytes to the sink as `FetchMethod.SCRAPE`, `contentType: text/csv`, `fetcherIdentity` from config).
+- [ ] **Step 5: Implement the webhook receiver** — `LightspeedIngestController` +
+  `WebhookIngestService`: accept the POST body (raw CSV or multipart; handle both),
+  open/complete an `IngestionRun` (`FetchMethod.FILE_EXPORT`, `fetcherIdentity`
+  `lightspeed-insights`), persist the bytes via `RawPayloadService`, then parse into
+  canonical daily totals (delegating to Task 4's service).
 
 - [ ] **Step 6: Run GREEN + commit**
 
@@ -467,7 +477,7 @@ cd frontend && bun run typecheck && bun run lint && bun run test && bun run buil
 
 ## Checkpoint: Slice 1 Complete
 
-- [ ] Both connectors stream byte-faithful source data through the existing port (fixture-tested parsers).
+- [ ] The Lightspeed webhook receiver and the CTB connector both persist byte-faithful source data (fixture-tested parsers).
 - [ ] `CanonicalDailySales` is idempotent and bitemporal; V5 migrates on an empty DB.
 - [ ] Date-keyed conflict detection surfaces the 13 Sep gap; overrides are append-only + permission-gated.
 - [ ] REST endpoints return the contract the frontend already expects; `liveApi` points at them.
@@ -475,7 +485,6 @@ cd frontend && bun run typecheck && bun run lint && bun run test && bun run buil
 
 ## Follow-On (not in this plan)
 
-- CTB `Sale` per-transaction `searchType` and Lightspeed "Sales By" line items → the
-  line-item matching slice (gated on paired samples + tolerance design).
+- CTB `Sale` per-transaction `searchType` and Lightspeed line-item data (a second scheduled Insights report, or the REST API when unlocked) → the line-item matching slice (gated on paired samples + tolerance design).
 - Outlet mapping (Lightspeed "Goldy's Tavern" ↔ CTB's two outlets).
 - Scheduled runs (cron) for both connectors, and the connector-status dashboard wired to run history.
