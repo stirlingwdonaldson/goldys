@@ -36,6 +36,29 @@ This builds and runs three containers — `frontend` (published on `${PORT:-3000
 `backend`, and `postgres`. Only `frontend` is reachable from the host; it proxies
 `/api` and `/oauth2` to `backend` over the internal network.
 
+## Staging / second instance (a different port)
+
+To run an isolated second instance alongside production (e.g. to preview a
+feature branch), check out the branch and start it with a distinct project name
+and port. The project name is what keeps its containers and database volume
+separate from production:
+
+```bash
+git checkout <branch>                      # e.g. feature/frontend-data-screens
+COMPOSE_PROJECT_NAME=goldys-dev PORT=3001 \
+  docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+```
+
+This runs a full copy on `http://<VM-IP>:3001` with its own database
+(`goldys-dev_goldys_pg_data`), leaving `platform.swd.sh` (port 3000) untouched.
+Point a separate tunnel/domain (or just the port) at it to preview. To stop it
+without touching production:
+
+```bash
+COMPOSE_PROJECT_NAME=goldys-dev \
+  docker compose --env-file .env.prod -f docker-compose.prod.yml down
+```
+
 ## Pointing platform.swd.sh at it
 
 1. In your DNS/edge (Cloudflare or equivalent), create an A/AAAA record for

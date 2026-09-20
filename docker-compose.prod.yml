@@ -8,8 +8,13 @@
 # A distinct project name keeps the prod containers and Postgres volume separate
 # from the dev stack (docker-compose.yml), so a dev `docker compose down -v`
 # never touches production data.
+#
+# Override with COMPOSE_PROJECT_NAME to run a second, isolated instance (e.g. a
+# staging/dev deployment on a different port and its own database volume):
+#   COMPOSE_PROJECT_NAME=goldys-dev PORT=3001 docker compose --env-file .env.prod \
+#     -f docker-compose.prod.yml up -d --build
 
-name: goldys-prod
+name: ${COMPOSE_PROJECT_NAME:-goldys-prod}
 
 services:
   postgres:
