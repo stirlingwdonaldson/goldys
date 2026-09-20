@@ -56,25 +56,27 @@ plain-HTTP origin bypasses TLS and access controls.
 After going live, smoke-test a full login and confirm the browser lands back on
 `https://platform.swd.sh/` (never `http://backend:8080/...`).
 
-## OIDC
+## OIDC (optional)
 
-Register this exact redirect URI with your identity provider:
+Login is optional. Without OIDC the app runs and the UI shows "Sign in" — you can
+deploy and view the site first, then wire up login later.
 
-```
-https://platform.swd.sh/login/oauth2/code/goldys
-```
+To enable login:
 
-Then set in `.env.prod`:
+1. Register this exact redirect URI with your identity provider:
 
-- `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`
-- `OIDC_ISSUER_URI`
-- `OIDC_REDIRECT_URI` (only if it differs from the default above)
+   ```
+   https://platform.swd.sh/login/oauth2/code/goldys
+   ```
 
-Restart the backend after changing these:
+2. Copy `.env.oidc.example` to `.env.oidc` and fill in the four values
+   (`CLIENT_ID`, `CLIENT_SECRET`, `SCOPE`, `ISSUER_URI`).
 
-```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d backend
-```
+3. Restart the backend:
+
+   ```bash
+   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d backend
+   ```
 
 ## Database
 

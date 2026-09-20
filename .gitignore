@@ -12,7 +12,8 @@ Claude outputs/
 # non-diffable, platform-specific artifact.
 .opencode/skills/impeccable/scripts/bin/
 
-# Local environment files (secrets). .env.example is the committed template.
+# Local environment files (secrets). The .example files are the committed templates.
 .env
 .env.*
 !.env.example
+!.env.oidc.example
