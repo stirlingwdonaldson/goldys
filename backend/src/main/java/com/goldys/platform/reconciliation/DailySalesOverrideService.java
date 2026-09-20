@@ -45,4 +45,9 @@ public class DailySalesOverrideService {
     return repository.save(
         DailySalesOverride.create(date, source, reason, oidcIssuer, oidcSubject, now));
   }
+
+  /** The current authoritative source for a date, if any override is active. */
+  public Optional<String> currentAuthoritativeSource(LocalDate date) {
+    return repository.findCurrent(date).map(DailySalesOverride::authoritativeSource);
+  }
 }
