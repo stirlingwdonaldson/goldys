@@ -13,7 +13,7 @@ public class CurrentUserService {
   }
 
   public UserRole roleOf(OidcUser user) {
-    StaffProfileService.StaffProfileSummary summary =
+    StaffProfileSummary summary =
         profiles
             .findActive(user.getIssuer().toString(), user.getSubject())
             .orElseThrow(() -> new AccessDeniedException("No active staff profile"));

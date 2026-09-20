@@ -2,7 +2,7 @@ package com.goldys.platform.api;
 
 import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.StaffProfileService;
-import com.goldys.platform.auth.StaffProfileService.StaffProfileSummary;
+import com.goldys.platform.auth.StaffProfileSummary;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.GetMapping;
