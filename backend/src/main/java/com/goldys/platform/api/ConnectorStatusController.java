@@ -10,6 +10,8 @@ import com.goldys.platform.ingestion.IngestionService;
 import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,6 +36,13 @@ public class ConnectorStatusController {
   List<ConnectorStatusDto> connectors(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
     return ingestion.latestRunPerSource().stream().map(this::toDto).toList();
+  }
+
+  @PostMapping("/connectors/{source}/run")
+  ConnectorStatusDto run(
+      @PathVariable String source, @AuthenticationPrincipal AccountUserDetails user) {
+    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.WRITE);
+    return toDto(ingestion.runConnector(source));
   }
 
   private ConnectorStatusDto toDto(IngestionRunSummary run) {
