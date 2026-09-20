@@ -101,6 +101,25 @@ To enable login:
    docker compose --env-file .env.prod -f docker-compose.prod.yml up -d backend
    ```
 
+### Permissions (admin bootstrap)
+
+The `V6` migration seeds a single administrator grant: department `ALL`, seniority
+`OWNER`, with read+write on `reconciliation.sales` and `connectors`. Finer-grained
+roles are added as later migrations — no seniority is special-cased in code.
+
+A permission grant only applies once an identity resolves to a staff profile. To
+make your own login an administrator: enable OIDC, sign in once, then read your
+OIDC `iss` and `sub` (visible in the backend debug log) and insert the profile:
+
+```sql
+INSERT INTO staff_profile (id, oidc_issuer, oidc_subject, display_name, department, seniority, active, created_at, updated_at)
+VALUES (gen_random_uuid(), '<your-issuer>', '<your-subject>', 'Stirling Donaldson', 'ALL', 'OWNER', true, now(), now());
+```
+
+Until that row exists your identity is authenticated but profile-less, and the
+reconciliation endpoints answer `NOT_PERMITTED` (explicit denial, never a
+silently filtered result).
+
 ## Database
 
 Postgres data lives in a named Docker volume (`goldys-prod_goldys_pg_data` for the
