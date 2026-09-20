@@ -2,10 +2,11 @@
 
 import { ShieldCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/states/error-state";
 import { useCurrentUser } from "./current-user-provider";
 
 export function IdentityCard() {
-  const { user, status } = useCurrentUser();
+  const { user, status, error, refresh } = useCurrentUser();
 
   if (status === "loading") {
     return (
@@ -13,6 +14,17 @@ export function IdentityCard() {
         <Skeleton className="h-4 w-40" />
         <Skeleton className="mt-3 h-3 w-64" />
       </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <ErrorState
+        title="Couldn't load your profile"
+        message={error?.message}
+        correlationId={error?.correlationId}
+        onRetry={refresh}
+      />
     );
   }
 

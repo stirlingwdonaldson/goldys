@@ -54,6 +54,12 @@ The Dashboard, Reconciliation, Connectors, and Settings screens are honest
 empty states until the later connector/reconciliation vertical slices land; they
 are not yet backed by operational data.
 
+No real browser rendered the UI in this environment (no Chrome binary is
+installed), so the interactive surfaces — the sidebar active-state highlight,
+the loading skeleton, the toast, the permission-denied and error cards — are
+built and type-checked but not exercised by an automated browser pass. The typed
+client's error branches were verified at runtime against the dev server.
+
 
 ## Local database
 

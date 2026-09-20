@@ -23,7 +23,16 @@ export async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> 
 
   if (response.ok) {
     if (response.status === 204) return undefined as T;
-    return (await response.json()) as T;
+    try {
+      return (await response.json()) as T;
+    } catch {
+      // A 2xx with a non-JSON body (proxy shell HTML, gateway interstitial) must
+      // not leak a raw SyntaxError through the abstraction that promises typed errors.
+      throw new ApiError(
+        "UNPARSEABLE_RESPONSE",
+        "The server returned a response that could not be read.",
+      );
+    }
   }
 
   let body: ApiErrorResponse | null = null;
