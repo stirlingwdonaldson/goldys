@@ -11,3 +11,8 @@ Claude outputs/
 # version-pinned cache when absent; committing it would bloat every clone with a
 # non-diffable, platform-specific artifact.
 .opencode/skills/impeccable/scripts/bin/
+
+# Local environment files (secrets). .env.example is the committed template.
+.env
+.env.*
+!.env.example

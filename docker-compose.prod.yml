@@ -1,0 +1,54 @@
+# Production stack for this VM. HTTPS is terminated at the operator's edge, which
+# forwards platform.swd.sh to ${PORT:-3000}. Only the frontend is published;
+# backend and Postgres live on the internal network.
+#
+#   cp .env.example .env.prod    # fill in real values
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-goldys}
+      POSTGRES_USER: ${POSTGRES_USER:-goldys}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}
+    volumes:
+      - goldys_pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-goldys}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-goldys}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOLDYS_CLIENT_ID: ${OIDC_CLIENT_ID:?set OIDC_CLIENT_ID in .env.prod}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOLDYS_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?set OIDC_CLIENT_SECRET in .env.prod}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOLDYS_SCOPE: ${OIDC_SCOPE:-openid,profile,email}
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_GOLDYS_ISSUER_URI: ${OIDC_ISSUER_URI:?set OIDC_ISSUER_URI in .env.prod}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-https://platform.swd.sh/login/oauth2/code/goldys}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      PORT: "3000"
+    ports:
+      - "${PORT:-3000}:3000"
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+volumes:
+  goldys_pg_data:
