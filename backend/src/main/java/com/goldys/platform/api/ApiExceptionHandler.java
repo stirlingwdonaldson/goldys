@@ -26,6 +26,15 @@ class ApiExceptionHandler {
                 "NOT_PERMITTED", exception.getMessage(), correlationId(request), Map.of()));
   }
 
+  @ExceptionHandler(IllegalArgumentException.class)
+  ResponseEntity<ApiErrorResponse> handleValidation(
+      IllegalArgumentException exception, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            new ApiErrorResponse(
+                "VALIDATION_FAILED", exception.getMessage(), correlationId(request), Map.of()));
+  }
+
   private String correlationId(HttpServletRequest request) {
     String provided = request.getHeader("X-Correlation-ID");
     return (provided != null && !provided.isBlank()) ? provided : UUID.randomUUID().toString();

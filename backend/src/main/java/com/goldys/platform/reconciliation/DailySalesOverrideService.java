@@ -4,6 +4,7 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -19,11 +20,15 @@ public class DailySalesOverrideService {
 
   private final DailySalesOverrideRepository repository;
   private final PermissionService permissions;
+  private final CanonicalDailySalesQuery dailySales;
 
   public DailySalesOverrideService(
-      DailySalesOverrideRepository repository, PermissionService permissions) {
+      DailySalesOverrideRepository repository,
+      PermissionService permissions,
+      CanonicalDailySalesQuery dailySales) {
     this.repository = repository;
     this.permissions = permissions;
+    this.dailySales = dailySales;
   }
 
   @Transactional
@@ -35,6 +40,15 @@ public class DailySalesOverrideService {
       String source,
       String reason) {
     permissions.require(actor, RESOURCE, PermissionAction.WRITE);
+
+    // Reject an override that names a source with no canonical row for the date — otherwise the
+    // conflict would silently vanish with no resolved total anywhere.
+    boolean sourceKnown =
+        dailySales.currentDailySalesForDate(date).stream()
+            .anyMatch(s -> s.sourceSystem().equals(source));
+    if (!sourceKnown) {
+      throw new IllegalArgumentException("No data from source '" + source + "' on " + date);
+    }
 
     Instant now = CLOCK.instant();
     Optional<DailySalesOverride> current = repository.lockCurrent(date);

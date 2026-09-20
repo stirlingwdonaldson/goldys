@@ -2,6 +2,7 @@ package com.goldys.platform.connectors.ctb;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -29,7 +30,8 @@ public class CtbRevenueParser {
     try {
       root = MAPPER.readTree(json);
     } catch (Exception e) {
-      throw new IllegalArgumentException("Not JSON: " + e.getMessage(), e);
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Not JSON: " + e.getMessage(), e);
     }
     JsonNode data = root.get("data");
     if (data == null || !data.isArray()) {

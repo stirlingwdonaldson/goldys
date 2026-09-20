@@ -1,8 +1,9 @@
 package com.goldys.platform.api;
 
-import com.goldys.platform.auth.DepartmentCode;
-import com.goldys.platform.auth.SeniorityCode;
-import com.goldys.platform.auth.StaffProfileService;
+import com.goldys.platform.auth.CurrentUserService;
+import com.goldys.platform.auth.PermissionAction;
+import com.goldys.platform.auth.PermissionService;
+import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.reconciliation.DailySalesConflict;
@@ -24,29 +25,36 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/reconciliation")
 public class ReconciliationController {
+  private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
+
   private final DailySalesReconciliationService reconciliation;
   private final DailySalesOverrideService overrides;
   private final CanonicalDailySalesQuery dailySales;
-  private final StaffProfileService profiles;
+  private final CurrentUserService currentUser;
+  private final PermissionService permissions;
 
   public ReconciliationController(
       DailySalesReconciliationService reconciliation,
       DailySalesOverrideService overrides,
       CanonicalDailySalesQuery dailySales,
-      StaffProfileService profiles) {
+      CurrentUserService currentUser,
+      PermissionService permissions) {
     this.reconciliation = reconciliation;
     this.overrides = overrides;
     this.dailySales = dailySales;
-    this.profiles = profiles;
+    this.currentUser = currentUser;
+    this.permissions = permissions;
   }
 
   @GetMapping("/exceptions")
-  List<ExceptionDto> exceptions() {
+  List<ExceptionDto> exceptions(@AuthenticationPrincipal OidcUser user) {
+    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
     return reconciliation.conflicts().stream().map(this::toException).toList();
   }
 
   @GetMapping("/records/{date}")
-  RecordDto record(@PathVariable LocalDate date) {
+  RecordDto record(@PathVariable LocalDate date, @AuthenticationPrincipal OidcUser user) {
+    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
     List<SourceValueDto> sources =
         dailySales.currentDailySalesForDate(date).stream()
             .map(s -> new SourceValueDto(s.sourceSystem(), plain(s.totalSales())))
@@ -67,7 +75,7 @@ public class ReconciliationController {
       @PathVariable LocalDate date,
       @RequestBody OverrideRequestDto body,
       @AuthenticationPrincipal OidcUser user) {
-    UserRole role = roleFor(user);
+    UserRole role = currentUser.roleOf(user);
     overrides.save(
         role, user.getIssuer().toString(), user.getSubject(), date, body.source(), body.reason());
     return new OverrideResultDto(true, date.toString(), "daily_sales");
@@ -85,17 +93,6 @@ public class ReconciliationController {
         "daily_sales",
         sources,
         conflict.status());
-  }
-
-  private UserRole roleFor(OidcUser user) {
-    StaffProfileService.StaffProfileSummary summary =
-        profiles
-            .findActive(user.getIssuer().toString(), user.getSubject())
-            .orElseThrow(
-                () ->
-                    new com.goldys.platform.auth.AccessDeniedException("No active staff profile"));
-    return new UserRole(
-        new DepartmentCode(summary.department()), new SeniorityCode(summary.seniority()));
   }
 
   private static String plain(java.math.BigDecimal value) {

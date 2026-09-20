@@ -1,8 +1,14 @@
 package com.goldys.platform.api;
 
+import com.goldys.platform.auth.CurrentUserService;
+import com.goldys.platform.auth.PermissionAction;
+import com.goldys.platform.auth.PermissionService;
+import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.ingestion.IngestionRunSummary;
 import com.goldys.platform.ingestion.IngestionService;
 import java.util.List;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,14 +17,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 public class ConnectorStatusController {
-  private final IngestionService ingestion;
+  private static final ResourceKey RESOURCE = new ResourceKey("connectors");
 
-  public ConnectorStatusController(IngestionService ingestion) {
+  private final IngestionService ingestion;
+  private final CurrentUserService currentUser;
+  private final PermissionService permissions;
+
+  public ConnectorStatusController(
+      IngestionService ingestion, CurrentUserService currentUser, PermissionService permissions) {
     this.ingestion = ingestion;
+    this.currentUser = currentUser;
+    this.permissions = permissions;
   }
 
   @GetMapping("/connectors")
-  List<ConnectorStatusDto> connectors() {
+  List<ConnectorStatusDto> connectors(@AuthenticationPrincipal OidcUser user) {
+    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
     return ingestion.latestRunPerSource().stream().map(this::toDto).toList();
   }
 

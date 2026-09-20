@@ -54,6 +54,8 @@ public class CtbConnector implements SourceConnector {
   public void fetch(String watermark, IngestionSink sink) {
     client.login(email, password);
 
+    LocalDate since = watermark == null || watermark.isBlank() ? null : LocalDate.parse(watermark);
+
     int start = 0;
     int pages = 0;
     int total = -1;
@@ -73,6 +75,11 @@ public class CtbConnector implements SourceConnector {
                   "ctb-revenue"));
 
       for (CtbRevenue revenue : parser.parse(bytes)) {
+        // Respect the watermark: skip canonicalizing dates already fully ingested. (The raw bytes
+        // are still streamed byte-faithfully; canonical recording is idempotent regardless.)
+        if (since != null && revenue.revenueDate().isBefore(since)) {
+          continue;
+        }
         byDate.computeIfAbsent(revenue.revenueDate(), d -> new Totals()).add(revenue);
         rawByDate.putIfAbsent(revenue.revenueDate(), rawId);
       }

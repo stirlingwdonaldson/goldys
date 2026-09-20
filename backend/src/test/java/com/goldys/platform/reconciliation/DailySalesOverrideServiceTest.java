@@ -14,7 +14,11 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.canonical.CanonicalDailySalesQuery;
+import com.goldys.platform.canonical.DailySalesView;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +28,15 @@ class DailySalesOverrideServiceTest {
       new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
   private static final LocalDate SEP_13 = LocalDate.of(2026, 9, 13);
 
+  private static CanonicalDailySalesQuery queryWithLightspeed() {
+    CanonicalDailySalesQuery query = mock(CanonicalDailySalesQuery.class);
+    when(query.currentDailySalesForDate(SEP_13))
+        .thenReturn(
+            List.of(
+                new DailySalesView("LIGHTSPEED", SEP_13, new BigDecimal("27650.66"), null, null)));
+    return query;
+  }
+
   @Test
   void deniedUserGetsAccessDenied() {
     PermissionService permissions = mock(PermissionService.class);
@@ -32,10 +45,24 @@ class DailySalesOverrideServiceTest {
         .require(any(), any(), any());
 
     DailySalesOverrideService service =
-        new DailySalesOverrideService(mock(DailySalesOverrideRepository.class), permissions);
+        new DailySalesOverrideService(
+            mock(DailySalesOverrideRepository.class), permissions, queryWithLightspeed());
 
     assertThatThrownBy(() -> service.save(OWNER, "iss", "sub", SEP_13, "LIGHTSPEED", null))
         .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void unknownSourceIsRejected() {
+    DailySalesOverrideService service =
+        new DailySalesOverrideService(
+            mock(DailySalesOverrideRepository.class),
+            mock(PermissionService.class),
+            queryWithLightspeed());
+
+    assertThatThrownBy(() -> service.save(OWNER, "iss", "sub", SEP_13, "CTB", null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("CTB");
   }
 
   @Test
@@ -45,7 +72,8 @@ class DailySalesOverrideServiceTest {
     when(repository.lockCurrent(SEP_13)).thenReturn(Optional.empty());
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-    DailySalesOverrideService service = new DailySalesOverrideService(repository, permissions);
+    DailySalesOverrideService service =
+        new DailySalesOverrideService(repository, permissions, queryWithLightspeed());
 
     DailySalesOverride saved =
         service.save(OWNER, "iss", "sub", SEP_13, "LIGHTSPEED", "typo in POS");
@@ -61,11 +89,13 @@ class DailySalesOverrideServiceTest {
     PermissionService permissions = mock(PermissionService.class);
     DailySalesOverrideRepository repository = mock(DailySalesOverrideRepository.class);
     DailySalesOverride prior =
-        DailySalesOverride.create(SEP_13, "CTB", null, "iss", "sub", java.time.Instant.now());
+        DailySalesOverride.create(
+            SEP_13, "LIGHTSPEED", null, "iss", "sub", java.time.Instant.now());
     when(repository.lockCurrent(SEP_13)).thenReturn(Optional.of(prior));
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-    DailySalesOverrideService service = new DailySalesOverrideService(repository, permissions);
+    DailySalesOverrideService service =
+        new DailySalesOverrideService(repository, permissions, queryWithLightspeed());
 
     service.save(OWNER, "iss", "sub", SEP_13, "LIGHTSPEED", null);
 
