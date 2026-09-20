@@ -1,0 +1,30 @@
+# Production Spring profile (SPRING_PROFILES_ACTIVE=prod).
+#
+# HTTPS is terminated at the operator's edge and the Next.js rewrite is a second
+# hop, so without honoring forwarded headers the backend sees Host: backend:8080
+# and would emit unreachable absolute redirects (e.g. a post-login redirect to
+# http://backend:8080). The edge must send X-Forwarded-Proto: https (Cloudflare
+# does by default); the backend is internal-only, so trusting those headers is safe.
+#
+# The session cookie is Secure because the browser only ever talks HTTPS. The
+# OIDC redirect URI is set explicitly rather than derived, defaulting to prod.
+
+server:
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        secure: true
+        same-site: lax
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          goldys:
+            redirect-uri: ${OIDC_REDIRECT_URI:https://platform.swd.sh/login/oauth2/code/goldys}
+
+logging:
+  level:
+    com.goldys.platform: INFO
