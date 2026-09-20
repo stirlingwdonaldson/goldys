@@ -1,0 +1,22 @@
+# Production Spring profile (SPRING_PROFILES_ACTIVE=prod).
+#
+# HTTPS is terminated at the operator's edge, so the session cookie must be
+# Secure — the browser only ever talks to https://platform.swd.sh. The OIDC
+# redirect URI is set explicitly rather than derived from forwarded headers,
+# because the edge -> frontend -> backend hop makes header-based derivation
+# fragile; OIDC_REDIRECT_URI defaults to the production domain.
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+        same-site: lax
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          goldys:
+            redirect-uri: ${OIDC_REDIRECT_URI:https://platform.swd.sh/login/oauth2/code/goldys}
