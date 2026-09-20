@@ -33,8 +33,13 @@ if a specific environment requires it.
 bun install --frozen-lockfile
 bun run typecheck
 bun run lint
+bun run test
 bun run build
 ```
+
+`bun run test` runs Vitest (pure-logic and React component tests). It covers the
+reconciliation decision/derivation logic and the demo-mode toggle; jsdom is the
+test environment.
 
 ### Data screens (demo mode)
 

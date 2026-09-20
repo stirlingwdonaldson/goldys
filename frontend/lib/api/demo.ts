@@ -1,3 +1,4 @@
+import { deriveExceptions } from "../reconciliation-logic";
 import { ApiError } from "./errors";
 import type {
   Api,
@@ -81,35 +82,12 @@ const connectorStatuses: ConnectorStatus[] = [
   { source: "OpenTable", connectorName: "opentable-guestcenter", lastRunAt: null, status: "never_run", failureCount: 0 },
 ];
 
-function deriveExceptions(): ReconciliationException[] {
-  const result: ReconciliationException[] = [];
-  for (const record of Object.values(records)) {
-    for (const field of record.fields) {
-      if (field.overridden) continue;
-      const values = field.sources.map((s) => s.value);
-      const anyMissing = field.sources.some((s) => s.value === null);
-      const allEqual = values.length > 1 && values.every((v) => v === values[0]);
-      if (anyMissing || !allEqual) {
-        result.push({
-          id: `${record.id}:${field.name}`,
-          recordId: record.id,
-          entity: record.entity,
-          field: field.name,
-          sources: field.sources,
-          status: anyMissing ? "missing" : "conflict",
-        });
-      }
-    }
-  }
-  return result;
-}
-
 export const demoApi: Api = {
   async getDashboardSummary(): Promise<DashboardSummary> {
     await delay(400);
     return {
       ingestionCompleteness: 92,
-      openConflicts: deriveExceptions().length,
+      openConflicts: deriveExceptions(records).length,
       timeToDetectFailure: "42m avg",
       overrideUsage: { count: 3, period: "this week" },
     };
@@ -117,7 +95,7 @@ export const demoApi: Api = {
 
   async listReconciliationExceptions(): Promise<ReconciliationException[]> {
     await delay(400);
-    return deriveExceptions();
+    return deriveExceptions(records);
   },
 
   async getReconciliationRecord(id: string): Promise<ReconciliationRecord> {

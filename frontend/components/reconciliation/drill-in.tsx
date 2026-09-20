@@ -8,21 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
-import type { ReconciliationField } from "@/lib/api";
+import { needsDecision } from "@/lib/reconciliation-logic";
 
 interface DrillInProps {
   recordId: string;
   onBack: () => void;
   onSave: (field: string, source: string, reason?: string) => Promise<void>;
   saving: boolean;
-}
-
-function needsDecision(field: ReconciliationField): boolean {
-  if (field.overridden) return false;
-  const values = field.sources.map((s) => s.value);
-  const anyMissing = field.sources.some((s) => s.value === null);
-  const allEqual = values.length > 1 && values.every((v) => v === values[0]);
-  return anyMissing || !allEqual;
 }
 
 export function ReconciliationDrillIn({ recordId, onBack, onSave, saving }: DrillInProps) {
