@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,6 +32,11 @@ class TradingWeekAcceptanceTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired CanonicalDailySalesService dailySales;
   @Autowired DailySalesReconciliationService reconciliation;
+
+  @BeforeEach
+  void clean() {
+    jdbc.update("truncate table canonical_daily_sales, daily_sales_override");
+  }
 
   @Test
   void surfacesTheKnownConflictAndResolvesToUnresolved() {

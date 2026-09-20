@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /** A normalized daily sales total from one source, to be recorded as a canonical version. */
-record DailySalesInput(
+public record DailySalesInput(
     String sourceSystem,
     LocalDate tradingDate,
     BigDecimal totalSales,

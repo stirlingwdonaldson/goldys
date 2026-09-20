@@ -6,6 +6,7 @@ import com.goldys.platform.support.PostgresContainerConfiguration;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +20,11 @@ class CanonicalDailySalesIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired CanonicalDailySalesService service;
   @Autowired CanonicalDailySalesRepository repository;
+
+  @BeforeEach
+  void clean() {
+    jdbc.update("truncate table canonical_daily_sales");
+  }
 
   @Test
   void twoSourcesForTheSameDateShareTheLogicalId() {

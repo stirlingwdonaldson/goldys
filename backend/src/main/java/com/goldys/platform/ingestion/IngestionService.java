@@ -36,11 +36,25 @@ public class IngestionService {
       String characterEncoding,
       String fetcherIdentity) {
     UUID runId = runs.start(sourceSystem, connectorName, null, CLOCK.instant());
-    runs.recordFetched(runId);
-    payloads.persist(
-        runId, sourceSystem, fetchMethod, contentType, bytes, characterEncoding, fetcherIdentity);
-    runs.complete(runId, null, CLOCK.instant());
-    return runId;
+    try {
+      runs.recordFetched(runId);
+      UUID rawId =
+          payloads.persist(
+              runId,
+              sourceSystem,
+              fetchMethod,
+              contentType,
+              bytes,
+              characterEncoding,
+              fetcherIdentity);
+      runs.complete(runId, null, CLOCK.instant());
+      return rawId;
+    } catch (RuntimeException e) {
+      // Record the failure and close the run so the fault is observable, not a dangling RUNNING.
+      runs.recordFailure(runId, "UNEXPECTED", e.getClass().getName(), CLOCK.instant());
+      runs.complete(runId, null, CLOCK.instant());
+      throw e;
+    }
   }
 
   /** The latest run for each source, newest first by start time. */

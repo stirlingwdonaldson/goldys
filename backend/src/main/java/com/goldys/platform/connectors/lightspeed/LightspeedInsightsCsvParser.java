@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.springframework.stereotype.Component;
 
 /**
  * Parses the CSV that Lightspeed Insights embeds in its scheduled-report webhook.
@@ -18,6 +19,7 @@ import org.apache.commons.csv.CSVRecord;
  * <p>The CSV carries a leading row-number column (empty header) and currency-formatted amounts
  * ("$1.46"), both of which are stripped here so callers see clean per-sale rows.
  */
+@Component
 public class LightspeedInsightsCsvParser {
   // The webhook CSV has a leading row-number column with no header name, which Commons CSV's
   // setHeader() rejects — so the column names are supplied explicitly and the CSV's own header

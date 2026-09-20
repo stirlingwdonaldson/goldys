@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.stereotype.Component;
 
 /**
  * Parses CTB's {@code Revenue/SearchRevenues} envelope into revenue rows.
@@ -15,6 +16,7 @@ import java.util.List;
  * <p>CTB stores dates as .NET ticks (100 ns since 0001-01-01); they are converted to a venue-local
  * date here.
  */
+@Component
 public class CtbRevenueParser {
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final ZoneId VENUE_ZONE = ZoneId.of("Australia/Melbourne");
