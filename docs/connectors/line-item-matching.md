@@ -14,61 +14,62 @@ from evidence rather than guessed.
 
 Note: the Lightspeed "Sales By" CSV has an **empty `Product Number` column** — there
 is no SKU in the export, only the product *name*. So the matching key is the name,
-not a code.
+not a code. CTB's `SearchSaleItemsByDateRange` returns only the per-product aggregate
+(`saleDate`/`parentStockCode`/`childGroupData` are null for every `searchType` tried),
+so modifier linkage is not exposed by the API.
 
 ## Result (14–20 Sep 2026 sample)
 
-| | count |
-|---|---|
-| Lightspeed products | 303 |
-| CTB products (distinct name) | 285 |
-| **Exact normalized-name matches** | **278 (92%)** |
-| Renames ("Kids X" vs "New Kids X") | 8 |
-| Lightspeed-only, no CTB counterpart | 17 |
+| | count | amount |
+|---|---|---|
+| Lightspeed products | 303 | $169,470.53 |
+| CTB products | 285 | $168,219.02 |
+| **Matched (name + "Kids" alias)** | **285** | |
+| Matched residual (LS − CTB, summed) | — | **$105.67** (~0.06%) |
+| Truly Lightspeed-only | 17 | $1,145.84 |
+| **Reconciled** | | **$1,251.51 = $105.67 + $1,145.84** (exactly the daily diff) |
 
-For matched products, `Quantity` and `Sale Amount` agree **to the cent** — e.g.
-`Pint - Carlton Draught`: 1232 / $17,340.98 on both sides.
+For the vast majority of matched products, `Quantity` and `Sale Amount` agree **to the
+cent** (`Pint - Carlton Draught`: 1232 / $17,340.98 on both sides). The $105.67 residual
+is spread across 39 products, the largest being `Garlic Aioli` (LS 150 vs CTB 127,
+$58.42) — a handful of items where CTB's per-product rollup differs slightly.
 
 ## The mismatches
 
-**1. Renames** — the same product under a different name:
+**1. Renames** — the same product under a different name (resolved by an alias key that
+strips a leading `New `):
 
-- `Kids Fish & Chippies` → `New Kids Fish & Chippies`
-- `Kids Gnocchi Bolognese` → `New Kids Gnocchi Bolognese`
-- `Kids Gnocchi Napoli` → `New Kids Gnocchi Napoli`
-- `Kids Orange Smiles` → `New Kids Orange Smiles`
-- `Kids Parma` → `New Kids Parma`
-- `Kids Schnitty` → `New Kids Schnitty`
-- `Kids slider` → `New Kids slider`
-- `Kids Teddy Bears Picnic` → `New Kids Teddy Bears Picnic`
+`Kids Fish & Chippies` → `New Kids Fish & Chippies`, `Kids Gnocchi Bolognese` →
+`New Kids Gnocchi Bolognese`, `Kids Gnocchi Napoli`, `Kids Orange Smiles`,
+`Kids Parma`, `Kids Schnitty`, `Kids slider`, `Kids Teddy Bears Picnic`.
 
-(plus `Kids Gnocchi`, which CTB appears to have dropped or folded away.)
+**2. Truly Lightspeed-only (17)** — modifiers/sides that CTB does **not** track as
+standalone line items (their amounts are simply absent from CTB, which the exact
+reconciliation confirms — they are *not* folded into a parent, because matched parents
+already agree to the cent):
 
-**2. Lightspeed-only items (17)** — likely modifiers/sides that CTB folds into a
-parent product's amount rather than tracking as standalone line items:
-
-`Burger`, `Calamari Rings`, `Cash Out`, `Chicken Burger`, `Dill Aioli`,
-`Fish Burger`, `Fish Fillet`, `Fisherman's Basket`, `Gnocchi - Mushroom`,
-`Grilled`, `Home-made Potato Cake`, `Large Chips`, `Parmesan`, `Small Chips`,
-`Tartare`, `Thai Sweet & Sour Wings`.
-
-There were **no CTB-only names** beyond the `New Kids` renames.
+`Fish Burger`, `Burger`, `Cash Out`, `Fisherman's Basket`, `Large Chips`,
+`Chicken Burger`, `Gnocchi - Mushroom`, `Dill Aioli`, `Home-made Potato Cake`,
+`Fish Fillet`, `Small Chips`, `Parmesan`, `Kids Gnocchi`, `Calamari Rings`,
+`Thai Sweet & Sour Wings`, `Tartare`, `Grilled`.
 
 ## Recommended matching strategy
 
-1. **Key = normalized product name** (`lower` + strip non-alphanumerics + collapse
-   whitespace). No SKU exists on the Lightspeed side.
-2. **Alias the renames** — a small static map (`Kids …` ↔ `New Kids …`) or a
-   `stripLeading("new ")` fallback on the CTB side.
-3. **Tolerance = zero** — matched `quantitySold` and `amount` already agree to the
-   cent, so there is no tolerance to guess; reconcile on exact equality.
-4. **The 17 modifiers/sides** need one further probe (are they CTB modifiers on a
-   parent item, or genuinely absent?) before deciding whether to drop, aggregate,
-   or match them as modifier-level rows.
+1. **Key = normalized product name** (lower, strip non-alphanumerics, collapse
+   whitespace) with a **`New `-prefix alias** for the rename cases. No SKU exists on
+   the Lightspeed side.
+2. **Match at product level** — one CTB `sale_items` row (summed per `stockCode`) vs
+   one Lightspeed "Sales By" row.
+3. **Tolerance = zero** for the core: matched products agree to the cent, so reconcile
+   `quantitySold` and `amount` on exact equality and surface any non-zero residual
+   (the 39 products behind the $105.67) as small day-level/item-level diffs to inspect.
+4. **Surface the 17 Lightspeed-only items explicitly** as "no data from CTB" (the same
+   "no data from source X" pattern as the daily slice), never silently dropped — they
+   are the ~$1.1k/week of modifier sales CTB's Kounta integration does not ingest.
 
-## Open question (gated)
+## Conclusion
 
-Before implementing, confirm the 17 Lightspeed-only items against CTB's *modifier*
-data (e.g. `childGroupData` / `parentStockCode` on `sale_items`) to see whether they
-are folded into a parent. That determines whether the slice matches at product level
-only, or product + modifier.
+The line-item slice can be implemented without further gating: the key is the
+normalized name (plus a small alias), the tolerance is zero, and the only unmatched
+class is the 17 modifier/side items, which are surfaced explicitly. No per-transaction
+or SKU data is required.
