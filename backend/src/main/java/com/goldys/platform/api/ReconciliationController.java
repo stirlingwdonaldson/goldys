@@ -7,9 +7,13 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
+import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.reconciliation.DailySalesConflict;
 import com.goldys.platform.reconciliation.DailySalesOverrideService;
 import com.goldys.platform.reconciliation.DailySalesReconciliationService;
+import com.goldys.platform.reconciliation.ProductSalesConflict;
+import com.goldys.platform.reconciliation.ProductSalesOverrideService;
+import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Reconciliation exceptions, per-date drill-in, and the manual override action. */
+/** Reconciliation exceptions, per-date/per-product drill-in, and the manual override action. */
 @RestController
 @RequestMapping("/api/reconciliation")
 public class ReconciliationController {
@@ -30,6 +34,9 @@ public class ReconciliationController {
   private final DailySalesReconciliationService reconciliation;
   private final DailySalesOverrideService overrides;
   private final CanonicalDailySalesQuery dailySales;
+  private final ProductSalesReconciliationService productSales;
+  private final ProductSalesOverrideService productOverrides;
+  private final CanonicalProductSalesQuery productSalesQuery;
   private final CurrentUserService currentUser;
   private final PermissionService permissions;
 
@@ -37,11 +44,17 @@ public class ReconciliationController {
       DailySalesReconciliationService reconciliation,
       DailySalesOverrideService overrides,
       CanonicalDailySalesQuery dailySales,
+      ProductSalesReconciliationService productSales,
+      ProductSalesOverrideService productOverrides,
+      CanonicalProductSalesQuery productSalesQuery,
       CurrentUserService currentUser,
       PermissionService permissions) {
     this.reconciliation = reconciliation;
     this.overrides = overrides;
     this.dailySales = dailySales;
+    this.productSales = productSales;
+    this.productOverrides = productOverrides;
+    this.productSalesQuery = productSalesQuery;
     this.currentUser = currentUser;
     this.permissions = permissions;
   }
@@ -80,6 +93,45 @@ public class ReconciliationController {
     return new OverrideResultDto(true, date.toString(), "daily_sales");
   }
 
+  @GetMapping("/products/exceptions")
+  List<ProductExceptionDto> productExceptions(@AuthenticationPrincipal AccountUserDetails user) {
+    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
+    return productSales.conflicts().stream().map(this::toProductException).toList();
+  }
+
+  @GetMapping("/products/{date}/{product}")
+  ProductRecordDto productRecord(
+      @PathVariable LocalDate date,
+      @PathVariable String product,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
+    List<SourceValueDto> sources =
+        productSalesQuery.currentProductSalesForDate(date).stream()
+            .filter(v -> v.productNameKey().equals(product))
+            .map(
+                v ->
+                    new SourceValueDto(
+                        v.sourceSystem(),
+                        v.quantitySold().toPlainString() + " × $" + v.amount().toPlainString()))
+            .toList();
+    Optional<String> authoritative = productOverrides.currentAuthoritativeSource(date, product);
+    FieldDto field =
+        new FieldDto(
+            product, product, sources, authoritative.isPresent(), authoritative.orElse(null));
+    return new ProductRecordDto(product, product, "product", List.of(field));
+  }
+
+  @PostMapping("/products/{date}/{product}/override")
+  OverrideResultDto productOverride(
+      @PathVariable LocalDate date,
+      @PathVariable String product,
+      @RequestBody OverrideRequestDto body,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    UserRole role = currentUser.roleOf(user);
+    productOverrides.save(role, user.email(), date, product, body.source(), body.reason());
+    return new OverrideResultDto(true, product, "product");
+  }
+
   private ExceptionDto toException(DailySalesConflict conflict) {
     List<SourceValueDto> sources =
         conflict.sources().stream()
@@ -90,6 +142,24 @@ public class ReconciliationController {
         conflict.tradingDate().toString(),
         conflict.tradingDate().toString(),
         "daily_sales",
+        sources,
+        conflict.status());
+  }
+
+  private ProductExceptionDto toProductException(ProductSalesConflict conflict) {
+    List<SourceValueDto> sources =
+        conflict.sources().stream()
+            .map(
+                s ->
+                    new SourceValueDto(
+                        s.sourceSystem(),
+                        s.quantitySold().toPlainString() + " × $" + s.amount().toPlainString()))
+            .toList();
+    return new ProductExceptionDto(
+        conflict.tradingDate() + ":" + conflict.productNameKey(),
+        conflict.productNameKey(),
+        conflict.productNameKey(),
+        conflict.productNameKey(),
         sources,
         conflict.status());
   }
@@ -106,7 +176,17 @@ public class ReconciliationController {
       List<SourceValueDto> sources,
       String status) {}
 
+  record ProductExceptionDto(
+      String id,
+      String recordId,
+      String entity,
+      String field,
+      List<SourceValueDto> sources,
+      String status) {}
+
   record RecordDto(String id, String entity, String entityType, List<FieldDto> fields) {}
+
+  record ProductRecordDto(String id, String entity, String entityType, List<FieldDto> fields) {}
 
   record FieldDto(
       String name,

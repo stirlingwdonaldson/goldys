@@ -1,0 +1,9 @@
+{
+  "data": [
+    { "stockCode": "17176896", "stockDescription": "(0.5L) Goldy's Pinot Grigio", "quantitySold": 3, "amount": 120.66 },
+    { "stockCode": "22101660", "stockDescription": "$28 Steak Special", "quantitySold": 99, "amount": 2732.07 },
+    { "stockCode": "987654", "stockDescription": "New Kids Parma", "quantitySold": 7, "amount": 84.00 }
+  ],
+  "totalCount": 3,
+  "message": { "IsSuccess": true, "Info": "" }
+}

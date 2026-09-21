@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
+import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,6 +22,7 @@ class LightspeedIngestControllerTest {
   @Autowired MockMvc mvc;
 
   @MockitoBean LightspeedIngestService ingestService;
+  @MockitoBean LightspeedProductIngestService productIngestService;
 
   @Test
   void queryParamTokenIsAccepted() throws Exception {

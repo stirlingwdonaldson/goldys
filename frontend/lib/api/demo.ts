@@ -4,6 +4,8 @@ import type {
   Api,
   ConnectorStatus,
   DashboardSummary,
+  OverrideResult,
+  ProductOverrideInput,
   ReconciliationException,
   ReconciliationRecord,
   SaveOverrideInput,
@@ -82,6 +84,20 @@ const connectorStatuses: ConnectorStatus[] = [
   { source: "OpenTable", connectorName: "opentable-guestcenter", lastRunAt: null, status: "never_run", failureCount: 0 },
 ];
 
+const productExceptions: ReconciliationException[] = [
+  {
+    id: "2026-09-14:garlic aioli",
+    recordId: "garlic aioli",
+    entity: "garlic aioli",
+    field: "garlic aioli",
+    sources: [
+      { source: "Lightspeed", value: "150 × $380.88" },
+      { source: "Cooking the Books", value: "127 × $322.46" },
+    ],
+    status: "conflict",
+  },
+];
+
 export const demoApi: Api = {
   async getDashboardSummary(): Promise<DashboardSummary> {
     await delay(400);
@@ -130,5 +146,15 @@ export const demoApi: Api = {
     field.overridden = true;
     field.authoritativeSource = input.source;
     return { ok: true, recordId: input.recordId, field: input.field };
+  },
+
+  async listProductExceptions(): Promise<ReconciliationException[]> {
+    await delay(400);
+    return productExceptions;
+  },
+
+  async saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult> {
+    await delay(500);
+    return { ok: true, recordId: input.product, field: input.product };
   },
 };

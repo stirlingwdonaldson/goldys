@@ -53,6 +53,30 @@ public class CtbClient {
     return new CtbPage(body, total);
   }
 
+  /** One page of sale items plus the total count, as raw JSON for the sink. */
+  public CtbPage searchSaleItems(String fromDate, String toDate, int start, int limit) {
+    String body =
+        post(
+            "/Sale/SearchSaleItemsByDateRange",
+            form(
+                "fromDate",
+                fromDate,
+                "toDate",
+                toDate,
+                "searchType",
+                "-1",
+                "start",
+                String.valueOf(start),
+                "limit",
+                String.valueOf(limit)));
+    JsonNode json = parse(body);
+    if (!json.path("message").path("IsSuccess").asBoolean(false)) {
+      throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB sale-item search failed");
+    }
+    int total = json.path("totalCount").asInt(json.path("data").size());
+    return new CtbPage(body, total);
+  }
+
   private String post(String path, String form) {
     HttpRequest request =
         HttpRequest.newBuilder(URI.create(baseUrl + path))

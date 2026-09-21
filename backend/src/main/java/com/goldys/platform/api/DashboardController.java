@@ -6,6 +6,7 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.reconciliation.DailySalesReconciliationService;
+import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,14 +19,17 @@ public class DashboardController {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
 
   private final DailySalesReconciliationService reconciliation;
+  private final ProductSalesReconciliationService productSales;
   private final CurrentUserService currentUser;
   private final PermissionService permissions;
 
   public DashboardController(
       DailySalesReconciliationService reconciliation,
+      ProductSalesReconciliationService productSales,
       CurrentUserService currentUser,
       PermissionService permissions) {
     this.reconciliation = reconciliation;
+    this.productSales = productSales;
     this.currentUser = currentUser;
     this.permissions = permissions;
   }
@@ -33,7 +37,8 @@ public class DashboardController {
   @GetMapping("/summary")
   SummaryDto summary(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return new SummaryDto(null, reconciliation.conflicts().size(), null, null);
+    int openConflicts = reconciliation.conflicts().size() + productSales.conflicts().size();
+    return new SummaryDto(null, openConflicts, null, null);
   }
 
   record SummaryDto(
