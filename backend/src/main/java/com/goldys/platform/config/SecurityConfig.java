@@ -35,7 +35,11 @@ public class SecurityConfig {
     http.authorizeHttpRequests(
         auth ->
             auth.requestMatchers(
-                    "/api/health", "/api/ingest/lightspeed", "/api/auth/signup", "/api/auth/login")
+                    "/api/health",
+                    "/api/ingest/lightspeed",
+                    "/api/ingest/lightspeed-products",
+                    "/api/auth/signup",
+                    "/api/auth/login")
                 .permitAll()
                 .anyRequest()
                 .authenticated());
@@ -45,7 +49,10 @@ public class SecurityConfig {
     http.csrf(
         csrf ->
             csrf.ignoringRequestMatchers(
-                    "/api/ingest/lightspeed", "/api/auth/signup", "/api/auth/login")
+                    "/api/ingest/lightspeed",
+                    "/api/ingest/lightspeed-products",
+                    "/api/auth/signup",
+                    "/api/auth/login")
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
 
