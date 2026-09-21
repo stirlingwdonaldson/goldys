@@ -84,7 +84,7 @@ const connectorStatuses: ConnectorStatus[] = [
   { source: "OpenTable", connectorName: "opentable-guestcenter", lastRunAt: null, status: "never_run", failureCount: 0 },
 ];
 
-const productExceptions: ReconciliationException[] = [
+let productExceptions: ReconciliationException[] = [
   {
     id: "2026-09-14:garlic aioli",
     recordId: "garlic aioli",
@@ -98,12 +98,32 @@ const productExceptions: ReconciliationException[] = [
   },
 ];
 
+// Mutable per-product records for the drill-in; the override flips overridden here too.
+const productRecords: Record<string, ReconciliationRecord> = {
+  "garlic aioli": {
+    id: "garlic aioli",
+    entity: "garlic aioli",
+    entityType: "product",
+    fields: [
+      {
+        name: "garlic aioli",
+        label: "garlic aioli",
+        sources: [
+          { source: "Lightspeed", value: "150 × $380.88" },
+          { source: "Cooking the Books", value: "127 × $322.46" },
+        ],
+        overridden: false,
+      },
+    ],
+  },
+};
+
 export const demoApi: Api = {
   async getDashboardSummary(): Promise<DashboardSummary> {
     await delay(400);
     return {
       ingestionCompleteness: 92,
-      openConflicts: deriveExceptions(records).length,
+      openConflicts: deriveExceptions(records).length + productExceptions.length,
       timeToDetectFailure: "42m avg",
       overrideUsage: { count: 3, period: "this week" },
     };
@@ -118,6 +138,13 @@ export const demoApi: Api = {
     await delay(300);
     const record = records[id];
     if (!record) throw new ApiError("VALIDATION_FAILED", `No record with id ${id}.`);
+    return record;
+  },
+
+  async getProductRecord(date: string, product: string): Promise<ReconciliationRecord> {
+    await delay(300);
+    const record = productRecords[product];
+    if (!record) throw new ApiError("VALIDATION_FAILED", `No product record ${product}.`);
     return record;
   },
 
@@ -155,6 +182,11 @@ export const demoApi: Api = {
 
   async saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult> {
     await delay(500);
+    const record = productRecords[input.product];
+    if (!record) throw new ApiError("VALIDATION_FAILED", `Unknown product ${input.product}.`);
+    record.fields[0].overridden = true;
+    record.fields[0].authoritativeSource = input.source;
+    productExceptions = productExceptions.filter((e) => e.recordId !== input.product);
     return { ok: true, recordId: input.product, field: input.product };
   },
 };

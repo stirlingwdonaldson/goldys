@@ -16,6 +16,8 @@ export const liveApi: Api = {
     fetchApi<ReconciliationException[]>("/api/reconciliation/exceptions"),
   getReconciliationRecord: (id: string) =>
     fetchApi<ReconciliationRecord>(`/api/reconciliation/records/${id}`),
+  getProductRecord: (date: string, product: string) =>
+    fetchApi<ReconciliationRecord>(`/api/reconciliation/products/${date}/${product}`),
   listConnectorStatuses: () => fetchApi<ConnectorStatus[]>("/api/connectors"),
   runConnector: (source: string) =>
     fetchApi<ConnectorStatus>(`/api/connectors/${source}/run`, { method: "POST" }),
