@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 /**
  * Email + password session auth. Only the health, webhook, signup and login endpoints are public.
@@ -35,11 +36,11 @@ public class SecurityConfig {
     http.authorizeHttpRequests(
         auth ->
             auth.requestMatchers(
-                    "/api/health",
-                    "/api/ingest/lightspeed",
-                    "/api/ingest/lightspeed-products",
-                    "/api/auth/signup",
-                    "/api/auth/login")
+                    AntPathRequestMatcher.antMatcher("/api/health"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
+                    AntPathRequestMatcher.antMatcher("/api/auth/signup"),
+                    AntPathRequestMatcher.antMatcher("/api/auth/login"))
                 .permitAll()
                 .anyRequest()
                 .authenticated());
@@ -49,10 +50,10 @@ public class SecurityConfig {
     http.csrf(
         csrf ->
             csrf.ignoringRequestMatchers(
-                    "/api/ingest/lightspeed",
-                    "/api/ingest/lightspeed-products",
-                    "/api/auth/signup",
-                    "/api/auth/login")
+                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
+                    AntPathRequestMatcher.antMatcher("/api/auth/signup"),
+                    AntPathRequestMatcher.antMatcher("/api/auth/login"))
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
 
