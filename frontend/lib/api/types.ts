@@ -86,5 +86,6 @@ export interface Api {
   listReconciliationExceptions(): Promise<ReconciliationException[]>;
   getReconciliationRecord(id: string): Promise<ReconciliationRecord>;
   listConnectorStatuses(): Promise<ConnectorStatus[]>;
+  runConnector(source: string): Promise<ConnectorStatus>;
   saveOverride(input: SaveOverrideInput): Promise<OverrideResult>;
 }

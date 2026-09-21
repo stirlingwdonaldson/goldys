@@ -61,8 +61,7 @@ class DailySalesReconciliationTest {
             List.of(view("LIGHTSPEED", SEP_13, "27650.66"), view("CTB", SEP_13, "20990.83")));
     DailySalesOverrideRepository overrides = mock(DailySalesOverrideRepository.class);
     DailySalesOverride override =
-        DailySalesOverride.create(
-            SEP_13, "LIGHTSPEED", null, "iss", "sub", java.time.Instant.now());
+        DailySalesOverride.create(SEP_13, "LIGHTSPEED", null, "a@b.com", java.time.Instant.now());
     when(overrides.findCurrent(SEP_13)).thenReturn(Optional.of(override));
 
     DailySalesReconciliationService service = new DailySalesReconciliationService(query, overrides);

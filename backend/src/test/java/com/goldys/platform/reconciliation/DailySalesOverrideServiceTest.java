@@ -27,6 +27,7 @@ class DailySalesOverrideServiceTest {
   private static final UserRole OWNER =
       new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
   private static final LocalDate SEP_13 = LocalDate.of(2026, 9, 13);
+  private static final String ACTOR_EMAIL = "a@b.com";
 
   private static CanonicalDailySalesQuery queryWithLightspeed() {
     CanonicalDailySalesQuery query = mock(CanonicalDailySalesQuery.class);
@@ -48,7 +49,7 @@ class DailySalesOverrideServiceTest {
         new DailySalesOverrideService(
             mock(DailySalesOverrideRepository.class), permissions, queryWithLightspeed());
 
-    assertThatThrownBy(() -> service.save(OWNER, "iss", "sub", SEP_13, "LIGHTSPEED", null))
+    assertThatThrownBy(() -> service.save(OWNER, ACTOR_EMAIL, SEP_13, "LIGHTSPEED", null))
         .isInstanceOf(AccessDeniedException.class);
   }
 
@@ -60,7 +61,7 @@ class DailySalesOverrideServiceTest {
             mock(PermissionService.class),
             queryWithLightspeed());
 
-    assertThatThrownBy(() -> service.save(OWNER, "iss", "sub", SEP_13, "CTB", null))
+    assertThatThrownBy(() -> service.save(OWNER, ACTOR_EMAIL, SEP_13, "CTB", null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("CTB");
   }
@@ -76,10 +77,10 @@ class DailySalesOverrideServiceTest {
         new DailySalesOverrideService(repository, permissions, queryWithLightspeed());
 
     DailySalesOverride saved =
-        service.save(OWNER, "iss", "sub", SEP_13, "LIGHTSPEED", "typo in POS");
+        service.save(OWNER, ACTOR_EMAIL, SEP_13, "LIGHTSPEED", "typo in POS");
 
     assertThat(saved.authoritativeSource()).isEqualTo("LIGHTSPEED");
-    assertThat(saved.actorOidcSubject()).isEqualTo("sub");
+    assertThat(saved.actorEmail()).isEqualTo(ACTOR_EMAIL);
     verify(permissions)
         .require(OWNER, new ResourceKey("reconciliation.sales"), PermissionAction.WRITE);
   }
@@ -89,15 +90,14 @@ class DailySalesOverrideServiceTest {
     PermissionService permissions = mock(PermissionService.class);
     DailySalesOverrideRepository repository = mock(DailySalesOverrideRepository.class);
     DailySalesOverride prior =
-        DailySalesOverride.create(
-            SEP_13, "LIGHTSPEED", null, "iss", "sub", java.time.Instant.now());
+        DailySalesOverride.create(SEP_13, "LIGHTSPEED", null, ACTOR_EMAIL, java.time.Instant.now());
     when(repository.lockCurrent(SEP_13)).thenReturn(Optional.of(prior));
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     DailySalesOverrideService service =
         new DailySalesOverrideService(repository, permissions, queryWithLightspeed());
 
-    service.save(OWNER, "iss", "sub", SEP_13, "LIGHTSPEED", null);
+    service.save(OWNER, ACTOR_EMAIL, SEP_13, "LIGHTSPEED", null);
 
     assertThat(prior.supersededAt()).isNotNull();
     verify(repository).saveAndFlush(prior);

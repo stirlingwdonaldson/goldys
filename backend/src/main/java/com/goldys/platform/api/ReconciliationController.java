@@ -1,5 +1,6 @@
 package com.goldys.platform.api;
 
+import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
@@ -13,7 +14,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,13 +47,13 @@ public class ReconciliationController {
   }
 
   @GetMapping("/exceptions")
-  List<ExceptionDto> exceptions(@AuthenticationPrincipal OidcUser user) {
+  List<ExceptionDto> exceptions(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
     return reconciliation.conflicts().stream().map(this::toException).toList();
   }
 
   @GetMapping("/records/{date}")
-  RecordDto record(@PathVariable LocalDate date, @AuthenticationPrincipal OidcUser user) {
+  RecordDto record(@PathVariable LocalDate date, @AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
     List<SourceValueDto> sources =
         dailySales.currentDailySalesForDate(date).stream()
@@ -74,10 +74,9 @@ public class ReconciliationController {
   OverrideResultDto override(
       @PathVariable LocalDate date,
       @RequestBody OverrideRequestDto body,
-      @AuthenticationPrincipal OidcUser user) {
+      @AuthenticationPrincipal AccountUserDetails user) {
     UserRole role = currentUser.roleOf(user);
-    overrides.save(
-        role, user.getIssuer().toString(), user.getSubject(), date, body.source(), body.reason());
+    overrides.save(role, user.email(), date, body.source(), body.reason());
     return new OverrideResultDto(true, date.toString(), "daily_sales");
   }
 

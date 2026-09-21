@@ -1,47 +1,89 @@
 package com.goldys.platform.config;
 
-import org.springframework.beans.factory.ObjectProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.api.ApiErrorResponse;
+import com.goldys.platform.auth.AccountUserDetails;
+import com.goldys.platform.auth.StaffProfileSummary;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 /**
- * Backend-owned session policy.
- *
- * <p>The venue's OIDC provider handles authentication; this application maps the resulting identity
- * to a staff profile. Only the public health endpoint is reachable without a session, and CSRF
- * stays on for browser sessions.
- *
- * <p>The OAuth2 login flow activates only when a {@link ClientRegistrationRepository} is present —
- * i.e. once the venue's provider details are supplied as environment variables. With no provider
- * configured (as in tests that use a mocked OIDC identity), the chain simply requires an
- * authenticated session.
+ * Email + password session auth. Only the health, webhook, signup and login endpoints are public.
  */
 @Configuration
 public class SecurityConfig {
+  private final ObjectMapper objectMapper = new ObjectMapper();
+
   @Bean
-  SecurityFilterChain securityFilterChain(
-      HttpSecurity http, ObjectProvider<ClientRegistrationRepository> registrations)
-      throws Exception {
+  PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  @Bean
+  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.authorizeHttpRequests(
         auth ->
-            auth.requestMatchers("/api/health", "/api/ingest/lightspeed")
+            auth.requestMatchers(
+                    "/api/health", "/api/ingest/lightspeed", "/api/auth/signup", "/api/auth/login")
                 .permitAll()
                 .anyRequest()
                 .authenticated());
-    // The server-to-server webhook has no session, so it is exempt from CSRF; browser sessions keep
-    // CSRF via a cookie the frontend reads back into the X-XSRF-TOKEN header.
+
+    // The server-to-server webhook and the unauthenticated auth endpoints are CSRF-exempt; browser
+    // sessions keep CSRF via a cookie the frontend reads back into the X-XSRF-TOKEN header.
     http.csrf(
         csrf ->
-            csrf.ignoringRequestMatchers("/api/ingest/lightspeed")
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
-    if (registrations.getIfAvailable() != null) {
-      http.oauth2Login(Customizer.withDefaults());
-    }
+            csrf.ignoringRequestMatchers(
+                    "/api/ingest/lightspeed", "/api/auth/signup", "/api/auth/login")
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
+
+    http.formLogin(
+        form ->
+            form.loginProcessingUrl("/api/auth/login")
+                .usernameParameter("email")
+                .successHandler(this::successHandler)
+                .failureHandler(this::failureHandler));
+
+    http.logout(
+        logout ->
+            logout
+                .logoutUrl("/api/auth/logout")
+                .logoutSuccessHandler(
+                    (request, response, authentication) -> response.setStatus(204)));
+
     return http.build();
+  }
+
+  private void successHandler(
+      HttpServletRequest request, HttpServletResponse response, Authentication authentication)
+      throws IOException {
+    AccountUserDetails user = (AccountUserDetails) authentication.getPrincipal();
+    response.setStatus(200);
+    response.setContentType("application/json");
+    objectMapper.writeValue(
+        response.getWriter(),
+        new StaffProfileSummary(user.displayName(), user.department(), user.seniority()));
+  }
+
+  private void failureHandler(
+      HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
+      throws IOException {
+    response.setStatus(401);
+    response.setContentType("application/json");
+    objectMapper.writeValue(
+        response.getWriter(),
+        new ApiErrorResponse("INVALID_CREDENTIALS", "Invalid email or password", null, Map.of()));
   }
 }

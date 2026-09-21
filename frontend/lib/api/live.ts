@@ -16,6 +16,8 @@ export const liveApi: Api = {
   getReconciliationRecord: (id: string) =>
     fetchApi<ReconciliationRecord>(`/api/reconciliation/records/${id}`),
   listConnectorStatuses: () => fetchApi<ConnectorStatus[]>("/api/connectors"),
+  runConnector: (source: string) =>
+    fetchApi<ConnectorStatus>(`/api/connectors/${source}/run`, { method: "POST" }),
   saveOverride: (input: SaveOverrideInput) =>
     fetchApi(`/api/reconciliation/records/${input.recordId}/override`, {
       method: "POST",

@@ -33,12 +33,7 @@ public class DailySalesOverrideService {
 
   @Transactional
   public DailySalesOverride save(
-      UserRole actor,
-      String oidcIssuer,
-      String oidcSubject,
-      LocalDate date,
-      String source,
-      String reason) {
+      UserRole actor, String actorEmail, LocalDate date, String source, String reason) {
     permissions.require(actor, RESOURCE, PermissionAction.WRITE);
 
     // Reject an override that names a source with no canonical row for the date — otherwise the
@@ -56,8 +51,7 @@ public class DailySalesOverrideService {
       current.get().supersede(now);
       repository.saveAndFlush(current.get());
     }
-    return repository.save(
-        DailySalesOverride.create(date, source, reason, oidcIssuer, oidcSubject, now));
+    return repository.save(DailySalesOverride.create(date, source, reason, actorEmail, now));
   }
 
   /** The current authoritative source for a date, if any override is active. */
