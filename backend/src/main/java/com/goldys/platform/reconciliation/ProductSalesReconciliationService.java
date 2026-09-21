@@ -14,9 +14,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProductSalesReconciliationService {
   private final CanonicalProductSalesQuery productSales;
+  private final ProductSalesOverrideRepository overrides;
 
-  public ProductSalesReconciliationService(CanonicalProductSalesQuery productSales) {
+  public ProductSalesReconciliationService(
+      CanonicalProductSalesQuery productSales, ProductSalesOverrideRepository overrides) {
     this.productSales = productSales;
+    this.overrides = overrides;
   }
 
   public List<ProductSalesConflict> conflicts() {
@@ -29,11 +32,16 @@ public class ProductSalesReconciliationService {
     }
     List<ProductSalesConflict> out = new ArrayList<>();
     for (Map.Entry<String, List<ProductSourceTotal>> e : byKey.entrySet()) {
+      String[] parts = e.getKey().split("\u0000");
+      LocalDate date = LocalDate.parse(parts[0]);
+      String key = parts[1];
+      // An override resolves this product/day, so it drops out of the open-exceptions list.
+      if (overrides.findCurrent(key, date).isPresent()) {
+        continue;
+      }
       String status = classify(e.getValue());
       if (!"agreed".equals(status)) {
-        String[] parts = e.getKey().split("\u0000");
-        out.add(
-            new ProductSalesConflict(LocalDate.parse(parts[0]), parts[1], e.getValue(), status));
+        out.add(new ProductSalesConflict(date, key, e.getValue(), status));
       }
     }
     out.sort(

@@ -18,10 +18,15 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
+import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.reconciliation.DailySalesConflict;
 import com.goldys.platform.reconciliation.DailySalesOverrideService;
 import com.goldys.platform.reconciliation.DailySalesReconciliationService;
+import com.goldys.platform.reconciliation.ProductSalesConflict;
+import com.goldys.platform.reconciliation.ProductSalesOverrideService;
+import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
+import com.goldys.platform.reconciliation.ProductSourceTotal;
 import com.goldys.platform.reconciliation.SourceTotal;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -46,6 +51,9 @@ class ReconciliationControllerTest {
   @MockitoBean DailySalesReconciliationService reconciliation;
   @MockitoBean DailySalesOverrideService overrides;
   @MockitoBean CanonicalDailySalesQuery dailySales;
+  @MockitoBean ProductSalesReconciliationService productSales;
+  @MockitoBean ProductSalesOverrideService productOverrides;
+  @MockitoBean CanonicalProductSalesQuery productSalesQuery;
   @MockitoBean CurrentUserService currentUser;
   @MockitoBean PermissionService permissions;
 
@@ -111,6 +119,29 @@ class ReconciliationControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.ok").value(true))
         .andExpect(jsonPath("$.recordId").value("2026-09-13"));
+  }
+
+  @Test
+  void productExceptionsReturnsTheConflict() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(productSales.conflicts())
+        .thenReturn(
+            List.of(
+                new ProductSalesConflict(
+                    LocalDate.of(2026, 9, 14),
+                    "garlic aioli",
+                    List.of(
+                        new ProductSourceTotal(
+                            "LIGHTSPEED", new BigDecimal("150"), new BigDecimal("380.88")),
+                        new ProductSourceTotal(
+                            "CTB", new BigDecimal("127"), new BigDecimal("322.46"))),
+                    "conflict")));
+
+    mvc.perform(get("/api/reconciliation/products/exceptions").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].field").value("garlic aioli"))
+        .andExpect(jsonPath("$[0].status").value("conflict"))
+        .andExpect(jsonPath("$[0].sources[0].source").value("LIGHTSPEED"));
   }
 
   private static AccountUserDetails owner() {

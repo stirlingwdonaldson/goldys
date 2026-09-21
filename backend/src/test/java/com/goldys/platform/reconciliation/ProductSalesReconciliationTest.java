@@ -37,7 +37,8 @@ class ProductSalesReconciliationTest {
                 view("LIGHTSPEED", SEP_14, "garlic aioli", "150", "380.88"),
                 view("CTB", SEP_14, "garlic aioli", "127", "322.46"))); // conflict
 
-    ProductSalesReconciliationService service = new ProductSalesReconciliationService(query);
+    ProductSalesReconciliationService service =
+        new ProductSalesReconciliationService(query, mock(ProductSalesOverrideRepository.class));
 
     List<ProductSalesConflict> conflicts = service.conflicts();
     assertThat(conflicts).hasSize(1);
