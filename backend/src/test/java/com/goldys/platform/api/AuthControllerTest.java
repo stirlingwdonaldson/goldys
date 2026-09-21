@@ -38,4 +38,11 @@ class AuthControllerTest {
         .andExpect(jsonPath("$.department").value("ALL"))
         .andExpect(jsonPath("$.seniority").value("STAFF"));
   }
+
+  @Test
+  void emptyBodySignupIsRejectedNotRedirectedToLogin() throws Exception {
+    // A POST with no body must reach the controller (and be rejected there) rather than be
+    // redirected to /login — the public permitAll paths are matched by path, not by content type.
+    mvc.perform(post("/api/auth/signup")).andExpect(status().is4xxClientError());
+  }
 }
