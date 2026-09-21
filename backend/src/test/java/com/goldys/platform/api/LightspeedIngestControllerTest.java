@@ -39,4 +39,22 @@ class LightspeedIngestControllerTest {
             post("/api/ingest/lightspeed").contentType(MediaType.APPLICATION_JSON).content("{}"))
         .andExpect(status().isUnauthorized());
   }
+
+  @Test
+  void productQueryParamTokenIsAccepted() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-products?token=test-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isAccepted());
+  }
+
+  @Test
+  void productMissingTokenIsRejected() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isUnauthorized());
+  }
 }
