@@ -16,6 +16,7 @@ export default function ReconciliationPage() {
   const { data: exceptions, loading, error, reload } = useApiData((a) =>
     a.listReconciliationExceptions(),
   );
+  const { data: productExceptions } = useApiData((a) => a.listProductExceptions());
   const { toast } = useToast();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -110,6 +111,29 @@ export default function ReconciliationPage() {
           </button>
         ))}
       </div>
+      {productExceptions && productExceptions.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-muted-foreground">Product-level</h2>
+          {productExceptions.map((ex) => (
+            <div
+              key={ex.id}
+              className="flex flex-col gap-1 rounded-lg border bg-card p-4"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">{ex.entity}</p>
+                <Badge variant={ex.status === "conflict" ? "secondary" : "outline"}>
+                  {ex.status === "conflict" ? "Conflict" : "Missing data"}
+                </Badge>
+              </div>
+              {ex.sources.map((s) => (
+                <p key={s.source} className="text-xs text-muted-foreground">
+                  {s.source}: {s.value ?? "no data"}
+                </p>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
