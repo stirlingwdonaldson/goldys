@@ -5,7 +5,6 @@ import { useApi } from "@/lib/demo-mode";
 import { useApiData } from "@/lib/use-api-data";
 import { useToast } from "@/components/feedback/toast";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
@@ -21,31 +20,11 @@ export default function ReconciliationPage() {
   );
   const { toast } = useToast();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<{
+    date: string;
+    product: string;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
-
-  async function handleProductSave(ex: {
-    id: string;
-    recordId: string;
-  }, source: string) {
-    setSaving(true);
-    try {
-      await api.saveProductOverride({
-        date: ex.id.split(":")[0],
-        product: ex.recordId,
-        source,
-      });
-      toast({ title: "Override saved", description: `${ex.recordId} is now resolved from ${source}.`, tone: "success" });
-      await reloadProducts();
-    } catch (e) {
-      toast({
-        title: "Couldn't save override",
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function handleSave(field: string, source: string, reason?: string) {
     if (!selectedId) return;
@@ -59,6 +38,34 @@ export default function ReconciliationPage() {
       });
       await reload();
       setSelectedId(null);
+    } catch (e) {
+      toast({
+        title: "Couldn't save override",
+        description: e instanceof Error ? e.message : undefined,
+        tone: "error",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleProductSave(_field: string, source: string, reason?: string) {
+    if (!selectedProduct) return;
+    setSaving(true);
+    try {
+      await api.saveProductOverride({
+        date: selectedProduct.date,
+        product: selectedProduct.product,
+        source,
+        reason,
+      });
+      toast({
+        title: "Override saved",
+        description: `${selectedProduct.product} is now resolved from ${source}.`,
+        tone: "success",
+      });
+      await reloadProducts();
+      setSelectedProduct(null);
     } catch (e) {
       toast({
         title: "Couldn't save override",
@@ -86,9 +93,24 @@ export default function ReconciliationPage() {
   if (selectedId) {
     return (
       <ReconciliationDrillIn
-        recordId={selectedId}
+        fetchRecord={(api) => api.getReconciliationRecord(selectedId)}
+        deps={[selectedId]}
         onBack={() => setSelectedId(null)}
         onSave={handleSave}
+        saving={saving}
+      />
+    );
+  }
+
+  if (selectedProduct) {
+    return (
+      <ReconciliationDrillIn
+        fetchRecord={(api) =>
+          api.getProductRecord(selectedProduct.date, selectedProduct.product)
+        }
+        deps={[selectedProduct.date, selectedProduct.product]}
+        onBack={() => setSelectedProduct(null)}
+        onSave={handleProductSave}
         saving={saving}
       />
     );
@@ -103,10 +125,7 @@ export default function ReconciliationPage() {
             Field-level conflicts between sources, shown exception-first.
           </p>
         </div>
-        <EmptyState
-          title="No conflicts to review"
-          description="When two sources disagree on the same fact, the exception appears here."
-        />
+        {renderProductSection()}
       </div>
     );
   }
@@ -137,42 +156,36 @@ export default function ReconciliationPage() {
           </button>
         ))}
       </div>
-      {productExceptions && productExceptions.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold text-muted-foreground">Product-level</h2>
-          {productExceptions.map((ex) => (
-            <div
-              key={ex.id}
-              className="flex flex-col gap-1 rounded-lg border bg-card p-4"
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">{ex.entity}</p>
-                <Badge variant={ex.status === "conflict" ? "secondary" : "outline"}>
-                  {ex.status === "conflict" ? "Conflict" : "Missing data"}
-                </Badge>
-              </div>
-              {ex.sources.map((s) => (
-                <p key={s.source} className="text-xs text-muted-foreground">
-                  {s.source}: {s.value ?? "no data"}
-                </p>
-              ))}
-              <div className="flex gap-2">
-                {ex.sources.map((s) => (
-                  <button
-                    key={s.source}
-                    type="button"
-                    disabled={saving}
-                    onClick={() => handleProductSave(ex, s.source)}
-                    className="text-xs underline text-muted-foreground hover:text-foreground"
-                  >
-                    Use {s.source}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {renderProductSection()}
     </div>
   );
+
+  function renderProductSection() {
+    if (!productExceptions || productExceptions.length === 0) return null;
+    return (
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-muted-foreground">Product-level</h2>
+        {productExceptions.map((ex) => (
+          <button
+            key={ex.id}
+            type="button"
+            onClick={() =>
+              setSelectedProduct({ date: ex.id.split(":")[0], product: ex.recordId })
+            }
+            className="flex items-center justify-between rounded-lg border bg-card p-4 text-left hover:bg-accent"
+          >
+            <div>
+              <p className="text-sm font-medium">{ex.entity}</p>
+              <p className="text-sm text-muted-foreground">
+                {ex.sources.map((s) => `${s.source}: ${s.value ?? "no data"}`).join(" · ")}
+              </p>
+            </div>
+            <Badge variant={ex.status === "conflict" ? "secondary" : "outline"}>
+              {ex.status === "conflict" ? "Conflict" : "Missing data"}
+            </Badge>
+          </button>
+        ))}
+      </div>
+    );
+  }
 }

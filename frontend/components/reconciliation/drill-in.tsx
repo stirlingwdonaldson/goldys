@@ -9,19 +9,18 @@ import { Input } from "@/components/ui/input";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { needsDecision } from "@/lib/reconciliation-logic";
+import type { Api, ReconciliationRecord } from "@/lib/api";
 
 interface DrillInProps {
-  recordId: string;
+  fetchRecord: (api: Api) => Promise<ReconciliationRecord>;
+  deps: unknown[];
   onBack: () => void;
   onSave: (field: string, source: string, reason?: string) => Promise<void>;
   saving: boolean;
 }
 
-export function ReconciliationDrillIn({ recordId, onBack, onSave, saving }: DrillInProps) {
-  const { data: record, loading, error, reload } = useApiData(
-    (api) => api.getReconciliationRecord(recordId),
-    [recordId],
-  );
+export function ReconciliationDrillIn({ fetchRecord, deps, onBack, onSave, saving }: DrillInProps) {
+  const { data: record, loading, error, reload } = useApiData(fetchRecord, deps);
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [reasons, setReasons] = useState<Record<string, string>>({});
 
