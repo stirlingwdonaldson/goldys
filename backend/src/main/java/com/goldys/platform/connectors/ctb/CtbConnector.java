@@ -121,6 +121,7 @@ public class CtbConnector implements SourceConnector {
     int start = 0;
     int pages = 0;
     int total = -1;
+    Map<String, ProductSalesInput> byProduct = new LinkedHashMap<>();
     while (pages < MAX_PAGES) {
       CtbClient.CtbPage page =
           client.searchSaleItems(day.toString(), day.toString(), start, PAGE_SIZE);
@@ -136,8 +137,17 @@ public class CtbConnector implements SourceConnector {
 
       for (CtbSaleItem item : saleItemParser.parse(bytes)) {
         String key = ProductNameKey.normalize(item.stockDescription());
-        productSales.record(
-            new ProductSalesInput("CTB", day, key, item.quantitySold(), item.amount(), rawId));
+        byProduct.merge(
+            key,
+            new ProductSalesInput("CTB", day, key, item.quantitySold(), item.amount(), rawId),
+            (a, b) ->
+                new ProductSalesInput(
+                    "CTB",
+                    day,
+                    key,
+                    a.quantitySold().add(b.quantitySold()),
+                    a.amount().add(b.amount()),
+                    a.rawRecordId()));
       }
 
       total = page.totalCount();
@@ -146,6 +156,10 @@ public class CtbConnector implements SourceConnector {
         break;
       }
       start += PAGE_SIZE;
+    }
+
+    for (ProductSalesInput input : byProduct.values()) {
+      productSales.record(input);
     }
   }
 

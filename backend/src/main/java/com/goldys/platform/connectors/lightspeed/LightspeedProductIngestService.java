@@ -11,7 +11,9 @@ import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -52,11 +54,24 @@ public class LightspeedProductIngestService {
     List<LightspeedProductSale> rows =
         parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8), tradingDate);
 
+    Map<String, ProductSalesInput> byProduct = new LinkedHashMap<>();
     for (LightspeedProductSale row : rows) {
       String key = ProductNameKey.normalize(row.productName());
-      canonical.record(
+      byProduct.merge(
+          key,
           new ProductSalesInput(
-              "LIGHTSPEED", tradingDate, key, row.quantitySold(), row.amount(), rawId));
+              "LIGHTSPEED", tradingDate, key, row.quantitySold(), row.amount(), rawId),
+          (a, b) ->
+              new ProductSalesInput(
+                  "LIGHTSPEED",
+                  tradingDate,
+                  key,
+                  a.quantitySold().add(b.quantitySold()),
+                  a.amount().add(b.amount()),
+                  rawId));
+    }
+    for (ProductSalesInput input : byProduct.values()) {
+      canonical.record(input);
     }
   }
 

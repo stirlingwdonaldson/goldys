@@ -16,10 +16,36 @@ export default function ReconciliationPage() {
   const { data: exceptions, loading, error, reload } = useApiData((a) =>
     a.listReconciliationExceptions(),
   );
-  const { data: productExceptions } = useApiData((a) => a.listProductExceptions());
+  const { data: productExceptions, reload: reloadProducts } = useApiData((a) =>
+    a.listProductExceptions(),
+  );
   const { toast } = useToast();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  async function handleProductSave(ex: {
+    id: string;
+    recordId: string;
+  }, source: string) {
+    setSaving(true);
+    try {
+      await api.saveProductOverride({
+        date: ex.id.split(":")[0],
+        product: ex.recordId,
+        source,
+      });
+      toast({ title: "Override saved", description: `${ex.recordId} is now resolved from ${source}.`, tone: "success" });
+      await reloadProducts();
+    } catch (e) {
+      toast({
+        title: "Couldn't save override",
+        description: e instanceof Error ? e.message : undefined,
+        tone: "error",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleSave(field: string, source: string, reason?: string) {
     if (!selectedId) return;
@@ -130,6 +156,19 @@ export default function ReconciliationPage() {
                   {s.source}: {s.value ?? "no data"}
                 </p>
               ))}
+              <div className="flex gap-2">
+                {ex.sources.map((s) => (
+                  <button
+                    key={s.source}
+                    type="button"
+                    disabled={saving}
+                    onClick={() => handleProductSave(ex, s.source)}
+                    className="text-xs underline text-muted-foreground hover:text-foreground"
+                  >
+                    Use {s.source}
+                  </button>
+                ))}
+              </div>
             </div>
           ))}
         </div>

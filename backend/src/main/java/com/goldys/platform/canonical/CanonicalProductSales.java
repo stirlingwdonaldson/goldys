@@ -69,8 +69,14 @@ class CanonicalProductSales extends BitemporalEntity {
   }
 
   boolean sameFact(ProductSalesInput input) {
-    return amount.compareTo(input.amount()) == 0
-        && quantitySold.compareTo(input.quantitySold()) == 0;
+    return same(amount, input.amount()) && same(quantitySold, input.quantitySold());
+  }
+
+  private static boolean same(BigDecimal a, BigDecimal b) {
+    if (a == null || b == null) {
+      return a == b;
+    }
+    return a.compareTo(b) == 0;
   }
 
   LocalDate tradingDate() {
