@@ -1,6 +1,8 @@
 package com.goldys.platform.api;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,5 +46,14 @@ class AuthControllerTest {
     // A POST with no body must reach the controller (and be rejected there) rather than be
     // redirected to /login — the public permitAll paths are matched by path, not by content type.
     mvc.perform(post("/api/auth/signup")).andExpect(status().is4xxClientError());
+  }
+
+  @Test
+  void errorPathIsPermitAll() throws Exception {
+    // Spring Boot forwards error handling to /error as an error-dispatch that still passes the
+    // AuthorizationFilter; /error must be public or the 4xx becomes a 302 to /login. (The mock MVC
+    // slice renders a 500 for /error, but the point is that it is not redirected to /login.)
+    mvc.perform(get("/error"))
+        .andExpect(result -> assertThat(result.getResponse().getStatus()).isNotEqualTo(302));
   }
 }

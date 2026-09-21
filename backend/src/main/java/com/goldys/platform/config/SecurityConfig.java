@@ -40,7 +40,12 @@ public class SecurityConfig {
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
                     AntPathRequestMatcher.antMatcher("/api/auth/signup"),
-                    AntPathRequestMatcher.antMatcher("/api/auth/login"))
+                    AntPathRequestMatcher.antMatcher("/api/auth/login"),
+                    // Spring Boot forwards error handling (e.g. a bodyless POST to a
+                    // @RequestBody endpoint) to /error as a separate error-dispatch. That
+                    // dispatch runs through the AuthorizationFilter, so /error must be public
+                    // or the 4xx it is trying to report becomes a 302 redirect to /login.
+                    AntPathRequestMatcher.antMatcher("/error"))
                 .permitAll()
                 .anyRequest()
                 .authenticated());
