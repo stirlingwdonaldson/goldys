@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.stereotype.Component;
 
 /** Parses CTB's {@code Sale/SearchSaleItemsByDateRange} envelope into per-product rows. */
+@Component
 public class CtbSaleItemParser {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 

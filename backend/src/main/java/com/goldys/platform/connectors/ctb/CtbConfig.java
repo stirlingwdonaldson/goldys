@@ -1,6 +1,7 @@
 package com.goldys.platform.connectors.ctb;
 
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
+import com.goldys.platform.canonical.CanonicalProductSalesIngest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +15,10 @@ public class CtbConfig {
       @Value("${ctb.email:}") String email,
       @Value("${ctb.password:}") String password,
       CtbRevenueParser parser,
-      CanonicalDailySalesIngest canonical) {
-    return new CtbConnector(new CtbClient(baseUrl), email, password, parser, canonical);
+      CanonicalDailySalesIngest canonical,
+      CtbSaleItemParser saleItemParser,
+      CanonicalProductSalesIngest productSales) {
+    return new CtbConnector(
+        new CtbClient(baseUrl), email, password, parser, canonical, saleItemParser, productSales);
   }
 }
