@@ -2,6 +2,7 @@ package com.goldys.platform.ingestion;
 
 import com.goldys.platform.ingestion.port.SourceConnector;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -112,5 +113,73 @@ public class IngestionService {
                     r.startedAt(),
                     r.failureSummary()))
         .toList();
+  }
+
+  /**
+   * Dashboard health metrics derived from the ledger.
+   *
+   * <p>Completeness is the share of <em>completed</em> runs (any terminal status) that ran cleanly
+   * — {@code SUCCESS} or {@code NO_NEW_DATA}. {@code PARTIAL} and {@code FAILED} both count against
+   * it, since a partial run still carries a silent-gap risk. A dangling {@code RUNNING} row (a
+   * crash that never completed) is excluded from both numbers: it is neither a clean run nor a
+   * measured failure duration.
+   *
+   * <p>Time-to-detect is the mean {@code startedAt → completedAt} duration of runs that recorded a
+   * failure ({@code FAILED} or {@code PARTIAL}). This is a proxy for "how long until a failed run
+   * became visible": the ledger records failures synchronously and does not timestamp the moment a
+   * human saw them, so run duration is the closest measurable stand-in.
+   */
+  public IngestionHealth health() {
+    List<IngestionRun> completed =
+        runRepository.findAllByOrderByStartedAtDesc().stream()
+            .filter(r -> r.status() != IngestionStatus.RUNNING)
+            .toList();
+
+    Integer completeness = null;
+    if (!completed.isEmpty()) {
+      long clean =
+          completed.stream()
+              .filter(
+                  r ->
+                      r.status() == IngestionStatus.SUCCESS
+                          || r.status() == IngestionStatus.NO_NEW_DATA)
+              .count();
+      completeness = (int) Math.round(100.0 * clean / completed.size());
+    }
+
+    String timeToDetect = null;
+    List<IngestionRun> failed =
+        completed.stream()
+            .filter(
+                r -> r.status() == IngestionStatus.FAILED || r.status() == IngestionStatus.PARTIAL)
+            .toList();
+    if (!failed.isEmpty()) {
+      long totalMillis =
+          failed.stream()
+              .mapToLong(r -> Duration.between(r.startedAt(), r.completedAt()).toMillis())
+              .sum();
+      timeToDetect = formatDuration(Duration.ofMillis(totalMillis / failed.size())) + " avg";
+    }
+
+    return new IngestionHealth(completeness, timeToDetect);
+  }
+
+  private static String formatDuration(Duration d) {
+    long seconds = d.toSeconds();
+    if (seconds < 60) {
+      return seconds + "s";
+    }
+    long minutes = seconds / 60;
+    if (minutes < 60) {
+      return minutes + "m";
+    }
+    long hours = minutes / 60;
+    long remMinutes = minutes % 60;
+    if (hours < 24) {
+      return remMinutes == 0 ? hours + "h" : hours + "h " + remMinutes + "m";
+    }
+    long days = hours / 24;
+    long remHours = hours % 24;
+    return remHours == 0 ? days + "d" : days + "d " + remHours + "h";
   }
 }
