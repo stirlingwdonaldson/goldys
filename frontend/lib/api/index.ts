@@ -48,6 +48,7 @@ export async function logout(): Promise<void> {
 export { ApiError, isApiError } from "./errors";
 export type { ApiErrorCode } from "./errors";
 export type {
+  ActivityPoint,
   Api,
   ApiErrorResponse,
   ConnectorRunStatus,

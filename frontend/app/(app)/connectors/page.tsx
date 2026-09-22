@@ -4,29 +4,12 @@ import { useState } from "react";
 import { useApiData } from "@/lib/use-api-data";
 import { useApi } from "@/lib/demo-mode";
 import { isApiError } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
+import { ConnectorStatusBadge } from "@/components/connectors/connector-status-badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
-import type { ConnectorRunStatus } from "@/lib/api";
-
-const STATUS_LABEL: Record<ConnectorRunStatus, string> = {
-  success: "Success",
-  partial: "Partial",
-  failed: "Failed",
-  no_new_data: "No new data",
-  never_run: "Never run",
-};
-
-const STATUS_CLASS: Record<ConnectorRunStatus, string> = {
-  success: "border-transparent bg-status-success text-status-success-foreground",
-  partial: "border-transparent bg-status-warning text-status-warning-foreground",
-  failed: "border-transparent bg-destructive text-destructive-foreground",
-  no_new_data: "border-transparent bg-muted text-muted-foreground",
-  never_run: "border-transparent bg-muted text-muted-foreground",
-};
 
 export default function ConnectorsPage() {
   const api = useApi();
@@ -91,7 +74,7 @@ export default function ConnectorsPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className={STATUS_CLASS[c.status]}>{STATUS_LABEL[c.status]}</Badge>
+              <ConnectorStatusBadge status={c.status} />
               <Button
                 variant="outline"
                 size="sm"

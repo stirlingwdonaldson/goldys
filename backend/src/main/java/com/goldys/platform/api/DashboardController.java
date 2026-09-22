@@ -5,12 +5,14 @@ import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
+import com.goldys.platform.ingestion.IngestionActivityPoint;
 import com.goldys.platform.ingestion.IngestionHealth;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.reconciliation.DailySalesReconciliationService;
 import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
 import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
+import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -64,4 +66,16 @@ public class DashboardController {
       OverrideUsageDto overrideUsage) {}
 
   record OverrideUsageDto(Integer count, String period) {}
+
+  @GetMapping("/activity")
+  List<ActivityDto> activity(@AuthenticationPrincipal AccountUserDetails user) {
+    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
+    return ingestion.activity(14).stream().map(DashboardController::toActivityDto).toList();
+  }
+
+  private static ActivityDto toActivityDto(IngestionActivityPoint point) {
+    return new ActivityDto(point.date(), point.clean(), point.failed());
+  }
+
+  record ActivityDto(String date, int clean, int failed) {}
 }

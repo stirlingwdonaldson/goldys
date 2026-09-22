@@ -1,6 +1,7 @@
 import { deriveExceptions } from "../reconciliation-logic";
 import { ApiError } from "./errors";
 import type {
+  ActivityPoint,
   Api,
   ConnectorStatus,
   DashboardSummary,
@@ -118,6 +119,21 @@ const productRecords: Record<string, ReconciliationRecord> = {
   },
 };
 
+/** A plausible trailing-14-day run series, ending today (UTC), for the demo chart. */
+function activityFixture(): ActivityPoint[] {
+  const points: ActivityPoint[] = [];
+  const today = new Date();
+  for (let i = 13; i >= 0; i--) {
+    const day = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i));
+    const date = day.toISOString().slice(0, 10);
+    // Mostly clean days, a couple of failed runs sprinkled in.
+    const failed = i === 2 || i === 7 ? 2 : i === 10 ? 1 : 0;
+    const clean = 3 + (i % 3);
+    points.push({ date, clean, failed });
+  }
+  return points;
+}
+
 export const demoApi: Api = {
   async getDashboardSummary(): Promise<DashboardSummary> {
     await delay(400);
@@ -127,6 +143,11 @@ export const demoApi: Api = {
       timeToDetectFailure: "42m avg",
       overrideUsage: { count: 3, period: "this week" },
     };
+  },
+
+  async getDashboardActivity(): Promise<ActivityPoint[]> {
+    await delay(400);
+    return activityFixture();
   },
 
   async listReconciliationExceptions(): Promise<ReconciliationException[]> {

@@ -1,5 +1,6 @@
 import { fetchApi } from "./client";
 import type {
+  ActivityPoint,
   Api,
   ConnectorStatus,
   DashboardSummary,
@@ -12,6 +13,7 @@ import type {
 /** Real backend calls. The demo fixtures stay behind the `demo` flag; these hit the live endpoints. */
 export const liveApi: Api = {
   getDashboardSummary: () => fetchApi<DashboardSummary>("/api/dashboard/summary"),
+  getDashboardActivity: () => fetchApi<ActivityPoint[]>("/api/dashboard/activity"),
   listReconciliationExceptions: () =>
     fetchApi<ReconciliationException[]>("/api/reconciliation/exceptions"),
   getReconciliationRecord: (id: string) =>
