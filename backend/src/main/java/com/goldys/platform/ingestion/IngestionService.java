@@ -3,6 +3,10 @@ package com.goldys.platform.ingestion;
 import com.goldys.platform.ingestion.port.SourceConnector;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -162,6 +166,58 @@ public class IngestionService {
     }
 
     return new IngestionHealth(completeness, timeToDetect);
+  }
+
+  /**
+   * Daily connector-run activity for the dashboard trend, one point per day over the trailing
+   * {@code days} days (inclusive of today), oldest first. Days with no runs are zero-filled so the
+   * chart has a stable x-axis.
+   */
+  public List<IngestionActivityPoint> activity(int days) {
+    if (days < 1) {
+      return List.of();
+    }
+    Instant now = CLOCK.instant();
+    LocalDate firstDay = now.atZone(ZoneOffset.UTC).toLocalDate().minusDays(days - 1L);
+    Instant windowStart = firstDay.atStartOfDay(ZoneOffset.UTC).toInstant();
+    return activityWindow(runRepository.findByStartedAtGreaterThanEqual(windowStart), now, days);
+  }
+
+  /**
+   * Bucket completed runs into UTC days over the trailing {@code days} days ending at {@code now},
+   * counting {@code SUCCESS}/{@code NO_NEW_DATA} as clean and {@code FAILED}/{@code PARTIAL} as
+   * failed. Dangling {@code RUNNING} rows and runs outside the window are ignored.
+   */
+  static List<IngestionActivityPoint> activityWindow(
+      List<IngestionRun> runs, Instant now, int days) {
+    LocalDate today = now.atZone(ZoneOffset.UTC).toLocalDate();
+    LocalDate firstDay = today.minusDays(days - 1L);
+
+    Map<LocalDate, int[]> buckets = new LinkedHashMap<>();
+    for (int i = 0; i < days; i++) {
+      buckets.put(firstDay.plusDays(i), new int[2]); // [clean, failed]
+    }
+
+    for (IngestionRun run : runs) {
+      if (run.status() == IngestionStatus.RUNNING) {
+        continue;
+      }
+      int[] bucket = buckets.get(run.startedAt().atZone(ZoneOffset.UTC).toLocalDate());
+      if (bucket == null) {
+        continue;
+      }
+      if (run.status() == IngestionStatus.SUCCESS || run.status() == IngestionStatus.NO_NEW_DATA) {
+        bucket[0]++;
+      } else {
+        bucket[1]++;
+      }
+    }
+
+    List<IngestionActivityPoint> points = new ArrayList<>(buckets.size());
+    buckets.forEach(
+        (day, counts) ->
+            points.add(new IngestionActivityPoint(day.toString(), counts[0], counts[1])));
+    return points;
   }
 
   private static String formatDuration(Duration d) {

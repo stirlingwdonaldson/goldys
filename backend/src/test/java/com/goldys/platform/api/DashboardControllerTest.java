@@ -2,12 +2,14 @@ package com.goldys.platform.api;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.DepartmentCode;
@@ -15,6 +17,7 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
+import com.goldys.platform.ingestion.IngestionActivityPoint;
 import com.goldys.platform.ingestion.IngestionHealth;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.reconciliation.DailySalesReconciliationService;
@@ -75,6 +78,36 @@ class DashboardControllerTest {
         .andExpect(jsonPath("$.ingestionCompleteness").value(nullValue()))
         .andExpect(jsonPath("$.timeToDetectFailure").value(nullValue()))
         .andExpect(jsonPath("$.overrideUsage.count").value(0));
+  }
+
+  @Test
+  void activityReturnsDailySeries() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(ingestion.activity(14))
+        .thenReturn(
+            List.of(
+                new IngestionActivityPoint("2026-09-21", 5, 0),
+                new IngestionActivityPoint("2026-09-22", 4, 1)));
+
+    mvc.perform(get("/api/dashboard/activity").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].date").value("2026-09-21"))
+        .andExpect(jsonPath("$[0].clean").value(5))
+        .andExpect(jsonPath("$[0].failed").value(0))
+        .andExpect(jsonPath("$[1].date").value("2026-09-22"))
+        .andExpect(jsonPath("$[1].failed").value(1));
+  }
+
+  @Test
+  void activityDeniedReturnsForbidden() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    doThrow(AccessDeniedException.forResource("reconciliation.sales"))
+        .when(permissions)
+        .require(any(), any(), any());
+
+    mvc.perform(get("/api/dashboard/activity").with(authenticated(owner())))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("NOT_PERMITTED"));
   }
 
   private static AccountUserDetails owner() {
