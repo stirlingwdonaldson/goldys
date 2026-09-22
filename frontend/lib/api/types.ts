@@ -52,6 +52,16 @@ export interface ReconciliationRecord {
 
 export type ConnectorRunStatus = "success" | "partial" | "failed" | "no_new_data" | "never_run";
 
+/** One day of connector-run activity for the dashboard trend. */
+export interface ActivityPoint {
+  /** UTC day in ISO-8601 (YYYY-MM-DD). */
+  date: string;
+  /** Runs that completed SUCCESS or NO_NEW_DATA. */
+  clean: number;
+  /** Runs that completed FAILED or PARTIAL. */
+  failed: number;
+}
+
 export interface ConnectorStatus {
   source: string;
   connectorName: string;
@@ -90,6 +100,7 @@ export interface ProductOverrideInput {
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
 export interface Api {
   getDashboardSummary(): Promise<DashboardSummary>;
+  getDashboardActivity(): Promise<ActivityPoint[]>;
   listReconciliationExceptions(): Promise<ReconciliationException[]>;
   listProductExceptions(): Promise<ReconciliationException[]>;
   getReconciliationRecord(id: string): Promise<ReconciliationRecord>;

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useApi } from "@/lib/demo-mode";
 import { useApiData } from "@/lib/use-api-data";
 import { useToast } from "@/components/feedback/toast";
@@ -11,7 +12,16 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { ReconciliationDrillIn } from "@/components/reconciliation/drill-in";
 
 export default function ReconciliationPage() {
+  return (
+    <Suspense fallback={<LoadingState rows={4} />}>
+      <ReconciliationContent />
+    </Suspense>
+  );
+}
+
+function ReconciliationContent() {
   const api = useApi();
+  const searchParams = useSearchParams();
   const { data: exceptions, loading, error, reload } = useApiData((a) =>
     a.listReconciliationExceptions(),
   );
@@ -19,11 +29,14 @@ export default function ReconciliationPage() {
     a.listProductExceptions(),
   );
   const { toast } = useToast();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const recordParam = searchParams.get("record");
+  const dateParam = searchParams.get("date");
+  const productParam = searchParams.get("product");
+  const [selectedId, setSelectedId] = useState<string | null>(recordParam);
   const [selectedProduct, setSelectedProduct] = useState<{
     date: string;
     product: string;
-  } | null>(null);
+  } | null>(dateParam && productParam ? { date: dateParam, product: productParam } : null);
   const [saving, setSaving] = useState(false);
 
   async function handleSave(field: string, source: string, reason?: string) {
