@@ -7,10 +7,14 @@ import java.time.LocalDate;
  * which cannot run in CI.
  */
 public interface OpenTableClient {
-  void login(String email, String password);
+  /**
+   * Ensure an authenticated GuestCenter session, auto-logging in only if the stored session is
+   * missing or expired.
+   */
+  void authenticate();
 
   byte[] exportReservationsCsv(LocalDate from, LocalDate to);
 
-  /** Releases the underlying browser and Playwright resources. Safe to call multiple times. */
+  /** Releases the browser connection and Playwright resources. Safe to call multiple times. */
   void close();
 }
