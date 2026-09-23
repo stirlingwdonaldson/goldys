@@ -17,6 +17,7 @@ import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.FetchedPayload;
 import com.goldys.platform.ingestion.port.IngestionSink;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
@@ -36,12 +37,13 @@ class OpenTableConnectorTest {
 
   @Test
   void authenticatesBeforeExportingAndCanonicalizesEachRow() {
+    UUID rawId = UUID.randomUUID();
     when(client.exportReservationsCsv(any(), any())).thenReturn(csv);
     AtomicReference<FetchedPayload> captured = new AtomicReference<>();
     IngestionSink sink =
         payload -> {
           captured.set(payload);
-          return UUID.randomUUID();
+          return rawId;
         };
 
     connector().fetch(null, sink);
@@ -56,8 +58,16 @@ class OpenTableConnectorTest {
 
     ArgumentCaptor<ReservationInput> input = ArgumentCaptor.forClass(ReservationInput.class);
     verify(canonical, times(2)).record(input.capture());
-    assertThat(input.getAllValues().get(0).reservationId()).isEqualTo("1000000001");
-    assertThat(input.getAllValues().get(0).sourceSystem()).isEqualTo("OPENTABLE");
+    ReservationInput first = input.getAllValues().get(0);
+    assertThat(first.sourceSystem()).isEqualTo("OPENTABLE");
+    assertThat(first.reservationId()).isEqualTo("1000000001");
+    assertThat(first.reservationAt()).isEqualTo(Instant.parse("2026-09-23T09:30:00Z"));
+    assertThat(first.partySize()).isEqualTo(4);
+    assertThat(first.status()).isEqualTo("BOOKED");
+    assertThat(first.tableName()).isEqualTo("12");
+    assertThat(first.sourceChannel()).isEqualTo("OpenTable");
+    assertThat(first.partyName()).isEqualTo("Smith");
+    assertThat(first.rawRecordId()).isEqualTo(rawId);
   }
 
   @Test

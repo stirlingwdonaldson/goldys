@@ -54,15 +54,19 @@ public class FortressOpenTableClient implements OpenTableClient {
       return false;
     }
     try {
+      if (context != null) {
+        context.close();
+        context = null;
+      }
       context =
           browser.newContext(
               new Browser.NewContextOptions()
                   .setAcceptDownloads(true)
                   .setStorageStatePath(sessionPath));
-      Page page = context.newPage();
-      page.navigate(BASE + "/reports/reservations");
-      // A valid session stays on the report; an expired one redirects to login or Okta.
-      return !page.url().contains("/login") && !page.url().contains("restauth");
+      try (Page page = context.newPage()) {
+        page.navigate(BASE + "/reports/reservations");
+        return !page.url().contains("/login") && !page.url().contains("restauth");
+      }
     } catch (RuntimeException e) {
       if (context != null) {
         context.close();
@@ -89,9 +93,11 @@ public class FortressOpenTableClient implements OpenTableClient {
       page.locator("button[type=submit]").click();
       page.waitForURL("**restauth.opentable.com/**");
 
-      // Stage 2: Okta identifier -> Next.
+      // Stage 2: Okta identifier -> Next. (Fix 8, fold in: wait for the field; inputValue is never
+      // null.)
       Locator identifier = page.locator("input[name=identifier]");
-      if (identifier.inputValue() == null || identifier.inputValue().isBlank()) {
+      identifier.waitFor();
+      if (identifier.inputValue().isBlank()) {
         moveMouse(page, identifier);
         typeHuman(page, identifier, email);
       }
@@ -106,15 +112,6 @@ public class FortressOpenTableClient implements OpenTableClient {
       pause();
       page.locator("input[type=submit]").click();
       page.waitForURL("**guestcenter.opentable.com/**");
-
-      // Persist the session for the next run.
-      if (sessionPath.getParent() != null) {
-        Files.createDirectories(sessionPath.getParent());
-      }
-      context.storageState(new BrowserContext.StorageStateOptions().setPath(sessionPath));
-    } catch (IOException e) {
-      throw new ConnectorFetchException(
-          "CONNECTOR_AUTH_FAILED", "Failed to persist the OpenTable session at " + sessionPath, e);
     } catch (RuntimeException e) {
       throw new ConnectorFetchException(
           "CONNECTOR_AUTH_FAILED",
@@ -122,6 +119,25 @@ public class FortressOpenTableClient implements OpenTableClient {
               + "required by placing a valid session at "
               + sessionPath,
           e);
+    }
+    persistSession();
+  }
+
+  private void persistSession() {
+    try {
+      if (sessionPath.getParent() != null) {
+        Files.createDirectories(sessionPath.getParent());
+      }
+      context.storageState(new BrowserContext.StorageStateOptions().setPath(sessionPath));
+      try {
+        Files.setPosixFilePermissions(
+            sessionPath, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
+      } catch (UnsupportedOperationException ignored) {
+        // non-POSIX filesystem; leave default permissions
+      }
+    } catch (IOException | RuntimeException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_FETCH_FAILED", "Failed to persist the OpenTable session at " + sessionPath, e);
     }
   }
 
@@ -147,10 +163,15 @@ public class FortressOpenTableClient implements OpenTableClient {
 
   private void ensureConnected() {
     if (browser == null) {
+      Playwright pw = null;
       try {
-        playwright = Playwright.create();
-        browser = playwright.chromium().connectOverCDP(cdpUrl);
+        pw = Playwright.create();
+        browser = pw.chromium().connectOverCDP(cdpUrl);
+        playwright = pw;
       } catch (RuntimeException e) {
+        if (pw != null) {
+          pw.close();
+        }
         throw new ConnectorFetchException(
             "CONNECTOR_BROWSER_FAILED", "Fortress CDP unreachable at " + cdpUrl, e);
       }
