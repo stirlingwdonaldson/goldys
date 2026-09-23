@@ -9,7 +9,6 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.AriaRole;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -49,6 +48,10 @@ public class PlaywrightOpenTableClient implements OpenTableClient {
 
   @Override
   public byte[] exportReservationsCsv(LocalDate from, LocalDate to) {
+    if (context == null) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_FETCH_FAILED", "login() must be called before exporting reservations");
+    }
     Page page = context.newPage();
     page.navigate(BASE + "/reports/reservations");
     page.locator("input[name=from]").fill(from.format(DateTimeFormatter.ISO_LOCAL_DATE));
@@ -61,7 +64,8 @@ public class PlaywrightOpenTableClient implements OpenTableClient {
     try {
       return Files.readAllBytes(download.path());
     } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      throw new ConnectorFetchException(
+          "CONNECTOR_FETCH_FAILED", "OpenTable CSV download failed", e);
     }
   }
 }
