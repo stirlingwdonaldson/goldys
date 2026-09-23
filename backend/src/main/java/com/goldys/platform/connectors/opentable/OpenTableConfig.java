@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 /** Wires the OpenTable connector, reading credentials from environment variables. */
 @Configuration
 public class OpenTableConfig {
-  @Bean
+  @Bean(destroyMethod = "close")
   OpenTableClient opentableClient() {
     return new PlaywrightOpenTableClient();
   }

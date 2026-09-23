@@ -10,4 +10,7 @@ public interface OpenTableClient {
   void login(String email, String password);
 
   byte[] exportReservationsCsv(LocalDate from, LocalDate to);
+
+  /** Releases the underlying browser and Playwright resources. Safe to call multiple times. */
+  void close();
 }

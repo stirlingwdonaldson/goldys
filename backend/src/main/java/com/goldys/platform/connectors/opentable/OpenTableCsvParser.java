@@ -53,14 +53,21 @@ public class OpenTableCsvParser {
         "Guest Name");
 
     List<OpenTableReservation> out = new ArrayList<>();
+    int width = columns.size();
     for (int i = 1; i < records.size(); i++) {
       CSVRecord r = records.get(i);
+      if (r.size() != width) {
+        throw new ConnectorFetchException(
+            "CONNECTOR_SCHEMA_MISMATCH", "OpenTable CSV row has wrong column count");
+      }
+      String id = requireValue(columns, r, "Reservation ID");
+      String status = normalizeStatus(requireValue(columns, r, "Status"));
       out.add(
           new OpenTableReservation(
-              r.get(columns.get("Reservation ID")),
+              id,
               at(r, columns),
               partySize(r, columns),
-              normalizeStatus(get(columns, r, "Status")),
+              status,
               blankToNull(get(columns, r, "Table")),
               blankToNull(get(columns, r, "Source")),
               blankToNull(get(columns, r, "Guest Name"))));
@@ -113,6 +120,8 @@ public class OpenTableCsvParser {
       return CSVFormat.DEFAULT.parse(in).getRecords();
     } catch (IOException e) {
       throw new UncheckedIOException(e);
+    } catch (RuntimeException e) {
+      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Malformed OpenTable CSV", e);
     }
   }
 
@@ -138,7 +147,20 @@ public class OpenTableCsvParser {
     return i == null ? null : r.get(i);
   }
 
+  private static String requireValue(Map<String, Integer> columns, CSVRecord r, String name) {
+    String value = get(columns, r, name);
+    if (value == null || value.isBlank()) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Missing value for '" + name + "' in OpenTable CSV");
+    }
+    return value.trim();
+  }
+
   private static String blankToNull(String value) {
-    return value == null || value.isBlank() ? null : value;
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
   }
 }

@@ -52,6 +52,8 @@ public class OpenTableConnector implements SourceConnector {
 
   @Override
   public void fetch(String watermark, IngestionSink sink) {
+    // `watermark` is intentionally unused: this connector pulls a rolling window anchored
+    // on LocalDate.now() rather than resuming from a stored high-water mark.
     client.login(email, password);
 
     LocalDate today = LocalDate.now();

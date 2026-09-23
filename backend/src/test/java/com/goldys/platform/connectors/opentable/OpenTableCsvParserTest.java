@@ -67,4 +67,24 @@ class OpenTableCsvParserTest {
         .isInstanceOf(ConnectorFetchException.class)
         .hasMessageContaining("Guest Name");
   }
+
+  @Test
+  void blankReservationIdIsSchemaMismatch() {
+    String csv =
+        "Reservation ID,Date,Time,Party Size,Status,Table,Source,Guest Name\n"
+            + ",2026-09-23,19:30,4,Booked,12,OpenTable,Smith\n";
+    assertThatThrownBy(() -> parser.parse(csv.getBytes()))
+        .isInstanceOf(ConnectorFetchException.class)
+        .hasMessageContaining("Reservation ID");
+  }
+
+  @Test
+  void wrongColumnCountIsSchemaMismatch() {
+    String csv =
+        "Reservation ID,Date,Time,Party Size,Status,Table,Source,Guest Name\n"
+            + "1000000001,2026-09-23,19:30,4,Booked,12,OpenTable\n";
+    assertThatThrownBy(() -> parser.parse(csv.getBytes()))
+        .isInstanceOf(ConnectorFetchException.class)
+        .hasMessageContaining("wrong column count");
+  }
 }

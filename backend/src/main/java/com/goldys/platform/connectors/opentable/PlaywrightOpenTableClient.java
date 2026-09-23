@@ -26,13 +26,20 @@ public class PlaywrightOpenTableClient implements OpenTableClient {
   @Override
   public void login(String email, String password) {
     ensureBrowser();
-    context = browser.newContext(new Browser.NewContextOptions().setAcceptDownloads(true));
-    Page page = context.newPage();
-    page.navigate(BASE + "/login");
-    page.locator("input[name=email]").fill(email);
-    page.locator("input[name=password]").fill(password);
-    page.locator("button[type=submit]").click();
-    page.waitForURL("**/guestcenter/**");
+    try {
+      if (context != null) {
+        context.close();
+      }
+      context = browser.newContext(new Browser.NewContextOptions().setAcceptDownloads(true));
+      Page page = context.newPage();
+      page.navigate(BASE + "/login");
+      page.locator("input[name=email]").fill(email);
+      page.locator("input[name=password]").fill(password);
+      page.locator("button[type=submit]").click();
+      page.waitForURL("**/guestcenter/**");
+    } catch (RuntimeException e) {
+      throw new ConnectorFetchException("CONNECTOR_AUTH_FAILED", "OpenTable login failed", e);
+    }
   }
 
   private void ensureBrowser() {
@@ -52,20 +59,42 @@ public class PlaywrightOpenTableClient implements OpenTableClient {
       throw new ConnectorFetchException(
           "CONNECTOR_FETCH_FAILED", "login() must be called before exporting reservations");
     }
-    Page page = context.newPage();
-    page.navigate(BASE + "/reports/reservations");
-    page.locator("input[name=from]").fill(from.format(DateTimeFormatter.ISO_LOCAL_DATE));
-    page.locator("input[name=to]").fill(to.format(DateTimeFormatter.ISO_LOCAL_DATE));
-    Download download =
-        page.waitForDownload(
-            () ->
-                page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Export"))
-                    .click());
-    try {
-      return Files.readAllBytes(download.path());
-    } catch (IOException e) {
+    try (Page page = context.newPage()) {
+      page.navigate(BASE + "/reports/reservations");
+      page.locator("input[name=from]").fill(from.format(DateTimeFormatter.ISO_LOCAL_DATE));
+      page.locator("input[name=to]").fill(to.format(DateTimeFormatter.ISO_LOCAL_DATE));
+      Download download =
+          page.waitForDownload(
+              () ->
+                  page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Export"))
+                      .click());
+      try {
+        return Files.readAllBytes(download.path());
+      } catch (IOException e) {
+        throw new ConnectorFetchException(
+            "CONNECTOR_FETCH_FAILED", "OpenTable CSV download failed", e);
+      }
+    } catch (ConnectorFetchException e) {
+      throw e;
+    } catch (RuntimeException e) {
       throw new ConnectorFetchException(
-          "CONNECTOR_FETCH_FAILED", "OpenTable CSV download failed", e);
+          "CONNECTOR_FETCH_FAILED", "OpenTable reservation export failed", e);
+    }
+  }
+
+  @Override
+  public void close() {
+    if (context != null) {
+      context.close();
+      context = null;
+    }
+    if (browser != null) {
+      browser.close();
+      browser = null;
+    }
+    if (playwright != null) {
+      playwright.close();
+      playwright = null;
     }
   }
 }

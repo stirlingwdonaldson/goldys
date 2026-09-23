@@ -22,8 +22,11 @@ FROM eclipse-temurin:25-jre AS runtime
 RUN useradd --system --uid 1001 app
 WORKDIR /app
 
-# Headless Chromium for the OpenTable browser pull. The library list is Playwright's
-# canonical set; install --with-deps also pulls the browser itself into the image layer.
+# Headless Chromium OS libraries for the OpenTable browser pull (Playwright's
+# canonical set). NOTE: the Chromium binary itself is NOT baked in here —
+# Playwright.create() downloads it at runtime to ~/.cache/ms-playwright. A
+# deployment with no outbound egress must pre-bake it (playwright install
+# chromium, with PLAYWRIGHT_BROWSERS_PATH set for the app user) instead.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
       libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
