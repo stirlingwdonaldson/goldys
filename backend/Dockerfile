@@ -22,15 +22,18 @@ FROM eclipse-temurin:25-jre AS runtime
 RUN useradd --system --uid 1001 app
 WORKDIR /app
 
-# Headless Chromium OS libraries for the OpenTable browser pull (Playwright's
-# canonical set). NOTE: the Chromium binary itself is NOT baked in here —
-# Playwright.create() downloads it at runtime to ~/.cache/ms-playwright. A
-# deployment with no outbound egress must pre-bake it (playwright install
-# chromium, with PLAYWRIGHT_BROWSERS_PATH set for the app user) instead.
+# Headless Chromium OS libraries for the OpenTable browser pull — Playwright's
+# dependency list for Ubuntu 24.04+/26.04 (the "t64" package names; older
+# `libasound2`-style names no longer exist here). NOTE: the Chromium binary
+# itself is NOT baked in — Playwright.create() downloads it at runtime to
+# ~/.cache/ms-playwright. A deployment with no outbound egress must pre-bake it
+# (playwright install chromium, with PLAYWRIGHT_BROWSERS_PATH set for app) instead.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
-      libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
-      libasound2 libpango-1.0-0 libcairo2 fonts-liberation wget ca-certificates \
+      libasound2t64 libatk-bridge2.0-0t64 libatk1.0-0t64 libatspi2.0-0t64 \
+      libcairo2 libcups2t64 libdbus-1-3 libdrm2 libgbm1 libglib2.0-0t64 \
+      libnspr4 libnss3 libpango-1.0-0 libx11-6 libxcb1 libxcomposite1 \
+      libxdamage1 libxext6 libxfixes3 libxkbcommon0 libxrandr2 \
+      fonts-liberation ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /workspace/build/libs/*.jar app.jar
