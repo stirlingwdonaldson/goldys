@@ -32,6 +32,16 @@ services:
       timeout: 5s
       retries: 12
 
+  fortress:
+    image: tilion/fortress:latest
+    restart: unless-stopped
+    # Internal only — no host port; the backend reaches it over the compose
+    # network at http://fortress:9222. The image's entrypoint already launches
+    # headless Chromium (--headless=new --no-sandbox) and bridges raw CDP onto
+    # 0.0.0.0:9222 via socat, so no `command:` override is set — passing extra
+    # flags would be appended after the entrypoint's own and clobber the
+    # internal --remote-debugging-port the bridge relies on.
+
   backend:
     build:
       context: ./backend
@@ -43,10 +53,18 @@ services:
       CTB_EMAIL: ${CTB_EMAIL:-}
       CTB_PASSWORD: ${CTB_PASSWORD:-}
       LIGHTSPEED_WEBHOOK_TOKEN: ${LIGHTSPEED_WEBHOOK_TOKEN:-}
+      OPENTABLE_FORTRESS_CDP_URL: http://fortress:9222
+      OPENTABLE_SESSION_PATH: /app/data/opentable-session.json
+      OPENTABLE_EMAIL: ${OPENTABLE_EMAIL:-}
+      OPENTABLE_PASSWORD: ${OPENTABLE_PASSWORD:-}
     restart: unless-stopped
+    volumes:
+      - goldys_opentable_data:/app/data
     depends_on:
       postgres:
         condition: service_healthy
+      fortress:
+        condition: service_started
 
   frontend:
     build:
@@ -64,3 +82,4 @@ services:
 
 volumes:
   goldys_pg_data:
+  goldys_opentable_data:

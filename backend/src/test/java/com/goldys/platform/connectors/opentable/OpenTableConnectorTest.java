@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 class OpenTableConnectorTest {
 
@@ -29,13 +32,13 @@ class OpenTableConnectorTest {
   private final CanonicalReservationIngest canonical = mock(CanonicalReservationIngest.class);
 
   private OpenTableConnector connector() {
-    return new OpenTableConnector(client, "e@example.com", "pw", parser, canonical, 30, 14);
+    return new OpenTableConnector(client, parser, canonical, 30, 14);
   }
 
   @Test
-  void fetchesScrapePayloadAndCanonicalizesEachRow() {
+  void authenticatesBeforeExportingAndCanonicalizesEachRow() {
+    UUID rawId = UUID.randomUUID();
     when(client.exportReservationsCsv(any(), any())).thenReturn(csv);
-    UUID rawId = UUID.fromString("11111111-2222-3333-4444-555555555555");
     AtomicReference<FetchedPayload> captured = new AtomicReference<>();
     IngestionSink sink =
         payload -> {
@@ -45,12 +48,16 @@ class OpenTableConnectorTest {
 
     connector().fetch(null, sink);
 
+    InOrder order = inOrder(client);
+    order.verify(client).authenticate();
+    order.verify(client).exportReservationsCsv(any(), any());
+
     assertThat(captured.get().fetchMethod()).isEqualTo(FetchMethod.SCRAPE);
     assertThat(captured.get().contentType()).isEqualTo("text/csv");
     assertThat(captured.get().fetcherIdentity()).isEqualTo("opentable-guestcenter");
 
     ArgumentCaptor<ReservationInput> input = ArgumentCaptor.forClass(ReservationInput.class);
-    verify(canonical, org.mockito.Mockito.times(2)).record(input.capture());
+    verify(canonical, times(2)).record(input.capture());
     ReservationInput first = input.getAllValues().get(0);
     assertThat(first.sourceSystem()).isEqualTo("OPENTABLE");
     assertThat(first.reservationId()).isEqualTo("1000000001");
@@ -67,7 +74,7 @@ class OpenTableConnectorTest {
   void authFailurePropagates() {
     doThrow(new ConnectorFetchException("CONNECTOR_AUTH_FAILED", "bad login"))
         .when(client)
-        .login(any(), any());
+        .authenticate();
 
     assertThatThrownBy(() -> connector().fetch(null, p -> UUID.randomUUID()))
         .isInstanceOf(ConnectorFetchException.class)
@@ -76,16 +83,13 @@ class OpenTableConnectorTest {
 
   @Test
   void browserFailurePropagates() {
-    when(client.exportReservationsCsv(any(), any()))
-        .thenThrow(new ConnectorFetchException("CONNECTOR_BROWSER_FAILED", "no chromium"));
+    doThrow(new ConnectorFetchException("CONNECTOR_BROWSER_FAILED", "no fortress"))
+        .when(client)
+        .authenticate();
 
-    assertThatThrownBy(
-            () -> {
-              OpenTableConnector c = connector();
-              c.fetch(null, p -> UUID.randomUUID());
-            })
+    assertThatThrownBy(() -> connector().fetch(null, p -> UUID.randomUUID()))
         .isInstanceOf(ConnectorFetchException.class)
-        .hasMessageContaining("no chromium");
+        .hasMessageContaining("no fortress");
   }
 
   private static byte[] fixtureCsv() {

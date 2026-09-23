@@ -16,8 +16,6 @@ import java.util.UUID;
  */
 public class OpenTableConnector implements SourceConnector {
   private final OpenTableClient client;
-  private final String email;
-  private final String password;
   private final OpenTableCsvParser parser;
   private final CanonicalReservationIngest canonical;
   private final int windowBeforeDays;
@@ -25,15 +23,11 @@ public class OpenTableConnector implements SourceConnector {
 
   public OpenTableConnector(
       OpenTableClient client,
-      String email,
-      String password,
       OpenTableCsvParser parser,
       CanonicalReservationIngest canonical,
       int windowBeforeDays,
       int windowAfterDays) {
     this.client = client;
-    this.email = email;
-    this.password = password;
     this.parser = parser;
     this.canonical = canonical;
     this.windowBeforeDays = windowBeforeDays;
@@ -54,7 +48,7 @@ public class OpenTableConnector implements SourceConnector {
   public void fetch(String watermark, IngestionSink sink) {
     // `watermark` is intentionally unused: this connector pulls a rolling window anchored
     // on LocalDate.now() rather than resuming from a stored high-water mark.
-    client.login(email, password);
+    client.authenticate();
 
     LocalDate today = LocalDate.now();
     byte[] csv =
