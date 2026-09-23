@@ -20,22 +20,13 @@ import java.time.format.DateTimeFormatter;
 public class PlaywrightOpenTableClient implements OpenTableClient {
   private static final String BASE = "https://guestcenter.opentable.com";
 
-  private final Playwright playwright;
-  private final Browser browser;
+  private Playwright playwright;
+  private Browser browser;
   private BrowserContext context;
-
-  public PlaywrightOpenTableClient() {
-    try {
-      this.playwright = Playwright.create();
-      this.browser =
-          playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-    } catch (RuntimeException e) {
-      throw new ConnectorFetchException("CONNECTOR_BROWSER_FAILED", "Chromium launch failed", e);
-    }
-  }
 
   @Override
   public void login(String email, String password) {
+    ensureBrowser();
     context = browser.newContext(new Browser.NewContextOptions().setAcceptDownloads(true));
     Page page = context.newPage();
     page.navigate(BASE + "/login");
@@ -43,6 +34,17 @@ public class PlaywrightOpenTableClient implements OpenTableClient {
     page.locator("input[name=password]").fill(password);
     page.locator("button[type=submit]").click();
     page.waitForURL("**/guestcenter/**");
+  }
+
+  private void ensureBrowser() {
+    if (browser == null) {
+      try {
+        playwright = Playwright.create();
+        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+      } catch (RuntimeException e) {
+        throw new ConnectorFetchException("CONNECTOR_BROWSER_FAILED", "Chromium launch failed", e);
+      }
+    }
   }
 
   @Override
