@@ -1,0 +1,6 @@
+Reservation ID,Date,Time,Party Size,Status,Table,Source,Guest Name
+1000000001,2026-09-23,19:30,4,Booked,12,OpenTable,Smith
+1000000002,2026-09-23,18:00,2,Seated,7,OpenTable,Jones
+1000000003,2026-09-23,20:15,6,Cancelled,,Phone,Patel
+1000000004,2026-09-22,19:00,3,Completed,5,Walk-in,Brown
+1000000005,2026-09-23,19:45,2,No Show,,OpenTable,Lee

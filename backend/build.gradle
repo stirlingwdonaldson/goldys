@@ -32,6 +32,7 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.apache.commons:commons-csv:1.11.0'
+	implementation 'com.microsoft.playwright:playwright:1.49.0'
 
 	// Spring AI: needed for the Conversational BI / Smart Exporter tool-calling
 	// framework (Phase 2, spec Requirements 9-10), not Phase 1. Coordinates and
