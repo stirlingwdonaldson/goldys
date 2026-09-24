@@ -22,9 +22,22 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  servlet:
+    multipart:
+      # Manual CSV drop: allow up to 2 GB per upload. Note the ingestion
+      # pipeline reads the file into memory, so in practice the ceiling is the
+      # JVM heap — a reservations CSV is KB–MB, nowhere near this.
+      max-file-size: 2GB
+      max-request-size: 2GB
 
 server:
   port: 8080
+  tomcat:
+    # Tomcat's own form-post/swallow caps default to 2 MB and would reject a
+    # large multipart before Spring's resolver sees it; disable them so the
+    # multipart max-file-size above is the effective limit.
+    max-swallow-size: -1
+    max-http-form-post-size: -1
 
 logging:
   level:
