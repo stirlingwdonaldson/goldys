@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useApiData } from "@/lib/use-api-data";
 import { useApi } from "@/lib/demo-mode";
 import { isApiError } from "@/lib/api";
@@ -16,6 +16,9 @@ export default function ConnectorsPage() {
   const { data, loading, error, reload } = useApiData((api) => api.listConnectorStatuses());
   const [running, setRunning] = useState<string | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function run(source: string) {
     setRunning(source);
@@ -27,6 +30,20 @@ export default function ConnectorsPage() {
       setRunError(isApiError(e) ? e.message : "Something went wrong running the connector.");
     } finally {
       setRunning(null);
+    }
+  }
+
+  async function uploadCsv(file: File) {
+    setUploading(true);
+    setUploadMessage(null);
+    try {
+      await api.uploadOpenTableCsv(file);
+      setUploadMessage({ ok: true, text: "CSV uploaded and ingested." });
+      await reload();
+    } catch (e) {
+      setUploadMessage({ ok: false, text: isApiError(e) ? e.message : "Upload failed." });
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -60,6 +77,11 @@ export default function ConnectorsPage() {
         </p>
       </div>
       {runError && <p className="text-sm text-destructive">{runError}</p>}
+      {uploadMessage && (
+        <p className={`text-sm ${uploadMessage.ok ? "text-emerald-600" : "text-destructive"}`}>
+          {uploadMessage.text}
+        </p>
+      )}
       <div className="rounded-lg border">
         {data.map((c, i) => (
           <div
@@ -75,14 +97,38 @@ export default function ConnectorsPage() {
             </div>
             <div className="flex items-center gap-2">
               <ConnectorStatusBadge status={c.status} />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => run(c.source)}
-                disabled={running !== null}
-              >
-                {running === c.source ? "Running…" : "Run now"}
-              </Button>
+              {c.source.toLowerCase() === "opentable" ? (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadCsv(file);
+                      e.target.value = "";
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? "Uploading…" : "Upload CSV"}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => run(c.source)}
+                  disabled={running !== null}
+                >
+                  {running === c.source ? "Running…" : "Run now"}
+                </Button>
+              )}
             </div>
           </div>
         ))}

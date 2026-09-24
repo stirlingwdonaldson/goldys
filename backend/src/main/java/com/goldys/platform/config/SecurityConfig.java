@@ -39,6 +39,7 @@ public class SecurityConfig {
                     AntPathRequestMatcher.antMatcher("/api/health"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/opentable"),
                     AntPathRequestMatcher.antMatcher("/api/auth/signup"),
                     AntPathRequestMatcher.antMatcher("/api/auth/login"),
                     // Spring Boot forwards error handling (e.g. a bodyless POST to a
@@ -57,6 +58,7 @@ public class SecurityConfig {
             csrf.ignoringRequestMatchers(
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/opentable"),
                     AntPathRequestMatcher.antMatcher("/api/auth/signup"),
                     AntPathRequestMatcher.antMatcher("/api/auth/login"))
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())

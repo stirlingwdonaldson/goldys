@@ -1,6 +1,7 @@
 package com.goldys.platform.api;
 
 import com.goldys.platform.auth.AccessDeniedException;
+import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.UUID;
@@ -33,6 +34,16 @@ class ApiExceptionHandler {
         .body(
             new ApiErrorResponse(
                 "VALIDATION_FAILED", exception.getMessage(), correlationId(request), Map.of()));
+  }
+
+  /** A push/upload payload that failed to parse (e.g. a CSV with unexpected columns). */
+  @ExceptionHandler(ConnectorFetchException.class)
+  ResponseEntity<ApiErrorResponse> handleConnectorFetch(
+      ConnectorFetchException exception, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            new ApiErrorResponse(
+                exception.failureType(), exception.getMessage(), correlationId(request), Map.of()));
   }
 
   private String correlationId(HttpServletRequest request) {

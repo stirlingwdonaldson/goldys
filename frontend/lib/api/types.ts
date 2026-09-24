@@ -107,6 +107,7 @@ export interface Api {
   getProductRecord(date: string, product: string): Promise<ReconciliationRecord>;
   listConnectorStatuses(): Promise<ConnectorStatus[]>;
   runConnector(source: string): Promise<ConnectorStatus>;
+  uploadOpenTableCsv(file: File): Promise<void>;
   saveOverride(input: SaveOverrideInput): Promise<OverrideResult>;
   saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult>;
 }
