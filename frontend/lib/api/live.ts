@@ -23,6 +23,11 @@ export const liveApi: Api = {
   listConnectorStatuses: () => fetchApi<ConnectorStatus[]>("/api/connectors"),
   runConnector: (source: string) =>
     fetchApi<ConnectorStatus>(`/api/connectors/${source}/run`, { method: "POST" }),
+  uploadOpenTableCsv: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return fetchApi<void>("/api/connectors/opentable/upload", { method: "POST", body: form });
+  },
   listProductExceptions: () =>
     fetchApi<ReconciliationException[]>("/api/reconciliation/products/exceptions"),
   saveOverride: (input: SaveOverrideInput) =>

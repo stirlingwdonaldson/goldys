@@ -184,6 +184,17 @@ export const demoApi: Api = {
     return existing;
   },
 
+  async uploadOpenTableCsv(_file: File): Promise<void> {
+    void _file; // demo no-op: nothing to upload
+    await delay(600);
+    const opentable = connectorStatuses.find((c) => c.source === "OpenTable");
+    if (opentable) {
+      opentable.lastRunAt = new Date().toISOString();
+      opentable.status = "success";
+      opentable.failureCount = 0;
+    }
+  },
+
   async saveOverride(input: SaveOverrideInput): Promise<{ ok: true; recordId: string; field: string }> {
     await delay(500);
     const record = records[input.recordId];
