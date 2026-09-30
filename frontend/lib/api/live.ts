@@ -5,9 +5,13 @@ import type {
   ConnectorStatus,
   DashboardSummary,
   ProductOverrideInput,
+  RecomputeStatus,
   ReconciliationException,
   ReconciliationRecord,
+  ResolutionRule,
+  RuleAuditEntry,
   SaveOverrideInput,
+  SaveResolutionRuleInput,
 } from "./types";
 
 /** Real backend calls. The demo fixtures stay behind the `demo` flag; these hit the live endpoints. */
@@ -42,4 +46,15 @@ export const liveApi: Api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ source: input.source, reason: input.reason }),
     }),
+  listResolutionRules: () => fetchApi<ResolutionRule[]>("/api/reconciliation/rules"),
+  saveResolutionRule: (input: SaveResolutionRuleInput) =>
+    fetchApi<ResolutionRule>("/api/reconciliation/rules", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  deleteResolutionRule: (id: string) =>
+    fetchApi<void>(`/api/reconciliation/rules/${id}`, { method: "DELETE" }),
+  getRecomputeStatus: () => fetchApi<RecomputeStatus>("/api/reconciliation/recompute/status"),
+  listRuleAudit: () => fetchApi<RuleAuditEntry[]>("/api/reconciliation/rules/audit"),
 };

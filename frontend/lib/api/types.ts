@@ -1,3 +1,7 @@
+import type { CustomLogic, ResolutionRule, RuleStrategy } from "@/lib/rule-logic";
+
+export type { CustomLogic, ResolutionRule, RuleStrategy };
+
 /** The current staff identity the backend resolves from the OIDC session. */
 export interface CurrentUser {
   displayName: string;
@@ -97,6 +101,31 @@ export interface ProductOverrideInput {
   reason?: string;
 }
 
+export interface SaveResolutionRuleInput {
+  id?: string; // present when editing an existing rule
+  entity: string;
+  field: string;
+  strategy: RuleStrategy;
+  sourcePriority?: string[];
+  customLogic?: CustomLogic;
+}
+
+export type RecomputeState = "idle" | "recomputing" | "complete" | "failed";
+
+export interface RecomputeStatus {
+  state: RecomputeState;
+  lastCompletedAt: string | null;
+}
+
+export interface RuleAuditEntry {
+  id: string;
+  ruleId: string | null; // null => the rule was deleted
+  field: string;
+  change: "created" | "updated" | "deleted";
+  at: string;
+  by: string;
+}
+
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
 export interface Api {
   getDashboardSummary(): Promise<DashboardSummary>;
@@ -110,4 +139,9 @@ export interface Api {
   uploadOpenTableCsv(file: File): Promise<void>;
   saveOverride(input: SaveOverrideInput): Promise<OverrideResult>;
   saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult>;
+  listResolutionRules(): Promise<ResolutionRule[]>;
+  saveResolutionRule(input: SaveResolutionRuleInput): Promise<ResolutionRule>;
+  deleteResolutionRule(id: string): Promise<void>;
+  getRecomputeStatus(): Promise<RecomputeStatus>;
+  listRuleAudit(): Promise<RuleAuditEntry[]>;
 }
