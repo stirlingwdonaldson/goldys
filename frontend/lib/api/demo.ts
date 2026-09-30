@@ -7,9 +7,13 @@ import type {
   DashboardSummary,
   OverrideResult,
   ProductOverrideInput,
+  RecomputeStatus,
   ReconciliationException,
   ReconciliationRecord,
+  ResolutionRule,
+  RuleAuditEntry,
   SaveOverrideInput,
+  SaveResolutionRuleInput,
 } from "./types";
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -134,6 +138,62 @@ function activityFixture(): ActivityPoint[] {
   return points;
 }
 
+const KNOWN_FIELDS: Record<string, string[]> = {
+  Sales: ["quantity_sold", "net_amount", "gross_sales"],
+  Shifts: ["hours_worked"],
+  Products: ["quantity_sold", "unit_price"],
+};
+
+let rules: ResolutionRule[] = [
+  {
+    id: "rule-1",
+    entity: "Sales",
+    field: "quantity_sold",
+    strategy: "priority",
+    sourcePriority: ["Cooking the Books", "Lightspeed"],
+    updatedAt: "2026-09-29T18:00:00Z",
+    updatedBy: "Stirling Donaldson",
+  },
+  {
+    id: "rule-2",
+    entity: "Shifts",
+    field: "hours_worked",
+    strategy: "priority",
+    sourcePriority: ["Deputy", "Lightspeed"],
+    updatedAt: "2026-09-28T09:30:00Z",
+    updatedBy: "Stirling Donaldson",
+  },
+  {
+    id: "rule-3",
+    entity: "Sales",
+    field: "gross_sales",
+    strategy: "manual",
+    updatedAt: "2026-09-27T16:00:00Z",
+    updatedBy: "Stirling Donaldson",
+  },
+];
+
+let recomputeStatus: RecomputeStatus = {
+  state: "complete",
+  lastCompletedAt: "2026-09-30T08:00:00Z",
+};
+
+let ruleAudit: RuleAuditEntry[] = [
+  {
+    id: "audit-1",
+    ruleId: "rule-1",
+    field: "quantity_sold",
+    change: "created",
+    at: "2026-09-29T18:00:00Z",
+    by: "Stirling Donaldson",
+  },
+];
+
+/** The entity → field map the page uses to derive unresolved rows. */
+export function getKnownFields(): Record<string, string[]> {
+  return { ...KNOWN_FIELDS };
+}
+
 export const demoApi: Api = {
   async getDashboardSummary(): Promise<DashboardSummary> {
     await delay(400);
@@ -220,5 +280,71 @@ export const demoApi: Api = {
     record.fields[0].authoritativeSource = input.source;
     productExceptions = productExceptions.filter((e) => e.recordId !== input.product);
     return { ok: true, recordId: input.product, field: input.product };
+  },
+
+  async listResolutionRules(): Promise<ResolutionRule[]> {
+    await delay(400);
+    return [...rules];
+  },
+
+  async saveResolutionRule(input: SaveResolutionRuleInput): Promise<ResolutionRule> {
+    await delay(500);
+    const now = new Date().toISOString();
+    if (input.id) {
+      const existing = rules.find((r) => r.id === input.id);
+      if (!existing) throw new ApiError("VALIDATION_FAILED", `No rule with id ${input.id}.`);
+      Object.assign(existing, {
+        entity: input.entity,
+        field: input.field,
+        strategy: input.strategy,
+        sourcePriority: input.sourcePriority,
+        customLogic: input.customLogic,
+        updatedAt: now,
+      });
+      ruleAudit = [
+        { id: `audit-${Date.now()}`, ruleId: existing.id, field: existing.field, change: "updated", at: now, by: "You" },
+        ...ruleAudit,
+      ];
+      recomputeStatus = { state: "complete", lastCompletedAt: now };
+      return { ...existing };
+    }
+    const created: ResolutionRule = {
+      id: `rule-${Date.now()}`,
+      entity: input.entity,
+      field: input.field,
+      strategy: input.strategy,
+      sourcePriority: input.sourcePriority,
+      customLogic: input.customLogic,
+      updatedAt: now,
+      updatedBy: "You",
+    };
+    rules = [...rules, created];
+    ruleAudit = [
+      { id: `audit-${Date.now()}`, ruleId: created.id, field: created.field, change: "created", at: now, by: "You" },
+      ...ruleAudit,
+    ];
+    recomputeStatus = { state: "complete", lastCompletedAt: now };
+    return created;
+  },
+
+  async deleteResolutionRule(id: string): Promise<void> {
+    await delay(400);
+    const existing = rules.find((r) => r.id === id);
+    if (!existing) throw new ApiError("VALIDATION_FAILED", `No rule with id ${id}.`);
+    rules = rules.filter((r) => r.id !== id);
+    ruleAudit = [
+      { id: `audit-${Date.now()}`, ruleId: null, field: existing.field, change: "deleted", at: new Date().toISOString(), by: "You" },
+      ...ruleAudit,
+    ];
+  },
+
+  async getRecomputeStatus(): Promise<RecomputeStatus> {
+    await delay(300);
+    return { ...recomputeStatus };
+  },
+
+  async listRuleAudit(): Promise<RuleAuditEntry[]> {
+    await delay(300);
+    return [...ruleAudit];
   },
 };

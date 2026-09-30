@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Scale,
   Settings,
+  ShieldCheck,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -55,6 +56,7 @@ const navGroups: NavGroup[] = [
     label: "Data",
     items: [
       { title: "Reconciliation", href: "/reconciliation", icon: Scale },
+      { title: "Resolution rules", href: "/resolution-rules", icon: ShieldCheck },
       { title: "Data health", href: "/data-health", icon: Activity },
     ],
   },
