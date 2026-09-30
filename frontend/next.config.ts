@@ -4,6 +4,10 @@ const backendOrigin = process.env.BACKEND_ORIGIN ?? "http://localhost:8080";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The diagnostics moved from /connectors to /data-health; keep old links working.
+  async redirects() {
+    return [{ source: "/connectors", destination: "/data-health", permanent: true }];
+  },
   // Standalone output produces a self-contained `server.js` the Docker runtime
   // image runs under Node — no dev server, no Bun needed at runtime.
   output: "standalone",
