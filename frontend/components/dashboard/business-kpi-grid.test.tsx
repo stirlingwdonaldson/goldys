@@ -26,4 +26,9 @@ describe("BusinessKpiGrid", () => {
     render(<BusinessKpiGrid seniority="Staff" />);
     expect(screen.getByText(/owner only/i)).toBeInTheDocument();
   });
+
+  it("fails closed (locks the labor tile) when seniority is absent", () => {
+    render(<BusinessKpiGrid />);
+    expect(screen.getByText(/owner only/i)).toBeInTheDocument();
+  });
 });
