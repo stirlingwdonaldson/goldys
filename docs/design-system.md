@@ -64,9 +64,14 @@ actually being built:
 
 | Screen | PRD ref | Notes |
 |---|---|---|
-| Dashboard / KPI overview | Goals 1–2, Success Metrics | Card/stat-based, not a table. Surfaces ingestion completeness and conflict counts, not just resolved numbers |
+| Dashboard / business KPI overview | Goals 1–2, Success Metrics | Trust-first: a live "Needs a decision" band above a five-tile business KPI grid. Business areas render as `AwaitingData` placeholders until reporting endpoints land; no ingestion/connector diagnostics on this screen |
+| Sales | Goals 1–2 | Placeholder; net sales trend, vs-prior-period, product mix |
+| Staff & Labor | Requirement 3 | Placeholder; roster, scheduled vs actual hours, labor % (wage figures Owner-only) |
+| Reservations | Goals 1–2 | Placeholder; covers, bookings, no-shows |
+| Kitchen | — | Forward-looking placeholder; food cost, stock, wastage (inventory not ingested) |
+| Recipes | — | Forward-looking placeholder; recipe list + ingredient costing (not ingested) |
 | Reconciliation view | Requirement 5 | Exception-first summary + drill-in comparison. See §6 |
-| Connector status / ingestion health | Requirement 6 | Failure states must be visually distinct from "no new data" |
+| Data health / ingestion health | Requirement 6 | Connector status, ingestion completeness, run activity; failure states visually distinct from "no new data" |
 | Permission-denied state | Requirement 3 | Explicit "not permitted" — never a silently filtered or partial-looking view |
 | Role/permission admin (future) | Requirement 3 | Not scheduled yet; deferred design |
 | Conversational BI widgets | Requirement 9 (Phase 2) | Deferred — depends on the JSON widget schema landing first |
@@ -87,8 +92,11 @@ final field list against a guess.
 
 The cleared rebuild baseline retains shadcn configuration but no application
 shell or components. When the Phase 1 shell is implemented, use shadcn's
-`sidebar-07` block as the starting point and adapt it to a flat Goldy's
-navigation: Dashboard, Reconciliation, Connectors, and Settings.
+`sidebar-07` block as the starting point and adapt it to Goldy's grouped
+navigation: a **Business** group (Dashboard, Sales, Staff & Labor,
+Reservations, Kitchen, Recipes), a **Data** group (Reconciliation, Data
+health), and **Settings** in the footer. Diagnostics live under Data health,
+never on the Dashboard.
 
 Goldy's is a single venue and workspace. Do not carry over multi-workspace,
 "Add team," billing, or upgrade behavior from demo blocks. User identity comes
@@ -177,6 +185,11 @@ not from a deleted preview implementation.
   glance — failure gets `--destructive` treatment (a system fault), "no
   new data since last check" gets neutral/muted treatment (an expected
   state, not an error).
+- **AwaitingData (forward-looking placeholder):** a surface not yet wired to
+  data renders its label, a one-line "what you'll see here" description, and a
+  muted reason line (e.g. "Awaiting Deputy reporting") — never fabricated
+  numbers. Distinct from an empty state, which means "the data exists but is
+  empty right now".
 
 ## 7. Open items
 
