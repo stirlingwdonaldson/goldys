@@ -10,6 +10,7 @@ import com.goldys.platform.canonical.ProductSalesView;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class ProductSalesReconciliationTest {
@@ -38,7 +39,8 @@ class ProductSalesReconciliationTest {
                 view("CTB", SEP_14, "garlic aioli", "127", "322.46"))); // conflict
 
     ProductSalesReconciliationService service =
-        new ProductSalesReconciliationService(query, mock(ProductSalesOverrideRepository.class));
+        new ProductSalesReconciliationService(
+            query, mock(ProductSalesOverrideRepository.class), mock(ResolutionRuleService.class));
 
     List<ProductSalesConflict> conflicts = service.conflicts();
     assertThat(conflicts).hasSize(1);
@@ -46,12 +48,55 @@ class ProductSalesReconciliationTest {
     assertThat(conflicts.get(0).status()).isEqualTo("conflict");
   }
 
+  @Test
+  void aProductSpecificRuleAndTheCatchAllEachResolveTheirUnits() {
+    LocalDate date = LocalDate.of(2026, 9, 14);
+    CanonicalProductSalesQuery query = mock(CanonicalProductSalesQuery.class);
+    when(query.currentProductSales())
+        .thenReturn(
+            List.of(
+                view("LIGHTSPEED", date, "garlic aioli", "150", "380.88"),
+                view("CTB", date, "garlic aioli", "127", "322.46"),
+                view("LIGHTSPEED", date, "chips", "10", "50.00"),
+                view("CTB", date, "chips", "9", "45.00")));
+
+    ResolutionRuleService rules = mock(ResolutionRuleService.class);
+    ResolutionRule specific =
+        ResolutionRule.create(
+            "product_sales",
+            "garlic aioli",
+            "priority",
+            null,
+            List.of("CTB"),
+            "a@b.com",
+            java.time.Instant.now());
+    ResolutionRule catchAll =
+        ResolutionRule.create(
+            "product_sales",
+            "*",
+            "priority",
+            null,
+            List.of("LIGHTSPEED"),
+            "a@b.com",
+            java.time.Instant.now());
+    when(rules.findCurrent("product_sales", "garlic aioli")).thenReturn(Optional.of(specific));
+    when(rules.findCurrent("product_sales", "chips")).thenReturn(Optional.empty());
+    when(rules.findCurrent("product_sales", "*")).thenReturn(Optional.of(catchAll));
+
+    ProductSalesReconciliationService service =
+        new ProductSalesReconciliationService(
+            query, mock(ProductSalesOverrideRepository.class), rules);
+
+    assertThat(service.conflicts()).isEmpty();
+  }
+
   private static ProductSourceTotal st(String source, String qty, String amount) {
-    return new ProductSourceTotal(source, new BigDecimal(qty), new BigDecimal(amount));
+    return new ProductSourceTotal(source, new BigDecimal(qty), new BigDecimal(amount), null);
   }
 
   private static ProductSalesView view(
       String source, LocalDate date, String key, String qty, String amount) {
-    return new ProductSalesView(source, date, key, new BigDecimal(qty), new BigDecimal(amount));
+    return new ProductSalesView(
+        source, date, key, new BigDecimal(qty), new BigDecimal(amount), null);
   }
 }

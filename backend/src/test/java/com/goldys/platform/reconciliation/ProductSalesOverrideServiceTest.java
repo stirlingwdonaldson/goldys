@@ -30,7 +30,9 @@ class ProductSalesOverrideServiceTest {
     CanonicalProductSalesQuery query = mock(CanonicalProductSalesQuery.class);
     when(query.currentProductSalesForDate(SEP_14))
         .thenReturn(
-            List.of(new ProductSalesView("CTB", SEP_14, "garlic aioli", bd("127"), bd("322.46"))));
+            List.of(
+                new ProductSalesView(
+                    "CTB", SEP_14, "garlic aioli", bd("127"), bd("322.46"), null)));
     return query;
   }
 

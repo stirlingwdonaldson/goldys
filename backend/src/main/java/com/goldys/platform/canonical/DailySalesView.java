@@ -1,6 +1,7 @@
 package com.goldys.platform.canonical;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 
 /**
@@ -12,4 +13,5 @@ public record DailySalesView(
     LocalDate tradingDate,
     BigDecimal totalSales,
     BigDecimal gstTotal,
-    BigDecimal netTotal) {}
+    BigDecimal netTotal,
+    Instant recordedAt) {}

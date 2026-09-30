@@ -1,6 +1,7 @@
 package com.goldys.platform.canonical;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 
 /** A read-only view of one current per-product sales total. */
@@ -9,4 +10,5 @@ public record ProductSalesView(
     LocalDate tradingDate,
     String productNameKey,
     BigDecimal quantitySold,
-    BigDecimal amount) {}
+    BigDecimal amount,
+    Instant recordedAt) {}

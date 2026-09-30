@@ -26,6 +26,11 @@ public class CanonicalDailySalesQuery {
 
   private DailySalesView toView(CanonicalDailySales s) {
     return new DailySalesView(
-        s.sourceSystem(), s.tradingDate(), s.totalSales(), s.gstTotal(), s.netTotal());
+        s.sourceSystem(),
+        s.tradingDate(),
+        s.totalSales(),
+        s.gstTotal(),
+        s.netTotal(),
+        s.recordedAt());
   }
 }

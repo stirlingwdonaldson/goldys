@@ -16,7 +16,8 @@ import org.springframework.stereotype.Service;
  * Reconciles the per-source daily sales totals keyed by trading date.
  *
  * <p>Conflict detection compares totals with a one-cent rounding rule; a missing source is surfaced
- * explicitly rather than silently omitted.
+ * explicitly rather than silently omitted. Resolution precedence is manual override, then
+ * agreement, then a standing rule, then unresolved.
  */
 @Service
 public class DailySalesReconciliationService {
@@ -24,11 +25,15 @@ public class DailySalesReconciliationService {
 
   private final CanonicalDailySalesQuery dailySales;
   private final DailySalesOverrideRepository overrides;
+  private final ResolutionRuleService rules;
 
   public DailySalesReconciliationService(
-      CanonicalDailySalesQuery dailySales, DailySalesOverrideRepository overrides) {
+      CanonicalDailySalesQuery dailySales,
+      DailySalesOverrideRepository overrides,
+      ResolutionRuleService rules) {
     this.dailySales = dailySales;
     this.overrides = overrides;
+    this.rules = rules;
   }
 
   public List<DailySalesConflict> conflicts() {
@@ -36,7 +41,7 @@ public class DailySalesReconciliationService {
     for (DailySalesView view : dailySales.currentDailySales()) {
       byDate
           .computeIfAbsent(view.tradingDate(), k -> new ArrayList<>())
-          .add(new SourceTotal(view.sourceSystem(), view.totalSales()));
+          .add(new SourceTotal(view.sourceSystem(), view.totalSales(), view.recordedAt()));
     }
 
     List<DailySalesConflict> out = new ArrayList<>();
@@ -47,7 +52,15 @@ public class DailySalesReconciliationService {
       }
       String status = classify(entry.getValue());
       if (!"agreed".equals(status)) {
-        out.add(new DailySalesConflict(entry.getKey(), entry.getValue(), status));
+        // A rule that resolves the unit drops it from the open-exceptions list.
+        boolean resolvedByRule =
+            rules
+                .findCurrent("daily_sales", "daily_sales")
+                .flatMap(r -> RuleEvaluator.resolve(r, toMetrics(entry.getValue())))
+                .isPresent();
+        if (!resolvedByRule) {
+          out.add(new DailySalesConflict(entry.getKey(), entry.getValue(), status));
+        }
       }
     }
     out.sort(Comparator.comparing(DailySalesConflict::tradingDate));
@@ -70,9 +83,23 @@ public class DailySalesReconciliationService {
       return Optional.empty();
     }
     List<SourceTotal> sources =
-        sales.stream().map(s -> new SourceTotal(s.sourceSystem(), s.totalSales())).toList();
+        sales.stream()
+            .map(s -> new SourceTotal(s.sourceSystem(), s.totalSales(), s.recordedAt()))
+            .toList();
     if ("agreed".equals(classify(sources))) {
       return Optional.of(new DailySalesResolved(date, sales.get(0).totalSales(), "agreed"));
+    }
+
+    Optional<ResolutionRule> rule = rules.findCurrent("daily_sales", "daily_sales");
+    if (rule.isPresent()) {
+      Optional<String> chosen = RuleEvaluator.resolve(rule.get(), toMetrics(sources));
+      if (chosen.isPresent()) {
+        String source = chosen.get();
+        return sales.stream()
+            .filter(s -> s.sourceSystem().equals(source))
+            .findFirst()
+            .map(s -> new DailySalesResolved(date, s.totalSales(), "rule:" + source));
+      }
     }
     return Optional.of(new DailySalesResolved(date, null, null));
   }
@@ -92,5 +119,11 @@ public class DailySalesReconciliationService {
       return a == b;
     }
     return a.subtract(b).abs().compareTo(ONE_CENT) <= 0;
+  }
+
+  private static List<SourceMetric> toMetrics(List<SourceTotal> sources) {
+    return sources.stream()
+        .map(s -> new SourceMetric(s.sourceSystem(), s.totalSales(), s.recordedAt()))
+        .toList();
   }
 }

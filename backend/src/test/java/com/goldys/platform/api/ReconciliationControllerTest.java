@@ -66,8 +66,8 @@ class ReconciliationControllerTest {
                 new DailySalesConflict(
                     LocalDate.of(2026, 9, 13),
                     List.of(
-                        new SourceTotal("LIGHTSPEED", new BigDecimal("27650.66")),
-                        new SourceTotal("CTB", new BigDecimal("20990.83"))),
+                        new SourceTotal("LIGHTSPEED", new BigDecimal("27650.66"), null),
+                        new SourceTotal("CTB", new BigDecimal("20990.83"), null)),
                     "conflict")));
 
     mvc.perform(get("/api/reconciliation/exceptions").with(authenticated(owner())))
@@ -132,9 +132,9 @@ class ReconciliationControllerTest {
                     "garlic aioli",
                     List.of(
                         new ProductSourceTotal(
-                            "LIGHTSPEED", new BigDecimal("150"), new BigDecimal("380.88")),
+                            "LIGHTSPEED", new BigDecimal("150"), new BigDecimal("380.88"), null),
                         new ProductSourceTotal(
-                            "CTB", new BigDecimal("127"), new BigDecimal("322.46"))),
+                            "CTB", new BigDecimal("127"), new BigDecimal("322.46"), null)),
                     "conflict")));
 
     mvc.perform(get("/api/reconciliation/products/exceptions").with(authenticated(owner())))

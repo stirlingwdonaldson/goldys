@@ -35,7 +35,7 @@ class TradingWeekAcceptanceTest {
 
   @BeforeEach
   void clean() {
-    jdbc.update("truncate table canonical_daily_sales, daily_sales_override");
+    jdbc.update("truncate table canonical_daily_sales, daily_sales_override, resolution_rule");
   }
 
   @Test

@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 /** Reconciles per-product daily sales by normalized name + date, with zero tolerance. */
@@ -15,11 +16,15 @@ import org.springframework.stereotype.Service;
 public class ProductSalesReconciliationService {
   private final CanonicalProductSalesQuery productSales;
   private final ProductSalesOverrideRepository overrides;
+  private final ResolutionRuleService rules;
 
   public ProductSalesReconciliationService(
-      CanonicalProductSalesQuery productSales, ProductSalesOverrideRepository overrides) {
+      CanonicalProductSalesQuery productSales,
+      ProductSalesOverrideRepository overrides,
+      ResolutionRuleService rules) {
     this.productSales = productSales;
     this.overrides = overrides;
+    this.rules = rules;
   }
 
   public List<ProductSalesConflict> conflicts() {
@@ -28,7 +33,9 @@ public class ProductSalesReconciliationService {
       byKey
           .computeIfAbsent(
               view.tradingDate() + "\u0000" + view.productNameKey(), k -> new ArrayList<>())
-          .add(new ProductSourceTotal(view.sourceSystem(), view.quantitySold(), view.amount()));
+          .add(
+              new ProductSourceTotal(
+                  view.sourceSystem(), view.quantitySold(), view.amount(), view.recordedAt()));
     }
     List<ProductSalesConflict> out = new ArrayList<>();
     for (Map.Entry<String, List<ProductSourceTotal>> e : byKey.entrySet()) {
@@ -41,7 +48,16 @@ public class ProductSalesReconciliationService {
       }
       String status = classify(e.getValue());
       if (!"agreed".equals(status)) {
-        out.add(new ProductSalesConflict(date, key, e.getValue(), status));
+        // A product-specific rule wins over the "*" catch-all.
+        Optional<ResolutionRule> rule = rules.findCurrent("product_sales", key);
+        if (rule.isEmpty()) {
+          rule = rules.findCurrent("product_sales", "*");
+        }
+        boolean resolvedByRule =
+            rule.flatMap(r -> RuleEvaluator.resolve(r, toProductMetrics(e.getValue()))).isPresent();
+        if (!resolvedByRule) {
+          out.add(new ProductSalesConflict(date, key, e.getValue(), status));
+        }
       }
     }
     out.sort(
@@ -62,5 +78,11 @@ public class ProductSalesReconciliationService {
                     first.quantitySold().compareTo(s.quantitySold()) == 0
                         && first.amount().compareTo(s.amount()) == 0);
     return agree ? "agreed" : "conflict";
+  }
+
+  private static List<SourceMetric> toProductMetrics(List<ProductSourceTotal> sources) {
+    return sources.stream()
+        .map(s -> new SourceMetric(s.sourceSystem(), s.quantitySold(), s.recordedAt()))
+        .toList();
   }
 }
