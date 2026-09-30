@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Cable, LayoutDashboard, Scale, Settings } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Activity,
+  BookOpen,
+  CalendarDays,
+  ChefHat,
+  LayoutDashboard,
+  Scale,
+  Settings,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,11 +28,36 @@ import {
 } from "@/components/ui/sidebar";
 import { UserMenu } from "./user-menu";
 
-const nav = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Reconciliation", href: "/reconciliation", icon: Scale },
-  { title: "Connectors", href: "/connectors", icon: Cable },
-  { title: "Settings", href: "/settings", icon: Settings },
+interface NavItem {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Business",
+    items: [
+      { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { title: "Sales", href: "/sales", icon: TrendingUp },
+      { title: "Staff & Labor", href: "/staff", icon: Users },
+      { title: "Reservations", href: "/reservations", icon: CalendarDays },
+      { title: "Kitchen", href: "/kitchen", icon: ChefHat },
+      { title: "Recipes", href: "/recipes", icon: BookOpen },
+    ],
+  },
+  {
+    label: "Data",
+    items: [
+      { title: "Reconciliation", href: "/reconciliation", icon: Scale },
+      { title: "Data health", href: "/data-health", icon: Activity },
+    ],
+  },
 ];
 
 export function AppSidebar() {
@@ -46,30 +82,47 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {nav.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                      <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const active =
+                    pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+                        <Link href={item.href}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === "/settings"}
+              tooltip="Settings"
+            >
+              <Link href="/settings">
+                <Settings />
+                <span>Settings</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <UserMenu />
           </SidebarMenuItem>
