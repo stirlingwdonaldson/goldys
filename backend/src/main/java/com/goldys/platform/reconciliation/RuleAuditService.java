@@ -54,7 +54,7 @@ public class RuleAuditService {
                 last.fieldKey(),
                 "deleted",
                 last.supersededAt(),
-                last.actorEmail()));
+                last.supersededBy() == null ? last.actorEmail() : last.supersededBy()));
       }
     }
     out.sort(Comparator.comparing(RuleAuditEntry::at).reversed());

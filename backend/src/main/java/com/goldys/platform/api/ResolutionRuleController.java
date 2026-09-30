@@ -77,7 +77,7 @@ public class ResolutionRuleController {
   @GetMapping("/recompute/status")
   RecomputeStatusDto recomputeStatus(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return new RecomputeStatusDto("complete", null);
+    return new RecomputeStatusDto("complete", rules.lastChangedAt().orElse(null));
   }
 
   record RecomputeStatusDto(String state, Instant lastChangedAt) {}

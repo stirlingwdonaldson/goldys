@@ -35,7 +35,7 @@ class ProductSalesIntegrationTest {
 
   @BeforeEach
   void clean() {
-    jdbc.update("truncate table canonical_product_sales, product_sales_override");
+    jdbc.update("truncate table canonical_product_sales, product_sales_override, resolution_rule");
   }
 
   @Test

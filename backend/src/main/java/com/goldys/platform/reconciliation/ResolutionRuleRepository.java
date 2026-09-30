@@ -21,4 +21,8 @@ interface ResolutionRuleRepository extends JpaRepository<ResolutionRule, UUID> {
   Optional<ResolutionRule> findCurrent(String entityType, String fieldKey);
 
   List<ResolutionRule> findAllByOrderByRecordedAtDesc();
+
+  List<ResolutionRule> findAllBySupersededAtIsNullOrderByRecordedAtDesc();
+
+  Optional<ResolutionRule> findFirstByOrderByRecordedAtDesc();
 }

@@ -23,6 +23,11 @@ public class CanonicalProductSalesQuery {
 
   private ProductSalesView toView(CanonicalProductSales s) {
     return new ProductSalesView(
-        s.sourceSystem(), s.tradingDate(), s.productNameKey(), s.quantitySold(), s.amount(), s.recordedAt());
+        s.sourceSystem(),
+        s.tradingDate(),
+        s.productNameKey(),
+        s.quantitySold(),
+        s.amount(),
+        s.recordedAt());
   }
 }

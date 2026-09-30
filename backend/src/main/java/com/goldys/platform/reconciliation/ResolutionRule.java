@@ -45,6 +45,9 @@ class ResolutionRule {
   @Column(name = "superseded_at")
   private Instant supersededAt;
 
+  @Column(name = "superseded_by")
+  private String supersededBy;
+
   protected ResolutionRule() {}
 
   private ResolutionRule(
@@ -77,11 +80,12 @@ class ResolutionRule {
         entityType, fieldKey, strategy, customLogic, sourcePriority, actorEmail, recordedAt);
   }
 
-  void supersede(Instant at) {
+  void supersede(Instant at, String supersededBy) {
     if (supersededAt != null) {
       throw new IllegalStateException("Rule " + id + " is already superseded");
     }
     this.supersededAt = Objects.requireNonNull(at, "at");
+    this.supersededBy = supersededBy;
   }
 
   UUID id() {
@@ -118,5 +122,9 @@ class ResolutionRule {
 
   Instant supersededAt() {
     return supersededAt;
+  }
+
+  String supersededBy() {
+    return supersededBy;
   }
 }

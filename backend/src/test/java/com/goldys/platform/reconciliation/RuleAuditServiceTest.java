@@ -17,12 +17,12 @@ class RuleAuditServiceTest {
     ResolutionRule created =
         ResolutionRule.create(
             "daily_sales", "daily_sales", "priority", null, List.of("CTB"), "a@b.com", t1);
-    created.supersede(t2); // replaced by the updated rule below
+    created.supersede(t2, "editor@example.com"); // replaced by the updated rule below
 
     ResolutionRule updated =
         ResolutionRule.create(
             "daily_sales", "daily_sales", "priority", null, List.of("LIGHTSPEED"), "a@b.com", t2);
-    updated.supersede(t3); // then deleted — no successor row
+    updated.supersede(t3, "deleter@example.com"); // then deleted — no successor row
 
     List<RuleAuditService.RuleAuditEntry> history =
         RuleAuditService.history(List.of(created, updated));
@@ -31,6 +31,8 @@ class RuleAuditServiceTest {
     assertThat(history)
         .extracting(RuleAuditService.RuleAuditEntry::change)
         .containsExactlyInAnyOrder("created", "updated", "deleted");
-    assertThat(history.stream().filter(e -> e.change().equals("deleted"))).hasSize(1);
+    RuleAuditService.RuleAuditEntry deletedEntry =
+        history.stream().filter(e -> e.change().equals("deleted")).findFirst().orElseThrow();
+    assertThat(deletedEntry.by()).isEqualTo("deleter@example.com");
   }
 }

@@ -27,7 +27,9 @@ public class ResolutionRuleService {
   }
 
   public List<ResolutionRuleView> list() {
-    return repository.findAllByOrderByRecordedAtDesc().stream().map(this::toView).toList();
+    return repository.findAllBySupersededAtIsNullOrderByRecordedAtDesc().stream()
+        .map(this::toView)
+        .toList();
   }
 
   @Transactional
@@ -36,7 +38,7 @@ public class ResolutionRuleService {
     Instant now = CLOCK.instant();
     Optional<ResolutionRule> current = repository.lockCurrent(input.entityType(), input.fieldKey());
     if (current.isPresent()) {
-      current.get().supersede(now);
+      current.get().supersede(now, actorEmail);
       repository.saveAndFlush(current.get());
     }
     ResolutionRule saved =
@@ -55,11 +57,17 @@ public class ResolutionRuleService {
   @Transactional
   public void delete(UserRole actor, String actorEmail, String id) {
     permissions.require(actor, RESOURCE, PermissionAction.WRITE);
-    repository.findById(UUID.fromString(id)).ifPresent(rule -> rule.supersede(CLOCK.instant()));
+    repository
+        .findById(UUID.fromString(id))
+        .ifPresent(rule -> rule.supersede(CLOCK.instant(), actorEmail));
   }
 
   public Optional<ResolutionRule> findCurrent(String entityType, String fieldKey) {
     return repository.findCurrent(entityType, fieldKey);
+  }
+
+  public Optional<Instant> lastChangedAt() {
+    return repository.findFirstByOrderByRecordedAtDesc().map(ResolutionRule::recordedAt);
   }
 
   private ResolutionRuleView toView(ResolutionRule r) {

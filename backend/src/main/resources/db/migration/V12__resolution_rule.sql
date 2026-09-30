@@ -9,7 +9,8 @@ CREATE TABLE resolution_rule (
     source_priority jsonb,
     actor_email varchar(255) NOT NULL,
     recorded_at timestamp(6) with time zone NOT NULL,
-    superseded_at timestamp(6) with time zone
+    superseded_at timestamp(6) with time zone,
+    superseded_by varchar(255)
 );
 
 CREATE UNIQUE INDEX ux_resolution_rule_current
