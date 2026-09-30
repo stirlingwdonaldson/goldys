@@ -77,6 +77,6 @@ class DailySalesReconciliationTest {
   }
 
   private static DailySalesView view(String source, LocalDate date, String total) {
-    return new DailySalesView(source, date, new BigDecimal(total), null, null);
+    return new DailySalesView(source, date, new BigDecimal(total), null, null, null);
   }
 }

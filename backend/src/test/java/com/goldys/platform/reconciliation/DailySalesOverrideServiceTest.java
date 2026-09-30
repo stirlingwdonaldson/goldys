@@ -34,7 +34,7 @@ class DailySalesOverrideServiceTest {
     when(query.currentDailySalesForDate(SEP_13))
         .thenReturn(
             List.of(
-                new DailySalesView("LIGHTSPEED", SEP_13, new BigDecimal("27650.66"), null, null)));
+                new DailySalesView("LIGHTSPEED", SEP_13, new BigDecimal("27650.66"), null, null, null)));
     return query;
   }
 

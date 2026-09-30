@@ -52,6 +52,6 @@ class ProductSalesReconciliationTest {
 
   private static ProductSalesView view(
       String source, LocalDate date, String key, String qty, String amount) {
-    return new ProductSalesView(source, date, key, new BigDecimal(qty), new BigDecimal(amount));
+    return new ProductSalesView(source, date, key, new BigDecimal(qty), new BigDecimal(amount), null);
   }
 }
