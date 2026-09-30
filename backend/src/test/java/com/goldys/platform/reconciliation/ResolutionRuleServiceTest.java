@@ -61,7 +61,7 @@ class ResolutionRuleServiceTest {
 
     ResolutionRuleService service = new ResolutionRuleService(repository, permissions);
 
-    ResolutionRule saved =
+    ResolutionRuleView saved =
         service.save(
             OWNER,
             "a@b.com",

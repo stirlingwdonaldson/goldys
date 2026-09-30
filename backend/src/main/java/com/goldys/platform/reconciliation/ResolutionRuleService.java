@@ -26,12 +26,12 @@ public class ResolutionRuleService {
     this.permissions = permissions;
   }
 
-  public List<ResolutionRule> list() {
-    return repository.findAllByOrderByRecordedAtDesc();
+  public List<ResolutionRuleView> list() {
+    return repository.findAllByOrderByRecordedAtDesc().stream().map(this::toView).toList();
   }
 
   @Transactional
-  public ResolutionRule save(UserRole actor, String actorEmail, RuleInput input) {
+  public ResolutionRuleView save(UserRole actor, String actorEmail, RuleInput input) {
     permissions.require(actor, RESOURCE, PermissionAction.WRITE);
     Instant now = CLOCK.instant();
     Optional<ResolutionRule> current = repository.lockCurrent(input.entityType(), input.fieldKey());
@@ -39,15 +39,17 @@ public class ResolutionRuleService {
       current.get().supersede(now);
       repository.saveAndFlush(current.get());
     }
-    return repository.save(
-        ResolutionRule.create(
-            input.entityType(),
-            input.fieldKey(),
-            input.strategy(),
-            input.customLogic(),
-            input.sourcePriority(),
-            actorEmail,
-            now));
+    ResolutionRule saved =
+        repository.save(
+            ResolutionRule.create(
+                input.entityType(),
+                input.fieldKey(),
+                input.strategy(),
+                input.customLogic(),
+                input.sourcePriority(),
+                actorEmail,
+                now));
+    return toView(saved);
   }
 
   @Transactional
@@ -58,6 +60,18 @@ public class ResolutionRuleService {
 
   public Optional<ResolutionRule> findCurrent(String entityType, String fieldKey) {
     return repository.findCurrent(entityType, fieldKey);
+  }
+
+  private ResolutionRuleView toView(ResolutionRule r) {
+    return new ResolutionRuleView(
+        r.id(),
+        r.entityType(),
+        r.fieldKey(),
+        r.strategy(),
+        r.sourcePriority(),
+        r.customLogic(),
+        r.recordedAt(),
+        r.actorEmail());
   }
 
   /** A rule authored through the API. */
