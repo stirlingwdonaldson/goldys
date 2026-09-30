@@ -18,8 +18,8 @@ const ENTITIES = ["Sales", "Shifts", "Products"];
 export default function ResolutionRulesPage() {
   const api = useApi();
   const { data: rules, loading, error, reload } = useApiData((api) => api.listResolutionRules());
-  const { data: status } = useApiData((api) => api.getRecomputeStatus());
-  const { data: audit } = useApiData((api) => api.listRuleAudit());
+  const { data: status, reload: reloadStatus } = useApiData((api) => api.getRecomputeStatus());
+  const { data: audit, reload: reloadAudit } = useApiData((api) => api.listRuleAudit());
 
   const [editing, setEditing] = useState<ResolutionRule | null>(null);
   const [creating, setCreating] = useState(false);
@@ -54,7 +54,7 @@ export default function ResolutionRulesPage() {
         onEdit={(id) => setEditing(rules?.find((r) => r.id === id) ?? null)}
         onDelete={async (id) => {
           await api.deleteResolutionRule(id);
-          await reload();
+          await Promise.all([reload(), reloadStatus(), reloadAudit()]);
         }}
         onNew={() => setCreating(true)}
       />
@@ -73,7 +73,7 @@ export default function ResolutionRulesPage() {
           await api.saveResolutionRule(input);
           setCreating(false);
           setEditing(null);
-          await reload();
+          await Promise.all([reload(), reloadStatus(), reloadAudit()]);
         }}
         onCancel={() => {
           setCreating(false);

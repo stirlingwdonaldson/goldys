@@ -50,4 +50,35 @@ describe("RuleEditor", () => {
       expect.objectContaining({ strategy: "manual", entity: "Sales", field: "quantity_sold" }),
     );
   });
+
+  it("preserves a non-default source priority when editing a priority rule", () => {
+    const onSave = vi.fn();
+    const shiftsRule: ResolutionRule = {
+      id: "rule-2",
+      entity: "Shifts",
+      field: "hours_worked",
+      strategy: "priority",
+      sourcePriority: ["Deputy", "Lightspeed"],
+      updatedAt: "2026-09-28T09:30:00Z",
+      updatedBy: "Stirling Donaldson",
+    };
+    render(
+      <RuleEditor
+        open
+        onCancel={() => {}}
+        onSave={onSave}
+        entities={["Shifts"]}
+        fieldsByEntity={{ Shifts: ["hours_worked"] }}
+        initial={shiftsRule}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /save rule/i }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "rule-2",
+        strategy: "priority",
+        sourcePriority: ["Deputy", "Lightspeed"],
+      }),
+    );
+  });
 });

@@ -294,6 +294,8 @@ export const demoApi: Api = {
       const existing = rules.find((r) => r.id === input.id);
       if (!existing) throw new ApiError("VALIDATION_FAILED", `No rule with id ${input.id}.`);
       Object.assign(existing, {
+        entity: input.entity,
+        field: input.field,
         strategy: input.strategy,
         sourcePriority: input.sourcePriority,
         customLogic: input.customLogic,

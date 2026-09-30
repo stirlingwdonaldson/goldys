@@ -29,6 +29,8 @@ const CUSTOM_OPTIONS: { value: CustomLogic; label: string }[] = [
   { value: "newest", label: "Pick newest" },
 ];
 
+const DEFAULT_PRIORITY = ["Cooking the Books", "Lightspeed"];
+
 interface RuleEditorProps {
   open: boolean;
   initial: ResolutionRule | null; // null => creating
@@ -74,7 +76,8 @@ export function RuleEditor({
       entity,
       field,
       strategy,
-      sourcePriority: strategy === "priority" ? ["Cooking the Books", "Lightspeed"] : undefined,
+      sourcePriority:
+        strategy === "priority" ? (initial?.sourcePriority ?? DEFAULT_PRIORITY) : undefined,
       customLogic: strategy === "custom" ? customLogic : undefined,
     });
   }
@@ -92,7 +95,13 @@ export function RuleEditor({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="rule-entity">Entity</Label>
-            <Select value={entity} onValueChange={setEntity}>
+            <Select
+              value={entity}
+              onValueChange={(e) => {
+                setEntity(e);
+                setField(fieldsByEntity[e]?.[0] ?? "");
+              }}
+            >
               <SelectTrigger id="rule-entity">
                 <SelectValue />
               </SelectTrigger>
