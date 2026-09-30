@@ -43,7 +43,8 @@ class DailySalesReconciliationTest {
                     "9694.80"))); // agree exactly -> not a conflict
 
     DailySalesReconciliationService service =
-        new DailySalesReconciliationService(query, mock(DailySalesOverrideRepository.class));
+        new DailySalesReconciliationService(
+            query, mock(DailySalesOverrideRepository.class), mock(ResolutionRuleService.class));
 
     List<DailySalesConflict> conflicts = service.conflicts();
 
@@ -64,7 +65,8 @@ class DailySalesReconciliationTest {
         DailySalesOverride.create(SEP_13, "LIGHTSPEED", null, "a@b.com", java.time.Instant.now());
     when(overrides.findCurrent(SEP_13)).thenReturn(Optional.of(override));
 
-    DailySalesReconciliationService service = new DailySalesReconciliationService(query, overrides);
+    DailySalesReconciliationService service =
+        new DailySalesReconciliationService(query, overrides, mock(ResolutionRuleService.class));
 
     Optional<DailySalesResolved> resolved = service.resolved(SEP_13);
     assertThat(resolved).isPresent();
@@ -72,8 +74,33 @@ class DailySalesReconciliationTest {
     assertThat(resolved.get().resolvedTotal()).isEqualByComparingTo("27650.66");
   }
 
+  @Test
+  void aPriorityRuleResolvesAConflictSoItDropsOutOfConflicts() {
+    CanonicalDailySalesQuery query = mock(CanonicalDailySalesQuery.class);
+    when(query.currentDailySales())
+        .thenReturn(
+            List.of(view("LIGHTSPEED", SEP_13, "27650.66"), view("CTB", SEP_13, "20990.83")));
+
+    ResolutionRuleService rules = mock(ResolutionRuleService.class);
+    ResolutionRule rule =
+        ResolutionRule.create(
+            "daily_sales",
+            "daily_sales",
+            "priority",
+            null,
+            List.of("CTB"),
+            "a@b.com",
+            java.time.Instant.now());
+    when(rules.findCurrent("daily_sales", "daily_sales")).thenReturn(Optional.of(rule));
+
+    DailySalesReconciliationService service =
+        new DailySalesReconciliationService(query, mock(DailySalesOverrideRepository.class), rules);
+
+    assertThat(service.conflicts()).isEmpty();
+  }
+
   private static SourceTotal st(String source, String total) {
-    return new SourceTotal(source, new BigDecimal(total));
+    return new SourceTotal(source, new BigDecimal(total), null);
   }
 
   private static DailySalesView view(String source, LocalDate date, String total) {
