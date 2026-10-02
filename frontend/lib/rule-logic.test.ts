@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { summarizeRule, ruleDetail, buildRuleRows } from "./rule-logic";
+import { summarizeRule, ruleDetail, buildRuleRows, entityLabel, fieldLabel } from "./rule-logic";
 import type { ResolutionRule } from "./rule-logic";
 
 function rule(overrides: Partial<ResolutionRule> = {}): ResolutionRule {
   return {
     id: "rule-1",
-    entity: "Sales",
-    field: "quantity_sold",
+    entityType: "daily_sales",
+    fieldKey: "daily_sales",
     strategy: "priority",
     sourcePriority: ["Cooking the Books", "Lightspeed"],
     updatedAt: "2026-09-29T18:00:00Z",
@@ -14,6 +14,24 @@ function rule(overrides: Partial<ResolutionRule> = {}): ResolutionRule {
     ...overrides,
   };
 }
+
+describe("entityLabel", () => {
+  it("maps the two real entity types to human labels", () => {
+    expect(entityLabel("daily_sales")).toBe("Daily sales");
+    expect(entityLabel("product_sales")).toBe("Product sales");
+  });
+});
+
+describe("fieldLabel", () => {
+  it("labels the daily total and the product catch-all", () => {
+    expect(fieldLabel("daily_sales", "daily_sales")).toBe("Daily sales total");
+    expect(fieldLabel("product_sales", "*")).toBe("All products");
+  });
+
+  it("passes a product name through unchanged", () => {
+    expect(fieldLabel("product_sales", "garlic aioli")).toBe("garlic aioli");
+  });
+});
 
 describe("summarizeRule", () => {
   it("summarizes a priority rule as '<first source> wins'", () => {
@@ -47,24 +65,24 @@ describe("ruleDetail", () => {
 
 describe("buildRuleRows", () => {
   it("emits one row per known field, marking unruly fields unresolved", () => {
-    const rules = [rule()]; // only Sales.quantity_sold has a rule
-    const known = { Sales: ["quantity_sold", "net_amount"] };
+    const rules = [rule()]; // only daily_sales.daily_sales has a rule
+    const known = { daily_sales: ["daily_sales"], product_sales: ["*", "garlic aioli"] };
     const rows = buildRuleRows(rules, known);
-    expect(rows).toHaveLength(2);
-    const resolved = rows.find((r) => r.field === "quantity_sold");
-    const unresolved = rows.find((r) => r.field === "net_amount");
+    expect(rows).toHaveLength(3);
+    const resolved = rows.find((r) => r.fieldKey === "daily_sales");
+    const unresolved = rows.find((r) => r.fieldKey === "*");
     expect(resolved?.rule).not.toBeNull();
     expect(unresolved?.rule).toBeNull();
   });
 
   it("groups rows by entity and sorts fields alphabetically", () => {
     const rules = [rule()];
-    const known = { Sales: ["net_amount", "quantity_sold"], Shifts: ["hours_worked"] };
+    const known = { product_sales: ["*", "garlic aioli"], daily_sales: ["daily_sales"] };
     const rows = buildRuleRows(rules, known);
-    expect(rows.map((r) => `${r.entity}:${r.field}`)).toEqual([
-      "Sales:net_amount",
-      "Sales:quantity_sold",
-      "Shifts:hours_worked",
+    expect(rows.map((r) => `${r.entityType}:${r.fieldKey}`)).toEqual([
+      "daily_sales:daily_sales",
+      "product_sales:*",
+      "product_sales:garlic aioli",
     ]);
   });
 });

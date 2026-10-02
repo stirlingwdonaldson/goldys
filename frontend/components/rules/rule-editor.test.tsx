@@ -5,8 +5,8 @@ import type { ResolutionRule } from "@/lib/api";
 
 const existing: ResolutionRule = {
   id: "rule-1",
-  entity: "Sales",
-  field: "quantity_sold",
+  entityType: "daily_sales",
+  fieldKey: "daily_sales",
   strategy: "priority",
   sourcePriority: ["Cooking the Books", "Lightspeed"],
   updatedAt: "2026-09-29T18:00:00Z",
@@ -21,8 +21,8 @@ describe("RuleEditor", () => {
         open
         onCancel={onCancel}
         onSave={() => {}}
-        entities={["Sales"]}
-        fieldsByEntity={{ Sales: ["quantity_sold", "net_amount"] }}
+        entities={["daily_sales"]}
+        fieldsByEntity={{ daily_sales: ["daily_sales"] }}
         initial={existing}
       />,
     );
@@ -39,26 +39,30 @@ describe("RuleEditor", () => {
         open
         onCancel={() => {}}
         onSave={onSave}
-        entities={["Sales"]}
-        fieldsByEntity={{ Sales: ["quantity_sold", "net_amount"] }}
+        entities={["daily_sales"]}
+        fieldsByEntity={{ daily_sales: ["daily_sales"] }}
         initial={null}
       />,
     );
     fireEvent.click(screen.getByRole("radio", { name: /manual override/i }));
     fireEvent.click(screen.getByRole("button", { name: /save rule/i }));
     expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({ strategy: "manual", entity: "Sales", field: "quantity_sold" }),
+      expect.objectContaining({
+        strategy: "manual",
+        entityType: "daily_sales",
+        fieldKey: "daily_sales",
+      }),
     );
   });
 
   it("preserves a non-default source priority when editing a priority rule", () => {
     const onSave = vi.fn();
-    const shiftsRule: ResolutionRule = {
+    const productRule: ResolutionRule = {
       id: "rule-2",
-      entity: "Shifts",
-      field: "hours_worked",
+      entityType: "product_sales",
+      fieldKey: "garlic aioli",
       strategy: "priority",
-      sourcePriority: ["Deputy", "Lightspeed"],
+      sourcePriority: ["Lightspeed", "Cooking the Books"],
       updatedAt: "2026-09-28T09:30:00Z",
       updatedBy: "Stirling Donaldson",
     };
@@ -67,9 +71,9 @@ describe("RuleEditor", () => {
         open
         onCancel={() => {}}
         onSave={onSave}
-        entities={["Shifts"]}
-        fieldsByEntity={{ Shifts: ["hours_worked"] }}
-        initial={shiftsRule}
+        entities={["product_sales"]}
+        fieldsByEntity={{ product_sales: ["*", "garlic aioli"] }}
+        initial={productRule}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /save rule/i }));
@@ -77,8 +81,22 @@ describe("RuleEditor", () => {
       expect.objectContaining({
         id: "rule-2",
         strategy: "priority",
-        sourcePriority: ["Deputy", "Lightspeed"],
+        sourcePriority: ["Lightspeed", "Cooking the Books"],
       }),
     );
+  });
+
+  it("notes that the product list is demo data", () => {
+    render(
+      <RuleEditor
+        open
+        onCancel={() => {}}
+        onSave={() => {}}
+        entities={["product_sales"]}
+        fieldsByEntity={{ product_sales: ["*", "garlic aioli"] }}
+        initial={null}
+      />,
+    );
+    expect(screen.getByText(/demo product list/i)).toBeInTheDocument();
   });
 });

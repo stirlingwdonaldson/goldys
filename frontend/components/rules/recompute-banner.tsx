@@ -26,12 +26,13 @@ export function RecomputeBanner({ status }: RecomputeBannerProps) {
     );
   }
 
-  if (status.state === "complete" && status.lastCompletedAt) {
+  if (status.state === "complete" && status.lastChangedAt) {
     return (
       <div className="flex items-center gap-2 rounded-lg border border-transparent bg-status-success/10 p-3 text-sm">
         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
         <span>
-          Last recomputed {new Date(status.lastCompletedAt).toLocaleString()}
+          Rules apply immediately · last changed{" "}
+          {new Date(status.lastChangedAt).toLocaleString()}
         </span>
       </div>
     );

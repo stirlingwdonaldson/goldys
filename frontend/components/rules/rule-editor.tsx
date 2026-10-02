@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { entityLabel, fieldLabel } from "@/lib/rule-logic";
 import type { CustomLogic, ResolutionRule, RuleStrategy, SaveResolutionRuleInput } from "@/lib/api";
 
 const CUSTOM_OPTIONS: { value: CustomLogic; label: string }[] = [
@@ -52,29 +53,31 @@ export function RuleEditor({
   onSave,
   onCancel,
 }: RuleEditorProps) {
-  const [entity, setEntity] = useState(initial?.entity ?? entities[0] ?? "");
-  const [field, setField] = useState(initial?.field ?? fieldsByEntity[entities[0]]?.[0] ?? "");
+  const [entityType, setEntityType] = useState(initial?.entityType ?? entities[0] ?? "");
+  const [fieldKey, setFieldKey] = useState(
+    initial?.fieldKey ?? fieldsByEntity[entities[0]]?.[0] ?? "",
+  );
   const [strategy, setStrategy] = useState<RuleStrategy>(initial?.strategy ?? "priority");
   const [customLogic, setCustomLogic] = useState<CustomLogic>(initial?.customLogic ?? "flag");
   const [recomputeHistory, setRecomputeHistory] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setEntity(initial?.entity ?? entities[0] ?? "");
-      setField(initial?.field ?? fieldsByEntity[entities[0]]?.[0] ?? "");
+      setEntityType(initial?.entityType ?? entities[0] ?? "");
+      setFieldKey(initial?.fieldKey ?? fieldsByEntity[entities[0]]?.[0] ?? "");
       setStrategy(initial?.strategy ?? "priority");
       setCustomLogic(initial?.customLogic ?? "flag");
       setRecomputeHistory(false);
     }
   }, [open, initial, entities, fieldsByEntity]);
 
-  const fields = fieldsByEntity[entity] ?? [];
+  const fields = fieldsByEntity[entityType] ?? [];
 
   function submit() {
     onSave({
       id: initial?.id,
-      entity,
-      field,
+      entityType,
+      fieldKey,
       strategy,
       sourcePriority:
         strategy === "priority" ? (initial?.sourcePriority ?? DEFAULT_PRIORITY) : undefined,
@@ -96,10 +99,10 @@ export function RuleEditor({
           <div className="flex flex-col gap-2">
             <Label htmlFor="rule-entity">Entity</Label>
             <Select
-              value={entity}
+              value={entityType}
               onValueChange={(e) => {
-                setEntity(e);
-                setField(fieldsByEntity[e]?.[0] ?? "");
+                setEntityType(e);
+                setFieldKey(fieldsByEntity[e]?.[0] ?? "");
               }}
             >
               <SelectTrigger id="rule-entity">
@@ -108,7 +111,7 @@ export function RuleEditor({
               <SelectContent>
                 {entities.map((e) => (
                   <SelectItem key={e} value={e}>
-                    {e}
+                    {entityLabel(e)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -117,18 +120,23 @@ export function RuleEditor({
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="rule-field">Field</Label>
-            <Select value={field} onValueChange={setField}>
+            <Select value={fieldKey} onValueChange={setFieldKey}>
               <SelectTrigger id="rule-field">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {fields.map((f) => (
                   <SelectItem key={f} value={f}>
-                    {f}
+                    {fieldLabel(entityType, f)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {entityType === "product_sales" ? (
+              <p className="text-xs text-muted-foreground">
+                Demo product list — live products aren&apos;t connected yet.
+              </p>
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-2">

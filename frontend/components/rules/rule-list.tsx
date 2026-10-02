@@ -1,7 +1,13 @@
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ruleDetail, summarizeRule, type RuleRow } from "@/lib/rule-logic";
+import {
+  entityLabel,
+  fieldLabel,
+  ruleDetail,
+  summarizeRule,
+  type RuleRow,
+} from "@/lib/rule-logic";
 
 interface RuleListProps {
   rows: RuleRow[];
@@ -25,10 +31,10 @@ export function RuleList({ rows, onEdit, onDelete, onNew }: RuleListProps) {
 
       <div className="rounded-lg border">
         {rows.map((r, i) => {
-          const header = r.entity !== lastEntity ? r.entity : null;
-          lastEntity = r.entity;
+          const header = r.entityType !== lastEntity ? entityLabel(r.entityType) : null;
+          lastEntity = r.entityType;
           return (
-            <div key={`${r.entity}:${r.field}`}>
+            <div key={`${r.entityType}:${r.fieldKey}`}>
               {header ? (
                 <div className="border-b bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {header}
@@ -38,7 +44,7 @@ export function RuleList({ rows, onEdit, onDelete, onNew }: RuleListProps) {
                 className={`flex items-center justify-between gap-4 p-3 ${i > 0 && !header ? "border-t" : ""}`}
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">{r.field}</p>
+                  <p className="text-sm font-medium">{fieldLabel(r.entityType, r.fieldKey)}</p>
                   {r.rule ? (
                     <>
                       <p className="text-sm">{summarizeRule(r.rule)}</p>
@@ -56,7 +62,7 @@ export function RuleList({ rows, onEdit, onDelete, onNew }: RuleListProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        aria-label={`Edit ${r.field}`}
+                        aria-label={`Edit ${fieldLabel(r.entityType, r.fieldKey)}`}
                         onClick={() => onEdit(r.rule!.id)}
                       >
                         <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -64,7 +70,7 @@ export function RuleList({ rows, onEdit, onDelete, onNew }: RuleListProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        aria-label={`Delete ${r.field}`}
+                        aria-label={`Delete ${fieldLabel(r.entityType, r.fieldKey)}`}
                         onClick={() => onDelete(r.rule!.id)}
                       >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />

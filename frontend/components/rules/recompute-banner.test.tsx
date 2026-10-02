@@ -3,14 +3,14 @@ import { render, screen } from "@testing-library/react";
 import { RecomputeBanner } from "./recompute-banner";
 import type { RecomputeStatus } from "@/lib/api";
 
-function status(state: RecomputeStatus["state"], lastCompletedAt: string | null = null): RecomputeStatus {
-  return { state, lastCompletedAt };
+function status(state: RecomputeStatus["state"], lastChangedAt: string | null = null): RecomputeStatus {
+  return { state, lastChangedAt };
 }
 
 describe("RecomputeBanner", () => {
-  it("shows the last-completed time when complete", () => {
+  it("shows the last-changed time when complete", () => {
     render(<RecomputeBanner status={status("complete", "2026-09-30T08:00:00Z")} />);
-    expect(screen.getByText(/recomputed/i)).toBeInTheDocument();
+    expect(screen.getByText(/rules apply immediately/i)).toBeInTheDocument();
     // The rendered timestamp is locale-formatted, so assert on the year only.
     expect(screen.getByText(/2026/i)).toBeInTheDocument();
   });

@@ -1,10 +1,13 @@
 export type RuleStrategy = "priority" | "manual" | "custom";
 export type CustomLogic = "flag" | "highest" | "lowest" | "newest";
 
+export const ENTITY_TYPES = ["daily_sales", "product_sales"] as const;
+export type EntityType = (typeof ENTITY_TYPES)[number];
+
 export interface ResolutionRule {
   id: string;
-  entity: string;
-  field: string;
+  entityType: string;
+  fieldKey: string;
   strategy: RuleStrategy;
   sourcePriority?: string[];
   customLogic?: CustomLogic;
@@ -18,6 +21,25 @@ const CUSTOM_LABEL: Record<CustomLogic, string> = {
   lowest: "Pick lowest",
   newest: "Pick newest",
 };
+
+/** Human label for an entity type. */
+export function entityLabel(entityType: string): string {
+  switch (entityType) {
+    case "daily_sales":
+      return "Daily sales";
+    case "product_sales":
+      return "Product sales";
+    default:
+      return entityType;
+  }
+}
+
+/** Human label for a field key within an entity type. */
+export function fieldLabel(entityType: string, fieldKey: string): string {
+  if (fieldKey === "*") return "All products";
+  if (entityType === "daily_sales") return "Daily sales total";
+  return fieldKey; // a product name key
+}
 
 /** One-line effect of a rule, shown in the rule list. */
 export function summarizeRule(rule: ResolutionRule): string {
@@ -35,8 +57,8 @@ export function ruleDetail(rule: ResolutionRule): string {
 }
 
 export interface RuleRow {
-  entity: string;
-  field: string;
+  entityType: string;
+  fieldKey: string;
   rule: ResolutionRule | null; // null => unresolved (no rule)
 }
 
@@ -49,11 +71,15 @@ export function buildRuleRows(
   rules: ResolutionRule[],
   knownFields: Record<string, string[]>,
 ): RuleRow[] {
-  const byKey = new Map(rules.map((r) => [`${r.entity}:${r.field}`, r]));
+  const byKey = new Map(rules.map((r) => [`${r.entityType}:${r.fieldKey}`, r]));
   const rows: RuleRow[] = [];
-  for (const entity of Object.keys(knownFields).sort()) {
-    for (const field of [...knownFields[entity]].sort()) {
-      rows.push({ entity, field, rule: byKey.get(`${entity}:${field}`) ?? null });
+  for (const entityType of Object.keys(knownFields).sort()) {
+    for (const fieldKey of [...knownFields[entityType]].sort()) {
+      rows.push({
+        entityType,
+        fieldKey,
+        rule: byKey.get(`${entityType}:${fieldKey}`) ?? null,
+      });
     }
   }
   return rows;

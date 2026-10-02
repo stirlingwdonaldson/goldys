@@ -103,8 +103,8 @@ export interface ProductOverrideInput {
 
 export interface SaveResolutionRuleInput {
   id?: string; // present when editing an existing rule
-  entity: string;
-  field: string;
+  entityType: string;
+  fieldKey: string;
   strategy: RuleStrategy;
   sourcePriority?: string[];
   customLogic?: CustomLogic;
@@ -114,13 +114,13 @@ export type RecomputeState = "idle" | "recomputing" | "complete" | "failed";
 
 export interface RecomputeStatus {
   state: RecomputeState;
-  lastCompletedAt: string | null;
+  lastChangedAt: string | null;
 }
 
 export interface RuleAuditEntry {
-  id: string;
   ruleId: string | null; // null => the rule was deleted
-  field: string;
+  entityType: string;
+  fieldKey: string;
   change: "created" | "updated" | "deleted";
   at: string;
   by: string;

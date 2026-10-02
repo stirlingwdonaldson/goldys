@@ -13,12 +13,12 @@ import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import type { ResolutionRule } from "@/lib/api";
 
-const ENTITIES = ["Sales", "Shifts", "Products"];
+const ENTITIES = ["daily_sales", "product_sales"];
 
 /**
- * The demo-mode resolution-rules screen. Rendered by the page only in demo mode;
- * in live mode the page shows a "not available yet" state instead (the rule
- * engine endpoints do not exist yet).
+ * The resolution-rules screen: the rule list, editor, recompute banner, and audit.
+ * Backed by the demo fixtures in demo mode and the live rule-engine endpoints in
+ * live mode.
  */
 export function ResolutionRulesContent() {
   const api = useApi();

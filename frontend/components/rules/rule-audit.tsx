@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { entityLabel, fieldLabel } from "@/lib/rule-logic";
 import type { RuleAuditEntry } from "@/lib/api";
 
 /** The rule change history (who / what / when). */
@@ -11,11 +12,13 @@ export function RuleAudit({ entries }: { entries: RuleAuditEntry[] }) {
     <div className="rounded-lg border">
       {entries.map((e, i) => (
         <div
-          key={e.id}
+          key={`${e.ruleId ?? "deleted"}:${e.at}:${i}`}
           className={`flex items-center justify-between gap-4 p-3 ${i > 0 ? "border-t" : ""}`}
         >
           <div className="min-w-0">
-            <p className="text-sm font-medium">{e.field}</p>
+            <p className="text-sm font-medium">
+              {entityLabel(e.entityType)} · {fieldLabel(e.entityType, e.fieldKey)}
+            </p>
             <p className="truncate text-xs text-muted-foreground">
               {e.by} · {new Date(e.at).toLocaleString()}
             </p>
