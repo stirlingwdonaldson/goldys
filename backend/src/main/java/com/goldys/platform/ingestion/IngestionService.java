@@ -26,6 +26,7 @@ public class IngestionService {
   private final IngestionRunService runs;
   private final RawPayloadService payloads;
   private final IngestionRunRepository runRepository;
+  private final IngestionFailureRepository failureRepository;
   private final ConnectorRunner connectorRunner;
   private final Map<String, SourceConnector> connectors;
 
@@ -33,11 +34,13 @@ public class IngestionService {
       IngestionRunService runs,
       RawPayloadService payloads,
       IngestionRunRepository runRepository,
+      IngestionFailureRepository failureRepository,
       ConnectorRunner connectorRunner,
       List<SourceConnector> connectors) {
     this.runs = runs;
     this.payloads = payloads;
     this.runRepository = runRepository;
+    this.failureRepository = failureRepository;
     this.connectorRunner = connectorRunner;
     this.connectors =
         connectors.stream()
@@ -62,12 +65,7 @@ public class IngestionService {
         runRepository
             .findById(runId)
             .orElseThrow(() -> new IllegalStateException("Run not found: " + runId));
-    return new IngestionRunSummary(
-        run.sourceSystem(),
-        run.connectorName(),
-        run.status().name(),
-        run.startedAt(),
-        run.failureSummary());
+    return toSummary(run);
   }
 
   /** Persist a pushed payload (e.g. a webhook) as one completed ingestion run. */
@@ -107,16 +105,27 @@ public class IngestionService {
     for (IngestionRun run : runRepository.findAllByOrderByStartedAtDesc()) {
       latest.putIfAbsent(run.sourceSystem(), run);
     }
-    return latest.values().stream()
-        .map(
-            r ->
-                new IngestionRunSummary(
-                    r.sourceSystem(),
-                    r.connectorName(),
-                    r.status().name(),
-                    r.startedAt(),
-                    r.failureSummary()))
-        .toList();
+    return latest.values().stream().map(this::toSummary).toList();
+  }
+
+  private IngestionRunSummary toSummary(IngestionRun run) {
+    return new IngestionRunSummary(
+        run.sourceSystem(),
+        run.connectorName(),
+        run.status().name(),
+        run.startedAt(),
+        run.failureSummary(),
+        latestFailure(run.id()));
+  }
+
+  private FailureDetail latestFailure(UUID runId) {
+    List<IngestionFailure> runFailures =
+        failureRepository.findByIngestionRunIdOrderByOccurredAtAsc(runId);
+    if (runFailures.isEmpty()) {
+      return null;
+    }
+    IngestionFailure latest = runFailures.get(runFailures.size() - 1);
+    return new FailureDetail(latest.failureType(), latest.detail(), latest.occurredAt());
   }
 
   /**

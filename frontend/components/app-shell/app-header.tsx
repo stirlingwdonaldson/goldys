@@ -3,6 +3,7 @@
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AskGoldysDrawer } from "@/components/ask-goldys/ask-goldys-drawer";
+import { LogsDrawer } from "@/components/logs/logs-drawer";
 import { useCurrentUser } from "./current-user-provider";
 
 export function AppHeader() {
@@ -12,7 +13,8 @@ export function AppHeader() {
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 h-4" />
       <span className="text-sm font-medium">Goldy&apos;s Data Platform</span>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
+        <LogsDrawer />
         <AskGoldysDrawer seniority={user?.seniority} />
       </div>
     </header>
