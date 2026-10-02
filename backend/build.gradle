@@ -33,12 +33,9 @@ dependencies {
 	runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.apache.commons:commons-csv:1.11.0'
 
-	// Spring AI: needed for the Conversational BI / Smart Exporter tool-calling
-	// framework (Phase 2, spec Requirements 9-10), not Phase 1. Coordinates and
-	// version are deliberately left unpinned here - Spring AI's artifact IDs and
-	// BOM version have moved fast; pin the current one when Phase 2 scaffolding
-	// (Requirement 11) actually starts, rather than guessing now.
-	// implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
+	// Spring AI 1.1.x is the Spring Boot 3.5-compatible line (2.x requires Boot 4).
+	implementation platform('org.springframework.ai:spring-ai-bom:1.1.8')
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'

@@ -29,6 +29,22 @@ spring:
       # JVM heap — a reservations CSV is KB–MB, nowhere near this.
       max-file-size: 2GB
       max-request-size: 2GB
+  ai:
+    model:
+      # Default OFF so the app boots without a key. The OpenAI chat auto-config is
+      # enabled-by-default when the starter is present; `none` disables it. Set
+      # SPRING_AI_MODEL_CHAT=openai plus OPENAI_API_KEY to turn Conversational BI on.
+      chat: ${SPRING_AI_MODEL_CHAT:none}
+    openai:
+      # A non-empty sentinel (not an empty string) so the connection auto-config's
+      # key check passes and the app boots with the feature off. The ChatModel (and
+      # thus Conversational BI) stays disabled while spring.ai.model.chat=none.
+      api-key: ${OPENAI_API_KEY:not-configured}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o-mini}
+          temperature: 0
 
 server:
   port: 8080
@@ -42,3 +58,7 @@ server:
 logging:
   level:
     com.goldys.platform: DEBUG
+
+app:
+  conversational:
+    system-prompt: prompts/ask-goldys-system.txt
