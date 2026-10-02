@@ -12,12 +12,15 @@ const failed: ConnectorStatus = {
   failure: { type: "AUTH_FAILED", message: "OAuth token rejected", at: "2026-10-02T12:00:05Z" },
 };
 
+const { reload } = vi.hoisted(() => ({ reload: vi.fn() }));
+
 vi.mock("@/lib/use-api-data", () => ({
-  useApiData: () => ({ data: [failed], loading: false, error: null, reload: async () => {} }),
+  useApiData: () => ({ data: [failed], loading: false, error: null, reload }),
 }));
 
 describe("LogsDrawer", () => {
   beforeEach(() => {
+    reload.mockReset();
     vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
   });
 
@@ -31,5 +34,11 @@ describe("LogsDrawer", () => {
   it("shows the trigger even when closed", () => {
     render(<LogsDrawer />);
     expect(screen.getByRole("button", { name: /logs/i })).toBeInTheDocument();
+  });
+
+  it("refetches when the drawer opens", () => {
+    render(<LogsDrawer />);
+    fireEvent.click(screen.getByRole("button", { name: /logs/i }));
+    expect(reload).toHaveBeenCalled();
   });
 });

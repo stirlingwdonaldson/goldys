@@ -28,7 +28,13 @@ export function LogsDrawer() {
   const allText = connectors.data?.map(logLine).join("\n\n") ?? "";
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) connectors.reload();
+      }}
+    >
       <SheetTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <ScrollText className="h-4 w-4" aria-hidden="true" />
