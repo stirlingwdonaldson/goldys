@@ -151,12 +151,16 @@ class ConnectorStatusControllerTest {
                     new FailureDetail(
                         "AUTH_FAILED",
                         "OAuth token rejected",
-                        Instant.parse("2026-10-02T12:00:05Z")))));
+                        Instant.parse("2026-10-02T12:00:05Z"),
+                        "java.lang.RuntimeException: boom\n\tat Foo.bar(Foo.java:1)"))));
 
     mvc.perform(get("/api/connectors").with(authenticated(owner())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[1].failure.type").value("AUTH_FAILED"))
-        .andExpect(jsonPath("$[1].failure.message").value("OAuth token rejected"));
+        .andExpect(jsonPath("$[1].failure.message").value("OAuth token rejected"))
+        .andExpect(
+            jsonPath("$[1].failure.stackTrace")
+                .value("java.lang.RuntimeException: boom\n\tat Foo.bar(Foo.java:1)"));
   }
 
   private static AccountUserDetails owner() {

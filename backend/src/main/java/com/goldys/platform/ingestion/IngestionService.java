@@ -134,7 +134,8 @@ public class IngestionService {
       return null;
     }
     IngestionFailure latest = runFailures.get(runFailures.size() - 1);
-    return new FailureDetail(latest.failureType(), latest.detail(), latest.occurredAt());
+    return new FailureDetail(
+        latest.failureType(), latest.detail(), latest.occurredAt(), latest.stackTrace());
   }
 
   /**
