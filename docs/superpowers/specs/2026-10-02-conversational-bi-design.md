@@ -121,7 +121,7 @@ conversation store is needed.
 **SSE events** (named):
 
 - `text` → `{ "delta": "…" }` — the model's prose summary, accumulated by the client.
-- `answer` → `{ "widgets": [WidgetSpec], "trace": [{"tool","description","sources"}],
+- `answer` → `{ "widgets": [WidgetSpec], "trace": [{"tool","description"}],
   "asOf": ISO-8601, "notices": ["…"] }` — terminal structured payload.
 - `error` → `{ "message": "…" }` — terminal failure (also the access-denied surface
   if it ever slips past the controller gate).
@@ -134,8 +134,9 @@ conversation store is needed.
    default advisors) and attaches the per-request tool callbacks — each
    `ReportingTool` wrapped as a `ToolCallback` bound to this request's `UserRole` —
    via `.tools(...)`.
-3. The model streams; if it decides it needs data, Spring AI's `ToolCallingAdvisor`
-   emits a tool call for `get_sales_by_period`, deserializes the JSON args into
+3. The model streams; if it decides it needs data, Spring AI's tool loop (the
+   auto-configured `ToolCallingManager`, driving internal tool execution) emits a
+   tool call for `get_sales_by_period`, deserializes the JSON args into
    `GetSalesByPeriodInput`, and invokes our callback.
 4. The callback calls `ToolDispatcher.dispatch(GET_SALES_BY_PERIOD, input, role)` —
    the single authorization/validation choke point — and records the `ToolResult`
@@ -144,7 +145,7 @@ conversation store is needed.
 5. The model finishes its prose (streamed as `text` deltas) referencing those numbers.
 6. On stream completion, `ChatClientAssistantService` reads `ConversationContext` and
    emits the `answer` event: widgets (`ToolResult.widget()`), trace (tool name +
-   description + sources), `asOf` timestamp, and notices.
+   description), `asOf` timestamp, and notices.
 
 Frontend shows a generic **"Working…"** state while the stream is open; the tool
 names surface in the "How I got this" trace once `answer` lands. A real-time
@@ -184,7 +185,10 @@ eventual agent harness be changeable without rework.
    `ReportingTool` + a `ToolId` enum value + its input record. Zero changes to chat
    wiring, the controller, or the prompt. The `ReportingTool` contract already
    carries exactly what the LLM and any harness need — `id()`, `name()`,
-   `description()`, `execute(input, role)`.
+   `description()`, `inputType()` (for JSON-schema generation), and
+   `execute(input, role)`. `inputType()` is the one addition this slice makes to the
+   contract: Spring AI needs the concrete input type to derive the parameter schema
+   and deserialize the model's JSON args.
 2. **Easily-changeable system prompt.** The prompt is not in Java — it is externalized
    to a classpath resource `prompts/ask-goldys-system.txt`, read through a config
    property (`app.conversational.system-prompt`) that defaults to that file and is
@@ -192,17 +196,21 @@ eventual agent harness be changeable without rework.
 3. **Future-proof for an agent harness.** The seam is three layers, all already
    present in this design:
 
-   - **Tools** — every `ReportingTool` becomes a `ToolCallback` bean. Skills,
-     callables, and future tools are just more beans; `ToolCallingManager` discovers
-     and executes them.
-   - **Advisor chain** — where RAG (`QuestionAnswerAdvisor`), memory, guardrails, and
-     the tool loop (`ToolCallingAdvisor`) compose by ordering. When the tool set
-     grows, swapping in `ToolSearchToolCallingAdvisor` gives progressive tool
-     disclosure with zero rework.
+   - **Tools** — every `ReportingTool` becomes a `ToolCallback`. Skills, callables,
+     and future tools are just more callbacks; `ToolCallingManager` discovers and
+     executes them.
+   - **Advisor chain** — where RAG (`QuestionAnswerAdvisor`), memory, and guardrails
+     compose by ordering around the chat call (available in 1.1.x today).
    - **`ToolCallingManager`** — the decorator seam where a full harness's governance
      (round limits, human-in-the-loop approval, interceptor chains) plugs in later;
-     the Spring AI ecosystem builds its agent loop as a decorator on this manager,
-     without subclassing Spring AI.
+     a custom `ToolCallingManager` bean wraps the default without subclassing
+     Spring AI internals.
+
+   Spring AI 1.1.x already exposes all three seams. The 2.0-style composable tool
+   loop (`ToolCallingAdvisor` / `ToolSearchToolCallingAdvisor`) is a Spring AI 2.x
+   feature that arrives with a future Spring Boot 4 upgrade; the `ToolCallback`
+   contract is stable across that boundary, so the upgrade changes the loop's
+   internals, not our tools.
 
    The `AssistantService` port insulates the controller from the orchestration
    strategy, so an agent-harness implementation can replace `ChatClientAssistantService`
@@ -213,8 +221,9 @@ eventual agent harness be changeable without rework.
    discovers arbitrary actions. A truly open-ended agent would require relaxing the
    enum-whitelist policy, a contained change rather than a rearchitecture.
 
-   **Pin Spring AI 2.0.x** (not the stale 1.x `FunctionCallback` API — that API is
-   removed in 2.0). Use `ToolCallback` / `FunctionToolCallback`.
+   **Pin Spring AI 1.1.x** (the line compatible with this project's Spring Boot
+   3.5.x; Spring AI 2.x requires Spring Boot 4.x). Use the `ToolCallback` /
+   `FunctionToolCallback` API — `FunctionCallback` is the deprecated 1.0-era name.
 
 ## 9. Config and Secrets
 
@@ -279,7 +288,8 @@ New `frontend/components/ask-goldys/`:
 - **System prompt** externalized to a classpath resource.
 - **Tools discovered**, not hardcoded; `AssistantService` port isolates the
   orchestration strategy.
-- **Spring AI 2.0.x** pinned; `ToolCallback` API (not the removed `FunctionCallback`).
+- **Spring AI 1.1.x** pinned (the Spring Boot 3.5.x line; 2.x needs Spring Boot 4);
+  `ToolCallback` / `FunctionToolCallback` API.
 
 ## 13. Open Questions
 
