@@ -51,8 +51,9 @@ class ConnectorRunner {
       runs.recordFailure(runId, e.failureType(), e.getMessage(), stackTraceOf(e), CLOCK.instant());
     } catch (RuntimeException e) {
       // An unclassified fault may carry anything in its message - a URL with a token, a fragment
-      // of payload - so only the exception type is recorded, and the run is closed before the
-      // exception continues to the caller.
+      // of payload. The stack trace is stored deliberately (accepted tradeoff: the operator who
+      // runs connectors already holds those secrets, and the ledger is append-only/trusted), but
+      // the run is still closed before the exception continues to the caller.
       runs.recordFailure(
           runId, "UNEXPECTED", e.getClass().getName(), stackTraceOf(e), CLOCK.instant());
       runs.complete(runId, watermark, CLOCK.instant());

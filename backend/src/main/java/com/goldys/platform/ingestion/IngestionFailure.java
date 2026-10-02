@@ -13,8 +13,10 @@ import java.util.UUID;
  * be mistaken for "no new data".
  *
  * <p>{@code failureType} stays a free string on purpose: a new adapter can report an unanticipated
- * failure mode without a migration. Detail text is operator-facing and must never carry payload
- * contents, credentials, or tokens.
+ * failure mode without a migration. {@code detail} is operator-facing and must never carry payload
+ * contents, credentials, or tokens; {@code stackTrace} is deliberately exempt from that rule — it
+ * may embed the exception message (and therefore tokens/payload fragments), accepted because the
+ * operator who runs connectors already holds those secrets and the ledger is append-only/trusted.
  */
 @Entity
 @Table(name = "ingestion_failure")

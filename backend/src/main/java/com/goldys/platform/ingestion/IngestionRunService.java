@@ -38,7 +38,8 @@ class IngestionRunService {
   /**
    * Records a failure in its own transaction so it survives whatever happens to the rest of the
    * run. {@code detail} is operator-facing text and must never contain payload contents,
-   * credentials, or tokens.
+   * credentials, or tokens; {@code stackTrace} is exempt from that rule (see {@link
+   * IngestionFailure}).
    */
   @Transactional
   void recordFailure(
