@@ -35,6 +35,11 @@ public class GetSalesByPeriodTool implements ReportingTool {
   }
 
   @Override
+  public Class<? extends ToolInput> inputType() {
+    return GetSalesByPeriodInput.class;
+  }
+
+  @Override
   public ToolResult execute(ToolInput input, UserRole role) {
     if (!(input instanceof GetSalesByPeriodInput in)) {
       throw new IllegalArgumentException(

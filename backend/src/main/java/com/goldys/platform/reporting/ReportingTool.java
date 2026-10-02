@@ -10,5 +10,8 @@ public interface ReportingTool {
 
   String description();
 
+  /** The concrete {@link ToolInput} type; Spring AI derives the tool's JSON schema from it. */
+  Class<? extends ToolInput> inputType();
+
   ToolResult execute(ToolInput input, UserRole role);
 }
