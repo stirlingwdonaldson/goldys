@@ -32,19 +32,27 @@ public class CtbClient {
   }
 
   public void login(String email, String password) {
+    // Establish the ASP.NET session first: the login POST alone does not set the session
+    // cookie, but a GET to a session-backed page (this one 302s to /Default/Login) does.
+    get("/Default/Home2");
     String body = post("/Account/Login", form("userEmail", email, "userPassword", password));
-    if (!isLoginSuccess(body)) {
+    if (!isSuccess(body)) {
       throw new ConnectorFetchException("CONNECTOR_AUTH_FAILED", "CTB login failed");
     }
   }
 
   /**
-   * True when CTB's login response carries a top-level {@code IsSuccess: true}. The login response
-   * is shaped {@code {IsSuccess, AdditionalData, Info}} — unlike the data endpoints, which wrap it
-   * as {@code {message: {IsSuccess, ...}, totalCount, data}}.
+   * True when a CTB response reports success. CTB uses two envelopes: the login returns {@code
+   * IsSuccess} at the top level, while data endpoints wrap it as {@code message: {IsSuccess, ...}}.
+   * Accept either.
    */
-  static boolean isLoginSuccess(String body) {
-    return parse(body).path("IsSuccess").asBoolean(false);
+  static boolean isSuccess(String body) {
+    return isSuccess(parse(body));
+  }
+
+  private static boolean isSuccess(JsonNode json) {
+    return json.path("IsSuccess").asBoolean(false)
+        || json.path("message").path("IsSuccess").asBoolean(false);
   }
 
   /** One page of revenue rows plus the total record count, returned as raw JSON for the sink. */
@@ -54,7 +62,7 @@ public class CtbClient {
             "/Revenue/SearchRevenues",
             form("keyword", "", "start", String.valueOf(start), "limit", String.valueOf(limit)));
     JsonNode json = parse(body);
-    if (!json.path("message").path("IsSuccess").asBoolean(false)) {
+    if (!isSuccess(json)) {
       throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB revenue search failed");
     }
     int total = json.path("totalCount").asInt(json.path("data").size());
@@ -78,11 +86,27 @@ public class CtbClient {
                 "limit",
                 String.valueOf(limit)));
     JsonNode json = parse(body);
-    if (!json.path("message").path("IsSuccess").asBoolean(false)) {
+    if (!isSuccess(json)) {
       throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB sale-item search failed");
     }
     int total = json.path("totalCount").asInt(json.path("data").size());
     return new CtbPage(body, total);
+  }
+
+  private String get(String path) {
+    HttpRequest request =
+        HttpRequest.newBuilder(URI.create(baseUrl + path))
+            .header("Accept", "text/html,application/xhtml+xml")
+            .GET()
+            .build();
+    try {
+      return http.send(request, HttpResponse.BodyHandlers.ofString()).body();
+    } catch (IOException e) {
+      throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB request failed: " + path, e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "Interrupted: " + path, e);
+    }
   }
 
   private String post(String path, String form) {
