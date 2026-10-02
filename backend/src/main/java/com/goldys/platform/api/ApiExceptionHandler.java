@@ -36,6 +36,16 @@ class ApiExceptionHandler {
                 "VALIDATION_FAILED", exception.getMessage(), correlationId(request), Map.of()));
   }
 
+  /** A feature that is present but not configured (e.g. no chat model / API key). */
+  @ExceptionHandler(NotConfiguredException.class)
+  ResponseEntity<ApiErrorResponse> handleNotConfigured(
+      NotConfiguredException exception, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(
+            new ApiErrorResponse(
+                "NOT_CONFIGURED", exception.getMessage(), correlationId(request), Map.of()));
+  }
+
   /** A push/upload payload that failed to parse (e.g. a CSV with unexpected columns). */
   @ExceptionHandler(ConnectorFetchException.class)
   ResponseEntity<ApiErrorResponse> handleConnectorFetch(
