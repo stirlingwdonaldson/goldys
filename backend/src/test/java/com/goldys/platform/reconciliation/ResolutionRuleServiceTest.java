@@ -72,4 +72,79 @@ class ResolutionRuleServiceTest {
     verify(repository).saveAndFlush(prior);
     assertThat(saved.sourcePriority()).containsExactly("LIGHTSPEED");
   }
+
+  @Test
+  void rejectsUnknownEntityType() {
+    ResolutionRuleService service =
+        new ResolutionRuleService(
+            mock(ResolutionRuleRepository.class), mock(PermissionService.class));
+
+    assertThatThrownBy(
+            () ->
+                service.save(
+                    OWNER,
+                    "a@b.com",
+                    new ResolutionRuleService.RuleInput(
+                        "sales", "daily_sales", "priority", null, List.of("CTB"))))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("entity type");
+  }
+
+  @Test
+  void rejectsPriorityWithoutSourceOrder() {
+    ResolutionRuleService service =
+        new ResolutionRuleService(
+            mock(ResolutionRuleRepository.class), mock(PermissionService.class));
+
+    assertThatThrownBy(
+            () ->
+                service.save(
+                    OWNER,
+                    "a@b.com",
+                    new ResolutionRuleService.RuleInput(
+                        "daily_sales", "daily_sales", "priority", null, List.of())))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("source order");
+  }
+
+  @Test
+  void rejectsUnknownCustomLogic() {
+    ResolutionRuleService service =
+        new ResolutionRuleService(
+            mock(ResolutionRuleRepository.class), mock(PermissionService.class));
+
+    assertThatThrownBy(
+            () ->
+                service.save(
+                    OWNER,
+                    "a@b.com",
+                    new ResolutionRuleService.RuleInput(
+                        "daily_sales", "daily_sales", "custom", "frobnicate", null)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("custom logic");
+  }
+
+  @Test
+  void deleteRejectsMalformedId() {
+    ResolutionRuleService service =
+        new ResolutionRuleService(
+            mock(ResolutionRuleRepository.class), mock(PermissionService.class));
+
+    assertThatThrownBy(() -> service.delete(OWNER, "a@b.com", "not-a-uuid"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid rule id");
+  }
+
+  @Test
+  void deleteRejectsUnknownId() {
+    ResolutionRuleRepository repository = mock(ResolutionRuleRepository.class);
+    java.util.UUID id = java.util.UUID.randomUUID();
+    when(repository.findCurrentById(id)).thenReturn(Optional.empty());
+    ResolutionRuleService service =
+        new ResolutionRuleService(repository, mock(PermissionService.class));
+
+    assertThatThrownBy(() -> service.delete(OWNER, "a@b.com", id.toString()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("No current rule");
+  }
 }

@@ -20,6 +20,9 @@ interface ResolutionRuleRepository extends JpaRepository<ResolutionRule, UUID> {
           + "and r.fieldKey = :fieldKey and r.supersededAt is null")
   Optional<ResolutionRule> findCurrent(String entityType, String fieldKey);
 
+  @Query("select r from ResolutionRule r where r.id = :id and r.supersededAt is null")
+  Optional<ResolutionRule> findCurrentById(UUID id);
+
   List<ResolutionRule> findAllByOrderByRecordedAtDesc();
 
   List<ResolutionRule> findAllBySupersededAtIsNullOrderByRecordedAtDesc();
