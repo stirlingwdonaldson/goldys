@@ -33,10 +33,18 @@ public class CtbClient {
 
   public void login(String email, String password) {
     String body = post("/Account/Login", form("userEmail", email, "userPassword", password));
-    JsonNode json = parse(body);
-    if (!json.path("message").path("IsSuccess").asBoolean(false)) {
+    if (!isLoginSuccess(body)) {
       throw new ConnectorFetchException("CONNECTOR_AUTH_FAILED", "CTB login failed");
     }
+  }
+
+  /**
+   * True when CTB's login response carries a top-level {@code IsSuccess: true}. The login response
+   * is shaped {@code {IsSuccess, AdditionalData, Info}} — unlike the data endpoints, which wrap it
+   * as {@code {message: {IsSuccess, ...}, totalCount, data}}.
+   */
+  static boolean isLoginSuccess(String body) {
+    return parse(body).path("IsSuccess").asBoolean(false);
   }
 
   /** One page of revenue rows plus the total record count, returned as raw JSON for the sink. */
