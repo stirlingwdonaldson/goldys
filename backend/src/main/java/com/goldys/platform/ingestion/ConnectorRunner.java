@@ -3,6 +3,8 @@ package com.goldys.platform.ingestion;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.IngestionSink;
 import com.goldys.platform.ingestion.port.SourceConnector;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Clock;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -46,12 +48,13 @@ class ConnectorRunner {
     try {
       connector.fetch(watermark, sink);
     } catch (ConnectorFetchException e) {
-      runs.recordFailure(runId, e.failureType(), e.getMessage(), CLOCK.instant());
+      runs.recordFailure(runId, e.failureType(), e.getMessage(), stackTraceOf(e), CLOCK.instant());
     } catch (RuntimeException e) {
       // An unclassified fault may carry anything in its message - a URL with a token, a fragment
       // of payload - so only the exception type is recorded, and the run is closed before the
       // exception continues to the caller.
-      runs.recordFailure(runId, "UNEXPECTED", e.getClass().getName(), CLOCK.instant());
+      runs.recordFailure(
+          runId, "UNEXPECTED", e.getClass().getName(), stackTraceOf(e), CLOCK.instant());
       runs.complete(runId, watermark, CLOCK.instant());
       throw e;
     }
@@ -60,5 +63,11 @@ class ConnectorRunner {
     // from rather than silently resetting the source position to null.
     runs.complete(runId, watermark, CLOCK.instant());
     return runId;
+  }
+
+  private static String stackTraceOf(Throwable t) {
+    StringWriter sw = new StringWriter();
+    t.printStackTrace(new PrintWriter(sw));
+    return sw.toString();
   }
 }

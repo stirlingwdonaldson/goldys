@@ -81,7 +81,7 @@ class IngestionServicesTest {
   void zeroPayloadsWithAFailureCompletesAsFailed() {
     UUID runId = runs.start("DEPUTY", "deputy-api", null, Instant.now());
 
-    runs.recordFailure(runId, "AUTH_FAILED", "OAuth token rejected", Instant.now());
+    runs.recordFailure(runId, "AUTH_FAILED", "OAuth token rejected", null, Instant.now());
     runs.complete(runId, null, Instant.now());
 
     assertThat(runRepository.findById(runId).orElseThrow().status())
@@ -97,7 +97,7 @@ class IngestionServicesTest {
     payloads.persist(
         runId, "LIGHTSPEED", FetchMethod.SCRAPE, "text/html", new byte[] {1}, "UTF-8", "fixture");
 
-    runs.recordFailure(runId, "SCHEMA_MISMATCH", "second page changed", Instant.now());
+    runs.recordFailure(runId, "SCHEMA_MISMATCH", "second page changed", null, Instant.now());
     runs.complete(runId, "page-2", Instant.now());
 
     assertThat(runRepository.findById(runId).orElseThrow().status())

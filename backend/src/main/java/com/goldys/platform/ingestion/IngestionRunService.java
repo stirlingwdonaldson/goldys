@@ -41,11 +41,16 @@ class IngestionRunService {
    * credentials, or tokens.
    */
   @Transactional
-  void recordFailure(UUID ingestionRunId, String failureType, String detail, Instant occurredAt) {
+  void recordFailure(
+      UUID ingestionRunId,
+      String failureType,
+      String detail,
+      String stackTrace,
+      Instant occurredAt) {
     IngestionRun run = require(ingestionRunId);
     failures.save(
         IngestionFailure.record(
-            ingestionRunId, run.sourceSystem(), failureType, detail, occurredAt));
+            ingestionRunId, run.sourceSystem(), failureType, detail, stackTrace, occurredAt));
   }
 
   @Transactional

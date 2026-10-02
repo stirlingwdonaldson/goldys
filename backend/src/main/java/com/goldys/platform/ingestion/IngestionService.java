@@ -1,6 +1,8 @@
 package com.goldys.platform.ingestion;
 
 import com.goldys.platform.ingestion.port.SourceConnector;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -93,10 +95,17 @@ public class IngestionService {
       return rawId;
     } catch (RuntimeException e) {
       // Record the failure and close the run so the fault is observable, not a dangling RUNNING.
-      runs.recordFailure(runId, "UNEXPECTED", e.getClass().getName(), CLOCK.instant());
+      runs.recordFailure(
+          runId, "UNEXPECTED", e.getClass().getName(), stackTraceOf(e), CLOCK.instant());
       runs.complete(runId, null, CLOCK.instant());
       throw e;
     }
+  }
+
+  private static String stackTraceOf(Throwable t) {
+    StringWriter sw = new StringWriter();
+    t.printStackTrace(new PrintWriter(sw));
+    return sw.toString();
   }
 
   /** The latest run for each source, newest first by start time. */

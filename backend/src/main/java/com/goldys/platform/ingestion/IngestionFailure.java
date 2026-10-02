@@ -33,6 +33,9 @@ class IngestionFailure {
   @Column(name = "detail", updatable = false)
   private String detail;
 
+  @Column(name = "stack_trace", updatable = false)
+  private String stackTrace;
+
   @Column(name = "occurred_at", nullable = false, updatable = false)
   private Instant occurredAt;
 
@@ -43,12 +46,14 @@ class IngestionFailure {
       String sourceSystem,
       String failureType,
       String detail,
+      String stackTrace,
       Instant occurredAt) {
     this.id = UUID.randomUUID();
     this.ingestionRunId = Objects.requireNonNull(ingestionRunId, "ingestionRunId");
     this.sourceSystem = Objects.requireNonNull(sourceSystem, "sourceSystem");
     this.failureType = requireFailureType(failureType);
     this.detail = detail;
+    this.stackTrace = stackTrace;
     this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt");
   }
 
@@ -57,8 +62,10 @@ class IngestionFailure {
       String sourceSystem,
       String failureType,
       String detail,
+      String stackTrace,
       Instant occurredAt) {
-    return new IngestionFailure(ingestionRunId, sourceSystem, failureType, detail, occurredAt);
+    return new IngestionFailure(
+        ingestionRunId, sourceSystem, failureType, detail, stackTrace, occurredAt);
   }
 
   private static String requireFailureType(String failureType) {
@@ -87,6 +94,10 @@ class IngestionFailure {
 
   String detail() {
     return detail;
+  }
+
+  String stackTrace() {
+    return stackTrace;
   }
 
   Instant occurredAt() {
