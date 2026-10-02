@@ -21,6 +21,7 @@ import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
+import com.goldys.platform.ingestion.FailureDetail;
 import com.goldys.platform.ingestion.IngestionRunSummary;
 import com.goldys.platform.ingestion.IngestionService;
 import java.time.Instant;
@@ -133,6 +134,29 @@ class ConnectorStatusControllerTest {
         .andExpect(status().isNoContent());
 
     verify(openTableCsvIngest).ingest(any(byte[].class));
+  }
+
+  @Test
+  void connectorsCarryTheFailureDetail() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(ingestion.latestRunPerSource())
+        .thenReturn(
+            List.of(
+                new IngestionRunSummary(
+                    "CTB",
+                    "ctb-revenue",
+                    "FAILED",
+                    Instant.parse("2026-10-02T12:00:00Z"),
+                    "1 failure(s) recorded",
+                    new FailureDetail(
+                        "AUTH_FAILED",
+                        "OAuth token rejected",
+                        Instant.parse("2026-10-02T12:00:05Z")))));
+
+    mvc.perform(get("/api/connectors").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[1].failure.type").value("AUTH_FAILED"))
+        .andExpect(jsonPath("$[1].failure.message").value("OAuth token rejected"));
   }
 
   private static AccountUserDetails owner() {

@@ -6,6 +6,7 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
+import com.goldys.platform.ingestion.FailureDetail;
 import com.goldys.platform.ingestion.IngestionRunSummary;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
@@ -37,10 +38,10 @@ public class ConnectorStatusController {
    */
   private static final List<ConnectorStatusDto> KNOWN_SOURCES =
       List.of(
-          new ConnectorStatusDto("LIGHTSPEED", "lightspeed-insights", null, "never_run", 0),
-          new ConnectorStatusDto("CTB", "ctb-revenue", null, "never_run", 0),
-          new ConnectorStatusDto("OPENTABLE", "opentable-csv-drop", null, "never_run", 0),
-          new ConnectorStatusDto("DEPUTY", "deputy-api", null, "never_run", 0));
+          new ConnectorStatusDto("LIGHTSPEED", "lightspeed-insights", null, "never_run", 0, null),
+          new ConnectorStatusDto("CTB", "ctb-revenue", null, "never_run", 0, null),
+          new ConnectorStatusDto("OPENTABLE", "opentable-csv-drop", null, "never_run", 0, null),
+          new ConnectorStatusDto("DEPUTY", "deputy-api", null, "never_run", 0, null));
 
   private final IngestionService ingestion;
   private final OpenTableCsvIngestService openTableCsvIngest;
@@ -101,7 +102,12 @@ public class ConnectorStatusController {
         run.connectorName(),
         run.startedAt().toString(),
         status(run.status()),
-        failureCount(run.failureSummary()));
+        failureCount(run.failureSummary()),
+        failure(run.failure()));
+  }
+
+  private static FailureDetailDto failure(FailureDetail f) {
+    return f == null ? null : new FailureDetailDto(f.type(), f.message(), f.at().toString());
   }
 
   private static String status(String s) {
@@ -127,5 +133,12 @@ public class ConnectorStatusController {
   }
 
   record ConnectorStatusDto(
-      String source, String connectorName, String lastRunAt, String status, int failureCount) {}
+      String source,
+      String connectorName,
+      String lastRunAt,
+      String status,
+      int failureCount,
+      FailureDetailDto failure) {}
+
+  record FailureDetailDto(String type, String message, String at) {}
 }
