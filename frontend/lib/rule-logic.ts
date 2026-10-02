@@ -41,6 +41,14 @@ export function fieldLabel(entityType: string, fieldKey: string): string {
   return fieldKey; // a product name key
 }
 
+/** The entity → field map used to derive unresolved rows, from the current product list. */
+export function buildKnownFields(products: string[]): Record<string, string[]> {
+  return {
+    daily_sales: ["daily_sales"],
+    product_sales: ["*", ...products],
+  };
+}
+
 /** One-line effect of a rule, shown in the rule list. */
 export function summarizeRule(rule: ResolutionRule): string {
   if (rule.strategy === "priority") return `${rule.sourcePriority?.[0] ?? "First source"} wins`;

@@ -18,4 +18,10 @@ describe("demoApi resolution rules", () => {
     expect(edited?.fieldKey).toBe("pint carlton draught");
     expect(edited?.sourcePriority).toEqual(["Lightspeed", "Cooking the Books"]);
   });
+
+  it("lists the demo products", async () => {
+    const products = await demoApi.listProducts();
+    expect(products).toContain("garlic aioli");
+    expect(products).toContain("pint carlton draught");
+  });
 });

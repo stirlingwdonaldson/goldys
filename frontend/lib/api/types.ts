@@ -144,4 +144,5 @@ export interface Api {
   deleteResolutionRule(id: string): Promise<void>;
   getRecomputeStatus(): Promise<RecomputeStatus>;
   listRuleAudit(): Promise<RuleAuditEntry[]>;
+  listProducts(): Promise<string[]>;
 }

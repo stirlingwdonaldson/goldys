@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { summarizeRule, ruleDetail, buildRuleRows, entityLabel, fieldLabel } from "./rule-logic";
+import {
+  summarizeRule,
+  ruleDetail,
+  buildRuleRows,
+  entityLabel,
+  fieldLabel,
+  buildKnownFields,
+} from "./rule-logic";
 import type { ResolutionRule } from "./rule-logic";
 
 function rule(overrides: Partial<ResolutionRule> = {}): ResolutionRule {
@@ -30,6 +37,18 @@ describe("fieldLabel", () => {
 
   it("passes a product name through unchanged", () => {
     expect(fieldLabel("product_sales", "garlic aioli")).toBe("garlic aioli");
+  });
+});
+
+describe("buildKnownFields", () => {
+  it("always includes the daily field and the product catch-all", () => {
+    const known = buildKnownFields(["garlic aioli"]);
+    expect(known.daily_sales).toEqual(["daily_sales"]);
+    expect(known.product_sales).toEqual(["*", "garlic aioli"]);
+  });
+
+  it("returns just the catch-all when there are no products", () => {
+    expect(buildKnownFields([]).product_sales).toEqual(["*"]);
   });
 });
 

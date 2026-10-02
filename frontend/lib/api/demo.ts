@@ -144,11 +144,6 @@ function activityFixture(): ActivityPoint[] {
 // items, and are surfaced as such in the UI.
 const DEMO_PRODUCTS = ["garlic aioli", "pint carlton draught"];
 
-const KNOWN_FIELDS: Record<string, string[]> = {
-  daily_sales: ["daily_sales"],
-  product_sales: ["*", ...DEMO_PRODUCTS],
-};
-
 let rules: ResolutionRule[] = [
   {
     id: "rule-1",
@@ -193,11 +188,6 @@ let ruleAudit: RuleAuditEntry[] = [
     by: "Stirling Donaldson",
   },
 ];
-
-/** The entity → field map the page uses to derive unresolved rows. */
-export function getKnownFields(): Record<string, string[]> {
-  return { ...KNOWN_FIELDS };
-}
 
 export const demoApi: Api = {
   async getDashboardSummary(): Promise<DashboardSummary> {
@@ -372,5 +362,10 @@ export const demoApi: Api = {
   async listRuleAudit(): Promise<RuleAuditEntry[]> {
     await delay(300);
     return [...ruleAudit];
+  },
+
+  async listProducts(): Promise<string[]> {
+    await delay(300);
+    return [...DEMO_PRODUCTS];
   },
 };
