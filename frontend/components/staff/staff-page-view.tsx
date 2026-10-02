@@ -1,5 +1,6 @@
 import { Lock, Percent, Users } from "lucide-react";
 import { AwaitingData } from "@/components/states/awaiting-data";
+import { isOwner } from "@/lib/roles";
 
 interface StaffPageViewProps {
   /** Current user's seniority; gates the Owner-only labor-cost surface. */
@@ -12,7 +13,7 @@ interface StaffPageViewProps {
  * closed: an absent seniority locks the labor-cost surface.
  */
 export function StaffPageView({ seniority }: StaffPageViewProps) {
-  const isOwner = seniority === "Owner";
+  const isOwnerRole = isOwner(seniority);
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -27,7 +28,7 @@ export function StaffPageView({ seniority }: StaffPageViewProps) {
         icon={Users}
       />
 
-      {isOwner ? (
+      {isOwnerRole ? (
         <AwaitingData
           label="Labor cost %"
           description="Labor cost as a % of sales."

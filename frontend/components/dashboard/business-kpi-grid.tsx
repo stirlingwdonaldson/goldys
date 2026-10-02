@@ -1,5 +1,6 @@
 import { CalendarDays, Lock, Percent, TrendingUp, Trophy, Utensils } from "lucide-react";
 import { AwaitingData } from "@/components/states/awaiting-data";
+import { isOwner } from "@/lib/roles";
 
 interface BusinessKpiGridProps {
   /** Current user's seniority; gates the Owner-only labor tile. */
@@ -12,7 +13,7 @@ interface BusinessKpiGridProps {
  * permission model (wage/labor-cost figures).
  */
 export function BusinessKpiGrid({ seniority }: BusinessKpiGridProps) {
-  const isOwner = seniority === "Owner";
+  const isOwnerRole = isOwner(seniority);
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <AwaitingData
@@ -21,7 +22,7 @@ export function BusinessKpiGrid({ seniority }: BusinessKpiGridProps) {
         reason="Awaiting sales-reporting endpoint."
         icon={TrendingUp}
       />
-      {isOwner ? (
+      {isOwnerRole ? (
         <AwaitingData
           label="Labor cost %"
           description="Scheduled vs. actual hours and labor % of sales."
