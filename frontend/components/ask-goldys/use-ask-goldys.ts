@@ -31,13 +31,24 @@ export function useAskGoldys(): UseAskGoldys {
       setError(null);
       setWorking(true);
 
+      let accumulated = "";
       streamChat(next, {
-        onText: (delta) => setSummary((s) => s + delta),
+        onText: (delta) => {
+          accumulated += delta;
+          setSummary(accumulated);
+        },
         onAnswer: (payload) => setAnswer(payload),
         onError: (message) => setError(message),
       })
         .catch(() => setError("Could not reach the server. Check your connection and try again."))
-        .finally(() => setWorking(false));
+        .finally(() => {
+          // Append the assistant's turn so the next ask() carries the full in-session
+          // history (the clarify loop depends on it).
+          if (accumulated) {
+            setMessages((msgs) => [...msgs, { role: "assistant", content: accumulated }]);
+          }
+          setWorking(false);
+        });
     },
     [messages],
   );
