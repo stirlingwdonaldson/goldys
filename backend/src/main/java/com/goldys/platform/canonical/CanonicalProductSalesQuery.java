@@ -21,6 +21,11 @@ public class CanonicalProductSalesQuery {
     return repository.findCurrentByDate(date).stream().map(this::toView).toList();
   }
 
+  /** The distinct, sorted product name keys that currently have canonical product sales. */
+  public List<String> distinctProductNameKeys() {
+    return repository.findDistinctCurrentProductNameKeys();
+  }
+
   private ProductSalesView toView(CanonicalProductSales s) {
     return new ProductSalesView(
         s.sourceSystem(),

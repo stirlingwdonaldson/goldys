@@ -8,6 +8,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class ResolutionRuleService {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
   private static final Clock CLOCK = Clock.systemUTC();
+
+  private static final Set<String> ENTITY_TYPES = Set.of("daily_sales", "product_sales");
+  private static final Set<String> STRATEGIES = Set.of("priority", "manual", "custom");
+  private static final Set<String> CUSTOM_LOGIC = Set.of("flag", "highest", "lowest", "newest");
 
   private final ResolutionRuleRepository repository;
   private final PermissionService permissions;
@@ -35,6 +40,7 @@ public class ResolutionRuleService {
   @Transactional
   public ResolutionRuleView save(UserRole actor, String actorEmail, RuleInput input) {
     permissions.require(actor, RESOURCE, PermissionAction.WRITE);
+    validate(input);
     Instant now = CLOCK.instant();
     Optional<ResolutionRule> current = repository.lockCurrent(input.entityType(), input.fieldKey());
     if (current.isPresent()) {
@@ -57,9 +63,17 @@ public class ResolutionRuleService {
   @Transactional
   public void delete(UserRole actor, String actorEmail, String id) {
     permissions.require(actor, RESOURCE, PermissionAction.WRITE);
-    repository
-        .findById(UUID.fromString(id))
-        .ifPresent(rule -> rule.supersede(CLOCK.instant(), actorEmail));
+    UUID ruleId;
+    try {
+      ruleId = UUID.fromString(id);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Invalid rule id: " + id);
+    }
+    ResolutionRule current =
+        repository
+            .findCurrentById(ruleId)
+            .orElseThrow(() -> new IllegalArgumentException("No current rule with id " + id));
+    current.supersede(CLOCK.instant(), actorEmail);
   }
 
   public Optional<ResolutionRule> findCurrent(String entityType, String fieldKey) {
@@ -68,6 +82,26 @@ public class ResolutionRuleService {
 
   public Optional<Instant> lastChangedAt() {
     return repository.findFirstByOrderByRecordedAtDesc().map(ResolutionRule::recordedAt);
+  }
+
+  private static void validate(RuleInput input) {
+    if (input.entityType() == null || !ENTITY_TYPES.contains(input.entityType())) {
+      throw new IllegalArgumentException("Unknown entity type: " + input.entityType());
+    }
+    if (input.fieldKey() == null || input.fieldKey().isBlank()) {
+      throw new IllegalArgumentException("Field key is required.");
+    }
+    if (input.strategy() == null || !STRATEGIES.contains(input.strategy())) {
+      throw new IllegalArgumentException("Unknown strategy: " + input.strategy());
+    }
+    if ("custom".equals(input.strategy())
+        && (input.customLogic() == null || !CUSTOM_LOGIC.contains(input.customLogic()))) {
+      throw new IllegalArgumentException("Unknown custom logic: " + input.customLogic());
+    }
+    if ("priority".equals(input.strategy())
+        && (input.sourcePriority() == null || input.sourcePriority().isEmpty())) {
+      throw new IllegalArgumentException("Priority strategy requires a source order.");
+    }
   }
 
   private ResolutionRuleView toView(ResolutionRule r) {

@@ -86,7 +86,7 @@ describe("RuleEditor", () => {
     );
   });
 
-  it("notes that the product list is demo data", () => {
+  it("notes that the product list is demo data only in demo mode", () => {
     render(
       <RuleEditor
         open
@@ -94,9 +94,25 @@ describe("RuleEditor", () => {
         onSave={() => {}}
         entities={["product_sales"]}
         fieldsByEntity={{ product_sales: ["*", "garlic aioli"] }}
+        demo
         initial={null}
       />,
     );
     expect(screen.getByText(/demo product list/i)).toBeInTheDocument();
+  });
+
+  it("does not flag the product list as demo in live mode", () => {
+    render(
+      <RuleEditor
+        open
+        onCancel={() => {}}
+        onSave={() => {}}
+        entities={["product_sales"]}
+        fieldsByEntity={{ product_sales: ["*", "garlic aioli"] }}
+        demo={false}
+        initial={null}
+      />,
+    );
+    expect(screen.queryByText(/demo product list/i)).not.toBeInTheDocument();
   });
 });

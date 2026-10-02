@@ -37,6 +37,8 @@ interface RuleEditorProps {
   initial: ResolutionRule | null; // null => creating
   entities: string[];
   fieldsByEntity: Record<string, string[]>;
+  /** True when running on demo fixtures, so the product list can be flagged as sample data. */
+  demo?: boolean;
   onSave: (input: SaveResolutionRuleInput) => void;
   onCancel: () => void;
 }
@@ -50,6 +52,7 @@ export function RuleEditor({
   initial,
   entities,
   fieldsByEntity,
+  demo = false,
   onSave,
   onCancel,
 }: RuleEditorProps) {
@@ -132,9 +135,9 @@ export function RuleEditor({
                 ))}
               </SelectContent>
             </Select>
-            {entityType === "product_sales" ? (
+            {demo && entityType === "product_sales" ? (
               <p className="text-xs text-muted-foreground">
-                Demo product list — live products aren&apos;t connected yet.
+                Demo product list — sample data, not your live menu.
               </p>
             ) : null}
           </div>

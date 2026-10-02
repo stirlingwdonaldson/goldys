@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useApi } from "@/lib/demo-mode";
+import { useApi, useDemoMode } from "@/lib/demo-mode";
 import { useApiData } from "@/lib/use-api-data";
-import { getKnownFields } from "@/lib/api/demo";
-import { buildRuleRows } from "@/lib/rule-logic";
+import { buildKnownFields, buildRuleRows } from "@/lib/rule-logic";
 import { RecomputeBanner } from "@/components/rules/recompute-banner";
 import { RuleList } from "@/components/rules/rule-list";
 import { RuleEditor } from "@/components/rules/rule-editor";
@@ -22,9 +21,11 @@ const ENTITIES = ["daily_sales", "product_sales"];
  */
 export function ResolutionRulesContent() {
   const api = useApi();
+  const { demo } = useDemoMode();
   const { data: rules, loading, error, reload } = useApiData((api) => api.listResolutionRules());
   const { data: status, reload: reloadStatus } = useApiData((api) => api.getRecomputeStatus());
   const { data: audit, reload: reloadAudit } = useApiData((api) => api.listRuleAudit());
+  const { data: products } = useApiData((api) => api.listProducts());
 
   const [editing, setEditing] = useState<ResolutionRule | null>(null);
   const [creating, setCreating] = useState(false);
@@ -41,7 +42,8 @@ export function ResolutionRulesContent() {
     );
   }
 
-  const rows = buildRuleRows(rules ?? [], getKnownFields());
+  const knownFields = buildKnownFields(products ?? []);
+  const rows = buildRuleRows(rules ?? [], knownFields);
 
   return (
     <div className="flex flex-col gap-6">
@@ -73,7 +75,8 @@ export function ResolutionRulesContent() {
         open={creating || editing !== null}
         initial={editing}
         entities={ENTITIES}
-        fieldsByEntity={getKnownFields()}
+        fieldsByEntity={knownFields}
+        demo={demo}
         onSave={async (input) => {
           await api.saveResolutionRule(input);
           setCreating(false);

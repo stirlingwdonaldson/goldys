@@ -99,6 +99,12 @@ public class ReconciliationController {
     return productSales.conflicts().stream().map(this::toProductException).toList();
   }
 
+  @GetMapping("/products")
+  List<String> products(@AuthenticationPrincipal AccountUserDetails user) {
+    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
+    return productSalesQuery.distinctProductNameKeys();
+  }
+
   @GetMapping("/products/{date}/{product}")
   ProductRecordDto productRecord(
       @PathVariable LocalDate date,

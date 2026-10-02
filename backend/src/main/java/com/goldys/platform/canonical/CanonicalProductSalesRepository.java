@@ -20,4 +20,9 @@ interface CanonicalProductSalesRepository extends BitemporalRepository<Canonical
 
   @Query("select s from CanonicalProductSales s where s.supersededAt is null")
   List<CanonicalProductSales> findAllCurrent();
+
+  @Query(
+      "select distinct p.productNameKey from CanonicalProductSales p where p.supersededAt is null "
+          + "order by p.productNameKey")
+  List<String> findDistinctCurrentProductNameKeys();
 }

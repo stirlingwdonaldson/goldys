@@ -57,4 +57,5 @@ export const liveApi: Api = {
     fetchApi<void>(`/api/reconciliation/rules/${id}`, { method: "DELETE" }),
   getRecomputeStatus: () => fetchApi<RecomputeStatus>("/api/reconciliation/recompute/status"),
   listRuleAudit: () => fetchApi<RuleAuditEntry[]>("/api/reconciliation/rules/audit"),
+  listProducts: () => fetchApi<string[]>("/api/reconciliation/products"),
 };

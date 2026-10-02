@@ -144,6 +144,18 @@ class ReconciliationControllerTest {
         .andExpect(jsonPath("$[0].sources[0].source").value("LIGHTSPEED"));
   }
 
+  @Test
+  void productsReturnsDistinctNames() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(productSalesQuery.distinctProductNameKeys())
+        .thenReturn(List.of("garlic aioli", "pint carlton draught"));
+
+    mvc.perform(get("/api/reconciliation/products").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0]").value("garlic aioli"))
+        .andExpect(jsonPath("$[1]").value("pint carlton draught"));
+  }
+
   private static AccountUserDetails owner() {
     return new AccountUserDetails(
         UUID.randomUUID(), "owner@example.com", "hash", "Owner", "ALL", "OWNER", true);
