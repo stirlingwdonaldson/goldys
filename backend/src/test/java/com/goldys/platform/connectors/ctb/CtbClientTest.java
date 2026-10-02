@@ -7,9 +7,21 @@ import org.junit.jupiter.api.Test;
 class CtbClientTest {
 
   @Test
-  void loginParsesTopLevelIsSuccess() {
-    assertThat(CtbClient.isLoginSuccess("{\"IsSuccess\": true, \"AdditionalData\": {}}")).isTrue();
-    assertThat(CtbClient.isLoginSuccess("{\"IsSuccess\": false, \"Info\": \"bad credentials\"}"))
+  void loginUsesTopLevelIsSuccess() {
+    assertThat(CtbClient.isSuccess("{\"IsSuccess\": true, \"AdditionalData\": {}}")).isTrue();
+    assertThat(CtbClient.isSuccess("{\"IsSuccess\": false, \"Info\": \"bad credentials\"}"))
+        .isFalse();
+  }
+
+  @Test
+  void dataEndpointsUseNestedMessageIsSuccess() {
+    assertThat(
+            CtbClient.isSuccess(
+                "{\"data\": [], \"totalCount\": 0, \"message\": {\"IsSuccess\": true}}"))
+        .isTrue();
+    assertThat(
+            CtbClient.isSuccess(
+                "{\"data\": [], \"totalCount\": 0, \"message\": {\"IsSuccess\": false}}"))
         .isFalse();
   }
 }
