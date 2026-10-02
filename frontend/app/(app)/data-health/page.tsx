@@ -142,6 +142,11 @@ export default function DataHealthPage() {
                   ? ` · last run ${new Date(c.lastRunAt).toLocaleString()}`
                   : " · never run"}
               </p>
+              {c.failure ? (
+                <p className="text-xs text-destructive">
+                  {c.failure.type}: {c.failure.message}
+                </p>
+              ) : null}
             </div>
             <div className="flex items-center gap-2">
               <ConnectorStatusBadge status={c.status} />
