@@ -36,7 +36,10 @@ public class GetSalesByPeriodTool implements ReportingTool {
 
   @Override
   public ToolResult execute(ToolInput input, UserRole role) {
-    GetSalesByPeriodInput in = (GetSalesByPeriodInput) input;
+    if (!(input instanceof GetSalesByPeriodInput in)) {
+      throw new IllegalArgumentException(
+          "Expected GetSalesByPeriodInput, got " + input.getClass().getSimpleName());
+    }
     List<Map<String, Object>> points = new ArrayList<>();
     List<LocalDate> unresolved = new ArrayList<>();
     for (LocalDate d = in.startDate(); !d.isAfter(in.endDate()); d = d.plusDays(1)) {

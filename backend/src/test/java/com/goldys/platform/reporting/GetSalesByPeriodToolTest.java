@@ -61,4 +61,16 @@ class GetSalesByPeriodToolTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("startDate");
   }
+
+  @Test
+  void rejectsAWrongInputType() {
+    DailySalesReconciliationService reconciliation = mock(DailySalesReconciliationService.class);
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(reconciliation);
+
+    assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("GetSalesByPeriodInput");
+  }
+
+  private record OtherInput() implements ToolInput {}
 }
