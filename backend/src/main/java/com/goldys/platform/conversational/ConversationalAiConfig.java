@@ -29,9 +29,15 @@ public class ConversationalAiConfig {
   @ConditionalOnProperty(name = OPENAI_CHAT_SELECTED, havingValue = "openai")
   ChatClient conversationalChatClient(
       ChatModel model,
+      @Value("${spring.ai.openai.api-key:not-configured}") String apiKey,
       @Value("${app.conversational.system-prompt:prompts/ask-goldys-system.txt}")
           String promptResource)
       throws IOException {
+    if (apiKey == null || apiKey.isBlank() || apiKey.equals("not-configured")) {
+      throw new IllegalStateException(
+          "spring.ai.model.chat=openai requires a real spring.ai.openai.api-key "
+              + "(set OPENAI_API_KEY); it is not configured.");
+    }
     String systemPrompt;
     try (var in = new ClassPathResource(promptResource).getInputStream()) {
       systemPrompt = new String(in.readAllBytes(), StandardCharsets.UTF_8);

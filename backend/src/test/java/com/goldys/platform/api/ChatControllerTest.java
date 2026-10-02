@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.goldys.platform.auth.AccessDeniedException;
@@ -66,7 +67,9 @@ class ChatControllerTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
-        .andExpect(status().isServiceUnavailable());
+        .andExpect(status().isServiceUnavailable())
+        .andExpect(jsonPath("$.code").value("NOT_CONFIGURED"))
+        .andExpect(jsonPath("$.message").exists());
   }
 
   private static AccountUserDetails owner() {

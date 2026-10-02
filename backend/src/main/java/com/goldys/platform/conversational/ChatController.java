@@ -1,5 +1,6 @@
 package com.goldys.platform.conversational;
 
+import com.goldys.platform.api.ApiErrorResponse;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.PermissionAction;
@@ -38,14 +39,20 @@ public class ChatController {
   }
 
   @PostMapping("/chat")
-  ResponseEntity<SseEmitter> chat(
+  ResponseEntity<?> chat(
       @RequestBody ChatRequest request, @AuthenticationPrincipal AccountUserDetails user) {
     UserRole role = currentUser.roleOf(user);
     permissions.require(role, RESOURCE, PermissionAction.READ);
 
     AssistantService service = assistant.getIfAvailable();
     if (service == null) {
-      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+          .body(
+              new ApiErrorResponse(
+                  "NOT_CONFIGURED",
+                  "Ask Goldy's is not configured (set OPENAI_API_KEY and SPRING_AI_MODEL_CHAT=openai).",
+                  null,
+                  Map.of()));
     }
 
     SseEmitter emitter = new SseEmitter(0L); // no idle timeout

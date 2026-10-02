@@ -1,10 +1,12 @@
 package com.goldys.platform.conversational;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -95,6 +97,26 @@ class ReportingToolCallbacksTest {
 
     assertThat(raw).contains("\"ok\":false");
     assertThat(raw).contains("endDate");
+  }
+
+  @Test
+  void rejectsOutOfEnumArgumentsBeforeDispatch() {
+    ToolDispatcher dispatcher = mock(ToolDispatcher.class);
+
+    ReportingToolCallbacks adapter = new ReportingToolCallbacks();
+    ToolCallback callback =
+        adapter
+            .forTools(List.of(tool()), OWNER, new ConversationContext(), dispatcher, mapper)
+            .get(0);
+
+    assertThatThrownBy(
+            () ->
+                callback.call(
+                    "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"REVENUE\"}"))
+        .isInstanceOf(IllegalStateException.class);
+    // The enum-whitelist boundary holds: an out-of-enum metric fails deserialization and
+    // never reaches the dispatcher. (Recovery back to the model happens in Spring AI's tool loop.)
+    verifyNoInteractions(dispatcher);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
