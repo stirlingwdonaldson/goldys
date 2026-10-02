@@ -107,7 +107,9 @@ public class ConnectorStatusController {
   }
 
   private static FailureDetailDto failure(FailureDetail f) {
-    return f == null ? null : new FailureDetailDto(f.type(), f.message(), f.at().toString());
+    return f == null
+        ? null
+        : new FailureDetailDto(f.type(), f.message(), f.at().toString(), f.stackTrace());
   }
 
   private static String status(String s) {
@@ -140,5 +142,5 @@ public class ConnectorStatusController {
       int failureCount,
       FailureDetailDto failure) {}
 
-  record FailureDetailDto(String type, String message, String at) {}
+  record FailureDetailDto(String type, String message, String at, String stackTrace) {}
 }

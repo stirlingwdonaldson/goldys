@@ -38,14 +38,20 @@ class IngestionRunService {
   /**
    * Records a failure in its own transaction so it survives whatever happens to the rest of the
    * run. {@code detail} is operator-facing text and must never contain payload contents,
-   * credentials, or tokens.
+   * credentials, or tokens; {@code stackTrace} is exempt from that rule (see {@link
+   * IngestionFailure}).
    */
   @Transactional
-  void recordFailure(UUID ingestionRunId, String failureType, String detail, Instant occurredAt) {
+  void recordFailure(
+      UUID ingestionRunId,
+      String failureType,
+      String detail,
+      String stackTrace,
+      Instant occurredAt) {
     IngestionRun run = require(ingestionRunId);
     failures.save(
         IngestionFailure.record(
-            ingestionRunId, run.sourceSystem(), failureType, detail, occurredAt));
+            ingestionRunId, run.sourceSystem(), failureType, detail, stackTrace, occurredAt));
   }
 
   @Transactional

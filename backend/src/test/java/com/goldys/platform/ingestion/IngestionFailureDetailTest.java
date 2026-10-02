@@ -28,7 +28,7 @@ class IngestionFailureDetailTest {
   @Test
   void latestRunPerSourceCarriesTheLatestFailureDetail() {
     UUID runId = runs.start("CTB", "ctb-revenue", null, Instant.now());
-    runs.recordFailure(runId, "AUTH_FAILED", "OAuth token rejected", Instant.now());
+    runs.recordFailure(runId, "AUTH_FAILED", "OAuth token rejected", null, Instant.now());
     runs.complete(runId, null, Instant.now());
 
     IngestionRunSummary summary = ingestion.latestRunPerSource().get(0);

@@ -13,8 +13,10 @@ import java.util.UUID;
  * be mistaken for "no new data".
  *
  * <p>{@code failureType} stays a free string on purpose: a new adapter can report an unanticipated
- * failure mode without a migration. Detail text is operator-facing and must never carry payload
- * contents, credentials, or tokens.
+ * failure mode without a migration. {@code detail} is operator-facing and must never carry payload
+ * contents, credentials, or tokens; {@code stackTrace} is deliberately exempt from that rule — it
+ * may embed the exception message (and therefore tokens/payload fragments), accepted because the
+ * operator who runs connectors already holds those secrets and the ledger is append-only/trusted.
  */
 @Entity
 @Table(name = "ingestion_failure")
@@ -33,6 +35,9 @@ class IngestionFailure {
   @Column(name = "detail", updatable = false)
   private String detail;
 
+  @Column(name = "stack_trace", updatable = false)
+  private String stackTrace;
+
   @Column(name = "occurred_at", nullable = false, updatable = false)
   private Instant occurredAt;
 
@@ -43,12 +48,14 @@ class IngestionFailure {
       String sourceSystem,
       String failureType,
       String detail,
+      String stackTrace,
       Instant occurredAt) {
     this.id = UUID.randomUUID();
     this.ingestionRunId = Objects.requireNonNull(ingestionRunId, "ingestionRunId");
     this.sourceSystem = Objects.requireNonNull(sourceSystem, "sourceSystem");
     this.failureType = requireFailureType(failureType);
     this.detail = detail;
+    this.stackTrace = stackTrace;
     this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt");
   }
 
@@ -57,8 +64,10 @@ class IngestionFailure {
       String sourceSystem,
       String failureType,
       String detail,
+      String stackTrace,
       Instant occurredAt) {
-    return new IngestionFailure(ingestionRunId, sourceSystem, failureType, detail, occurredAt);
+    return new IngestionFailure(
+        ingestionRunId, sourceSystem, failureType, detail, stackTrace, occurredAt);
   }
 
   private static String requireFailureType(String failureType) {
@@ -87,6 +96,10 @@ class IngestionFailure {
 
   String detail() {
     return detail;
+  }
+
+  String stackTrace() {
+    return stackTrace;
   }
 
   Instant occurredAt() {
