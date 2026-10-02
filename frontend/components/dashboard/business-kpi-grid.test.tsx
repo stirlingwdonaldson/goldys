@@ -4,7 +4,7 @@ import { BusinessKpiGrid } from "./business-kpi-grid";
 
 describe("BusinessKpiGrid", () => {
   it("renders all five business tiles for an Owner, including labor", () => {
-    render(<BusinessKpiGrid seniority="Owner" />);
+    render(<BusinessKpiGrid seniority="OWNER" />);
     expect(screen.getByText("Sales")).toBeInTheDocument();
     expect(screen.getByText("Labor cost %")).toBeInTheDocument();
     expect(screen.getByText("Covers today")).toBeInTheDocument();
@@ -14,7 +14,7 @@ describe("BusinessKpiGrid", () => {
   });
 
   it("locks the labor tile for a non-Owner seniority", () => {
-    render(<BusinessKpiGrid seniority="Manager" />);
+    render(<BusinessKpiGrid seniority="MANAGER" />);
     expect(screen.queryByText(/awaiting deputy reporting/i)).not.toBeInTheDocument();
     expect(screen.getByText(/owner only/i)).toBeInTheDocument();
     // The other four tiles still render.
@@ -23,7 +23,7 @@ describe("BusinessKpiGrid", () => {
   });
 
   it("locks the labor tile for any value other than Owner", () => {
-    render(<BusinessKpiGrid seniority="Staff" />);
+    render(<BusinessKpiGrid seniority="STAFF" />);
     expect(screen.getByText(/owner only/i)).toBeInTheDocument();
   });
 

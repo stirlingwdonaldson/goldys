@@ -4,12 +4,12 @@ import { AskGoldysDrawer } from "./ask-goldys-drawer";
 
 describe("AskGoldysDrawer", () => {
   it("shows the Ask button for an Owner", () => {
-    render(<AskGoldysDrawer seniority="Owner" />);
+    render(<AskGoldysDrawer seniority="OWNER" />);
     expect(screen.getByRole("button", { name: /ask/i })).toBeInTheDocument();
   });
 
   it("hides itself for a non-Owner", () => {
-    render(<AskGoldysDrawer seniority="Manager" />);
+    render(<AskGoldysDrawer seniority="MANAGER" />);
     expect(screen.queryByRole("button", { name: /ask/i })).not.toBeInTheDocument();
   });
 

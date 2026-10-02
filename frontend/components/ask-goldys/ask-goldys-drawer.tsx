@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isOwner } from "@/lib/roles";
 import { useAskGoldys } from "./use-ask-goldys";
 import { AnswerBlock } from "./answer-block";
 
@@ -26,7 +27,7 @@ const SUGGESTIONS = [
 
 /** The global "Ask Goldy's" drawer. Fail-closed: renders nothing for non-Owners. */
 export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
-  const isOwner = seniority === "Owner";
+  const isOwnerRole = isOwner(seniority);
   const [open, setOpen] = useState(false);
   const { summary, answer, error, working, ask } = useAskGoldys();
 
@@ -41,7 +42,7 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  if (!isOwner) return null;
+  if (!isOwnerRole) return null;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
