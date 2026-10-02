@@ -72,6 +72,8 @@ export interface ConnectorStatus {
   lastRunAt: string | null;
   status: ConnectorRunStatus;
   failureCount: number;
+  /** Latest run's failure; null when the latest run had no failure. `message` is nullable. */
+  failure?: { type: string; message: string | null; at: string } | null;
 }
 
 export interface DashboardSummary {
