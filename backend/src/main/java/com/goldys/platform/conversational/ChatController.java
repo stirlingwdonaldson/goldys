@@ -1,6 +1,6 @@
 package com.goldys.platform.conversational;
 
-import com.goldys.platform.api.ApiErrorResponse;
+import com.goldys.platform.api.NotConfiguredException;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.PermissionAction;
@@ -10,8 +10,7 @@ import com.goldys.platform.auth.UserRole;
 import java.io.IOException;
 import java.util.Map;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,21 +37,16 @@ public class ChatController {
     this.assistant = assistant;
   }
 
-  @PostMapping("/chat")
-  ResponseEntity<?> chat(
+  @PostMapping(path = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  SseEmitter chat(
       @RequestBody ChatRequest request, @AuthenticationPrincipal AccountUserDetails user) {
     UserRole role = currentUser.roleOf(user);
     permissions.require(role, RESOURCE, PermissionAction.READ);
 
     AssistantService service = assistant.getIfAvailable();
     if (service == null) {
-      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-          .body(
-              new ApiErrorResponse(
-                  "NOT_CONFIGURED",
-                  "Ask Goldy's is not configured (set OPENAI_API_KEY and SPRING_AI_MODEL_CHAT=openai).",
-                  null,
-                  Map.of()));
+      throw new NotConfiguredException(
+          "Ask Goldy's is not configured (set OPENAI_API_KEY and SPRING_AI_MODEL_CHAT=openai).");
     }
 
     SseEmitter emitter = new SseEmitter(0L); // no idle timeout
@@ -61,7 +55,7 @@ public class ChatController {
             event -> send(emitter, event),
             err -> send(emitter, new ConversationEvent.Error("Something went wrong.")),
             emitter::complete);
-    return ResponseEntity.ok(emitter);
+    return emitter;
   }
 
   private static void send(SseEmitter emitter, ConversationEvent event) {
