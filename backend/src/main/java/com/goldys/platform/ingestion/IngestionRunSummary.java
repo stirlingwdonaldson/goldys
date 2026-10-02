@@ -8,4 +8,5 @@ public record IngestionRunSummary(
     String connectorName,
     String status,
     Instant startedAt,
-    String failureSummary) {}
+    String failureSummary,
+    FailureDetail failure) {}

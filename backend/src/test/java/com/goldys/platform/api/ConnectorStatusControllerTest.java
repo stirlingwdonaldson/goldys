@@ -52,7 +52,9 @@ class ConnectorStatusControllerTest {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(ingestion.latestRunPerSource())
         .thenReturn(
-            List.of(new IngestionRunSummary("CTB", "ctb-revenue", "SUCCESS", Instant.EPOCH, null)));
+            List.of(
+                new IngestionRunSummary(
+                    "CTB", "ctb-revenue", "SUCCESS", Instant.EPOCH, null, null)));
 
     mvc.perform(get("/api/connectors").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -90,7 +92,8 @@ class ConnectorStatusControllerTest {
   void runReturnsTheResultSummary() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(ingestion.runConnector("CTB"))
-        .thenReturn(new IngestionRunSummary("CTB", "ctb-revenue", "SUCCESS", Instant.EPOCH, null));
+        .thenReturn(
+            new IngestionRunSummary("CTB", "ctb-revenue", "SUCCESS", Instant.EPOCH, null, null));
 
     mvc.perform(post("/api/connectors/CTB/run").with(authenticated(owner())).with(csrf()))
         .andExpect(status().isOk())
