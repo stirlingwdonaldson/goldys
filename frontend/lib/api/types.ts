@@ -73,7 +73,7 @@ export interface ConnectorStatus {
   status: ConnectorRunStatus;
   failureCount: number;
   /** Latest run's failure; null when the latest run had no failure. `message` is nullable. */
-  failure?: { type: string; message: string | null; at: string } | null;
+  failure?: { type: string; message: string | null; at: string; stackTrace?: string | null } | null;
 }
 
 export interface DashboardSummary {

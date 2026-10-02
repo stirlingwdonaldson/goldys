@@ -10,6 +10,7 @@ import {
   ChefHat,
   LayoutDashboard,
   Scale,
+  ScrollText,
   Settings,
   ShieldCheck,
   TrendingUp,
@@ -58,6 +59,7 @@ const navGroups: NavGroup[] = [
       { title: "Reconciliation", href: "/reconciliation", icon: Scale },
       { title: "Resolution rules", href: "/resolution-rules", icon: ShieldCheck },
       { title: "Data health", href: "/data-health", icon: Activity },
+      { title: "Logs", href: "/logs", icon: ScrollText },
     ],
   },
 ];
