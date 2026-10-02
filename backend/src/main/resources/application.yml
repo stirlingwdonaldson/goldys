@@ -40,7 +40,7 @@ spring:
       # key check passes and the app boots with the feature off. The ChatModel (and
       # thus Conversational BI) stays disabled while spring.ai.model.chat=none.
       api-key: ${OPENAI_API_KEY:not-configured}
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
       chat:
         options:
           model: ${OPENAI_MODEL:gpt-4o-mini}
