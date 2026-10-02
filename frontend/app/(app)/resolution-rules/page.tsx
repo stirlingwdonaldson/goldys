@@ -13,7 +13,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import type { ResolutionRule } from "@/lib/api";
 
-const ENTITIES = ["Sales", "Shifts", "Products"];
+const ENTITIES = ["daily_sales", "product_sales"];
 
 export default function ResolutionRulesPage() {
   const api = useApi();

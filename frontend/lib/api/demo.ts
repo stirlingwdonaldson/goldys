@@ -138,17 +138,22 @@ function activityFixture(): ActivityPoint[] {
   return points;
 }
 
+// Demo-only product list: in live mode the product names come from canonical
+// product sales, but no "list products" endpoint exists yet, so the editor's
+// product picker falls back to these fixtures. They are demo data, not real menu
+// items, and are surfaced as such in the UI.
+const DEMO_PRODUCTS = ["garlic aioli", "pint carlton draught"];
+
 const KNOWN_FIELDS: Record<string, string[]> = {
-  Sales: ["quantity_sold", "net_amount", "gross_sales"],
-  Shifts: ["hours_worked"],
-  Products: ["quantity_sold", "unit_price"],
+  daily_sales: ["daily_sales"],
+  product_sales: ["*", ...DEMO_PRODUCTS],
 };
 
 let rules: ResolutionRule[] = [
   {
     id: "rule-1",
-    entity: "Sales",
-    field: "quantity_sold",
+    entityType: "daily_sales",
+    fieldKey: "daily_sales",
     strategy: "priority",
     sourcePriority: ["Cooking the Books", "Lightspeed"],
     updatedAt: "2026-09-29T18:00:00Z",
@@ -156,17 +161,17 @@ let rules: ResolutionRule[] = [
   },
   {
     id: "rule-2",
-    entity: "Shifts",
-    field: "hours_worked",
+    entityType: "product_sales",
+    fieldKey: "garlic aioli",
     strategy: "priority",
-    sourcePriority: ["Deputy", "Lightspeed"],
+    sourcePriority: ["Lightspeed", "Cooking the Books"],
     updatedAt: "2026-09-28T09:30:00Z",
     updatedBy: "Stirling Donaldson",
   },
   {
     id: "rule-3",
-    entity: "Sales",
-    field: "gross_sales",
+    entityType: "product_sales",
+    fieldKey: "*",
     strategy: "manual",
     updatedAt: "2026-09-27T16:00:00Z",
     updatedBy: "Stirling Donaldson",
@@ -175,14 +180,14 @@ let rules: ResolutionRule[] = [
 
 let recomputeStatus: RecomputeStatus = {
   state: "complete",
-  lastCompletedAt: "2026-09-30T08:00:00Z",
+  lastChangedAt: "2026-09-30T08:00:00Z",
 };
 
 let ruleAudit: RuleAuditEntry[] = [
   {
-    id: "audit-1",
     ruleId: "rule-1",
-    field: "quantity_sold",
+    entityType: "daily_sales",
+    fieldKey: "daily_sales",
     change: "created",
     at: "2026-09-29T18:00:00Z",
     by: "Stirling Donaldson",
@@ -294,24 +299,31 @@ export const demoApi: Api = {
       const existing = rules.find((r) => r.id === input.id);
       if (!existing) throw new ApiError("VALIDATION_FAILED", `No rule with id ${input.id}.`);
       Object.assign(existing, {
-        entity: input.entity,
-        field: input.field,
+        entityType: input.entityType,
+        fieldKey: input.fieldKey,
         strategy: input.strategy,
         sourcePriority: input.sourcePriority,
         customLogic: input.customLogic,
         updatedAt: now,
       });
       ruleAudit = [
-        { id: `audit-${Date.now()}`, ruleId: existing.id, field: existing.field, change: "updated", at: now, by: "You" },
+        {
+          ruleId: existing.id,
+          entityType: existing.entityType,
+          fieldKey: existing.fieldKey,
+          change: "updated",
+          at: now,
+          by: "You",
+        },
         ...ruleAudit,
       ];
-      recomputeStatus = { state: "complete", lastCompletedAt: now };
+      recomputeStatus = { state: "complete", lastChangedAt: now };
       return { ...existing };
     }
     const created: ResolutionRule = {
       id: `rule-${Date.now()}`,
-      entity: input.entity,
-      field: input.field,
+      entityType: input.entityType,
+      fieldKey: input.fieldKey,
       strategy: input.strategy,
       sourcePriority: input.sourcePriority,
       customLogic: input.customLogic,
@@ -320,10 +332,17 @@ export const demoApi: Api = {
     };
     rules = [...rules, created];
     ruleAudit = [
-      { id: `audit-${Date.now()}`, ruleId: created.id, field: created.field, change: "created", at: now, by: "You" },
+      {
+        ruleId: created.id,
+        entityType: created.entityType,
+        fieldKey: created.fieldKey,
+        change: "created",
+        at: now,
+        by: "You",
+      },
       ...ruleAudit,
     ];
-    recomputeStatus = { state: "complete", lastCompletedAt: now };
+    recomputeStatus = { state: "complete", lastChangedAt: now };
     return created;
   },
 
@@ -333,7 +352,14 @@ export const demoApi: Api = {
     if (!existing) throw new ApiError("VALIDATION_FAILED", `No rule with id ${id}.`);
     rules = rules.filter((r) => r.id !== id);
     ruleAudit = [
-      { id: `audit-${Date.now()}`, ruleId: null, field: existing.field, change: "deleted", at: new Date().toISOString(), by: "You" },
+      {
+        ruleId: null,
+        entityType: existing.entityType,
+        fieldKey: existing.fieldKey,
+        change: "deleted",
+        at: new Date().toISOString(),
+        by: "You",
+      },
       ...ruleAudit,
     ];
   },
