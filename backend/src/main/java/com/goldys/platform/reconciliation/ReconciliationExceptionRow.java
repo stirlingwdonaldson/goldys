@@ -29,6 +29,7 @@ class ReconciliationExceptionRow {
   @Column(name = "field_key", nullable = false)
   private String fieldKey;
 
+  @jakarta.persistence.Id
   @Column(name = "trading_date", nullable = false)
   private LocalDate tradingDate;
 
@@ -86,13 +87,15 @@ class ReconciliationExceptionRow {
   static class Id implements Serializable {
     private String entityType;
     private String entityKey;
+    private LocalDate tradingDate;
     private String fieldKey;
 
     public Id() {}
 
-    Id(String entityType, String entityKey, String fieldKey) {
+    Id(String entityType, String entityKey, LocalDate tradingDate, String fieldKey) {
       this.entityType = entityType;
       this.entityKey = entityKey;
+      this.tradingDate = tradingDate;
       this.fieldKey = fieldKey;
     }
 
@@ -102,12 +105,13 @@ class ReconciliationExceptionRow {
       if (!(o instanceof Id other)) return false;
       return Objects.equals(entityType, other.entityType)
           && Objects.equals(entityKey, other.entityKey)
+          && Objects.equals(tradingDate, other.tradingDate)
           && Objects.equals(fieldKey, other.fieldKey);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(entityType, entityKey, fieldKey);
+      return Objects.hash(entityType, entityKey, tradingDate, fieldKey);
     }
   }
 }
