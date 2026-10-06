@@ -76,7 +76,7 @@ public class LightspeedIngestService {
 
     Map<LocalDate, Totals> byDate = new LinkedHashMap<>();
     for (LightspeedInsightsSale sale : sales) {
-      byDate.computeIfAbsent(sale.saleDate(), d -> new Totals()).add(sale);
+      byDate.computeIfAbsent(sale.reconciliationDate(), d -> new Totals()).add(sale);
     }
 
     for (Map.Entry<LocalDate, Totals> entry : byDate.entrySet()) {
@@ -106,8 +106,8 @@ public class LightspeedIngestService {
     BigDecimal gst = BigDecimal.ZERO;
 
     void add(LightspeedInsightsSale sale) {
-      total = total.add(nz(sale.totalIncTax()));
-      gst = gst.add(nz(sale.totalTax()));
+      total = total.add(nz(sale.totalIncTax())).add(nz(sale.totalAdjustmentIncTax()));
+      gst = gst.add(nz(sale.totalTax())).add(nz(sale.totalAdjustmentTax()));
     }
   }
 
