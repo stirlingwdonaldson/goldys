@@ -190,13 +190,12 @@ export default function DataHealthPage() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-muted-foreground">Run activity · last 14 days</h2>
         {activity.loading ? (
           <Skeleton className="h-40 w-full" />
         ) : activity.error ? (
           <SectionError message="Couldn't load activity." />
         ) : (
-          <ActivityChart points={activity.data ?? []} />
+          <ActivityChart title="Run activity · last 14 days" points={activity.data ?? []} />
         )}
       </section>
     </div>

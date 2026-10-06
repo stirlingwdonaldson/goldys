@@ -12,19 +12,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.goldys.platform.application.ConnectorApplicationService;
 import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.DepartmentCode;
-import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
-import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
-import com.goldys.platform.ingestion.FailureDetail;
-import com.goldys.platform.ingestion.IngestionRunSummary;
-import com.goldys.platform.ingestion.IngestionService;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -43,19 +38,21 @@ class ConnectorStatusControllerTest {
 
   @Autowired MockMvc mvc;
 
-  @MockitoBean IngestionService ingestion;
-  @MockitoBean OpenTableCsvIngestService openTableCsvIngest;
+  @MockitoBean ConnectorApplicationService connectors;
   @MockitoBean CurrentUserService currentUser;
-  @MockitoBean PermissionService permissions;
 
   @Test
   void connectorsListsKnownSourcesMergedWithLatestRun() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(ingestion.latestRunPerSource())
+    when(connectors.connectors(any()))
         .thenReturn(
             List.of(
-                new IngestionRunSummary(
-                    "CTB", "ctb-revenue", "SUCCESS", Instant.EPOCH, null, null)));
+                connectorStatus(
+                    "LIGHTSPEED", "lightspeed-insights", null, "never_run", false, null),
+                connectorStatus(
+                    "CTB", "ctb-revenue", "1970-01-01T00:00:00Z", "success", true, null),
+                connectorStatus("OPENTABLE", "opentable-csv-drop", null, "never_run", false, null),
+                connectorStatus("DEPUTY", "deputy-api", null, "never_run", false, null)));
 
     mvc.perform(get("/api/connectors").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -69,9 +66,7 @@ class ConnectorStatusControllerTest {
   @Test
   void runDeniedReturnsForbidden() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    doThrow(AccessDeniedException.forResource("connectors"))
-        .when(permissions)
-        .require(any(), any(), any());
+    doThrow(AccessDeniedException.forResource("connectors")).when(connectors).run(any(), any());
 
     mvc.perform(post("/api/connectors/CTB/run").with(authenticated(owner())).with(csrf()))
         .andExpect(status().isForbidden())
@@ -81,7 +76,7 @@ class ConnectorStatusControllerTest {
   @Test
   void unknownSourceReturnsBadRequest() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(ingestion.runConnector("CTB"))
+    when(connectors.run(any(), any()))
         .thenThrow(new IllegalArgumentException("Unknown source: CTB"));
 
     mvc.perform(post("/api/connectors/CTB/run").with(authenticated(owner())).with(csrf()))
@@ -92,9 +87,9 @@ class ConnectorStatusControllerTest {
   @Test
   void runReturnsTheResultSummary() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(ingestion.runConnector("CTB"))
+    when(connectors.run(any(), any()))
         .thenReturn(
-            new IngestionRunSummary("CTB", "ctb-revenue", "SUCCESS", Instant.EPOCH, null, null));
+            connectorStatus("CTB", "ctb-revenue", "1970-01-01T00:00:00Z", "success", true, null));
 
     mvc.perform(post("/api/connectors/CTB/run").with(authenticated(owner())).with(csrf()))
         .andExpect(status().isOk())
@@ -106,8 +101,8 @@ class ConnectorStatusControllerTest {
   void uploadDeniedReturnsForbidden() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     doThrow(AccessDeniedException.forResource("connectors"))
-        .when(permissions)
-        .require(any(), any(), any());
+        .when(connectors)
+        .uploadOpenTableCsv(any(), any(byte[].class));
 
     MockMultipartFile file = new MockMultipartFile("file", "r.csv", "text/csv", "a,b".getBytes());
 
@@ -133,26 +128,30 @@ class ConnectorStatusControllerTest {
                 .with(csrf()))
         .andExpect(status().isNoContent());
 
-    verify(openTableCsvIngest).ingest(any(byte[].class));
+    verify(connectors).uploadOpenTableCsv(any(), any(byte[].class));
   }
 
   @Test
   void connectorsCarryTheFailureDetail() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(ingestion.latestRunPerSource())
+    when(connectors.connectors(any()))
         .thenReturn(
             List.of(
-                new IngestionRunSummary(
+                connectorStatus(
+                    "LIGHTSPEED", "lightspeed-insights", null, "never_run", false, null),
+                connectorStatus(
                     "CTB",
                     "ctb-revenue",
-                    "FAILED",
-                    Instant.parse("2026-10-02T12:00:00Z"),
-                    "1 failure(s) recorded",
-                    new FailureDetail(
+                    "2026-10-02T12:00:00Z",
+                    "failed",
+                    true,
+                    new ConnectorApplicationService.Failure(
                         "AUTH_FAILED",
                         "OAuth token rejected",
-                        Instant.parse("2026-10-02T12:00:05Z"),
-                        "java.lang.RuntimeException: boom\n\tat Foo.bar(Foo.java:1)"))));
+                        "2026-10-02T12:00:05Z",
+                        "java.lang.RuntimeException: boom\n\tat Foo.bar(Foo.java:1)")),
+                connectorStatus("OPENTABLE", "opentable-csv-drop", null, "never_run", false, null),
+                connectorStatus("DEPUTY", "deputy-api", null, "never_run", false, null)));
 
     mvc.perform(get("/api/connectors").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -166,14 +165,28 @@ class ConnectorStatusControllerTest {
   @Test
   void connectorsFlagRunnableSources() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(ingestion.latestRunPerSource()).thenReturn(List.of());
-    when(ingestion.isRunnable("CTB")).thenReturn(true);
-    when(ingestion.isRunnable("LIGHTSPEED")).thenReturn(false);
+    when(connectors.connectors(any()))
+        .thenReturn(
+            List.of(
+                connectorStatus(
+                    "LIGHTSPEED", "lightspeed-insights", null, "never_run", false, null),
+                connectorStatus("CTB", "ctb-revenue", null, "never_run", true, null)));
 
     mvc.perform(get("/api/connectors").with(authenticated(owner())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[?(@.source=='CTB')].runnable").value(true))
         .andExpect(jsonPath("$[?(@.source=='LIGHTSPEED')].runnable").value(false));
+  }
+
+  private static ConnectorApplicationService.ConnectorStatus connectorStatus(
+      String source,
+      String connectorName,
+      String lastRunAt,
+      String status,
+      boolean runnable,
+      ConnectorApplicationService.Failure failure) {
+    return new ConnectorApplicationService.ConnectorStatus(
+        source, connectorName, lastRunAt, status, 0, failure, runnable);
   }
 
   private static AccountUserDetails owner() {

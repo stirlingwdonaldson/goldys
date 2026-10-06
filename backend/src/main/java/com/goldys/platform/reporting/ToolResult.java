@@ -1,5 +1,6 @@
 package com.goldys.platform.reporting;
 
+import com.goldys.platform.widget.WidgetSpec;
 import java.util.List;
 import java.util.Objects;
 

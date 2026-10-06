@@ -9,22 +9,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.goldys.platform.application.DashboardApplicationService;
 import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.DepartmentCode;
-import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.config.SecurityConfig;
-import com.goldys.platform.ingestion.IngestionActivityPoint;
-import com.goldys.platform.ingestion.IngestionHealth;
-import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.reconciliation.OverrideUsage;
-import com.goldys.platform.reconciliation.OverrideUsageService;
-import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
-import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -42,21 +36,16 @@ class DashboardControllerTest {
 
   @Autowired MockMvc mvc;
 
-  @MockitoBean ResolvedDailySalesQuery resolvedDailySales;
-  @MockitoBean ProductSalesExceptionQuery productSalesExceptions;
-  @MockitoBean CanonicalProductSalesQuery productSales;
-  @MockitoBean IngestionService ingestion;
-  @MockitoBean OverrideUsageService overrideUsage;
+  @MockitoBean DashboardApplicationService dashboard;
   @MockitoBean CurrentUserService currentUser;
-  @MockitoBean PermissionService permissions;
 
   @Test
   void summaryPopulatesIngestionMetrics() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(resolvedDailySales.countOpenConflicts()).thenReturn(0L);
-    when(productSalesExceptions.countOpen()).thenReturn(0L);
-    when(ingestion.health()).thenReturn(new IngestionHealth(92, "42m avg"));
-    when(overrideUsage.usage()).thenReturn(new OverrideUsage(3, "last 7 days"));
+    when(dashboard.summary(any()))
+        .thenReturn(
+            new DashboardApplicationService.Summary(
+                92, 0, "42m avg", new OverrideUsage(3, "last 7 days")));
 
     mvc.perform(get("/api/dashboard/summary").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -70,10 +59,10 @@ class DashboardControllerTest {
   @Test
   void summaryReturnsNullMetricsWhenLedgerIsEmpty() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(resolvedDailySales.countOpenConflicts()).thenReturn(0L);
-    when(productSalesExceptions.countOpen()).thenReturn(0L);
-    when(ingestion.health()).thenReturn(new IngestionHealth(null, null));
-    when(overrideUsage.usage()).thenReturn(new OverrideUsage(0, "last 7 days"));
+    when(dashboard.summary(any()))
+        .thenReturn(
+            new DashboardApplicationService.Summary(
+                null, 0, null, new OverrideUsage(0, "last 7 days")));
 
     mvc.perform(get("/api/dashboard/summary").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -85,11 +74,11 @@ class DashboardControllerTest {
   @Test
   void activityReturnsDailySeries() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(ingestion.activity(14))
+    when(dashboard.activity(any()))
         .thenReturn(
             List.of(
-                new IngestionActivityPoint("2026-09-21", 5, 0),
-                new IngestionActivityPoint("2026-09-22", 4, 1)));
+                new DashboardApplicationService.ActivityPoint("2026-09-21", 5, 0),
+                new DashboardApplicationService.ActivityPoint("2026-09-22", 4, 1)));
 
     mvc.perform(get("/api/dashboard/activity").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -104,12 +93,56 @@ class DashboardControllerTest {
   void activityDeniedReturnsForbidden() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     doThrow(AccessDeniedException.forResource("reconciliation.sales"))
-        .when(permissions)
-        .require(any(), any(), any());
+        .when(dashboard)
+        .activity(any());
 
     mvc.perform(get("/api/dashboard/activity").with(authenticated(owner())))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("NOT_PERMITTED"));
+  }
+
+  @Test
+  void topSellersDelegatesToApplicationService() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(dashboard.topSellers(any()))
+        .thenReturn(
+            List.of(
+                new DashboardApplicationService.TopSeller(
+                    "garlic aioli", new BigDecimal("150"), new BigDecimal("380.88"), true)));
+
+    mvc.perform(get("/api/dashboard/top-sellers").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].name").value("garlic aioli"))
+        .andExpect(jsonPath("$[0].quantitySold").value(150))
+        .andExpect(jsonPath("$[0].amount").value(380.88))
+        .andExpect(jsonPath("$[0].hasConflict").value(true));
+  }
+
+  @Test
+  void bootstrapReturnsTheCombinedInitialRender() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(dashboard.bootstrap(any()))
+        .thenReturn(
+            new DashboardApplicationService.Bootstrap(
+                new DashboardApplicationService.Summary(
+                    92, 1, "42m avg", new OverrideUsage(3, "last 7 days")),
+                new DashboardApplicationService.LatestSales(
+                    "2026-10-05", new BigDecimal("10865.72"), "agreed"),
+                List.of(
+                    new DashboardApplicationService.SalesTrend(
+                        "2026-10-05", new BigDecimal("10865.72"))),
+                List.of(new DashboardApplicationService.ActivityPoint("2026-10-05", 5, 1)),
+                List.of(
+                    new DashboardApplicationService.TopSeller(
+                        "garlic aioli", new BigDecimal("150"), new BigDecimal("380.88"), true))));
+
+    mvc.perform(get("/api/dashboard/bootstrap").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.summary.openConflicts").value(1))
+        .andExpect(jsonPath("$.latestSales.total").value(10865.72))
+        .andExpect(jsonPath("$.salesTrend[0].date").value("2026-10-05"))
+        .andExpect(jsonPath("$.activity[0].clean").value(5))
+        .andExpect(jsonPath("$.topSellers[0].name").value("garlic aioli"));
   }
 
   private static AccountUserDetails owner() {

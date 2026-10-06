@@ -1,15 +1,136 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://goldys.local/schemas/widget-spec-v1.json",
-  "title": "GoldysWidgetSpec",
+  "$id": "https://goldys.local/schemas/widget-spec-v2.json",
+  "title": "GoldysWidgetSpecV2",
   "type": "object",
-  "additionalProperties": false,
-  "required": ["version", "type", "title", "data"],
-  "properties": {
-    "version": { "const": 1 },
-    "type": { "enum": ["stat", "table", "line-chart", "bar-chart"] },
-    "title": { "type": "string", "minLength": 1, "maxLength": 120 },
-    "description": { "type": "string", "maxLength": 500 },
-    "data": { "type": "array", "items": { "type": "object" } }
+  "discriminator": { "propertyName": "type" },
+  "required": ["schemaVersion", "id", "type", "title"],
+  "oneOf": [
+    { "$ref": "#/$defs/stat" },
+    { "$ref": "#/$defs/time-series" },
+    { "$ref": "#/$defs/bar-chart" },
+    { "$ref": "#/$defs/table" },
+    { "$ref": "#/$defs/ranked-list" }
+  ],
+  "$defs": {
+    "base": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": { "const": 2 },
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 500 },
+        "query": {
+          "type": "object",
+          "properties": { "tool": { "type": "string" }, "input": { "type": "object" } },
+          "required": ["tool", "input"]
+        }
+      },
+      "required": ["schemaVersion", "id", "title"]
+    },
+    "point": {
+      "type": "object",
+      "properties": { "x": { "type": "string" }, "y": { "type": ["number", "null"] } },
+      "required": ["x"]
+    },
+    "series": {
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "label": { "type": "string" },
+        "points": { "type": "array", "items": { "$ref": "#/$defs/point" } }
+      },
+      "required": ["key", "label", "points"]
+    },
+    "stat": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "stat" },
+            "value": { "type": ["number", "null"] },
+            "format": { "enum": ["currency", "number", "percent", "text"] },
+            "hint": { "type": "string" }
+          },
+          "required": ["type"]
+        }
+      ]
+    },
+    "time-series": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "time-series" },
+            "series": { "type": "array", "items": { "$ref": "#/$defs/series" } },
+            "yFormat": { "enum": ["currency", "number", "percent", "text"] }
+          },
+          "required": ["type", "series"]
+        }
+      ]
+    },
+    "bar-chart": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "bar-chart" },
+            "series": { "type": "array", "items": { "$ref": "#/$defs/series" } },
+            "yFormat": { "enum": ["currency", "number", "percent", "text"] },
+            "stacked": { "type": "boolean" }
+          },
+          "required": ["type", "series"]
+        }
+      ]
+    },
+    "table": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "table" },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": { "key": { "type": "string" }, "label": { "type": "string" } },
+                "required": ["key", "label"]
+              }
+            },
+            "rows": { "type": "array", "items": { "type": "object" } }
+          },
+          "required": ["type", "columns", "rows"]
+        }
+      ]
+    },
+    "ranked-list": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "ranked-list" },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "type": "string" },
+                  "primary": { "type": "string" },
+                  "secondary": { "type": "string" },
+                  "badge": { "type": "string" }
+                },
+                "required": ["label"]
+              }
+            }
+          },
+          "required": ["type", "items"]
+        }
+      ]
+    }
   }
 }

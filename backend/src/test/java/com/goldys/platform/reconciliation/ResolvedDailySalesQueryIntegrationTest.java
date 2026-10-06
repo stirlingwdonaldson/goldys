@@ -2,6 +2,7 @@ package com.goldys.platform.reconciliation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.goldys.platform.semantic.SalesMetricsQuery;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -19,7 +20,7 @@ class ResolvedDailySalesQueryIntegrationTest {
 
   @Autowired JdbcTemplate jdbc;
   @Autowired ResolvedDailySalesRepository repository;
-  @Autowired ResolvedDailySalesQuery query;
+  @Autowired SalesMetricsQuery query;
 
   @BeforeEach
   void seed() {
@@ -38,22 +39,22 @@ class ResolvedDailySalesQueryIntegrationTest {
   }
 
   @Test
-  void latestReturnsTheMostRecentRow() {
-    var latest = query.latest();
+  void latestTradingDayReturnsTheMostRecentRow() {
+    var latest = query.latestTradingDay();
     assertThat(latest).isPresent();
     assertThat(latest.get().tradingDate()).isEqualTo(LocalDate.of(2026, 9, 14));
-    assertThat(latest.get().totalSales()).isNull();
+    assertThat(latest.get().grossSales()).isNull();
   }
 
   @Test
-  void betweenReturnsRowsInRange() {
-    var rows = query.between(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
+  void dailySalesReturnsRowsInRange() {
+    var rows = query.dailySales(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
     assertThat(rows).hasSize(2);
     assertThat(rows.get(0).tradingDate()).isEqualTo(LocalDate.of(2026, 9, 13));
   }
 
   @Test
-  void countOpenConflictsCountsOnlyConflicts() {
-    assertThat(query.countOpenConflicts()).isEqualTo(1);
+  void openConflictsCountsOnlyConflicts() {
+    assertThat(query.openConflicts()).isEqualTo(1);
   }
 }

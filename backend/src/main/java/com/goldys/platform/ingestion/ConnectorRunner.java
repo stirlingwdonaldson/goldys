@@ -3,6 +3,8 @@ package com.goldys.platform.ingestion;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.IngestionSink;
 import com.goldys.platform.ingestion.port.SourceConnector;
+import com.goldys.platform.metrics.OperationalMetrics;
+import io.micrometer.core.instrument.Timer;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Clock;
@@ -28,11 +30,17 @@ class ConnectorRunner {
   private final IngestionRunService runs;
   private final RawPayloadService payloads;
   private final TaskExecutor executor;
+  private final OperationalMetrics metrics;
 
-  ConnectorRunner(IngestionRunService runs, RawPayloadService payloads, TaskExecutor executor) {
+  ConnectorRunner(
+      IngestionRunService runs,
+      RawPayloadService payloads,
+      TaskExecutor executor,
+      OperationalMetrics metrics) {
     this.runs = runs;
     this.payloads = payloads;
     this.executor = executor;
+    this.metrics = metrics;
   }
 
   /** Starts a run and executes the connector asynchronously; returns the run id immediately. */
@@ -44,22 +52,27 @@ class ConnectorRunner {
   }
 
   private void execute(UUID runId, SourceConnector connector, String watermark) {
+    Timer.Sample sample = metrics.start();
     IngestionSink sink =
         payload -> {
           runs.recordFetched(runId);
-          return payloads.persist(
-              runId,
-              connector.sourceSystem(),
-              payload.fetchMethod(),
-              payload.contentType(),
-              payload.bytes(),
-              payload.characterEncoding(),
-              payload.fetcherIdentity());
+          UUID rawId =
+              payloads.persist(
+                  runId,
+                  connector.sourceSystem(),
+                  payload.fetchMethod(),
+                  payload.contentType(),
+                  payload.bytes(),
+                  payload.characterEncoding(),
+                  payload.fetcherIdentity());
+          metrics.payloadIngested(connector.sourceSystem());
+          return rawId;
         };
 
     try {
       connector.fetch(watermark, sink);
     } catch (ConnectorFetchException e) {
+      metrics.connectorFailure(connector.sourceSystem());
       runs.recordFailure(runId, e.failureType(), e.getMessage(), stackTraceOf(e), CLOCK.instant());
     } catch (RuntimeException e) {
       // An unclassified fault may carry anything in its message - a URL with a token, a fragment
@@ -67,8 +80,11 @@ class ConnectorRunner {
       // runs connectors already holds those secrets, and the ledger is append-only/trusted), but
       // the run is still closed rather than left RUNNING.
       log.warn("Connector {} failed unexpectedly", connector.sourceSystem(), e);
+      metrics.connectorFailure(connector.sourceSystem());
       runs.recordFailure(
           runId, "UNEXPECTED", e.getClass().getName(), stackTraceOf(e), CLOCK.instant());
+    } finally {
+      metrics.stopConnector(sample, connector.sourceSystem());
     }
 
     // This port carries no output watermark yet, so an unchanged run keeps the one it started

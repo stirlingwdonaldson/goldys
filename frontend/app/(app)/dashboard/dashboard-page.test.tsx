@@ -2,36 +2,29 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import DashboardPage from "./page";
 
-const summary = {
-  ingestionCompleteness: 92,
-  openConflicts: 1,
-  timeToDetectFailure: "42m avg",
-  overrideUsage: { count: 3, period: "this week" },
-};
-
 vi.mock("@/lib/use-api-data", () => ({
   useApiData: (fetcher: (api: unknown) => Promise<unknown>) => {
     const src = String(fetcher);
-    // Distinguish the fetchers by their source text so the dashboard gets a
-    // resolved latest-sales value (not a per-source list) back from the mock.
-    if (src.includes("getLatestSales")) {
+    if (src.includes("getDashboardBootstrap")) {
       return {
-        data: { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" },
+        data: {
+          summary: {
+            ingestionCompleteness: 92,
+            openConflicts: 1,
+            timeToDetectFailure: "42m avg",
+            overrideUsage: { count: 3, period: "this week" },
+          },
+          latestSales: { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" },
+          salesTrend: [],
+          activity: [],
+          topSellers: [],
+        },
         loading: false,
         error: null,
         reload: async () => {},
       };
     }
-    if (src.includes("getDashboardActivity")) {
-      return { data: [], loading: false, error: null, reload: async () => {} };
-    }
-    if (src.includes("getTopSellers")) {
-      return { data: [], loading: false, error: null, reload: async () => {} };
-    }
-    if (src.includes("getSalesTrend")) {
-      return { data: [], loading: false, error: null, reload: async () => {} };
-    }
-    return { data: summary, loading: false, error: null, reload: async () => {} };
+    return { data: null, loading: false, error: null, reload: async () => {} };
   },
 }));
 

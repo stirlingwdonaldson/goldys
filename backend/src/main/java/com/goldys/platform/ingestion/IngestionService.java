@@ -120,13 +120,9 @@ public class IngestionService {
     return sw.toString();
   }
 
-  /** The latest run for each source, newest first by start time. */
+  /** The latest run for each source. One query, indexed, regardless of ledger size. */
   public List<IngestionRunSummary> latestRunPerSource() {
-    Map<String, IngestionRun> latest = new LinkedHashMap<>();
-    for (IngestionRun run : runRepository.findAllByOrderByStartedAtDesc()) {
-      latest.putIfAbsent(run.sourceSystem(), run);
-    }
-    return latest.values().stream().map(this::toSummary).toList();
+    return runRepository.latestPerSource().stream().map(this::toSummary).toList();
   }
 
   private IngestionRunSummary toSummary(IngestionRun run) {
@@ -165,35 +161,34 @@ public class IngestionService {
    * human saw them, so run duration is the closest measurable stand-in.
    */
   public IngestionHealth health() {
-    List<IngestionRun> completed =
-        runRepository.findAllByOrderByStartedAtDesc().stream()
-            .filter(r -> r.status() != IngestionStatus.RUNNING)
-            .toList();
+    long completed = 0;
+    long clean = 0;
+    long failed = 0;
+    for (StatusCount statusCount : runRepository.statusCounts()) {
+      if (statusCount.status() != IngestionStatus.RUNNING) {
+        completed += statusCount.count();
+      }
+      if (statusCount.status() == IngestionStatus.SUCCESS
+          || statusCount.status() == IngestionStatus.NO_NEW_DATA) {
+        clean += statusCount.count();
+      }
+      if (statusCount.status() == IngestionStatus.FAILED
+          || statusCount.status() == IngestionStatus.PARTIAL) {
+        failed += statusCount.count();
+      }
+    }
 
     Integer completeness = null;
-    if (!completed.isEmpty()) {
-      long clean =
-          completed.stream()
-              .filter(
-                  r ->
-                      r.status() == IngestionStatus.SUCCESS
-                          || r.status() == IngestionStatus.NO_NEW_DATA)
-              .count();
-      completeness = (int) Math.round(100.0 * clean / completed.size());
+    if (completed > 0) {
+      completeness = (int) Math.round(100.0 * clean / completed);
     }
 
     String timeToDetect = null;
-    List<IngestionRun> failed =
-        completed.stream()
-            .filter(
-                r -> r.status() == IngestionStatus.FAILED || r.status() == IngestionStatus.PARTIAL)
-            .toList();
-    if (!failed.isEmpty()) {
-      long totalMillis =
-          failed.stream()
-              .mapToLong(r -> Duration.between(r.startedAt(), r.completedAt()).toMillis())
-              .sum();
-      timeToDetect = formatDuration(Duration.ofMillis(totalMillis / failed.size())) + " avg";
+    if (failed > 0) {
+      Double seconds = runRepository.avgFailedDurationSeconds();
+      if (seconds != null) {
+        timeToDetect = formatDuration(Duration.ofMillis((long) (seconds * 1000))) + " avg";
+      }
     }
 
     return new IngestionHealth(completeness, timeToDetect);

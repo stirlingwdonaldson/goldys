@@ -1,108 +1,54 @@
 package com.goldys.platform.api;
 
+import com.goldys.platform.application.DashboardApplicationService;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
-import com.goldys.platform.auth.PermissionAction;
-import com.goldys.platform.auth.PermissionService;
-import com.goldys.platform.auth.ResourceKey;
-import com.goldys.platform.canonical.CanonicalProductSalesQuery;
-import com.goldys.platform.ingestion.IngestionActivityPoint;
-import com.goldys.platform.ingestion.IngestionHealth;
-import com.goldys.platform.ingestion.IngestionService;
-import com.goldys.platform.reconciliation.OverrideUsage;
-import com.goldys.platform.reconciliation.OverrideUsageService;
-import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
-import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Dashboard summary: ingestion health, open conflicts, and manual-override usage. */
+/** Dashboard summary and widgets. Delivery-only: delegates to the dashboard application service. */
 @RestController
 @RequestMapping("/api/dashboard")
 public class DashboardController {
-  private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
-
-  private final ResolvedDailySalesQuery resolvedDailySales;
-  private final ProductSalesExceptionQuery productSalesExceptions;
-  private final CanonicalProductSalesQuery productSales;
-  private final IngestionService ingestion;
-  private final OverrideUsageService overrideUsage;
+  private final DashboardApplicationService dashboard;
   private final CurrentUserService currentUser;
-  private final PermissionService permissions;
 
   public DashboardController(
-      ResolvedDailySalesQuery resolvedDailySales,
-      ProductSalesExceptionQuery productSalesExceptions,
-      CanonicalProductSalesQuery productSales,
-      IngestionService ingestion,
-      OverrideUsageService overrideUsage,
-      CurrentUserService currentUser,
-      PermissionService permissions) {
-    this.resolvedDailySales = resolvedDailySales;
-    this.productSalesExceptions = productSalesExceptions;
-    this.productSales = productSales;
-    this.ingestion = ingestion;
-    this.overrideUsage = overrideUsage;
+      DashboardApplicationService dashboard, CurrentUserService currentUser) {
+    this.dashboard = dashboard;
     this.currentUser = currentUser;
-    this.permissions = permissions;
   }
 
   @GetMapping("/summary")
-  SummaryDto summary(@AuthenticationPrincipal AccountUserDetails user) {
-    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    int openConflicts =
-        (int) (resolvedDailySales.countOpenConflicts() + productSalesExceptions.countOpen());
-    IngestionHealth health = ingestion.health();
-    OverrideUsage usage = overrideUsage.usage();
-    return new SummaryDto(
-        health.completenessPercent(),
-        openConflicts,
-        health.timeToDetectFailure(),
-        new OverrideUsageDto(usage.count(), usage.period()));
+  DashboardApplicationService.Summary summary(@AuthenticationPrincipal AccountUserDetails user) {
+    return dashboard.summary(currentUser.roleOf(user));
   }
 
-  record SummaryDto(
-      Integer ingestionCompleteness,
-      Integer openConflicts,
-      String timeToDetectFailure,
-      OverrideUsageDto overrideUsage) {}
-
-  record OverrideUsageDto(Integer count, String period) {}
+  /** The dashboard's whole initial render, in one request. */
+  @GetMapping("/bootstrap")
+  DashboardApplicationService.Bootstrap bootstrap(
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboard.bootstrap(currentUser.roleOf(user));
+  }
 
   @GetMapping("/activity")
-  List<ActivityDto> activity(@AuthenticationPrincipal AccountUserDetails user) {
-    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return ingestion.activity(14).stream().map(DashboardController::toActivityDto).toList();
+  List<DashboardApplicationService.ActivityPoint> activity(
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboard.activity(currentUser.roleOf(user));
   }
 
   @GetMapping("/top-sellers")
-  List<TopSellerDto> topSellers(@AuthenticationPrincipal AccountUserDetails user) {
-    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return productSales.topProductsByAmount(LocalDate.now().minusDays(30), 5).stream()
-        .map(p -> new TopSellerDto(p.productNameKey(), p.quantitySold(), p.amount()))
-        .toList();
+  List<DashboardApplicationService.TopSeller> topSellers(
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboard.topSellers(currentUser.roleOf(user));
   }
 
   @GetMapping("/sales-trend")
-  List<SalesTrendDto> salesTrend(@AuthenticationPrincipal AccountUserDetails user) {
-    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return resolvedDailySales.between(LocalDate.now().minusDays(13), LocalDate.now()).stream()
-        .map(v -> new SalesTrendDto(v.tradingDate().toString(), v.totalSales()))
-        .toList();
+  List<DashboardApplicationService.SalesTrend> salesTrend(
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboard.salesTrend(currentUser.roleOf(user));
   }
-
-  private static ActivityDto toActivityDto(IngestionActivityPoint point) {
-    return new ActivityDto(point.date(), point.clean(), point.failed());
-  }
-
-  record ActivityDto(String date, int clean, int failed) {}
-
-  record TopSellerDto(String name, BigDecimal quantitySold, BigDecimal amount) {}
-
-  record SalesTrendDto(String date, BigDecimal total) {}
 }

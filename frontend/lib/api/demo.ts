@@ -1,10 +1,13 @@
 import { deriveExceptions } from "../reconciliation-logic";
 import { ApiError } from "./errors";
+import type { WidgetSpec } from "@/components/widgets/types";
 import type {
   ActivityPoint,
   Api,
   ConnectorStatus,
   DailySales,
+  DashboardBootstrap,
+  DashboardDocument,
   DashboardSummary,
   LatestSales,
   OverrideResult,
@@ -15,8 +18,10 @@ import type {
   ResolutionRule,
   RuleAuditEntry,
   SalesTrendPoint,
+  SaveDashboardInput,
   SaveOverrideInput,
   SaveResolutionRuleInput,
+  SavedDashboardSummary,
   TopSeller,
 } from "./types";
 
@@ -194,6 +199,34 @@ let ruleAudit: RuleAuditEntry[] = [
 ];
 
 export const demoApi: Api = {
+  async getDashboardBootstrap(): Promise<DashboardBootstrap> {
+    await delay(400);
+    return {
+      summary: {
+        ingestionCompleteness: 92,
+        openConflicts: deriveExceptions(records).length + productExceptions.length,
+        timeToDetectFailure: "42m avg",
+        overrideUsage: { count: 3, period: "this week" },
+      },
+      latestSales: { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" },
+      salesTrend: [
+        { date: "2026-10-01", total: 9582.11 },
+        { date: "2026-10-02", total: 33909.35 },
+        { date: "2026-10-03", total: 43618.92 },
+        { date: "2026-10-04", total: 29605.13 },
+        { date: "2026-10-05", total: 10865.72 },
+      ],
+      activity: activityFixture(),
+      topSellers: [
+        { name: "pint carlton draught", quantitySold: 493, amount: 7904.25, hasConflict: false },
+        { name: "chicken schnitzel", quantitySold: 211, amount: 5591.5, hasConflict: false },
+        { name: "garlic aioli", quantitySold: 150, amount: 380.88, hasConflict: true },
+        { name: "parma", quantitySold: 132, amount: 3696, hasConflict: false },
+        { name: "house red", quantitySold: 98, amount: 1078, hasConflict: false },
+      ],
+    };
+  },
+
   async getDashboardSummary(): Promise<DashboardSummary> {
     await delay(400);
     return {
@@ -390,11 +423,11 @@ export const demoApi: Api = {
   async getTopSellers(): Promise<TopSeller[]> {
     await delay(300);
     return [
-      { name: "pint carlton draught", quantitySold: 493, amount: 7904.25 },
-      { name: "chicken schnitzel", quantitySold: 211, amount: 5591.5 },
-      { name: "garlic aioli", quantitySold: 150, amount: 380.88 },
-      { name: "parma", quantitySold: 132, amount: 3696 },
-      { name: "house red", quantitySold: 98, amount: 1078 },
+      { name: "pint carlton draught", quantitySold: 493, amount: 7904.25, hasConflict: false },
+      { name: "chicken schnitzel", quantitySold: 211, amount: 5591.5, hasConflict: false },
+      { name: "garlic aioli", quantitySold: 150, amount: 380.88, hasConflict: true },
+      { name: "parma", quantitySold: 132, amount: 3696, hasConflict: false },
+      { name: "house red", quantitySold: 98, amount: 1078, hasConflict: false },
     ];
   },
 
@@ -408,4 +441,69 @@ export const demoApi: Api = {
       { date: "2026-10-05", total: 10865.72 },
     ];
   },
+
+  async listDashboards(): Promise<SavedDashboardSummary[]> {
+    await delay(300);
+    return savedDashboards.map((d) => ({ id: d.id, title: d.title, updatedAt: d.updatedAt }));
+  },
+
+  async getDashboard(id: string): Promise<DashboardDocument> {
+    await delay(300);
+    const found = savedDashboards.find((d) => d.id === id);
+    if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
+    return found;
+  },
+
+  async saveDashboard(input: SaveDashboardInput): Promise<DashboardDocument> {
+    await delay(400);
+    const now = new Date().toISOString();
+    const created: DashboardDocument = {
+      id: `dash-${Date.now()}`,
+      schemaVersion: 1,
+      title: input.title,
+      description: input.description ?? null,
+      layout: input.layout ?? "grid",
+      widgets: input.widgets,
+      createdBy: "You",
+      createdAt: now,
+      updatedAt: now,
+    };
+    savedDashboards = [created, ...savedDashboards];
+    return created;
+  },
+
+  async deleteDashboard(id: string): Promise<void> {
+    await delay(300);
+    savedDashboards = savedDashboards.filter((d) => d.id !== id);
+  },
+
+  async renderDashboard(_id: string): Promise<WidgetSpec[]> {
+    void _id; // demo no-op: return a fixed widget, not a re-run
+    await delay(300);
+    return [
+      {
+        schemaVersion: 2,
+        id: "demo-sales",
+        type: "time-series",
+        title: "Daily sales",
+        description: "Resolved gross sales per day.",
+        series: [
+          {
+            key: "grossSales",
+            label: "Gross sales",
+            points: [
+              { x: "2026-10-01", y: 9582.11 },
+              { x: "2026-10-02", y: 33909.35 },
+              { x: "2026-10-03", y: 43618.92 },
+              { x: "2026-10-04", y: 29605.13 },
+              { x: "2026-10-05", y: 10865.72 },
+            ],
+          },
+        ],
+        yFormat: "currency",
+      },
+    ];
+  },
 };
+
+let savedDashboards: DashboardDocument[] = [];

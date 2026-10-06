@@ -37,7 +37,7 @@ class ProductSalesExceptionQueryIntegrationTest {
             "chips",
             "product_sales",
             LocalDate.of(2026, 9, 15),
-            "missing",
+            "conflict",
             Instant.EPOCH));
   }
 

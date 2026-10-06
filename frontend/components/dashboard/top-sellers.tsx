@@ -1,32 +1,39 @@
+"use client";
+
+import { WidgetRenderer } from "@/components/widgets/widget-renderer";
+import type { RankedListWidget } from "@/components/widgets/types";
 import type { TopSeller } from "@/lib/api";
 
-function fmt(v: number | string): string {
+function num(v: number | string | null): number | null {
+  if (v === null || v === undefined) return null;
   const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) ? String(Number(n.toFixed(2))) : "—";
+  return Number.isFinite(n) ? n : null;
 }
 
-function money(v: number | string): string {
-  const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) ? `$${n.toFixed(2)}` : "—";
+function fmt(v: number | string | null): string {
+  const n = num(v);
+  return n === null ? "—" : String(Number(n.toFixed(2)));
 }
 
-/** Ranked list of the top-selling products by amount. */
+function money(v: number | string | null): string {
+  const n = num(v);
+  return n === null ? "—" : `$${n.toFixed(2)}`;
+}
+
+/** Ranked best-sellers, rendered through the shared widget runtime. */
 export function TopSellers({ items }: { items: TopSeller[] }) {
-  if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">No product sales yet.</p>;
-  }
-  return (
-    <ol className="divide-y">
-      {items.map((p, i) => (
-        <li key={p.name} className="flex items-baseline justify-between gap-3 py-2">
-          <span className="text-sm">
-            <span className="text-muted-foreground">{i + 1}.</span> {p.name}
-          </span>
-          <span className="text-sm tabular-nums text-muted-foreground">
-            {fmt(p.quantitySold)} × {money(p.amount)}
-          </span>
-        </li>
-      ))}
-    </ol>
-  );
+  const widget: RankedListWidget = {
+    schemaVersion: 2,
+    id: "top-sellers",
+    type: "ranked-list",
+    title: "Top sellers · last 30 days",
+    description: "Best-selling items by revenue.",
+    items: items.map((t) => ({
+      label: t.name,
+      primary: fmt(t.quantitySold),
+      secondary: money(t.amount),
+      badge: t.hasConflict ? "unresolved" : null,
+    })),
+  };
+  return <WidgetRenderer widget={widget} />;
 }

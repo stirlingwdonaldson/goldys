@@ -10,24 +10,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.goldys.platform.application.ReconciliationApplicationService;
 import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.DepartmentCode;
-import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.canonical.CanonicalDailySalesQuery;
-import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.config.SecurityConfig;
-import com.goldys.platform.reconciliation.DailySalesOverrideService;
-import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
-import com.goldys.platform.reconciliation.ProductSalesOverrideService;
-import com.goldys.platform.reconciliation.ProductSourceTotal;
-import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
-import com.goldys.platform.reconciliation.SourceTotal;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -46,27 +36,24 @@ class ReconciliationControllerTest {
 
   @Autowired MockMvc mvc;
 
-  @MockitoBean ReconciliationExceptionQuery exceptionsQuery;
-  @MockitoBean DailySalesOverrideService overrides;
-  @MockitoBean CanonicalDailySalesQuery dailySales;
-  @MockitoBean ProductSalesExceptionQuery productSalesExceptions;
-  @MockitoBean ProductSalesOverrideService productOverrides;
-  @MockitoBean CanonicalProductSalesQuery productSalesQuery;
+  @MockitoBean ReconciliationApplicationService reconciliation;
   @MockitoBean CurrentUserService currentUser;
-  @MockitoBean PermissionService permissions;
 
   @Test
   void exceptionsReturnsTheConflict() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(exceptionsQuery.listDaily())
+    when(reconciliation.listDailyExceptions(any()))
         .thenReturn(
             List.of(
-                new ReconciliationExceptionQuery.DailyException(
-                    LocalDate.of(2026, 9, 13),
-                    "conflict",
+                new ReconciliationApplicationService.DailyException(
+                    "2026-09-13:daily_sales",
+                    "2026-09-13",
+                    "2026-09-13",
+                    "daily_sales",
                     List.of(
-                        new SourceTotal("LIGHTSPEED", new BigDecimal("27650.66"), null),
-                        new SourceTotal("CTB", new BigDecimal("20990.83"), null)))));
+                        new ReconciliationApplicationService.SourceValue("LIGHTSPEED", "27650.66"),
+                        new ReconciliationApplicationService.SourceValue("CTB", "20990.83")),
+                    "conflict")));
 
     mvc.perform(get("/api/reconciliation/exceptions").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -79,8 +66,8 @@ class ReconciliationControllerTest {
   void readDeniedReturnsForbidden() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     doThrow(AccessDeniedException.forResource("reconciliation.sales"))
-        .when(permissions)
-        .require(any(), any(), any());
+        .when(reconciliation)
+        .listDailyExceptions(any());
 
     mvc.perform(get("/api/reconciliation/exceptions").with(authenticated(owner())))
         .andExpect(status().isForbidden())
@@ -91,8 +78,8 @@ class ReconciliationControllerTest {
   void overrideDeniedReturnsForbidden() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     doThrow(AccessDeniedException.forResource("reconciliation.sales"))
-        .when(overrides)
-        .save(any(), any(), any(), any(), any());
+        .when(reconciliation)
+        .overrideDaily(any(), any(), any(), any(), any());
 
     mvc.perform(
             post("/api/reconciliation/records/2026-09-13/override")
@@ -107,6 +94,9 @@ class ReconciliationControllerTest {
   @Test
   void overrideReturnsOk() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(reconciliation.overrideDaily(any(), any(), any(), any(), any()))
+        .thenReturn(
+            new ReconciliationApplicationService.OverrideResult(true, "2026-09-13", "daily_sales"));
 
     mvc.perform(
             post("/api/reconciliation/records/2026-09-13/override")
@@ -122,18 +112,19 @@ class ReconciliationControllerTest {
   @Test
   void productExceptionsReturnsTheConflict() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(productSalesExceptions.listAll())
+    when(reconciliation.listProductExceptions(any()))
         .thenReturn(
             List.of(
-                new ProductSalesExceptionQuery.ProductException(
-                    LocalDate.of(2026, 9, 14),
+                new ReconciliationApplicationService.ProductException(
+                    "2026-09-14:garlic aioli",
                     "garlic aioli",
-                    "conflict",
+                    "garlic aioli",
+                    "garlic aioli",
                     List.of(
-                        new ProductSourceTotal(
-                            "LIGHTSPEED", new BigDecimal("150"), new BigDecimal("380.88"), null),
-                        new ProductSourceTotal(
-                            "CTB", new BigDecimal("127"), new BigDecimal("322.46"), null)))));
+                        new ReconciliationApplicationService.SourceValue(
+                            "LIGHTSPEED", "150 × $380.88"),
+                        new ReconciliationApplicationService.SourceValue("CTB", "127 × $322.46")),
+                    "conflict")));
 
     mvc.perform(get("/api/reconciliation/products/exceptions").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -146,7 +137,7 @@ class ReconciliationControllerTest {
   @Test
   void productsReturnsDistinctNames() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(productSalesQuery.distinctProductNameKeys())
+    when(reconciliation.listProducts(any()))
         .thenReturn(List.of("garlic aioli", "pint carlton draught"));
 
     mvc.perform(get("/api/reconciliation/products").with(authenticated(owner())))

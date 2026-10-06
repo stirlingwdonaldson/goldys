@@ -3,10 +3,16 @@ package com.goldys.platform.canonical;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-/** Read-only query facade for canonical per-product sales. */
+/**
+ * Read-only query facade for canonical per-product sales.
+ *
+ * <p>Intended for reconciliation internals, provenance inspection, and projection building only.
+ * Business-facing reporting must read {@link
+ * com.goldys.platform.reconciliation.ResolvedProductSalesQuery} instead — never aggregate canonical
+ * rows for a metric, since multiple sources can describe the same product/day.
+ */
 @Service
 public class CanonicalProductSalesQuery {
   private final CanonicalProductSalesRepository repository;
@@ -34,11 +40,6 @@ public class CanonicalProductSalesQuery {
   /** The distinct, sorted product name keys that currently have canonical product sales. */
   public List<String> distinctProductNameKeys() {
     return repository.findDistinctCurrentProductNameKeys();
-  }
-
-  /** Top products by summed amount since {@code since}, descending. */
-  public List<ProductSalesTotal> topProductsByAmount(LocalDate since, int limit) {
-    return repository.topProductsByAmountSince(since, PageRequest.of(0, limit));
   }
 
   private ProductSalesView toView(CanonicalProductSales s) {

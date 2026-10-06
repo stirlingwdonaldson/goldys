@@ -8,21 +8,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.goldys.platform.application.SalesReportingService;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.DepartmentCode;
-import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.canonical.CanonicalDailySalesQuery;
-import com.goldys.platform.canonical.DailySalesView;
 import com.goldys.platform.config.SecurityConfig;
-import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,31 +33,27 @@ class SalesControllerTest {
 
   @Autowired MockMvc mvc;
 
-  @MockitoBean CanonicalDailySalesQuery dailySales;
-  @MockitoBean ResolvedDailySalesQuery resolvedDailySales;
+  @MockitoBean SalesReportingService salesReporting;
   @MockitoBean CurrentUserService currentUser;
-  @MockitoBean PermissionService permissions;
 
   @Test
   void returnsDailySalesNewestFirst() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(dailySales.currentDailySales())
+    when(salesReporting.dailySales(any()))
         .thenReturn(
             List.of(
-                new DailySalesView(
+                new SalesReportingService.DailySalesRow(
+                    "2026-10-05",
                     "CTB",
-                    LocalDate.of(2026, 10, 4),
-                    new BigDecimal("29605.13"),
-                    new BigDecimal("2689.54"),
-                    new BigDecimal("26915.60"),
-                    Instant.EPOCH),
-                new DailySalesView(
-                    "CTB",
-                    LocalDate.of(2026, 10, 5),
                     new BigDecimal("10865.72"),
                     new BigDecimal("985.44"),
-                    new BigDecimal("9880.28"),
-                    Instant.EPOCH)));
+                    new BigDecimal("9880.28")),
+                new SalesReportingService.DailySalesRow(
+                    "2026-10-04",
+                    "CTB",
+                    new BigDecimal("29605.13"),
+                    new BigDecimal("2689.54"),
+                    new BigDecimal("26915.60"))));
 
     mvc.perform(get("/api/sales/daily").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -75,7 +65,8 @@ class SalesControllerTest {
   @Test
   void latestReturnsNullsWhenThereIsNoData() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(resolvedDailySales.latest()).thenReturn(Optional.empty());
+    when(salesReporting.latestTradingDay(any()))
+        .thenReturn(new SalesReportingService.LatestSales(null, null, null));
 
     mvc.perform(get("/api/sales/latest").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -86,13 +77,11 @@ class SalesControllerTest {
 
   @Test
   void latestReturnsTheResolvedTotal() throws Exception {
-    LocalDate date = LocalDate.of(2026, 10, 5);
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(resolvedDailySales.latest())
+    when(salesReporting.latestTradingDay(any()))
         .thenReturn(
-            Optional.of(
-                new ResolvedDailySalesQuery.ResolvedDailySalesView(
-                    date, new BigDecimal("10865.72"), "agreed", "agreed", false)));
+            new SalesReportingService.LatestSales(
+                "2026-10-05", new BigDecimal("10865.72"), "agreed"));
 
     mvc.perform(get("/api/sales/latest").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -103,13 +92,9 @@ class SalesControllerTest {
 
   @Test
   void latestReturnsNullTotalWhenTheLatestDateIsUnresolved() throws Exception {
-    LocalDate date = LocalDate.of(2026, 10, 5);
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(resolvedDailySales.latest())
-        .thenReturn(
-            Optional.of(
-                new ResolvedDailySalesQuery.ResolvedDailySalesView(
-                    date, null, "conflict", null, true)));
+    when(salesReporting.latestTradingDay(any()))
+        .thenReturn(new SalesReportingService.LatestSales("2026-10-05", null, null));
 
     mvc.perform(get("/api/sales/latest").with(authenticated(owner())))
         .andExpect(status().isOk())

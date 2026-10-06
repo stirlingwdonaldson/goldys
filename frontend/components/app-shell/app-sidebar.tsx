@@ -9,6 +9,7 @@ import {
   CalendarDays,
   ChefHat,
   LayoutDashboard,
+  LayoutGrid,
   Scale,
   ScrollText,
   Settings,
@@ -46,6 +47,7 @@ const navGroups: NavGroup[] = [
     label: "Business",
     items: [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { title: "Dashboards", href: "/dashboards", icon: LayoutGrid },
       { title: "Sales", href: "/sales", icon: TrendingUp },
       { title: "Staff & Labor", href: "/staff", icon: Users },
       { title: "Reservations", href: "/reservations", icon: CalendarDays },

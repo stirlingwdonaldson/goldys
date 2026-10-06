@@ -2,7 +2,7 @@ package com.goldys.platform.conversational;
 
 import com.goldys.platform.reporting.ReportingTool;
 import com.goldys.platform.reporting.ToolResult;
-import com.goldys.platform.reporting.WidgetSpec;
+import com.goldys.platform.widget.WidgetSpec;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
