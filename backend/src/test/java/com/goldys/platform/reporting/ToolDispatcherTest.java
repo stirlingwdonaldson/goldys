@@ -33,7 +33,24 @@ class ToolDispatcherTest {
   private static ReportingTool tool(ToolId id) {
     ReportingTool t = mock(ReportingTool.class);
     when(t.id()).thenReturn(id);
+    when(t.resource()).thenReturn(new ResourceKey("reconciliation.sales"));
     return t;
+  }
+
+  @Test
+  void authorizesUsingTheToolsDeclaredResource() {
+    ReportingTool t = mock(ReportingTool.class);
+    when(t.id()).thenReturn(ToolId.GET_LABOUR_COST);
+    when(t.resource()).thenReturn(new ResourceKey("labour.cost"));
+    when(t.execute(any(), any())).thenReturn(okResult());
+    PermissionService permissions = mock(PermissionService.class);
+    ToolDispatcher dispatcher =
+        new ToolDispatcher(
+            new ToolRegistry(List.of(t)), permissions, mock(OperationalMetrics.class));
+
+    dispatcher.dispatch(ToolId.GET_LABOUR_COST, mock(ToolInput.class), OWNER);
+
+    verify(permissions).require(OWNER, new ResourceKey("labour.cost"), PermissionAction.READ);
   }
 
   @Test

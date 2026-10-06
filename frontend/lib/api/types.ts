@@ -93,6 +93,20 @@ export interface DailySales {
   net: number | string;
 }
 
+/** One date's resolved reservation summary. Ratios are null when their denominator is zero. */
+export interface ReservationSummary {
+  date: string;
+  bookings: number;
+  attended: number;
+  covers: number;
+  cancelled: number;
+  noShows: number;
+  walkIns: number;
+  avgPartySize: number | null;
+  noShowRate: number | null;
+  bookingToCoverConversion: number | null;
+}
+
 /**
  * The latest trading date's resolved total, or nulls when there is no data yet or the latest
  * date is still unresolved. `total: null` with a non-null `date` means "needs a decision".
@@ -232,6 +246,7 @@ export interface Api {
   listProducts(): Promise<string[]>;
   listDailySales(): Promise<DailySales[]>;
   getLatestSales(): Promise<LatestSales>;
+  getReservationSummary(date: string): Promise<ReservationSummary | undefined>;
   getTopSellers(): Promise<TopSeller[]>;
   getSalesTrend(): Promise<SalesTrendPoint[]>;
   listDashboards(): Promise<SavedDashboardSummary[]>;

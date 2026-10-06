@@ -1,7 +1,11 @@
 package com.goldys.platform.architecture;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.goldys.platform.semantic.InventoryMetricsQuery;
+import com.goldys.platform.semantic.LabourMetricsQuery;
+import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -102,4 +106,91 @@ class ArchitectureBoundariesTest {
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage("..canonical..", "..reconciliation..", "..ingestion..");
+
+  /** The reservation controller must not read canonical source facts directly. */
+  @ArchTest
+  static final ArchRule reservationControllerDoesNotReadCanonical =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.api.ReservationController")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..canonical..");
+
+  /** The reservation reporting tool consumes the semantic layer, not canonical/reconciliation. */
+  @ArchTest
+  static final ArchRule reservationToolConsumesSemanticOnly =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.reporting.GetReservationSummaryTool")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..canonical..", "..reconciliation..");
+
+  /** The reservation semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule reservationMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(ReservationMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  /** The labour controller must not read canonical source facts directly. */
+  @ArchTest
+  static final ArchRule labourControllerDoesNotReadCanonical =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.api.LabourController")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..canonical..");
+
+  /** The labour reporting tool consumes the semantic layer, not canonical/reconciliation. */
+  @ArchTest
+  static final ArchRule labourToolConsumesSemanticOnly =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.reporting.GetLabourCostTool")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..canonical..", "..reconciliation..");
+
+  /** The labour semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule labourMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(LabourMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  /** The inventory controller must not read canonical source facts directly. */
+  @ArchTest
+  static final ArchRule inventoryControllerDoesNotReadCanonical =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.api.InventoryController")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..canonical..");
+
+  /** The inventory reporting tool consumes the semantic layer, not canonical/reconciliation. */
+  @ArchTest
+  static final ArchRule inventoryToolConsumesSemanticOnly =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.reporting.GetFoodCostTool")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..canonical..", "..reconciliation..");
+
+  /** The inventory semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule inventoryMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(InventoryMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
 }

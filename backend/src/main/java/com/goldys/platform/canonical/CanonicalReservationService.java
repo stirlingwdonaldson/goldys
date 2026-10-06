@@ -3,8 +3,11 @@ package com.goldys.platform.canonical;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,14 +21,24 @@ class CanonicalReservationService {
   private static final Clock CLOCK = Clock.systemUTC();
 
   private final CanonicalReservationRepository repository;
+  private final ApplicationEventPublisher publisher;
+  private final ZoneId zone;
 
-  CanonicalReservationService(CanonicalReservationRepository repository) {
+  CanonicalReservationService(
+      CanonicalReservationRepository repository,
+      ApplicationEventPublisher publisher,
+      @Value("${opentable.timezone:Australia/Sydney}") String zone) {
     this.repository = repository;
+    this.publisher = publisher;
+    this.zone = ZoneId.of(zone);
   }
 
   @Transactional
   CanonicalReservation record(ReservationInput input) {
-    return recordAt(input, CLOCK.instant());
+    CanonicalReservation saved = recordAt(input, CLOCK.instant());
+    publisher.publishEvent(
+        new ReservationRecorded(input.reservationAt().atZone(zone).toLocalDate()));
+    return saved;
   }
 
   @Transactional
