@@ -67,37 +67,45 @@ ways.
 Every metric is registered under a stable `MetricId` with a `MetricDefinition` contract. IDs are
 stable, machine-readable, dotted strings — never physical table or Java class names.
 
+A `MetricDefinition` also carries a `notes` field for **persistent caveats** (e.g. "gross includes
+GST") that always render with the metric — distinct from the runtime `notices` on a result, which
+describe data conditions for a specific query (e.g. "2 days unresolved").
+
 ### 3.1 Base metrics (read resolved projections; live today)
 
-| ID | Name | Business definition / formula | Unit | Source domain | Valid dimensions | Grains | Null/missing semantics |
+| ID | Name | Business definition / formula | Unit | Source domain | Valid dimensions | Grains | Missing-data behavior |
 |---|---|---|---|---|---|---|---|
-| `sales.gross` | Gross sales | Resolved gross sales incl. GST (`totalSales`) | AUD | `resolved_daily_sales` | — | day, week, month | STRICT: aggregate is null if any day in range is unresolved |
-| `sales.net` | Net sales | Resolved `netTotal` = gross − GST | AUD | `resolved_daily_sales` | — | day, week, month | STRICT |
-| `sales.gst` | GST | Resolved `gstTotal` | AUD | `resolved_daily_sales` | — | day, week, month | STRICT |
+| `sales.gross` | Gross sales | Resolved gross sales incl. GST (`totalSales`) | AUD | `resolved_daily_sales` | — | day, week, month | displays resolved sum; unresolved days noted |
+| `sales.net` | Net sales | Resolved `netTotal` = gross − GST | AUD | `resolved_daily_sales` | — | day, week, month | displays resolved sum; unresolved days noted |
+| `sales.gst` | GST | Resolved `gstTotal` | AUD | `resolved_daily_sales` | — | day, week, month | displays resolved sum; unresolved days noted |
 | `reservations.bookings` | Bookings | Resolved bookings | count | `resolved_reservation_day` | service_period | day, week, month | sum (absent day = no row, not zero, unless projected) |
 | `reservations.attended` | Attended parties | Resolved attended | count | `resolved_reservation_day` | service_period | day, week, month | sum |
 | `reservations.covers` | Covers | Resolved covers (guests) | count | `resolved_reservation_day` | service_period | day, week, month | sum |
 | `reservations.no_shows` | No-shows | Resolved no-shows | count | `resolved_reservation_day` | service_period | day, week, month | sum |
 | `labour.scheduled_hours` | Scheduled hours | Resolved scheduled hours | hours | `resolved_labour_day` | department | day, week, month | sum of non-null |
 | `labour.actual_hours` | Actual hours | Resolved actual hours | hours | `resolved_labour_day` | department | day, week, month | sum of non-null |
-| `labour.cost` | Labour cost | Resolved actual cost | AUD | `resolved_labour_day` | department | day, week, month | STRICT: null if any day's cost is unknown |
+| `labour.cost` | Labour cost | Resolved actual cost | AUD | `resolved_labour_day` | department | day, week, month | displays resolved sum; unknown-cost days noted |
 | `inventory.purchases` | Purchases (COGS) | Resolved purchases | AUD | `resolved_inventory_day` | — | day, week, month | sum of non-null |
 | `inventory.wastage` | Wastage | Resolved wastage | AUD | `resolved_inventory_day` | — | day, week, month | null when no wastage data at all |
 | `inventory.stock_on_hand` | Closing stock | Resolved stock-on-hand | AUD | `resolved_inventory_day` | — | day | latest value |
 | `product.sales_amount` | Product sales amount | Resolved product amount | AUD | `resolved_product_sales` | product | day, week, month | sum |
 | `product.sales_quantity` | Product sales quantity | Resolved product quantity | units | `resolved_product_sales` | product | day, week, month | sum |
 
-**Missing-data semantics** (two declared kinds, per metric):
+**Missing-data semantics (uniform "display + note"):**
 
-- **STRICT** — the period aggregate is `null` (with the unresolved dates listed in provenance) when
-  any constituent day is unresolved. Used for financial totals where a partial sum would understate
-  truth. Matches the existing `labourCost` behavior and the dashboard "Needs decision" pattern.
-- **SUM** — the aggregate sums resolved values; days with no resolved row are *not* silently
-  zeroed — they are recorded in `MetricProvenance.missingPeriods` and the result is flagged partial.
-  Used for counts already treated as summable.
+A metric **always displays a value when any resolved data exists**, and attaches a **notice**
+explaining what is going on. There is no "hide the number" mode:
 
-This is the enforcement of "do not silently convert unknown data to zero": an unresolved day is
-never `0`, it is either a `null` aggregate (STRICT) or an explicit `missingPeriods` entry (SUM).
+- **Partial data** (some days unresolved): the value is the sum of the resolved constituents; the
+  unresolved dates are recorded in `MetricProvenance.missingPeriods` and surfaced as a notice
+  ("2 days unresolved"). A day is never silently zeroed — it is summed-excluded *and* flagged.
+- **No resolved data at all**: the value is `null` (nothing to display) plus a "no resolved data"
+  notice.
+- **Derived metrics**: a zero/unknown denominator yields `null` with a notice ("no covers data" /
+  "denominator is zero"), because no value exists; a partial numerator still displays with a notice.
+
+This keeps every figure on screen with an explanation, rather than a blank tile, while still never
+treating an unknown value as zero.
 
 ### 3.2 Derived metrics (explicit formulas over resolved metrics)
 
@@ -118,6 +126,9 @@ Java function, not a parsed formula language). They centralize what today is dup
 | `labour.boh_percent` | BOH `labour.cost ÷ sales.gross` | % | null when gross = 0/unresolved or BOH cost unknown |
 | `inventory.food_cost_percent` | `inventory.purchases ÷ sales.gross` | % | null when gross = 0/unresolved or purchases unknown |
 | `product.top_sellers` | ranked product list by summed resolved amount | list | items with unresolved days flagged, summing resolved rows only |
+
+All derived `null` results carry a notice describing the cause (zero denominator / unknown input);
+partial inputs still display with a notice, per §3.1.
 
 `labour.foh_percent` / `labour.boh_percent` bind the department at the metric ID (FOH/BOH are
 distinct metrics) rather than via a free department filter, keeping the surface bounded. A future
@@ -177,12 +188,13 @@ public record RankedItem(String label, BigDecimal primary, BigDecimal secondary)
 
 public sealed interface MetricResult permits TimeSeriesResult, RankedListResult {
   MetricId metric();
+  List<String> notices();   // runtime caveats surfaced to the user (e.g. "2 days unresolved")
   MetricProvenance provenance();
 }
-public record TimeSeriesResult(MetricId metric, List<Series> series, MetricProvenance provenance)
-    implements MetricResult {}
-public record RankedListResult(MetricId metric, List<RankedItem> items, MetricProvenance provenance)
-    implements MetricResult {}
+public record TimeSeriesResult(MetricId metric, List<Series> series, List<String> notices,
+    MetricProvenance provenance) implements MetricResult {}
+public record RankedListResult(MetricId metric, List<RankedItem> items, List<String> notices,
+    MetricProvenance provenance) implements MetricResult {}
 
 public record MetricProvenance(
     MetricId metric, String definitionVersion, TimeRange range, TimeGrain grain,
@@ -213,8 +225,8 @@ an LLM to inject anything into.
 - **Base executors** wrap the existing `*MetricsQuery` interfaces (`SalesMetricsQuery`,
   `ReservationMetricsQuery`, `LabourMetricsQuery`, `InventoryMetricsQuery`, `ProductMetricsQuery`),
   unchanged. They read the resolved projection, bucket by grain, and apply the metric's declared
-  missing/STRICT semantics. A few thin aggregate methods are added where a range aggregate does not
-  yet exist (e.g. `ReservationMetricsQuery.bookings(from, to)`).
+  missing semantics (sum resolved + notices, per §3.1). A few thin aggregate methods are added
+  where a range aggregate does not yet exist (e.g. `ReservationMetricsQuery.bookings(from, to)`).
 - **Derived executors** call other executors and compose in code, applying the zero/unknown rules in
   §3.2.
 - **Registry** — `Map<MetricId, MetricExecutor>` populated by Spring beans. No codegen, no
@@ -300,9 +312,9 @@ For **each** metric, base and derived:
 1. formula correctness (exact resolved values; exact ratio/percent),
 2. period boundaries (inclusive `from`/`to`; week/month grain bucketing),
 3. trading-day semantics (`TRADING` vs `CALENDAR` identical today; boundary deferred),
-4. missing data (no row → STRICT null vs SUM-with-flag, per definition),
-5. unresolved data (null value / `hasConflict` → surfaced in `missingPeriods`),
-6. zero denominators (derived → null, never divide-by-zero),
+4. missing data (no row → still displays resolved sum with a notice; null only when nothing to display),
+5. unresolved data (`hasConflict` → surfaced in `missingPeriods` + a notice),
+6. zero denominators (derived → null + notice, never divide-by-zero),
 7. permissions (denied → explicit "not permitted"),
 8. comparison calculations (prev-day / prev-week / same-weekday-last-week / SYLY / rolling 4w / 12w).
 
@@ -314,8 +326,8 @@ Plus updated **ArchUnit** rules (§6).
 
 `docs/metrics/catalog.md` — the human-readable catalogue, generated alongside `MetricDefinition`
 (with a test asserting the two stay in sync). Per metric: ID, name, business definition, formula,
-unit, source domain, valid dimensions, allowed grains, required permission, null/missing semantics,
-comparison semantics, version. It answers "what exactly does this number mean?"
+unit, source domain, valid dimensions, allowed grains, required permission, notes, null/missing
+semantics, comparison semantics, version. It answers "what exactly does this number mean?"
 
 ---
 
