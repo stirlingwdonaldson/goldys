@@ -6,6 +6,7 @@ import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
+import com.goldys.platform.ingestion.RawLedgerQuery;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -51,7 +52,17 @@ public class LightspeedIngestService {
             body,
             StandardCharsets.UTF_8.name(),
             "lightspeed-insights");
+    parseAndRecord(body, rawId);
+  }
 
+  /** Re-parse already-persisted raw payloads into canonical rows, without re-persisting them. */
+  public void backfill(List<RawLedgerQuery.RawPayload> payloads) {
+    for (RawLedgerQuery.RawPayload payload : payloads) {
+      parseAndRecord(payload.bytes(), payload.id());
+    }
+  }
+
+  private void parseAndRecord(byte[] body, UUID rawId) {
     List<LightspeedInsightsSale> sales =
         parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
 
