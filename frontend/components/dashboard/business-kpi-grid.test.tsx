@@ -31,4 +31,12 @@ describe("BusinessKpiGrid", () => {
     render(<BusinessKpiGrid />);
     expect(screen.getByText(/owner only/i)).toBeInTheDocument();
   });
+
+  it("shows the latest sales total when data is present", () => {
+    render(
+      <BusinessKpiGrid seniority="OWNER" latestSales={{ date: "2026-10-05", total: 10865.72 }} />,
+    );
+    expect(screen.getByText("$10865.72")).toBeInTheDocument();
+    expect(screen.queryByText(/awaiting sales-reporting/i)).not.toBeInTheDocument();
+  });
 });
