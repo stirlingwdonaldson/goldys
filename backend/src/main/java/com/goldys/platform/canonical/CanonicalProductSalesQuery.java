@@ -1,6 +1,7 @@
 package com.goldys.platform.canonical;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,14 @@ public class CanonicalProductSalesQuery {
 
   public List<ProductSalesView> currentProductSalesForDate(LocalDate date) {
     return repository.findCurrentByDate(date).stream().map(this::toView).toList();
+  }
+
+  public List<ProductSalesView> currentProductSalesForDateAndProduct(LocalDate date, String key) {
+    return repository.findCurrentByDateAndProduct(date, key).stream().map(this::toView).toList();
+  }
+
+  public List<ProductSalesView> currentProductSalesForDates(Collection<LocalDate> dates) {
+    return repository.findCurrentByDates(dates).stream().map(this::toView).toList();
   }
 
   /** The distinct, sorted product name keys that currently have canonical product sales. */

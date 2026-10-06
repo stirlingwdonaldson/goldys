@@ -13,4 +13,9 @@ interface ReconciliationExceptionRowRepository
 
   List<ReconciliationExceptionRow> findByEntityTypeAndTradingDateIn(
       String entityType, Collection<LocalDate> dates);
+
+  List<ReconciliationExceptionRow> findByEntityTypeAndEntityKeyAndTradingDate(
+      String entityType, String entityKey, LocalDate tradingDate);
+
+  void deleteByEntityType(String entityType);
 }

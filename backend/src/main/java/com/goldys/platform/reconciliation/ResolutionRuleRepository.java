@@ -27,5 +27,9 @@ interface ResolutionRuleRepository extends JpaRepository<ResolutionRule, UUID> {
 
   List<ResolutionRule> findAllBySupersededAtIsNullOrderByRecordedAtDesc();
 
+  @Query(
+      "select r from ResolutionRule r where r.entityType = :entityType and r.supersededAt is null")
+  List<ResolutionRule> findByEntityTypeAndSupersededAtIsNull(String entityType);
+
   Optional<ResolutionRule> findFirstByOrderByRecordedAtDesc();
 }
