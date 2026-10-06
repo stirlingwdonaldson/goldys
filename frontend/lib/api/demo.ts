@@ -14,8 +14,10 @@ import type {
   ReconciliationRecord,
   ResolutionRule,
   RuleAuditEntry,
+  SalesTrendPoint,
   SaveOverrideInput,
   SaveResolutionRuleInput,
+  TopSeller,
 } from "./types";
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -383,5 +385,27 @@ export const demoApi: Api = {
   async getLatestSales(): Promise<LatestSales> {
     await delay(300);
     return { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" };
+  },
+
+  async getTopSellers(): Promise<TopSeller[]> {
+    await delay(300);
+    return [
+      { name: "pint carlton draught", quantitySold: 493, amount: 7904.25 },
+      { name: "chicken schnitzel", quantitySold: 211, amount: 5591.5 },
+      { name: "garlic aioli", quantitySold: 150, amount: 380.88 },
+      { name: "parma", quantitySold: 132, amount: 3696 },
+      { name: "house red", quantitySold: 98, amount: 1078 },
+    ];
+  },
+
+  async getSalesTrend(): Promise<SalesTrendPoint[]> {
+    await delay(300);
+    return [
+      { date: "2026-10-01", total: 9582.11 },
+      { date: "2026-10-02", total: 33909.35 },
+      { date: "2026-10-03", total: 43618.92 },
+      { date: "2026-10-04", total: 29605.13 },
+      { date: "2026-10-05", total: 10865.72 },
+    ];
   },
 };

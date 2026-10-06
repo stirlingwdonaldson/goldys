@@ -69,7 +69,9 @@ export type {
   ResolutionRule,
   RuleAuditEntry,
   RuleStrategy,
+  SalesTrendPoint,
   SaveOverrideInput,
   SaveResolutionRuleInput,
   SourceValue,
+  TopSeller,
 } from "./types";

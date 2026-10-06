@@ -110,6 +110,19 @@ export interface DashboardSummary {
   overrideUsage: { count: number; period: string } | null;
 }
 
+/** A top-selling product over a recent window. */
+export interface TopSeller {
+  name: string;
+  quantitySold: number | string;
+  amount: number | string;
+}
+
+/** One day of resolved daily sales for the dashboard trend. */
+export interface SalesTrendPoint {
+  date: string;
+  total: number | string | null;
+}
+
 export interface SaveOverrideInput {
   recordId: string;
   field: string;
@@ -176,4 +189,6 @@ export interface Api {
   listProducts(): Promise<string[]>;
   listDailySales(): Promise<DailySales[]>;
   getLatestSales(): Promise<LatestSales>;
+  getTopSellers(): Promise<TopSeller[]>;
+  getSalesTrend(): Promise<SalesTrendPoint[]>;
 }

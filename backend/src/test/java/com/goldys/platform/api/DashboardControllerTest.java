@@ -16,6 +16,7 @@ import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.ingestion.IngestionActivityPoint;
 import com.goldys.platform.ingestion.IngestionHealth;
@@ -43,6 +44,7 @@ class DashboardControllerTest {
 
   @MockitoBean ResolvedDailySalesQuery resolvedDailySales;
   @MockitoBean ProductSalesExceptionQuery productSalesExceptions;
+  @MockitoBean CanonicalProductSalesQuery productSales;
   @MockitoBean IngestionService ingestion;
   @MockitoBean OverrideUsageService overrideUsage;
   @MockitoBean CurrentUserService currentUser;

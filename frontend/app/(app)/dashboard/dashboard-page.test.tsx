@@ -11,15 +11,25 @@ const summary = {
 
 vi.mock("@/lib/use-api-data", () => ({
   useApiData: (fetcher: (api: unknown) => Promise<unknown>) => {
-    // Distinguish the two fetchers by their source text so the dashboard gets a
+    const src = String(fetcher);
+    // Distinguish the fetchers by their source text so the dashboard gets a
     // resolved latest-sales value (not a per-source list) back from the mock.
-    if (String(fetcher).includes("getLatestSales")) {
+    if (src.includes("getLatestSales")) {
       return {
         data: { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" },
         loading: false,
         error: null,
         reload: async () => {},
       };
+    }
+    if (src.includes("getDashboardActivity")) {
+      return { data: [], loading: false, error: null, reload: async () => {} };
+    }
+    if (src.includes("getTopSellers")) {
+      return { data: [], loading: false, error: null, reload: async () => {} };
+    }
+    if (src.includes("getSalesTrend")) {
+      return { data: [], loading: false, error: null, reload: async () => {} };
     }
     return { data: summary, loading: false, error: null, reload: async () => {} };
   },

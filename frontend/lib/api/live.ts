@@ -60,4 +60,7 @@ export const liveApi: Api = {
   listProducts: () => fetchApi<string[]>("/api/reconciliation/products"),
   listDailySales: () => fetchApi<import("./types").DailySales[]>("/api/sales/daily"),
   getLatestSales: () => fetchApi<import("./types").LatestSales>("/api/sales/latest"),
+  getTopSellers: () => fetchApi<import("./types").TopSeller[]>("/api/dashboard/top-sellers"),
+  getSalesTrend: () =>
+    fetchApi<import("./types").SalesTrendPoint[]>("/api/dashboard/sales-trend"),
 };
