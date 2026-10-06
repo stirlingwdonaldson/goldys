@@ -1,5 +1,6 @@
 package com.goldys.platform.reporting;
 
+import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.widget.Column;
@@ -39,6 +40,11 @@ public class GetLabourCostTool implements ReportingTool {
   @Override
   public Class<? extends ToolInput> inputType() {
     return GetLabourCostInput.class;
+  }
+
+  @Override
+  public ResourceKey resource() {
+    return new ResourceKey("labour.cost");
   }
 
   @Override

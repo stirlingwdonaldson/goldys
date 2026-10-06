@@ -1,5 +1,6 @@
 package com.goldys.platform.reporting;
 
+import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.goldys.platform.semantic.ReservationSummary;
@@ -40,6 +41,11 @@ public class GetReservationSummaryTool implements ReportingTool {
   @Override
   public Class<? extends ToolInput> inputType() {
     return GetReservationSummaryInput.class;
+  }
+
+  @Override
+  public ResourceKey resource() {
+    return new ResourceKey("reservations.metrics");
   }
 
   @Override

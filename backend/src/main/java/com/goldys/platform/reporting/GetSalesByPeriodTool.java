@@ -1,5 +1,6 @@
 package com.goldys.platform.reporting;
 
+import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.DailySalesMetric;
 import com.goldys.platform.semantic.SalesMetricsQuery;
@@ -40,6 +41,11 @@ public class GetSalesByPeriodTool implements ReportingTool {
   @Override
   public Class<? extends ToolInput> inputType() {
     return GetSalesByPeriodInput.class;
+  }
+
+  @Override
+  public ResourceKey resource() {
+    return new ResourceKey("reconciliation.sales");
   }
 
   @Override

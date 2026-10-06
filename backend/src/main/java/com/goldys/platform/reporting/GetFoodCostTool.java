@@ -1,5 +1,6 @@
 package com.goldys.platform.reporting;
 
+import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.InventoryMetricsQuery;
 import com.goldys.platform.widget.Column;
@@ -38,6 +39,11 @@ public class GetFoodCostTool implements ReportingTool {
   @Override
   public Class<? extends ToolInput> inputType() {
     return GetFoodCostInput.class;
+  }
+
+  @Override
+  public ResourceKey resource() {
+    return new ResourceKey("inventory.cost");
   }
 
   @Override
