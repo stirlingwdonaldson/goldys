@@ -28,7 +28,10 @@ public class ReconciliationExceptionQuery {
 
   public List<DailyException> listDaily() {
     List<ReconciliationExceptionRow> rows =
-        exceptions.findByEntityTypeOrderByTradingDateAsc(ENTITY_TYPE);
+        exceptions.findByEntityTypeOrderByTradingDateDesc(ENTITY_TYPE);
+    if (rows.isEmpty()) {
+      return List.of();
+    }
     Set<LocalDate> dates = new LinkedHashSet<>();
     for (ReconciliationExceptionRow row : rows) {
       dates.add(row.tradingDate());

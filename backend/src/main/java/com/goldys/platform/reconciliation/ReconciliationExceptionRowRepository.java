@@ -9,6 +9,8 @@ interface ReconciliationExceptionRowRepository
     extends JpaRepository<ReconciliationExceptionRow, ReconciliationExceptionRow.Id> {
   List<ReconciliationExceptionRow> findByEntityTypeOrderByTradingDateAsc(String entityType);
 
+  List<ReconciliationExceptionRow> findByEntityTypeOrderByTradingDateDesc(String entityType);
+
   List<ReconciliationExceptionRow> findByEntityTypeAndTradingDateIn(
       String entityType, Collection<LocalDate> dates);
 }
