@@ -33,26 +33,23 @@ public class LightspeedInsightsCsvParser {
     }
 
     Map<String, Integer> columns = columnIndex(records.get(0));
-    require(columns, "Sale Opened Date", "Sale Number", "Total Inc Tax", "Total Tax");
+    require(columns, "Reconciliation Date", "Total Inc Tax", "Total Tax");
 
     List<LightspeedInsightsSale> out = new ArrayList<>();
     for (int i = 1; i < records.size(); i++) {
       CSVRecord r = records.get(i);
-      String openedDate = get(columns, r, "Sale Opened Date");
-      if (openedDate == null || openedDate.isBlank()) {
-        // Looker "dimension fill": repeated dimension values are blank on continuation rows, which
-        // re-emit the same measures. Skip them so they are not double-counted and do not abort the
-        // parse with a bad-date error.
+      String reconciliationDate = get(columns, r, "Reconciliation Date");
+      if (reconciliationDate == null || reconciliationDate.isBlank()) {
+        // The CSV ends with a totals row (blank reconciliation date); skip it.
         continue;
       }
       out.add(
           new LightspeedInsightsSale(
-              date(r, columns, "Sale Opened Date"),
-              r.get(columns.get("Sale Number")),
-              get(columns, r, "Sale Type"),
+              date(r, columns, "Reconciliation Date"),
               money(r, columns, "Total Inc Tax"),
               money(r, columns, "Total Tax"),
-              money(r, columns, "Total Adjustment Inc Tax")));
+              money(r, columns, "Total Adjustment Inc Tax"),
+              money(r, columns, "Total Adjustment Tax")));
     }
     return out;
   }

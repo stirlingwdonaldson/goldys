@@ -20,26 +20,25 @@ class LightspeedInsightsCsvParserTest {
     List<LightspeedInsightsSale> sales = new LightspeedInsightsCsvParser().parse(csv);
 
     assertThat(sales).hasSize(4);
-    assertThat(sales.get(0).saleDate()).isEqualTo(LocalDate.parse("2026-09-20"));
-    assertThat(sales.get(0).saleNumber()).isEqualTo("SP-56 0920042116");
+    assertThat(sales.get(0).reconciliationDate()).isEqualTo(LocalDate.parse("2026-09-20"));
     assertThat(sales.get(0).totalIncTax()).isEqualByComparingTo("16.00");
+    // Currency formatting: thousands comma stripped; negative adjustment preserved.
+    assertThat(sales.get(2).totalIncTax()).isEqualByComparingTo("1089.96");
+    assertThat(sales.get(2).totalAdjustmentIncTax()).isEqualByComparingTo("-1.46");
   }
 
   @Test
-  void skipsDimensionFillContinuationRowsWithBlankDates() {
-    // Looker "dimension fill": repeated dimension values (Sale Opened Date, Sale Number) are blank
-    // on continuation rows, which repeat the measure values. These must be skipped, not treated as
-    // extra sales (which would double-count) nor allowed to abort the parse with a bad-date error.
+  void skipsTotalsRowWithBlankReconciliationDate() {
     String csv =
-        ",Reconciliation Date,Sale Opened Date,Sale Type,Sale Number,Order Type,Total Tax,Total Inc Tax\n"
-            + "1,2026-10-05,2026-10-03,Sale,SP-4 1003022358,Unspecified,$80.63,$885.00\n"
-            + ",,,,,,$80.63,$885.00\n";
+        ",Reconciliation Date,Total Tax,Total Inc Tax\n"
+            + "1,2026-10-05,$80.63,$885.00\n"
+            + ",,$80.63,$885.00\n";
 
     List<LightspeedInsightsSale> sales =
         new LightspeedInsightsCsvParser().parse(csv.getBytes(StandardCharsets.UTF_8));
 
     assertThat(sales).hasSize(1);
-    assertThat(sales.get(0).saleNumber()).isEqualTo("SP-4 1003022358");
+    assertThat(sales.get(0).reconciliationDate()).isEqualTo(LocalDate.parse("2026-10-05"));
     assertThat(sales.get(0).totalIncTax()).isEqualByComparingTo("885.00");
   }
 }
