@@ -1,9 +1,12 @@
 package com.goldys.platform.api;
 
 import com.goldys.platform.connectors.ctb.CtInvoiceCsvIngestService;
+import com.goldys.platform.connectors.ctb.CtInvoicePdfIngestService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.LocalDate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -24,11 +27,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/ingest")
 public class CtInvoiceIngestController {
   private final CtInvoiceCsvIngestService csvIngest;
+  private final CtInvoicePdfIngestService pdfIngest;
   private final String dropToken;
 
   public CtInvoiceIngestController(
-      CtInvoiceCsvIngestService csvIngest, @Value("${ctb.drop-token:}") String dropToken) {
+      CtInvoiceCsvIngestService csvIngest,
+      CtInvoicePdfIngestService pdfIngest,
+      @Value("${ctb.drop-token:}") String dropToken) {
     this.csvIngest = csvIngest;
+    this.pdfIngest = pdfIngest;
     this.dropToken = dropToken;
   }
 
@@ -41,6 +48,21 @@ public class CtInvoiceIngestController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     csvIngest.ingest(body);
+    return ResponseEntity.accepted().build();
+  }
+
+  @PostMapping("/ctb-invoices/pdf")
+  ResponseEntity<Void> invoicePdf(
+      @RequestBody byte[] body,
+      @RequestParam("invoiceNumber") String invoiceNumber,
+      @RequestParam("invoiceDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate invoiceDate,
+      @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+      @RequestParam(value = "token", required = false) String queryToken) {
+    if (!tokenValid(token, queryToken)) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    pdfIngest.ingest(body, invoiceNumber, invoiceDate);
     return ResponseEntity.accepted().build();
   }
 
