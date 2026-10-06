@@ -2,7 +2,6 @@ package com.goldys.platform.ingestion;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.FetchedPayload;
@@ -51,8 +50,8 @@ class ConnectorRunnerTest {
 
     UUID runId = runner.run(connector, null);
 
+    assertThat(awaitTerminal(runId)).isEqualTo(IngestionStatus.PARTIAL);
     assertThat(rawRecords.findByIngestionRunId(runId)).hasSize(1);
-    assertThat(runs.findById(runId).orElseThrow().status()).isEqualTo(IngestionStatus.PARTIAL);
     assertThat(failures.findByIngestionRunIdOrderByOccurredAtAsc(runId))
         .extracting(IngestionFailure::failureType)
         .containsExactly("SCHEMA_MISMATCH");
@@ -64,8 +63,8 @@ class ConnectorRunnerTest {
 
     UUID runId = runner.run(connector, "page-1");
 
+    assertThat(awaitTerminal(runId)).isEqualTo(IngestionStatus.SUCCESS);
     IngestionRun run = runs.findById(runId).orElseThrow();
-    assertThat(run.status()).isEqualTo(IngestionStatus.SUCCESS);
     assertThat(run.fetchedCount()).isEqualTo(1);
     assertThat(run.persistedCount()).isEqualTo(1);
     assertThat(rawRecords.findByIngestionRunId(runId)).hasSize(1);
@@ -77,27 +76,22 @@ class ConnectorRunnerTest {
 
     UUID runId = runner.run(connector, "week-1");
 
-    IngestionRun run = runs.findById(runId).orElseThrow();
-    assertThat(run.status()).isEqualTo(IngestionStatus.NO_NEW_DATA);
-    assertThat(run.outputWatermark()).isEqualTo("week-1");
+    assertThat(awaitTerminal(runId)).isEqualTo(IngestionStatus.NO_NEW_DATA);
+    assertThat(runs.findById(runId).orElseThrow().outputWatermark()).isEqualTo("week-1");
     assertThat(failures.findByIngestionRunIdOrderByOccurredAtAsc(runId)).isEmpty();
   }
 
   @Test
-  void unexpectedFailureIsRecordedWithoutLeakingItsMessageAndIsRethrown() {
+  void unexpectedFailureIsRecordedWithoutLeakingItsMessage() {
     SourceConnector connector =
         fixture(
             sink -> {
               throw new IllegalStateException("token=super-secret-value");
             });
 
-    assertThatThrownBy(() -> runner.run(connector, null))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("super-secret-value");
+    UUID runId = runner.run(connector, null);
 
-    UUID runId =
-        runs.findAll().stream().map(IngestionRun::id).reduce((first, last) -> last).orElseThrow();
-    assertThat(runs.findById(runId).orElseThrow().status()).isEqualTo(IngestionStatus.FAILED);
+    assertThat(awaitTerminal(runId)).isEqualTo(IngestionStatus.FAILED);
     assertThat(failures.findByIngestionRunIdOrderByOccurredAtAsc(runId))
         .singleElement()
         .satisfies(
@@ -118,6 +112,24 @@ class ConnectorRunnerTest {
     payload.bytes()[1] = 9;
 
     assertThat(payload.bytes()).isEqualTo(new byte[] {1, 2, 3});
+  }
+
+  /** Polls the run until it leaves RUNNING, then returns its terminal status. */
+  private IngestionStatus awaitTerminal(UUID runId) {
+    long deadline = System.currentTimeMillis() + 10_000;
+    while (System.currentTimeMillis() < deadline) {
+      IngestionRun run = runs.findById(runId).orElseThrow();
+      if (run.status() != IngestionStatus.RUNNING) {
+        return run.status();
+      }
+      try {
+        Thread.sleep(25);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new AssertionError("interrupted while awaiting run completion", e);
+      }
+    }
+    throw new AssertionError("run " + runId + " did not reach a terminal state");
   }
 
   private static SourceConnector fixture(java.util.function.Consumer<IngestionSink> body) {

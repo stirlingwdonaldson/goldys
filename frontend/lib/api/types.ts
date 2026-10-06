@@ -54,7 +54,13 @@ export interface ReconciliationRecord {
   fields: ReconciliationField[];
 }
 
-export type ConnectorRunStatus = "success" | "partial" | "failed" | "no_new_data" | "never_run";
+export type ConnectorRunStatus =
+  | "success"
+  | "partial"
+  | "failed"
+  | "no_new_data"
+  | "running"
+  | "never_run";
 
 /** One day of connector-run activity for the dashboard trend. */
 export interface ActivityPoint {

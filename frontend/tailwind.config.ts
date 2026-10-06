@@ -68,6 +68,10 @@ const config: Config = {
             DEFAULT: "hsl(var(--status-warning))",
             foreground: "hsl(var(--status-warning-foreground))",
           },
+          info: {
+            DEFAULT: "hsl(var(--status-info))",
+            foreground: "hsl(var(--status-info-foreground))",
+          },
           missing: {
             DEFAULT: "hsl(var(--status-missing))",
             foreground: "hsl(var(--status-missing-foreground))",

@@ -15,4 +15,9 @@ describe("ConnectorStatusBadge", () => {
     render(<ConnectorStatusBadge status="no_new_data" />);
     expect(screen.getByText("No new data")).toBeInTheDocument();
   });
+
+  it("labels an in-flight run as running", () => {
+    render(<ConnectorStatusBadge status="running" />);
+    expect(screen.getByText("Running")).toBeInTheDocument();
+  });
 });

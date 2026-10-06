@@ -147,4 +147,25 @@ class IngestionServicesTest {
                     "fixture"))
         .isInstanceOf(IllegalStateException.class);
   }
+
+  @Test
+  void recoverDanglingRunsMarksInterruptedRunsAndLeavesCompletedRunsAlone() {
+    UUID danglingId = runs.start("CTB", "ctb-export", null, Instant.now());
+    payloads.persist(
+        danglingId, "CTB", FetchMethod.FILE_EXPORT, "text/csv", new byte[] {1}, "UTF-8", "fixture");
+
+    UUID finishedId = runs.start("DEPUTY", "deputy-api", null, Instant.now());
+    runs.complete(finishedId, null, Instant.now());
+
+    int recovered = runs.recoverDanglingRuns(Instant.now());
+
+    assertThat(recovered).isGreaterThanOrEqualTo(1);
+    assertThat(runRepository.findById(danglingId).orElseThrow().status())
+        .isEqualTo(IngestionStatus.PARTIAL);
+    assertThat(failures.findByIngestionRunIdOrderByOccurredAtAsc(danglingId))
+        .extracting(IngestionFailure::failureType)
+        .containsExactly("RUN_INTERRUPTED");
+    assertThat(runRepository.findById(finishedId).orElseThrow().status())
+        .isEqualTo(IngestionStatus.NO_NEW_DATA);
+  }
 }
