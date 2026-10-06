@@ -3,6 +3,7 @@ package com.goldys.platform.architecture;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.goldys.platform.semantic.InventoryMetricsQuery;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.tngtech.archunit.core.importer.ImportOption;
@@ -161,6 +162,35 @@ class ArchitectureBoundariesTest {
       classes()
           .that()
           .implement(LabourMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  /** The inventory controller must not read canonical source facts directly. */
+  @ArchTest
+  static final ArchRule inventoryControllerDoesNotReadCanonical =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.api.InventoryController")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..canonical..");
+
+  /** The inventory reporting tool consumes the semantic layer, not canonical/reconciliation. */
+  @ArchTest
+  static final ArchRule inventoryToolConsumesSemanticOnly =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.reporting.GetFoodCostTool")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..canonical..", "..reconciliation..");
+
+  /** The inventory semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule inventoryMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(InventoryMetricsQuery.class)
           .should()
           .resideInAPackage("..reconciliation..");
 }
