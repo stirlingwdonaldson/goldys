@@ -163,6 +163,19 @@ class ConnectorStatusControllerTest {
                 .value("java.lang.RuntimeException: boom\n\tat Foo.bar(Foo.java:1)"));
   }
 
+  @Test
+  void connectorsFlagRunnableSources() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(ingestion.latestRunPerSource()).thenReturn(List.of());
+    when(ingestion.isRunnable("CTB")).thenReturn(true);
+    when(ingestion.isRunnable("LIGHTSPEED")).thenReturn(false);
+
+    mvc.perform(get("/api/connectors").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[?(@.source=='CTB')].runnable").value(true))
+        .andExpect(jsonPath("$[?(@.source=='LIGHTSPEED')].runnable").value(false));
+  }
+
   private static AccountUserDetails owner() {
     return new AccountUserDetails(
         UUID.randomUUID(), "owner@example.com", "hash", "Owner", "ALL", "OWNER", true);

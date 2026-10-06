@@ -9,6 +9,7 @@ const failed: ConnectorStatus = {
   lastRunAt: "2026-10-02T12:00:00Z",
   status: "failed",
   failureCount: 1,
+  runnable: true,
   failure: {
     type: "AUTH_FAILED",
     message: "CTB login failed",

@@ -172,7 +172,7 @@ export default function DataHealthPage() {
                     {uploading ? "Uploading…" : "Upload CSV"}
                   </Button>
                 </>
-              ) : (
+              ) : c.runnable ? (
                 <Button
                   variant="outline"
                   size="sm"
@@ -181,6 +181,8 @@ export default function DataHealthPage() {
                 >
                   {running === c.source ? "Running…" : "Run now"}
                 </Button>
+              ) : (
+                <span className="text-xs text-muted-foreground">Push-only</span>
               )}
             </div>
           </div>

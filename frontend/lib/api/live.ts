@@ -58,4 +58,5 @@ export const liveApi: Api = {
   getRecomputeStatus: () => fetchApi<RecomputeStatus>("/api/reconciliation/recompute/status"),
   listRuleAudit: () => fetchApi<RuleAuditEntry[]>("/api/reconciliation/rules/audit"),
   listProducts: () => fetchApi<string[]>("/api/reconciliation/products"),
+  listDailySales: () => fetchApi<import("./types").DailySales[]>("/api/sales/daily"),
 };
