@@ -9,9 +9,8 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.reconciliation.DailySalesOverrideService;
-import com.goldys.platform.reconciliation.ProductSalesConflict;
+import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
 import com.goldys.platform.reconciliation.ProductSalesOverrideService;
-import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
 import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
 import java.time.LocalDate;
 import java.util.List;
@@ -33,7 +32,7 @@ public class ReconciliationController {
   private final ReconciliationExceptionQuery exceptionsQuery;
   private final DailySalesOverrideService overrides;
   private final CanonicalDailySalesQuery dailySales;
-  private final ProductSalesReconciliationService productSales;
+  private final ProductSalesExceptionQuery productSalesExceptions;
   private final ProductSalesOverrideService productOverrides;
   private final CanonicalProductSalesQuery productSalesQuery;
   private final CurrentUserService currentUser;
@@ -43,7 +42,7 @@ public class ReconciliationController {
       ReconciliationExceptionQuery exceptionsQuery,
       DailySalesOverrideService overrides,
       CanonicalDailySalesQuery dailySales,
-      ProductSalesReconciliationService productSales,
+      ProductSalesExceptionQuery productSalesExceptions,
       ProductSalesOverrideService productOverrides,
       CanonicalProductSalesQuery productSalesQuery,
       CurrentUserService currentUser,
@@ -51,7 +50,7 @@ public class ReconciliationController {
     this.exceptionsQuery = exceptionsQuery;
     this.overrides = overrides;
     this.dailySales = dailySales;
-    this.productSales = productSales;
+    this.productSalesExceptions = productSalesExceptions;
     this.productOverrides = productOverrides;
     this.productSalesQuery = productSalesQuery;
     this.currentUser = currentUser;
@@ -95,7 +94,7 @@ public class ReconciliationController {
   @GetMapping("/products/exceptions")
   List<ProductExceptionDto> productExceptions(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return productSales.conflicts().stream().map(this::toProductException).toList();
+    return productSalesExceptions.listAll().stream().map(this::toProductException).toList();
   }
 
   @GetMapping("/products")
@@ -151,9 +150,9 @@ public class ReconciliationController {
         e.status());
   }
 
-  private ProductExceptionDto toProductException(ProductSalesConflict conflict) {
+  private ProductExceptionDto toProductException(ProductSalesExceptionQuery.ProductException e) {
     List<SourceValueDto> sources =
-        conflict.sources().stream()
+        e.sources().stream()
             .map(
                 s ->
                     new SourceValueDto(
@@ -161,12 +160,12 @@ public class ReconciliationController {
                         s.quantitySold().toPlainString() + " × $" + s.amount().toPlainString()))
             .toList();
     return new ProductExceptionDto(
-        conflict.tradingDate() + ":" + conflict.productNameKey(),
-        conflict.productNameKey(),
-        conflict.productNameKey(),
-        conflict.productNameKey(),
+        e.tradingDate() + ":" + e.productNameKey(),
+        e.productNameKey(),
+        e.productNameKey(),
+        e.productNameKey(),
         sources,
-        conflict.status());
+        e.status());
   }
 
   private static String plain(java.math.BigDecimal value) {

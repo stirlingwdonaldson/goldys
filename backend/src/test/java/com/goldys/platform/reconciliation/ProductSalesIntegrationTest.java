@@ -30,12 +30,14 @@ class ProductSalesIntegrationTest {
 
   @Autowired JdbcTemplate jdbc;
   @Autowired CanonicalProductSalesIngest productSales;
-  @Autowired ProductSalesReconciliationService reconciliation;
+  @Autowired ProductSalesExceptionQuery exceptions;
   @Autowired ProductSalesOverrideService overrides;
 
   @BeforeEach
   void clean() {
-    jdbc.update("truncate table canonical_product_sales, product_sales_override, resolution_rule");
+    jdbc.update(
+        "truncate table canonical_product_sales, product_sales_override, resolution_rule,"
+            + " reconciliation_exception");
   }
 
   @Test
@@ -46,14 +48,14 @@ class ProductSalesIntegrationTest {
     productSales.record(input("LIGHTSPEED", SEP_15, "garlic aioli", "150", "380.88"));
     productSales.record(input("CTB", SEP_15, "garlic aioli", "150", "380.88"));
 
-    List<ProductSalesConflict> conflicts = reconciliation.conflicts();
-    assertThat(conflicts).hasSize(1);
-    assertThat(conflicts.get(0).tradingDate()).isEqualTo(SEP_14);
-    assertThat(conflicts.get(0).productNameKey()).isEqualTo("garlic aioli");
+    List<ProductSalesExceptionQuery.ProductException> rows = exceptions.listAll();
+    assertThat(rows).hasSize(1);
+    assertThat(rows.get(0).tradingDate()).isEqualTo(SEP_14);
+    assertThat(rows.get(0).productNameKey()).isEqualTo("garlic aioli");
 
     overrides.save(OWNER, "a@b.com", SEP_14, "garlic aioli", "CTB", "typo");
 
-    assertThat(reconciliation.conflicts()).isEmpty();
+    assertThat(exceptions.listAll()).isEmpty();
   }
 
   private ProductSalesInput input(

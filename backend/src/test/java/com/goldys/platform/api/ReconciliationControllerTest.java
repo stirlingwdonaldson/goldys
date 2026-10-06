@@ -21,9 +21,8 @@ import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.reconciliation.DailySalesOverrideService;
-import com.goldys.platform.reconciliation.ProductSalesConflict;
+import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
 import com.goldys.platform.reconciliation.ProductSalesOverrideService;
-import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
 import com.goldys.platform.reconciliation.ProductSourceTotal;
 import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
 import com.goldys.platform.reconciliation.SourceTotal;
@@ -50,7 +49,7 @@ class ReconciliationControllerTest {
   @MockitoBean ReconciliationExceptionQuery exceptionsQuery;
   @MockitoBean DailySalesOverrideService overrides;
   @MockitoBean CanonicalDailySalesQuery dailySales;
-  @MockitoBean ProductSalesReconciliationService productSales;
+  @MockitoBean ProductSalesExceptionQuery productSalesExceptions;
   @MockitoBean ProductSalesOverrideService productOverrides;
   @MockitoBean CanonicalProductSalesQuery productSalesQuery;
   @MockitoBean CurrentUserService currentUser;
@@ -123,24 +122,25 @@ class ReconciliationControllerTest {
   @Test
   void productExceptionsReturnsTheConflict() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(productSales.conflicts())
+    when(productSalesExceptions.listAll())
         .thenReturn(
             List.of(
-                new ProductSalesConflict(
+                new ProductSalesExceptionQuery.ProductException(
                     LocalDate.of(2026, 9, 14),
                     "garlic aioli",
+                    "conflict",
                     List.of(
                         new ProductSourceTotal(
                             "LIGHTSPEED", new BigDecimal("150"), new BigDecimal("380.88"), null),
                         new ProductSourceTotal(
-                            "CTB", new BigDecimal("127"), new BigDecimal("322.46"), null)),
-                    "conflict")));
+                            "CTB", new BigDecimal("127"), new BigDecimal("322.46"), null)))));
 
     mvc.perform(get("/api/reconciliation/products/exceptions").with(authenticated(owner())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].field").value("garlic aioli"))
         .andExpect(jsonPath("$[0].status").value("conflict"))
-        .andExpect(jsonPath("$[0].sources[0].source").value("LIGHTSPEED"));
+        .andExpect(jsonPath("$[0].sources[0].source").value("LIGHTSPEED"))
+        .andExpect(jsonPath("$[0].sources[0].value").value("150 × $380.88"));
   }
 
   @Test

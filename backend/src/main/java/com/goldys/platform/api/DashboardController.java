@@ -10,7 +10,7 @@ import com.goldys.platform.ingestion.IngestionHealth;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
-import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
+import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
 import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +25,7 @@ public class DashboardController {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
 
   private final ResolvedDailySalesQuery resolvedDailySales;
-  private final ProductSalesReconciliationService productSales;
+  private final ProductSalesExceptionQuery productSalesExceptions;
   private final IngestionService ingestion;
   private final OverrideUsageService overrideUsage;
   private final CurrentUserService currentUser;
@@ -33,13 +33,13 @@ public class DashboardController {
 
   public DashboardController(
       ResolvedDailySalesQuery resolvedDailySales,
-      ProductSalesReconciliationService productSales,
+      ProductSalesExceptionQuery productSalesExceptions,
       IngestionService ingestion,
       OverrideUsageService overrideUsage,
       CurrentUserService currentUser,
       PermissionService permissions) {
     this.resolvedDailySales = resolvedDailySales;
-    this.productSales = productSales;
+    this.productSalesExceptions = productSalesExceptions;
     this.ingestion = ingestion;
     this.overrideUsage = overrideUsage;
     this.currentUser = currentUser;
@@ -50,7 +50,7 @@ public class DashboardController {
   SummaryDto summary(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
     int openConflicts =
-        (int) (resolvedDailySales.countOpenConflicts() + productSales.conflicts().size());
+        (int) (resolvedDailySales.countOpenConflicts() + productSalesExceptions.countOpen());
     IngestionHealth health = ingestion.health();
     OverrideUsage usage = overrideUsage.usage();
     return new SummaryDto(

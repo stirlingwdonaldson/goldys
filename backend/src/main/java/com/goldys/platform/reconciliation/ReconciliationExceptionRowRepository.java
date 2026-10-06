@@ -18,4 +18,6 @@ interface ReconciliationExceptionRowRepository
       String entityType, String entityKey, LocalDate tradingDate);
 
   void deleteByEntityType(String entityType);
+
+  long countByEntityType(String entityType);
 }
