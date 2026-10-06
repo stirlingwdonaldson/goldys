@@ -40,6 +40,7 @@ public class SecurityConfig {
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/opentable"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/deputy"),
                     AntPathRequestMatcher.antMatcher("/api/auth/signup"),
                     AntPathRequestMatcher.antMatcher("/api/auth/login"),
                     // Prometheus scrape + load-balancer health checks are unauthenticated.
@@ -63,6 +64,7 @@ public class SecurityConfig {
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/opentable"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/deputy"),
                     AntPathRequestMatcher.antMatcher("/api/auth/signup"),
                     AntPathRequestMatcher.antMatcher("/api/auth/login"))
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
