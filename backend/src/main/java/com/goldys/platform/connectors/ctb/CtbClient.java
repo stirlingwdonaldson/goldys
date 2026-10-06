@@ -54,8 +54,19 @@ public class CtbClient {
   }
 
   private static boolean isSuccess(JsonNode json) {
-    return json.path("IsSuccess").asBoolean(false)
-        || json.path("message").path("IsSuccess").asBoolean(false);
+    // CTB's success signal varies by endpoint. The login returns a top-level IsSuccess; the
+    // older data envelope used message.IsSuccess; the current data endpoints return `data`
+    // with no IsSuccess field at all. Prefer an explicit IsSuccess flag when present, and
+    // otherwise treat a response without one as success (the data-endpoint shape).
+    JsonNode topIsSuccess = json.get("IsSuccess");
+    if (topIsSuccess != null && topIsSuccess.isBoolean()) {
+      return topIsSuccess.asBoolean();
+    }
+    JsonNode nestedIsSuccess = json.path("message").get("IsSuccess");
+    if (nestedIsSuccess != null && nestedIsSuccess.isBoolean()) {
+      return nestedIsSuccess.asBoolean();
+    }
+    return true;
   }
 
   /** One page of revenue rows plus the total record count, returned as raw JSON for the sink. */

@@ -24,4 +24,9 @@ class CtbClientTest {
                 "{\"data\": [], \"totalCount\": 0, \"message\": {\"IsSuccess\": false}}"))
         .isFalse();
   }
+
+  @Test
+  void dataEndpointsSucceedOnDataWithoutAnyIsSuccessField() {
+    assertThat(CtbClient.isSuccess("{\"data\": [{\"revenueId\": 1}], \"totalCount\": 1}")).isTrue();
+  }
 }
