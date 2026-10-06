@@ -16,7 +16,9 @@ class ProductSalesResolverTest {
     assertThat(classify(List.of(st("LIGHTSPEED", "10", "100.00"), st("CTB", "10", "100.00"))))
         .isEqualTo("agreed");
     // quantity differs by 0.0001 — zero tolerance, not "close enough"
-    assertThat(classify(List.of(st("LIGHTSPEED", "10.0000", "100.00"), st("CTB", "10.0001", "100.00"))))
+    assertThat(
+            classify(
+                List.of(st("LIGHTSPEED", "10.0000", "100.00"), st("CTB", "10.0001", "100.00"))))
         .isEqualTo("conflict");
     assertThat(classify(List.of(st("LIGHTSPEED", "10", "100.00")))).isEqualTo("missing");
   }
@@ -61,14 +63,20 @@ class ProductSalesResolverTest {
 
   @Test
   void emptySourcesAreNotAnException() {
-    assertThat(ProductSalesResolver.resolve(List.of(), Optional.empty(), Optional.empty())).isEmpty();
+    assertThat(ProductSalesResolver.resolve(List.of(), Optional.empty(), Optional.empty()))
+        .isEmpty();
   }
 
   @Test
   void aRuleResolvesThePair() {
     ResolutionRule rule =
         ResolutionRule.create(
-            "product_sales", "garlic aioli", "priority", null, List.of("CTB"), "a@b.com",
+            "product_sales",
+            "garlic aioli",
+            "priority",
+            null,
+            List.of("CTB"),
+            "a@b.com",
             Instant.EPOCH);
 
     assertThat(

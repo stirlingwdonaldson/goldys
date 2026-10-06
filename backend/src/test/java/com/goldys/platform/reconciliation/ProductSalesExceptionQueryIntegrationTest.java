@@ -25,11 +25,19 @@ class ProductSalesExceptionQueryIntegrationTest {
     jdbc.update("truncate table reconciliation_exception");
     repository.save(
         new ReconciliationExceptionRow(
-            "product_sales", "garlic aioli", "product_sales", LocalDate.of(2026, 9, 14), "conflict",
+            "product_sales",
+            "garlic aioli",
+            "product_sales",
+            LocalDate.of(2026, 9, 14),
+            "conflict",
             Instant.EPOCH));
     repository.save(
         new ReconciliationExceptionRow(
-            "product_sales", "chips", "product_sales", LocalDate.of(2026, 9, 15), "missing",
+            "product_sales",
+            "chips",
+            "product_sales",
+            LocalDate.of(2026, 9, 15),
+            "missing",
             Instant.EPOCH));
   }
 

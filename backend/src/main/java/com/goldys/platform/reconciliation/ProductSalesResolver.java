@@ -3,9 +3,11 @@ package com.goldys.platform.reconciliation;
 import java.util.List;
 import java.util.Optional;
 
-/** Pure product-sales resolution: override → agreement (zero tolerance on quantity AND amount) →
+/**
+ * Pure product-sales resolution: override → agreement (zero tolerance on quantity AND amount) →
  * rule (evaluated on quantity_sold) → unresolved. Returns the exception status, or empty when the
- * pair is resolved or has no data. */
+ * pair is resolved or has no data.
+ */
 final class ProductSalesResolver {
   private ProductSalesResolver() {}
 

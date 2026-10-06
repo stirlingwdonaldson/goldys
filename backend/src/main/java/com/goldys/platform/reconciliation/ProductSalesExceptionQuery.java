@@ -11,8 +11,10 @@ import java.util.Map;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 
-/** Read-only facade over the product_sales exception projection, joined back to canonical for the
- * per-source values shown in the exceptions UI. */
+/**
+ * Read-only facade over the product_sales exception projection, joined back to canonical for the
+ * per-source values shown in the exceptions UI.
+ */
 @Service
 public class ProductSalesExceptionQuery {
   private static final String ENTITY_TYPE = "product_sales";
@@ -41,7 +43,9 @@ public class ProductSalesExceptionQuery {
     for (ProductSalesView v : productSales.currentProductSalesForDates(dates)) {
       byPair
           .computeIfAbsent(v.tradingDate() + SEP + v.productNameKey(), k -> new ArrayList<>())
-          .add(new ProductSourceTotal(v.sourceSystem(), v.quantitySold(), v.amount(), v.recordedAt()));
+          .add(
+              new ProductSourceTotal(
+                  v.sourceSystem(), v.quantitySold(), v.amount(), v.recordedAt()));
     }
     List<ProductException> out = new ArrayList<>();
     for (ReconciliationExceptionRow row : rows) {
