@@ -31,7 +31,7 @@ class ResolutionRuleServiceTest {
         .require(any(), any(), any());
 
     ResolutionRuleService service =
-        new ResolutionRuleService(mock(ResolutionRuleRepository.class), permissions);
+        new ResolutionRuleService(mock(ResolutionRuleRepository.class), permissions, mock(DailySalesProjector.class));
 
     assertThatThrownBy(
             () ->
@@ -59,7 +59,8 @@ class ResolutionRuleServiceTest {
     when(repository.lockCurrent("daily_sales", "daily_sales")).thenReturn(Optional.of(prior));
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-    ResolutionRuleService service = new ResolutionRuleService(repository, permissions);
+    ResolutionRuleService service =
+        new ResolutionRuleService(repository, permissions, mock(DailySalesProjector.class));
 
     ResolutionRuleView saved =
         service.save(
@@ -77,7 +78,9 @@ class ResolutionRuleServiceTest {
   void rejectsUnknownEntityType() {
     ResolutionRuleService service =
         new ResolutionRuleService(
-            mock(ResolutionRuleRepository.class), mock(PermissionService.class));
+            mock(ResolutionRuleRepository.class),
+            mock(PermissionService.class),
+            mock(DailySalesProjector.class));
 
     assertThatThrownBy(
             () ->
@@ -94,7 +97,9 @@ class ResolutionRuleServiceTest {
   void rejectsPriorityWithoutSourceOrder() {
     ResolutionRuleService service =
         new ResolutionRuleService(
-            mock(ResolutionRuleRepository.class), mock(PermissionService.class));
+            mock(ResolutionRuleRepository.class),
+            mock(PermissionService.class),
+            mock(DailySalesProjector.class));
 
     assertThatThrownBy(
             () ->
@@ -111,7 +116,9 @@ class ResolutionRuleServiceTest {
   void rejectsUnknownCustomLogic() {
     ResolutionRuleService service =
         new ResolutionRuleService(
-            mock(ResolutionRuleRepository.class), mock(PermissionService.class));
+            mock(ResolutionRuleRepository.class),
+            mock(PermissionService.class),
+            mock(DailySalesProjector.class));
 
     assertThatThrownBy(
             () ->
@@ -128,7 +135,9 @@ class ResolutionRuleServiceTest {
   void deleteRejectsMalformedId() {
     ResolutionRuleService service =
         new ResolutionRuleService(
-            mock(ResolutionRuleRepository.class), mock(PermissionService.class));
+            mock(ResolutionRuleRepository.class),
+            mock(PermissionService.class),
+            mock(DailySalesProjector.class));
 
     assertThatThrownBy(() -> service.delete(OWNER, "a@b.com", "not-a-uuid"))
         .isInstanceOf(IllegalArgumentException.class)
@@ -141,7 +150,7 @@ class ResolutionRuleServiceTest {
     java.util.UUID id = java.util.UUID.randomUUID();
     when(repository.findCurrentById(id)).thenReturn(Optional.empty());
     ResolutionRuleService service =
-        new ResolutionRuleService(repository, mock(PermissionService.class));
+        new ResolutionRuleService(repository, mock(PermissionService.class), mock(DailySalesProjector.class));
 
     assertThatThrownBy(() -> service.delete(OWNER, "a@b.com", id.toString()))
         .isInstanceOf(IllegalArgumentException.class)
