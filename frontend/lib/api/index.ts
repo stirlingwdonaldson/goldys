@@ -66,6 +66,7 @@ export type {
   ReconciliationException,
   ReconciliationField,
   ReconciliationRecord,
+  ReservationSummary,
   ResolutionRule,
   RuleAuditEntry,
   RuleStrategy,

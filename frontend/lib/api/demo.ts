@@ -420,6 +420,22 @@ export const demoApi: Api = {
     return { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" };
   },
 
+  async getReservationSummary(date: string): Promise<import("./types").ReservationSummary | undefined> {
+    await delay(300);
+    return {
+      date,
+      bookings: 96,
+      attended: 82,
+      covers: 314,
+      cancelled: 5,
+      noShows: 9,
+      walkIns: 12,
+      avgPartySize: 3.83,
+      noShowRate: 0.0938,
+      bookingToCoverConversion: 0.8542,
+    };
+  },
+
   async getTopSellers(): Promise<TopSeller[]> {
     await delay(300);
     return [
