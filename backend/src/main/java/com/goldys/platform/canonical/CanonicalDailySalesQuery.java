@@ -2,6 +2,7 @@ package com.goldys.platform.canonical;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 /**
@@ -22,6 +23,10 @@ public class CanonicalDailySalesQuery {
 
   public List<DailySalesView> currentDailySalesForDate(LocalDate date) {
     return repository.findCurrentByDate(date).stream().map(this::toView).toList();
+  }
+
+  public Optional<LocalDate> latestTradingDate() {
+    return repository.findLatestTradingDate();
   }
 
   private DailySalesView toView(CanonicalDailySales s) {

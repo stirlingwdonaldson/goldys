@@ -1,5 +1,6 @@
 package com.goldys.platform.api;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -16,10 +17,13 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.DailySalesView;
 import com.goldys.platform.config.SecurityConfig;
+import com.goldys.platform.reconciliation.DailySalesReconciliationService;
+import com.goldys.platform.reconciliation.DailySalesResolved;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +41,7 @@ class SalesControllerTest {
   @Autowired MockMvc mvc;
 
   @MockitoBean CanonicalDailySalesQuery dailySales;
+  @MockitoBean DailySalesReconciliationService reconciliation;
   @MockitoBean CurrentUserService currentUser;
   @MockitoBean PermissionService permissions;
 
@@ -66,6 +71,49 @@ class SalesControllerTest {
         .andExpect(jsonPath("$[0].date").value("2026-10-05"))
         .andExpect(jsonPath("$[0].source").value("CTB"))
         .andExpect(jsonPath("$[1].date").value("2026-10-04"));
+  }
+
+  @Test
+  void latestReturnsNullsWhenThereIsNoData() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(dailySales.latestTradingDate()).thenReturn(Optional.empty());
+
+    mvc.perform(get("/api/sales/latest").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.date").value(nullValue()))
+        .andExpect(jsonPath("$.total").value(nullValue()))
+        .andExpect(jsonPath("$.authoritativeSource").value(nullValue()));
+  }
+
+  @Test
+  void latestReturnsTheResolvedTotal() throws Exception {
+    LocalDate date = LocalDate.of(2026, 10, 5);
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(dailySales.latestTradingDate()).thenReturn(Optional.of(date));
+    when(reconciliation.resolved(date))
+        .thenReturn(
+            Optional.of(new DailySalesResolved(date, new BigDecimal("10865.72"), "agreed")));
+
+    mvc.perform(get("/api/sales/latest").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.date").value("2026-10-05"))
+        .andExpect(jsonPath("$.total").value(10865.72))
+        .andExpect(jsonPath("$.authoritativeSource").value("agreed"));
+  }
+
+  @Test
+  void latestReturnsNullTotalWhenTheLatestDateIsUnresolved() throws Exception {
+    LocalDate date = LocalDate.of(2026, 10, 5);
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(dailySales.latestTradingDate()).thenReturn(Optional.of(date));
+    when(reconciliation.resolved(date))
+        .thenReturn(Optional.of(new DailySalesResolved(date, null, null)));
+
+    mvc.perform(get("/api/sales/latest").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.date").value("2026-10-05"))
+        .andExpect(jsonPath("$.total").value(nullValue()))
+        .andExpect(jsonPath("$.authoritativeSource").value(nullValue()));
   }
 
   private static AccountUserDetails owner() {

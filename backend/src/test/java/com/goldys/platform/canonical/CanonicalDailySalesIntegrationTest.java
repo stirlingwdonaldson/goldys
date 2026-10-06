@@ -77,6 +77,25 @@ class CanonicalDailySalesIntegrationTest {
     assertThat(repository.findCurrentByDate(date)).hasSize(1);
   }
 
+  @Test
+  void latestTradingDateIsEmptyWhenThereAreNoRows() {
+    assertThat(repository.findLatestTradingDate()).isEmpty();
+  }
+
+  @Test
+  void latestTradingDateReturnsTheMostRecentDate() {
+    LocalDate earlier = LocalDate.of(2026, 9, 13);
+    LocalDate later = LocalDate.of(2026, 9, 14);
+    service.record(
+        new DailySalesInput(
+            "CTB", earlier, bd("100.00"), bd("9.00"), bd("91.00"), rawRecord("CTB")));
+    service.record(
+        new DailySalesInput(
+            "CTB", later, bd("200.00"), bd("18.00"), bd("182.00"), rawRecord("CTB")));
+
+    assertThat(repository.findLatestTradingDate()).contains(later);
+  }
+
   private UUID rawRecord(String source) {
     UUID runId = UUID.randomUUID();
     UUID recordId = UUID.randomUUID();

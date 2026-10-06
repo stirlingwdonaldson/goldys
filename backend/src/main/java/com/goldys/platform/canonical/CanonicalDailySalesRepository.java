@@ -27,4 +27,7 @@ interface CanonicalDailySalesRepository extends BitemporalRepository<CanonicalDa
 
   @Query("select s from CanonicalDailySales s where s.supersededAt is null")
   List<CanonicalDailySales> findAllCurrent();
+
+  @Query("select max(s.tradingDate) from CanonicalDailySales s where s.supersededAt is null")
+  Optional<LocalDate> findLatestTradingDate();
 }
