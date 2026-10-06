@@ -59,4 +59,5 @@ export const liveApi: Api = {
   listRuleAudit: () => fetchApi<RuleAuditEntry[]>("/api/reconciliation/rules/audit"),
   listProducts: () => fetchApi<string[]>("/api/reconciliation/products"),
   listDailySales: () => fetchApi<import("./types").DailySales[]>("/api/sales/daily"),
+  getLatestSales: () => fetchApi<import("./types").LatestSales>("/api/sales/latest"),
 };
