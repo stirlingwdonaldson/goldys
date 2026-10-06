@@ -21,14 +21,17 @@ public class ProductSalesOverrideService {
   private final ProductSalesOverrideRepository repository;
   private final PermissionService permissions;
   private final CanonicalProductSalesQuery productSales;
+  private final ProductSalesProjector projector;
 
   public ProductSalesOverrideService(
       ProductSalesOverrideRepository repository,
       PermissionService permissions,
-      CanonicalProductSalesQuery productSales) {
+      CanonicalProductSalesQuery productSales,
+      ProductSalesProjector projector) {
     this.repository = repository;
     this.permissions = permissions;
     this.productSales = productSales;
+    this.projector = projector;
   }
 
   @Transactional
@@ -56,8 +59,11 @@ public class ProductSalesOverrideService {
       current.get().supersede(now);
       repository.saveAndFlush(current.get());
     }
-    return repository.save(
-        ProductSalesOverride.create(date, productNameKey, source, reason, actorEmail, now));
+    ProductSalesOverride saved =
+        repository.save(
+            ProductSalesOverride.create(date, productNameKey, source, reason, actorEmail, now));
+    projector.recompute(productNameKey, date);
+    return saved;
   }
 
   public Optional<String> currentAuthoritativeSource(LocalDate date, String productNameKey) {

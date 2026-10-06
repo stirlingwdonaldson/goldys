@@ -5,6 +5,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,14 +15,19 @@ class CanonicalProductSalesService {
   private static final Clock CLOCK = Clock.systemUTC();
 
   private final CanonicalProductSalesRepository repository;
+  private final ApplicationEventPublisher publisher;
 
-  CanonicalProductSalesService(CanonicalProductSalesRepository repository) {
+  CanonicalProductSalesService(
+      CanonicalProductSalesRepository repository, ApplicationEventPublisher publisher) {
     this.repository = repository;
+    this.publisher = publisher;
   }
 
   @Transactional
   CanonicalProductSales record(ProductSalesInput input) {
-    return recordAt(input, CLOCK.instant());
+    CanonicalProductSales saved = recordAt(input, CLOCK.instant());
+    publisher.publishEvent(new ProductSalesRecorded(input.productNameKey(), input.tradingDate()));
+    return saved;
   }
 
   @Transactional

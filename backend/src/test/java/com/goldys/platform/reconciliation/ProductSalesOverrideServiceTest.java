@@ -44,7 +44,10 @@ class ProductSalesOverrideServiceTest {
         .require(any(), any(), any());
     ProductSalesOverrideService service =
         new ProductSalesOverrideService(
-            mock(ProductSalesOverrideRepository.class), permissions, queryWithCtb());
+            mock(ProductSalesOverrideRepository.class),
+            permissions,
+            queryWithCtb(),
+            mock(ProductSalesProjector.class));
 
     assertThatThrownBy(() -> service.save(OWNER, "a@b.com", SEP_14, "garlic aioli", "CTB", null))
         .isInstanceOf(AccessDeniedException.class);
@@ -56,7 +59,8 @@ class ProductSalesOverrideServiceTest {
         new ProductSalesOverrideService(
             mock(ProductSalesOverrideRepository.class),
             mock(PermissionService.class),
-            queryWithCtb());
+            queryWithCtb(),
+            mock(ProductSalesProjector.class));
 
     assertThatThrownBy(
             () -> service.save(OWNER, "a@b.com", SEP_14, "garlic aioli", "LIGHTSPEED", null))
@@ -69,7 +73,11 @@ class ProductSalesOverrideServiceTest {
     when(repository.lockCurrent("garlic aioli", SEP_14)).thenReturn(Optional.empty());
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     ProductSalesOverrideService service =
-        new ProductSalesOverrideService(repository, mock(PermissionService.class), queryWithCtb());
+        new ProductSalesOverrideService(
+            repository,
+            mock(PermissionService.class),
+            queryWithCtb(),
+            mock(ProductSalesProjector.class));
 
     ProductSalesOverride saved =
         service.save(OWNER, "a@b.com", SEP_14, "garlic aioli", "CTB", "typo");

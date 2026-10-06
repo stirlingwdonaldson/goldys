@@ -26,14 +26,17 @@ public class ResolutionRuleService {
   private final ResolutionRuleRepository repository;
   private final PermissionService permissions;
   private final DailySalesProjector projector;
+  private final ProductSalesProjector productProjector;
 
   public ResolutionRuleService(
       ResolutionRuleRepository repository,
       PermissionService permissions,
-      DailySalesProjector projector) {
+      DailySalesProjector projector,
+      ProductSalesProjector productProjector) {
     this.repository = repository;
     this.permissions = permissions;
     this.projector = projector;
+    this.productProjector = productProjector;
   }
 
   public List<ResolutionRuleView> list() {
@@ -65,6 +68,9 @@ public class ResolutionRuleService {
     if ("daily_sales".equals(input.entityType())) {
       projector.recomputeAll();
     }
+    if ("product_sales".equals(input.entityType())) {
+      productProjector.recomputeAll();
+    }
     return toView(saved);
   }
 
@@ -84,6 +90,9 @@ public class ResolutionRuleService {
     current.supersede(CLOCK.instant(), actorEmail);
     if ("daily_sales".equals(current.entityType())) {
       projector.recomputeAll();
+    }
+    if ("product_sales".equals(current.entityType())) {
+      productProjector.recomputeAll();
     }
   }
 
