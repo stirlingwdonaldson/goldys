@@ -4,5 +4,6 @@ package com.goldys.platform.reporting;
 public enum ToolId {
   GET_SALES_BY_PERIOD,
   GET_RESERVATION_SUMMARY,
-  GET_LABOUR_COST
+  GET_LABOUR_COST,
+  GET_FOOD_COST
 }
