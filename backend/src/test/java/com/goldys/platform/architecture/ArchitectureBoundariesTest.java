@@ -3,6 +3,7 @@ package com.goldys.platform.architecture;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -131,6 +132,35 @@ class ArchitectureBoundariesTest {
       classes()
           .that()
           .implement(ReservationMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  /** The labour controller must not read canonical source facts directly. */
+  @ArchTest
+  static final ArchRule labourControllerDoesNotReadCanonical =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.api.LabourController")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..canonical..");
+
+  /** The labour reporting tool consumes the semantic layer, not canonical/reconciliation. */
+  @ArchTest
+  static final ArchRule labourToolConsumesSemanticOnly =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.reporting.GetLabourCostTool")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..canonical..", "..reconciliation..");
+
+  /** The labour semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule labourMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(LabourMetricsQuery.class)
           .should()
           .resideInAPackage("..reconciliation..");
 }
