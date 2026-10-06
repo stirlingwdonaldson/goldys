@@ -1,20 +1,11 @@
 package com.goldys.platform.api;
 
+import com.goldys.platform.application.ReconciliationApplicationService;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
-import com.goldys.platform.auth.PermissionAction;
-import com.goldys.platform.auth.PermissionService;
-import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.canonical.CanonicalDailySalesQuery;
-import com.goldys.platform.canonical.CanonicalProductSalesQuery;
-import com.goldys.platform.reconciliation.DailySalesOverrideService;
-import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
-import com.goldys.platform.reconciliation.ProductSalesOverrideService;
-import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,181 +18,65 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/reconciliation")
 public class ReconciliationController {
-  private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
-
-  private final ReconciliationExceptionQuery exceptionsQuery;
-  private final DailySalesOverrideService overrides;
-  private final CanonicalDailySalesQuery dailySales;
-  private final ProductSalesExceptionQuery productSalesExceptions;
-  private final ProductSalesOverrideService productOverrides;
-  private final CanonicalProductSalesQuery productSalesQuery;
+  private final ReconciliationApplicationService reconciliation;
   private final CurrentUserService currentUser;
-  private final PermissionService permissions;
 
   public ReconciliationController(
-      ReconciliationExceptionQuery exceptionsQuery,
-      DailySalesOverrideService overrides,
-      CanonicalDailySalesQuery dailySales,
-      ProductSalesExceptionQuery productSalesExceptions,
-      ProductSalesOverrideService productOverrides,
-      CanonicalProductSalesQuery productSalesQuery,
-      CurrentUserService currentUser,
-      PermissionService permissions) {
-    this.exceptionsQuery = exceptionsQuery;
-    this.overrides = overrides;
-    this.dailySales = dailySales;
-    this.productSalesExceptions = productSalesExceptions;
-    this.productOverrides = productOverrides;
-    this.productSalesQuery = productSalesQuery;
+      ReconciliationApplicationService reconciliation, CurrentUserService currentUser) {
+    this.reconciliation = reconciliation;
     this.currentUser = currentUser;
-    this.permissions = permissions;
   }
 
   @GetMapping("/exceptions")
-  List<ExceptionDto> exceptions(@AuthenticationPrincipal AccountUserDetails user) {
-    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return exceptionsQuery.listDaily().stream().map(this::toException).toList();
+  List<ReconciliationApplicationService.DailyException> exceptions(
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return reconciliation.listDailyExceptions(currentUser.roleOf(user));
   }
 
   @GetMapping("/records/{date}")
-  RecordDto record(@PathVariable LocalDate date, @AuthenticationPrincipal AccountUserDetails user) {
-    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    List<SourceValueDto> sources =
-        dailySales.currentDailySalesForDate(date).stream()
-            .map(s -> new SourceValueDto(s.sourceSystem(), plain(s.totalSales())))
-            .toList();
-    Optional<String> authoritative = overrides.currentAuthoritativeSource(date);
-    FieldDto field =
-        new FieldDto(
-            "daily_sales",
-            "Daily sales",
-            sources,
-            authoritative.isPresent(),
-            authoritative.orElse(null));
-    return new RecordDto(date.toString(), date.toString(), "day", List.of(field));
+  ReconciliationApplicationService.Record record(
+      @PathVariable LocalDate date, @AuthenticationPrincipal AccountUserDetails user) {
+    return reconciliation.dailyRecord(currentUser.roleOf(user), date);
   }
 
   @PostMapping("/records/{date}/override")
-  OverrideResultDto override(
+  ReconciliationApplicationService.OverrideResult override(
       @PathVariable LocalDate date,
       @RequestBody OverrideRequestDto body,
       @AuthenticationPrincipal AccountUserDetails user) {
     UserRole role = currentUser.roleOf(user);
-    overrides.save(role, user.email(), date, body.source(), body.reason());
-    return new OverrideResultDto(true, date.toString(), "daily_sales");
+    return reconciliation.overrideDaily(role, user.email(), date, body.source(), body.reason());
   }
 
   @GetMapping("/products/exceptions")
-  List<ProductExceptionDto> productExceptions(@AuthenticationPrincipal AccountUserDetails user) {
-    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return productSalesExceptions.listAll().stream().map(this::toProductException).toList();
+  List<ReconciliationApplicationService.ProductException> productExceptions(
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return reconciliation.listProductExceptions(currentUser.roleOf(user));
   }
 
   @GetMapping("/products")
   List<String> products(@AuthenticationPrincipal AccountUserDetails user) {
-    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return productSalesQuery.distinctProductNameKeys();
+    return reconciliation.listProducts(currentUser.roleOf(user));
   }
 
   @GetMapping("/products/{date}/{product}")
-  ProductRecordDto productRecord(
+  ReconciliationApplicationService.ProductRecord productRecord(
       @PathVariable LocalDate date,
       @PathVariable String product,
       @AuthenticationPrincipal AccountUserDetails user) {
-    permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    List<SourceValueDto> sources =
-        productSalesQuery.currentProductSalesForDate(date).stream()
-            .filter(v -> v.productNameKey().equals(product))
-            .map(
-                v ->
-                    new SourceValueDto(
-                        v.sourceSystem(),
-                        v.quantitySold().toPlainString() + " × $" + v.amount().toPlainString()))
-            .toList();
-    Optional<String> authoritative = productOverrides.currentAuthoritativeSource(date, product);
-    FieldDto field =
-        new FieldDto(
-            product, product, sources, authoritative.isPresent(), authoritative.orElse(null));
-    return new ProductRecordDto(product, product, "product", List.of(field));
+    return reconciliation.productRecord(currentUser.roleOf(user), date, product);
   }
 
   @PostMapping("/products/{date}/{product}/override")
-  OverrideResultDto productOverride(
+  ReconciliationApplicationService.OverrideResult productOverride(
       @PathVariable LocalDate date,
       @PathVariable String product,
       @RequestBody OverrideRequestDto body,
       @AuthenticationPrincipal AccountUserDetails user) {
     UserRole role = currentUser.roleOf(user);
-    productOverrides.save(role, user.email(), date, product, body.source(), body.reason());
-    return new OverrideResultDto(true, product, "product");
+    return reconciliation.overrideProduct(
+        role, user.email(), date, product, body.source(), body.reason());
   }
-
-  private ExceptionDto toException(ReconciliationExceptionQuery.DailyException e) {
-    List<SourceValueDto> sources =
-        e.sources().stream()
-            .map(s -> new SourceValueDto(s.sourceSystem(), plain(s.totalSales())))
-            .toList();
-    return new ExceptionDto(
-        e.tradingDate() + ":daily_sales",
-        e.tradingDate().toString(),
-        e.tradingDate().toString(),
-        "daily_sales",
-        sources,
-        e.status());
-  }
-
-  private ProductExceptionDto toProductException(ProductSalesExceptionQuery.ProductException e) {
-    List<SourceValueDto> sources =
-        e.sources().stream()
-            .map(
-                s ->
-                    new SourceValueDto(
-                        s.sourceSystem(),
-                        s.quantitySold().toPlainString() + " × $" + s.amount().toPlainString()))
-            .toList();
-    return new ProductExceptionDto(
-        e.tradingDate() + ":" + e.productNameKey(),
-        e.productNameKey(),
-        e.productNameKey(),
-        e.productNameKey(),
-        sources,
-        e.status());
-  }
-
-  private static String plain(java.math.BigDecimal value) {
-    return value == null ? null : value.toPlainString();
-  }
-
-  record ExceptionDto(
-      String id,
-      String recordId,
-      String entity,
-      String field,
-      List<SourceValueDto> sources,
-      String status) {}
-
-  record ProductExceptionDto(
-      String id,
-      String recordId,
-      String entity,
-      String field,
-      List<SourceValueDto> sources,
-      String status) {}
-
-  record RecordDto(String id, String entity, String entityType, List<FieldDto> fields) {}
-
-  record ProductRecordDto(String id, String entity, String entityType, List<FieldDto> fields) {}
-
-  record FieldDto(
-      String name,
-      String label,
-      List<SourceValueDto> sources,
-      boolean overridden,
-      String authoritativeSource) {}
-
-  record SourceValueDto(String source, String value) {}
 
   record OverrideRequestDto(String source, String reason) {}
-
-  record OverrideResultDto(boolean ok, String recordId, String field) {}
 }

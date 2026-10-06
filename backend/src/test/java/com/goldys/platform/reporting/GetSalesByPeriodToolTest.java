@@ -8,7 +8,9 @@ import static org.mockito.Mockito.when;
 import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
+import com.goldys.platform.semantic.DailySalesMetric;
+import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.widget.TimeSeriesWidgetSpec;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -23,31 +25,36 @@ class GetSalesByPeriodToolTest {
 
   @Test
   void emitsResolvedPointsAndNoticesUnresolvedDates() {
-    ResolvedDailySalesQuery resolved = mock(ResolvedDailySalesQuery.class);
-    when(resolved.between(SEP_13, SEP_14))
-        .thenReturn(List.of(view(SEP_13, "27650.66", "agreed"), view(SEP_14, null, null)));
+    SalesMetricsQuery metrics = mock(SalesMetricsQuery.class);
+    when(metrics.dailySales(SEP_13, SEP_14))
+        .thenReturn(List.of(metric(SEP_13, "27650.66"), metric(SEP_14, null)));
 
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(resolved);
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics);
     ToolResult result =
         tool.execute(new GetSalesByPeriodInput(SEP_13, SEP_14, Metric.GROSS_SALES), OWNER);
 
-    assertThat(result.widget().type()).isEqualTo("line-chart");
-    assertThat(result.widget().data()).hasSize(1);
-    assertThat(result.widget().data().get(0).get("date")).isEqualTo("2026-09-13");
+    assertThat(result.widget()).isInstanceOf(TimeSeriesWidgetSpec.class);
+    var widget = (TimeSeriesWidgetSpec) result.widget();
+    assertThat(widget.series()).hasSize(1);
+    assertThat(widget.series().get(0).points()).hasSize(2);
+    assertThat(widget.series().get(0).points().get(0).x()).isEqualTo("2026-09-13");
+    assertThat(widget.series().get(0).points().get(0).y()).isEqualByComparingTo("27650.66");
+    assertThat(widget.series().get(0).points().get(1).y()).isNull();
     assertThat(result.notices()).hasSize(1);
     assertThat(result.notices().get(0)).contains("no resolved total");
   }
 
   @Test
   void treatsMissingDataAsUnresolved() {
-    ResolvedDailySalesQuery resolved = mock(ResolvedDailySalesQuery.class);
-    when(resolved.between(SEP_13, SEP_13)).thenReturn(List.of(view(SEP_13, null, null)));
+    SalesMetricsQuery metrics = mock(SalesMetricsQuery.class);
+    when(metrics.dailySales(SEP_13, SEP_13)).thenReturn(List.of(metric(SEP_13, null)));
 
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(resolved);
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics);
     ToolResult result =
         tool.execute(new GetSalesByPeriodInput(SEP_13, SEP_13, Metric.GROSS_SALES), OWNER);
 
-    assertThat(result.widget().data()).isEmpty();
+    var widget = (TimeSeriesWidgetSpec) result.widget();
+    assertThat(widget.series().get(0).points().get(0).y()).isNull();
     assertThat(result.notices()).hasSize(1);
   }
 
@@ -60,23 +67,17 @@ class GetSalesByPeriodToolTest {
 
   @Test
   void rejectsAWrongInputType() {
-    ResolvedDailySalesQuery resolved = mock(ResolvedDailySalesQuery.class);
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(resolved);
+    SalesMetricsQuery metrics = mock(SalesMetricsQuery.class);
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics);
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("GetSalesByPeriodInput");
   }
 
-  private static ResolvedDailySalesQuery.ResolvedDailySalesView view(
-      LocalDate date, String total, String source) {
-    boolean conflict = total == null;
-    return new ResolvedDailySalesQuery.ResolvedDailySalesView(
-        date,
-        total == null ? null : new BigDecimal(total),
-        conflict ? "conflict" : "agreed",
-        source,
-        conflict);
+  private static DailySalesMetric metric(LocalDate date, String total) {
+    return new DailySalesMetric(
+        date, total == null ? null : new BigDecimal(total), null, total == null);
   }
 
   private record OtherInput() implements ToolInput {}

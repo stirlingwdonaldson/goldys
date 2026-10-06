@@ -60,6 +60,17 @@ server:
     max-swallow-size: -1
     max-http-form-post-size: -1
 
+# Operational metrics. Prometheus scrapes /actuator/prometheus; see
+# docs/performance.md for the production hardening note (management port + auth).
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
     com.goldys.platform: DEBUG

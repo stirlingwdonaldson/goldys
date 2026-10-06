@@ -82,10 +82,7 @@ class IngestionRunService {
    */
   @Transactional
   int recoverDanglingRuns(Instant now) {
-    var dangling =
-        runs.findAllByOrderByStartedAtDesc().stream()
-            .filter(run -> run.status() == IngestionStatus.RUNNING)
-            .toList();
+    var dangling = runs.findByStatus(IngestionStatus.RUNNING);
     for (IngestionRun run : dangling) {
       failures.save(
           IngestionFailure.record(

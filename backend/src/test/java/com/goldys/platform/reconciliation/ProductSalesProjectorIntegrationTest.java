@@ -30,7 +30,7 @@ class ProductSalesProjectorIntegrationTest {
   @BeforeEach
   void clean() {
     jdbc.update(
-        "truncate table reconciliation_exception, canonical_product_sales, product_sales_override, resolution_rule");
+        "truncate table reconciliation_exception, resolved_product_sales, canonical_product_sales, product_sales_override, resolution_rule");
   }
 
   @Test

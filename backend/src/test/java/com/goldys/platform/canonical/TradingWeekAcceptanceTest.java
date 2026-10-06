@@ -3,7 +3,7 @@ package com.goldys.platform.canonical;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
-import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
+import com.goldys.platform.semantic.SalesMetricsQuery;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,7 +28,7 @@ class TradingWeekAcceptanceTest {
 
   @Autowired JdbcTemplate jdbc;
   @Autowired CanonicalDailySalesService dailySales;
-  @Autowired ResolvedDailySalesQuery resolvedDailySales;
+  @Autowired SalesMetricsQuery salesMetrics;
   @Autowired ReconciliationExceptionQuery exceptionsQuery;
 
   @BeforeEach
@@ -59,9 +59,9 @@ class TradingWeekAcceptanceTest {
     assertThat(exceptions.get(0).tradingDate()).isEqualTo(SEP_13);
     assertThat(exceptions.get(0).status()).isEqualTo("conflict");
 
-    var resolved = resolvedDailySales.between(SEP_13, SEP_13);
+    var resolved = salesMetrics.dailySales(SEP_13, SEP_13);
     assertThat(resolved).hasSize(1);
-    assertThat(resolved.get(0).totalSales()).isNull(); // unresolved conflict
+    assertThat(resolved.get(0).grossSales()).isNull(); // unresolved conflict
   }
 
   private UUID rawRecord() {

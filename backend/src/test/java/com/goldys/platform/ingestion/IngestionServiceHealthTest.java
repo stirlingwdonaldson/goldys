@@ -5,8 +5,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.ingestion.port.SourceConnector;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 class IngestionServiceHealthTest {
@@ -77,7 +80,23 @@ class IngestionServiceHealthTest {
 
   private static IngestionService service(List<IngestionRun> runs) {
     IngestionRunRepository repository = mock(IngestionRunRepository.class);
-    when(repository.findAllByOrderByStartedAtDesc()).thenReturn(runs);
+
+    // Derive the aggregates the real repository now computes in SQL.
+    Map<IngestionStatus, Long> counts =
+        runs.stream().collect(Collectors.groupingBy(IngestionRun::status, Collectors.counting()));
+    List<StatusCount> statusCounts =
+        counts.entrySet().stream().map(e -> new StatusCount(e.getKey(), e.getValue())).toList();
+    when(repository.statusCounts()).thenReturn(statusCounts);
+
+    double avgSeconds =
+        runs.stream()
+            .filter(
+                r -> r.status() == IngestionStatus.FAILED || r.status() == IngestionStatus.PARTIAL)
+            .mapToDouble(r -> Duration.between(r.startedAt(), r.completedAt()).toMillis() / 1000.0)
+            .average()
+            .orElse(0.0);
+    when(repository.avgFailedDurationSeconds()).thenReturn(avgSeconds > 0 ? avgSeconds : null);
+
     return new IngestionService(
         mock(IngestionRunService.class),
         mock(RawPayloadService.class),

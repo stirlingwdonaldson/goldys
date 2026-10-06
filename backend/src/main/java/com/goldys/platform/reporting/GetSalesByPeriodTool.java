@@ -1,21 +1,25 @@
 package com.goldys.platform.reporting;
 
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
+import com.goldys.platform.semantic.DailySalesMetric;
+import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.widget.Point;
+import com.goldys.platform.widget.Series;
+import com.goldys.platform.widget.TimeSeriesWidgetSpec;
+import com.goldys.platform.widget.WidgetQuery;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 
-/** Resolved daily gross sales for a date range, emitted as a line-chart widget. */
+/** Resolved daily gross sales for a date range, emitted as a time-series widget. */
 @Component
 public class GetSalesByPeriodTool implements ReportingTool {
-  private final ResolvedDailySalesQuery resolved;
+  private final SalesMetricsQuery salesMetrics;
 
-  public GetSalesByPeriodTool(ResolvedDailySalesQuery resolved) {
-    this.resolved = resolved;
+  public GetSalesByPeriodTool(SalesMetricsQuery salesMetrics) {
+    this.salesMetrics = salesMetrics;
   }
 
   @Override
@@ -44,30 +48,26 @@ public class GetSalesByPeriodTool implements ReportingTool {
       throw new IllegalArgumentException(
           "Expected GetSalesByPeriodInput, got " + input.getClass().getSimpleName());
     }
-    List<Map<String, Object>> points = new ArrayList<>();
+    List<Point> points = new ArrayList<>();
     List<LocalDate> unresolved = new ArrayList<>();
-    for (ResolvedDailySalesQuery.ResolvedDailySalesView v :
-        resolved.between(in.startDate(), in.endDate())) {
-      if (v.totalSales() == null) {
-        unresolved.add(v.tradingDate());
-      } else {
-        points.add(point(v));
+    for (DailySalesMetric m : salesMetrics.dailySales(in.startDate(), in.endDate())) {
+      if (m.grossSales() == null) {
+        unresolved.add(m.tradingDate());
       }
+      points.add(new Point(m.tradingDate().toString(), m.grossSales()));
     }
     List<String> notices =
         unresolved.isEmpty()
             ? List.of()
             : List.of(unresolved.size() + " date(s) have no resolved total (unresolved conflict).");
-    WidgetSpec widget =
-        new WidgetSpec(1, "line-chart", "Daily sales", "Resolved gross sales per day.", points);
+    TimeSeriesWidgetSpec widget =
+        new TimeSeriesWidgetSpec(
+            UUID.randomUUID().toString(),
+            "Daily sales",
+            "Resolved gross sales per day.",
+            List.of(new Series("grossSales", "Gross sales", points)),
+            "currency",
+            new WidgetQuery(ToolId.GET_SALES_BY_PERIOD.name(), in.toMap()));
     return new ToolResult(widget, notices);
-  }
-
-  private static Map<String, Object> point(ResolvedDailySalesQuery.ResolvedDailySalesView v) {
-    Map<String, Object> m = new LinkedHashMap<>();
-    m.put("date", v.tradingDate().toString());
-    m.put("grossSales", v.totalSales());
-    m.put("source", v.authoritativeSource());
-    return m;
   }
 }

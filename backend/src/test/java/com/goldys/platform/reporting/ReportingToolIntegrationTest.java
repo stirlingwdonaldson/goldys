@@ -8,6 +8,7 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.support.PostgresContainerConfiguration;
+import com.goldys.platform.widget.TimeSeriesWidgetSpec;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -51,10 +52,10 @@ class ReportingToolIntegrationTest {
             new GetSalesByPeriodInput(SEP_13, SEP_13, Metric.GROSS_SALES),
             OWNER);
 
-    assertThat(result.widget().type()).isEqualTo("line-chart");
-    assertThat(result.widget().data()).hasSize(1);
-    assertThat((BigDecimal) result.widget().data().get(0).get("grossSales"))
-        .isEqualByComparingTo("27650.66");
+    assertThat(result.widget()).isInstanceOf(TimeSeriesWidgetSpec.class);
+    var widget = (TimeSeriesWidgetSpec) result.widget();
+    assertThat(widget.series()).hasSize(1);
+    assertThat(widget.series().get(0).points().get(0).y()).isEqualByComparingTo("27650.66");
     assertThat(result.notices()).isEmpty();
   }
 

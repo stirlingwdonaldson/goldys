@@ -2,6 +2,8 @@ package com.goldys.platform.reconciliation;
 
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.DailySalesView;
+import com.goldys.platform.metrics.OperationalMetrics;
+import io.micrometer.core.instrument.Timer;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -34,18 +36,21 @@ public class DailySalesProjector {
   private final ResolutionRuleRepository rules;
   private final ResolvedDailySalesRepository resolved;
   private final ReconciliationExceptionRowRepository exceptions;
+  private final OperationalMetrics metrics;
 
   public DailySalesProjector(
       CanonicalDailySalesQuery dailySales,
       DailySalesOverrideRepository overrides,
       ResolutionRuleRepository rules,
       ResolvedDailySalesRepository resolved,
-      ReconciliationExceptionRowRepository exceptions) {
+      ReconciliationExceptionRowRepository exceptions,
+      OperationalMetrics metrics) {
     this.dailySales = dailySales;
     this.overrides = overrides;
     this.rules = rules;
     this.resolved = resolved;
     this.exceptions = exceptions;
+    this.metrics = metrics;
   }
 
   /**
@@ -54,13 +59,18 @@ public class DailySalesProjector {
    */
   @Transactional
   public void recomputeAll() {
-    resolved.deleteAllInBatch();
-    exceptions.deleteAllInBatch();
-    Set<LocalDate> dates = new LinkedHashSet<>();
-    for (DailySalesView v : dailySales.currentDailySales()) {
-      dates.add(v.tradingDate());
+    Timer.Sample sample = metrics.start();
+    try {
+      resolved.deleteAllInBatch();
+      exceptions.deleteAllInBatch();
+      Set<LocalDate> dates = new LinkedHashSet<>();
+      for (DailySalesView v : dailySales.currentDailySales()) {
+        dates.add(v.tradingDate());
+      }
+      recompute(dates);
+    } finally {
+      metrics.stopProjection(sample, ENTITY_TYPE);
     }
-    recompute(dates);
   }
 
   /** Recompute just the given dates (bulk). */

@@ -12,6 +12,7 @@ import com.goldys.platform.reporting.ReportingTool;
 import com.goldys.platform.reporting.ToolDispatcher;
 import com.goldys.platform.reporting.ToolRegistry;
 import com.goldys.platform.support.PostgresContainerConfiguration;
+import com.goldys.platform.widget.TimeSeriesWidgetSpec;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -65,7 +66,7 @@ class ConversationalBiIntegrationTest {
 
     assertThat(raw).contains("27650.66");
     assertThat(context.toAnswerPayload().widgets()).hasSize(1);
-    assertThat(context.toAnswerPayload().widgets().get(0).type()).isEqualTo("line-chart");
+    assertThat(context.toAnswerPayload().widgets().get(0)).isInstanceOf(TimeSeriesWidgetSpec.class);
     assertThat(context.toAnswerPayload().notices()).isEmpty();
   }
 

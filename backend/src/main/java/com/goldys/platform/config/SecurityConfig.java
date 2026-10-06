@@ -42,6 +42,10 @@ public class SecurityConfig {
                     AntPathRequestMatcher.antMatcher("/api/ingest/opentable"),
                     AntPathRequestMatcher.antMatcher("/api/auth/signup"),
                     AntPathRequestMatcher.antMatcher("/api/auth/login"),
+                    // Prometheus scrape + load-balancer health checks are unauthenticated.
+                    // See docs/performance.md for the production hardening note.
+                    AntPathRequestMatcher.antMatcher("/actuator/health"),
+                    AntPathRequestMatcher.antMatcher("/actuator/prometheus"),
                     // Spring Boot forwards error handling (e.g. a bodyless POST to a
                     // @RequestBody endpoint) to /error as a separate error-dispatch. That
                     // dispatch runs through the AuthorizationFilter, so /error must be public

@@ -18,7 +18,7 @@ import com.goldys.platform.reporting.ReportingTool;
 import com.goldys.platform.reporting.ToolDispatcher;
 import com.goldys.platform.reporting.ToolId;
 import com.goldys.platform.reporting.ToolResult;
-import com.goldys.platform.reporting.WidgetSpec;
+import com.goldys.platform.widget.TimeSeriesWidgetSpec;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallback;
@@ -35,7 +35,7 @@ class ReportingToolCallbacksTest {
     ToolDispatcher dispatcher = mock(ToolDispatcher.class);
     ToolResult result =
         new ToolResult(
-            new WidgetSpec(1, "line-chart", "Daily sales", null, List.of()),
+            new TimeSeriesWidgetSpec("id", "Daily sales", null, List.of(), "currency", null),
             List.of("1 date(s) have no resolved total (unresolved conflict)."));
     when(dispatcher.dispatch(eq(ToolId.GET_SALES_BY_PERIOD), any(), eq(OWNER))).thenReturn(result);
 

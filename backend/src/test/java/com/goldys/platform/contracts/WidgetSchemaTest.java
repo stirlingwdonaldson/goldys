@@ -9,18 +9,39 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 class WidgetSchemaTest {
+
+  private static final ObjectMapper MAPPER = new ObjectMapper();
+
   @Test
-  void schemaHasAClosedVersionedRootContract() throws Exception {
-    JsonNode schema =
-        new ObjectMapper()
-            .readTree(
-                Files.readString(Path.of("..", "docs", "contracts", "widget-spec.schema.json")));
+  void widgetSchemaIsAVersionedDiscriminatedContract() throws Exception {
+    JsonNode schema = read("widget-spec.schema.json");
 
     assertThat(schema.get("$id").asText())
-        .isEqualTo("https://goldys.local/schemas/widget-spec-v1.json");
+        .isEqualTo("https://goldys.local/schemas/widget-spec-v2.json");
+    assertThat(schema.get("discriminator").get("propertyName").asText()).isEqualTo("type");
+    assertThat(schema.get("oneOf")).hasSize(5);
+    assertThat(
+            schema
+                .path("$defs")
+                .path("base")
+                .path("properties")
+                .path("schemaVersion")
+                .get("const")
+                .asInt())
+        .isEqualTo(2);
+  }
+
+  @Test
+  void dashboardDocumentSchemaIsClosedAndVersioned() throws Exception {
+    JsonNode schema = read("dashboard-document.schema.json");
+
+    assertThat(schema.get("$id").asText())
+        .isEqualTo("https://goldys.local/schemas/dashboard-document-v1.json");
     assertThat(schema.get("additionalProperties").asBoolean()).isFalse();
-    assertThat(schema.get("required"))
-        .extracting(JsonNode::asText)
-        .containsExactly("version", "type", "title", "data");
+    assertThat(schema.path("properties").path("layout").get("const").asText()).isEqualTo("grid");
+  }
+
+  private static JsonNode read(String name) throws Exception {
+    return MAPPER.readTree(Files.readString(Path.of("..", "docs", "contracts", name)));
   }
 }
