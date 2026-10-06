@@ -35,6 +35,8 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.apache.commons:commons-csv:1.11.0'
+	// Invoice PDF text extraction (behind the DocumentTextExtractor port, so it is swappable).
+	implementation 'org.apache.pdfbox:pdfbox:3.0.4'
 
 	// Spring AI 1.1.x is the Spring Boot 3.5-compatible line (2.x requires Boot 4).
 	implementation platform('org.springframework.ai:spring-ai-bom:1.1.8')
