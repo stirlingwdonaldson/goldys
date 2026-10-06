@@ -2,6 +2,7 @@ package com.goldys.platform.ingestion;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,6 +16,8 @@ interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
   List<IngestionRun> findAllByOrderByStartedAtDesc();
 
   List<IngestionRun> findByStartedAtGreaterThanEqual(Instant startedAt);
+
+  Optional<IngestionRun> findFirstBySourceSystemOrderByStartedAtDesc(String sourceSystem);
 }
 
 interface RawRecordRepository extends JpaRepository<RawRecord, UUID> {

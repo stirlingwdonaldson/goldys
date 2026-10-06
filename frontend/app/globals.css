@@ -41,6 +41,8 @@
     --status-success-foreground: 0 0% 100%;
     --status-warning: 38 92% 50%;
     --status-warning-foreground: 222.2 84% 4.9%;
+    --status-info: 217 91% 60%;
+    --status-info-foreground: 0 0% 100%;
     --status-missing: 215 16% 65%;
     --status-missing-foreground: 0 0% 100%;
   }

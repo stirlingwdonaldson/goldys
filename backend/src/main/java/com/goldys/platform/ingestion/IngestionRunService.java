@@ -75,6 +75,31 @@ class IngestionRunService {
     runs.save(run);
   }
 
+  /**
+   * Closes any run left {@code RUNNING} by a previous shutdown. The fetch now runs on a background
+   * thread, so a crash mid-fetch would otherwise leave a run that no one will ever complete; this
+   * marks each such run interrupted on the next boot. Returns how many runs were recovered.
+   */
+  @Transactional
+  int recoverDanglingRuns(Instant now) {
+    var dangling =
+        runs.findAllByOrderByStartedAtDesc().stream()
+            .filter(run -> run.status() == IngestionStatus.RUNNING)
+            .toList();
+    for (IngestionRun run : dangling) {
+      failures.save(
+          IngestionFailure.record(
+              run.id(),
+              run.sourceSystem(),
+              "RUN_INTERRUPTED",
+              "interrupted by application restart",
+              null,
+              now));
+      complete(run.id(), null, now);
+    }
+    return dangling.size();
+  }
+
   private IngestionRun require(UUID ingestionRunId) {
     return runs.findById(ingestionRunId)
         .orElseThrow(() -> new IllegalArgumentException("Unknown ingestion run " + ingestionRunId));

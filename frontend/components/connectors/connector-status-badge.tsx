@@ -6,6 +6,7 @@ const STATUS_LABEL: Record<ConnectorRunStatus, string> = {
   partial: "Partial",
   failed: "Failed",
   no_new_data: "No new data",
+  running: "Running",
   never_run: "Never run",
 };
 
@@ -14,6 +15,7 @@ const STATUS_CLASS: Record<ConnectorRunStatus, string> = {
   partial: "border-transparent bg-status-warning text-status-warning-foreground",
   failed: "border-transparent bg-destructive text-destructive-foreground",
   no_new_data: "border-transparent bg-muted text-muted-foreground",
+  running: "border-transparent bg-status-info text-status-info-foreground",
   never_run: "border-transparent bg-muted text-muted-foreground",
 };
 

@@ -58,6 +58,13 @@ public class IngestionService {
     if (connector == null) {
       throw new IllegalArgumentException("Unknown source: " + source);
     }
+    // A pull connector can outlive a single request; refuse to stack a second run on top of one
+    // that is still in flight rather than double-fetching the same window.
+    String sourceSystem = connector.sourceSystem();
+    var active = runRepository.findFirstBySourceSystemOrderByStartedAtDesc(sourceSystem);
+    if (active.isPresent() && active.get().status() == IngestionStatus.RUNNING) {
+      return toSummary(active.get());
+    }
     UUID runId = connectorRunner.run(connector, null);
     return runSummary(runId);
   }
