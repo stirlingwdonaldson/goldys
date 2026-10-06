@@ -9,8 +9,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Records canonical invoice line items, locking the current source fact and publishing a
- * projection event so the affected date's COGS is re-projected in the same transaction. */
+/**
+ * Records canonical invoice line items, locking the current source fact and publishing a projection
+ * event so the affected date's COGS is re-projected in the same transaction.
+ */
 @Service
 class CanonicalInvoiceLineService {
   private static final Clock CLOCK = Clock.systemUTC();

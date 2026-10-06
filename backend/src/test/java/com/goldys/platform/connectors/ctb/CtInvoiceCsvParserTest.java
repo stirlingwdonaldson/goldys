@@ -34,7 +34,8 @@ class CtInvoiceCsvParserTest {
 
   @Test
   void rejectsAMissingColumn() {
-    byte[] csv = "Supplier,Invoice Date,Total\nBidfood,2026-09-20,100\n".getBytes(StandardCharsets.UTF_8);
+    byte[] csv =
+        "Supplier,Invoice Date,Total\nBidfood,2026-09-20,100\n".getBytes(StandardCharsets.UTF_8);
 
     assertThatThrownBy(() -> parser.parse(csv))
         .isInstanceOf(ConnectorFetchException.class)

@@ -52,7 +52,8 @@ class ReservationReportingServiceTest {
     ReservationReportingService service = new ReservationReportingService(metrics, permissions);
 
     assertThat(service.summary(OWNER, SEP_20)).contains(expected);
-    verify(permissions).require(OWNER, new ResourceKey("reservations.metrics"), PermissionAction.READ);
+    verify(permissions)
+        .require(OWNER, new ResourceKey("reservations.metrics"), PermissionAction.READ);
   }
 
   @Test
@@ -64,6 +65,7 @@ class ReservationReportingServiceTest {
     ReservationReportingService service = new ReservationReportingService(metrics, permissions);
 
     assertThat(service.dailyCovers(OWNER, SEP_20, SEP_20)).hasSize(1);
-    verify(permissions).require(OWNER, new ResourceKey("reservations.metrics"), PermissionAction.READ);
+    verify(permissions)
+        .require(OWNER, new ResourceKey("reservations.metrics"), PermissionAction.READ);
   }
 }

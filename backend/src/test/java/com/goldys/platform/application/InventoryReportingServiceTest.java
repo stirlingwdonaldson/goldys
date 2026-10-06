@@ -52,7 +52,8 @@ class InventoryReportingServiceTest {
 
     SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
     when(sales.dailySales(FROM, TO))
-        .thenReturn(List.of(new DailySalesMetric(FROM, new BigDecimal("1000.00"), "agreed", false)));
+        .thenReturn(
+            List.of(new DailySalesMetric(FROM, new BigDecimal("1000.00"), "agreed", false)));
 
     PermissionService permissions = mock(PermissionService.class);
     InventoryReportingService service =

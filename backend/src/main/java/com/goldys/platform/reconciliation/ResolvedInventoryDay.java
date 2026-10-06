@@ -8,8 +8,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
-/** One date's resolved inventory value. Disposable projection; {@code wastage}/{@code
- * stock_on_hand} are null while there is no source data. */
+/**
+ * One date's resolved inventory value. Disposable projection; {@code wastage}/{@code stock_on_hand}
+ * are null while there is no source data.
+ */
 @Entity
 @Table(name = "resolved_inventory_day")
 class ResolvedInventoryDay {

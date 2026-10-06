@@ -36,7 +36,10 @@ public class ResolvedReservationQuery implements ReservationMetricsQuery {
       t.hasConflict |= r.hasConflict();
     }
     return byDate.entrySet().stream()
-        .map(e -> new CoversMetric(e.getKey(), e.getValue().covers, e.getValue().source, e.getValue().hasConflict))
+        .map(
+            e ->
+                new CoversMetric(
+                    e.getKey(), e.getValue().covers, e.getValue().source, e.getValue().hasConflict))
         .toList();
   }
 

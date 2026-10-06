@@ -50,7 +50,8 @@ class InventoryOverrideServiceTest {
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     InventoryProjector projector = mock(InventoryProjector.class);
 
-    InventoryOverrideService service = new InventoryOverrideService(repository, permissions, projector);
+    InventoryOverrideService service =
+        new InventoryOverrideService(repository, permissions, projector);
 
     InventoryOverride saved =
         service.save(OWNER, ACTOR, SEP_20, new BigDecimal("70.00"), "manual COGS");

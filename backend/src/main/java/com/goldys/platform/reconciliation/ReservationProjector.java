@@ -73,7 +73,8 @@ public class ReservationProjector {
 
     Map<Key, Mutable> buckets = new HashMap<>();
     for (ReservationView v : reservations.currentReservationsForDates(dates)) {
-      Key key = new Key(v.tradingDate(), ServicePeriod.classify(v.reservationAt(), zone, lunchCutoff));
+      Key key =
+          new Key(v.tradingDate(), ServicePeriod.classify(v.reservationAt(), zone, lunchCutoff));
       buckets.computeIfAbsent(key, k -> new Mutable()).add(v);
     }
 
@@ -93,13 +94,33 @@ public class ReservationProjector {
       if (overridden != null) {
         rows.add(
             new ResolvedReservationDay(
-                key.date(), key.period(), m.bookings, m.attended, overridden, m.cancelled, m.noShows,
-                m.walkIns, "override", "manual", false, now));
+                key.date(),
+                key.period(),
+                m.bookings,
+                m.attended,
+                overridden,
+                m.cancelled,
+                m.noShows,
+                m.walkIns,
+                "override",
+                "manual",
+                false,
+                now));
       } else {
         rows.add(
             new ResolvedReservationDay(
-                key.date(), key.period(), m.bookings, m.attended, m.covers, m.cancelled, m.noShows,
-                m.walkIns, "single", "OPENTABLE", false, now));
+                key.date(),
+                key.period(),
+                m.bookings,
+                m.attended,
+                m.covers,
+                m.cancelled,
+                m.noShows,
+                m.walkIns,
+                "single",
+                "OPENTABLE",
+                false,
+                now));
       }
     }
     resolved.saveAll(rows);

@@ -58,9 +58,7 @@ class GetLabourCostToolTest {
   @Test
   void rejectsEndDateBeforeStartDate() {
     assertThatThrownBy(
-            () ->
-                new GetLabourCostInput(
-                    LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 20)))
+            () -> new GetLabourCostInput(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 20)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("startDate");
   }

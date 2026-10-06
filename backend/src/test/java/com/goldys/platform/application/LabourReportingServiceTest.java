@@ -60,11 +60,23 @@ class LabourReportingServiceTest {
         .thenReturn(
             List.of(
                 new LabourMetric(
-                    FROM, "FOH", new BigDecimal("8"), new BigDecimal("7.5"), null,
-                    new BigDecimal("200.00"), "DEPUTY", false),
+                    FROM,
+                    "FOH",
+                    new BigDecimal("8"),
+                    new BigDecimal("7.5"),
+                    null,
+                    new BigDecimal("200.00"),
+                    "DEPUTY",
+                    false),
                 new LabourMetric(
-                    FROM, "BOH", new BigDecimal("6"), new BigDecimal("6"), null,
-                    new BigDecimal("150.00"), "DEPUTY", false)));
+                    FROM,
+                    "BOH",
+                    new BigDecimal("6"),
+                    new BigDecimal("6"),
+                    null,
+                    new BigDecimal("150.00"),
+                    "DEPUTY",
+                    false)));
 
     ReservationMetricsQuery reservations = mock(ReservationMetricsQuery.class);
     when(reservations.dailyCovers(FROM, TO))
@@ -72,7 +84,8 @@ class LabourReportingServiceTest {
 
     SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
     when(sales.dailySales(FROM, TO))
-        .thenReturn(List.of(new DailySalesMetric(FROM, new BigDecimal("10000.00"), "agreed", false)));
+        .thenReturn(
+            List.of(new DailySalesMetric(FROM, new BigDecimal("10000.00"), "agreed", false)));
 
     PermissionService permissions = mock(PermissionService.class);
     LabourReportingService service =
@@ -101,7 +114,13 @@ class LabourReportingServiceTest {
         .thenReturn(
             List.of(
                 new LabourMetric(
-                    FROM, "FOH", new BigDecimal("8"), new BigDecimal("7.5"), null, null, "DEPUTY",
+                    FROM,
+                    "FOH",
+                    new BigDecimal("8"),
+                    new BigDecimal("7.5"),
+                    null,
+                    null,
+                    "DEPUTY",
                     false)));
 
     ReservationMetricsQuery reservations = mock(ReservationMetricsQuery.class);
@@ -109,11 +128,11 @@ class LabourReportingServiceTest {
         .thenReturn(List.of(new CoversMetric(FROM, 310, "OPENTABLE", false)));
     SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
     when(sales.dailySales(FROM, TO))
-        .thenReturn(List.of(new DailySalesMetric(FROM, new BigDecimal("10000.00"), "agreed", false)));
+        .thenReturn(
+            List.of(new DailySalesMetric(FROM, new BigDecimal("10000.00"), "agreed", false)));
 
     LabourReportingService service =
-        new LabourReportingService(
-            labour, reservations, sales, mock(PermissionService.class));
+        new LabourReportingService(labour, reservations, sales, mock(PermissionService.class));
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 
@@ -134,11 +153,11 @@ class LabourReportingServiceTest {
     when(reservations.dailyCovers(FROM, TO)).thenReturn(List.of());
     SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
     when(sales.dailySales(FROM, TO))
-        .thenReturn(List.of(new DailySalesMetric(FROM, new BigDecimal("10000.00"), "agreed", false)));
+        .thenReturn(
+            List.of(new DailySalesMetric(FROM, new BigDecimal("10000.00"), "agreed", false)));
 
     LabourReportingService service =
-        new LabourReportingService(
-            labour, reservations, sales, mock(PermissionService.class));
+        new LabourReportingService(labour, reservations, sales, mock(PermissionService.class));
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 

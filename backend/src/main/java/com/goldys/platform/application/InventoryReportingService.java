@@ -26,9 +26,7 @@ public class InventoryReportingService {
   private final PermissionService permissions;
 
   public InventoryReportingService(
-      InventoryMetricsQuery inventory,
-      SalesMetricsQuery sales,
-      PermissionService permissions) {
+      InventoryMetricsQuery inventory, SalesMetricsQuery sales, PermissionService permissions) {
     this.inventory = inventory;
     this.sales = sales;
     this.permissions = permissions;

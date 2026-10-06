@@ -5,8 +5,10 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
-/** Read-only query facade for canonical labour facts, so modules outside this package never touch
- * the package-private entity or repository directly. */
+/**
+ * Read-only query facade for canonical labour facts, so modules outside this package never touch
+ * the package-private entity or repository directly.
+ */
 @Service
 public class CanonicalLabourQuery {
   private final CanonicalLabourEntryRepository repository;

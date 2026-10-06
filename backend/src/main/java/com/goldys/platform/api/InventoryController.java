@@ -18,8 +18,7 @@ public class InventoryController {
   private final InventoryReportingService reporting;
   private final CurrentUserService currentUser;
 
-  public InventoryController(
-      InventoryReportingService reporting, CurrentUserService currentUser) {
+  public InventoryController(InventoryReportingService reporting, CurrentUserService currentUser) {
     this.reporting = reporting;
     this.currentUser = currentUser;
   }

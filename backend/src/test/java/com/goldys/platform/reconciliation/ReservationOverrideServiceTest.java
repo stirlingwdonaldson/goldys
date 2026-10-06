@@ -35,7 +35,9 @@ class ReservationOverrideServiceTest {
 
     ReservationOverrideService service =
         new ReservationOverrideService(
-            mock(ReservationOverrideRepository.class), permissions, mock(ReservationProjector.class));
+            mock(ReservationOverrideRepository.class),
+            permissions,
+            mock(ReservationProjector.class));
 
     assertThatThrownBy(() -> service.save(OWNER, ACTOR, SEP_20, "LUNCH", 100L, "reason"))
         .isInstanceOf(AccessDeniedException.class);
@@ -82,10 +84,12 @@ class ReservationOverrideServiceTest {
     ReservationOverrideRepository repository = mock(ReservationOverrideRepository.class);
     when(repository.findCurrent(SEP_20, "LUNCH"))
         .thenReturn(
-            Optional.of(ReservationOverride.create(SEP_20, "LUNCH", 100L, "r", ACTOR, Instant.now())));
+            Optional.of(
+                ReservationOverride.create(SEP_20, "LUNCH", 100L, "r", ACTOR, Instant.now())));
 
     ReservationOverrideService service =
-        new ReservationOverrideService(repository, mock(PermissionService.class), mock(ReservationProjector.class));
+        new ReservationOverrideService(
+            repository, mock(PermissionService.class), mock(ReservationProjector.class));
 
     assertThat(service.currentCovers(SEP_20, "LUNCH")).contains(100L);
   }

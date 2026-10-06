@@ -36,7 +36,8 @@ class CanonicalReservationService {
   @Transactional
   CanonicalReservation record(ReservationInput input) {
     CanonicalReservation saved = recordAt(input, CLOCK.instant());
-    publisher.publishEvent(new ReservationRecorded(input.reservationAt().atZone(zone).toLocalDate()));
+    publisher.publishEvent(
+        new ReservationRecorded(input.reservationAt().atZone(zone).toLocalDate()));
     return saved;
   }
 

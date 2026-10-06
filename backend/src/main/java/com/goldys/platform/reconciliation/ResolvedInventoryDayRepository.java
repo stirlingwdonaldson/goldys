@@ -5,8 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-interface ResolvedInventoryDayRepository
-    extends JpaRepository<ResolvedInventoryDay, LocalDate> {
+interface ResolvedInventoryDayRepository extends JpaRepository<ResolvedInventoryDay, LocalDate> {
 
   List<ResolvedInventoryDay> findByTradingDateBetweenOrderByTradingDateAsc(
       LocalDate from, LocalDate to);

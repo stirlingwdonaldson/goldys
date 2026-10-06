@@ -10,8 +10,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
 
-/** One date/department's resolved labour hours and cost. Disposable projection; reconstructed from
- * {@code canonical_labour_entry} by {@link LabourProjector}. Cost is null while unknown. */
+/**
+ * One date/department's resolved labour hours and cost. Disposable projection; reconstructed from
+ * {@code canonical_labour_entry} by {@link LabourProjector}. Cost is null while unknown.
+ */
 @Entity
 @Table(name = "resolved_labour_day")
 @IdClass(ResolvedLabourDay.Id.class)

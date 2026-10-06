@@ -2,7 +2,6 @@ package com.goldys.platform.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -22,8 +21,7 @@ class CtInvoiceIngestControllerTest {
 
   @Test
   void rejectsWhenNoTokenConfigured() {
-    CtInvoiceIngestController controller =
-        new CtInvoiceIngestController(csvIngest, pdfIngest, "");
+    CtInvoiceIngestController controller = new CtInvoiceIngestController(csvIngest, pdfIngest, "");
 
     ResponseEntity<Void> response = controller.invoices(new byte[] {1}, "anything", null);
 
@@ -59,7 +57,8 @@ class CtInvoiceIngestControllerTest {
         new CtInvoiceIngestController(csvIngest, pdfIngest, "secret");
 
     ResponseEntity<Void> response =
-        controller.invoicePdf(new byte[] {1}, "INV-1001", LocalDate.of(2026, 9, 20), "secret", null);
+        controller.invoicePdf(
+            new byte[] {1}, "INV-1001", LocalDate.of(2026, 9, 20), "secret", null);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
     verify(pdfIngest).ingest(any(byte[].class), eq("INV-1001"), eq(LocalDate.of(2026, 9, 20)));

@@ -39,8 +39,7 @@ class GetFoodCostToolTest {
   @Test
   void rejectsEndDateBeforeStartDate() {
     assertThatThrownBy(
-            () ->
-                new GetFoodCostInput(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 20)))
+            () -> new GetFoodCostInput(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 20)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("startDate");
   }

@@ -5,8 +5,10 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
-/** Read-only query facade for canonical inventory facts, so modules outside this package never
- * touch the package-private entities or repositories directly. */
+/**
+ * Read-only query facade for canonical inventory facts, so modules outside this package never touch
+ * the package-private entities or repositories directly.
+ */
 @Service
 public class CanonicalInventoryQuery {
   private final CanonicalInvoiceLineRepository lineRepository;

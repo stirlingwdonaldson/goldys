@@ -42,7 +42,11 @@ class ReservationReadModelRepositoryIntegrationTest {
   void overrideRoundTripsAndFindsCurrent() {
     overrides.save(
         ReservationOverride.create(
-            LocalDate.of(2026, 9, 13), "LUNCH", 125L, "manual correction", "owner@example.com",
+            LocalDate.of(2026, 9, 13),
+            "LUNCH",
+            125L,
+            "manual correction",
+            "owner@example.com",
             Instant.EPOCH));
 
     assertThat(overrides.findCurrent(LocalDate.of(2026, 9, 13), "LUNCH"))
@@ -62,7 +66,17 @@ class ReservationReadModelRepositoryIntegrationTest {
       long noShows,
       long walkIns) {
     return new ResolvedReservationDay(
-        date, period, bookings, attended, covers, cancelled, noShows, walkIns, "single", "OPENTABLE",
-        false, Instant.EPOCH);
+        date,
+        period,
+        bookings,
+        attended,
+        covers,
+        cancelled,
+        noShows,
+        walkIns,
+        "single",
+        "OPENTABLE",
+        false,
+        Instant.EPOCH);
   }
 }

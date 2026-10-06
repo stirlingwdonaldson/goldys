@@ -80,7 +80,8 @@ public class InventoryProjector {
       BigDecimal overridden = overrideByDate.get(date);
       if (overridden != null) {
         rows.add(
-            new ResolvedInventoryDay(date, overridden, null, null, "override", "manual", false, now));
+            new ResolvedInventoryDay(
+                date, overridden, null, null, "override", "manual", false, now));
       } else {
         rows.add(
             new ResolvedInventoryDay(date, e.getValue(), null, null, "single", "CTB", false, now));

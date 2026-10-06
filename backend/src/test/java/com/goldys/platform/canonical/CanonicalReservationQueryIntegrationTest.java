@@ -60,7 +60,9 @@ class CanonicalReservationQueryIntegrationTest {
 
     assertThat(views).hasSize(2);
     assertThat(views).allMatch(v -> v.tradingDate().equals(LocalDate.of(2026, 9, 20)));
-    assertThat(views).extracting(ReservationView::status).containsExactlyInAnyOrder("SEATED", "NO_SHOW");
+    assertThat(views)
+        .extracting(ReservationView::status)
+        .containsExactlyInAnyOrder("SEATED", "NO_SHOW");
   }
 
   private UUID rawRecord(String source) {

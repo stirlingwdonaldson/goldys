@@ -44,8 +44,15 @@ class CanonicalInvoiceIntegrationTest {
     CanonicalInvoiceLine first = lineService.record(before);
     InvoiceLineInput after =
         new InvoiceLineInput(
-            "CTB", "INV-1001:1", "INV-1001", LocalDate.of(2026, 9, 20), "potatoes",
-            new BigDecimal("2"), new BigDecimal("12.50"), new BigDecimal("27.00"), null,
+            "CTB",
+            "INV-1001:1",
+            "INV-1001",
+            LocalDate.of(2026, 9, 20),
+            "potatoes",
+            new BigDecimal("2"),
+            new BigDecimal("12.50"),
+            new BigDecimal("27.00"),
+            null,
             before.rawRecordId());
 
     CanonicalInvoiceLine corrected = lineService.record(after);
@@ -59,13 +66,7 @@ class CanonicalInvoiceIntegrationTest {
 
   private InvoiceInput invoice(String number, String supplier, String date, String total) {
     return new InvoiceInput(
-        "CTB",
-        number,
-        supplier,
-        LocalDate.parse(date),
-        null,
-        new BigDecimal(total),
-        rawRecord());
+        "CTB", number, supplier, LocalDate.parse(date), null, new BigDecimal(total), rawRecord());
   }
 
   private InvoiceLineInput line(

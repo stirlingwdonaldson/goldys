@@ -9,8 +9,10 @@ import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
-/** One version of a supplier-invoice metadata fact. Fact fields are immutable; a correction closes
- * this row and inserts a successor sharing the same logical identity (the invoice number). */
+/**
+ * One version of a supplier-invoice metadata fact. Fact fields are immutable; a correction closes
+ * this row and inserts a successor sharing the same logical identity (the invoice number).
+ */
 @Entity
 @Table(name = "canonical_invoice")
 class CanonicalInvoice extends BitemporalEntity {

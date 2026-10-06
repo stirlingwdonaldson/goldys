@@ -46,10 +46,21 @@ class ReservationControllerTest {
         .thenReturn(
             Optional.of(
                 new ReservationSummary(
-                    LocalDate.of(2026, 9, 20), 10, 8, 32, 1, 1, 2, new BigDecimal("4.0000"),
-                    new BigDecimal("0.1000"), new BigDecimal("0.8000"))));
+                    LocalDate.of(2026, 9, 20),
+                    10,
+                    8,
+                    32,
+                    1,
+                    1,
+                    2,
+                    new BigDecimal("4.0000"),
+                    new BigDecimal("0.1000"),
+                    new BigDecimal("0.8000"))));
 
-    mvc.perform(get("/api/reservations/summary").param("date", "2026-09-20").with(authenticated(owner())))
+    mvc.perform(
+            get("/api/reservations/summary")
+                .param("date", "2026-09-20")
+                .with(authenticated(owner())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.date").value("2026-09-20"))
         .andExpect(jsonPath("$.bookings").value(10))
@@ -62,7 +73,10 @@ class ReservationControllerTest {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(reporting.summary(any(), any())).thenReturn(Optional.empty());
 
-    mvc.perform(get("/api/reservations/summary").param("date", "2026-09-20").with(authenticated(owner())))
+    mvc.perform(
+            get("/api/reservations/summary")
+                .param("date", "2026-09-20")
+                .with(authenticated(owner())))
         .andExpect(status().isNoContent());
   }
 
@@ -92,6 +106,7 @@ class ReservationControllerTest {
   }
 
   private static RequestPostProcessor authenticated(AccountUserDetails user) {
-    return authentication(new UsernamePasswordAuthenticationToken(user, user.passwordHash(), List.of()));
+    return authentication(
+        new UsernamePasswordAuthenticationToken(user, user.passwordHash(), List.of()));
   }
 }

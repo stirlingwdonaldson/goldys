@@ -11,8 +11,9 @@ import java.util.Objects;
 
 /**
  * One date/service-period's resolved reservation counts. Disposable projection; reconstructed from
- * {@code canonical_reservation} by {@link ReservationProjector}. Counts are raw daily totals; ratios
- * (avg party size, no-show rate, conversion) are derived in the semantic layer, not persisted.
+ * {@code canonical_reservation} by {@link ReservationProjector}. Counts are raw daily totals;
+ * ratios (avg party size, no-show rate, conversion) are derived in the semantic layer, not
+ * persisted.
  */
 @Entity
 @Table(name = "resolved_reservation_day")

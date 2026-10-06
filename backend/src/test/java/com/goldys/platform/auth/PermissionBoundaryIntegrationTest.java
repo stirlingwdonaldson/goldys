@@ -23,7 +23,8 @@ class PermissionBoundaryIntegrationTest {
 
     assertThatCode(
             () -> {
-              permissions.require(owner, new ResourceKey("reservations.metrics"), PermissionAction.READ);
+              permissions.require(
+                  owner, new ResourceKey("reservations.metrics"), PermissionAction.READ);
               permissions.require(owner, new ResourceKey("labour.hours"), PermissionAction.READ);
               permissions.require(owner, new ResourceKey("labour.cost"), PermissionAction.READ);
               permissions.require(owner, new ResourceKey("labour.wages"), PermissionAction.READ);
@@ -41,13 +42,19 @@ class PermissionBoundaryIntegrationTest {
     UserRole fohManager = new UserRole(new DepartmentCode("FOH"), new SeniorityCode("MANAGER"));
 
     assertThatCode(
-            () -> permissions.require(fohManager, new ResourceKey("labour.hours"), PermissionAction.READ))
+            () ->
+                permissions.require(
+                    fohManager, new ResourceKey("labour.hours"), PermissionAction.READ))
         .doesNotThrowAnyException();
     assertThatThrownBy(
-            () -> permissions.require(fohManager, new ResourceKey("labour.cost"), PermissionAction.READ))
+            () ->
+                permissions.require(
+                    fohManager, new ResourceKey("labour.cost"), PermissionAction.READ))
         .isInstanceOf(AccessDeniedException.class);
     assertThatThrownBy(
-            () -> permissions.require(fohManager, new ResourceKey("labour.wages"), PermissionAction.READ))
+            () ->
+                permissions.require(
+                    fohManager, new ResourceKey("labour.wages"), PermissionAction.READ))
         .isInstanceOf(AccessDeniedException.class);
   }
 }

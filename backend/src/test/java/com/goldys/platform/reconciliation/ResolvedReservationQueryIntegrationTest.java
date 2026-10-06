@@ -36,7 +36,8 @@ class ResolvedReservationQueryIntegrationTest {
     repository.save(day(d, "LUNCH", 30, 28, 120, 1, 1, 3));
     repository.save(day(d, "DINNER", 50, 48, 190, 2, 0, 6));
 
-    assertThat(query.dailyCovers(d, d)).containsExactly(new CoversMetric(d, 310, "OPENTABLE", false));
+    assertThat(query.dailyCovers(d, d))
+        .containsExactly(new CoversMetric(d, 310, "OPENTABLE", false));
   }
 
   @Test
@@ -103,7 +104,17 @@ class ResolvedReservationQueryIntegrationTest {
       long noShows,
       long walkIns) {
     return new ResolvedReservationDay(
-        date, period, bookings, attended, covers, cancelled, noShows, walkIns, "single", "OPENTABLE",
-        false, Instant.EPOCH);
+        date,
+        period,
+        bookings,
+        attended,
+        covers,
+        cancelled,
+        noShows,
+        walkIns,
+        "single",
+        "OPENTABLE",
+        false,
+        Instant.EPOCH);
   }
 }

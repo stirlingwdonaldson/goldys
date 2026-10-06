@@ -69,8 +69,7 @@ public class LabourProjector {
     Map<Key, BigDecimal> overrideByKey = new HashMap<>();
     for (LabourOverride o : overrides.findAllCurrent()) {
       if (o.overriddenActualHours() != null) {
-        overrideByKey.put(
-            new Key(o.tradingDate(), o.department()), o.overriddenActualHours());
+        overrideByKey.put(new Key(o.tradingDate(), o.department()), o.overriddenActualHours());
       }
     }
 
@@ -83,13 +82,29 @@ public class LabourProjector {
       if (overridden != null) {
         rows.add(
             new ResolvedLabourDay(
-                key.date(), key.department(), m.scheduledHours, overridden, m.scheduledCost(),
-                m.actualCost(), "override", "manual", false, now));
+                key.date(),
+                key.department(),
+                m.scheduledHours,
+                overridden,
+                m.scheduledCost(),
+                m.actualCost(),
+                "override",
+                "manual",
+                false,
+                now));
       } else {
         rows.add(
             new ResolvedLabourDay(
-                key.date(), key.department(), m.scheduledHours, m.actualHours, m.scheduledCost(),
-                m.actualCost(), "single", "DEPUTY", false, now));
+                key.date(),
+                key.department(),
+                m.scheduledHours,
+                m.actualHours,
+                m.scheduledCost(),
+                m.actualCost(),
+                "single",
+                "DEPUTY",
+                false,
+                now));
       }
     }
     resolved.saveAll(rows);

@@ -7,8 +7,8 @@ import java.util.Optional;
 
 /**
  * Business reads over resolved reservations. Implementations read the resolved projection;
- * consumers (dashboards, reporting tools, exports) never derive these figures from canonical
- * source rows.
+ * consumers (dashboards, reporting tools, exports) never derive these figures from canonical source
+ * rows.
  */
 public interface ReservationMetricsQuery {
 

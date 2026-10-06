@@ -12,7 +12,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Records permission-gated, append-only manual overrides for a date's resolved purchases (COGS). */
+/**
+ * Records permission-gated, append-only manual overrides for a date's resolved purchases (COGS).
+ */
 @Service
 public class InventoryOverrideService {
   private static final ResourceKey RESOURCE = new ResourceKey("inventory.cost");
@@ -47,7 +49,8 @@ public class InventoryOverrideService {
       repository.saveAndFlush(current.get());
     }
     InventoryOverride saved =
-        repository.save(InventoryOverride.create(date, overriddenPurchases, reason, actorEmail, now));
+        repository.save(
+            InventoryOverride.create(date, overriddenPurchases, reason, actorEmail, now));
     projector.recompute(date);
     return saved;
   }

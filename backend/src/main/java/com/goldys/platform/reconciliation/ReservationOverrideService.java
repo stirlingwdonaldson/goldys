@@ -48,7 +48,8 @@ public class ReservationOverrideService {
     }
     ReservationOverride saved =
         repository.save(
-            ReservationOverride.create(date, servicePeriod, overriddenCovers, reason, actorEmail, now));
+            ReservationOverride.create(
+                date, servicePeriod, overriddenCovers, reason, actorEmail, now));
     projector.recompute(date);
     return saved;
   }

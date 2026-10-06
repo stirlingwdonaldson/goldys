@@ -29,7 +29,15 @@ class GetReservationSummaryToolTest {
         .thenReturn(
             Optional.of(
                 new ReservationSummary(
-                    SEP_20, 10, 8, 32, 1, 1, 2, new BigDecimal("4.0000"), new BigDecimal("0.1000"),
+                    SEP_20,
+                    10,
+                    8,
+                    32,
+                    1,
+                    1,
+                    2,
+                    new BigDecimal("4.0000"),
+                    new BigDecimal("0.1000"),
                     new BigDecimal("0.8000"))));
 
     GetReservationSummaryTool tool = new GetReservationSummaryTool(metrics);
@@ -60,7 +68,8 @@ class GetReservationSummaryToolTest {
 
   @Test
   void rejectsWrongInputType() {
-    GetReservationSummaryTool tool = new GetReservationSummaryTool(mock(ReservationMetricsQuery.class));
+    GetReservationSummaryTool tool =
+        new GetReservationSummaryTool(mock(ReservationMetricsQuery.class));
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)

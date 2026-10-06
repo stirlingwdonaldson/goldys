@@ -8,7 +8,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Records canonical invoice metadata, locking the current source fact for concurrent corrections. */
+/**
+ * Records canonical invoice metadata, locking the current source fact for concurrent corrections.
+ */
 @Service
 class CanonicalInvoiceService {
   private static final Clock CLOCK = Clock.systemUTC();

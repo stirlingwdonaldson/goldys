@@ -40,8 +40,7 @@ class InventoryProjectorIntegrationTest {
 
     projector.recompute(d);
 
-    ResolvedInventoryDay day =
-        resolved.findByTradingDateBetweenOrderByTradingDateAsc(d, d).get(0);
+    ResolvedInventoryDay day = resolved.findByTradingDateBetweenOrderByTradingDateAsc(d, d).get(0);
     assertThat(day.purchases()).isEqualByComparingTo(new BigDecimal("70.00"));
     assertThat(day.wastage()).isNull();
     assertThat(day.stockOnHand()).isNull();
