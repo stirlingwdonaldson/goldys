@@ -110,11 +110,21 @@ export interface DashboardSummary {
   overrideUsage: { count: number; period: string } | null;
 }
 
-/** A top-selling product over a recent window. */
+/** The dashboard's whole initial render, fetched in one request. */
+export interface DashboardBootstrap {
+  summary: DashboardSummary;
+  latestSales: LatestSales;
+  salesTrend: SalesTrendPoint[];
+  activity: ActivityPoint[];
+  topSellers: TopSeller[];
+}
+
+/** A top-selling product over a recent window. `quantitySold`/`amount` are null when unresolved. */
 export interface TopSeller {
   name: string;
-  quantitySold: number | string;
-  amount: number | string;
+  quantitySold: number | string | null;
+  amount: number | string | null;
+  hasConflict: boolean;
 }
 
 /** One day of resolved daily sales for the dashboard trend. */
@@ -168,8 +178,41 @@ export interface RuleAuditEntry {
   by: string;
 }
 
+/** One persisted widget: a fixed semantic tool plus its bounded input. */
+export interface SavedWidget {
+  id: string;
+  tool: string;
+  input: Record<string, unknown>;
+}
+
+export interface SavedDashboardSummary {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
+export interface DashboardDocument {
+  id: string;
+  schemaVersion: number;
+  title: string;
+  description: string | null;
+  layout: string;
+  widgets: SavedWidget[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaveDashboardInput {
+  title: string;
+  description?: string | null;
+  layout?: string;
+  widgets: SavedWidget[];
+}
+
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
 export interface Api {
+  getDashboardBootstrap(): Promise<DashboardBootstrap>;
   getDashboardSummary(): Promise<DashboardSummary>;
   getDashboardActivity(): Promise<ActivityPoint[]>;
   listReconciliationExceptions(): Promise<ReconciliationException[]>;
@@ -191,4 +234,9 @@ export interface Api {
   getLatestSales(): Promise<LatestSales>;
   getTopSellers(): Promise<TopSeller[]>;
   getSalesTrend(): Promise<SalesTrendPoint[]>;
+  listDashboards(): Promise<SavedDashboardSummary[]>;
+  getDashboard(id: string): Promise<DashboardDocument>;
+  saveDashboard(input: SaveDashboardInput): Promise<DashboardDocument>;
+  deleteDashboard(id: string): Promise<void>;
+  renderDashboard(id: string): Promise<import("@/components/widgets/types").WidgetSpec[]>;
 }

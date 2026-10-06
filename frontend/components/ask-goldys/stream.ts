@@ -1,4 +1,5 @@
 import type { AnswerPayload, ChatMessage } from "./types";
+import { parseWidgetSpecs } from "@/components/widgets/parse";
 
 /** Parse a single `\n\n`-delimited SSE block into its event name and data string. */
 export function parseSseBlock(block: string): { event: string; data: string } {
@@ -67,7 +68,7 @@ export async function streamChat(messages: ChatMessage[], handlers: StreamHandle
     try {
       const payload = JSON.parse(data) as Record<string, unknown>;
       if (event === "text" && typeof payload.delta === "string") handlers.onText(payload.delta);
-      else if (event === "answer") handlers.onAnswer(payload as unknown as AnswerPayload);
+      else if (event === "answer") handlers.onAnswer(parseAnswer(payload));
       else if (event === "error" && typeof payload.message === "string")
         handlers.onError(payload.message);
     } catch {
@@ -85,4 +86,26 @@ export async function streamChat(messages: ChatMessage[], handlers: StreamHandle
   }
   buffer += decoder.decode();
   if (buffer.trim()) dispatch(buffer);
+}
+
+/** Validate the untrusted answer payload at the boundary; malformed widgets are dropped. */
+function parseAnswer(payload: Record<string, unknown>): AnswerPayload {
+  return {
+    widgets: parseWidgetSpecs(payload.widgets),
+    trace: Array.isArray(payload.trace)
+      ? payload.trace
+          .filter(
+            (t): t is { tool: string; description: string } =>
+              typeof t === "object" &&
+              t !== null &&
+              typeof (t as { tool?: unknown }).tool === "string" &&
+              typeof (t as { description?: unknown }).description === "string",
+          )
+          .map((t) => ({ tool: t.tool, description: t.description }))
+      : [],
+    asOf: typeof payload.asOf === "string" ? payload.asOf : "",
+    notices: Array.isArray(payload.notices)
+      ? payload.notices.filter((n): n is string => typeof n === "string")
+      : [],
+  };
 }

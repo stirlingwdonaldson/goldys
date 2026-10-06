@@ -1,7 +1,8 @@
 "use client";
 
 import { PermissionDenied } from "@/components/states/permission-denied";
-import { WidgetRenderer } from "./widget-renderer";
+import { WidgetRenderer } from "@/components/widgets/widget-renderer";
+import { parseWidgetSpecs } from "@/components/widgets/parse";
 import type { AnswerPayload } from "./types";
 
 interface AnswerBlockProps {
@@ -28,9 +29,9 @@ export function AnswerBlock({ summary, answer, error }: AnswerBlockProps) {
         </p>
       ) : null}
 
-      {answer?.widgets.map((w, i) => (
-        <WidgetRenderer key={i} widget={w} />
-      ))}
+      {answer ? (
+        parseWidgetSpecs(answer.widgets).map((w) => <WidgetRenderer key={w.id} widget={w} />)
+      ) : null}
 
       {answer?.trace.length ? (
         <details className="text-xs text-muted-foreground">

@@ -1,12 +1,6 @@
-export type WidgetType = "stat" | "table" | "line-chart" | "bar-chart";
+import type { WidgetSpec } from "@/components/widgets/types";
 
-export interface WidgetSpec {
-  version: number;
-  type: WidgetType;
-  title: string;
-  description?: string | null;
-  data: Record<string, unknown>[];
-}
+export type { WidgetSpec };
 
 export interface TraceEntry {
   tool: string;

@@ -3,6 +3,8 @@ import type {
   ActivityPoint,
   Api,
   ConnectorStatus,
+  DashboardBootstrap,
+  DashboardDocument,
   DashboardSummary,
   ProductOverrideInput,
   RecomputeStatus,
@@ -10,12 +12,15 @@ import type {
   ReconciliationRecord,
   ResolutionRule,
   RuleAuditEntry,
+  SaveDashboardInput,
   SaveOverrideInput,
   SaveResolutionRuleInput,
+  SavedDashboardSummary,
 } from "./types";
 
 /** Real backend calls. The demo fixtures stay behind the `demo` flag; these hit the live endpoints. */
 export const liveApi: Api = {
+  getDashboardBootstrap: () => fetchApi<DashboardBootstrap>("/api/dashboard/bootstrap"),
   getDashboardSummary: () => fetchApi<DashboardSummary>("/api/dashboard/summary"),
   getDashboardActivity: () => fetchApi<ActivityPoint[]>("/api/dashboard/activity"),
   listReconciliationExceptions: () =>
@@ -63,4 +68,16 @@ export const liveApi: Api = {
   getTopSellers: () => fetchApi<import("./types").TopSeller[]>("/api/dashboard/top-sellers"),
   getSalesTrend: () =>
     fetchApi<import("./types").SalesTrendPoint[]>("/api/dashboard/sales-trend"),
+  listDashboards: () => fetchApi<SavedDashboardSummary[]>("/api/dashboards"),
+  getDashboard: (id: string) => fetchApi<DashboardDocument>(`/api/dashboards/${id}`),
+  saveDashboard: (input: SaveDashboardInput) =>
+    fetchApi<DashboardDocument>("/api/dashboards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  deleteDashboard: (id: string) =>
+    fetchApi<void>(`/api/dashboards/${id}`, { method: "DELETE" }),
+  renderDashboard: (id: string) =>
+    fetchApi<import("@/components/widgets/types").WidgetSpec[]>(`/api/dashboards/${id}/render`),
 };

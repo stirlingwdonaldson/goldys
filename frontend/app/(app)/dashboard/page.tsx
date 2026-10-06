@@ -13,11 +13,8 @@ import { TopSellers } from "@/components/dashboard/top-sellers";
 import { SalesTrend } from "@/components/dashboard/sales-trend";
 
 export default function DashboardPage() {
-  const { data, loading, error, reload } = useApiData((api) => api.getDashboardSummary());
-  const latest = useApiData((api) => api.getLatestSales());
-  const activity = useApiData((api) => api.getDashboardActivity());
-  const topSellers = useApiData((api) => api.getTopSellers());
-  const salesTrend = useApiData((api) => api.getSalesTrend());
+  // One bootstrap request replaces the previous five independent fetches.
+  const { data, loading, error, reload } = useApiData((api) => api.getDashboardBootstrap());
   const { user } = useCurrentUser();
 
   if (loading) return <LoadingState rows={2} />;
@@ -48,33 +45,16 @@ export default function DashboardPage() {
         <p className="text-sm text-muted-foreground">Your numbers, verified.</p>
       </div>
 
-      <NeedsDecisionBand openCount={data.openConflicts} />
+      <NeedsDecisionBand openCount={data.summary.openConflicts} />
 
-      <BusinessKpiGrid seniority={user?.seniority} latestSales={latest.data} />
+      <BusinessKpiGrid seniority={user?.seniority} latestSales={data.latestSales} />
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border p-4">
-          <h2 className="text-sm font-semibold text-muted-foreground">Sales · last 14 days</h2>
-          <div className="mt-3">
-            <SalesTrend points={salesTrend.data ?? []} />
-          </div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <h2 className="text-sm font-semibold text-muted-foreground">
-            Connector activity · last 14 days
-          </h2>
-          <div className="mt-3">
-            <ActivityChart points={activity.data ?? []} />
-          </div>
-        </div>
+        <SalesTrend points={data.salesTrend} />
+        <ActivityChart points={data.activity} />
       </section>
 
-      <section className="rounded-lg border p-4">
-        <h2 className="text-sm font-semibold text-muted-foreground">Top sellers · last 30 days</h2>
-        <div className="mt-2">
-          <TopSellers items={topSellers.data ?? []} />
-        </div>
-      </section>
+      <TopSellers items={data.topSellers} />
     </div>
   );
 }
