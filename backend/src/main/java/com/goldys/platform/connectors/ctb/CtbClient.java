@@ -12,6 +12,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Authenticated HTTP client for CTB's internal AJAX endpoints (ASP.NET MVC, session-cookie auth, no
@@ -19,6 +21,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class CtbClient {
   private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final Logger log = LoggerFactory.getLogger(CtbClient.class);
 
   private final String baseUrl;
   private final HttpClient http;
@@ -63,7 +66,9 @@ public class CtbClient {
             form("keyword", "", "start", String.valueOf(start), "limit", String.valueOf(limit)));
     JsonNode json = parse(body);
     if (!isSuccess(json)) {
-      throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB revenue search failed");
+      log.warn("CTB revenue search failed; response: {}", body);
+      throw new ConnectorFetchException(
+          "CONNECTOR_FETCH_FAILED", "CTB revenue search failed: " + truncate(body, 500));
     }
     int total = json.path("totalCount").asInt(json.path("data").size());
     return new CtbPage(body, total);
@@ -87,10 +92,19 @@ public class CtbClient {
                 String.valueOf(limit)));
     JsonNode json = parse(body);
     if (!isSuccess(json)) {
-      throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB sale-item search failed");
+      log.warn("CTB sale-item search failed; response: {}", body);
+      throw new ConnectorFetchException(
+          "CONNECTOR_FETCH_FAILED", "CTB sale-item search failed: " + truncate(body, 500));
     }
     int total = json.path("totalCount").asInt(json.path("data").size());
     return new CtbPage(body, total);
+  }
+
+  private static String truncate(String s, int max) {
+    if (s == null) {
+      return null;
+    }
+    return s.length() <= max ? s : s.substring(0, max) + "…";
   }
 
   private String get(String path) {
