@@ -1,13 +1,10 @@
 "use client";
 
-import type { Metadata } from "next";
 import { CalendarDays } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { AwaitingData } from "@/components/states/awaiting-data";
-
-export const metadata: Metadata = { title: "Reservations" };
 
 /** The venue's "today" as YYYY-MM-DD, using the browser's local calendar date. */
 function today(): string {
