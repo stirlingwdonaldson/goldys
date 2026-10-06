@@ -23,12 +23,14 @@ public class CanonicalReservationQuery {
     this.zone = ZoneId.of(zone);
   }
 
+  /** All current reservations, mapped to views. */
+  public List<ReservationView> currentReservations() {
+    return repository.findAllCurrent().stream().map(this::toView).toList();
+  }
+
   /** Current reservations whose local trading date falls in {@code dates}. */
   public List<ReservationView> currentReservationsForDates(Collection<LocalDate> dates) {
-    return repository.findAllCurrent().stream()
-        .map(this::toView)
-        .filter(v -> dates.contains(v.tradingDate()))
-        .toList();
+    return currentReservations().stream().filter(v -> dates.contains(v.tradingDate())).toList();
   }
 
   private ReservationView toView(CanonicalReservation r) {
