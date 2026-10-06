@@ -1,7 +1,9 @@
 package com.goldys.platform.architecture;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -102,4 +104,33 @@ class ArchitectureBoundariesTest {
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage("..canonical..", "..reconciliation..", "..ingestion..");
+
+  /** The reservation controller must not read canonical source facts directly. */
+  @ArchTest
+  static final ArchRule reservationControllerDoesNotReadCanonical =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.api.ReservationController")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..canonical..");
+
+  /** The reservation reporting tool consumes the semantic layer, not canonical/reconciliation. */
+  @ArchTest
+  static final ArchRule reservationToolConsumesSemanticOnly =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.reporting.GetReservationSummaryTool")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..canonical..", "..reconciliation..");
+
+  /** The reservation semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule reservationMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(ReservationMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
 }
