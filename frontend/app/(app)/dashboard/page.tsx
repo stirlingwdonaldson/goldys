@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useApiData } from "@/lib/use-api-data";
 import { useCurrentUser } from "@/components/app-shell/current-user-provider";
 import { EmptyState } from "@/components/states/empty-state";
@@ -11,7 +12,20 @@ import { BusinessKpiGrid } from "@/components/dashboard/business-kpi-grid";
 
 export default function DashboardPage() {
   const { data, loading, error, reload } = useApiData((api) => api.getDashboardSummary());
+  const sales = useApiData((api) => api.listDailySales());
   const { user } = useCurrentUser();
+
+  const latestSales = useMemo(() => {
+    if (!sales.data?.length) return null;
+    const byDate = new Map<string, number>();
+    for (const r of sales.data) {
+      const n = typeof r.totalSales === "number" ? r.totalSales : Number(r.totalSales);
+      if (Number.isFinite(n)) byDate.set(r.date, (byDate.get(r.date) ?? 0) + n);
+    }
+    if (byDate.size === 0) return null;
+    const latestDate = [...byDate.keys()].sort().pop()!;
+    return { date: latestDate, total: byDate.get(latestDate)! };
+  }, [sales.data]);
 
   if (loading) return <LoadingState rows={2} />;
   if (error) {
@@ -43,7 +57,7 @@ export default function DashboardPage() {
 
       <NeedsDecisionBand openCount={data.openConflicts} />
 
-      <BusinessKpiGrid seniority={user?.seniority} />
+      <BusinessKpiGrid seniority={user?.seniority} latestSales={latestSales} />
     </div>
   );
 }

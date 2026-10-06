@@ -1,27 +1,38 @@
 import { CalendarDays, Lock, Percent, TrendingUp, Trophy, Utensils } from "lucide-react";
 import { AwaitingData } from "@/components/states/awaiting-data";
+import { StatCard } from "@/components/dashboard/stat-card";
 import { isOwner } from "@/lib/roles";
 
 interface BusinessKpiGridProps {
   /** Current user's seniority; gates the Owner-only labor tile. */
   seniority?: string;
+  /** The latest daily-sales total (summed across sources), or null when no data yet. */
+  latestSales?: { date: string; total: number } | null;
 }
 
 /**
- * The dashboard's five business KPI tiles. All are placeholders until their
- * reporting data lands; the labor tile is additionally Owner-only per the
- * permission model (wage/labor-cost figures).
+ * The dashboard's five business KPI tiles. The Sales tile shows the latest resolved daily total
+ * once data lands; the rest are placeholders until their reporting data lands.
  */
-export function BusinessKpiGrid({ seniority }: BusinessKpiGridProps) {
+export function BusinessKpiGrid({ seniority, latestSales }: BusinessKpiGridProps) {
   const isOwnerRole = isOwner(seniority);
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      <AwaitingData
-        label="Sales"
-        description="Net sales today and this week vs. last week."
-        reason="Awaiting sales-reporting endpoint."
-        icon={TrendingUp}
-      />
+      {latestSales ? (
+        <StatCard
+          label="Sales"
+          value={`$${latestSales.total.toFixed(2)}`}
+          hint={`Latest: ${latestSales.date}`}
+          icon={TrendingUp}
+        />
+      ) : (
+        <AwaitingData
+          label="Sales"
+          description="Net sales today and this week vs. last week."
+          reason="Awaiting sales-reporting endpoint."
+          icon={TrendingUp}
+        />
+      )}
       {isOwnerRole ? (
         <AwaitingData
           label="Labor cost %"
