@@ -16,9 +16,12 @@ class DailySalesResolverTest {
 
   @Test
   void classifiesAgreedConflictAndMissing() {
-    assertThat(classify(List.of(st("LIGHTSPEED", "10.00"), st("CTB", "10.00")))).isEqualTo("agreed");
-    assertThat(classify(List.of(st("LIGHTSPEED", "10.00"), st("CTB", "10.005")))).isEqualTo("agreed");
-    assertThat(classify(List.of(st("LIGHTSPEED", "10.00"), st("CTB", "12.00")))).isEqualTo("conflict");
+    assertThat(classify(List.of(st("LIGHTSPEED", "10.00"), st("CTB", "10.00"))))
+        .isEqualTo("agreed");
+    assertThat(classify(List.of(st("LIGHTSPEED", "10.00"), st("CTB", "10.005"))))
+        .isEqualTo("agreed");
+    assertThat(classify(List.of(st("LIGHTSPEED", "10.00"), st("CTB", "12.00"))))
+        .isEqualTo("conflict");
     assertThat(classify(List.of(st("LIGHTSPEED", "10.00")))).isEqualTo("missing");
   }
 
@@ -81,7 +84,12 @@ class DailySalesResolverTest {
   void priorityRuleResolvesAConflict() {
     ResolutionRule rule =
         ResolutionRule.create(
-            "daily_sales", "daily_sales", "priority", null, List.of("CTB"), "a@b.com",
+            "daily_sales",
+            "daily_sales",
+            "priority",
+            null,
+            List.of("CTB"),
+            "a@b.com",
             Instant.EPOCH);
 
     Optional<DailySalesResolver.Result> r =

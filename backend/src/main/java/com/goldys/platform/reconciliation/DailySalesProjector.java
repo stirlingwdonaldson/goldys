@@ -17,11 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Maintains the daily-sales read model ({@code resolved_daily_sales} and
- * {@code reconciliation_exception}) from canonical rows, overrides, and rules.
+ * Maintains the daily-sales read model ({@code resolved_daily_sales} and {@code
+ * reconciliation_exception}) from canonical rows, overrides, and rules.
  *
- * <p>Injects repositories rather than the services that trigger it
- * ({@link DailySalesOverrideService}, {@link ResolutionRuleService}) to avoid a Spring bean cycle.
+ * <p>Injects repositories rather than the services that trigger it ({@link
+ * DailySalesOverrideService}, {@link ResolutionRuleService}) to avoid a Spring bean cycle.
  */
 @Service
 public class DailySalesProjector {
@@ -48,8 +48,10 @@ public class DailySalesProjector {
     this.exceptions = exceptions;
   }
 
-  /** Rebuild the whole read model from canonical + overrides + rules. Used on rule changes and
-   * deploy backfill. */
+  /**
+   * Rebuild the whole read model from canonical + overrides + rules. Used on rule changes and
+   * deploy backfill.
+   */
   @Transactional
   public void recomputeAll() {
     resolved.deleteAllInBatch();
@@ -98,8 +100,12 @@ public class DailySalesProjector {
       DailySalesResolver.Result r = e.getValue();
       rows.add(
           new ResolvedDailySales(
-              e.getKey(), r.totalSales(), r.resolutionType(), r.authoritativeSource(),
-              r.hasConflict(), now));
+              e.getKey(),
+              r.totalSales(),
+              r.resolutionType(),
+              r.authoritativeSource(),
+              r.hasConflict(),
+              now));
     }
     resolved.saveAll(rows);
 

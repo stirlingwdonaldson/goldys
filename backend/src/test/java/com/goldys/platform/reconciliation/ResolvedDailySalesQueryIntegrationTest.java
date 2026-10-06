@@ -26,7 +26,11 @@ class ResolvedDailySalesQueryIntegrationTest {
     jdbc.update("truncate table resolved_daily_sales");
     repository.save(
         new ResolvedDailySales(
-            LocalDate.of(2026, 9, 13), new BigDecimal("9694.80"), "agreed", "agreed", false,
+            LocalDate.of(2026, 9, 13),
+            new BigDecimal("9694.80"),
+            "agreed",
+            "agreed",
+            false,
             Instant.EPOCH));
     repository.save(
         new ResolvedDailySales(
@@ -43,8 +47,7 @@ class ResolvedDailySalesQueryIntegrationTest {
 
   @Test
   void betweenReturnsRowsInRange() {
-    var rows =
-        query.between(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
+    var rows = query.between(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
     assertThat(rows).hasSize(2);
     assertThat(rows.get(0).tradingDate()).isEqualTo(LocalDate.of(2026, 9, 13));
   }

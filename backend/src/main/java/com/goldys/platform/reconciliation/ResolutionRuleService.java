@@ -28,7 +28,9 @@ public class ResolutionRuleService {
   private final DailySalesProjector projector;
 
   public ResolutionRuleService(
-      ResolutionRuleRepository repository, PermissionService permissions, DailySalesProjector projector) {
+      ResolutionRuleRepository repository,
+      PermissionService permissions,
+      DailySalesProjector projector) {
     this.repository = repository;
     this.permissions = permissions;
     this.projector = projector;

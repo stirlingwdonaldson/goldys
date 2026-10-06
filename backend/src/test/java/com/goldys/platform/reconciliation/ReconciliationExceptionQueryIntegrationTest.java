@@ -94,7 +94,11 @@ class ReconciliationExceptionQueryIntegrationTest {
 
   private DailySalesInput input(String source, LocalDate date, String total) {
     return new DailySalesInput(
-        source, date, new BigDecimal(total), new BigDecimal("0"), new BigDecimal("0"),
+        source,
+        date,
+        new BigDecimal(total),
+        new BigDecimal("0"),
+        new BigDecimal("0"),
         rawRecord(source));
   }
 

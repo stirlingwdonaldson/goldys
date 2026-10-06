@@ -93,14 +93,19 @@ class DailySalesProjectorIntegrationTest {
 
     Thread.sleep(5);
     projector.recompute(SEP_13);
-    var second = exceptions.findByEntityTypeOrderByTradingDateAsc("daily_sales").get(0).detectedAt();
+    var second =
+        exceptions.findByEntityTypeOrderByTradingDateAsc("daily_sales").get(0).detectedAt();
 
     assertThat(second).isEqualTo(first);
   }
 
   private DailySalesInput input(String source, LocalDate date, String total) {
     return new DailySalesInput(
-        source, date, new BigDecimal(total), new BigDecimal("0"), new BigDecimal("0"),
+        source,
+        date,
+        new BigDecimal(total),
+        new BigDecimal("0"),
+        new BigDecimal("0"),
         rawRecord(source));
   }
 

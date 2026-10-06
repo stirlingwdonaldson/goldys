@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-/** Pure daily-sales resolution: override → agreement (one-cent tolerance) → rule → unresolved.
- * No I/O and no permissions; the projector and any future consumer share this one implementation. */
+/**
+ * Pure daily-sales resolution: override → agreement (one-cent tolerance) → rule → unresolved. No
+ * I/O and no permissions; the projector and any future consumer share this one implementation.
+ */
 final class DailySalesResolver {
   private static final BigDecimal ONE_CENT = new BigDecimal("0.01");
 

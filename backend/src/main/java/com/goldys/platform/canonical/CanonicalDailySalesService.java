@@ -25,7 +25,8 @@ class CanonicalDailySalesService {
   private final CanonicalDailySalesRepository repository;
   private final ApplicationEventPublisher publisher;
 
-  CanonicalDailySalesService(CanonicalDailySalesRepository repository, ApplicationEventPublisher publisher) {
+  CanonicalDailySalesService(
+      CanonicalDailySalesRepository repository, ApplicationEventPublisher publisher) {
     this.repository = repository;
     this.publisher = publisher;
   }

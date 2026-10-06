@@ -11,8 +11,10 @@ import java.util.Map;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 
-/** Read-only facade over the daily-sales exception projection, joined back to canonical for the
- * per-source values shown in the exceptions UI. */
+/**
+ * Read-only facade over the daily-sales exception projection, joined back to canonical for the
+ * per-source values shown in the exceptions UI.
+ */
 @Service
 public class ReconciliationExceptionQuery {
   private static final String ENTITY_TYPE = "daily_sales";
