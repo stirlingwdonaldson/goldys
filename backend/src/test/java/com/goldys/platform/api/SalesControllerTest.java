@@ -17,8 +17,7 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.DailySalesView;
 import com.goldys.platform.config.SecurityConfig;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
-import com.goldys.platform.reconciliation.DailySalesResolved;
+import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -41,7 +40,7 @@ class SalesControllerTest {
   @Autowired MockMvc mvc;
 
   @MockitoBean CanonicalDailySalesQuery dailySales;
-  @MockitoBean DailySalesReconciliationService reconciliation;
+  @MockitoBean ResolvedDailySalesQuery resolvedDailySales;
   @MockitoBean CurrentUserService currentUser;
   @MockitoBean PermissionService permissions;
 
@@ -76,7 +75,7 @@ class SalesControllerTest {
   @Test
   void latestReturnsNullsWhenThereIsNoData() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(dailySales.latestTradingDate()).thenReturn(Optional.empty());
+    when(resolvedDailySales.latest()).thenReturn(Optional.empty());
 
     mvc.perform(get("/api/sales/latest").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -89,10 +88,11 @@ class SalesControllerTest {
   void latestReturnsTheResolvedTotal() throws Exception {
     LocalDate date = LocalDate.of(2026, 10, 5);
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(dailySales.latestTradingDate()).thenReturn(Optional.of(date));
-    when(reconciliation.resolved(date))
+    when(resolvedDailySales.latest())
         .thenReturn(
-            Optional.of(new DailySalesResolved(date, new BigDecimal("10865.72"), "agreed")));
+            Optional.of(
+                new ResolvedDailySalesQuery.ResolvedDailySalesView(
+                    date, new BigDecimal("10865.72"), "agreed", "agreed", false)));
 
     mvc.perform(get("/api/sales/latest").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -105,9 +105,11 @@ class SalesControllerTest {
   void latestReturnsNullTotalWhenTheLatestDateIsUnresolved() throws Exception {
     LocalDate date = LocalDate.of(2026, 10, 5);
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(dailySales.latestTradingDate()).thenReturn(Optional.of(date));
-    when(reconciliation.resolved(date))
-        .thenReturn(Optional.of(new DailySalesResolved(date, null, null)));
+    when(resolvedDailySales.latest())
+        .thenReturn(
+            Optional.of(
+                new ResolvedDailySalesQuery.ResolvedDailySalesView(
+                    date, null, "conflict", null, true)));
 
     mvc.perform(get("/api/sales/latest").with(authenticated(owner())))
         .andExpect(status().isOk())

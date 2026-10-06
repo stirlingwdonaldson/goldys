@@ -8,10 +8,10 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.ingestion.IngestionActivityPoint;
 import com.goldys.platform.ingestion.IngestionHealth;
 import com.goldys.platform.ingestion.IngestionService;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
 import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
 import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
+import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DashboardController {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
 
-  private final DailySalesReconciliationService reconciliation;
+  private final ResolvedDailySalesQuery resolvedDailySales;
   private final ProductSalesReconciliationService productSales;
   private final IngestionService ingestion;
   private final OverrideUsageService overrideUsage;
@@ -32,13 +32,13 @@ public class DashboardController {
   private final PermissionService permissions;
 
   public DashboardController(
-      DailySalesReconciliationService reconciliation,
+      ResolvedDailySalesQuery resolvedDailySales,
       ProductSalesReconciliationService productSales,
       IngestionService ingestion,
       OverrideUsageService overrideUsage,
       CurrentUserService currentUser,
       PermissionService permissions) {
-    this.reconciliation = reconciliation;
+    this.resolvedDailySales = resolvedDailySales;
     this.productSales = productSales;
     this.ingestion = ingestion;
     this.overrideUsage = overrideUsage;
@@ -49,7 +49,8 @@ public class DashboardController {
   @GetMapping("/summary")
   SummaryDto summary(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    int openConflicts = reconciliation.conflicts().size() + productSales.conflicts().size();
+    int openConflicts =
+        (int) (resolvedDailySales.countOpenConflicts() + productSales.conflicts().size());
     IngestionHealth health = ingestion.health();
     OverrideUsage usage = overrideUsage.usage();
     return new SummaryDto(

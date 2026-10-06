@@ -7,12 +7,10 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.DailySalesView;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
+import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,17 +23,17 @@ public class SalesController {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
 
   private final CanonicalDailySalesQuery dailySales;
-  private final DailySalesReconciliationService reconciliation;
+  private final ResolvedDailySalesQuery resolvedDailySales;
   private final CurrentUserService currentUser;
   private final PermissionService permissions;
 
   public SalesController(
       CanonicalDailySalesQuery dailySales,
-      DailySalesReconciliationService reconciliation,
+      ResolvedDailySalesQuery resolvedDailySales,
       CurrentUserService currentUser,
       PermissionService permissions) {
     this.dailySales = dailySales;
-    this.reconciliation = reconciliation;
+    this.resolvedDailySales = resolvedDailySales;
     this.currentUser = currentUser;
     this.permissions = permissions;
   }
@@ -57,17 +55,13 @@ public class SalesController {
   @GetMapping("/latest")
   LatestSalesDto latest(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    Optional<LocalDate> latest = dailySales.latestTradingDate();
-    if (latest.isEmpty()) {
-      return new LatestSalesDto(null, null, null);
-    }
-    return reconciliation
-        .resolved(latest.get())
+    return resolvedDailySales
+        .latest()
         .map(
-            r ->
+            v ->
                 new LatestSalesDto(
-                    latest.get().toString(), r.resolvedTotal(), r.authoritativeSource()))
-        .orElseGet(() -> new LatestSalesDto(latest.get().toString(), null, null));
+                    v.tradingDate().toString(), v.totalSales(), v.authoritativeSource()))
+        .orElseGet(() -> new LatestSalesDto(null, null, null));
   }
 
   private static DailySalesDto toDto(DailySalesView v) {

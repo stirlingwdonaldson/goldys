@@ -8,12 +8,11 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.CanonicalProductSalesQuery;
-import com.goldys.platform.reconciliation.DailySalesConflict;
 import com.goldys.platform.reconciliation.DailySalesOverrideService;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
 import com.goldys.platform.reconciliation.ProductSalesConflict;
 import com.goldys.platform.reconciliation.ProductSalesOverrideService;
 import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
+import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReconciliationController {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
 
-  private final DailySalesReconciliationService reconciliation;
+  private final ReconciliationExceptionQuery exceptionsQuery;
   private final DailySalesOverrideService overrides;
   private final CanonicalDailySalesQuery dailySales;
   private final ProductSalesReconciliationService productSales;
@@ -41,7 +40,7 @@ public class ReconciliationController {
   private final PermissionService permissions;
 
   public ReconciliationController(
-      DailySalesReconciliationService reconciliation,
+      ReconciliationExceptionQuery exceptionsQuery,
       DailySalesOverrideService overrides,
       CanonicalDailySalesQuery dailySales,
       ProductSalesReconciliationService productSales,
@@ -49,7 +48,7 @@ public class ReconciliationController {
       CanonicalProductSalesQuery productSalesQuery,
       CurrentUserService currentUser,
       PermissionService permissions) {
-    this.reconciliation = reconciliation;
+    this.exceptionsQuery = exceptionsQuery;
     this.overrides = overrides;
     this.dailySales = dailySales;
     this.productSales = productSales;
@@ -62,7 +61,7 @@ public class ReconciliationController {
   @GetMapping("/exceptions")
   List<ExceptionDto> exceptions(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    return reconciliation.conflicts().stream().map(this::toException).toList();
+    return exceptionsQuery.listDaily().stream().map(this::toException).toList();
   }
 
   @GetMapping("/records/{date}")
@@ -138,18 +137,18 @@ public class ReconciliationController {
     return new OverrideResultDto(true, product, "product");
   }
 
-  private ExceptionDto toException(DailySalesConflict conflict) {
+  private ExceptionDto toException(ReconciliationExceptionQuery.DailyException e) {
     List<SourceValueDto> sources =
-        conflict.sources().stream()
+        e.sources().stream()
             .map(s -> new SourceValueDto(s.sourceSystem(), plain(s.totalSales())))
             .toList();
     return new ExceptionDto(
-        conflict.tradingDate() + ":daily_sales",
-        conflict.tradingDate().toString(),
-        conflict.tradingDate().toString(),
+        e.tradingDate() + ":daily_sales",
+        e.tradingDate().toString(),
+        e.tradingDate().toString(),
         "daily_sales",
         sources,
-        conflict.status());
+        e.status());
   }
 
   private ProductExceptionDto toProductException(ProductSalesConflict conflict) {

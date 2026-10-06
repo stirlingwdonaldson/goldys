@@ -8,11 +8,10 @@ import static org.mockito.Mockito.when;
 import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
-import com.goldys.platform.reconciliation.DailySalesResolved;
+import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Optional;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class GetSalesByPeriodToolTest {
@@ -24,14 +23,11 @@ class GetSalesByPeriodToolTest {
 
   @Test
   void emitsResolvedPointsAndNoticesUnresolvedDates() {
-    DailySalesReconciliationService reconciliation = mock(DailySalesReconciliationService.class);
-    when(reconciliation.resolved(SEP_13))
-        .thenReturn(
-            Optional.of(new DailySalesResolved(SEP_13, new BigDecimal("27650.66"), "agreed")));
-    when(reconciliation.resolved(SEP_14))
-        .thenReturn(Optional.of(new DailySalesResolved(SEP_14, null, null)));
+    ResolvedDailySalesQuery resolved = mock(ResolvedDailySalesQuery.class);
+    when(resolved.between(SEP_13, SEP_14))
+        .thenReturn(List.of(view(SEP_13, "27650.66", "agreed"), view(SEP_14, null, null)));
 
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(reconciliation);
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(resolved);
     ToolResult result =
         tool.execute(new GetSalesByPeriodInput(SEP_13, SEP_14, Metric.GROSS_SALES), OWNER);
 
@@ -44,10 +40,10 @@ class GetSalesByPeriodToolTest {
 
   @Test
   void treatsMissingDataAsUnresolved() {
-    DailySalesReconciliationService reconciliation = mock(DailySalesReconciliationService.class);
-    when(reconciliation.resolved(SEP_13)).thenReturn(Optional.empty());
+    ResolvedDailySalesQuery resolved = mock(ResolvedDailySalesQuery.class);
+    when(resolved.between(SEP_13, SEP_13)).thenReturn(List.of(view(SEP_13, null, null)));
 
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(reconciliation);
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(resolved);
     ToolResult result =
         tool.execute(new GetSalesByPeriodInput(SEP_13, SEP_13, Metric.GROSS_SALES), OWNER);
 
@@ -64,12 +60,23 @@ class GetSalesByPeriodToolTest {
 
   @Test
   void rejectsAWrongInputType() {
-    DailySalesReconciliationService reconciliation = mock(DailySalesReconciliationService.class);
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(reconciliation);
+    ResolvedDailySalesQuery resolved = mock(ResolvedDailySalesQuery.class);
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(resolved);
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("GetSalesByPeriodInput");
+  }
+
+  private static ResolvedDailySalesQuery.ResolvedDailySalesView view(
+      LocalDate date, String total, String source) {
+    boolean conflict = total == null;
+    return new ResolvedDailySalesQuery.ResolvedDailySalesView(
+        date,
+        total == null ? null : new BigDecimal(total),
+        conflict ? "conflict" : "agreed",
+        source,
+        conflict);
   }
 
   private record OtherInput() implements ToolInput {}

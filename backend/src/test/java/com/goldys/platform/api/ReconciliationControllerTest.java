@@ -20,13 +20,12 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.config.SecurityConfig;
-import com.goldys.platform.reconciliation.DailySalesConflict;
 import com.goldys.platform.reconciliation.DailySalesOverrideService;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
 import com.goldys.platform.reconciliation.ProductSalesConflict;
 import com.goldys.platform.reconciliation.ProductSalesOverrideService;
 import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
 import com.goldys.platform.reconciliation.ProductSourceTotal;
+import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
 import com.goldys.platform.reconciliation.SourceTotal;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -48,7 +47,7 @@ class ReconciliationControllerTest {
 
   @Autowired MockMvc mvc;
 
-  @MockitoBean DailySalesReconciliationService reconciliation;
+  @MockitoBean ReconciliationExceptionQuery exceptionsQuery;
   @MockitoBean DailySalesOverrideService overrides;
   @MockitoBean CanonicalDailySalesQuery dailySales;
   @MockitoBean ProductSalesReconciliationService productSales;
@@ -60,15 +59,15 @@ class ReconciliationControllerTest {
   @Test
   void exceptionsReturnsTheConflict() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(reconciliation.conflicts())
+    when(exceptionsQuery.listDaily())
         .thenReturn(
             List.of(
-                new DailySalesConflict(
+                new ReconciliationExceptionQuery.DailyException(
                     LocalDate.of(2026, 9, 13),
+                    "conflict",
                     List.of(
                         new SourceTotal("LIGHTSPEED", new BigDecimal("27650.66"), null),
-                        new SourceTotal("CTB", new BigDecimal("20990.83"), null)),
-                    "conflict")));
+                        new SourceTotal("CTB", new BigDecimal("20990.83"), null)))));
 
     mvc.perform(get("/api/reconciliation/exceptions").with(authenticated(owner())))
         .andExpect(status().isOk())

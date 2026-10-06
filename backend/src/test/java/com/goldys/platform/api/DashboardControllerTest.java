@@ -20,10 +20,10 @@ import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.ingestion.IngestionActivityPoint;
 import com.goldys.platform.ingestion.IngestionHealth;
 import com.goldys.platform.ingestion.IngestionService;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
 import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
 import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
+import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ class DashboardControllerTest {
 
   @Autowired MockMvc mvc;
 
-  @MockitoBean DailySalesReconciliationService reconciliation;
+  @MockitoBean ResolvedDailySalesQuery resolvedDailySales;
   @MockitoBean ProductSalesReconciliationService productSales;
   @MockitoBean IngestionService ingestion;
   @MockitoBean OverrideUsageService overrideUsage;
@@ -51,7 +51,7 @@ class DashboardControllerTest {
   @Test
   void summaryPopulatesIngestionMetrics() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(reconciliation.conflicts()).thenReturn(List.of());
+    when(resolvedDailySales.countOpenConflicts()).thenReturn(0L);
     when(productSales.conflicts()).thenReturn(List.of());
     when(ingestion.health()).thenReturn(new IngestionHealth(92, "42m avg"));
     when(overrideUsage.usage()).thenReturn(new OverrideUsage(3, "last 7 days"));
@@ -68,7 +68,7 @@ class DashboardControllerTest {
   @Test
   void summaryReturnsNullMetricsWhenLedgerIsEmpty() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(reconciliation.conflicts()).thenReturn(List.of());
+    when(resolvedDailySales.countOpenConflicts()).thenReturn(0L);
     when(productSales.conflicts()).thenReturn(List.of());
     when(ingestion.health()).thenReturn(new IngestionHealth(null, null));
     when(overrideUsage.usage()).thenReturn(new OverrideUsage(0, "last 7 days"));
