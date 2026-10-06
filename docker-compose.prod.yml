@@ -48,6 +48,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      APP_LIGHTSPEED_BACKFILL: ${APP_LIGHTSPEED_BACKFILL:-}
     restart: unless-stopped
     depends_on:
       postgres:

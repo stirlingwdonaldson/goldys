@@ -22,4 +22,6 @@ interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
 
 interface RawRecordRepository extends JpaRepository<RawRecord, UUID> {
   List<RawRecord> findByIngestionRunId(UUID ingestionRunId);
+
+  List<RawRecord> findBySourceSystem(String sourceSystem);
 }
