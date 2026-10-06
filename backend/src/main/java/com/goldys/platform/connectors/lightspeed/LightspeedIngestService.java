@@ -15,6 +15,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class LightspeedIngestService {
   private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final Logger log = LoggerFactory.getLogger(LightspeedIngestService.class);
 
   private final IngestionService ingestion;
   private final CanonicalDailySalesIngest canonical;
@@ -51,6 +54,14 @@ public class LightspeedIngestService {
 
     List<LightspeedInsightsSale> sales =
         parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+
+    if (sales.isEmpty()) {
+      // The scheduled report fired but returned no rows (header only). This is a Looker-side
+      // configuration issue — the report's date filter yields no transactions. Surface it clearly
+      // rather than a silent "SUCCESS with no data".
+      log.warn("Lightspeed webhook delivered an empty report (no data rows)");
+      return;
+    }
 
     Map<LocalDate, Totals> byDate = new LinkedHashMap<>();
     for (LightspeedInsightsSale sale : sales) {

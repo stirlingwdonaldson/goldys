@@ -114,10 +114,17 @@ public class CtbConnector implements SourceConnector {
   }
 
   private void pullSaleItems(String watermark, IngestionSink sink) {
-    // CTB's sale-items endpoint has no per-row date (the date is the range supplied to the call),
-    // so pull a single day and attribute every row to it.
-    LocalDate day = watermarkDate(watermark);
+    // CTB's sale-items endpoint has no per-row date (the date is the range supplied to the
+    // call), so pull one day at a time and attribute every row to that day. CTB keeps a
+    // rolling ~90 days of sale items, so backfill that window.
+    LocalDate to = watermarkDate(watermark);
+    LocalDate from = to.minusDays(90);
+    for (LocalDate day = from; !day.isAfter(to); day = day.plusDays(1)) {
+      pullSaleItemsForDay(day, sink);
+    }
+  }
 
+  private void pullSaleItemsForDay(LocalDate day, IngestionSink sink) {
     int start = 0;
     int pages = 0;
     int total = -1;

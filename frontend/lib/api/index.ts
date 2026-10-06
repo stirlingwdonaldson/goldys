@@ -55,6 +55,7 @@ export type {
   ConnectorStatus,
   CurrentUser,
   CustomLogic,
+  DailySales,
   DashboardSummary,
   ExceptionStatus,
   HealthResponse,
