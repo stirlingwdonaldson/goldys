@@ -62,6 +62,11 @@ public class IngestionService {
     return runSummary(runId);
   }
 
+  /** True when the source has a pull {@link SourceConnector} (i.e. "Run now" applies). */
+  public boolean isRunnable(String source) {
+    return connectors.containsKey(source.trim().toUpperCase(Locale.ROOT));
+  }
+
   private IngestionRunSummary runSummary(UUID runId) {
     IngestionRun run =
         runRepository

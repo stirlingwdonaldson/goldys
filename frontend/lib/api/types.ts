@@ -74,6 +74,17 @@ export interface ConnectorStatus {
   failureCount: number;
   /** Latest run's failure; null when the latest run had no failure. `message` is nullable. */
   failure?: { type: string; message: string | null; at: string; stackTrace?: string | null } | null;
+  /** True when the source has a pull connector (i.e. "Run now" applies). */
+  runnable: boolean;
+}
+
+/** One daily-sales total for a (date, source) pair. */
+export interface DailySales {
+  date: string;
+  source: string;
+  totalSales: number | string;
+  gst: number | string;
+  net: number | string;
 }
 
 export interface DashboardSummary {
@@ -147,4 +158,5 @@ export interface Api {
   getRecomputeStatus(): Promise<RecomputeStatus>;
   listRuleAudit(): Promise<RuleAuditEntry[]>;
   listProducts(): Promise<string[]>;
+  listDailySales(): Promise<DailySales[]>;
 }

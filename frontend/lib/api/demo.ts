@@ -4,6 +4,7 @@ import type {
   ActivityPoint,
   Api,
   ConnectorStatus,
+  DailySales,
   DashboardSummary,
   OverrideResult,
   ProductOverrideInput,
@@ -83,10 +84,10 @@ const records: Record<string, ReconciliationRecord> = {
 };
 
 const connectorStatuses: ConnectorStatus[] = [
-  { source: "Lightspeed", connectorName: "lightspeed-scrape", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0 },
-  { source: "Cooking the Books", connectorName: "ctb-export", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1 },
-  { source: "Deputy", connectorName: "deputy-api", lastRunAt: "2026-09-19T22:30:00Z", status: "failed", failureCount: 2 },
-  { source: "OpenTable", connectorName: "opentable-guestcenter", lastRunAt: null, status: "never_run", failureCount: 0 },
+  { source: "Lightspeed", connectorName: "lightspeed-scrape", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0, runnable: false },
+  { source: "Cooking the Books", connectorName: "ctb-export", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1, runnable: true },
+  { source: "Deputy", connectorName: "deputy-api", lastRunAt: "2026-09-19T22:30:00Z", status: "failed", failureCount: 2, runnable: false },
+  { source: "OpenTable", connectorName: "opentable-guestcenter", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
 ];
 
 let productExceptions: ReconciliationException[] = [
@@ -367,5 +368,14 @@ export const demoApi: Api = {
   async listProducts(): Promise<string[]> {
     await delay(300);
     return [...DEMO_PRODUCTS];
+  },
+
+  async listDailySales(): Promise<DailySales[]> {
+    await delay(300);
+    return [
+      { date: "2026-10-05", source: "CTB", totalSales: 10865.72, gst: 985.44, net: 9880.28 },
+      { date: "2026-10-04", source: "CTB", totalSales: 29605.13, gst: 2689.54, net: 26915.6 },
+      { date: "2026-10-03", source: "CTB", totalSales: 43618.92, gst: 3960.39, net: 39658.53 },
+    ];
   },
 };

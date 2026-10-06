@@ -38,10 +38,12 @@ public class ConnectorStatusController {
    */
   private static final List<ConnectorStatusDto> KNOWN_SOURCES =
       List.of(
-          new ConnectorStatusDto("LIGHTSPEED", "lightspeed-insights", null, "never_run", 0, null),
-          new ConnectorStatusDto("CTB", "ctb-revenue", null, "never_run", 0, null),
-          new ConnectorStatusDto("OPENTABLE", "opentable-csv-drop", null, "never_run", 0, null),
-          new ConnectorStatusDto("DEPUTY", "deputy-api", null, "never_run", 0, null));
+          new ConnectorStatusDto(
+              "LIGHTSPEED", "lightspeed-insights", null, "never_run", 0, null, false),
+          new ConnectorStatusDto("CTB", "ctb-revenue", null, "never_run", 0, null, false),
+          new ConnectorStatusDto(
+              "OPENTABLE", "opentable-csv-drop", null, "never_run", 0, null, false),
+          new ConnectorStatusDto("DEPUTY", "deputy-api", null, "never_run", 0, null, false));
 
   private final IngestionService ingestion;
   private final OpenTableCsvIngestService openTableCsvIngest;
@@ -66,7 +68,20 @@ public class ConnectorStatusController {
     for (IngestionRunSummary run : ingestion.latestRunPerSource()) {
       latest.putIfAbsent(run.sourceSystem(), toDto(run));
     }
-    return KNOWN_SOURCES.stream().map(known -> latest.getOrDefault(known.source(), known)).toList();
+    return KNOWN_SOURCES.stream()
+        .map(
+            known -> {
+              ConnectorStatusDto dto = latest.getOrDefault(known.source(), known);
+              return new ConnectorStatusDto(
+                  dto.source(),
+                  dto.connectorName(),
+                  dto.lastRunAt(),
+                  dto.status(),
+                  dto.failureCount(),
+                  dto.failure(),
+                  ingestion.isRunnable(dto.source()));
+            })
+        .toList();
   }
 
   @PostMapping("/connectors/{source}/run")
@@ -103,7 +118,8 @@ public class ConnectorStatusController {
         run.startedAt().toString(),
         status(run.status()),
         failureCount(run.failureSummary()),
-        failure(run.failure()));
+        failure(run.failure()),
+        ingestion.isRunnable(run.sourceSystem()));
   }
 
   private static FailureDetailDto failure(FailureDetail f) {
@@ -140,7 +156,8 @@ public class ConnectorStatusController {
       String lastRunAt,
       String status,
       int failureCount,
-      FailureDetailDto failure) {}
+      FailureDetailDto failure,
+      boolean runnable) {}
 
   record FailureDetailDto(String type, String message, String at, String stackTrace) {}
 }
