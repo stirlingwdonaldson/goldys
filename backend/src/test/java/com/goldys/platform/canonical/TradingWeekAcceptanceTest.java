@@ -2,14 +2,11 @@ package com.goldys.platform.canonical;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.goldys.platform.reconciliation.DailySalesConflict;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
-import com.goldys.platform.reconciliation.DailySalesResolved;
+import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
+import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,8 +16,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * End-to-end acceptance for the daily-sales slice: canonicalize two sources, then reconcile and
- * resolve. Includes the known 13 Sep gap.
+ * End-to-end acceptance for the daily-sales slice: canonicalize two sources, then read the resolved
+ * projection. Includes the known 13 Sep gap.
  */
 @SpringBootTest
 @Import(PostgresContainerConfiguration.class)
@@ -31,11 +28,14 @@ class TradingWeekAcceptanceTest {
 
   @Autowired JdbcTemplate jdbc;
   @Autowired CanonicalDailySalesService dailySales;
-  @Autowired DailySalesReconciliationService reconciliation;
+  @Autowired ResolvedDailySalesQuery resolvedDailySales;
+  @Autowired ReconciliationExceptionQuery exceptionsQuery;
 
   @BeforeEach
   void clean() {
-    jdbc.update("truncate table canonical_daily_sales, daily_sales_override, resolution_rule");
+    jdbc.update(
+        "truncate table canonical_daily_sales, daily_sales_override, resolution_rule, "
+            + "resolved_daily_sales, reconciliation_exception");
   }
 
   @Test
@@ -54,15 +54,14 @@ class TradingWeekAcceptanceTest {
         new DailySalesInput(
             "CTB", SEP_14, bd("9694.80"), bd("880.91"), bd("8813.89"), rawRecord()));
 
-    List<DailySalesConflict> conflicts = reconciliation.conflicts();
+    var exceptions = exceptionsQuery.listDaily();
+    assertThat(exceptions).hasSize(1);
+    assertThat(exceptions.get(0).tradingDate()).isEqualTo(SEP_13);
+    assertThat(exceptions.get(0).status()).isEqualTo("conflict");
 
-    assertThat(conflicts).hasSize(1);
-    assertThat(conflicts.get(0).tradingDate()).isEqualTo(SEP_13);
-    assertThat(conflicts.get(0).status()).isEqualTo("conflict");
-
-    Optional<DailySalesResolved> resolved = reconciliation.resolved(SEP_13);
-    assertThat(resolved).isPresent();
-    assertThat(resolved.get().resolvedTotal()).isNull(); // unresolved conflict
+    var resolved = resolvedDailySales.between(SEP_13, SEP_13);
+    assertThat(resolved).hasSize(1);
+    assertThat(resolved.get(0).totalSales()).isNull(); // unresolved conflict
   }
 
   private UUID rawRecord() {

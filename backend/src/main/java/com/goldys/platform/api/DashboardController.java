@@ -8,10 +8,10 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.ingestion.IngestionActivityPoint;
 import com.goldys.platform.ingestion.IngestionHealth;
 import com.goldys.platform.ingestion.IngestionService;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
 import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
-import com.goldys.platform.reconciliation.ProductSalesReconciliationService;
+import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
+import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,22 +24,22 @@ import org.springframework.web.bind.annotation.RestController;
 public class DashboardController {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
 
-  private final DailySalesReconciliationService reconciliation;
-  private final ProductSalesReconciliationService productSales;
+  private final ResolvedDailySalesQuery resolvedDailySales;
+  private final ProductSalesExceptionQuery productSalesExceptions;
   private final IngestionService ingestion;
   private final OverrideUsageService overrideUsage;
   private final CurrentUserService currentUser;
   private final PermissionService permissions;
 
   public DashboardController(
-      DailySalesReconciliationService reconciliation,
-      ProductSalesReconciliationService productSales,
+      ResolvedDailySalesQuery resolvedDailySales,
+      ProductSalesExceptionQuery productSalesExceptions,
       IngestionService ingestion,
       OverrideUsageService overrideUsage,
       CurrentUserService currentUser,
       PermissionService permissions) {
-    this.reconciliation = reconciliation;
-    this.productSales = productSales;
+    this.resolvedDailySales = resolvedDailySales;
+    this.productSalesExceptions = productSalesExceptions;
     this.ingestion = ingestion;
     this.overrideUsage = overrideUsage;
     this.currentUser = currentUser;
@@ -49,7 +49,8 @@ public class DashboardController {
   @GetMapping("/summary")
   SummaryDto summary(@AuthenticationPrincipal AccountUserDetails user) {
     permissions.require(currentUser.roleOf(user), RESOURCE, PermissionAction.READ);
-    int openConflicts = reconciliation.conflicts().size() + productSales.conflicts().size();
+    int openConflicts =
+        (int) (resolvedDailySales.countOpenConflicts() + productSalesExceptions.countOpen());
     IngestionHealth health = ingestion.health();
     OverrideUsage usage = overrideUsage.usage();
     return new SummaryDto(

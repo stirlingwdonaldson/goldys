@@ -1,8 +1,7 @@
 package com.goldys.platform.reporting;
 
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.reconciliation.DailySalesReconciliationService;
-import com.goldys.platform.reconciliation.DailySalesResolved;
+import com.goldys.platform.reconciliation.ResolvedDailySalesQuery;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,10 +12,10 @@ import org.springframework.stereotype.Component;
 /** Resolved daily gross sales for a date range, emitted as a line-chart widget. */
 @Component
 public class GetSalesByPeriodTool implements ReportingTool {
-  private final DailySalesReconciliationService reconciliation;
+  private final ResolvedDailySalesQuery resolved;
 
-  public GetSalesByPeriodTool(DailySalesReconciliationService reconciliation) {
-    this.reconciliation = reconciliation;
+  public GetSalesByPeriodTool(ResolvedDailySalesQuery resolved) {
+    this.resolved = resolved;
   }
 
   @Override
@@ -47,19 +46,13 @@ public class GetSalesByPeriodTool implements ReportingTool {
     }
     List<Map<String, Object>> points = new ArrayList<>();
     List<LocalDate> unresolved = new ArrayList<>();
-    for (LocalDate d = in.startDate(); !d.isAfter(in.endDate()); d = d.plusDays(1)) {
-      LocalDate date = d;
-      reconciliation
-          .resolved(date)
-          .ifPresentOrElse(
-              r -> {
-                if (r.resolvedTotal() == null) {
-                  unresolved.add(date);
-                } else {
-                  points.add(point(date, r));
-                }
-              },
-              () -> unresolved.add(date));
+    for (ResolvedDailySalesQuery.ResolvedDailySalesView v :
+        resolved.between(in.startDate(), in.endDate())) {
+      if (v.totalSales() == null) {
+        unresolved.add(v.tradingDate());
+      } else {
+        points.add(point(v));
+      }
     }
     List<String> notices =
         unresolved.isEmpty()
@@ -70,11 +63,11 @@ public class GetSalesByPeriodTool implements ReportingTool {
     return new ToolResult(widget, notices);
   }
 
-  private static Map<String, Object> point(LocalDate date, DailySalesResolved r) {
+  private static Map<String, Object> point(ResolvedDailySalesQuery.ResolvedDailySalesView v) {
     Map<String, Object> m = new LinkedHashMap<>();
-    m.put("date", date.toString());
-    m.put("grossSales", r.resolvedTotal());
-    m.put("source", r.authoritativeSource());
+    m.put("date", v.tradingDate().toString());
+    m.put("grossSales", v.totalSales());
+    m.put("source", v.authoritativeSource());
     return m;
   }
 }

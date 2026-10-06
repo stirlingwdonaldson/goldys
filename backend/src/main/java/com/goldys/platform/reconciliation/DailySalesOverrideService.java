@@ -21,14 +21,17 @@ public class DailySalesOverrideService {
   private final DailySalesOverrideRepository repository;
   private final PermissionService permissions;
   private final CanonicalDailySalesQuery dailySales;
+  private final DailySalesProjector projector;
 
   public DailySalesOverrideService(
       DailySalesOverrideRepository repository,
       PermissionService permissions,
-      CanonicalDailySalesQuery dailySales) {
+      CanonicalDailySalesQuery dailySales,
+      DailySalesProjector projector) {
     this.repository = repository;
     this.permissions = permissions;
     this.dailySales = dailySales;
+    this.projector = projector;
   }
 
   @Transactional
@@ -51,7 +54,10 @@ public class DailySalesOverrideService {
       current.get().supersede(now);
       repository.saveAndFlush(current.get());
     }
-    return repository.save(DailySalesOverride.create(date, source, reason, actorEmail, now));
+    DailySalesOverride saved =
+        repository.save(DailySalesOverride.create(date, source, reason, actorEmail, now));
+    projector.recompute(date);
+    return saved;
   }
 
   /** The current authoritative source for a date, if any override is active. */

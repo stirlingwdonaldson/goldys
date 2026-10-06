@@ -59,6 +59,7 @@ export type {
   DashboardSummary,
   ExceptionStatus,
   HealthResponse,
+  LatestSales,
   OverrideResult,
   RecomputeState,
   RecomputeStatus,

@@ -2,6 +2,7 @@ package com.goldys.platform.canonical;
 
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Lock;
@@ -25,4 +26,13 @@ interface CanonicalProductSalesRepository extends BitemporalRepository<Canonical
       "select distinct p.productNameKey from CanonicalProductSales p where p.supersededAt is null "
           + "order by p.productNameKey")
   List<String> findDistinctCurrentProductNameKeys();
+
+  @Query(
+      "select s from CanonicalProductSales s where s.tradingDate = :date "
+          + "and s.productNameKey = :key and s.supersededAt is null")
+  List<CanonicalProductSales> findCurrentByDateAndProduct(LocalDate date, String key);
+
+  @Query(
+      "select s from CanonicalProductSales s where s.tradingDate in :dates and s.supersededAt is null")
+  List<CanonicalProductSales> findCurrentByDates(Collection<LocalDate> dates);
 }

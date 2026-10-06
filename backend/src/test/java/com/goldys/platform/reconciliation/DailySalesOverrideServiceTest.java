@@ -48,7 +48,10 @@ class DailySalesOverrideServiceTest {
 
     DailySalesOverrideService service =
         new DailySalesOverrideService(
-            mock(DailySalesOverrideRepository.class), permissions, queryWithLightspeed());
+            mock(DailySalesOverrideRepository.class),
+            permissions,
+            queryWithLightspeed(),
+            mock(DailySalesProjector.class));
 
     assertThatThrownBy(() -> service.save(OWNER, ACTOR_EMAIL, SEP_13, "LIGHTSPEED", null))
         .isInstanceOf(AccessDeniedException.class);
@@ -60,7 +63,8 @@ class DailySalesOverrideServiceTest {
         new DailySalesOverrideService(
             mock(DailySalesOverrideRepository.class),
             mock(PermissionService.class),
-            queryWithLightspeed());
+            queryWithLightspeed(),
+            mock(DailySalesProjector.class));
 
     assertThatThrownBy(() -> service.save(OWNER, ACTOR_EMAIL, SEP_13, "CTB", null))
         .isInstanceOf(IllegalArgumentException.class)
@@ -75,7 +79,8 @@ class DailySalesOverrideServiceTest {
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     DailySalesOverrideService service =
-        new DailySalesOverrideService(repository, permissions, queryWithLightspeed());
+        new DailySalesOverrideService(
+            repository, permissions, queryWithLightspeed(), mock(DailySalesProjector.class));
 
     DailySalesOverride saved =
         service.save(OWNER, ACTOR_EMAIL, SEP_13, "LIGHTSPEED", "typo in POS");
@@ -96,7 +101,8 @@ class DailySalesOverrideServiceTest {
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     DailySalesOverrideService service =
-        new DailySalesOverrideService(repository, permissions, queryWithLightspeed());
+        new DailySalesOverrideService(
+            repository, permissions, queryWithLightspeed(), mock(DailySalesProjector.class));
 
     service.save(OWNER, ACTOR_EMAIL, SEP_13, "LIGHTSPEED", null);
 

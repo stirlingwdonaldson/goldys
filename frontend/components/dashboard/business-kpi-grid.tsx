@@ -1,4 +1,4 @@
-import { CalendarDays, Lock, Percent, TrendingUp, Trophy, Utensils } from "lucide-react";
+import { CalendarDays, Lock, Percent, Scale, TrendingUp, Trophy, Utensils } from "lucide-react";
 import { AwaitingData } from "@/components/states/awaiting-data";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { isOwner } from "@/lib/roles";
@@ -6,8 +6,11 @@ import { isOwner } from "@/lib/roles";
 interface BusinessKpiGridProps {
   /** Current user's seniority; gates the Owner-only labor tile. */
   seniority?: string;
-  /** The latest daily-sales total (summed across sources), or null when no data yet. */
-  latestSales?: { date: string; total: number } | null;
+  /**
+   * The latest resolved daily-sales total, or null when there is no data yet. When present but
+   * with a null `total`, the latest date is still unresolved and needs a decision.
+   */
+  latestSales?: { date: string | null; total: number | null } | null;
 }
 
 /**
@@ -18,18 +21,25 @@ export function BusinessKpiGrid({ seniority, latestSales }: BusinessKpiGridProps
   const isOwnerRole = isOwner(seniority);
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      {latestSales ? (
-        <StatCard
-          label="Sales"
-          value={`$${latestSales.total.toFixed(2)}`}
-          hint={`Latest: ${latestSales.date}`}
-          icon={TrendingUp}
-        />
-      ) : (
+      {latestSales == null ? (
         <AwaitingData
           label="Sales"
           description="Net sales today and this week vs. last week."
           reason="Awaiting sales-reporting endpoint."
+          icon={TrendingUp}
+        />
+      ) : latestSales.total == null ? (
+        <AwaitingData
+          label="Sales"
+          description="The latest day's totals disagree across sources."
+          reason="Needs decision in Reconciliation."
+          icon={Scale}
+        />
+      ) : (
+        <StatCard
+          label="Sales"
+          value={`$${latestSales.total.toFixed(2)}`}
+          hint={`Latest: ${latestSales.date}`}
           icon={TrendingUp}
         />
       )}

@@ -3,6 +3,8 @@ package com.goldys.platform.reconciliation;
 import jakarta.persistence.LockModeType;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +20,11 @@ interface DailySalesOverrideRepository extends JpaRepository<DailySalesOverride,
   @Query(
       "select o from DailySalesOverride o where o.tradingDate = :date and o.supersededAt is null")
   Optional<DailySalesOverride> findCurrent(LocalDate date);
+
+  @Query(
+      "select o from DailySalesOverride o where o.tradingDate in :dates "
+          + "and o.supersededAt is null")
+  List<DailySalesOverride> findCurrentByDates(Collection<LocalDate> dates);
 
   long countByRecordedAtAfter(Instant since);
 }

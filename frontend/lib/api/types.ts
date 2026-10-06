@@ -93,6 +93,16 @@ export interface DailySales {
   net: number | string;
 }
 
+/**
+ * The latest trading date's resolved total, or nulls when there is no data yet or the latest
+ * date is still unresolved. `total: null` with a non-null `date` means "needs a decision".
+ */
+export interface LatestSales {
+  date: string | null;
+  total: number | null;
+  authoritativeSource: string | null;
+}
+
 export interface DashboardSummary {
   ingestionCompleteness: number | null;
   openConflicts: number;
@@ -165,4 +175,5 @@ export interface Api {
   listRuleAudit(): Promise<RuleAuditEntry[]>;
   listProducts(): Promise<string[]>;
   listDailySales(): Promise<DailySales[]>;
+  getLatestSales(): Promise<LatestSales>;
 }

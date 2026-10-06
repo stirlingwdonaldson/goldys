@@ -25,10 +25,18 @@ public class ResolutionRuleService {
 
   private final ResolutionRuleRepository repository;
   private final PermissionService permissions;
+  private final DailySalesProjector projector;
+  private final ProductSalesProjector productProjector;
 
-  public ResolutionRuleService(ResolutionRuleRepository repository, PermissionService permissions) {
+  public ResolutionRuleService(
+      ResolutionRuleRepository repository,
+      PermissionService permissions,
+      DailySalesProjector projector,
+      ProductSalesProjector productProjector) {
     this.repository = repository;
     this.permissions = permissions;
+    this.projector = projector;
+    this.productProjector = productProjector;
   }
 
   public List<ResolutionRuleView> list() {
@@ -57,6 +65,12 @@ public class ResolutionRuleService {
                 input.sourcePriority(),
                 actorEmail,
                 now));
+    if ("daily_sales".equals(input.entityType())) {
+      projector.recomputeAll();
+    }
+    if ("product_sales".equals(input.entityType())) {
+      productProjector.recomputeAll();
+    }
     return toView(saved);
   }
 
@@ -74,6 +88,12 @@ public class ResolutionRuleService {
             .findCurrentById(ruleId)
             .orElseThrow(() -> new IllegalArgumentException("No current rule with id " + id));
     current.supersede(CLOCK.instant(), actorEmail);
+    if ("daily_sales".equals(current.entityType())) {
+      projector.recomputeAll();
+    }
+    if ("product_sales".equals(current.entityType())) {
+      productProjector.recomputeAll();
+    }
   }
 
   public Optional<ResolutionRule> findCurrent(String entityType, String fieldKey) {

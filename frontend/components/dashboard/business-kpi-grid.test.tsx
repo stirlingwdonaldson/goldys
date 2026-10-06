@@ -39,4 +39,10 @@ describe("BusinessKpiGrid", () => {
     expect(screen.getByText("$10865.72")).toBeInTheDocument();
     expect(screen.queryByText(/awaiting sales-reporting/i)).not.toBeInTheDocument();
   });
+
+  it("shows a needs-decision placeholder when the latest date is unresolved", () => {
+    render(<BusinessKpiGrid seniority="OWNER" latestSales={{ date: "2026-10-05", total: null }} />);
+    expect(screen.getByText(/needs decision/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\$10865/)).not.toBeInTheDocument();
+  });
 });

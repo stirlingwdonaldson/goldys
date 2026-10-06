@@ -2,6 +2,7 @@ package com.goldys.platform.canonical;
 
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,6 +26,14 @@ interface CanonicalDailySalesRepository extends BitemporalRepository<CanonicalDa
           + "and s.supersededAt is null")
   List<CanonicalDailySales> findCurrentByDate(LocalDate date);
 
+  @Query(
+      "select s from CanonicalDailySales s where s.tradingDate in :dates "
+          + "and s.supersededAt is null")
+  List<CanonicalDailySales> findCurrentByDates(Collection<LocalDate> dates);
+
   @Query("select s from CanonicalDailySales s where s.supersededAt is null")
   List<CanonicalDailySales> findAllCurrent();
+
+  @Query("select max(s.tradingDate) from CanonicalDailySales s where s.supersededAt is null")
+  Optional<LocalDate> findLatestTradingDate();
 }

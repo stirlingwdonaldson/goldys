@@ -6,6 +6,7 @@ import type {
   ConnectorStatus,
   DailySales,
   DashboardSummary,
+  LatestSales,
   OverrideResult,
   ProductOverrideInput,
   RecomputeStatus,
@@ -377,5 +378,10 @@ export const demoApi: Api = {
       { date: "2026-10-04", source: "CTB", totalSales: 29605.13, gst: 2689.54, net: 26915.6 },
       { date: "2026-10-03", source: "CTB", totalSales: 43618.92, gst: 3960.39, net: 39658.53 },
     ];
+  },
+
+  async getLatestSales(): Promise<LatestSales> {
+    await delay(300);
+    return { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" };
   },
 };
