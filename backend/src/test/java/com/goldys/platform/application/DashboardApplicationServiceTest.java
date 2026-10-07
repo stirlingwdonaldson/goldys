@@ -87,7 +87,9 @@ class DashboardApplicationServiceTest {
         .thenReturn(
             new RankedListResult(
                 MetricId.PRODUCT_TOP_SELLERS,
-                List.of(new MetricRankedItem("chips", new BigDecimal("50"), new BigDecimal("10"))),
+                List.of(
+                    new MetricRankedItem(
+                        "chips", new BigDecimal("50"), new BigDecimal("10"), true)),
                 List.of(),
                 provenance(MetricId.PRODUCT_TOP_SELLERS)));
 
@@ -97,7 +99,7 @@ class DashboardApplicationServiceTest {
     assertThat(sellers.get(0).name()).isEqualTo("chips");
     assertThat(sellers.get(0).quantitySold()).isEqualByComparingTo("10");
     assertThat(sellers.get(0).amount()).isEqualByComparingTo("50");
-    assertThat(sellers.get(0).hasConflict()).isFalse();
+    assertThat(sellers.get(0).hasConflict()).isTrue();
   }
 
   @Test

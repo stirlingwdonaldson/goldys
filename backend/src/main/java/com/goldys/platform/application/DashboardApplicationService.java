@@ -114,7 +114,7 @@ public class DashboardApplicationService {
                 new MetricQuery(
                     MetricId.PRODUCT_TOP_SELLERS, range, TimeGrain.DAY, Set.of(), null));
     return result.items().stream()
-        .map(i -> new TopSeller(i.label(), i.secondary(), i.primary(), false))
+        .map(i -> new TopSeller(i.label(), i.secondary(), i.primary(), i.hasConflict()))
         .toList();
   }
 

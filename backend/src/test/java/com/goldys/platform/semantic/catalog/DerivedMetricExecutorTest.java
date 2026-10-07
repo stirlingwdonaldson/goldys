@@ -378,8 +378,7 @@ class DerivedMetricExecutorTest {
   void topSellersReturnsRankedList() {
     when(product.topSellers(SEP_13, SEP_13, 5))
         .thenReturn(
-            List.of(
-                new TopSeller("Burger", new BigDecimal("10"), new BigDecimal("300.00"), false)));
+            List.of(new TopSeller("Burger", new BigDecimal("10"), new BigDecimal("300.00"), true)));
 
     RankedListResult result =
         (RankedListResult)
@@ -396,6 +395,7 @@ class DerivedMetricExecutorTest {
     assertThat(result.items().get(0).label()).isEqualTo("Burger");
     assertThat(result.items().get(0).primary()).isEqualByComparingTo("300.00");
     assertThat(result.items().get(0).secondary()).isEqualByComparingTo("10");
+    assertThat(result.items().get(0).hasConflict()).isTrue();
   }
 
   private static ReservationSummary summary(

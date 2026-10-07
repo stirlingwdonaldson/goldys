@@ -190,7 +190,10 @@ public class DerivedMetricExecutor implements MetricExecutor {
   private RankedListResult topSellers(MetricQuery query) {
     List<MetricRankedItem> items =
         product.topSellers(query.range().from(), query.range().to(), 5).stream()
-            .map(t -> new MetricRankedItem(t.productName(), t.amount(), t.quantitySold()))
+            .map(
+                t ->
+                    new MetricRankedItem(
+                        t.productName(), t.amount(), t.quantitySold(), t.hasConflict()))
             .toList();
     return new RankedListResult(query.metric(), items, List.of(), provenance(query));
   }
