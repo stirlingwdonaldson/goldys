@@ -1,18 +1,24 @@
 package com.goldys.platform.application;
 
+import com.goldys.platform.canonical.CanonicalDailySalesQuery;
+import com.goldys.platform.canonical.DailySalesView;
 import com.goldys.platform.config.FreshnessProperties;
 import com.goldys.platform.semantic.ConnectorHealth;
 import com.goldys.platform.semantic.ConnectorHealthQuery;
 import com.goldys.platform.semantic.FreshnessState;
 import com.goldys.platform.semantic.Provenance;
+import com.goldys.platform.semantic.ResolutionDetail;
 import com.goldys.platform.semantic.ResolutionState;
 import com.goldys.platform.semantic.ResolutionStateQuery;
+import com.goldys.platform.semantic.SourceValue;
 import com.goldys.platform.semantic.TrustQuery;
 import com.goldys.platform.semantic.TrustState;
 import com.goldys.platform.semantic.TrustSummary;
+import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.TimeRange;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -21,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /** Derives a metric's trust state and freshness from its resolution history and connectors. */
@@ -30,16 +37,19 @@ public class TrustService implements TrustQuery {
   private final ConnectorHealthQuery connectors;
   private final FreshnessProperties freshness;
   private final MetricCatalog catalog;
+  private final CanonicalDailySalesQuery dailySales;
 
   public TrustService(
       ResolutionStateQuery resolution,
       ConnectorHealthQuery connectors,
       FreshnessProperties freshness,
-      MetricCatalog catalog) {
+      MetricCatalog catalog,
+      CanonicalDailySalesQuery dailySales) {
     this.resolution = resolution;
     this.connectors = connectors;
     this.freshness = freshness;
     this.catalog = catalog;
+    this.dailySales = dailySales;
   }
 
   @Override
@@ -62,8 +72,77 @@ public class TrustService implements TrustQuery {
 
   @Override
   public Provenance provenanceFor(MetricId metric, LocalDate date) {
-    // Drill-down assembly is deferred to Task 7.
-    throw new UnsupportedOperationException("provenanceFor is not implemented yet");
+    requireSalesMetric(metric);
+    ResolutionState state =
+        resolution.states(metric, date, date).stream()
+            .filter(s -> s.date().equals(date))
+            .findFirst()
+            .orElse(null);
+    List<DailySalesView> rows = dailySales.currentDailySalesForDate(date);
+    List<SourceValue> sources =
+        rows.stream()
+            .map(r -> new SourceValue(r.sourceSystem(), valueFor(metric, r), r.recordedAt()))
+            .toList();
+    List<UUID> rawRecordIds = dailySales.rawRecordIdsForDate(date);
+    BigDecimal resolvedValue = resolvedValueFor(metric, state, rows);
+    TrustSummary trust = trustFor(metric, new TimeRange(date, date, Calendar.CALENDAR));
+    return new Provenance(
+        metric, date, resolvedValue, trust, sources, resolutionDetail(state), rawRecordIds);
+  }
+
+  private static void requireSalesMetric(MetricId metric) {
+    if (metric != MetricId.SALES_GROSS
+        && metric != MetricId.SALES_NET
+        && metric != MetricId.SALES_GST) {
+      throw new IllegalArgumentException("drill-down not yet available for " + metric.value());
+    }
+  }
+
+  private static BigDecimal valueFor(MetricId metric, DailySalesView row) {
+    return switch (metric) {
+      case SALES_GROSS -> row.totalSales();
+      case SALES_NET -> row.netTotal();
+      case SALES_GST -> row.gstTotal();
+      default ->
+          throw new IllegalArgumentException("drill-down not yet available for " + metric.value());
+    };
+  }
+
+  /** The value surfaced to operators: the winning source's figure, or null while unresolved. */
+  private static BigDecimal resolvedValueFor(
+      MetricId metric, ResolutionState state, List<DailySalesView> rows) {
+    if (state == null) {
+      return null;
+    }
+    if ("override".equals(state.resolutionType()) || "rule".equals(state.resolutionType())) {
+      String authoritative = state.authoritativeSource();
+      return rows.stream()
+          .filter(r -> r.sourceSystem().equals(authoritative))
+          .findFirst()
+          .map(r -> valueFor(metric, r))
+          .orElse(null);
+    }
+    if ("agreed".equals(state.resolutionType())) {
+      return rows.stream().findFirst().map(r -> valueFor(metric, r)).orElse(null);
+    }
+    return null; // "conflict" or "missing" carry no resolved total
+  }
+
+  private static ResolutionDetail resolutionDetail(ResolutionState state) {
+    if (state == null) {
+      return new ResolutionDetail(null, null, "no resolution for this date", null, null);
+    }
+    String reason =
+        switch (state.resolutionType()) {
+          case "override" -> "manually overridden";
+          case "rule" -> "resolved by standing rule";
+          case "agreed" -> "sources agree within tolerance";
+          case "conflict" -> "conflicting sources unresolved";
+          case "missing" -> "single source or missing data";
+          default -> state.resolutionType();
+        };
+    return new ResolutionDetail(
+        state.resolutionType(), state.authoritativeSource(), reason, null, state.resolvedAt());
   }
 
   private static TrustState aggregate(List<ResolutionState> states, TimeRange range) {

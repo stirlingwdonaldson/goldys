@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.config.FreshnessProperties;
 import com.goldys.platform.semantic.ConnectorHealth;
 import com.goldys.platform.semantic.ConnectorHealthQuery;
@@ -244,7 +245,8 @@ class TrustServiceTest {
         new FreshnessProperties(
             Map.of("resolved_daily_sales", THRESHOLD),
             Map.of("resolved_daily_sales", SALES_SOURCES));
-    return new TrustService(resolution, connectors, freshness, catalog);
+    CanonicalDailySalesQuery dailySales = mock(CanonicalDailySalesQuery.class);
+    return new TrustService(resolution, connectors, freshness, catalog, dailySales);
   }
 
   private static ResolutionState state(LocalDate date, String type, String source) {

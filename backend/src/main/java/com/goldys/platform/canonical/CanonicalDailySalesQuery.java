@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,6 +33,13 @@ public class CanonicalDailySalesQuery {
 
   public Optional<LocalDate> latestTradingDate() {
     return repository.findLatestTradingDate();
+  }
+
+  /** The raw ingestion record ids underpinning a trading date's per-source totals. */
+  public List<UUID> rawRecordIdsForDate(LocalDate date) {
+    return repository.findCurrentByDate(date).stream()
+        .map(CanonicalDailySales::rawRecordId)
+        .toList();
   }
 
   private DailySalesView toView(CanonicalDailySales s) {
