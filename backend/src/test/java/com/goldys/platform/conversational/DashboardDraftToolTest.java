@@ -184,6 +184,143 @@ class DashboardDraftToolTest {
     assertThat(context.toAnswerPayload().draft().title()).isEqualTo("My dashboard");
   }
 
+  @Test
+  void draftDefaultsNullFiltersToEmpty() {
+    CreateDashboardDraftInput input =
+        new CreateDashboardDraftInput(
+            "My dashboard",
+            "Daily sales",
+            null,
+            List.of(
+                new SavedWidget(
+                    "w1",
+                    "time-series",
+                    List.of(
+                        new MetricQuery(
+                            MetricId.SALES_GROSS, RANGE, TimeGrain.DAY, Set.of(), null)),
+                    new WidgetLayout(6, 2))));
+
+    DashboardDraft draft = tool.toDraft(input);
+
+    assertThat(draft.filters()).isEqualTo(DashboardFilters.empty());
+  }
+
+  @Test
+  void draftAcceptsRankedListForTopSellers() {
+    CreateDashboardDraftInput input =
+        new CreateDashboardDraftInput(
+            "Top sellers",
+            null,
+            DashboardFilters.empty(),
+            List.of(
+                new SavedWidget(
+                    "w1",
+                    "ranked-list",
+                    List.of(
+                        new MetricQuery(
+                            MetricId.PRODUCT_TOP_SELLERS, RANGE, TimeGrain.DAY, Set.of(), null)),
+                    new WidgetLayout(6, 2))));
+
+    tool.validate(input);
+
+    assertThat(tool.toDraft(input).widgets().get(0).renderType()).isEqualTo("ranked-list");
+  }
+
+  @Test
+  void draftRejectsStatForMultiQueryWidget() {
+    assertThatThrownBy(
+            () ->
+                tool.validate(
+                    new CreateDashboardDraftInput(
+                        "X",
+                        null,
+                        DashboardFilters.empty(),
+                        List.of(
+                            new SavedWidget(
+                                "w1",
+                                "stat",
+                                List.of(
+                                    new MetricQuery(
+                                        MetricId.SALES_GROSS, RANGE, TimeGrain.DAY, Set.of(), null),
+                                    new MetricQuery(
+                                        MetricId.SALES_NET, RANGE, TimeGrain.DAY, Set.of(), null)),
+                                new WidgetLayout(6, 2))))))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void draftRejectsRankedListForMultiQueryWidget() {
+    assertThatThrownBy(
+            () ->
+                tool.validate(
+                    new CreateDashboardDraftInput(
+                        "X",
+                        null,
+                        DashboardFilters.empty(),
+                        List.of(
+                            new SavedWidget(
+                                "w1",
+                                "ranked-list",
+                                List.of(
+                                    new MetricQuery(
+                                        MetricId.SALES_GROSS, RANGE, TimeGrain.DAY, Set.of(), null),
+                                    new MetricQuery(
+                                        MetricId.SALES_NET, RANGE, TimeGrain.DAY, Set.of(), null)),
+                                new WidgetLayout(6, 2))))))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void draftRejectsRankedMetricInCompositeWidget() {
+    assertThatThrownBy(
+            () ->
+                tool.validate(
+                    new CreateDashboardDraftInput(
+                        "X",
+                        null,
+                        DashboardFilters.empty(),
+                        List.of(
+                            new SavedWidget(
+                                "w1",
+                                "time-series",
+                                List.of(
+                                    new MetricQuery(
+                                        MetricId.PRODUCT_TOP_SELLERS,
+                                        RANGE,
+                                        TimeGrain.DAY,
+                                        Set.of(),
+                                        null),
+                                    new MetricQuery(
+                                        MetricId.SALES_GROSS,
+                                        RANGE,
+                                        TimeGrain.DAY,
+                                        Set.of(),
+                                        null)),
+                                new WidgetLayout(6, 2))))))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void draftAcceptsCompositeTimeSeriesWidget() {
+    CreateDashboardDraftInput input =
+        new CreateDashboardDraftInput(
+            "Sales and net",
+            null,
+            DashboardFilters.empty(),
+            List.of(
+                new SavedWidget(
+                    "w1",
+                    "time-series",
+                    List.of(
+                        new MetricQuery(MetricId.SALES_GROSS, RANGE, TimeGrain.DAY, Set.of(), null),
+                        new MetricQuery(MetricId.SALES_NET, RANGE, TimeGrain.DAY, Set.of(), null)),
+                    new WidgetLayout(12, 2))));
+
+    tool.validate(input);
+
+    assertThat(tool.toDraft(input).widgets().get(0).queries()).hasSize(2);
+  }
+
   private static CreateDashboardDraftInput validInput() {
     return new CreateDashboardDraftInput(
         "My dashboard",

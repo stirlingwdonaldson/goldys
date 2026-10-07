@@ -29,6 +29,8 @@ import org.springframework.stereotype.Component;
 public class CreateDashboardDraftTool implements ReportingTool {
   private static final Set<String> TIME_SERIES_RENDER_TYPES =
       Set.of("stat", "time-series", "bar-chart", "table");
+  private static final Set<String> COMPOSITE_RENDER_TYPES =
+      Set.of("time-series", "bar-chart", "table");
   private static final String RANKED_LIST = "ranked-list";
 
   private final MetricCatalog catalog;
@@ -123,11 +125,15 @@ public class CreateDashboardDraftTool implements ReportingTool {
   }
 
   private boolean isRenderTypeAllowed(SavedWidget widget) {
-    boolean ranked =
-        widget.queries().stream().anyMatch(q -> q.metric() == MetricId.PRODUCT_TOP_SELLERS);
-    if (ranked) {
-      return RANKED_LIST.equals(widget.renderType());
+    List<MetricQuery> queries = widget.queries();
+    boolean anyRanked = queries.stream().anyMatch(q -> q.metric() == MetricId.PRODUCT_TOP_SELLERS);
+    if (anyRanked) {
+      // A ranked-list result is single-query only and only renders as 'ranked-list'.
+      return queries.size() == 1 && RANKED_LIST.equals(widget.renderType());
     }
-    return TIME_SERIES_RENDER_TYPES.contains(widget.renderType());
+    if (queries.size() == 1) {
+      return TIME_SERIES_RENDER_TYPES.contains(widget.renderType());
+    }
+    return COMPOSITE_RENDER_TYPES.contains(widget.renderType());
   }
 }

@@ -15,6 +15,7 @@ public record CreateDashboardDraftInput(
     String title, String description, DashboardFilters filters, List<SavedWidget> widgets)
     implements ToolInput {
   public CreateDashboardDraftInput {
+    filters = filters == null ? DashboardFilters.empty() : filters;
     widgets = widgets == null ? List.of() : List.copyOf(widgets);
   }
 }
