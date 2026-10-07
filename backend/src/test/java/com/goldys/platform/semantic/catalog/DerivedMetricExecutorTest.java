@@ -13,6 +13,7 @@ import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.goldys.platform.semantic.ReservationSummary;
 import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.semantic.TopSeller;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -323,6 +324,30 @@ class DerivedMetricExecutorTest {
                         null));
 
     assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("-10.00");
+  }
+
+  @Test
+  void topSellersReturnsRankedList() {
+    when(product.topSellers(SEP_13, SEP_13, 5))
+        .thenReturn(
+            List.of(
+                new TopSeller("Burger", new BigDecimal("10"), new BigDecimal("300.00"), false)));
+
+    RankedListResult result =
+        (RankedListResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.PRODUCT_TOP_SELLERS,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(result.items()).hasSize(1);
+    assertThat(result.items().get(0).label()).isEqualTo("Burger");
+    assertThat(result.items().get(0).primary()).isEqualByComparingTo("300.00");
+    assertThat(result.items().get(0).secondary()).isEqualByComparingTo("10");
   }
 
   private static ReservationSummary summary(
