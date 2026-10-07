@@ -2,25 +2,32 @@ package com.goldys.platform.reporting;
 
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.semantic.ReservationMetricsQuery;
-import com.goldys.platform.semantic.ReservationSummary;
-import com.goldys.platform.widget.Column;
-import com.goldys.platform.widget.TableWidgetSpec;
-import com.goldys.platform.widget.WidgetQuery;
-import java.util.LinkedHashMap;
+import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.MetricResult;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeRange;
+import com.goldys.platform.widget.WidgetSpec;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
-/** Resolved reservation summary for a date, emitted as a table widget. */
+/**
+ * Resolved reservation summary for a date, emitted as a table widget over the catalogue-metric
+ * subset (bookings, attended, covers, no-shows). The non-metric columns (cancelled, walk-ins) and
+ * the derived ratios are deferred — see the dashboards design spec §18.
+ */
 @Component
 public class GetReservationSummaryTool implements ReportingTool {
-  private final ReservationMetricsQuery metrics;
+  private final MetricQueryService metrics;
+  private final WidgetRenderer renderer;
 
-  public GetReservationSummaryTool(ReservationMetricsQuery metrics) {
+  public GetReservationSummaryTool(MetricQueryService metrics, WidgetRenderer renderer) {
     this.metrics = metrics;
+    this.renderer = renderer;
   }
 
   @Override
@@ -54,47 +61,26 @@ public class GetReservationSummaryTool implements ReportingTool {
       throw new IllegalArgumentException(
           "Expected GetReservationSummaryInput, got " + input.getClass().getSimpleName());
     }
-    Optional<ReservationSummary> summary = metrics.summary(in.date());
-    List<Map<String, Object>> rows =
-        summary.map(GetReservationSummaryTool::toRow).map(List::of).orElse(List.of());
-    List<String> notices =
-        summary.isPresent() ? List.of() : List.of("No reservation data for " + in.date());
-
-    TableWidgetSpec widget =
-        new TableWidgetSpec(
-            UUID.randomUUID().toString(),
-            "Reservation summary",
-            "Resolved reservation metrics for " + in.date(),
-            columns(),
-            rows,
-            new WidgetQuery(ToolId.GET_RESERVATION_SUMMARY.name(), in.toMap()));
-    return new ToolResult(widget, notices);
+    List<MetricResult> results = toMetricQueries(in).stream().map(metrics::query).toList();
+    WidgetSpec widget = renderer.render(UUID.randomUUID().toString(), "table", results);
+    return new ToolResult(widget, results.stream().flatMap(r -> r.notices().stream()).toList());
   }
 
-  private static List<Column> columns() {
+  @Override
+  public List<MetricQuery> toMetricQueries(ToolInput input) {
+    if (!(input instanceof GetReservationSummaryInput in)) {
+      throw new IllegalArgumentException(
+          "Expected GetReservationSummaryInput, got " + input.getClass().getSimpleName());
+    }
+    TimeRange range = new TimeRange(in.date(), in.date(), Calendar.CALENDAR);
     return List.of(
-        new Column("bookings", "Bookings", null),
-        new Column("attended", "Attended", null),
-        new Column("covers", "Covers", null),
-        new Column("cancelled", "Cancelled", null),
-        new Column("noShows", "No-shows", null),
-        new Column("walkIns", "Walk-ins", null),
-        new Column("avgPartySize", "Avg party size", "decimal"),
-        new Column("noShowRate", "No-show rate", "percent"),
-        new Column("bookingToCoverConversion", "Conversion", "percent"));
+        q(MetricId.RESERVATIONS_BOOKINGS, range),
+        q(MetricId.RESERVATIONS_ATTENDED, range),
+        q(MetricId.RESERVATIONS_COVERS, range),
+        q(MetricId.RESERVATIONS_NO_SHOWS, range));
   }
 
-  private static Map<String, Object> toRow(ReservationSummary s) {
-    Map<String, Object> row = new LinkedHashMap<>();
-    row.put("bookings", s.bookings());
-    row.put("attended", s.attended());
-    row.put("covers", s.covers());
-    row.put("cancelled", s.cancelled());
-    row.put("noShows", s.noShows());
-    row.put("walkIns", s.walkIns());
-    row.put("avgPartySize", s.avgPartySize());
-    row.put("noShowRate", s.noShowRate());
-    row.put("bookingToCoverConversion", s.bookingToCoverConversion());
-    return row;
+  private static MetricQuery q(MetricId id, TimeRange range) {
+    return new MetricQuery(id, range, TimeGrain.DAY, Set.of(), null);
   }
 }

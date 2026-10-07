@@ -3,22 +3,14 @@ package com.goldys.platform.reporting;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.catalog.Calendar;
-import com.goldys.platform.semantic.catalog.MetricCatalog;
 import com.goldys.platform.semantic.catalog.MetricId;
-import com.goldys.platform.semantic.catalog.MetricPoint;
 import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
-import com.goldys.platform.semantic.catalog.MetricSeries;
+import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
-import com.goldys.platform.semantic.catalog.TimeSeriesResult;
-import com.goldys.platform.widget.Column;
-import com.goldys.platform.widget.TableWidgetSpec;
-import com.goldys.platform.widget.WidgetQuery;
-import java.math.BigDecimal;
-import java.util.LinkedHashMap;
+import com.goldys.platform.widget.WidgetSpec;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -27,11 +19,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class GetFoodCostTool implements ReportingTool {
   private final MetricQueryService metrics;
-  private final MetricCatalog catalog;
+  private final WidgetRenderer renderer;
 
-  public GetFoodCostTool(MetricQueryService metrics, MetricCatalog catalog) {
+  public GetFoodCostTool(MetricQueryService metrics, WidgetRenderer renderer) {
     this.metrics = metrics;
-    this.catalog = catalog;
+    this.renderer = renderer;
   }
 
   @Override
@@ -65,51 +57,22 @@ public class GetFoodCostTool implements ReportingTool {
       throw new IllegalArgumentException(
           "Expected GetFoodCostInput, got " + input.getClass().getSimpleName());
     }
-    TimeRange range = new TimeRange(in.startDate(), in.endDate(), Calendar.CALENDAR);
-    TimeSeriesResult purchases = query(MetricId.INVENTORY_PURCHASES, range);
-    TimeSeriesResult wastage = query(MetricId.INVENTORY_WASTAGE, range);
-
-    Map<String, Object> row = new LinkedHashMap<>();
-    row.put("purchases", sum(purchases));
-    row.put("wastage", sum(wastage));
-
-    TableWidgetSpec widget =
-        new TableWidgetSpec(
-            UUID.randomUUID().toString(),
-            "Food cost",
-            "Resolved food cost for " + in.startDate() + " to " + in.endDate(),
-            List.of(
-                new Column(
-                    "purchases",
-                    catalog.definition(MetricId.INVENTORY_PURCHASES).name(),
-                    "currency"),
-                new Column(
-                    "wastage", catalog.definition(MetricId.INVENTORY_WASTAGE).name(), "currency")),
-            List.of(row),
-            new WidgetQuery(ToolId.GET_FOOD_COST.name(), in.toMap()));
-    return new ToolResult(widget, notices(purchases, wastage));
+    List<MetricResult> results = toMetricQueries(in).stream().map(metrics::query).toList();
+    WidgetSpec widget = renderer.render(UUID.randomUUID().toString(), "table", results);
+    return new ToolResult(widget, results.stream().flatMap(r -> r.notices().stream()).toList());
   }
 
-  private TimeSeriesResult query(MetricId id, TimeRange range) {
-    return (TimeSeriesResult)
-        metrics.query(new MetricQuery(id, range, TimeGrain.DAY, Set.of(), null));
-  }
-
-  private static BigDecimal sum(TimeSeriesResult result) {
-    BigDecimal total = BigDecimal.ZERO;
-    boolean any = false;
-    for (MetricSeries series : result.series()) {
-      for (MetricPoint point : series.points()) {
-        if (point.value() != null) {
-          total = total.add(point.value());
-          any = true;
-        }
-      }
+  @Override
+  public List<MetricQuery> toMetricQueries(ToolInput input) {
+    if (!(input instanceof GetFoodCostInput in)) {
+      throw new IllegalArgumentException(
+          "Expected GetFoodCostInput, got " + input.getClass().getSimpleName());
     }
-    return any ? total : null;
+    TimeRange range = new TimeRange(in.startDate(), in.endDate(), Calendar.CALENDAR);
+    return List.of(q(MetricId.INVENTORY_PURCHASES, range), q(MetricId.INVENTORY_WASTAGE, range));
   }
 
-  private static List<String> notices(TimeSeriesResult... results) {
-    return List.of(results).stream().flatMap(r -> r.notices().stream()).toList();
+  private static MetricQuery q(MetricId id, TimeRange range) {
+    return new MetricQuery(id, range, TimeGrain.DAY, Set.of(), null);
   }
 }

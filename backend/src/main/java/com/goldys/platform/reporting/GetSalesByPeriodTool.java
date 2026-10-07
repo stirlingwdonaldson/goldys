@@ -3,17 +3,13 @@ package com.goldys.platform.reporting;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.catalog.Calendar;
-import com.goldys.platform.semantic.catalog.MetricCatalog;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
-import com.goldys.platform.semantic.catalog.TimeSeriesResult;
-import com.goldys.platform.widget.Point;
-import com.goldys.platform.widget.Series;
-import com.goldys.platform.widget.TimeSeriesWidgetSpec;
-import com.goldys.platform.widget.WidgetQuery;
+import com.goldys.platform.widget.WidgetSpec;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -23,11 +19,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class GetSalesByPeriodTool implements ReportingTool {
   private final MetricQueryService metrics;
-  private final MetricCatalog catalog;
+  private final WidgetRenderer renderer;
 
-  public GetSalesByPeriodTool(MetricQueryService metrics, MetricCatalog catalog) {
+  public GetSalesByPeriodTool(MetricQueryService metrics, WidgetRenderer renderer) {
     this.metrics = metrics;
-    this.catalog = catalog;
+    this.renderer = renderer;
   }
 
   @Override
@@ -67,29 +63,23 @@ public class GetSalesByPeriodTool implements ReportingTool {
       throw new IllegalArgumentException(
           "Unsupported metric for get_sales_by_period: " + in.metric());
     }
-    TimeSeriesResult result =
-        (TimeSeriesResult)
-            metrics.query(
-                new MetricQuery(
-                    in.metric(),
-                    new TimeRange(in.startDate(), in.endDate(), Calendar.CALENDAR),
-                    TimeGrain.DAY,
-                    Set.of(),
-                    null));
+    List<MetricResult> results = toMetricQueries(in).stream().map(metrics::query).toList();
+    WidgetSpec widget = renderer.render(UUID.randomUUID().toString(), "time-series", results);
+    return new ToolResult(widget, results.stream().flatMap(r -> r.notices().stream()).toList());
+  }
 
-    String metricName = catalog.definition(in.metric()).name();
-    List<Point> points =
-        result.series().get(0).points().stream()
-            .map(p -> new Point(p.bucketStart().toString(), p.value()))
-            .toList();
-    TimeSeriesWidgetSpec widget =
-        new TimeSeriesWidgetSpec(
-            UUID.randomUUID().toString(),
-            "Daily sales",
-            "Resolved " + metricName.toLowerCase() + " per day.",
-            List.of(new Series("grossSales", metricName, points)),
-            "currency",
-            new WidgetQuery(ToolId.GET_SALES_BY_PERIOD.name(), in.toMap()));
-    return new ToolResult(widget, result.notices());
+  @Override
+  public List<MetricQuery> toMetricQueries(ToolInput input) {
+    if (!(input instanceof GetSalesByPeriodInput in)) {
+      throw new IllegalArgumentException(
+          "Expected GetSalesByPeriodInput, got " + input.getClass().getSimpleName());
+    }
+    return List.of(
+        new MetricQuery(
+            in.metric(),
+            new TimeRange(in.startDate(), in.endDate(), Calendar.CALENDAR),
+            TimeGrain.DAY,
+            Set.of(),
+            null));
   }
 }
