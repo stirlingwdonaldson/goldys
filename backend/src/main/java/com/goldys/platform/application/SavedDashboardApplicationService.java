@@ -14,10 +14,13 @@ import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
 import com.goldys.platform.reporting.WidgetRenderer;
+import com.goldys.platform.semantic.catalog.Comparison;
+import com.goldys.platform.semantic.catalog.Dimension;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
 import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
 import com.goldys.platform.semantic.catalog.MetricResult;
+import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.widget.WidgetSpec;
 import java.time.Clock;
 import java.time.Instant;
@@ -152,9 +155,15 @@ public class SavedDashboardApplicationService {
     return d;
   }
 
-  /** Dashboard-level filters merged into a widget query; the real merge lands in a later task. */
-  private static MetricQuery merge(MetricQuery q, DashboardFilters f, MetricCatalog catalog) {
-    return q;
+  /** Dashboard-level filters merged into a widget query, gated by the metric's valid dimensions. */
+  static MetricQuery merge(MetricQuery q, DashboardFilters f, MetricCatalog catalog) {
+    TimeRange range = f.dateRange() != null ? f.dateRange() : q.range();
+    Comparison comparison = f.comparison() != null ? f.comparison() : q.comparison();
+    Set<Dimension> valid = catalog.definition(q.metric()).validDimensions();
+    Set<Dimension> dims = new java.util.LinkedHashSet<>(q.dimensions());
+    dims.addAll(f.dimensions());
+    dims.retainAll(valid);
+    return new MetricQuery(q.metric(), range, q.grain(), dims, comparison);
   }
 
   private SavedDashboard requireDashboard(UUID id) {
