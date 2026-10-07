@@ -181,6 +181,27 @@ describe("dashboard library", () => {
     expect(await screen.findByText(/no saved dashboards/i)).toBeInTheDocument();
   });
 
+  it("opens the template dialog from the empty state", async () => {
+    const templates = [
+      { id: "daily", name: "Daily Management", description: "Today's sales", widgets: [widget()] },
+    ];
+    const api = {
+      listDashboards: async () => [],
+      listDashboardTemplates: async () => templates,
+    } as unknown as Api;
+    render(
+      <DemoModeProvider>
+        <DashboardsPageView api={api} />
+      </DemoModeProvider>,
+    );
+    expect(await screen.findByText(/no saved dashboards/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /new from template/i }));
+
+    // The dialog must actually appear (the regression was that it was never mounted here).
+    expect(await screen.findByText("Daily Management")).toBeInTheDocument();
+  });
+
   it("shows a card's title, description, creator, visibility and pin toggle", () => {
     const summary: SavedDashboardSummary = {
       id: "d1",
