@@ -66,6 +66,8 @@ export type {
   OverrideResult,
   RecomputeState,
   RecomputeStatus,
+  ReconciliationAuditChange,
+  ReconciliationAuditEntry,
   ReconciliationException,
   ReconciliationField,
   ReconciliationRecord,

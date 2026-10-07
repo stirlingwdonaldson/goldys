@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
+import { DisagreementExplanation } from "@/components/reconciliation/disagreement-explanation";
 import { needsDecision } from "@/lib/reconciliation-logic";
+import { matchingRule } from "@/lib/rule-logic";
 import type { Api, ReconciliationRecord } from "@/lib/api";
 
 interface DrillInProps {
@@ -21,6 +23,7 @@ interface DrillInProps {
 
 export function ReconciliationDrillIn({ fetchRecord, deps, onBack, onSave, saving }: DrillInProps) {
   const { data: record, loading, error, reload } = useApiData(fetchRecord, deps);
+  const { data: rules } = useApiData((api) => api.listResolutionRules(), []);
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [reasons, setReasons] = useState<Record<string, string>>({});
 
@@ -52,6 +55,11 @@ export function ReconciliationDrillIn({ fetchRecord, deps, onBack, onSave, savin
       <div className="flex flex-col gap-3">
         {record.fields.map((field) => {
           const decide = needsDecision(field);
+          const rule = matchingRule(
+            rules ?? [],
+            record.entityType === "product" ? "product_sales" : "daily_sales",
+            field.name,
+          );
           return (
             <div key={field.name} className="rounded-lg border bg-card p-4">
               <div className="flex items-center justify-between">
@@ -79,6 +87,10 @@ export function ReconciliationDrillIn({ fetchRecord, deps, onBack, onSave, savin
                   </div>
                 ))}
               </div>
+
+              {decide || field.overridden ? (
+                <DisagreementExplanation field={field} rule={rule} />
+              ) : null}
 
               {decide ? (
                 <div className="mt-3 flex flex-col gap-2 border-t pt-3">

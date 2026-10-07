@@ -45,6 +45,10 @@ export interface ReconciliationField {
   sources: SourceValue[];
   overridden: boolean;
   authoritativeSource?: string;
+  /** Why an override was chosen: the reason/actor/timestamp recorded when it was saved. */
+  overrideReason?: string | null;
+  overrideActor?: string | null;
+  overrideAt?: string | null;
 }
 
 export interface ReconciliationRecord {
@@ -190,6 +194,26 @@ export interface RuleAuditEntry {
   change: "created" | "updated" | "deleted";
   at: string;
   by: string;
+}
+
+/** The combined reconciliation audit change kinds (rule + override). */
+export type ReconciliationAuditChange =
+  | "created" // rule
+  | "updated" // rule
+  | "deleted" // rule
+  | "set" // override (authoritative source chosen)
+  | "removed"; // override (superseded / no longer authoritative)
+
+/** One entry in the combined rule + override audit history (mirrors the backend `AuditEntry`). */
+export interface ReconciliationAuditEntry {
+  kind: "rule" | "override";
+  change: ReconciliationAuditChange;
+  entityType: string;
+  fieldKey: string;
+  source: string | null;
+  reason: string | null;
+  by: string;
+  at: string;
 }
 
 /** The bounded semantic query behind a persisted widget. */
@@ -344,6 +368,7 @@ export interface Api {
   deleteResolutionRule(id: string): Promise<void>;
   getRecomputeStatus(): Promise<RecomputeStatus>;
   listRuleAudit(): Promise<RuleAuditEntry[]>;
+  listReconciliationAudit(): Promise<ReconciliationAuditEntry[]>;
   listProducts(): Promise<string[]>;
   listDailySales(): Promise<DailySales[]>;
   getLatestSales(): Promise<LatestSales>;

@@ -15,6 +15,7 @@ import type {
   RecomputeStatus,
   ReconciliationException,
   ReconciliationRecord,
+  ReconciliationAuditEntry,
   RenderedWidget,
   ResolutionRule,
   RuleAuditEntry,
@@ -68,6 +69,8 @@ export const liveApi: Api = {
     fetchApi<void>(`/api/reconciliation/rules/${id}`, { method: "DELETE" }),
   getRecomputeStatus: () => fetchApi<RecomputeStatus>("/api/reconciliation/recompute/status"),
   listRuleAudit: () => fetchApi<RuleAuditEntry[]>("/api/reconciliation/rules/audit"),
+  listReconciliationAudit: () =>
+    fetchApi<ReconciliationAuditEntry[]>("/api/reconciliation/audit"),
   listProducts: () => fetchApi<string[]>("/api/reconciliation/products"),
   listDailySales: () => fetchApi<import("./types").DailySales[]>("/api/sales/daily"),
   getLatestSales: () => fetchApi<import("./types").LatestSales>("/api/sales/latest"),
