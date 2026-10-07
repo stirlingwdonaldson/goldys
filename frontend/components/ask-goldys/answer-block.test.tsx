@@ -56,7 +56,13 @@ describe("AnswerBlock", () => {
   it("shows summary, trace, as-of, and notices", () => {
     const answer: AnswerPayload = {
       widgets: [],
-      trace: [{ tool: "get_sales_by_period", description: "Resolved daily sales totals." }],
+      trace: [
+        {
+          tool: "get_sales_by_period",
+          description: "Resolved daily sales totals.",
+          provenance: [],
+        },
+      ],
       asOf: "2026-10-02T10:00:00Z",
       notices: ["1 date(s) have no resolved total (unresolved conflict)."],
     };

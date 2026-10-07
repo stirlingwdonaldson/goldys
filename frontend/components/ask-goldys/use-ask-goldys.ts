@@ -21,9 +21,15 @@ export function useAskGoldys(): UseAskGoldys {
   const [answer, setAnswer] = useState<AnswerPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
 
   const ask = useCallback(
     (question: string) => {
+      // The backend owns the thread; the client mints a UUID for a new conversation and reuses it
+      // for every subsequent turn, avoiding any id-discovery round-trip.
+      const id = threadId ?? crypto.randomUUID();
+      if (threadId === null) setThreadId(id);
+
       const next: ChatMessage[] = [...messages, { role: "user", content: question }];
       setMessages(next);
       setSummary("");
@@ -32,7 +38,7 @@ export function useAskGoldys(): UseAskGoldys {
       setWorking(true);
 
       let accumulated = "";
-      streamChat(next, {
+      streamChat(id, question, {
         onText: (delta) => {
           accumulated += delta;
           setSummary(accumulated);
@@ -42,15 +48,15 @@ export function useAskGoldys(): UseAskGoldys {
       })
         .catch(() => setError("Could not reach the server. Check your connection and try again."))
         .finally(() => {
-          // Append the assistant's turn so the next ask() carries the full in-session
-          // history (the clarify loop depends on it).
+          // Append the assistant's turn so the local history stays in sync with what the server
+          // streamed back. The assistant text is authoritative — never sent back to the server.
           if (accumulated) {
             setMessages((msgs) => [...msgs, { role: "assistant", content: accumulated }]);
           }
           setWorking(false);
         });
     },
-    [messages],
+    [messages, threadId],
   );
 
   const reset = useCallback(() => {
@@ -59,6 +65,7 @@ export function useAskGoldys(): UseAskGoldys {
     setAnswer(null);
     setError(null);
     setWorking(false);
+    setThreadId(null);
   }, []);
 
   return useMemo(
