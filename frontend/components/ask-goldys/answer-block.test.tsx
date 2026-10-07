@@ -107,4 +107,25 @@ describe("AnswerBlock", () => {
 
     expect(await screen.findByText(/dashboard saved/i)).toBeInTheDocument();
   });
+
+  it("surfaces a save failure without leaving the button in a stuck state", async () => {
+    const saveDashboard = vi.fn(async () => {
+      throw new Error("Network failure");
+    });
+    const answer: AnswerPayload = {
+      widgets: [],
+      trace: [],
+      asOf: "2026-10-07T10:00:00Z",
+      notices: [],
+      draft: draft(),
+    };
+    render(<AnswerBlock summary="" answer={answer} error={null} api={stubApi({ saveDashboard })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /save dashboard/i }));
+
+    expect(await screen.findByText(/network failure/i)).toBeInTheDocument();
+    // The button is re-enabled for a retry.
+    expect(screen.getByRole("button", { name: /save dashboard/i })).toBeEnabled();
+    expect(saveDashboard).toHaveBeenCalledTimes(1);
+  });
 });

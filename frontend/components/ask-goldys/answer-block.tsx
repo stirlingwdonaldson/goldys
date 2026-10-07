@@ -26,12 +26,14 @@ function draftWidgetSummary(widget: SavedWidget): string {
 export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<DashboardDocument | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const draft = answer?.draft ?? null;
 
   async function saveDraft() {
     if (!draft || saving) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const doc = await api.saveDashboard({
         title: draft.title,
@@ -42,6 +44,8 @@ export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
         widgets: draft.widgets,
       });
       setSaved(doc);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Couldn't save the dashboard.");
     } finally {
       setSaving(false);
     }
@@ -95,9 +99,16 @@ export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
               </Link>
             </p>
           ) : (
-            <Button onClick={saveDraft} disabled={saving}>
-              {saving ? "Saving…" : "Save dashboard"}
-            </Button>
+            <div className="space-y-2">
+              <Button onClick={saveDraft} disabled={saving}>
+                {saving ? "Saving…" : "Save dashboard"}
+              </Button>
+              {saveError ? (
+                <p role="alert" className="text-sm text-destructive">
+                  {saveError}
+                </p>
+              ) : null}
+            </div>
           )}
         </div>
       ) : null}

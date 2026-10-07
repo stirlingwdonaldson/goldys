@@ -66,7 +66,7 @@ function parseFilters(v: unknown): DashboardFilters {
  * Validate the untrusted dashboard draft at the boundary. Returns null when the shape is not a
  * usable draft (missing title); malformed widgets are dropped, filters degrade to empty.
  */
-function parseDraft(v: unknown): DashboardDraft | null {
+export function parseDraft(v: unknown): DashboardDraft | null {
   if (!isRecord(v) || typeof v.title !== "string") return null;
   return {
     title: v.title,
