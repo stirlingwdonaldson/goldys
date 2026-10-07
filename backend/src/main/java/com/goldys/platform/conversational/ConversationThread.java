@@ -87,4 +87,20 @@ public class ConversationThread {
   public Instant lastMessageAt() {
     return lastMessageAt;
   }
+
+  /** Renames this thread; used by the owner via the conversation service. */
+  public void rename(String title) {
+    this.title = Objects.requireNonNull(title, "title");
+  }
+
+  /** Replaces the running summary produced by compaction. Never deletes stored messages. */
+  public void setSummary(String summary) {
+    this.summary = summary;
+  }
+
+  /** Bumps {@link #updatedAt()} and {@link #lastMessageAt()} to {@code now}. */
+  public void touch(Instant now) {
+    this.updatedAt = Objects.requireNonNull(now, "now");
+    this.lastMessageAt = now;
+  }
 }
