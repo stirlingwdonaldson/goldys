@@ -23,6 +23,5 @@ public record AnswerPayload(
   }
 
   /** One provenance entry naming a tool the answer ran. */
-  public record TraceEntry(
-      String tool, String description, List<MetricProvenance> provenance) {}
+  public record TraceEntry(String tool, String description, List<MetricProvenance> provenance) {}
 }

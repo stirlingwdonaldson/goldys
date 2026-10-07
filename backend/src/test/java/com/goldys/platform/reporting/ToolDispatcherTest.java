@@ -35,7 +35,10 @@ class ToolDispatcherTest {
 
   private static ToolResult okResult() {
     return new ToolResult(
-        new StatWidgetSpec("id", "Sales", null, null, null, null, null), List.of(), List.of(), List.of());
+        new StatWidgetSpec("id", "Sales", null, null, null, null, null),
+        List.of(),
+        List.of(),
+        List.of());
   }
 
   private static ReportingTool tool(ToolId id) {
@@ -122,21 +125,34 @@ class ToolDispatcherTest {
   void authorizesEachMetricBeforeExecution() {
     ReportingTool t = mock(ReportingTool.class);
     when(t.id()).thenReturn(ToolId.GET_SALES_BY_PERIOD);
-    when(t.resource()).thenReturn(new ResourceKey("conversational.chat")); // capability (general tool)
-    when(t.toMetricQueries(any())).thenReturn(List.of(
-        new MetricQuery(MetricId.SALES_GROSS,
-            new TimeRange(LocalDate.of(2026,1,1), LocalDate.of(2026,1,2), Calendar.CALENDAR),
-            TimeGrain.DAY, Set.of(), null)));
+    when(t.resource())
+        .thenReturn(new ResourceKey("conversational.chat")); // capability (general tool)
+    when(t.toMetricQueries(any()))
+        .thenReturn(
+            List.of(
+                new MetricQuery(
+                    MetricId.SALES_GROSS,
+                    new TimeRange(
+                        LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 2), Calendar.CALENDAR),
+                    TimeGrain.DAY,
+                    Set.of(),
+                    null)));
     when(t.execute(any(), any())).thenReturn(okResult());
     PermissionService permissions = mock(PermissionService.class);
-    ToolDispatcher dispatcher = new ToolDispatcher(
-        new ToolRegistry(List.of(t)), permissions, new MetricCatalog(), mock(OperationalMetrics.class));
+    ToolDispatcher dispatcher =
+        new ToolDispatcher(
+            new ToolRegistry(List.of(t)),
+            permissions,
+            new MetricCatalog(),
+            mock(OperationalMetrics.class));
 
     dispatcher.dispatch(ToolId.GET_SALES_BY_PERIOD, mock(ToolInput.class), OWNER);
 
     // capability gate ...
-    verify(permissions).require(OWNER, new ResourceKey("conversational.chat"), PermissionAction.READ);
+    verify(permissions)
+        .require(OWNER, new ResourceKey("conversational.chat"), PermissionAction.READ);
     // ... and the per-metric gate (sales.gross -> reconciliation.sales), both before execution.
-    verify(permissions).require(OWNER, new ResourceKey("reconciliation.sales"), PermissionAction.READ);
+    verify(permissions)
+        .require(OWNER, new ResourceKey("reconciliation.sales"), PermissionAction.READ);
   }
 }
