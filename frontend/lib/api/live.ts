@@ -5,11 +5,15 @@ import type {
   ConnectorStatus,
   DashboardBootstrap,
   DashboardDocument,
+  DashboardRevisionSummary,
+  DashboardSharing,
   DashboardSummary,
+  DashboardTemplate,
   ProductOverrideInput,
   RecomputeStatus,
   ReconciliationException,
   ReconciliationRecord,
+  RenderedWidget,
   ResolutionRule,
   RuleAuditEntry,
   SaveDashboardInput,
@@ -80,8 +84,32 @@ export const liveApi: Api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     }),
+  updateDashboard: (id: string, input: SaveDashboardInput) =>
+    fetchApi<DashboardDocument>(`/api/dashboards/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
   deleteDashboard: (id: string) =>
     fetchApi<void>(`/api/dashboards/${id}`, { method: "DELETE" }),
-  renderDashboard: (id: string) =>
-    fetchApi<import("@/components/widgets/types").WidgetSpec[]>(`/api/dashboards/${id}/render`),
+  renderDashboard: (id: string) => fetchApi<RenderedWidget[]>(`/api/dashboards/${id}/render`),
+  listDashboardTemplates: () => fetchApi<DashboardTemplate[]>("/api/dashboards/templates"),
+  createDashboardFromTemplate: (templateId: string) =>
+    fetchApi<DashboardDocument>(`/api/dashboards/from-template/${templateId}`, { method: "POST" }),
+  listDashboardRevisions: (id: string) =>
+    fetchApi<DashboardRevisionSummary[]>(`/api/dashboards/${id}/revisions`),
+  restoreDashboardRevision: (id: string, revision: number) =>
+    fetchApi<DashboardDocument>(`/api/dashboards/${id}/revisions/${revision}/restore`, {
+      method: "POST",
+    }),
+  toggleDashboardPin: (id: string) =>
+    fetchApi<DashboardDocument>(`/api/dashboards/${id}/pin`, { method: "PUT" }),
+  getDashboardSharing: (id: string) =>
+    fetchApi<DashboardSharing>(`/api/dashboards/${id}/sharing`),
+  setDashboardSharing: (id: string, sharing: DashboardSharing) =>
+    fetchApi<DashboardSharing>(`/api/dashboards/${id}/sharing`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sharing),
+    }),
 };

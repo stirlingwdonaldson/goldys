@@ -34,6 +34,8 @@ class GetLabourCostToolTest {
   private static final UserRole OWNER =
       new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
 
+  private static final WidgetRenderer RENDERER = new WidgetRenderer(new MetricCatalog());
+
   @Test
   void emitsResolvedLabourTable() {
     MetricQueryService metrics = mock(MetricQueryService.class);
@@ -50,13 +52,13 @@ class GetLabourCostToolTest {
               };
             });
 
-    GetLabourCostTool tool = new GetLabourCostTool(metrics, new MetricCatalog());
+    GetLabourCostTool tool = new GetLabourCostTool(metrics, RENDERER);
     ToolResult result = tool.execute(new GetLabourCostInput(FROM, TO), OWNER);
 
     assertThat(result.widget()).isInstanceOf(TableWidgetSpec.class);
     TableWidgetSpec widget = (TableWidgetSpec) result.widget();
     assertThat(widget.rows()).hasSize(1);
-    assertThat((BigDecimal) widget.rows().get(0).get("labourCost"))
+    assertThat((BigDecimal) widget.rows().get(0).get("labour.cost"))
         .isEqualByComparingTo(new BigDecimal("350.00"));
     assertThat(result.notices()).isEmpty();
   }
@@ -78,7 +80,7 @@ class GetLabourCostToolTest {
               };
             });
 
-    GetLabourCostTool tool = new GetLabourCostTool(metrics, new MetricCatalog());
+    GetLabourCostTool tool = new GetLabourCostTool(metrics, RENDERER);
     ToolResult result = tool.execute(new GetLabourCostInput(FROM, TO), OWNER);
 
     assertThat(result.notices()).hasSize(1);
@@ -95,8 +97,7 @@ class GetLabourCostToolTest {
 
   @Test
   void rejectsWrongInputType() {
-    GetLabourCostTool tool =
-        new GetLabourCostTool(mock(MetricQueryService.class), new MetricCatalog());
+    GetLabourCostTool tool = new GetLabourCostTool(mock(MetricQueryService.class), RENDERER);
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)

@@ -1,18 +1,56 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import { parseWidgetSpecs } from "@/components/widgets/parse";
+import { Button } from "@/components/ui/button";
+import type { Api, DashboardDocument, SavedWidget } from "@/lib/api/types";
 import type { AnswerPayload } from "./types";
 
 interface AnswerBlockProps {
   summary: string;
   answer: AnswerPayload | null;
   error: string | null;
+  api: Api;
 }
 
-/** The answer anatomy: summary + widgets + "How I got this" trace + "as of" + notices. */
-export function AnswerBlock({ summary, answer, error }: AnswerBlockProps) {
+/** A compact textual summary of a draft widget: render type + metric count (drafts are SavedWidgets). */
+function draftWidgetSummary(widget: SavedWidget): string {
+  const count = widget.queries.length;
+  return `${widget.renderType} · ${count} ${count === 1 ? "metric" : "metrics"}`;
+}
+
+/** The answer anatomy: summary + widgets + "How I got this" trace + "as of" + notices + draft. */
+export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState<DashboardDocument | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const draft = answer?.draft ?? null;
+
+  async function saveDraft() {
+    if (!draft || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const doc = await api.saveDashboard({
+        title: draft.title,
+        description: draft.description ?? null,
+        layout: "grid",
+        filters: draft.filters,
+        visibility: "PRIVATE",
+        widgets: draft.widgets,
+      });
+      setSaved(doc);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Couldn't save the dashboard.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (error) {
     return <PermissionDenied subject="this data" message={error} />;
   }
@@ -31,6 +69,48 @@ export function AnswerBlock({ summary, answer, error }: AnswerBlockProps) {
 
       {answer ? (
         parseWidgetSpecs(answer.widgets).map((w) => <WidgetRenderer key={w.id} widget={w} />)
+      ) : null}
+
+      {draft ? (
+        <div className="space-y-3 rounded-lg border p-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Dashboard draft
+            </p>
+            <h3 className="text-base font-semibold">{draft.title}</h3>
+            {draft.description ? (
+              <p className="text-sm text-muted-foreground">{draft.description}</p>
+            ) : null}
+          </div>
+
+          {draft.widgets.length ? (
+            <ul className="space-y-1 text-sm">
+              {draft.widgets.map((w) => (
+                <li key={w.id}>{draftWidgetSummary(w)}</li>
+              ))}
+            </ul>
+          ) : null}
+
+          {saved ? (
+            <p className="text-sm text-green-700">
+              Dashboard saved:{" "}
+              <Link href="/dashboards" className="underline">
+                {saved.title}
+              </Link>
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <Button onClick={saveDraft} disabled={saving}>
+                {saving ? "Saving…" : "Save dashboard"}
+              </Button>
+              {saveError ? (
+                <p role="alert" className="text-sm text-destructive">
+                  {saveError}
+                </p>
+              ) : null}
+            </div>
+          )}
+        </div>
       ) : null}
 
       {answer?.trace.length ? (

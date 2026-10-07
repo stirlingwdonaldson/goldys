@@ -192,17 +192,51 @@ export interface RuleAuditEntry {
   by: string;
 }
 
-/** One persisted widget: a fixed semantic tool plus its bounded input. */
-export interface SavedWidget {
-  id: string;
-  tool: string;
-  input: Record<string, unknown>;
+/** The bounded semantic query behind a persisted widget. */
+export interface MetricQuery {
+  metric: string;
+  range: { from: string; to: string; calendar: "TRADING" | "CALENDAR" };
+  grain: "DAY" | "WEEK" | "MONTH";
+  dimensions: string[];
+  comparison: string | null;
 }
 
+/** A widget's grid span: width in 12-column units, height in row units. */
+export interface WidgetLayout {
+  w: number;
+  h: number;
+}
+
+/** One persisted widget: a bounded set of semantic queries plus a render type and a grid span. */
+export interface SavedWidget {
+  id: string;
+  renderType: string;
+  queries: MetricQuery[];
+  layout: WidgetLayout;
+}
+
+/** Dashboard-level reusable filters merged into each widget's query at render. */
+export interface DashboardFilters {
+  dateRange: { from: string; to: string; calendar: "TRADING" | "CALENDAR" } | null;
+  comparison: string | null;
+  dimensions: string[];
+}
+
+export type Visibility = "PRIVATE" | "SHARED" | "ORG_WIDE";
+
+/**
+ * A dashboard's list entry. `description`/`createdBy`/`pinned`/`visibility` are optional
+ * because the live `GET /api/dashboards` summary predates the richer card contract and may
+ * not return them yet; the library card renders gracefully when they are absent.
+ */
 export interface SavedDashboardSummary {
   id: string;
   title: string;
   updatedAt: string;
+  description?: string | null;
+  createdBy?: string;
+  pinned?: boolean;
+  visibility?: Visibility;
 }
 
 export interface DashboardDocument {
@@ -212,6 +246,9 @@ export interface DashboardDocument {
   description: string | null;
   layout: string;
   widgets: SavedWidget[];
+  filters: DashboardFilters;
+  visibility: Visibility;
+  pinned: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -221,7 +258,43 @@ export interface SaveDashboardInput {
   title: string;
   description?: string | null;
   layout?: string;
+  filters?: DashboardFilters;
+  visibility?: Visibility;
   widgets: SavedWidget[];
+}
+
+/** One widget's render outcome: a resolved spec, or the metric that denied it. */
+export interface RenderedWidget {
+  widgetId: string;
+  widget: import("@/components/widgets/types").WidgetSpec | null;
+  deniedResource: string | null;
+}
+
+/** A named starting-point dashboard built from catalogue metrics. */
+export interface DashboardTemplate {
+  id: string;
+  name: string;
+  description: string;
+  widgets: SavedWidget[];
+}
+
+/** One revision of a saved dashboard. */
+export interface DashboardRevisionSummary {
+  revision: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** A department × seniority role grant for a SHARED dashboard. */
+export interface DashboardSharingRole {
+  department: { value: string };
+  seniority: { value: string };
+}
+
+/** Visibility plus the role list that can open a SHARED dashboard. */
+export interface DashboardSharing {
+  visibility: Visibility;
+  roles: DashboardSharingRole[];
 }
 
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
@@ -252,6 +325,14 @@ export interface Api {
   listDashboards(): Promise<SavedDashboardSummary[]>;
   getDashboard(id: string): Promise<DashboardDocument>;
   saveDashboard(input: SaveDashboardInput): Promise<DashboardDocument>;
+  updateDashboard(id: string, input: SaveDashboardInput): Promise<DashboardDocument>;
   deleteDashboard(id: string): Promise<void>;
-  renderDashboard(id: string): Promise<import("@/components/widgets/types").WidgetSpec[]>;
+  renderDashboard(id: string): Promise<RenderedWidget[]>;
+  listDashboardTemplates(): Promise<DashboardTemplate[]>;
+  createDashboardFromTemplate(templateId: string): Promise<DashboardDocument>;
+  listDashboardRevisions(id: string): Promise<DashboardRevisionSummary[]>;
+  restoreDashboardRevision(id: string, revision: number): Promise<DashboardDocument>;
+  toggleDashboardPin(id: string): Promise<DashboardDocument>;
+  getDashboardSharing(id: string): Promise<DashboardSharing>;
+  setDashboardSharing(id: string, sharing: DashboardSharing): Promise<DashboardSharing>;
 }

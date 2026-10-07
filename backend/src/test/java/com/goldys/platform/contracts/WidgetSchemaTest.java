@@ -32,13 +32,15 @@ class WidgetSchemaTest {
   }
 
   @Test
-  void dashboardDocumentSchemaIsClosedAndVersioned() throws Exception {
+  void dashboardDocumentSchemaIsV2ClosedAndVersioned() throws Exception {
     JsonNode schema = read("dashboard-document.schema.json");
 
-    assertThat(schema.get("$id").asText())
-        .isEqualTo("https://goldys.local/schemas/dashboard-document-v1.json");
-    assertThat(schema.get("additionalProperties").asBoolean()).isFalse();
-    assertThat(schema.path("properties").path("layout").get("const").asText()).isEqualTo("grid");
+    assertThat(schema.at("/$id").asText())
+        .isEqualTo("https://goldys.local/schemas/dashboard-document-v2.json");
+    assertThat(schema.at("/properties/schemaVersion/const").asInt()).isEqualTo(2);
+    assertThat(schema.at("/additionalProperties").asBoolean()).isFalse();
+    // new fields exist
+    assertThat(schema.at("/required").toString()).contains("visibility", "filters");
   }
 
   private static JsonNode read(String name) throws Exception {

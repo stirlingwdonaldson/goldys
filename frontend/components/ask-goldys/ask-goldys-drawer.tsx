@@ -30,12 +30,8 @@ const SUGGESTIONS = [
 export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
   const isOwnerRole = isOwner(seniority);
   const [open, setOpen] = useState(false);
-  const { summary, answer, error, working, ask } = useAskGoldys();
   const api = useApi();
-  const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
-
-  const savable = (answer?.widgets ?? []).filter((w) => w.query);
+  const { summary, answer, error, working, ask } = useAskGoldys();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -49,23 +45,6 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
   }, []);
 
   if (!isOwnerRole) return null;
-
-  async function saveDashboard() {
-    setSaving(true);
-    setSaveMessage(null);
-    try {
-      await api.saveDashboard({
-        title: `Report · ${new Date().toLocaleDateString()}`,
-        layout: "grid",
-        widgets: savable.map((w) => ({ id: w.id, tool: w.query!.tool, input: w.query!.input })),
-      });
-      setSaveMessage("Saved to Dashboards.");
-    } catch {
-      setSaveMessage("Could not save the dashboard.");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -99,16 +78,7 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
           {working ? <p className="text-sm text-muted-foreground">Working…</p> : null}
 
           {summary || answer || error ? (
-            <AnswerBlock summary={summary} answer={answer} error={error} />
-          ) : null}
-
-          {savable.length > 0 && !working ? (
-            <div className="space-y-2">
-              <Button variant="outline" size="sm" onClick={saveDashboard} disabled={saving}>
-                {saving ? "Saving…" : "Save as dashboard"}
-              </Button>
-              {saveMessage ? <p className="text-xs text-muted-foreground">{saveMessage}</p> : null}
-            </div>
+            <AnswerBlock summary={summary} answer={answer} error={error} api={api} />
           ) : null}
         </div>
 

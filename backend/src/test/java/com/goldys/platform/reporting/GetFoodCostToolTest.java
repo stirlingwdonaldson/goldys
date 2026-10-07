@@ -34,6 +34,8 @@ class GetFoodCostToolTest {
   private static final UserRole OWNER =
       new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
 
+  private static final WidgetRenderer RENDERER = new WidgetRenderer(new MetricCatalog());
+
   @Test
   void emitsResolvedFoodCostTable() {
     MetricQueryService metrics = mock(MetricQueryService.class);
@@ -50,14 +52,14 @@ class GetFoodCostToolTest {
               throw new IllegalArgumentException("unexpected metric " + metric);
             });
 
-    GetFoodCostTool tool = new GetFoodCostTool(metrics, new MetricCatalog());
+    GetFoodCostTool tool = new GetFoodCostTool(metrics, RENDERER);
     ToolResult result = tool.execute(new GetFoodCostInput(FROM, TO), OWNER);
 
     assertThat(result.widget()).isInstanceOf(TableWidgetSpec.class);
     TableWidgetSpec widget = (TableWidgetSpec) result.widget();
-    assertThat((BigDecimal) widget.rows().get(0).get("purchases"))
+    assertThat((BigDecimal) widget.rows().get(0).get("inventory.purchases"))
         .isEqualByComparingTo(new BigDecimal("70.00"));
-    assertThat(widget.rows().get(0).get("wastage")).isNull();
+    assertThat(widget.rows().get(0).get("inventory.wastage")).isNull();
   }
 
   @Test
@@ -70,7 +72,7 @@ class GetFoodCostToolTest {
 
   @Test
   void rejectsWrongInputType() {
-    GetFoodCostTool tool = new GetFoodCostTool(mock(MetricQueryService.class), new MetricCatalog());
+    GetFoodCostTool tool = new GetFoodCostTool(mock(MetricQueryService.class), RENDERER);
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)

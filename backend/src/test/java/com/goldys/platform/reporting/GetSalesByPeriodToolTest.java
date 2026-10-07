@@ -36,6 +36,8 @@ class GetSalesByPeriodToolTest {
   private static final UserRole OWNER =
       new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
 
+  private static final WidgetRenderer RENDERER = new WidgetRenderer(new MetricCatalog());
+
   @Test
   void emitsResolvedPointsAndNoticesUnresolvedDates() {
     MetricQueryService metrics = mock(MetricQueryService.class);
@@ -47,7 +49,7 @@ class GetSalesByPeriodToolTest {
                 point(SEP_13, "27650.66"),
                 point(SEP_14, null)));
 
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics, new MetricCatalog());
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics, RENDERER);
     ToolResult result =
         tool.execute(new GetSalesByPeriodInput(SEP_13, SEP_14, MetricId.SALES_GROSS), OWNER);
 
@@ -69,7 +71,7 @@ class GetSalesByPeriodToolTest {
         .thenReturn(
             tsResult(MetricId.SALES_GROSS, List.of("1 day(s) unresolved"), point(SEP_13, null)));
 
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics, new MetricCatalog());
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics, RENDERER);
     ToolResult result =
         tool.execute(new GetSalesByPeriodInput(SEP_13, SEP_13, MetricId.SALES_GROSS), OWNER);
 
@@ -88,7 +90,7 @@ class GetSalesByPeriodToolTest {
   @Test
   void rejectsAWrongInputType() {
     MetricQueryService metrics = mock(MetricQueryService.class);
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics, new MetricCatalog());
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics, RENDERER);
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)
@@ -98,7 +100,7 @@ class GetSalesByPeriodToolTest {
   @Test
   void rejectsANonSalesMetric() {
     MetricQueryService metrics = mock(MetricQueryService.class);
-    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics, new MetricCatalog());
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics, RENDERER);
 
     assertThatThrownBy(
             () ->
