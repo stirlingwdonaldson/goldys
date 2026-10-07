@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.goldys.platform.semantic.MissingDataStatus;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.ProductSalesMetric;
 import java.math.BigDecimal;
@@ -63,6 +64,7 @@ class ProductMetricExecutorTest {
 
     TimeSeriesResult ts = (TimeSeriesResult) result;
     assertThat(ts.series().get(0).points().get(0).value()).isNull();
+    assertThat(ts.series().get(0).points().get(0).status()).isEqualTo(MissingDataStatus.UNRESOLVED);
     assertThat(ts.notices()).containsExactly("1 day(s) unresolved");
     assertThat(ts.provenance().missingPeriods()).containsExactly(d);
   }

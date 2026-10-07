@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.semantic.DailySalesMetric;
+import com.goldys.platform.semantic.MissingDataStatus;
 import com.goldys.platform.semantic.SalesMetricsQuery;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,7 +36,9 @@ class SalesMetricExecutorTest {
 
     TimeSeriesResult ts = (TimeSeriesResult) result;
     assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("100.00");
+    assertThat(ts.series().get(0).points().get(0).status()).isNull();
     assertThat(ts.series().get(0).points().get(1).value()).isNull();
+    assertThat(ts.series().get(0).points().get(1).status()).isEqualTo(MissingDataStatus.UNRESOLVED);
     assertThat(ts.notices()).containsExactly("1 day(s) unresolved");
     assertThat(ts.provenance().missingPeriods()).containsExactly(SEP_14);
   }

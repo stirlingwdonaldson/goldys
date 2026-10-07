@@ -46,7 +46,7 @@ public class LabourMetricExecutor implements MetricExecutor {
       BigDecimal v = pick.apply(m);
       if (v == null) {
         unresolved.put(m.date(), true);
-        byDay.remove(m.date());
+        byDay.put(m.date(), null);
       } else if (!unresolved.getOrDefault(m.date(), false)) {
         byDay.merge(m.date(), v, BigDecimal::add);
       }
