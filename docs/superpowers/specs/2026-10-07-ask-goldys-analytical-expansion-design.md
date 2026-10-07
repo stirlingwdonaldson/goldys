@@ -132,14 +132,18 @@ service in `semantic.catalog` (or a new `semantic.analytics` sub-package); none 
 |---|---|---|
 | retrieve series | `MetricQueryService.query(MetricQuery)` | exists |
 | compare periods | `ComparisonService` + `deltaPercent` | exists; exposed by `compare_metric_periods` |
-| rank groups | `RankingService.rank(MetricId, Dimension, TimeRange, TimeGrain, limit) → RankedListResult` | generalizes `ProductMetricsQuery.topSellers` to any metric × dimension |
-| contribution | `ContributionService.contribution(MetricId, Dimension, TimeRange) → per-group share of total` | powers "what share is X of sales" |
-| largest variance | `VarianceService.largestVariance(MetricId, TimeRange, Comparison) → biggest mover` | powers "which day was unusual" |
-| related metrics | `RelatedMetricsService.related(MetricId) → Set<MetricId>` | from an explicit `relatedMetrics` map on `MetricDefinition` |
+| rank groups | `RankingService.rank(MetricId, Dimension, TimeRange, limit) → RankedListResult` | supports the pairs with a grouped read (`PRODUCT`, `DEPARTMENT`); generalizes `ProductMetricsQuery.topSellers` |
+| contribution | (deferred) | no consuming tool this pass |
+| largest variance | (deferred) | no consuming tool this pass |
+| related metrics | `MetricCatalog.related(MetricId) → Set<MetricId>` | curated catalogue map, not parsed from formulas |
 
-`MetricDefinition` gains an explicit `relatedMetrics: Set<MetricId>` field (curated, not parsed from
-formulas). This is the single source for "what else explains this metric", surfaced to the model via
-`get_metric` results (§7) rather than a separate tool.
+The catalogue declares explicit metric relatedness — a curated map exposed as
+`MetricCatalog.related(id) → Set<MetricId>`, not parsed from formulas. This is the single source for
+"what else explains this metric", surfaced to the model via `get_metric` results (§7) rather than a
+separate tool.
+
+The `contribution` and `largest variance` primitives are deferred this pass — no tool in §6 consumes
+them yet (YAGNI); they remain planned primitives for a future question type.
 
 ## 6. Tool Catalogue
 
@@ -148,7 +152,7 @@ one tool per English question.
 
 | Tool | `ToolId` | Input (record) | Backs onto | Capability resource |
 |---|---|---|---|---|
-| `get_metric` | `GET_METRIC` | `GetMetricInput(MetricId, startDate, endDate, TimeGrain, Set<Dimension>)` | `MetricQueryService` + `RelatedMetricsService` | `conversational.chat` (per-metric data gate) |
+| `get_metric` | `GET_METRIC` | `GetMetricInput(MetricId, startDate, endDate, TimeGrain, Set<Dimension>)` | `MetricQueryService` + `MetricCatalog.related` | `conversational.chat` (per-metric data gate) |
 | `compare_metric_periods` | `COMPARE_METRIC_PERIODS` | `CompareMetricPeriodsInput(MetricId, startDate, endDate, Comparison, TimeGrain)` | `ComparisonService` + `MetricQueryService` | `conversational.chat` (per-metric data gate) |
 | `rank_dimension` | `RANK_DIMENSION` | `RankDimensionInput(MetricId, Dimension, startDate, endDate, limit)` | `RankingService` | `conversational.chat` (per-metric data gate) |
 | `get_sales_by_period` | `GET_SALES_BY_PERIOD` (kept) | existing `GetSalesByPeriodInput` | `MetricQueryService` | `reconciliation.sales` |
@@ -177,6 +181,10 @@ All inputs are typed records with enum fields (`MetricId`, `Dimension`, `TimeGra
 and `LocalDate` ranges — no free-text field, filter, or expression. Date ranges are validated
 (`startDate <= endDate`, both present); a range spanning no data returns an empty result plus a
 notice, never a fabricated figure.
+
+`get_labour_variance` and `get_inventory_summary` rename and broaden the existing `get_labour_cost`
+and `get_food_cost` tools (added in the dashboards pass) rather than duplicating them; the renamed
+tools keep the codebase's `labour` spelling.
 
 ## 7. Result Envelope and Provenance Seam
 
@@ -233,8 +241,8 @@ unchanged.
 covers) is assigned a single `requiredPermission`, but its computation reads more than one domain's
 base metrics. Today this is moot — the only role that can use Ask Goldy's is OWNER, which holds every
 resource. When the department × seniority matrix lands, per-metric authorization for derived metrics
-must require the union of their constituent base metrics' permissions; the `relatedMetrics` field
-added in §5 is the hook for that (recorded in §18).
+must require the union of their constituent base metrics' permissions; the `MetricCatalog.related(id)`
+map added in §5 is the hook for that (recorded in §18).
 
 **`ConnectorHealthQuery` seam.** A new `semantic` interface exposing per-source last-successful
 ingestion, implemented by `application` (reusing `ConnectorApplicationService`). This keeps
