@@ -157,6 +157,92 @@ class ConversationServiceTest {
   }
 
   @Test
+  void contextForTokenOnlyTriggerKeepsRecentTurnsAndSummarizes() {
+    ConversationThread thread = ConversationThread.create(USER, "Long review", null, Instant.now());
+    when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
+
+    // 5 huge prior messages (over the token threshold, under KEEP_RECENT by count).
+    String huge = "a".repeat(4000);
+    List<ConversationMessage> prior = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      prior.add(
+          ConversationMessage.create(thread.id(), "user", huge + i, List.of(), Instant.now()));
+    }
+    when(messages.findByThreadIdOrderByCreatedAtAsc(thread.id())).thenReturn(prior);
+    when(model.call(any(Prompt.class)))
+        .thenReturn(
+            new ChatResponse(List.of(new Generation(new AssistantMessage("Compacted summary")))));
+
+    List<Message> context = service.contextFor(USER, thread.id(), "Why were sales down?");
+
+    // 6 total messages (5 prior + 1 appended) is within KEEP_RECENT by count but over the token
+    // threshold. Compaction keeps the most recent KEEP_RECENT turns (capped at size - 1 = 5),
+    // folding the oldest message into the summary.
+    assertThat(context).hasSize(6); // 1 summary + 5 recent turns
+    assertThat(context.get(0)).isInstanceOf(SystemMessage.class);
+    assertThat(context.get(0).getText()).isEqualTo("Compacted summary");
+    assertThat(context.get(context.size() - 1)).isInstanceOf(UserMessage.class);
+    assertThat(context.get(context.size() - 1).getText()).isEqualTo("Why were sales down?");
+    assertThat(context.stream().map(Message::getText)).doesNotContain(huge + "0");
+    assertThat(thread.summary()).isEqualTo("Compacted summary");
+  }
+
+  @Test
+  void contextForDoesNotDropTurnsWhenSummarizationBlank() {
+    ConversationThread thread = ConversationThread.create(USER, "Long review", null, Instant.now());
+    when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
+
+    List<ConversationMessage> prior = new ArrayList<>();
+    for (int i = 0; i < 4; i++) {
+      prior.add(
+          ConversationMessage.create(
+              thread.id(), "user", "question " + i, List.of(), Instant.now()));
+      prior.add(
+          ConversationMessage.create(
+              thread.id(), "assistant", "answer " + i, List.of(), Instant.now()));
+    }
+    when(messages.findByThreadIdOrderByCreatedAtAsc(thread.id())).thenReturn(prior);
+    when(model.call(any(Prompt.class)))
+        .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
+
+    List<Message> context = service.contextFor(USER, thread.id(), "Why were sales down?");
+
+    // No usable summary was produced, so no turn is dropped: full history (8 prior + 1 new) is
+    // returned and the stored summary stays untouched.
+    assertThat(context).hasSize(9);
+    assertThat(context).noneMatch(m -> m instanceof SystemMessage);
+    assertThat(context.get(context.size() - 1)).isInstanceOf(UserMessage.class);
+    assertThat(thread.summary()).isNull();
+  }
+
+  @Test
+  void contextForDoesNotDropTurnsWhenModelAbsent() {
+    ConversationThread thread = ConversationThread.create(USER, "Long review", null, Instant.now());
+    when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
+    when(modelProvider.getIfAvailable()).thenReturn(null);
+
+    List<ConversationMessage> prior = new ArrayList<>();
+    for (int i = 0; i < 4; i++) {
+      prior.add(
+          ConversationMessage.create(
+              thread.id(), "user", "question " + i, List.of(), Instant.now()));
+      prior.add(
+          ConversationMessage.create(
+              thread.id(), "assistant", "answer " + i, List.of(), Instant.now()));
+    }
+    when(messages.findByThreadIdOrderByCreatedAtAsc(thread.id())).thenReturn(prior);
+
+    List<Message> context = service.contextFor(USER, thread.id(), "Why were sales down?");
+
+    // Without a model no summary can be produced, so the older turns are still sent in full.
+    assertThat(context).hasSize(9);
+    assertThat(context).noneMatch(m -> m instanceof SystemMessage);
+    assertThat(context.get(context.size() - 1)).isInstanceOf(UserMessage.class);
+    assertThat(thread.summary()).isNull();
+    verify(model, never()).call(any(Prompt.class));
+  }
+
+  @Test
   void contextForDoesNotSummarizeWithinKeepRecent() {
     ConversationThread thread =
         ConversationThread.create(USER, "Short review", null, Instant.now());

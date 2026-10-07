@@ -134,13 +134,20 @@ public class ConversationService {
     boolean overCount = history.size() > KEEP_RECENT;
     boolean overTokens = estimateTokens(history) > SUMMARIZE_THRESHOLD_TOKENS;
     if (overCount || (overTokens && history.size() > 1)) {
-      int keep = overCount ? KEEP_RECENT : history.size() - 1;
+      // Keep the most recent KEEP_RECENT turns, but always fold at least the oldest message.
+      int keep = Math.min(KEEP_RECENT, history.size() - 1);
       int compactFrom = history.size() - keep;
       List<ConversationMessage> older = history.subList(0, compactFrom);
-      recent = history.subList(compactFrom, history.size());
-      summary = summarize(summary, older);
-      thread.setSummary(summary);
-      threads.save(thread);
+      String newSummary = summarize(summary, older);
+      // Only drop the folded turns from the returned context once a new summary actually captures
+      // them; otherwise send the full history so nothing is silently lost. Stored messages are
+      // never deleted either way.
+      if (newSummary != null && !newSummary.isBlank()) {
+        summary = newSummary;
+        thread.setSummary(summary);
+        threads.save(thread);
+        recent = history.subList(compactFrom, history.size());
+      }
     }
 
     List<Message> result = new ArrayList<>();
@@ -162,11 +169,15 @@ public class ConversationService {
     return (int) Math.ceil(chars / 4.0);
   }
 
-  /** Folds {@code older} into the prior summary via a temperature-0 call to the model. */
+  /**
+   * Folds {@code older} into the prior summary via a temperature-0 call to the model. Returns the
+   * new summary, or {@code null} when none can be produced (model absent, or a blank result), so
+   * callers can avoid silently dropping the folded turns.
+   */
   private String summarize(String existingSummary, List<ConversationMessage> older) {
     ChatModel chatModel = model.getIfAvailable();
     if (chatModel == null) {
-      return existingSummary;
+      return null;
     }
     StringBuilder transcript = new StringBuilder();
     if (existingSummary != null && !existingSummary.isBlank()) {
@@ -183,7 +194,7 @@ public class ConversationService {
             + transcript;
     ChatResponse response = chatModel.call(new Prompt(instruction, temperatureZero()));
     String text = response.getResult().getOutput().getText();
-    return (text == null || text.isBlank()) ? existingSummary : text;
+    return (text == null || text.isBlank()) ? null : text;
   }
 
   private static ChatOptions temperatureZero() {
