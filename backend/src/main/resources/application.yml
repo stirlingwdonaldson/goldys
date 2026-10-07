@@ -78,3 +78,13 @@ logging:
 app:
   conversational:
     system-prompt: prompts/ask-goldys-system.txt
+  # Per-domain freshness thresholds (bound by config.FreshnessProperties): how old a
+  # domain's last successful ingestion may be before its resolved figures are stale.
+  # Provisional values - tune per environment without a rebuild.
+  freshness:
+    thresholds:
+      resolved_daily_sales: 2h
+      resolved_reservation_day: 1d
+      resolved_labour_day: 1d
+      resolved_inventory_day: 7d
+      accounting: 30d
