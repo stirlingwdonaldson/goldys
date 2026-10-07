@@ -207,6 +207,64 @@ class DashboardRenderTest {
     assertThat(r.get(0).trust().freshness()).isEqualTo(FreshnessState.STALE);
   }
 
+  @Test
+  void compositeWidgetAggregatesWorstTrustAcrossMetrics() {
+    var owner = new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
+    SavedDashboard saved =
+        SavedDashboard.create(
+            "Sales",
+            null,
+            "grid",
+            List.of(
+                new SavedWidget(
+                    "w1",
+                    "time-series",
+                    List.of(query(MetricId.SALES_GROSS), query(MetricId.SALES_NET)),
+                    new WidgetLayout(6, 2))),
+            DashboardFilters.empty(),
+            Visibility.PRIVATE,
+            "owner@x.com",
+            Instant.EPOCH);
+    when(repo.findById(saved.id())).thenReturn(Optional.of(saved));
+    when(metricQueryService.query(query(MetricId.SALES_GROSS)))
+        .thenReturn(timeSeries(MetricId.SALES_GROSS, TrustState.VERIFIED, FreshnessState.FRESH));
+    when(metricQueryService.query(query(MetricId.SALES_NET)))
+        .thenReturn(timeSeries(MetricId.SALES_NET, TrustState.CONFLICTED, FreshnessState.STALE));
+
+    List<SavedDashboardApplicationService.RenderedWidget> r =
+        service.render(owner, "owner@x.com", saved.id());
+
+    assertThat(r).hasSize(1);
+    assertThat(r.get(0).trust()).isNotNull();
+    assertThat(r.get(0).trust().state()).isEqualTo(TrustState.CONFLICTED);
+    assertThat(r.get(0).trust().freshness()).isEqualTo(FreshnessState.STALE);
+  }
+
+  private static TimeSeriesResult timeSeries(
+      MetricId id, TrustState state, FreshnessState freshness) {
+    return new TimeSeriesResult(
+        id,
+        List.of(new MetricSeries(null, List.of(new MetricPoint(SEP_13, new BigDecimal("100"))))),
+        List.of(),
+        new MetricProvenance(
+                id,
+                "1",
+                RANGE,
+                TimeGrain.DAY,
+                "resolved_daily_sales",
+                Instant.EPOCH,
+                List.of(),
+                "1")
+            .withTrust(
+                new TrustSummary(
+                    state,
+                    freshness,
+                    "Lightspeed",
+                    Instant.EPOCH,
+                    Instant.EPOCH,
+                    Duration.ofHours(24))));
+  }
+
   private static MetricQuery query(MetricId id) {
     return new MetricQuery(id, RANGE, TimeGrain.DAY, Set.of(), null);
   }

@@ -22,6 +22,8 @@ import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
 import com.goldys.platform.reporting.WidgetRenderer;
+import com.goldys.platform.semantic.FreshnessState;
+import com.goldys.platform.semantic.TrustState;
 import com.goldys.platform.semantic.TrustSummary;
 import com.goldys.platform.semantic.catalog.Comparison;
 import com.goldys.platform.semantic.catalog.Dimension;
@@ -258,8 +260,57 @@ public class SavedDashboardApplicationService {
       }
     }
     WidgetSpec spec = renderer.render(w.id(), w.renderType(), results);
-    TrustSummary trust = results.get(0).provenance().trust();
+    TrustSummary trust = aggregateTrust(results);
     return new RenderedWidget(w.id(), spec, null, trust);
+  }
+
+  /**
+   * Collapses per-metric trust into a single worst-case summary for a widget. A composite widget
+   * must not report "verified" while any of its metrics is stale or conflicted, so the state is the
+   * least-trusted {@link TrustState} (by enum ordinal) and the freshness is the worst {@link
+   * FreshnessState}; the provenance fields are copied from the first result attaining the worst
+   * state. A single metric keeps its trust unchanged.
+   */
+  private static TrustSummary aggregateTrust(List<MetricResult> results) {
+    if (results.size() == 1) {
+      return results.get(0).provenance().trust();
+    }
+    MetricResult worst = null;
+    TrustState worstState = null;
+    FreshnessState worstFreshness = null;
+    for (MetricResult result : results) {
+      TrustSummary trust = result.provenance().trust();
+      if (trust == null) continue;
+      if (worstState == null || trust.state().ordinal() > worstState.ordinal()) {
+        worstState = trust.state();
+        worst = result;
+      }
+      if (worstFreshness == null
+          || freshnessRank(trust.freshness()) > freshnessRank(worstFreshness)) {
+        worstFreshness = trust.freshness();
+      }
+    }
+    if (worst == null) {
+      return null;
+    }
+    TrustSummary base = worst.provenance().trust();
+    return new TrustSummary(
+        worstState,
+        worstFreshness,
+        base.authoritativeSource(),
+        base.resolvedAt(),
+        base.lastIngestionAt(),
+        base.threshold());
+  }
+
+  /** Worst-first freshness ranking: SOURCE_FAILURE &gt; STALE &gt; UNKNOWN &gt; FRESH. */
+  private static int freshnessRank(FreshnessState freshness) {
+    return switch (freshness) {
+      case FRESH -> 0;
+      case UNKNOWN -> 1;
+      case STALE -> 2;
+      case SOURCE_FAILURE -> 3;
+    };
   }
 
   private SavedDashboard requireVisible(UserRole role, String email, UUID id) {
