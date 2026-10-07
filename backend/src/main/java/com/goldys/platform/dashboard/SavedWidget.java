@@ -1,16 +1,19 @@
 package com.goldys.platform.dashboard;
 
-import java.util.Map;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import java.util.List;
 import java.util.Objects;
 
 /**
- * One persisted widget: a fixed semantic tool plus its bounded input. Stored as JSONB inside a
- * dashboard; never generated code, never free-form SQL/filters.
+ * One persisted widget: a bounded set of semantic queries plus a rendering type and a grid span.
+ * Never generated code, never free-form SQL/filters.
  */
-public record SavedWidget(String id, String tool, Map<String, Object> input) {
+public record SavedWidget(
+    String id, String renderType, List<MetricQuery> queries, WidgetLayout layout) {
   public SavedWidget {
     Objects.requireNonNull(id, "id");
-    Objects.requireNonNull(tool, "tool");
-    input = input == null ? Map.of() : input;
+    Objects.requireNonNull(renderType, "renderType");
+    queries = queries == null ? List.of() : List.copyOf(queries);
+    Objects.requireNonNull(layout, "layout");
   }
 }
