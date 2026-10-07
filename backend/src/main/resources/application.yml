@@ -88,3 +88,19 @@ app:
       resolved_labour_day: 1d
       resolved_inventory_day: 7d
       accounting: 30d
+    # Source systems backing each domain, so freshness is derived from the domain's
+    # connectors rather than a single resolved source (an "agreed" resolution names no
+    # real connector). Source-system strings match the connector's sourceSystem().
+    sources:
+      resolved_daily_sales:
+        - LIGHTSPEED
+        - CTB
+      resolved_product_sales:
+        - LIGHTSPEED
+        - CTB
+      resolved_reservation_day:
+        - OPENTABLE
+      resolved_labour_day:
+        - DEPUTY
+      resolved_inventory_day:
+        - CTB

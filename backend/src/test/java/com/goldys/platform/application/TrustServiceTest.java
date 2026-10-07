@@ -28,6 +28,9 @@ class TrustServiceTest {
 
   private static final MetricId METRIC = MetricId.SALES_GROSS;
   private static final String SOURCE = "pos";
+  private static final String LIGHTSPEED = "LIGHTSPEED";
+  private static final String CTB = "CTB";
+  private static final List<String> SALES_SOURCES = List.of(LIGHTSPEED, CTB);
   private static final Duration THRESHOLD = Duration.ofHours(2);
   private static final Instant AT = Instant.parse("2026-09-01T10:00:00Z");
 
@@ -128,7 +131,23 @@ class TrustServiceTest {
   void failedConnectorIsSourceFailure() {
     LocalDate day = LocalDate.of(2026, 9, 1);
     TimeRange range = range(day);
-    List<ConnectorHealth> health = List.of(new ConnectorHealth(SOURCE, Instant.now(), "FAILED"));
+    List<ConnectorHealth> health =
+        List.of(new ConnectorHealth(LIGHTSPEED, Instant.now(), "FAILED"));
+
+    TrustSummary summary =
+        service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
+
+    assertThat(summary.freshness()).isEqualTo(FreshnessState.SOURCE_FAILURE);
+  }
+
+  @Test
+  void anyFailedDomainSourceIsSourceFailure() {
+    LocalDate day = LocalDate.of(2026, 9, 1);
+    TimeRange range = range(day);
+    List<ConnectorHealth> health =
+        List.of(
+            new ConnectorHealth(LIGHTSPEED, Instant.now(), "SUCCESS"),
+            new ConnectorHealth(CTB, Instant.now(), "FAILED"));
 
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
@@ -141,7 +160,7 @@ class TrustServiceTest {
     LocalDate day = LocalDate.of(2026, 9, 1);
     TimeRange range = range(day);
     Instant staleAt = Instant.now().minus(THRESHOLD).minusSeconds(60);
-    List<ConnectorHealth> health = List.of(new ConnectorHealth(SOURCE, staleAt, "SUCCESS"));
+    List<ConnectorHealth> health = List.of(new ConnectorHealth(LIGHTSPEED, staleAt, "SUCCESS"));
 
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
@@ -151,16 +170,37 @@ class TrustServiceTest {
   }
 
   @Test
-  void recentIngestionIsFresh() {
+  void agreedResolutionDerivesFreshnessFromDomainSources() {
     LocalDate day = LocalDate.of(2026, 9, 1);
     TimeRange range = range(day);
+    Instant lightspeedAt = Instant.now().minus(Duration.ofMinutes(7));
+    List<ConnectorHealth> health =
+        List.of(new ConnectorHealth(LIGHTSPEED, lightspeedAt, "SUCCESS"));
+
+    TrustSummary summary =
+        service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
+
+    assertThat(summary.state()).isEqualTo(TrustState.VERIFIED);
+    assertThat(summary.freshness()).isEqualTo(FreshnessState.FRESH);
+    assertThat(summary.lastIngestionAt()).isEqualTo(lightspeedAt);
+  }
+
+  @Test
+  void freshnessUsesFreshestDomainSource() {
+    LocalDate day = LocalDate.of(2026, 9, 1);
+    TimeRange range = range(day);
+    Instant staleAt = Instant.now().minus(THRESHOLD).minusSeconds(60);
     Instant freshAt = Instant.now().minusSeconds(10);
-    List<ConnectorHealth> health = List.of(new ConnectorHealth(SOURCE, freshAt, "SUCCESS"));
+    List<ConnectorHealth> health =
+        List.of(
+            new ConnectorHealth(LIGHTSPEED, staleAt, "SUCCESS"),
+            new ConnectorHealth(CTB, freshAt, "SUCCESS"));
 
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
 
     assertThat(summary.freshness()).isEqualTo(FreshnessState.FRESH);
+    assertThat(summary.lastIngestionAt()).isEqualTo(freshAt);
   }
 
   @Test
@@ -201,7 +241,9 @@ class TrustServiceTest {
     ConnectorHealthQuery connectors = mock(ConnectorHealthQuery.class);
     when(connectors.health()).thenReturn(health);
     FreshnessProperties freshness =
-        new FreshnessProperties(Map.of("resolved_daily_sales", THRESHOLD));
+        new FreshnessProperties(
+            Map.of("resolved_daily_sales", THRESHOLD),
+            Map.of("resolved_daily_sales", SALES_SOURCES));
     return new TrustService(resolution, connectors, freshness, catalog);
   }
 

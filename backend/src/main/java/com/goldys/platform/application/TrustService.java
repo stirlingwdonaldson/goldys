@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /** Derives a metric's trust state and freshness from its resolution history and connectors. */
@@ -46,15 +47,16 @@ public class TrustService implements TrustQuery {
     List<ResolutionState> states = resolution.states(metric, range.from(), range.to());
     String domain = catalog.definition(metric).sourceDomain();
     Duration threshold = freshness.thresholds().getOrDefault(domain, Duration.ofDays(1));
+    List<String> sources = freshness.sources().getOrDefault(domain, List.of());
     TrustState state = aggregate(states, range);
-    FreshnessState fresh = freshnessState(states, connectors.health(), threshold);
+    FreshnessState fresh = freshnessState(states, connectors.health(), sources, threshold);
     String authoritative = states.isEmpty() ? null : states.get(0).authoritativeSource();
     Instant resolvedAt =
         states.stream()
             .map(ResolutionState::resolvedAt)
             .max(Comparator.naturalOrder())
             .orElse(null);
-    Instant lastIngest = lastIngestionFor(authoritative, connectors.health());
+    Instant lastIngest = lastIngestionFor(sources, connectors.health());
     return new TrustSummary(state, fresh, authoritative, resolvedAt, lastIngest, threshold);
   }
 
@@ -92,24 +94,34 @@ public class TrustService implements TrustQuery {
   }
 
   private static FreshnessState freshnessState(
-      List<ResolutionState> states, List<ConnectorHealth> health, Duration threshold) {
+      List<ResolutionState> states,
+      List<ConnectorHealth> health,
+      List<String> sources,
+      Duration threshold) {
     if (states.isEmpty()) return FreshnessState.UNKNOWN;
-    String authoritative = states.get(0).authoritativeSource();
-    ConnectorHealth h =
-        health.stream().filter(c -> c.source().equals(authoritative)).findFirst().orElse(null);
-    if (h == null) return FreshnessState.UNKNOWN;
-    if ("FAILED".equals(h.status())) return FreshnessState.SOURCE_FAILURE;
+    List<ConnectorHealth> domainHealth =
+        health.stream().filter(c -> sources.contains(c.source())).toList();
+    if (domainHealth.isEmpty()) return FreshnessState.UNKNOWN;
+    if (domainHealth.stream().anyMatch(c -> "FAILED".equals(c.status()))) {
+      return FreshnessState.SOURCE_FAILURE;
+    }
+    Instant freshest =
+        domainHealth.stream()
+            .map(ConnectorHealth::lastRunAt)
+            .filter(Objects::nonNull)
+            .max(Comparator.naturalOrder())
+            .orElse(null);
+    if (freshest == null) return FreshnessState.UNKNOWN;
     Instant now = Instant.now();
-    return h.lastRunAt() != null && now.isAfter(h.lastRunAt().plus(threshold))
-        ? FreshnessState.STALE
-        : FreshnessState.FRESH;
+    return now.isAfter(freshest.plus(threshold)) ? FreshnessState.STALE : FreshnessState.FRESH;
   }
 
-  private static Instant lastIngestionFor(String source, List<ConnectorHealth> health) {
+  private static Instant lastIngestionFor(List<String> sources, List<ConnectorHealth> health) {
     return health.stream()
-        .filter(c -> c.source().equals(source))
+        .filter(c -> sources.contains(c.source()))
         .map(ConnectorHealth::lastRunAt)
-        .findFirst()
+        .filter(Objects::nonNull)
+        .max(Comparator.naturalOrder())
         .orElse(null);
   }
 }
