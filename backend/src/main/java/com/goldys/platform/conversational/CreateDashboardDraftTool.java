@@ -73,7 +73,7 @@ public class CreateDashboardDraftTool implements ReportingTool {
             null,
             null,
             null);
-    return new ToolResult(widget, List.of());
+    return new ToolResult(widget, List.of(), List.of());
   }
 
   /** Casts, validates, and returns the non-persisted draft document. */

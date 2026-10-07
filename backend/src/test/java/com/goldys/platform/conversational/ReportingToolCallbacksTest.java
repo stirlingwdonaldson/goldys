@@ -18,7 +18,14 @@ import com.goldys.platform.reporting.ReportingTool;
 import com.goldys.platform.reporting.ToolDispatcher;
 import com.goldys.platform.reporting.ToolId;
 import com.goldys.platform.reporting.ToolResult;
+import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricProvenance;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.widget.TimeSeriesWidgetSpec;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallback;
@@ -36,7 +43,8 @@ class ReportingToolCallbacksTest {
     ToolResult result =
         new ToolResult(
             new TimeSeriesWidgetSpec("id", "Daily sales", null, List.of(), "currency", null),
-            List.of("1 date(s) have no resolved total (unresolved conflict)."));
+            List.of("1 date(s) have no resolved total (unresolved conflict)."),
+            List.of(provenance(MetricId.SALES_GROSS)));
     when(dispatcher.dispatch(eq(ToolId.GET_SALES_BY_PERIOD), any(), eq(OWNER))).thenReturn(result);
 
     ReportingTool tool = tool();
@@ -53,6 +61,8 @@ class ReportingToolCallbacksTest {
     assertThat(raw).contains("\"ok\":true");
     assertThat(context.toAnswerPayload().widgets()).hasSize(1);
     assertThat(context.toAnswerPayload().trace()).hasSize(1);
+    assertThat(context.toAnswerPayload().trace().get(0).provenance())
+        .containsExactly(provenance(MetricId.SALES_GROSS));
     assertThat(context.toAnswerPayload().notices())
         .containsExactly("1 date(s) have no resolved total (unresolved conflict).");
   }
@@ -128,5 +138,17 @@ class ReportingToolCallbacksTest {
     when(t.inputType())
         .thenReturn((Class) com.goldys.platform.reporting.GetSalesByPeriodInput.class);
     return t;
+  }
+
+  private static MetricProvenance provenance(MetricId id) {
+    return new MetricProvenance(
+        id,
+        "1",
+        new TimeRange(LocalDate.of(2026, 9, 13), LocalDate.of(2026, 9, 13), Calendar.CALENDAR),
+        TimeGrain.DAY,
+        "resolved_daily_sales",
+        Instant.EPOCH,
+        List.of(),
+        "1");
   }
 }

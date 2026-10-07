@@ -1,5 +1,6 @@
 package com.goldys.platform.conversational;
 
+import com.goldys.platform.semantic.catalog.MetricProvenance;
 import com.goldys.platform.widget.WidgetSpec;
 import java.time.Instant;
 import java.util.List;
@@ -22,5 +23,6 @@ public record AnswerPayload(
   }
 
   /** One provenance entry naming a tool the answer ran. */
-  public record TraceEntry(String tool, String description) {}
+  public record TraceEntry(
+      String tool, String description, List<MetricProvenance> provenance) {}
 }

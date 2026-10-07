@@ -22,6 +22,6 @@ public interface ReportingTool {
 
   /** The bounded MetricQueries this tool computes, for persisting a saved widget. */
   default List<com.goldys.platform.semantic.catalog.MetricQuery> toMetricQueries(ToolInput input) {
-    throw new UnsupportedOperationException(id() + " does not support metric-query persistence");
+    return List.of();
   }
 }
