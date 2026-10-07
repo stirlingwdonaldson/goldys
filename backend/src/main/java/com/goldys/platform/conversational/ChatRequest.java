@@ -1,23 +1,17 @@
 package com.goldys.platform.conversational;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
-/** The request body of a chat turn: the in-session message history. */
-public record ChatRequest(List<ChatMessage> messages) {
+/**
+ * The request body of a chat turn: the optional {@code threadId} to continue and the new user
+ * message. Server-authoritative: the client never supplies assistant history — the server loads its
+ * own history via {@link ConversationService}.
+ */
+public record ChatRequest(UUID threadId, String message) {
 
   public ChatRequest {
-    messages = messages == null ? List.of() : List.copyOf(messages);
-  }
-
-  /** A single message in the conversation. Only user and assistant roles are accepted. */
-  public record ChatMessage(String role, String content) {
-    public ChatMessage {
-      Objects.requireNonNull(role, "role");
-      Objects.requireNonNull(content, "content");
-      if (!role.equals("user") && !role.equals("assistant")) {
-        throw new IllegalArgumentException("Unknown message role: " + role);
-      }
-    }
+    Objects.requireNonNull(message, "message");
+    // threadId is null for a brand-new conversation.
   }
 }

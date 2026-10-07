@@ -54,13 +54,17 @@ public class ConversationService {
 
   /**
    * Loads the thread (or creates one when {@code threadId} is {@code null}), appends the user
-   * message, and returns the model-ready message list: the running summary (if any) followed by the
-   * most recent turns ending in the new user message. Compacts older turns into {@link
-   * ConversationThread#summary()} when the thread exceeds {@link #KEEP_RECENT} turns or {@link
-   * #SUMMARIZE_THRESHOLD_TOKENS} tokens; messages are never deleted from the store.
+   * message, and returns the resolved thread id together with the model-ready message list: the
+   * running summary (if any) followed by the most recent turns ending in the new user message.
+   * Compacts older turns into {@link ConversationThread#summary()} when the thread exceeds {@link
+   * #KEEP_RECENT} turns or {@link #SUMMARIZE_THRESHOLD_TOKENS} tokens; messages are never deleted
+   * from the store.
+   *
+   * <p>The resolved {@code threadId} is returned so the caller can later persist the assistant
+   * message against the same (possibly newly-created) thread via {@link #complete}.
    */
   @Transactional
-  public List<Message> contextFor(UUID userId, UUID threadId, String message) {
+  public PreparedTurn contextFor(UUID userId, UUID threadId, String message) {
     Objects.requireNonNull(userId, "userId");
     Objects.requireNonNull(message, "message");
     Instant now = CLOCK.instant();
@@ -82,7 +86,7 @@ public class ConversationService {
     List<ConversationMessage> history = new ArrayList<>(prior.size() + 1);
     history.addAll(prior);
     history.add(userMessage);
-    return buildContext(thread, history);
+    return new PreparedTurn(thread.id(), buildContext(thread, history));
   }
 
   /** Persists the assistant message and its tool trace, bumping the thread's timestamps. */
@@ -242,6 +246,17 @@ public class ConversationService {
   /** A thread and its full message history, for the owning user. */
   public record ThreadView(UUID id, String title, List<ConversationMessage> messages) {
     public ThreadView {
+      messages = messages == null ? List.of() : List.copyOf(messages);
+    }
+  }
+
+  /**
+   * The result of {@link #contextFor}: the resolved {@code threadId} (created when the caller
+   * passed {@code null}) plus the model-ready message list.
+   */
+  public record PreparedTurn(UUID threadId, List<Message> messages) {
+    public PreparedTurn {
+      Objects.requireNonNull(threadId, "threadId");
       messages = messages == null ? List.of() : List.copyOf(messages);
     }
   }

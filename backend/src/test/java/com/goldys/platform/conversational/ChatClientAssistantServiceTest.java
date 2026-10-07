@@ -14,6 +14,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -43,10 +44,7 @@ class ChatClientAssistantServiceTest {
             new ObjectMapper());
 
     List<ConversationEvent> events =
-        service.stream(
-                new ChatRequest(
-                    List.of(new ChatRequest.ChatMessage("user", "What were sales last week?"))),
-                OWNER)
+        service.stream(List.of(new UserMessage("What were sales last week?")), OWNER)
             .collectList()
             .block();
 
@@ -74,10 +72,7 @@ class ChatClientAssistantServiceTest {
             new ObjectMapper());
 
     List<ConversationEvent> events =
-        service.stream(
-                new ChatRequest(List.of(new ChatRequest.ChatMessage("user", "hello"))), OWNER)
-            .collectList()
-            .block();
+        service.stream(List.of(new UserMessage("hello")), OWNER).collectList().block();
 
     assertThat(events).hasSize(1);
     assertThat(events.get(0)).isInstanceOf(ConversationEvent.Error.class);

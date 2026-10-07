@@ -60,7 +60,10 @@ class ConversationServiceTest {
   void contextForCreatesThreadAndAppendsUserMessage() {
     when(messages.findByThreadIdOrderByCreatedAtAsc(any())).thenReturn(List.of());
 
-    List<Message> context = service.contextFor(USER, null, "Why were sales down?");
+    ConversationService.PreparedTurn turn = service.contextFor(USER, null, "Why were sales down?");
+    List<Message> context = turn.messages();
+
+    assertThat(turn.threadId()).isNotNull();
 
     assertThat(context).hasSize(1);
     assertThat(context.get(0)).isInstanceOf(UserMessage.class);
@@ -85,8 +88,11 @@ class ConversationServiceTest {
                 ConversationMessage.create(
                     thread.id(), "assistant", "Prior answer", List.of(), Instant.now())));
 
-    List<Message> context = service.contextFor(USER, thread.id(), "Why were sales down?");
+    ConversationService.PreparedTurn turn =
+        service.contextFor(USER, thread.id(), "Why were sales down?");
+    List<Message> context = turn.messages();
 
+    assertThat(turn.threadId()).isEqualTo(thread.id());
     assertThat(context).hasSize(2);
     assertThat(context.get(0)).isInstanceOf(AssistantMessage.class);
     assertThat(context.get(1)).isInstanceOf(UserMessage.class);
@@ -120,7 +126,8 @@ class ConversationServiceTest {
         .thenReturn(
             new ChatResponse(List.of(new Generation(new AssistantMessage("Compacted summary")))));
 
-    List<Message> context = service.contextFor(USER, thread.id(), "Why were sales down?");
+    List<Message> context =
+        service.contextFor(USER, thread.id(), "Why were sales down?").messages();
 
     // summary + the 6 most recent messages (5 prior + the appended user message).
     assertThat(context).hasSize(7);
@@ -173,7 +180,8 @@ class ConversationServiceTest {
         .thenReturn(
             new ChatResponse(List.of(new Generation(new AssistantMessage("Compacted summary")))));
 
-    List<Message> context = service.contextFor(USER, thread.id(), "Why were sales down?");
+    List<Message> context =
+        service.contextFor(USER, thread.id(), "Why were sales down?").messages();
 
     // 6 total messages (5 prior + 1 appended) is within KEEP_RECENT by count but over the token
     // threshold. Compaction keeps the most recent KEEP_RECENT turns (capped at size - 1 = 5),
@@ -205,7 +213,8 @@ class ConversationServiceTest {
     when(model.call(any(Prompt.class)))
         .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
 
-    List<Message> context = service.contextFor(USER, thread.id(), "Why were sales down?");
+    List<Message> context =
+        service.contextFor(USER, thread.id(), "Why were sales down?").messages();
 
     // No usable summary was produced, so no turn is dropped: full history (8 prior + 1 new) is
     // returned and the stored summary stays untouched.
@@ -232,7 +241,8 @@ class ConversationServiceTest {
     }
     when(messages.findByThreadIdOrderByCreatedAtAsc(thread.id())).thenReturn(prior);
 
-    List<Message> context = service.contextFor(USER, thread.id(), "Why were sales down?");
+    List<Message> context =
+        service.contextFor(USER, thread.id(), "Why were sales down?").messages();
 
     // Without a model no summary can be produced, so the older turns are still sent in full.
     assertThat(context).hasSize(9);

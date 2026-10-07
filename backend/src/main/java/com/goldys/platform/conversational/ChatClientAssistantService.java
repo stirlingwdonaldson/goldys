@@ -7,9 +7,7 @@ import com.goldys.platform.reporting.ToolDispatcher;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,14 +35,14 @@ public class ChatClientAssistantService implements AssistantService {
   }
 
   @Override
-  public Flux<ConversationEvent> stream(ChatRequest request, UserRole role) {
-    ConversationContext context = new ConversationContext();
-    List<ToolCallback> toolCallbacks = callbacks.forTools(tools, role, context, dispatcher, mapper);
-    List<Message> messages = request.messages().stream().map(this::toMessage).toList();
+  public Flux<ConversationEvent> stream(List<Message> context, UserRole role) {
+    ConversationContext accumulator = new ConversationContext();
+    List<ToolCallback> toolCallbacks =
+        callbacks.forTools(tools, role, accumulator, dispatcher, mapper);
 
     return chatClient
         .prompt()
-        .messages(messages)
+        .messages(context)
         .toolCallbacks(toolCallbacks.toArray(ToolCallback[]::new))
         .stream()
         .content()
@@ -52,18 +50,10 @@ public class ChatClientAssistantService implements AssistantService {
         .<ConversationEvent>map(delta -> new ConversationEvent.TextDelta(delta))
         // Deferred so the payload is built after the tool callbacks have populated the context.
         .concatWith(
-            Mono.fromSupplier(() -> new ConversationEvent.Answer(context.toAnswerPayload())))
+            Mono.fromSupplier(() -> new ConversationEvent.Answer(accumulator.toAnswerPayload())))
         .onErrorResume(
             e ->
                 Mono.just(
                     new ConversationEvent.Error("Something went wrong generating the answer.")));
-  }
-
-  private Message toMessage(ChatRequest.ChatMessage m) {
-    return switch (m.role()) {
-      case "user" -> new UserMessage(m.content());
-      case "assistant" -> new AssistantMessage(m.content());
-      default -> throw new IllegalArgumentException("Unknown message role: " + m.role());
-    };
   }
 }
