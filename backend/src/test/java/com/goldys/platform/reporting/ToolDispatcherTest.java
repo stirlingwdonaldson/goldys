@@ -51,7 +51,7 @@ class ToolDispatcherTest {
   @Test
   void authorizesUsingTheToolsDeclaredResource() {
     ReportingTool t = mock(ReportingTool.class);
-    when(t.id()).thenReturn(ToolId.GET_LABOUR_COST);
+    when(t.id()).thenReturn(ToolId.GET_LABOUR_VARIANCE);
     when(t.resource()).thenReturn(new ResourceKey("labour.cost"));
     when(t.execute(any(), any())).thenReturn(okResult());
     PermissionService permissions = mock(PermissionService.class);
@@ -62,7 +62,7 @@ class ToolDispatcherTest {
             new MetricCatalog(),
             mock(OperationalMetrics.class));
 
-    dispatcher.dispatch(ToolId.GET_LABOUR_COST, mock(ToolInput.class), OWNER);
+    dispatcher.dispatch(ToolId.GET_LABOUR_VARIANCE, mock(ToolInput.class), OWNER);
 
     verify(permissions).require(OWNER, new ResourceKey("labour.cost"), PermissionAction.READ);
   }

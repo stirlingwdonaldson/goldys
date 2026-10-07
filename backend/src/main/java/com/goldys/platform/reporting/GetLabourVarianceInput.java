@@ -5,9 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/** Input for {@link ToolId#GET_LABOUR_COST}. */
-public record GetLabourCostInput(LocalDate startDate, LocalDate endDate) implements ToolInput {
-  public GetLabourCostInput {
+/** Input for {@link ToolId#GET_LABOUR_VARIANCE}. */
+public record GetLabourVarianceInput(LocalDate startDate, LocalDate endDate) implements ToolInput {
+  public GetLabourVarianceInput {
     Objects.requireNonNull(startDate, "startDate");
     Objects.requireNonNull(endDate, "endDate");
     if (endDate.isBefore(startDate)) {

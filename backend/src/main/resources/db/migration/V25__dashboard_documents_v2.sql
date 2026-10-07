@@ -41,7 +41,7 @@ SET widgets = COALESCE(
              'metric', COALESCE(w->'input'->>'metric','sales.gross'),
              'range', jsonb_build_object('from', w->'input'->>'startDate','to', w->'input'->>'endDate','calendar','CALENDAR'),
              'grain', 'DAY', 'dimensions', '[]'::jsonb)))
-       WHEN w->>'tool' IN ('GET_LABOUR_COST','GET_FOOD_COST','GET_RESERVATION_SUMMARY') THEN
+       WHEN w->>'tool' IN ('GET_LABOUR_VARIANCE','GET_FOOD_COST','GET_RESERVATION_SUMMARY') THEN
          jsonb_build_object(
            'id', w->>'id', 'renderType', 'table', 'layout', '{"w":12,"h":2}'::jsonb,
            'queries', jsonb_build_array(jsonb_build_object(

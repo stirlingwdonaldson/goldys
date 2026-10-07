@@ -174,7 +174,7 @@ class ArchitectureBoundariesTest {
   static final ArchRule labourToolConsumesSemanticOnly =
       noClasses()
           .that()
-          .haveFullyQualifiedName("com.goldys.platform.reporting.GetLabourCostTool")
+          .haveFullyQualifiedName("com.goldys.platform.reporting.GetLabourVarianceTool")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage("..canonical..", "..reconciliation..");

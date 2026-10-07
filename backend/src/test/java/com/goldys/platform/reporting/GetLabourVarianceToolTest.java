@@ -27,7 +27,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class GetLabourCostToolTest {
+class GetLabourVarianceToolTest {
 
   private static final LocalDate FROM = LocalDate.of(2026, 9, 20);
   private static final LocalDate TO = LocalDate.of(2026, 9, 20);
@@ -35,6 +35,17 @@ class GetLabourCostToolTest {
       new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
 
   private static final WidgetRenderer RENDERER = new WidgetRenderer(new MetricCatalog());
+
+  @Test
+  void exposesVarianceNameAndBroadenedMetricQueries() {
+    GetLabourVarianceTool tool =
+        new GetLabourVarianceTool(mock(MetricQueryService.class), RENDERER);
+
+    assertThat(tool.name()).isEqualTo("get_labour_variance");
+    assertThat(tool.toMetricQueries(new GetLabourVarianceInput(FROM, TO)))
+        .extracting(MetricQuery::metric)
+        .contains(MetricId.LABOUR_FOH_PERCENT, MetricId.LABOUR_BOH_PERCENT);
+  }
 
   @Test
   void emitsResolvedLabourTable() {
@@ -48,12 +59,14 @@ class GetLabourCostToolTest {
                 case LABOUR_ACTUAL_HOURS -> tsResult(metric, List.of(), point(FROM, "13.50"));
                 case LABOUR_COST -> tsResult(metric, List.of(), point(FROM, "350.00"));
                 case LABOUR_HOURS_VARIANCE -> tsResult(metric, List.of(), point(FROM, "0.50"));
+                case LABOUR_FOH_PERCENT -> tsResult(metric, List.of(), point(FROM, "30.00"));
+                case LABOUR_BOH_PERCENT -> tsResult(metric, List.of(), point(FROM, "20.00"));
                 default -> throw new IllegalArgumentException("unexpected metric " + metric);
               };
             });
 
-    GetLabourCostTool tool = new GetLabourCostTool(metrics, RENDERER);
-    ToolResult result = tool.execute(new GetLabourCostInput(FROM, TO), OWNER);
+    GetLabourVarianceTool tool = new GetLabourVarianceTool(metrics, RENDERER);
+    ToolResult result = tool.execute(new GetLabourVarianceInput(FROM, TO), OWNER);
 
     assertThat(result.widget()).isInstanceOf(TableWidgetSpec.class);
     TableWidgetSpec widget = (TableWidgetSpec) result.widget();
@@ -76,12 +89,14 @@ class GetLabourCostToolTest {
                 case LABOUR_COST ->
                     tsResult(metric, List.of("1 day(s) unresolved"), point(FROM, null));
                 case LABOUR_HOURS_VARIANCE -> tsResult(metric, List.of(), point(FROM, "0.50"));
+                case LABOUR_FOH_PERCENT -> tsResult(metric, List.of(), point(FROM, "30.00"));
+                case LABOUR_BOH_PERCENT -> tsResult(metric, List.of(), point(FROM, "20.00"));
                 default -> throw new IllegalArgumentException("unexpected metric " + metric);
               };
             });
 
-    GetLabourCostTool tool = new GetLabourCostTool(metrics, RENDERER);
-    ToolResult result = tool.execute(new GetLabourCostInput(FROM, TO), OWNER);
+    GetLabourVarianceTool tool = new GetLabourVarianceTool(metrics, RENDERER);
+    ToolResult result = tool.execute(new GetLabourVarianceInput(FROM, TO), OWNER);
 
     assertThat(result.notices()).hasSize(1);
     assertThat(result.notices().get(0)).contains("unresolved");
@@ -90,18 +105,19 @@ class GetLabourCostToolTest {
   @Test
   void rejectsEndDateBeforeStartDate() {
     assertThatThrownBy(
-            () -> new GetLabourCostInput(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 20)))
+            () -> new GetLabourVarianceInput(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 20)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("startDate");
   }
 
   @Test
   void rejectsWrongInputType() {
-    GetLabourCostTool tool = new GetLabourCostTool(mock(MetricQueryService.class), RENDERER);
+    GetLabourVarianceTool tool =
+        new GetLabourVarianceTool(mock(MetricQueryService.class), RENDERER);
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("GetLabourCostInput");
+        .hasMessageContaining("GetLabourVarianceInput");
   }
 
   private static TimeSeriesResult tsResult(
