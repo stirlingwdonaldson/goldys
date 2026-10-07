@@ -70,6 +70,7 @@ public class ReportingToolCallbacks {
       ToolResult result = (ToolResult) resultOrMessage;
       m.put("widget", result.widget());
       m.put("notices", result.notices());
+      m.put("provenance", result.provenance());
     } else {
       m.put("error", resultOrMessage);
     }

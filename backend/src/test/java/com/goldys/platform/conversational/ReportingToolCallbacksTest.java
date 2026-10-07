@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.DepartmentCode;
@@ -65,6 +66,34 @@ class ReportingToolCallbacksTest {
         .containsExactly(provenance(MetricId.SALES_GROSS));
     assertThat(context.toAnswerPayload().notices())
         .containsExactly("1 date(s) have no resolved total (unresolved conflict).");
+  }
+
+  @Test
+  void outcomeIncludesProvenance() throws Exception {
+    ToolDispatcher dispatcher = mock(ToolDispatcher.class);
+    ToolResult result =
+        new ToolResult(
+            new TimeSeriesWidgetSpec("id", "Daily sales", null, List.of(), "currency", null),
+            List.of(),
+            List.of(provenance(MetricId.SALES_GROSS)));
+    when(dispatcher.dispatch(eq(ToolId.GET_SALES_BY_PERIOD), any(), eq(OWNER))).thenReturn(result);
+
+    ToolCallback callback =
+        new ReportingToolCallbacks()
+            .forTools(List.of(tool()), OWNER, new ConversationContext(), dispatcher, mapper)
+            .get(0);
+
+    String raw =
+        callback.call(
+            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"SALES_GROSS\"}");
+
+    JsonNode outcome = mapper.readTree(raw);
+    assertThat(outcome.get("ok").asBoolean()).isTrue();
+    assertThat(outcome.get("provenance")).isNotNull();
+    assertThat(outcome.get("provenance").isArray()).isTrue();
+    assertThat(outcome.get("provenance").size()).isEqualTo(1);
+    assertThat(outcome.get("provenance").get(0).get("metric").asText())
+        .isEqualTo(MetricId.SALES_GROSS.value());
   }
 
   @Test
