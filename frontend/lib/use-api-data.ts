@@ -9,10 +9,16 @@ import { useApi } from "@/lib/demo-mode";
  * `fetcher` is read via a ref (not a dependency) so inline arrow functions don't
  * cause an infinite loop; `deps` controls when to re-fetch. `reload` returns a
  * Promise that resolves when the fetch settles, and cancels any in-flight request
- * it replaces.
+ * it replaces. `apiOverride` lets a screen inject a specific Api (used by tests and
+ * by pages that receive an `api` prop); it defaults to the demo/live singleton.
  */
-export function useApiData<T>(fetcher: (api: Api) => Promise<T>, deps: unknown[] = []) {
-  const api = useApi();
+export function useApiData<T>(
+  fetcher: (api: Api) => Promise<T>,
+  deps: unknown[] = [],
+  apiOverride?: Api,
+) {
+  const contextApi = useApi();
+  const api = apiOverride ?? contextApi;
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
   const cancelRef = useRef<(() => void) | null>(null);

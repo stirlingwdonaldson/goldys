@@ -224,10 +224,19 @@ export interface DashboardFilters {
 
 export type Visibility = "PRIVATE" | "SHARED" | "ORG_WIDE";
 
+/**
+ * A dashboard's list entry. `description`/`createdBy`/`pinned`/`visibility` are optional
+ * because the live `GET /api/dashboards` summary predates the richer card contract and may
+ * not return them yet; the library card renders gracefully when they are absent.
+ */
 export interface SavedDashboardSummary {
   id: string;
   title: string;
   updatedAt: string;
+  description?: string | null;
+  createdBy?: string;
+  pinned?: boolean;
+  visibility?: Visibility;
 }
 
 export interface DashboardDocument {
@@ -316,6 +325,7 @@ export interface Api {
   listDashboards(): Promise<SavedDashboardSummary[]>;
   getDashboard(id: string): Promise<DashboardDocument>;
   saveDashboard(input: SaveDashboardInput): Promise<DashboardDocument>;
+  updateDashboard(id: string, input: SaveDashboardInput): Promise<DashboardDocument>;
   deleteDashboard(id: string): Promise<void>;
   renderDashboard(id: string): Promise<RenderedWidget[]>;
   listDashboardTemplates(): Promise<DashboardTemplate[]>;

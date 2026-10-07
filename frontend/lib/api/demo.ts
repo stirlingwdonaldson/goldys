@@ -467,7 +467,15 @@ export const demoApi: Api = {
 
   async listDashboards(): Promise<SavedDashboardSummary[]> {
     await delay(300);
-    return savedDashboards.map((d) => ({ id: d.id, title: d.title, updatedAt: d.updatedAt }));
+    return savedDashboards.map((d) => ({
+      id: d.id,
+      title: d.title,
+      updatedAt: d.updatedAt,
+      description: d.description,
+      createdBy: d.createdBy,
+      pinned: d.pinned,
+      visibility: d.visibility,
+    }));
   },
 
   async getDashboard(id: string): Promise<DashboardDocument> {
@@ -496,6 +504,20 @@ export const demoApi: Api = {
     };
     savedDashboards = [created, ...savedDashboards];
     return created;
+  },
+
+  async updateDashboard(id: string, input: SaveDashboardInput): Promise<DashboardDocument> {
+    await delay(400);
+    const found = savedDashboards.find((d) => d.id === id);
+    if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
+    found.title = input.title;
+    found.description = input.description ?? null;
+    found.layout = input.layout ?? "grid";
+    found.widgets = input.widgets;
+    found.filters = input.filters ?? emptyFilters();
+    found.visibility = input.visibility ?? "PRIVATE";
+    found.updatedAt = new Date().toISOString();
+    return { ...found };
   },
 
   async deleteDashboard(id: string): Promise<void> {

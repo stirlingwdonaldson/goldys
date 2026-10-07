@@ -84,6 +84,12 @@ export const liveApi: Api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     }),
+  updateDashboard: (id: string, input: SaveDashboardInput) =>
+    fetchApi<DashboardDocument>(`/api/dashboards/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
   deleteDashboard: (id: string) =>
     fetchApi<void>(`/api/dashboards/${id}`, { method: "DELETE" }),
   renderDashboard: (id: string) => fetchApi<RenderedWidget[]>(`/api/dashboards/${id}/render`),
