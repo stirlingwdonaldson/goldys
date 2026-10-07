@@ -47,10 +47,12 @@ class SavedDashboardApplicationServiceTest {
   private final SavedDashboardRevisionRepository revisions =
       mock(SavedDashboardRevisionRepository.class);
   private final SavedDashboardShareRepository shares = mock(SavedDashboardShareRepository.class);
+  private final com.goldys.platform.semantic.catalog.MetricQueryService metricQueryService =
+      mock(com.goldys.platform.semantic.catalog.MetricQueryService.class);
 
   private final SavedDashboardApplicationService service =
       new SavedDashboardApplicationService(
-          repo, catalog, renderer, mapper, permissions, revisions, shares);
+          repo, catalog, renderer, mapper, permissions, revisions, shares, metricQueryService);
 
   @Test
   void createRejectsUnknownMetric() {
@@ -59,7 +61,14 @@ class SavedDashboardApplicationServiceTest {
         .thenThrow(new IllegalArgumentException("Unknown metric: sales.gross"));
     var strictService =
         new SavedDashboardApplicationService(
-            repo, strict, new WidgetRenderer(strict), mapper, permissions, revisions, shares);
+            repo,
+            strict,
+            new WidgetRenderer(strict),
+            mapper,
+            permissions,
+            revisions,
+            shares,
+            metricQueryService);
 
     var input =
         new SavedDashboardApplicationService.DashboardInput(

@@ -3,8 +3,6 @@ package com.goldys.platform.api;
 import com.goldys.platform.application.SavedDashboardApplicationService;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
-import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.widget.WidgetSpec;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -64,8 +62,8 @@ public class SavedDashboardController {
 
   /** Re-runs the dashboard's stored queries and returns current widget specs. */
   @GetMapping("/{id}/render")
-  List<WidgetSpec> render(@PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
-    UserRole role = currentUser.roleOf(user);
-    return dashboards.render(role, id);
+  List<SavedDashboardApplicationService.RenderedWidget> render(
+      @PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboards.render(currentUser.roleOf(user), user.email(), id);
   }
 }

@@ -1,6 +1,7 @@
 package com.goldys.platform.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
@@ -15,9 +16,12 @@ import com.goldys.platform.dashboard.Visibility;
 import com.goldys.platform.reporting.WidgetRenderer;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
 import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.widget.WidgetSpec;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -46,6 +50,7 @@ public class SavedDashboardApplicationService {
   private final PermissionService permissions;
   private final SavedDashboardRevisionRepository revisions;
   private final SavedDashboardShareRepository shares;
+  private final MetricQueryService metricQueryService;
 
   public SavedDashboardApplicationService(
       SavedDashboardRepository repository,
@@ -54,7 +59,8 @@ public class SavedDashboardApplicationService {
       ObjectMapper mapper,
       PermissionService permissions,
       SavedDashboardRevisionRepository revisions,
-      SavedDashboardShareRepository shares) {
+      SavedDashboardShareRepository shares,
+      MetricQueryService metricQueryService) {
     this.repository = repository;
     this.catalog = catalog;
     this.renderer = renderer;
@@ -62,6 +68,7 @@ public class SavedDashboardApplicationService {
     this.permissions = permissions;
     this.revisions = revisions;
     this.shares = shares;
+    this.metricQueryService = metricQueryService;
   }
 
   public List<DashboardSummary> list(UserRole role) {
@@ -116,9 +123,38 @@ public class SavedDashboardApplicationService {
     repository.deleteById(id);
   }
 
-  /** Render is implemented in a later batch (per-metric authorization via MetricQueryService). */
-  public List<WidgetSpec> render(UserRole role, UUID id) {
-    throw new UnsupportedOperationException("dashboard render is implemented in a later batch");
+  /** Re-runs each widget's stored queries, authorizing per metric at render time. */
+  public List<RenderedWidget> render(UserRole role, String email, UUID id) {
+    SavedDashboard d = requireVisible(role, email, id);
+    return d.widgets().stream().map(w -> renderWidget(role, w, d.filters())).toList();
+  }
+
+  private RenderedWidget renderWidget(UserRole role, SavedWidget w, DashboardFilters filters) {
+    List<MetricResult> results = new ArrayList<>();
+    for (MetricQuery q : w.queries()) {
+      MetricQuery merged = merge(q, filters, catalog);
+      String perm = catalog.definition(merged.metric()).requiredPermission();
+      try {
+        permissions.require(role, new ResourceKey(perm), PermissionAction.READ);
+        results.add(metricQueryService.query(merged));
+      } catch (AccessDeniedException e) {
+        return new RenderedWidget(w.id(), null, perm);
+      }
+    }
+    WidgetSpec spec = renderer.render(w.id(), w.renderType(), results);
+    return new RenderedWidget(w.id(), spec, null);
+  }
+
+  private SavedDashboard requireVisible(UserRole role, String email, UUID id) {
+    SavedDashboard d = requireDashboard(id);
+    if (d.createdBy().equals(email)) return d;
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return d;
+  }
+
+  /** Dashboard-level filters merged into a widget query; the real merge lands in a later task. */
+  private static MetricQuery merge(MetricQuery q, DashboardFilters f, MetricCatalog catalog) {
+    return q;
   }
 
   private SavedDashboard requireDashboard(UUID id) {
@@ -192,4 +228,7 @@ public class SavedDashboardApplicationService {
       String createdBy,
       Instant createdAt,
       Instant updatedAt) {}
+
+  /** One widget's render outcome: a resolved spec, or the metric that denied it. */
+  public record RenderedWidget(String widgetId, WidgetSpec widget, String deniedResource) {}
 }
