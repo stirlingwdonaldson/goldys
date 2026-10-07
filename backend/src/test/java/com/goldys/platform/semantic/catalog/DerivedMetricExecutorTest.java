@@ -4,12 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.goldys.platform.semantic.DailySalesMetric;
+import com.goldys.platform.semantic.InventoryMetric;
 import com.goldys.platform.semantic.InventoryMetricsQuery;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.goldys.platform.semantic.ReservationSummary;
 import com.goldys.platform.semantic.SalesMetricsQuery;
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
@@ -156,6 +159,82 @@ class DerivedMetricExecutorTest {
     assertThat(ts.series().get(0).points()).hasSize(1);
     assertThat(ts.series().get(0).points().get(0).bucketStart()).isEqualTo(monday);
     assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("0.1000");
+  }
+
+  @Test
+  void averageSpendPerCoverDividesGrossByCovers() {
+    when(reservations.dailySummaries(SEP_13, SEP_13))
+        .thenReturn(List.of(summary(SEP_13, 100, 90, 250, 10)));
+    when(sales.dailySales(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new DailySalesMetric(
+                    SEP_13, new BigDecimal("5000.00"), null, null, "agreed", false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("20.0000");
+  }
+
+  @Test
+  void averageSpendPerCoverIsNullWhenCoversAreZero() {
+    when(reservations.dailySummaries(SEP_13, SEP_13))
+        .thenReturn(List.of(summary(SEP_13, 100, 90, 0, 10)));
+    when(sales.dailySales(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new DailySalesMetric(
+                    SEP_13, new BigDecimal("5000.00"), null, null, "agreed", false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isNull();
+    assertThat(ts.notices()).isNotEmpty();
+  }
+
+  @Test
+  void foodCostPercentDividesPurchasesByGross() {
+    when(sales.dailySales(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new DailySalesMetric(
+                    SEP_13, new BigDecimal("5000.00"), null, null, "agreed", false)));
+    when(inventory.dailyInventory(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new InventoryMetric(
+                    SEP_13, new BigDecimal("1000.00"), null, null, "agreed", false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.INVENTORY_FOOD_COST_PERCENT,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("0.2000");
   }
 
   private static ReservationSummary summary(
