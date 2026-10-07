@@ -59,6 +59,42 @@ export function DashboardsPageView({ api }: { api: Api }) {
     }
   }
 
+  const templateDialog = (
+    <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>New from template</DialogTitle>
+          <DialogDescription>Pick a starting point. A private copy is created for you.</DialogDescription>
+        </DialogHeader>
+        {templates.loading ? (
+          <LoadingState rows={2} />
+        ) : templates.error ? (
+          <ErrorState
+            title="Couldn't load templates"
+            message={templates.error.message}
+            onRetry={templates.reload}
+          />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {(templates.data ?? []).map((t) => (
+              <li key={t.id}>
+                <button
+                  type="button"
+                  disabled={creating !== null}
+                  onClick={() => createFromTemplate(t.id)}
+                  className="flex w-full flex-col gap-1 rounded-md border p-3 text-left hover:bg-muted disabled:opacity-50"
+                >
+                  <span className="text-sm font-medium">{t.name}</span>
+                  <span className="text-xs text-muted-foreground">{t.description}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+
   if (list.loading) return <LoadingState rows={3} />;
   if (list.error) {
     if (list.error.code === "NOT_PERMITTED") return <PermissionDenied subject="saved dashboards" />;
@@ -89,16 +125,19 @@ export function DashboardsPageView({ api }: { api: Api }) {
 
   if (!list.data || list.data.length === 0) {
     return (
-      <EmptyState
-        title="No saved dashboards"
-        description="Start from a template, or ask Goldy's a reporting question and save the answer as a dashboard."
-        action={
-          <Button onClick={() => setTemplatesOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            New from template
-          </Button>
-        }
-      />
+      <>
+        <EmptyState
+          title="No saved dashboards"
+          description="Start from a template, or ask Goldy's a reporting question and save the answer as a dashboard."
+          action={
+            <Button onClick={() => setTemplatesOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              New from template
+            </Button>
+          }
+        />
+        {templateDialog}
+      </>
     );
   }
 
@@ -128,39 +167,7 @@ export function DashboardsPageView({ api }: { api: Api }) {
         ))}
       </div>
 
-      <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>New from template</DialogTitle>
-            <DialogDescription>Pick a starting point. A private copy is created for you.</DialogDescription>
-          </DialogHeader>
-          {templates.loading ? (
-            <LoadingState rows={2} />
-          ) : templates.error ? (
-            <ErrorState
-              title="Couldn't load templates"
-              message={templates.error.message}
-              onRetry={templates.reload}
-            />
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {(templates.data ?? []).map((t) => (
-                <li key={t.id}>
-                  <button
-                    type="button"
-                    disabled={creating !== null}
-                    onClick={() => createFromTemplate(t.id)}
-                    className="flex w-full flex-col gap-1 rounded-md border p-3 text-left hover:bg-muted disabled:opacity-50"
-                  >
-                    <span className="text-sm font-medium">{t.name}</span>
-                    <span className="text-xs text-muted-foreground">{t.description}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </DialogContent>
-      </Dialog>
+      {templateDialog}
     </div>
   );
 }
