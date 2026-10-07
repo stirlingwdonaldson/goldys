@@ -10,6 +10,8 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.dashboard.DashboardFilters;
+import com.goldys.platform.dashboard.DashboardTemplate;
+import com.goldys.platform.dashboard.DashboardTemplateCatalog;
 import com.goldys.platform.dashboard.SavedDashboard;
 import com.goldys.platform.dashboard.SavedDashboardRepository;
 import com.goldys.platform.dashboard.SavedDashboardRevision;
@@ -60,6 +62,7 @@ public class SavedDashboardApplicationService {
   private final SavedDashboardRevisionRepository revisionsRepository;
   private final SavedDashboardShareRepository shares;
   private final MetricQueryService metricQueryService;
+  private final DashboardTemplateCatalog templateCatalog;
 
   public SavedDashboardApplicationService(
       SavedDashboardRepository repository,
@@ -69,7 +72,8 @@ public class SavedDashboardApplicationService {
       PermissionService permissions,
       SavedDashboardRevisionRepository revisionsRepository,
       SavedDashboardShareRepository shares,
-      MetricQueryService metricQueryService) {
+      MetricQueryService metricQueryService,
+      DashboardTemplateCatalog templateCatalog) {
     this.repository = repository;
     this.catalog = catalog;
     this.renderer = renderer;
@@ -78,6 +82,7 @@ public class SavedDashboardApplicationService {
     this.revisionsRepository = revisionsRepository;
     this.shares = shares;
     this.metricQueryService = metricQueryService;
+    this.templateCatalog = templateCatalog;
   }
 
   public List<DashboardSummary> list(UserRole role, String email) {
@@ -108,6 +113,27 @@ public class SavedDashboardApplicationService {
                 CLOCK.instant()));
     writeRevision(saved, actorEmail);
     return toDocument(saved);
+  }
+
+  /** The nine code-based starting-point templates. */
+  public List<DashboardTemplate> templates() {
+    return templateCatalog.templates();
+  }
+
+  /** Copies a template into a new PRIVATE dashboard owned by the caller, via the normal create path. */
+  @Transactional
+  public DashboardDocument instantiate(UserRole role, String email, String templateId) {
+    DashboardTemplate template = templateCatalog.byId(templateId);
+    return create(
+        role,
+        email,
+        new DashboardInput(
+            template.name(),
+            template.description(),
+            LAYOUT_GRID,
+            DashboardFilters.empty(),
+            Visibility.PRIVATE,
+            template.widgets()));
   }
 
   @Transactional

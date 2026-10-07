@@ -12,6 +12,7 @@ import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.dashboard.DashboardFilters;
+import com.goldys.platform.dashboard.DashboardTemplateCatalog;
 import com.goldys.platform.dashboard.SavedDashboard;
 import com.goldys.platform.dashboard.SavedDashboardRepository;
 import com.goldys.platform.dashboard.SavedDashboardRevisionRepository;
@@ -53,7 +54,15 @@ class SavedDashboardApplicationServiceTest {
 
   private final SavedDashboardApplicationService service =
       new SavedDashboardApplicationService(
-          repo, catalog, renderer, mapper, permissions, revisions, shares, metricQueryService);
+          repo,
+          catalog,
+          renderer,
+          mapper,
+          permissions,
+          revisions,
+          shares,
+          metricQueryService,
+          new DashboardTemplateCatalog());
 
   @Test
   void createRejectsUnknownMetric() {
@@ -69,7 +78,8 @@ class SavedDashboardApplicationServiceTest {
             permissions,
             revisions,
             shares,
-            metricQueryService);
+            metricQueryService,
+            new DashboardTemplateCatalog());
 
     var input =
         new SavedDashboardApplicationService.DashboardInput(
@@ -174,6 +184,19 @@ class SavedDashboardApplicationServiceTest {
     assertThat(doc.pinned()).isFalse();
     assertThat(doc.widgets()).hasSize(1);
     verify(repo).save(any(SavedDashboard.class));
+  }
+
+  @Test
+  void instantiateCopiesTemplateIntoPrivateDashboard() {
+    when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    var doc = service.instantiate(OWNER, "a@b.com", "daily");
+
+    assertThat(doc.visibility()).isEqualTo(Visibility.PRIVATE);
+    assertThat(doc.title()).isEqualTo("Daily Management");
+    assertThat(doc.layout()).isEqualTo("grid");
+    assertThat(doc.widgets()).hasSize(3);
+    assertThat(doc.createdBy()).isEqualTo("a@b.com");
   }
 
   @Test
