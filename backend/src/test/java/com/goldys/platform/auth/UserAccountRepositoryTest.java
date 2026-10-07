@@ -20,7 +20,7 @@ class UserAccountRepositoryTest {
 
   @BeforeEach
   void clean() {
-    jdbc.update("truncate table user_account");
+    jdbc.update("truncate table user_account cascade");
   }
 
   @Test
