@@ -87,7 +87,9 @@ public class DailySalesProjector {
     for (DailySalesView v : dailySales.currentDailySalesForDates(dates)) {
       byDate
           .computeIfAbsent(v.tradingDate(), k -> new ArrayList<>())
-          .add(new SourceTotal(v.sourceSystem(), v.totalSales(), v.recordedAt()));
+          .add(
+              new SourceTotal(
+                  v.sourceSystem(), v.totalSales(), v.gstTotal(), v.netTotal(), v.recordedAt()));
     }
     Map<LocalDate, String> overrideByDate = new HashMap<>();
     for (DailySalesOverride o : overrides.findCurrentByDates(dates)) {
@@ -112,8 +114,8 @@ public class DailySalesProjector {
           new ResolvedDailySales(
               e.getKey(),
               r.totalSales(),
-              null,
-              null,
+              r.net(),
+              r.gst(),
               r.resolutionType(),
               r.authoritativeSource(),
               r.hasConflict(),

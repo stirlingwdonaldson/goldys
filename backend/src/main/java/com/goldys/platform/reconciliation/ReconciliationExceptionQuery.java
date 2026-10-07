@@ -42,7 +42,9 @@ public class ReconciliationExceptionQuery {
     for (DailySalesView v : dailySales.currentDailySalesForDates(dates)) {
       byDate
           .computeIfAbsent(v.tradingDate(), k -> new ArrayList<>())
-          .add(new SourceTotal(v.sourceSystem(), v.totalSales(), v.recordedAt()));
+          .add(
+              new SourceTotal(
+                  v.sourceSystem(), v.totalSales(), v.gstTotal(), v.netTotal(), v.recordedAt()));
     }
     List<DailyException> out = new ArrayList<>();
     for (ReconciliationExceptionRow row : rows) {
