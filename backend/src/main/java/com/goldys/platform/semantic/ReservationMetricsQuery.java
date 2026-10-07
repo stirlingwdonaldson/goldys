@@ -18,6 +18,9 @@ public interface ReservationMetricsQuery {
   /** The resolved summary for a single date (both service periods combined). */
   Optional<ReservationSummary> summary(LocalDate date);
 
+  /** Resolved per-day summaries for the inclusive range, ascending by date. */
+  List<ReservationSummary> dailySummaries(LocalDate from, LocalDate to);
+
   /** Resolved covers broken down by service period, ascending by date then period. */
   List<ServicePeriodCovers> coversByServicePeriod(LocalDate from, LocalDate to);
 

@@ -9,6 +9,7 @@ import com.goldys.platform.semantic.ServicePeriodCovers;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,27 +50,16 @@ public class ResolvedReservationQuery implements ReservationMetricsQuery {
     if (rows.isEmpty()) {
       return Optional.empty();
     }
-    long bookings = 0, attended = 0, covers = 0, cancelled = 0, noShows = 0, walkIns = 0;
-    for (ResolvedReservationDay r : rows) {
-      bookings += r.bookings();
-      attended += r.attended();
-      covers += r.covers();
-      cancelled += r.cancelled();
-      noShows += r.noShows();
-      walkIns += r.walkIns();
+    return Optional.of(summarize(date, rows));
+  }
+
+  @Override
+  public List<ReservationSummary> dailySummaries(LocalDate from, LocalDate to) {
+    Map<LocalDate, List<ResolvedReservationDay>> byDate = new LinkedHashMap<>();
+    for (ResolvedReservationDay r : rows(from, to)) {
+      byDate.computeIfAbsent(r.tradingDate(), k -> new ArrayList<>()).add(r);
     }
-    return Optional.of(
-        new ReservationSummary(
-            date,
-            bookings,
-            attended,
-            covers,
-            cancelled,
-            noShows,
-            walkIns,
-            ratio(covers, attended),
-            ratio(noShows, bookings),
-            ratio(attended, bookings)));
+    return byDate.entrySet().stream().map(e -> summarize(e.getKey(), e.getValue())).toList();
   }
 
   @Override
@@ -124,6 +114,29 @@ public class ResolvedReservationQuery implements ReservationMetricsQuery {
 
   private List<ResolvedReservationDay> rows(LocalDate from, LocalDate to) {
     return repository.findByTradingDateBetweenOrderByTradingDateAscServicePeriodAsc(from, to);
+  }
+
+  private static ReservationSummary summarize(LocalDate date, List<ResolvedReservationDay> rows) {
+    long bookings = 0, attended = 0, covers = 0, cancelled = 0, noShows = 0, walkIns = 0;
+    for (ResolvedReservationDay r : rows) {
+      bookings += r.bookings();
+      attended += r.attended();
+      covers += r.covers();
+      cancelled += r.cancelled();
+      noShows += r.noShows();
+      walkIns += r.walkIns();
+    }
+    return new ReservationSummary(
+        date,
+        bookings,
+        attended,
+        covers,
+        cancelled,
+        noShows,
+        walkIns,
+        ratio(covers, attended),
+        ratio(noShows, bookings),
+        ratio(attended, bookings));
   }
 
   private static BigDecimal ratio(long numerator, long denominator) {
