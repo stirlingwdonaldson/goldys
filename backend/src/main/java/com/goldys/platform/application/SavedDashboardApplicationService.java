@@ -5,51 +5,63 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.SavedDashboard;
 import com.goldys.platform.dashboard.SavedDashboardRepository;
+import com.goldys.platform.dashboard.SavedDashboardRevisionRepository;
+import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
-import com.goldys.platform.reporting.ReportingTool;
-import com.goldys.platform.reporting.ToolDispatcher;
-import com.goldys.platform.reporting.ToolId;
-import com.goldys.platform.reporting.ToolInput;
-import com.goldys.platform.reporting.ToolRegistry;
+import com.goldys.platform.dashboard.Visibility;
+import com.goldys.platform.reporting.WidgetRenderer;
+import com.goldys.platform.semantic.catalog.MetricCatalog;
+import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.widget.WidgetSpec;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Saved-dashboard CRUD and rendering. Dashboards persist query configuration (tool + bounded input)
- * only; {@link #render} re-runs those queries through the tool dispatcher so a reopened dashboard
- * always shows current resolved data, never a stale snapshot.
+ * Saved-dashboard CRUD and rendering. Dashboards persist bounded semantic query configuration only;
+ * rendering re-runs those queries through the shared {@link WidgetRenderer} (per-metric
+ * authorization is added in a later batch), so a reopened dashboard always shows current resolved
+ * data, never a stale snapshot.
  */
 @Service
 public class SavedDashboardApplicationService {
   private static final ResourceKey RESOURCE = new ResourceKey("dashboards");
   private static final String LAYOUT_GRID = "grid";
-  private static final int DOCUMENT_SCHEMA_VERSION = 1;
+  private static final int DOCUMENT_SCHEMA_VERSION = 2;
   private static final Clock CLOCK = Clock.systemUTC();
+  private static final Set<String> RENDER_TYPES =
+      Set.of("stat", "time-series", "bar-chart", "table", "ranked-list");
 
   private final SavedDashboardRepository repository;
-  private final ToolRegistry toolRegistry;
-  private final ToolDispatcher dispatcher;
+  private final MetricCatalog catalog;
+  private final WidgetRenderer renderer;
   private final ObjectMapper mapper;
   private final PermissionService permissions;
+  private final SavedDashboardRevisionRepository revisions;
+  private final SavedDashboardShareRepository shares;
 
   public SavedDashboardApplicationService(
       SavedDashboardRepository repository,
-      ToolRegistry toolRegistry,
-      ToolDispatcher dispatcher,
+      MetricCatalog catalog,
+      WidgetRenderer renderer,
       ObjectMapper mapper,
-      PermissionService permissions) {
+      PermissionService permissions,
+      SavedDashboardRevisionRepository revisions,
+      SavedDashboardShareRepository shares) {
     this.repository = repository;
-    this.toolRegistry = toolRegistry;
-    this.dispatcher = dispatcher;
+    this.catalog = catalog;
+    this.renderer = renderer;
     this.mapper = mapper;
     this.permissions = permissions;
+    this.revisions = revisions;
+    this.shares = shares;
   }
 
   public List<DashboardSummary> list(UserRole role) {
@@ -75,6 +87,8 @@ public class SavedDashboardApplicationService {
                 input.description(),
                 input.layout(),
                 input.widgets(),
+                input.filters(),
+                input.visibility(),
                 actorEmail,
                 CLOCK.instant()));
     return toDocument(saved);
@@ -86,7 +100,13 @@ public class SavedDashboardApplicationService {
     validate(input);
     SavedDashboard dashboard = requireDashboard(id);
     dashboard.update(
-        input.title(), input.description(), input.layout(), input.widgets(), CLOCK.instant());
+        input.title(),
+        input.description(),
+        input.layout(),
+        input.widgets(),
+        input.filters(),
+        input.visibility(),
+        CLOCK.instant());
     return toDocument(dashboard);
   }
 
@@ -96,33 +116,9 @@ public class SavedDashboardApplicationService {
     repository.deleteById(id);
   }
 
-  /** Re-runs each widget's stored query and returns fresh widget specs. */
+  /** Render is implemented in a later batch (per-metric authorization via MetricQueryService). */
   public List<WidgetSpec> render(UserRole role, UUID id) {
-    permissions.require(role, RESOURCE, PermissionAction.READ);
-    SavedDashboard dashboard = requireDashboard(id);
-    return dashboard.widgets().stream()
-        .map(w -> dispatcher.dispatch(toolId(w.tool()), input(w), role).widget())
-        .toList();
-  }
-
-  private ToolInput input(SavedWidget widget) {
-    ReportingTool tool = tool(widget.tool());
-    return mapper.convertValue(widget.input(), tool.inputType());
-  }
-
-  private ToolId toolId(String tool) {
-    return tool(tool).id();
-  }
-
-  private ReportingTool tool(String tool) {
-    try {
-      ToolId id = ToolId.valueOf(tool);
-      return toolRegistry
-          .find(id)
-          .orElseThrow(() -> new IllegalArgumentException("Unknown tool: " + tool));
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("Unknown tool: " + tool, e);
-    }
+    throw new UnsupportedOperationException("dashboard render is implemented in a later batch");
   }
 
   private SavedDashboard requireDashboard(UUID id) {
@@ -131,19 +127,28 @@ public class SavedDashboardApplicationService {
         .orElseThrow(() -> new IllegalArgumentException("No dashboard with id " + id));
   }
 
-  private static void validate(DashboardInput input) {
+  private void validate(DashboardInput input) {
     if (input.title() == null || input.title().isBlank()) {
       throw new IllegalArgumentException("Dashboard title is required.");
     }
     if (input.layout() == null || !LAYOUT_GRID.equals(input.layout())) {
       throw new IllegalArgumentException("Unsupported layout: " + input.layout());
     }
+    if (input.visibility() == null) {
+      throw new IllegalArgumentException("Dashboard visibility is required.");
+    }
     for (SavedWidget w : input.widgets()) {
       if (w.id() == null || w.id().isBlank()) {
         throw new IllegalArgumentException("Widget id is required.");
       }
-      if (w.tool() == null || w.tool().isBlank()) {
-        throw new IllegalArgumentException("Widget tool is required.");
+      if (w.renderType() == null || !RENDER_TYPES.contains(w.renderType())) {
+        throw new IllegalArgumentException("Unsupported render type: " + w.renderType());
+      }
+      if (w.queries().isEmpty() || w.queries().size() > 4) {
+        throw new IllegalArgumentException("Widget queries must number between 1 and 4.");
+      }
+      for (MetricQuery q : w.queries()) {
+        catalog.definition(q.metric());
       }
     }
   }
@@ -156,13 +161,21 @@ public class SavedDashboardApplicationService {
         d.description(),
         d.layout(),
         d.widgets(),
+        d.filters(),
+        d.visibility(),
+        d.pinned(),
         d.createdBy(),
         d.createdAt(),
         d.updatedAt());
   }
 
   public record DashboardInput(
-      String title, String description, String layout, List<SavedWidget> widgets) {}
+      String title,
+      String description,
+      String layout,
+      DashboardFilters filters,
+      Visibility visibility,
+      List<SavedWidget> widgets) {}
 
   public record DashboardSummary(UUID id, String title, String updatedAt) {}
 
@@ -173,6 +186,9 @@ public class SavedDashboardApplicationService {
       String description,
       String layout,
       List<SavedWidget> widgets,
+      DashboardFilters filters,
+      Visibility visibility,
+      boolean pinned,
       String createdBy,
       Instant createdAt,
       Instant updatedAt) {}
