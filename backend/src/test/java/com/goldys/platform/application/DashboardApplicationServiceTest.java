@@ -87,7 +87,9 @@ class DashboardApplicationServiceTest {
   @Test
   void salesTrendMapsMetricToResponse() {
     when(salesMetrics.dailySales(any(), any()))
-        .thenReturn(List.of(new DailySalesMetric(SEP_13, new BigDecimal("100"), "agreed", false)));
+        .thenReturn(
+            List.of(
+                new DailySalesMetric(SEP_13, new BigDecimal("100"), null, null, "agreed", false)));
 
     var trend = service.salesTrend(OWNER);
 

@@ -77,7 +77,7 @@ class GetSalesByPeriodToolTest {
 
   private static DailySalesMetric metric(LocalDate date, String total) {
     return new DailySalesMetric(
-        date, total == null ? null : new BigDecimal(total), null, total == null);
+        date, total == null ? null : new BigDecimal(total), null, null, null, total == null);
   }
 
   private record OtherInput() implements ToolInput {}

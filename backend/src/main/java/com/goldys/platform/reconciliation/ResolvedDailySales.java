@@ -22,6 +22,12 @@ class ResolvedDailySales {
   @Column(name = "total_sales", precision = 14, scale = 4)
   private BigDecimal totalSales;
 
+  @Column(name = "net_sales", precision = 14, scale = 4)
+  private BigDecimal netSales;
+
+  @Column(name = "gst", precision = 14, scale = 4)
+  private BigDecimal gst;
+
   @Column(name = "resolution_type", nullable = false)
   private String resolutionType;
 
@@ -39,12 +45,16 @@ class ResolvedDailySales {
   ResolvedDailySales(
       LocalDate tradingDate,
       BigDecimal totalSales,
+      BigDecimal netSales,
+      BigDecimal gst,
       String resolutionType,
       String authoritativeSource,
       boolean hasConflict,
       Instant resolvedAt) {
     this.tradingDate = tradingDate;
     this.totalSales = totalSales;
+    this.netSales = netSales;
+    this.gst = gst;
     this.resolutionType = resolutionType;
     this.authoritativeSource = authoritativeSource;
     this.hasConflict = hasConflict;
@@ -57,6 +67,14 @@ class ResolvedDailySales {
 
   BigDecimal totalSales() {
     return totalSales;
+  }
+
+  BigDecimal netSales() {
+    return netSales;
+  }
+
+  BigDecimal gst() {
+    return gst;
   }
 
   String resolutionType() {

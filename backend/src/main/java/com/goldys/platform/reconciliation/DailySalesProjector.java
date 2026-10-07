@@ -112,6 +112,8 @@ public class DailySalesProjector {
           new ResolvedDailySales(
               e.getKey(),
               r.totalSales(),
+              null,
+              null,
               r.resolutionType(),
               r.authoritativeSource(),
               r.hasConflict(),

@@ -29,13 +29,15 @@ class ResolvedDailySalesQueryIntegrationTest {
         new ResolvedDailySales(
             LocalDate.of(2026, 9, 13),
             new BigDecimal("9694.80"),
+            null,
+            null,
             "agreed",
             "agreed",
             false,
             Instant.EPOCH));
     repository.save(
         new ResolvedDailySales(
-            LocalDate.of(2026, 9, 14), null, "conflict", null, true, Instant.EPOCH));
+            LocalDate.of(2026, 9, 14), null, null, null, "conflict", null, true, Instant.EPOCH));
   }
 
   @Test

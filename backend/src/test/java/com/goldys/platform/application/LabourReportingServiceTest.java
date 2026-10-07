@@ -85,7 +85,9 @@ class LabourReportingServiceTest {
     SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
     when(sales.dailySales(FROM, TO))
         .thenReturn(
-            List.of(new DailySalesMetric(FROM, new BigDecimal("10000.00"), "agreed", false)));
+            List.of(
+                new DailySalesMetric(
+                    FROM, new BigDecimal("10000.00"), null, null, "agreed", false)));
 
     PermissionService permissions = mock(PermissionService.class);
     LabourReportingService service =
@@ -129,7 +131,9 @@ class LabourReportingServiceTest {
     SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
     when(sales.dailySales(FROM, TO))
         .thenReturn(
-            List.of(new DailySalesMetric(FROM, new BigDecimal("10000.00"), "agreed", false)));
+            List.of(
+                new DailySalesMetric(
+                    FROM, new BigDecimal("10000.00"), null, null, "agreed", false)));
 
     LabourReportingService service =
         new LabourReportingService(labour, reservations, sales, mock(PermissionService.class));
@@ -154,7 +158,9 @@ class LabourReportingServiceTest {
     SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
     when(sales.dailySales(FROM, TO))
         .thenReturn(
-            List.of(new DailySalesMetric(FROM, new BigDecimal("10000.00"), "agreed", false)));
+            List.of(
+                new DailySalesMetric(
+                    FROM, new BigDecimal("10000.00"), null, null, "agreed", false)));
 
     LabourReportingService service =
         new LabourReportingService(labour, reservations, sales, mock(PermissionService.class));
