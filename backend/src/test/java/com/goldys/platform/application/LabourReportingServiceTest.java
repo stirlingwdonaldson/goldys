@@ -14,13 +14,18 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.semantic.CoversMetric;
-import com.goldys.platform.semantic.DailySalesMetric;
 import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
-import com.goldys.platform.semantic.ReservationMetricsQuery;
-import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricPoint;
+import com.goldys.platform.semantic.catalog.MetricProvenance;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.MetricSeries;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -41,10 +46,7 @@ class LabourReportingServiceTest {
 
     LabourReportingService service =
         new LabourReportingService(
-            mock(LabourMetricsQuery.class),
-            mock(ReservationMetricsQuery.class),
-            mock(SalesMetricsQuery.class),
-            permissions);
+            mock(LabourMetricsQuery.class), mock(MetricQueryService.class), permissions);
 
     assertThatThrownBy(() -> service.summary(OWNER, FROM, TO))
         .isInstanceOf(AccessDeniedException.class);
@@ -53,9 +55,6 @@ class LabourReportingServiceTest {
   @Test
   void summaryComputesCrossDomainMetrics() {
     LabourMetricsQuery labour = mock(LabourMetricsQuery.class);
-    when(labour.scheduledHours(FROM, TO)).thenReturn(new BigDecimal("14.00"));
-    when(labour.actualHours(FROM, TO)).thenReturn(new BigDecimal("13.50"));
-    when(labour.labourCost(FROM, TO)).thenReturn(new BigDecimal("350.00"));
     when(labour.dailyLabour(FROM, TO))
         .thenReturn(
             List.of(
@@ -78,20 +77,17 @@ class LabourReportingServiceTest {
                     "DEPUTY",
                     false)));
 
-    ReservationMetricsQuery reservations = mock(ReservationMetricsQuery.class);
-    when(reservations.dailyCovers(FROM, TO))
-        .thenReturn(List.of(new CoversMetric(FROM, 310, "OPENTABLE", false)));
-
-    SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
-    when(sales.dailySales(FROM, TO))
-        .thenReturn(
-            List.of(
-                new DailySalesMetric(
-                    FROM, new BigDecimal("10000.00"), null, null, "agreed", false)));
+    MetricQueryService metrics =
+        metricService(
+            MetricId.LABOUR_SCHEDULED_HOURS, new BigDecimal("14.00"),
+            MetricId.LABOUR_ACTUAL_HOURS, new BigDecimal("13.50"),
+            MetricId.LABOUR_COST, new BigDecimal("350.00"),
+            MetricId.LABOUR_HOURS_VARIANCE, new BigDecimal("0.50"),
+            MetricId.RESERVATIONS_COVERS, new BigDecimal("310"),
+            MetricId.SALES_GROSS, new BigDecimal("10000.00"));
 
     PermissionService permissions = mock(PermissionService.class);
-    LabourReportingService service =
-        new LabourReportingService(labour, reservations, sales, permissions);
+    LabourReportingService service = new LabourReportingService(labour, metrics, permissions);
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 
@@ -109,9 +105,6 @@ class LabourReportingServiceTest {
   @Test
   void missingCostYieldsNullLabourCostMetrics() {
     LabourMetricsQuery labour = mock(LabourMetricsQuery.class);
-    when(labour.scheduledHours(FROM, TO)).thenReturn(new BigDecimal("14.00"));
-    when(labour.actualHours(FROM, TO)).thenReturn(new BigDecimal("13.50"));
-    when(labour.labourCost(FROM, TO)).thenReturn(null);
     when(labour.dailyLabour(FROM, TO))
         .thenReturn(
             List.of(
@@ -125,18 +118,17 @@ class LabourReportingServiceTest {
                     "DEPUTY",
                     false)));
 
-    ReservationMetricsQuery reservations = mock(ReservationMetricsQuery.class);
-    when(reservations.dailyCovers(FROM, TO))
-        .thenReturn(List.of(new CoversMetric(FROM, 310, "OPENTABLE", false)));
-    SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
-    when(sales.dailySales(FROM, TO))
-        .thenReturn(
-            List.of(
-                new DailySalesMetric(
-                    FROM, new BigDecimal("10000.00"), null, null, "agreed", false)));
+    MetricQueryService metrics =
+        metricService(
+            MetricId.LABOUR_SCHEDULED_HOURS, new BigDecimal("14.00"),
+            MetricId.LABOUR_ACTUAL_HOURS, new BigDecimal("13.50"),
+            MetricId.LABOUR_COST, null,
+            MetricId.LABOUR_HOURS_VARIANCE, new BigDecimal("0.50"),
+            MetricId.RESERVATIONS_COVERS, new BigDecimal("310"),
+            MetricId.SALES_GROSS, new BigDecimal("10000.00"));
 
     LabourReportingService service =
-        new LabourReportingService(labour, reservations, sales, mock(PermissionService.class));
+        new LabourReportingService(labour, metrics, mock(PermissionService.class));
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 
@@ -148,26 +140,58 @@ class LabourReportingServiceTest {
   @Test
   void zeroCoversYieldsNullPerCoverMetrics() {
     LabourMetricsQuery labour = mock(LabourMetricsQuery.class);
-    when(labour.scheduledHours(FROM, TO)).thenReturn(new BigDecimal("14.00"));
-    when(labour.actualHours(FROM, TO)).thenReturn(new BigDecimal("13.50"));
-    when(labour.labourCost(FROM, TO)).thenReturn(new BigDecimal("350.00"));
     when(labour.dailyLabour(FROM, TO)).thenReturn(List.of());
 
-    ReservationMetricsQuery reservations = mock(ReservationMetricsQuery.class);
-    when(reservations.dailyCovers(FROM, TO)).thenReturn(List.of());
-    SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
-    when(sales.dailySales(FROM, TO))
-        .thenReturn(
-            List.of(
-                new DailySalesMetric(
-                    FROM, new BigDecimal("10000.00"), null, null, "agreed", false)));
+    MetricQueryService metrics =
+        metricService(
+            MetricId.LABOUR_SCHEDULED_HOURS, new BigDecimal("14.00"),
+            MetricId.LABOUR_ACTUAL_HOURS, new BigDecimal("13.50"),
+            MetricId.LABOUR_COST, new BigDecimal("350.00"),
+            MetricId.LABOUR_HOURS_VARIANCE, new BigDecimal("0.50"),
+            MetricId.RESERVATIONS_COVERS, BigDecimal.ZERO,
+            MetricId.SALES_GROSS, new BigDecimal("10000.00"));
 
     LabourReportingService service =
-        new LabourReportingService(labour, reservations, sales, mock(PermissionService.class));
+        new LabourReportingService(labour, metrics, mock(PermissionService.class));
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 
     assertThat(summary.hoursPerCover()).isNull();
     assertThat(summary.labourCostPerCover()).isNull();
+  }
+
+  /** Builds a {@link MetricQueryService} mock that resolves each (metric, value) pair. */
+  private static MetricQueryService metricService(Object... idValues) {
+    MetricQueryService metrics = mock(MetricQueryService.class);
+    when(metrics.query(any()))
+        .thenAnswer(
+            inv -> {
+              MetricQuery query = inv.getArgument(0);
+              for (int i = 0; i < idValues.length; i += 2) {
+                if (idValues[i] == query.metric()) {
+                  return series(query, (BigDecimal) idValues[i + 1]);
+                }
+              }
+              throw new AssertionError("unexpected metric " + query.metric());
+            });
+    return metrics;
+  }
+
+  private static TimeSeriesResult series(MetricQuery query, BigDecimal value) {
+    MetricProvenance provenance =
+        new MetricProvenance(
+            query.metric(),
+            "1",
+            query.range(),
+            TimeGrain.DAY,
+            "resolved_labour_day",
+            Instant.EPOCH,
+            List.of(),
+            "1");
+    return new TimeSeriesResult(
+        query.metric(),
+        List.of(new MetricSeries(null, List.of(new MetricPoint(query.range().from(), value)))),
+        List.of(),
+        provenance);
   }
 }

@@ -4,15 +4,21 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.semantic.CoversMetric;
-import com.goldys.platform.semantic.DailySalesMetric;
 import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
-import com.goldys.platform.semantic.ReservationMetricsQuery;
-import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricPoint;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.MetricSeries;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeRange;
+import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 /**
@@ -27,18 +33,13 @@ public class LabourReportingService {
   private static final int SCALE = 4;
 
   private final LabourMetricsQuery labour;
-  private final ReservationMetricsQuery reservations;
-  private final SalesMetricsQuery sales;
+  private final MetricQueryService metrics;
   private final PermissionService permissions;
 
   public LabourReportingService(
-      LabourMetricsQuery labour,
-      ReservationMetricsQuery reservations,
-      SalesMetricsQuery sales,
-      PermissionService permissions) {
+      LabourMetricsQuery labour, MetricQueryService metrics, PermissionService permissions) {
     this.labour = labour;
-    this.reservations = reservations;
-    this.sales = sales;
+    this.metrics = metrics;
     this.permissions = permissions;
   }
 
@@ -46,13 +47,15 @@ public class LabourReportingService {
     permissions.require(role, RESOURCE_HOURS, PermissionAction.READ);
     permissions.require(role, RESOURCE_COST, PermissionAction.READ);
 
-    BigDecimal scheduledHours = labour.scheduledHours(from, to);
-    BigDecimal actualHours = labour.actualHours(from, to);
-    BigDecimal labourCost = labour.labourCost(from, to);
-    BigDecimal variance = labour.scheduledVsActualVariance(from, to);
+    TimeRange range = new TimeRange(from, to, Calendar.CALENDAR);
 
-    long covers = sumCovers(from, to);
-    BigDecimal grossSales = sumGrossSales(from, to);
+    BigDecimal scheduledHours = total(MetricId.LABOUR_SCHEDULED_HOURS, range);
+    BigDecimal actualHours = total(MetricId.LABOUR_ACTUAL_HOURS, range);
+    BigDecimal labourCost = total(MetricId.LABOUR_COST, range);
+    BigDecimal variance = total(MetricId.LABOUR_HOURS_VARIANCE, range);
+
+    BigDecimal covers = total(MetricId.RESERVATIONS_COVERS, range);
+    BigDecimal grossSales = total(MetricId.SALES_GROSS, range);
 
     return new LabourSummary(
         from.toString(),
@@ -62,27 +65,26 @@ public class LabourReportingService {
         labourCost,
         variance,
         ratio(actualHours, covers),
-        labourCost == null ? null : ratio(labourCost, covers),
+        ratio(labourCost, covers),
         departmentPercent(from, to, "FOH", grossSales),
         departmentPercent(from, to, "BOH", grossSales));
   }
 
-  private long sumCovers(LocalDate from, LocalDate to) {
-    long total = 0;
-    for (CoversMetric m : reservations.dailyCovers(from, to)) {
-      total += m.covers();
-    }
-    return total;
-  }
-
-  private BigDecimal sumGrossSales(LocalDate from, LocalDate to) {
+  /** Sums non-null per-day points across all series; null when nothing resolved (never zero). */
+  private BigDecimal total(MetricId id, TimeRange range) {
+    TimeSeriesResult result =
+        (TimeSeriesResult) metrics.query(new MetricQuery(id, range, TimeGrain.DAY, Set.of(), null));
     BigDecimal total = BigDecimal.ZERO;
-    for (DailySalesMetric m : sales.dailySales(from, to)) {
-      if (m.grossSales() != null) {
-        total = total.add(m.grossSales());
+    boolean any = false;
+    for (MetricSeries series : result.series()) {
+      for (MetricPoint point : series.points()) {
+        if (point.value() != null) {
+          total = total.add(point.value());
+          any = true;
+        }
       }
     }
-    return total;
+    return any ? total : null;
   }
 
   private BigDecimal departmentPercent(
@@ -107,11 +109,11 @@ public class LabourReportingService {
     return cost.divide(grossSales, SCALE, RoundingMode.HALF_UP);
   }
 
-  private static BigDecimal ratio(BigDecimal numerator, long denominator) {
-    if (numerator == null || denominator == 0) {
+  private static BigDecimal ratio(BigDecimal numerator, BigDecimal denominator) {
+    if (numerator == null || denominator == null || denominator.signum() == 0) {
       return null;
     }
-    return numerator.divide(BigDecimal.valueOf(denominator), SCALE, RoundingMode.HALF_UP);
+    return numerator.divide(denominator, SCALE, RoundingMode.HALF_UP);
   }
 
   public record LabourSummary(

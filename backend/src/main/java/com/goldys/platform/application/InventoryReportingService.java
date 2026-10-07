@@ -4,12 +4,19 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.semantic.DailySalesMetric;
-import com.goldys.platform.semantic.InventoryMetricsQuery;
-import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricPoint;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.MetricSeries;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeRange;
+import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 /**
@@ -21,25 +28,23 @@ public class InventoryReportingService {
   private static final ResourceKey RESOURCE = new ResourceKey("inventory.cost");
   private static final int SCALE = 4;
 
-  private final InventoryMetricsQuery inventory;
-  private final SalesMetricsQuery sales;
+  private final MetricQueryService metrics;
   private final PermissionService permissions;
 
-  public InventoryReportingService(
-      InventoryMetricsQuery inventory, SalesMetricsQuery sales, PermissionService permissions) {
-    this.inventory = inventory;
-    this.sales = sales;
+  public InventoryReportingService(MetricQueryService metrics, PermissionService permissions) {
+    this.metrics = metrics;
     this.permissions = permissions;
   }
 
   public InventorySummary summary(UserRole role, LocalDate from, LocalDate to) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
 
-    BigDecimal purchases = inventory.purchases(from, to);
-    BigDecimal wastage = inventory.wastage(from, to);
-    BigDecimal grossSales = sumGrossSales(from, to);
+    TimeRange range = new TimeRange(from, to, Calendar.CALENDAR);
+    BigDecimal purchases = total(MetricId.INVENTORY_PURCHASES, range);
+    BigDecimal wastage = total(MetricId.INVENTORY_WASTAGE, range);
+    BigDecimal grossSales = total(MetricId.SALES_GROSS, range);
     BigDecimal foodCostPercent =
-        purchases == null || grossSales.signum() == 0
+        purchases == null || grossSales == null || grossSales.signum() == 0
             ? null
             : purchases.divide(grossSales, SCALE, RoundingMode.HALF_UP);
 
@@ -47,14 +52,21 @@ public class InventoryReportingService {
         from.toString(), to.toString(), purchases, wastage, foodCostPercent);
   }
 
-  private BigDecimal sumGrossSales(LocalDate from, LocalDate to) {
+  /** Sums non-null per-day points across all series; null when nothing resolved (never zero). */
+  private BigDecimal total(MetricId id, TimeRange range) {
+    TimeSeriesResult result =
+        (TimeSeriesResult) metrics.query(new MetricQuery(id, range, TimeGrain.DAY, Set.of(), null));
     BigDecimal total = BigDecimal.ZERO;
-    for (DailySalesMetric m : sales.dailySales(from, to)) {
-      if (m.grossSales() != null) {
-        total = total.add(m.grossSales());
+    boolean any = false;
+    for (MetricSeries series : result.series()) {
+      for (MetricPoint point : series.points()) {
+        if (point.value() != null) {
+          total = total.add(point.value());
+          any = true;
+        }
       }
     }
-    return total;
+    return any ? total : null;
   }
 
   public record InventorySummary(
