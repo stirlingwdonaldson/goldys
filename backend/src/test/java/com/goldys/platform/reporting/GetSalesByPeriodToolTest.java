@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.auth.DepartmentCode;
@@ -90,6 +91,20 @@ class GetSalesByPeriodToolTest {
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("GetSalesByPeriodInput");
+  }
+
+  @Test
+  void rejectsANonSalesMetric() {
+    MetricQueryService metrics = mock(MetricQueryService.class);
+    GetSalesByPeriodTool tool = new GetSalesByPeriodTool(metrics, new MetricCatalog());
+
+    assertThatThrownBy(
+            () ->
+                tool.execute(
+                    new GetSalesByPeriodInput(SEP_13, SEP_13, MetricId.PRODUCT_TOP_SELLERS), OWNER))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Unsupported metric");
+    verifyNoInteractions(metrics);
   }
 
   private static TimeSeriesResult tsResult(

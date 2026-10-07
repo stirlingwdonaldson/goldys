@@ -4,6 +4,7 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
+import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
 import com.goldys.platform.semantic.catalog.TimeGrain;
@@ -59,6 +60,12 @@ public class GetSalesByPeriodTool implements ReportingTool {
     if (!(input instanceof GetSalesByPeriodInput in)) {
       throw new IllegalArgumentException(
           "Expected GetSalesByPeriodInput, got " + input.getClass().getSimpleName());
+    }
+    if (in.metric() != MetricId.SALES_GROSS
+        && in.metric() != MetricId.SALES_NET
+        && in.metric() != MetricId.SALES_GST) {
+      throw new IllegalArgumentException(
+          "Unsupported metric for get_sales_by_period: " + in.metric());
     }
     TimeSeriesResult result =
         (TimeSeriesResult)
