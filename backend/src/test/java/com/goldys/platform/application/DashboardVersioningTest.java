@@ -68,16 +68,40 @@ class DashboardVersioningTest {
     assertThat(doc.title()).isEqualTo("original");
     assertThat(doc.widgets()).isEqualTo(input.widgets());
     assertThat(doc.filters()).isEqualTo(input.filters());
-    assertThat(service.revisions(d.id())).hasSize(4); // 3 edits + 1 restore
+    assertThat(service.revisions(OWNER, "a@b.com", d.id())).hasSize(4); // 3 edits + 1 restore
+  }
+
+  @Test
+  void restoreReproducesShareRoles() {
+    var boh = new UserRole(new DepartmentCode("BOH"), new SeniorityCode("MANAGER"));
+    var foh = new UserRole(new DepartmentCode("FOH"), new SeniorityCode("STAFF"));
+
+    var d = service.create(OWNER, "a@b.com", inputWithTitle("v1", Visibility.SHARED));
+    service.setSharing(OWNER, "a@b.com", d.id(), Visibility.SHARED, List.of(boh));
+    // update writes revision 2, snapshotting visibility=SHARED + shares=[boh]
+    service.update(OWNER, "a@b.com", d.id(), inputWithTitle("v2", Visibility.SHARED));
+    // drift the share list away from what revision 2 captured
+    service.setSharing(OWNER, "a@b.com", d.id(), Visibility.SHARED, List.of(foh));
+
+    service.restore(OWNER, "a@b.com", d.id(), 2);
+
+    var sharing = service.sharing(OWNER, "a@b.com", d.id());
+    assertThat(sharing.visibility()).isEqualTo(Visibility.SHARED);
+    assertThat(sharing.roles()).containsExactly(boh);
   }
 
   private static SavedDashboardApplicationService.DashboardInput inputWithTitle(String title) {
+    return inputWithTitle(title, Visibility.PRIVATE);
+  }
+
+  private static SavedDashboardApplicationService.DashboardInput inputWithTitle(
+      String title, Visibility visibility) {
     return new SavedDashboardApplicationService.DashboardInput(
         title,
         "daily sales",
         "grid",
         new DashboardFilters(FILTER_RANGE, Comparison.PREVIOUS_WEEK, Set.of()),
-        Visibility.PRIVATE,
+        visibility,
         List.of(
             new SavedWidget(
                 "w1",

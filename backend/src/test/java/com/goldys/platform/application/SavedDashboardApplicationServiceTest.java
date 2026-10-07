@@ -64,6 +64,11 @@ class SavedDashboardApplicationServiceTest {
           metricQueryService,
           new DashboardTemplateCatalog());
 
+  @org.junit.jupiter.api.BeforeEach
+  void stubShares() {
+    when(shares.findByDashboardId(any())).thenReturn(List.of());
+  }
+
   @Test
   void createRejectsUnknownMetric() {
     MetricCatalog strict = mock(MetricCatalog.class);

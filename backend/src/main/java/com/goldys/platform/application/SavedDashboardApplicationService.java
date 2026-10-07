@@ -153,7 +153,8 @@ public class SavedDashboardApplicationService {
     return toDocument(dashboard);
   }
 
-  public List<DashboardRevisionSummary> revisions(UUID id) {
+  public List<DashboardRevisionSummary> revisions(UserRole role, String email, UUID id) {
+    requireVisible(role, email, id);
     return revisionsRepository.findByDashboardIdOrderByRevisionDesc(id).stream()
         .map(r -> new DashboardRevisionSummary(r.revision(), r.createdBy(), r.createdAt()))
         .toList();
@@ -163,7 +164,8 @@ public class SavedDashboardApplicationService {
   public DashboardDocument restore(UserRole role, String email, UUID id, int revision) {
     requireEditable(role, email, id);
     SavedDashboardRevision rev = findRevision(id, revision);
-    DashboardDocument doc = readDocument(rev.document());
+    RevisionSnapshot snapshot = readSnapshot(rev.document());
+    DashboardDocument doc = snapshot.document();
     DashboardInput input =
         new DashboardInput(
             doc.title(),
@@ -172,6 +174,12 @@ public class SavedDashboardApplicationService {
             doc.filters(),
             doc.visibility(),
             doc.widgets());
+    // Replace the dashboard's share rows with the snapshot's BEFORE re-running update, so the new
+    // revision written by update captures the restored shares rather than the pre-restore ones.
+    shares.deleteAll(shares.findByDashboardId(id));
+    for (ShareSnapshot s : snapshot.shares()) {
+      shares.save(SavedDashboardShare.create(id, s.department(), s.seniority()));
+    }
     return update(role, email, id, input);
   }
 
@@ -182,7 +190,7 @@ public class SavedDashboardApplicationService {
   }
 
   @Transactional
-  public void setSharing(
+  public DashboardSharing setSharing(
       UserRole role, String email, UUID id, Visibility visibility, List<UserRole> roles) {
     SavedDashboard dashboard = requireEditable(role, email, id);
     if (visibility == null) {
@@ -193,13 +201,19 @@ public class SavedDashboardApplicationService {
     for (UserRole r : roles) {
       shares.save(SavedDashboardShare.create(id, r.department().value(), r.seniority().value()));
     }
+    return new DashboardSharing(visibility, roles);
   }
 
-  public List<UserRole> sharing(UUID id) {
-    return shares.findByDashboardId(id).stream()
-        .map(
-            s -> new UserRole(new DepartmentCode(s.department()), new SeniorityCode(s.seniority())))
-        .toList();
+  public DashboardSharing sharing(UserRole role, String email, UUID id) {
+    SavedDashboard d = requireVisible(role, email, id);
+    List<UserRole> roles =
+        shares.findByDashboardId(id).stream()
+            .map(
+                s ->
+                    new UserRole(
+                        new DepartmentCode(s.department()), new SeniorityCode(s.seniority())))
+            .toList();
+    return new DashboardSharing(d.visibility(), roles);
   }
 
   /** Re-runs each widget's stored queries, authorizing per metric at render time. */
@@ -333,9 +347,17 @@ public class SavedDashboardApplicationService {
   }
 
   private void writeRevision(SavedDashboard saved, String actorEmail) {
+    List<ShareSnapshot> shareSnapshot =
+        shares.findByDashboardId(saved.id()).stream()
+            .map(s -> new ShareSnapshot(s.department(), s.seniority()))
+            .toList();
     revisionsRepository.save(
         SavedDashboardRevision.create(
-            saved.id(), saved.currentRevision(), serialize(saved), actorEmail, CLOCK.instant()));
+            saved.id(),
+            saved.currentRevision(),
+            serialize(new RevisionSnapshot(toDocument(saved), shareSnapshot)),
+            actorEmail,
+            CLOCK.instant()));
   }
 
   private SavedDashboardRevision findRevision(UUID id, int revision) {
@@ -346,17 +368,17 @@ public class SavedDashboardApplicationService {
             () -> new IllegalArgumentException("No revision " + revision + " for dashboard " + id));
   }
 
-  private String serialize(SavedDashboard saved) {
+  private String serialize(Object value) {
     try {
-      return mapper.writeValueAsString(toDocument(saved));
+      return mapper.writeValueAsString(value);
     } catch (JsonProcessingException e) {
-      throw new IllegalStateException("Failed to serialize dashboard " + saved.id(), e);
+      throw new IllegalStateException("Failed to serialize dashboard revision", e);
     }
   }
 
-  private DashboardDocument readDocument(String json) {
+  private RevisionSnapshot readSnapshot(String json) {
     try {
-      return mapper.readValue(json, DashboardDocument.class);
+      return mapper.readValue(json, RevisionSnapshot.class);
     } catch (JsonProcessingException e) {
       throw new IllegalStateException("Failed to deserialize dashboard revision", e);
     }
@@ -374,6 +396,9 @@ public class SavedDashboardApplicationService {
 
   public record DashboardRevisionSummary(int revision, String createdBy, Instant createdAt) {}
 
+  /** Visibility plus the role list that can open a {@code SHARED} dashboard. */
+  public record DashboardSharing(Visibility visibility, List<UserRole> roles) {}
+
   public record DashboardDocument(
       UUID id,
       int schemaVersion,
@@ -390,4 +415,10 @@ public class SavedDashboardApplicationService {
 
   /** One widget's render outcome: a resolved spec, or the metric that denied it. */
   public record RenderedWidget(String widgetId, WidgetSpec widget, String deniedResource) {}
+
+  /** A revision snapshot: the document plus the share roles in force when the revision was written. */
+  record RevisionSnapshot(DashboardDocument document, List<ShareSnapshot> shares) {}
+
+  /** One share role captured in a revision snapshot (department × seniority). */
+  record ShareSnapshot(String department, String seniority) {}
 }

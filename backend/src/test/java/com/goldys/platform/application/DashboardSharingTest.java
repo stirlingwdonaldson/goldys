@@ -79,6 +79,7 @@ class DashboardSharingTest {
               lastSaved.set(s);
               return s;
             });
+    when(shares.findByDashboardId(any())).thenReturn(List.of());
   }
 
   @Test
@@ -89,6 +90,19 @@ class DashboardSharingTest {
     var other = new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
 
     assertThatThrownBy(() -> service.get(other, "c@d.com", d.id()))
+        .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void sharingAndRevisionsRequireVisibility() {
+    var d = service.create(OWNER, "a@b.com", input());
+    when(repo.findById(d.id())).thenReturn(Optional.of(lastSaved.get()));
+
+    var other = new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
+
+    assertThatThrownBy(() -> service.sharing(other, "c@d.com", d.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> service.revisions(other, "c@d.com", d.id()))
         .isInstanceOf(AccessDeniedException.class);
   }
 
@@ -106,7 +120,7 @@ class DashboardSharingTest {
     var doc = service.get(boh, "boh@x.com", d.id());
     assertThat(doc).isNotNull();
     assertThat(doc.visibility()).isEqualTo(Visibility.SHARED);
-    assertThat(service.sharing(d.id())).containsExactly(boh);
+    assertThat(service.sharing(OWNER, "a@b.com", d.id()).roles()).containsExactly(boh);
   }
 
   private static SavedDashboardApplicationService.DashboardInput input() {
