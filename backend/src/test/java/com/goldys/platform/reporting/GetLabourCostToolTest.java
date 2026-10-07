@@ -2,16 +2,29 @@ package com.goldys.platform.reporting;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.semantic.LabourMetricsQuery;
+import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricCatalog;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricPoint;
+import com.goldys.platform.semantic.catalog.MetricProvenance;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.MetricSeries;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeRange;
+import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import com.goldys.platform.widget.TableWidgetSpec;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class GetLabourCostToolTest {
@@ -23,13 +36,21 @@ class GetLabourCostToolTest {
 
   @Test
   void emitsResolvedLabourTable() {
-    LabourMetricsQuery labour = mock(LabourMetricsQuery.class);
-    when(labour.scheduledHours(FROM, TO)).thenReturn(new BigDecimal("14.00"));
-    when(labour.actualHours(FROM, TO)).thenReturn(new BigDecimal("13.50"));
-    when(labour.labourCost(FROM, TO)).thenReturn(new BigDecimal("350.00"));
-    when(labour.scheduledVsActualVariance(FROM, TO)).thenReturn(new BigDecimal("0.50"));
+    MetricQueryService metrics = mock(MetricQueryService.class);
+    when(metrics.query(any()))
+        .thenAnswer(
+            inv -> {
+              MetricId metric = ((MetricQuery) inv.getArgument(0)).metric();
+              return switch (metric) {
+                case LABOUR_SCHEDULED_HOURS -> tsResult(metric, List.of(), point(FROM, "14.00"));
+                case LABOUR_ACTUAL_HOURS -> tsResult(metric, List.of(), point(FROM, "13.50"));
+                case LABOUR_COST -> tsResult(metric, List.of(), point(FROM, "350.00"));
+                case LABOUR_HOURS_VARIANCE -> tsResult(metric, List.of(), point(FROM, "0.50"));
+                default -> throw new IllegalArgumentException("unexpected metric " + metric);
+              };
+            });
 
-    GetLabourCostTool tool = new GetLabourCostTool(labour);
+    GetLabourCostTool tool = new GetLabourCostTool(metrics, new MetricCatalog());
     ToolResult result = tool.execute(new GetLabourCostInput(FROM, TO), OWNER);
 
     assertThat(result.widget()).isInstanceOf(TableWidgetSpec.class);
@@ -42,17 +63,26 @@ class GetLabourCostToolTest {
 
   @Test
   void emitsNoticeWhenCostIsUnknown() {
-    LabourMetricsQuery labour = mock(LabourMetricsQuery.class);
-    when(labour.scheduledHours(FROM, TO)).thenReturn(new BigDecimal("14.00"));
-    when(labour.actualHours(FROM, TO)).thenReturn(new BigDecimal("13.50"));
-    when(labour.labourCost(FROM, TO)).thenReturn(null);
-    when(labour.scheduledVsActualVariance(FROM, TO)).thenReturn(new BigDecimal("0.50"));
+    MetricQueryService metrics = mock(MetricQueryService.class);
+    when(metrics.query(any()))
+        .thenAnswer(
+            inv -> {
+              MetricId metric = ((MetricQuery) inv.getArgument(0)).metric();
+              return switch (metric) {
+                case LABOUR_SCHEDULED_HOURS -> tsResult(metric, List.of(), point(FROM, "14.00"));
+                case LABOUR_ACTUAL_HOURS -> tsResult(metric, List.of(), point(FROM, "13.50"));
+                case LABOUR_COST ->
+                    tsResult(metric, List.of("1 day(s) unresolved"), point(FROM, null));
+                case LABOUR_HOURS_VARIANCE -> tsResult(metric, List.of(), point(FROM, "0.50"));
+                default -> throw new IllegalArgumentException("unexpected metric " + metric);
+              };
+            });
 
-    GetLabourCostTool tool = new GetLabourCostTool(labour);
+    GetLabourCostTool tool = new GetLabourCostTool(metrics, new MetricCatalog());
     ToolResult result = tool.execute(new GetLabourCostInput(FROM, TO), OWNER);
 
     assertThat(result.notices()).hasSize(1);
-    assertThat(result.notices().get(0)).contains("unknown");
+    assertThat(result.notices().get(0)).contains("unresolved");
   }
 
   @Test
@@ -65,11 +95,32 @@ class GetLabourCostToolTest {
 
   @Test
   void rejectsWrongInputType() {
-    GetLabourCostTool tool = new GetLabourCostTool(mock(LabourMetricsQuery.class));
+    GetLabourCostTool tool =
+        new GetLabourCostTool(mock(MetricQueryService.class), new MetricCatalog());
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("GetLabourCostInput");
+  }
+
+  private static TimeSeriesResult tsResult(
+      MetricId id, List<String> notices, MetricPoint... points) {
+    MetricProvenance provenance =
+        new MetricProvenance(
+            id,
+            "1",
+            new TimeRange(FROM, TO, Calendar.CALENDAR),
+            TimeGrain.DAY,
+            "resolved_labour_day",
+            Instant.EPOCH,
+            List.of(),
+            "1");
+    return new TimeSeriesResult(
+        id, List.of(new MetricSeries(null, List.of(points))), notices, provenance);
+  }
+
+  private static MetricPoint point(LocalDate date, String value) {
+    return new MetricPoint(date, value == null ? null : new BigDecimal(value));
   }
 
   private record OtherInput() implements ToolInput {}

@@ -39,7 +39,9 @@ class SalesReportingServiceTest {
   void latestTradingDayComesFromTheSemanticLayer() {
     when(salesMetrics.latestTradingDay())
         .thenReturn(
-            Optional.of(new DailySalesMetric(SEP_13, new BigDecimal("10865.72"), "agreed", false)));
+            Optional.of(
+                new DailySalesMetric(
+                    SEP_13, new BigDecimal("10865.72"), null, null, "agreed", false)));
 
     var latest = service.latestTradingDay(OWNER);
 

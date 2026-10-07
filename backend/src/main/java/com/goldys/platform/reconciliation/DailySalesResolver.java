@@ -13,7 +13,12 @@ final class DailySalesResolver {
 
   private DailySalesResolver() {}
 
-  record Result(String resolutionType, String authoritativeSource, BigDecimal totalSales) {
+  record Result(
+      String resolutionType,
+      String authoritativeSource,
+      BigDecimal totalSales,
+      BigDecimal gst,
+      BigDecimal net) {
     boolean hasConflict() {
       return "conflict".equals(resolutionType) || "missing".equals(resolutionType);
     }
@@ -25,14 +30,15 @@ final class DailySalesResolver {
       return sources.stream()
           .filter(s -> s.sourceSystem().equals(overrideSource.get()))
           .findFirst()
-          .map(s -> new Result("override", s.sourceSystem(), s.totalSales()));
+          .map(s -> result("override", s.sourceSystem(), s));
     }
     if (sources.isEmpty()) {
       return Optional.empty();
     }
     String status = classify(sources);
     if ("agreed".equals(status)) {
-      return Optional.of(new Result("agreed", "agreed", sources.get(0).totalSales()));
+      SourceTotal s = sources.get(0);
+      return Optional.of(result("agreed", "agreed", s));
     }
     if (rule.isPresent()) {
       Optional<String> chosen = RuleEvaluator.resolve(rule.get(), toMetrics(sources));
@@ -40,10 +46,14 @@ final class DailySalesResolver {
         return sources.stream()
             .filter(s -> s.sourceSystem().equals(chosen.get()))
             .findFirst()
-            .map(s -> new Result("rule", s.sourceSystem(), s.totalSales()));
+            .map(s -> result("rule", s.sourceSystem(), s));
       }
     }
-    return Optional.of(new Result(status, null, null));
+    return Optional.of(new Result(status, null, null, null, null));
+  }
+
+  private static Result result(String type, String source, SourceTotal s) {
+    return new Result(type, source, s.totalSales(), s.gstTotal(), s.netTotal());
   }
 
   static String classify(List<SourceTotal> sources) {

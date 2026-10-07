@@ -49,6 +49,8 @@ class StartupProjectionSeederIntegrationTest {
         new ResolvedDailySales(
             LocalDate.of(2026, 9, 13),
             new BigDecimal("100.00"),
+            null,
+            null,
             "agreed",
             "agreed",
             false,

@@ -110,6 +110,32 @@ class DailySalesResolverTest {
   }
 
   @Test
+  void resolvesGstAndNetAlongsideTotalOnAgreement() {
+    List<SourceTotal> sources =
+        List.of(
+            new SourceTotal(
+                "LIGHTSPEED",
+                new BigDecimal("100.00"),
+                new BigDecimal("9.09"),
+                new BigDecimal("90.91"),
+                Instant.EPOCH),
+            new SourceTotal(
+                "CTB",
+                new BigDecimal("100.00"),
+                new BigDecimal("9.09"),
+                new BigDecimal("90.91"),
+                Instant.EPOCH));
+
+    Optional<DailySalesResolver.Result> result =
+        DailySalesResolver.resolve(sources, Optional.empty(), Optional.empty());
+
+    assertThat(result).isPresent();
+    assertThat(result.get().totalSales()).isEqualByComparingTo("100.00");
+    assertThat(result.get().gst()).isEqualByComparingTo("9.09");
+    assertThat(result.get().net()).isEqualByComparingTo("90.91");
+  }
+
+  @Test
   void overrideForUnknownSourceDoesNotNpe() {
     Optional<DailySalesResolver.Result> r =
         DailySalesResolver.resolve(
@@ -119,6 +145,6 @@ class DailySalesResolverTest {
   }
 
   private static SourceTotal st(String source, String total) {
-    return new SourceTotal(source, new BigDecimal(total), null);
+    return new SourceTotal(source, new BigDecimal(total), null, null, null);
   }
 }

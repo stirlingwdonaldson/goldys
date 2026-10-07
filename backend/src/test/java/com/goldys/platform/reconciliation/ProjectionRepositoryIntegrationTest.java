@@ -34,13 +34,15 @@ class ProjectionRepositoryIntegrationTest {
         new ResolvedDailySales(
             LocalDate.of(2026, 9, 13),
             new BigDecimal("27650.66"),
+            null,
+            null,
             "agreed",
             "agreed",
             false,
             Instant.EPOCH));
     resolved.save(
         new ResolvedDailySales(
-            LocalDate.of(2026, 9, 14), null, "conflict", null, true, Instant.EPOCH));
+            LocalDate.of(2026, 9, 14), null, null, null, "conflict", null, true, Instant.EPOCH));
 
     assertThat(resolved.findTopByOrderByTradingDateDesc().get().tradingDate())
         .isEqualTo(LocalDate.of(2026, 9, 14));

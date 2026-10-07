@@ -2,25 +2,32 @@ package com.goldys.platform.reporting;
 
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.semantic.DailySalesMetric;
-import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricCatalog;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeRange;
+import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import com.goldys.platform.widget.Point;
 import com.goldys.platform.widget.Series;
 import com.goldys.platform.widget.TimeSeriesWidgetSpec;
 import com.goldys.platform.widget.WidgetQuery;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 /** Resolved daily gross sales for a date range, emitted as a time-series widget. */
 @Component
 public class GetSalesByPeriodTool implements ReportingTool {
-  private final SalesMetricsQuery salesMetrics;
+  private final MetricQueryService metrics;
+  private final MetricCatalog catalog;
 
-  public GetSalesByPeriodTool(SalesMetricsQuery salesMetrics) {
-    this.salesMetrics = salesMetrics;
+  public GetSalesByPeriodTool(MetricQueryService metrics, MetricCatalog catalog) {
+    this.metrics = metrics;
+    this.catalog = catalog;
   }
 
   @Override
@@ -54,26 +61,35 @@ public class GetSalesByPeriodTool implements ReportingTool {
       throw new IllegalArgumentException(
           "Expected GetSalesByPeriodInput, got " + input.getClass().getSimpleName());
     }
-    List<Point> points = new ArrayList<>();
-    List<LocalDate> unresolved = new ArrayList<>();
-    for (DailySalesMetric m : salesMetrics.dailySales(in.startDate(), in.endDate())) {
-      if (m.grossSales() == null) {
-        unresolved.add(m.tradingDate());
-      }
-      points.add(new Point(m.tradingDate().toString(), m.grossSales()));
+    if (in.metric() != MetricId.SALES_GROSS
+        && in.metric() != MetricId.SALES_NET
+        && in.metric() != MetricId.SALES_GST) {
+      throw new IllegalArgumentException(
+          "Unsupported metric for get_sales_by_period: " + in.metric());
     }
-    List<String> notices =
-        unresolved.isEmpty()
-            ? List.of()
-            : List.of(unresolved.size() + " date(s) have no resolved total (unresolved conflict).");
+    TimeSeriesResult result =
+        (TimeSeriesResult)
+            metrics.query(
+                new MetricQuery(
+                    in.metric(),
+                    new TimeRange(in.startDate(), in.endDate(), Calendar.CALENDAR),
+                    TimeGrain.DAY,
+                    Set.of(),
+                    null));
+
+    String metricName = catalog.definition(in.metric()).name();
+    List<Point> points =
+        result.series().get(0).points().stream()
+            .map(p -> new Point(p.bucketStart().toString(), p.value()))
+            .toList();
     TimeSeriesWidgetSpec widget =
         new TimeSeriesWidgetSpec(
             UUID.randomUUID().toString(),
             "Daily sales",
-            "Resolved gross sales per day.",
-            List.of(new Series("grossSales", "Gross sales", points)),
+            "Resolved " + metricName.toLowerCase() + " per day.",
+            List.of(new Series("grossSales", metricName, points)),
             "currency",
             new WidgetQuery(ToolId.GET_SALES_BY_PERIOD.name(), in.toMap()));
-    return new ToolResult(widget, notices);
+    return new ToolResult(widget, result.notices());
   }
 }

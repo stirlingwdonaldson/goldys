@@ -48,7 +48,7 @@ class ReportingToolCallbacksTest {
 
     String raw =
         callback.call(
-            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"GROSS_SALES\"}");
+            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"SALES_GROSS\"}");
 
     assertThat(raw).contains("\"ok\":true");
     assertThat(context.toAnswerPayload().widgets()).hasSize(1);
@@ -72,7 +72,7 @@ class ReportingToolCallbacksTest {
 
     String raw =
         callback.call(
-            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"GROSS_SALES\"}");
+            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"SALES_GROSS\"}");
 
     assertThat(raw).contains("\"ok\":false");
     assertThat(raw).contains("access");
@@ -93,7 +93,7 @@ class ReportingToolCallbacksTest {
 
     String raw =
         callback.call(
-            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"GROSS_SALES\"}");
+            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"SALES_GROSS\"}");
 
     assertThat(raw).contains("\"ok\":false");
     assertThat(raw).contains("endDate");

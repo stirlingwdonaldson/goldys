@@ -63,7 +63,7 @@ class SavedDashboardIntegrationTest {
                         "endDate",
                         "2026-09-13",
                         "metric",
-                        "GROSS_SALES"))));
+                        "SALES_GROSS"))));
 
     var created = service.create(OWNER, "a@b.com", input);
     assertThat(created.id()).isNotNull();

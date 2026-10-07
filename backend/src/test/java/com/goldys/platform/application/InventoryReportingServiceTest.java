@@ -14,10 +14,16 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.semantic.DailySalesMetric;
-import com.goldys.platform.semantic.InventoryMetricsQuery;
-import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricPoint;
+import com.goldys.platform.semantic.catalog.MetricProvenance;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.MetricSeries;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -37,8 +43,7 @@ class InventoryReportingServiceTest {
         .require(any(), any(), any());
 
     InventoryReportingService service =
-        new InventoryReportingService(
-            mock(InventoryMetricsQuery.class), mock(SalesMetricsQuery.class), permissions);
+        new InventoryReportingService(mock(MetricQueryService.class), permissions);
 
     assertThatThrownBy(() -> service.summary(OWNER, FROM, TO))
         .isInstanceOf(AccessDeniedException.class);
@@ -46,18 +51,14 @@ class InventoryReportingServiceTest {
 
   @Test
   void summaryComputesFoodCostPercent() {
-    InventoryMetricsQuery inventory = mock(InventoryMetricsQuery.class);
-    when(inventory.purchases(FROM, TO)).thenReturn(new BigDecimal("70.00"));
-    when(inventory.wastage(FROM, TO)).thenReturn(null);
-
-    SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
-    when(sales.dailySales(FROM, TO))
-        .thenReturn(
-            List.of(new DailySalesMetric(FROM, new BigDecimal("1000.00"), "agreed", false)));
+    MetricQueryService metrics =
+        metricService(
+            MetricId.INVENTORY_PURCHASES, new BigDecimal("70.00"),
+            MetricId.INVENTORY_WASTAGE, null,
+            MetricId.SALES_GROSS, new BigDecimal("1000.00"));
 
     PermissionService permissions = mock(PermissionService.class);
-    InventoryReportingService service =
-        new InventoryReportingService(inventory, sales, permissions);
+    InventoryReportingService service = new InventoryReportingService(metrics, permissions);
 
     InventoryReportingService.InventorySummary summary = service.summary(OWNER, FROM, TO);
 
@@ -68,18 +69,52 @@ class InventoryReportingServiceTest {
 
   @Test
   void zeroSalesYieldsNullFoodCostPercent() {
-    InventoryMetricsQuery inventory = mock(InventoryMetricsQuery.class);
-    when(inventory.purchases(FROM, TO)).thenReturn(new BigDecimal("70.00"));
-    when(inventory.wastage(FROM, TO)).thenReturn(null);
-
-    SalesMetricsQuery sales = mock(SalesMetricsQuery.class);
-    when(sales.dailySales(FROM, TO)).thenReturn(List.of());
+    MetricQueryService metrics =
+        metricService(
+            MetricId.INVENTORY_PURCHASES, new BigDecimal("70.00"),
+            MetricId.INVENTORY_WASTAGE, null,
+            MetricId.SALES_GROSS, null);
 
     InventoryReportingService service =
-        new InventoryReportingService(inventory, sales, mock(PermissionService.class));
+        new InventoryReportingService(metrics, mock(PermissionService.class));
 
     InventoryReportingService.InventorySummary summary = service.summary(OWNER, FROM, TO);
 
     assertThat(summary.foodCostPercent()).isNull();
+  }
+
+  /** Builds a {@link MetricQueryService} mock that resolves each (metric, value) pair. */
+  private static MetricQueryService metricService(Object... idValues) {
+    MetricQueryService metrics = mock(MetricQueryService.class);
+    when(metrics.query(any()))
+        .thenAnswer(
+            inv -> {
+              MetricQuery query = inv.getArgument(0);
+              for (int i = 0; i < idValues.length; i += 2) {
+                if (idValues[i] == query.metric()) {
+                  return series(query, (BigDecimal) idValues[i + 1]);
+                }
+              }
+              throw new AssertionError("unexpected metric " + query.metric());
+            });
+    return metrics;
+  }
+
+  private static TimeSeriesResult series(MetricQuery query, BigDecimal value) {
+    MetricProvenance provenance =
+        new MetricProvenance(
+            query.metric(),
+            "1",
+            query.range(),
+            TimeGrain.DAY,
+            "resolved_inventory",
+            Instant.EPOCH,
+            List.of(),
+            "1");
+    return new TimeSeriesResult(
+        query.metric(),
+        List.of(new MetricSeries(null, List.of(new MetricPoint(query.range().from(), value)))),
+        List.of(),
+        provenance);
   }
 }

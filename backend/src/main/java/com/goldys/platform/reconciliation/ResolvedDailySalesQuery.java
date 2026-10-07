@@ -35,6 +35,11 @@ public class ResolvedDailySalesQuery implements SalesMetricsQuery {
 
   private DailySalesMetric toMetric(ResolvedDailySales r) {
     return new DailySalesMetric(
-        r.tradingDate(), r.totalSales(), r.authoritativeSource(), r.hasConflict());
+        r.tradingDate(),
+        r.totalSales(),
+        r.netSales(),
+        r.gst(),
+        r.authoritativeSource(),
+        r.hasConflict());
   }
 }
