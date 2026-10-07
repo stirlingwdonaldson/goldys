@@ -53,6 +53,27 @@ class ArchitectureBoundariesTest {
               "..widget..",
               "..dashboard..");
 
+  /** The metric catalogue is a leaf: no in-platform dependencies beyond the semantic interfaces. */
+  @ArchTest
+  static final ArchRule catalogIsALeaf =
+      noClasses()
+          .that()
+          .resideInAPackage("..semantic.catalog..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "..api..",
+              "..application..",
+              "..reporting..",
+              "..conversational..",
+              "..reconciliation..",
+              "..canonical..",
+              "..ingestion..",
+              "..auth..",
+              "..connectors..",
+              "..widget..",
+              "..dashboard..");
+
   /** The widget contract is a leaf: schema records only, no platform dependencies. */
   @ArchTest
   static final ArchRule widgetContractIsALeaf =
