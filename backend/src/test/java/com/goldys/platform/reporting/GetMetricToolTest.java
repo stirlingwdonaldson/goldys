@@ -54,6 +54,10 @@ class GetMetricToolTest {
                 OWNER);
 
     assertThat(result.provenance()).isNotEmpty();
+    assertThat(result.relatedMetrics())
+        .contains(MetricId.RESERVATIONS_COVERS)
+        .contains(MetricId.SALES_AVERAGE_SPEND_PER_COVER)
+        .hasSize(6);
     assertThat(result.widget()).isInstanceOf(TimeSeriesWidgetSpec.class);
     TimeSeriesWidgetSpec widget = (TimeSeriesWidgetSpec) result.widget();
     assertThat(widget.series()).hasSize(1);
@@ -130,6 +134,15 @@ class GetMetricToolTest {
         .hasMessageContaining("SERVICE_PERIOD");
   }
 
+  @Test
+  void rejectsWrongInputType() {
+    GetMetricTool tool = new GetMetricTool(mock(MetricQueryService.class), RENDERER, CATALOG);
+
+    assertThatThrownBy(() -> tool.toMetricQueries(new OtherInput()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("GetMetricInput");
+  }
+
   private static TimeSeriesResult tsResult(MetricId id, MetricPoint... points) {
     return new TimeSeriesResult(
         id, List.of(new MetricSeries(null, List.of(points))), List.of(), provenance(id));
@@ -154,4 +167,6 @@ class GetMetricToolTest {
   private static MetricPoint point(LocalDate date, String value) {
     return new MetricPoint(date, value == null ? null : new BigDecimal(value));
   }
+
+  private record OtherInput() implements ToolInput {}
 }

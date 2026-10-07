@@ -4,12 +4,14 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
+import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
 import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.semantic.catalog.RankedListResult;
 import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.widget.WidgetSpec;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -63,12 +65,16 @@ public class GetMetricTool implements ReportingTool {
     MetricResult r = results.get(0);
     String type = r instanceof RankedListResult ? "ranked-list" : "time-series";
     WidgetSpec widget = renderer.render(UUID.randomUUID().toString(), type, results);
-    return new ToolResult(widget, r.notices(), List.of(r.provenance()));
+    List<MetricId> related = new ArrayList<>(catalog.related(r.metric()));
+    return new ToolResult(widget, r.notices(), List.of(r.provenance()), related);
   }
 
   @Override
   public List<MetricQuery> toMetricQueries(ToolInput input) {
-    GetMetricInput in = (GetMetricInput) input;
+    if (!(input instanceof GetMetricInput in)) {
+      throw new IllegalArgumentException(
+          "Expected GetMetricInput, got " + input.getClass().getSimpleName());
+    }
     return List.of(
         new MetricQuery(
             in.metric(),

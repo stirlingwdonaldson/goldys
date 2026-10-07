@@ -45,7 +45,8 @@ class ReportingToolCallbacksTest {
         new ToolResult(
             new TimeSeriesWidgetSpec("id", "Daily sales", null, List.of(), "currency", null),
             List.of("1 date(s) have no resolved total (unresolved conflict)."),
-            List.of(provenance(MetricId.SALES_GROSS)));
+            List.of(provenance(MetricId.SALES_GROSS)),
+            List.of());
     when(dispatcher.dispatch(eq(ToolId.GET_SALES_BY_PERIOD), any(), eq(OWNER))).thenReturn(result);
 
     ReportingTool tool = tool();
@@ -75,7 +76,8 @@ class ReportingToolCallbacksTest {
         new ToolResult(
             new TimeSeriesWidgetSpec("id", "Daily sales", null, List.of(), "currency", null),
             List.of(),
-            List.of(provenance(MetricId.SALES_GROSS)));
+            List.of(provenance(MetricId.SALES_GROSS)),
+            List.of(MetricId.RESERVATIONS_COVERS));
     when(dispatcher.dispatch(eq(ToolId.GET_SALES_BY_PERIOD), any(), eq(OWNER))).thenReturn(result);
 
     ToolCallback callback =
@@ -94,6 +96,11 @@ class ReportingToolCallbacksTest {
     assertThat(outcome.get("provenance").size()).isEqualTo(1);
     assertThat(outcome.get("provenance").get(0).get("metric").asText())
         .isEqualTo(MetricId.SALES_GROSS.value());
+    assertThat(outcome.get("relatedMetrics")).isNotNull();
+    assertThat(outcome.get("relatedMetrics").isArray()).isTrue();
+    assertThat(outcome.get("relatedMetrics").size()).isEqualTo(1);
+    assertThat(outcome.get("relatedMetrics").get(0).asText())
+        .isEqualTo(MetricId.RESERVATIONS_COVERS.value());
   }
 
   @Test

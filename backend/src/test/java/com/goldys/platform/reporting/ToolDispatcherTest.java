@@ -35,7 +35,7 @@ class ToolDispatcherTest {
 
   private static ToolResult okResult() {
     return new ToolResult(
-        new StatWidgetSpec("id", "Sales", null, null, null, null, null), List.of(), List.of());
+        new StatWidgetSpec("id", "Sales", null, null, null, null, null), List.of(), List.of(), List.of());
   }
 
   private static ReportingTool tool(ToolId id) {

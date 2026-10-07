@@ -62,7 +62,8 @@ public class GetLabourCostTool implements ReportingTool {
     return new ToolResult(
         widget,
         results.stream().flatMap(r -> r.notices().stream()).toList(),
-        results.stream().map(MetricResult::provenance).toList());
+        results.stream().map(MetricResult::provenance).toList(),
+        List.of());
   }
 
   @Override
