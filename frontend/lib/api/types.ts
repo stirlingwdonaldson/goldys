@@ -297,6 +297,32 @@ export interface DashboardSharing {
   roles: DashboardSharingRole[];
 }
 
+/** A compact row for the Ask Goldy's conversation list (mirrors `ConversationService.ThreadSummary`). */
+export interface ConversationThreadSummary {
+  id: string;
+  title: string;
+  updatedAt: string;
+  /** The tail of the last message, truncated by the backend. Empty string when there is none. */
+  lastPreview: string;
+}
+
+/** One persisted message in a thread (mirrors the `ConversationMessage` entity's JSON). */
+export interface ConversationMessage {
+  id: string;
+  threadId: string;
+  role: "user" | "assistant";
+  content: string;
+  toolTrace: import("@/components/ask-goldys/types").TraceEntry[];
+  createdAt: string;
+}
+
+/** A thread and its full message history, for the owning user (mirrors `ThreadView`). */
+export interface ConversationThreadView {
+  id: string;
+  title: string;
+  messages: ConversationMessage[];
+}
+
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
 export interface Api {
   getDashboardBootstrap(): Promise<DashboardBootstrap>;
@@ -335,4 +361,8 @@ export interface Api {
   toggleDashboardPin(id: string): Promise<DashboardDocument>;
   getDashboardSharing(id: string): Promise<DashboardSharing>;
   setDashboardSharing(id: string, sharing: DashboardSharing): Promise<DashboardSharing>;
+  listThreads(): Promise<ConversationThreadSummary[]>;
+  getThread(id: string): Promise<ConversationThreadView>;
+  renameThread(id: string, title: string): Promise<ConversationThreadView>;
+  deleteThread(id: string): Promise<void>;
 }

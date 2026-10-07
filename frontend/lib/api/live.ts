@@ -3,6 +3,8 @@ import type {
   ActivityPoint,
   Api,
   ConnectorStatus,
+  ConversationThreadSummary,
+  ConversationThreadView,
   DashboardBootstrap,
   DashboardDocument,
   DashboardRevisionSummary,
@@ -112,4 +114,14 @@ export const liveApi: Api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(sharing),
     }),
+  listThreads: () => fetchApi<ConversationThreadSummary[]>("/api/conversational/threads"),
+  getThread: (id: string) => fetchApi<ConversationThreadView>(`/api/conversational/threads/${id}`),
+  renameThread: (id: string, title: string) =>
+    fetchApi<ConversationThreadView>(`/api/conversational/threads/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    }),
+  deleteThread: (id: string) =>
+    fetchApi<void>(`/api/conversational/threads/${id}`, { method: "DELETE" }),
 };
