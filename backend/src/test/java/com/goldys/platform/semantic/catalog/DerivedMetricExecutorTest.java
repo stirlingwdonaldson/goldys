@@ -327,6 +327,54 @@ class DerivedMetricExecutorTest {
   }
 
   @Test
+  void hoursPerCoverDividesActualHoursByCovers() {
+    when(reservations.dailySummaries(SEP_13, SEP_13))
+        .thenReturn(List.of(summary(SEP_13, 100, 90, 180, 10)));
+    when(labour.dailyLabour(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new LabourMetric(
+                    SEP_13, "FOH", null, new BigDecimal("90.00"), null, null, "agreed", false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.LABOUR_HOURS_PER_COVER,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("0.5000");
+  }
+
+  @Test
+  void costPerCoverDividesLabourCostByCovers() {
+    when(reservations.dailySummaries(SEP_13, SEP_13))
+        .thenReturn(List.of(summary(SEP_13, 100, 90, 180, 10)));
+    when(labour.dailyLabour(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new LabourMetric(
+                    SEP_13, "FOH", null, null, null, new BigDecimal("1500.00"), "agreed", false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.LABOUR_COST_PER_COVER,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("8.3333");
+  }
+
+  @Test
   void topSellersReturnsRankedList() {
     when(product.topSellers(SEP_13, SEP_13, 5))
         .thenReturn(
