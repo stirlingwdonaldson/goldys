@@ -1,7 +1,6 @@
 package com.goldys.platform.conversational;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -23,10 +22,5 @@ class ChatRequestTest {
 
     assertThat(request.threadId()).isEqualTo(threadId);
     assertThat(request.message()).isEqualTo("And the week before?");
-  }
-
-  @Test
-  void rejectsANullMessage() {
-    assertThatThrownBy(() -> new ChatRequest(null, null)).isInstanceOf(NullPointerException.class);
   }
 }

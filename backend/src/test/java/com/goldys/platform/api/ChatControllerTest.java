@@ -74,6 +74,19 @@ class ChatControllerTest {
         .andExpect(jsonPath("$.message").exists());
   }
 
+  @Test
+  void returnsBadRequestWhenMessageIsBlank() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+
+    mvc.perform(
+            post("/api/conversational/chat")
+                .with(authenticated(owner()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"  \"}"))
+        .andExpect(status().isBadRequest());
+  }
+
   private static AccountUserDetails owner() {
     return new AccountUserDetails(
         UUID.randomUUID(), "owner@example.com", "hash", "Owner", "ALL", "OWNER", true);

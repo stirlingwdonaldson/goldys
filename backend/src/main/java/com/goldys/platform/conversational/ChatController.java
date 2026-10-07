@@ -7,6 +7,7 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class ChatController {
 
   @PostMapping(path = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   SseEmitter chat(
-      @RequestBody ChatRequest request, @AuthenticationPrincipal AccountUserDetails user) {
+      @Valid @RequestBody ChatRequest request, @AuthenticationPrincipal AccountUserDetails user) {
     UserRole role = currentUser.roleOf(user);
     permissions.require(role, RESOURCE, PermissionAction.READ);
 
@@ -87,11 +88,14 @@ public class ChatController {
         send(emitter, event);
       }
       case ConversationEvent.Answer(var payload) -> {
-        try {
-          conversations.complete(userId, threadId, assistantText.toString(), payload.trace());
-        } catch (RuntimeException e) {
-          send(emitter, new ConversationEvent.Error("Something went wrong saving the answer."));
-          return;
+        String text = assistantText.toString();
+        if (!text.isBlank()) {
+          try {
+            conversations.complete(userId, threadId, text, payload.trace());
+          } catch (RuntimeException e) {
+            send(emitter, new ConversationEvent.Error("Something went wrong saving the answer."));
+            return;
+          }
         }
         send(emitter, event);
       }

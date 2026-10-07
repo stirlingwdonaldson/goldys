@@ -1,6 +1,6 @@
 package com.goldys.platform.conversational;
 
-import java.util.Objects;
+import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;
 
 /**
@@ -8,10 +8,4 @@ import java.util.UUID;
  * message. Server-authoritative: the client never supplies assistant history — the server loads its
  * own history via {@link ConversationService}.
  */
-public record ChatRequest(UUID threadId, String message) {
-
-  public ChatRequest {
-    Objects.requireNonNull(message, "message");
-    // threadId is null for a brand-new conversation.
-  }
-}
+public record ChatRequest(UUID threadId, @NotBlank String message) {}
