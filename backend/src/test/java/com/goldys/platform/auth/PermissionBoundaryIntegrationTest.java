@@ -1,9 +1,13 @@
 package com.goldys.platform.auth;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.goldys.platform.support.PostgresContainerConfiguration;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,6 +36,19 @@ class PermissionBoundaryIntegrationTest {
               permissions.require(owner, new ResourceKey("inventory.stock"), PermissionAction.READ);
             })
         .doesNotThrowAnyException();
+  }
+
+  @Test
+  void askGoldysPermissionsAreSeededForOwner() {
+    List<Map<String, Object>> rows =
+        jdbc.queryForList(
+            "select department, seniority, can_read, can_write from permission "
+                + "where resource in ('reconciliation.status','conversational.threads')");
+
+    assertThat(rows)
+        .hasSize(2)
+        .extracting("department", "seniority", "can_read", "can_write")
+        .containsOnly(tuple("ALL", "OWNER", true, true));
   }
 
   @Test
