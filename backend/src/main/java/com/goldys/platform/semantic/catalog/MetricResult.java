@@ -10,4 +10,14 @@ public sealed interface MetricResult permits TimeSeriesResult, RankedListResult 
   List<String> notices();
 
   MetricProvenance provenance();
+
+  /** Returns a copy of this result carrying {@code provenance} instead of its own. */
+  default MetricResult withProvenance(MetricProvenance provenance) {
+    return switch (this) {
+      case TimeSeriesResult t ->
+          new TimeSeriesResult(t.metric(), t.series(), t.notices(), provenance);
+      case RankedListResult r ->
+          new RankedListResult(r.metric(), r.items(), r.notices(), provenance);
+    };
+  }
 }
