@@ -229,6 +229,32 @@ class SavedDashboardApplicationServiceTest {
     assertThat(doc.schemaVersion()).isEqualTo(2);
   }
 
+  @Test
+  void listReturnsEnrichedSummaryFields() {
+    SavedDashboard saved =
+        SavedDashboard.create(
+            "Sales",
+            "Daily sales dashboard",
+            "grid",
+            List.of(),
+            DashboardFilters.empty(),
+            Visibility.ORG_WIDE,
+            "owner@example.com",
+            java.time.Instant.EPOCH);
+    saved.setPinned(true);
+    when(repo.findAllByOrderByUpdatedAtDesc()).thenReturn(List.of(saved));
+
+    var summary = service.list(OWNER, "owner@example.com").get(0);
+
+    assertThat(summary.id()).isEqualTo(saved.id());
+    assertThat(summary.title()).isEqualTo("Sales");
+    assertThat(summary.description()).isEqualTo("Daily sales dashboard");
+    assertThat(summary.createdBy()).isEqualTo("owner@example.com");
+    assertThat(summary.pinned()).isTrue();
+    assertThat(summary.visibility()).isEqualTo("ORG_WIDE");
+    assertThat(summary.updatedAt()).isEqualTo(java.time.Instant.EPOCH.toString());
+  }
+
   private static MetricQuery query(MetricId id) {
     return new MetricQuery(id, RANGE, TimeGrain.DAY, Set.of(), null);
   }

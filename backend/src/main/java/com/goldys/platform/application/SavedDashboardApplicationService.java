@@ -88,7 +88,16 @@ public class SavedDashboardApplicationService {
   public List<DashboardSummary> list(UserRole role, String email) {
     return repository.findAllByOrderByUpdatedAtDesc().stream()
         .filter(d -> isVisible(role, email, d))
-        .map(d -> new DashboardSummary(d.id(), d.title(), d.updatedAt().toString()))
+        .map(
+            d ->
+                new DashboardSummary(
+                    d.id(),
+                    d.title(),
+                    d.description(),
+                    d.createdBy(),
+                    d.pinned(),
+                    d.visibility().name(),
+                    d.updatedAt().toString()))
         .toList();
   }
 
@@ -403,7 +412,14 @@ public class SavedDashboardApplicationService {
       Visibility visibility,
       List<SavedWidget> widgets) {}
 
-  public record DashboardSummary(UUID id, String title, String updatedAt) {}
+  public record DashboardSummary(
+      UUID id,
+      String title,
+      String description,
+      String createdBy,
+      boolean pinned,
+      String visibility,
+      String updatedAt) {}
 
   public record DashboardRevisionSummary(int revision, String createdBy, Instant createdAt) {}
 
