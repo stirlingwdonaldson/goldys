@@ -87,6 +87,19 @@ class CompareMetricPeriodsToolTest {
   }
 
   @Test
+  void omitsDeltaWhenCurrentHasNoResolvedData() {
+    MetricQueryService metrics = mock(MetricQueryService.class);
+    when(metrics.query(any()))
+        .thenReturn(tsResult(MetricId.SALES_GROSS, JAN_8, JAN_14, point(JAN_8, null)))
+        .thenReturn(tsResult(MetricId.SALES_GROSS, JAN_1, JAN_7, point(JAN_1, "1000.00")));
+
+    ToolResult result = tool(metrics).execute(input(Comparison.PREVIOUS_WEEK), OWNER);
+
+    assertThat(result.notices()).anyMatch(n -> n.contains("vs"));
+    assertThat(result.notices()).noneMatch(n -> n.contains("%"));
+  }
+
+  @Test
   void rejectsBudgetAndForecastWithoutQuerying() {
     MetricQueryService metrics = mock(MetricQueryService.class);
     CompareMetricPeriodsTool tool = tool(metrics);

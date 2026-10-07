@@ -32,7 +32,7 @@ public class ComparisonService {
       MetricResult current, MetricResult reference, BigDecimal deltaPercent) {}
 
   public static BigDecimal deltaPercent(BigDecimal current, BigDecimal reference) {
-    if (reference == null || reference.signum() == 0) {
+    if (current == null || reference == null || reference.signum() == 0) {
       return null;
     }
     return current.subtract(reference).divide(reference, 4, RoundingMode.HALF_UP);
