@@ -53,6 +53,8 @@ public class SalesMetricExecutor implements MetricExecutor {
             query.range(),
             query.grain(),
             definition.sourceDomain(),
+            // TODO(provenance): plumb max(resolved_at) from the *MetricsQuery read, not
+            // Instant.EPOCH
             Instant.EPOCH,
             bucket.missingDays(),
             definition.version());

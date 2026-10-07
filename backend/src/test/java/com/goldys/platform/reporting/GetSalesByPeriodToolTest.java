@@ -7,6 +7,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
@@ -105,6 +107,18 @@ class GetSalesByPeriodToolTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Unsupported metric");
     verifyNoInteractions(metrics);
+  }
+
+  @Test
+  void dottedMetricIdSurvivesJsonRoundTrip() {
+    GetSalesByPeriodInput input = new GetSalesByPeriodInput(SEP_13, SEP_14, MetricId.SALES_GROSS);
+
+    GetSalesByPeriodInput roundTripped =
+        new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .convertValue(input.toMap(), GetSalesByPeriodInput.class);
+
+    assertThat(roundTripped.metric()).isEqualTo(MetricId.SALES_GROSS);
   }
 
   private static TimeSeriesResult tsResult(

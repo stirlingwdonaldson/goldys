@@ -43,6 +43,11 @@ public class LabourReportingService {
     this.permissions = permissions;
   }
 
+  /**
+   * Period-total ratios are computed here as ratio-of-sums over catalogue base metrics; the derived
+   * {@code *_PERCENT}/{@code *_PER_COVER} metrics are the time-series form and will replace this
+   * once a TOTAL grain exists.
+   */
   public LabourSummary summary(UserRole role, LocalDate from, LocalDate to) {
     permissions.require(role, RESOURCE_HOURS, PermissionAction.READ);
     permissions.require(role, RESOURCE_COST, PermissionAction.READ);

@@ -1,5 +1,8 @@
 package com.goldys.platform.semantic.catalog;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /** Stable, machine-readable metric identifiers. Never a table or Java class name. */
 public enum MetricId {
   SALES_GROSS("sales.gross"),
@@ -35,7 +38,28 @@ public enum MetricId {
     this.value = value;
   }
 
+  /** Canonical wire form: the dotted id, e.g. {@code "sales.gross"}. */
+  @JsonValue
   public String value() {
     return value;
+  }
+
+  /**
+   * Accepts either the enum name ({@code "SALES_GROSS"}) or the dotted value ({@code
+   * "sales.gross"}).
+   */
+  @JsonCreator
+  public static MetricId fromValue(String input) {
+    try {
+      return MetricId.valueOf(input);
+    } catch (IllegalArgumentException ignore) {
+      // fall through to dotted-value match
+    }
+    for (MetricId id : values()) {
+      if (id.value.equals(input)) {
+        return id;
+      }
+    }
+    throw new IllegalArgumentException("Unknown metric id: " + input);
   }
 }
