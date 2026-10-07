@@ -17,6 +17,7 @@ public class ConversationContext {
   private final List<WidgetSpec> widgets = new CopyOnWriteArrayList<>();
   private final List<String> notices = new CopyOnWriteArrayList<>();
   private final Instant asOf = Instant.now();
+  private volatile DashboardDraft draft;
 
   public void record(ReportingTool tool, ToolResult result) {
     trace.add(new AnswerPayload.TraceEntry(tool.name(), tool.description()));
@@ -24,7 +25,17 @@ public class ConversationContext {
     notices.addAll(result.notices());
   }
 
+  /** Records a validated dashboard draft (carried on the answer, not persisted). */
+  public void recordDraft(DashboardDraft draft) {
+    this.draft = draft;
+  }
+
+  public DashboardDraft draft() {
+    return draft;
+  }
+
   public AnswerPayload toAnswerPayload() {
-    return new AnswerPayload(List.copyOf(widgets), List.copyOf(trace), asOf, List.copyOf(notices));
+    return new AnswerPayload(
+        List.copyOf(widgets), List.copyOf(trace), asOf, List.copyOf(notices), draft);
   }
 }

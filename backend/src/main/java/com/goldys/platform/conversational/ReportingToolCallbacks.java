@@ -5,6 +5,7 @@ import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.reporting.ReportingTool;
 import com.goldys.platform.reporting.ToolDispatcher;
+import com.goldys.platform.reporting.ToolId;
 import com.goldys.platform.reporting.ToolInput;
 import com.goldys.platform.reporting.ToolResult;
 import java.util.LinkedHashMap;
@@ -45,7 +46,11 @@ public class ReportingToolCallbacks {
                 input -> {
                   try {
                     ToolResult result = dispatcher.dispatch(tool.id(), input, role);
-                    context.record(tool, result);
+                    if (tool.id() == ToolId.CREATE_DASHBOARD_DRAFT) {
+                      context.recordDraft(((CreateDashboardDraftTool) tool).toDraft(input));
+                    } else {
+                      context.record(tool, result);
+                    }
                     return outcome(true, result);
                   } catch (AccessDeniedException e) {
                     return outcome(false, "You don't have access to that data.");
