@@ -59,6 +59,12 @@ public class ReconciliationController {
     return reconciliation.listProducts(currentUser.roleOf(user));
   }
 
+  @GetMapping("/audit")
+  List<ReconciliationApplicationService.AuditEntry> audit(
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return reconciliation.audit(currentUser.roleOf(user));
+  }
+
   @GetMapping("/products/{date}/{product}")
   ReconciliationApplicationService.ProductRecord productRecord(
       @PathVariable LocalDate date,
