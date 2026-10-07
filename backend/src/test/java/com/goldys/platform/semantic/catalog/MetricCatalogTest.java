@@ -36,4 +36,17 @@ class MetricCatalogTest {
     assertThat(d.validDimensions()).isEmpty();
     assertThat(d.unit()).isEqualTo("AUD");
   }
+
+  @Test
+  void baseMetricsCarryTheirSpecifiedDimensions() {
+    MetricCatalog catalog = new MetricCatalog();
+    assertThat(catalog.definition(MetricId.RESERVATIONS_BOOKINGS).validDimensions())
+        .containsExactly(Dimension.SERVICE_PERIOD);
+    assertThat(catalog.definition(MetricId.LABOUR_COST).validDimensions())
+        .containsExactly(Dimension.DEPARTMENT);
+    assertThat(catalog.definition(MetricId.PRODUCT_SALES_AMOUNT).validDimensions())
+        .containsExactly(Dimension.PRODUCT);
+    assertThat(catalog.definition(MetricId.SALES_GROSS).validDimensions()).isEmpty();
+    assertThat(catalog.definition(MetricId.RESERVATIONS_NO_SHOW_RATE).validDimensions()).isEmpty();
+  }
 }

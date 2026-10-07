@@ -31,6 +31,7 @@ public class MetricCatalog {
                     "AUD",
                     "resolved_daily_sales",
                     DAY_WEEK_MONTH,
+                    Set.of(),
                     "reconciliation.sales",
                     "gross includes GST"),
                 base(
@@ -41,6 +42,7 @@ public class MetricCatalog {
                     "AUD",
                     "resolved_daily_sales",
                     DAY_WEEK_MONTH,
+                    Set.of(),
                     "reconciliation.sales",
                     null),
                 base(
@@ -51,6 +53,7 @@ public class MetricCatalog {
                     "AUD",
                     "resolved_daily_sales",
                     DAY_WEEK_MONTH,
+                    Set.of(),
                     "reconciliation.sales",
                     null),
                 base(
@@ -61,6 +64,7 @@ public class MetricCatalog {
                     "count",
                     "resolved_reservation_day",
                     DAY_WEEK_MONTH,
+                    Set.of(Dimension.SERVICE_PERIOD),
                     "reservations.metrics",
                     null),
                 base(
@@ -71,6 +75,7 @@ public class MetricCatalog {
                     "count",
                     "resolved_reservation_day",
                     DAY_WEEK_MONTH,
+                    Set.of(Dimension.SERVICE_PERIOD),
                     "reservations.metrics",
                     null),
                 base(
@@ -81,6 +86,7 @@ public class MetricCatalog {
                     "count",
                     "resolved_reservation_day",
                     DAY_WEEK_MONTH,
+                    Set.of(Dimension.SERVICE_PERIOD),
                     "reservations.metrics",
                     null),
                 base(
@@ -91,6 +97,7 @@ public class MetricCatalog {
                     "count",
                     "resolved_reservation_day",
                     DAY_WEEK_MONTH,
+                    Set.of(Dimension.SERVICE_PERIOD),
                     "reservations.metrics",
                     null),
                 base(
@@ -101,6 +108,7 @@ public class MetricCatalog {
                     "hours",
                     "resolved_labour_day",
                     DAY_WEEK_MONTH,
+                    Set.of(Dimension.DEPARTMENT),
                     "labour.hours",
                     null),
                 base(
@@ -111,6 +119,7 @@ public class MetricCatalog {
                     "hours",
                     "resolved_labour_day",
                     DAY_WEEK_MONTH,
+                    Set.of(Dimension.DEPARTMENT),
                     "labour.hours",
                     null),
                 base(
@@ -121,6 +130,7 @@ public class MetricCatalog {
                     "AUD",
                     "resolved_labour_day",
                     DAY_WEEK_MONTH,
+                    Set.of(Dimension.DEPARTMENT),
                     "labour.cost",
                     null),
                 base(
@@ -131,6 +141,7 @@ public class MetricCatalog {
                     "AUD",
                     "resolved_inventory_day",
                     DAY_WEEK_MONTH,
+                    Set.of(),
                     "inventory.cost",
                     null),
                 base(
@@ -141,6 +152,7 @@ public class MetricCatalog {
                     "AUD",
                     "resolved_inventory_day",
                     DAY_WEEK_MONTH,
+                    Set.of(),
                     "inventory.cost",
                     null),
                 base(
@@ -151,6 +163,7 @@ public class MetricCatalog {
                     "AUD",
                     "resolved_inventory_day",
                     DAY_ONLY,
+                    Set.of(),
                     "inventory.cost",
                     null),
                 base(
@@ -161,6 +174,7 @@ public class MetricCatalog {
                     "AUD",
                     "resolved_product_sales",
                     DAY_WEEK_MONTH,
+                    Set.of(Dimension.PRODUCT),
                     "reconciliation.sales",
                     null),
                 base(
@@ -171,6 +185,7 @@ public class MetricCatalog {
                     "units",
                     "resolved_product_sales",
                     DAY_WEEK_MONTH,
+                    Set.of(Dimension.PRODUCT),
                     "reconciliation.sales",
                     null),
                 derived(
@@ -273,6 +288,7 @@ public class MetricCatalog {
       String unit,
       String domain,
       Set<TimeGrain> grains,
+      Set<Dimension> dimensions,
       String permission,
       String note) {
     return new MetricDefinition(
@@ -282,7 +298,7 @@ public class MetricCatalog {
         formula,
         unit,
         domain,
-        Set.of(),
+        dimensions,
         grains,
         permission,
         note == null ? List.of() : List.of(note),
