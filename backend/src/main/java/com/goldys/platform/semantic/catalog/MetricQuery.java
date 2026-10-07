@@ -14,7 +14,9 @@ public record MetricQuery(
     Set<Dimension> dimensions,
     Comparison comparison) {
   public MetricQuery {
-    Objects.requireNonNull(metric, "metric");
+    if (metric == null) {
+      throw new IllegalArgumentException("Unknown metric: null");
+    }
     Objects.requireNonNull(range, "range");
     Objects.requireNonNull(grain, "grain");
     dimensions = dimensions == null ? Set.of() : Set.copyOf(dimensions);
