@@ -29,6 +29,7 @@ import com.goldys.platform.widget.StatWidgetSpec;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.tool.ToolCallback;
 
@@ -154,6 +155,16 @@ class DashboardDraftToolTest {
     assertThat(draft.filters()).isEqualTo(DashboardFilters.empty());
     assertThat(draft.widgets()).hasSize(1);
     assertThat(draft.widgets().get(0).renderType()).isEqualTo("time-series");
+  }
+
+  @Test
+  void updateDraftCarriesDashboardId() {
+    DashboardDraft draft =
+        tool.toDraft(
+            new CreateDashboardDraftInput(
+                "Weekend", null, DashboardFilters.empty(), List.of(), UUID.randomUUID()));
+
+    assertThat(draft.dashboardId()).isNotNull();
   }
 
   @Test

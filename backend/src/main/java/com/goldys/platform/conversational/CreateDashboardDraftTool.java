@@ -83,7 +83,8 @@ public class CreateDashboardDraftTool implements ReportingTool {
           "Expected CreateDashboardDraftInput, got " + input.getClass().getSimpleName());
     }
     validate(in);
-    return new DashboardDraft(in.title(), in.description(), in.filters(), in.widgets());
+    return new DashboardDraft(
+        in.title(), in.description(), in.filters(), in.widgets(), in.dashboardId());
   }
 
   /**
