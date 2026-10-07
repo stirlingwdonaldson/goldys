@@ -31,7 +31,7 @@ public class SavedDashboardController {
   @GetMapping
   List<SavedDashboardApplicationService.DashboardSummary> list(
       @AuthenticationPrincipal AccountUserDetails user) {
-    return dashboards.list(currentUser.roleOf(user));
+    return dashboards.list(currentUser.roleOf(user), user.email());
   }
 
   @PostMapping
@@ -44,7 +44,7 @@ public class SavedDashboardController {
   @GetMapping("/{id}")
   SavedDashboardApplicationService.DashboardDocument get(
       @PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
-    return dashboards.get(currentUser.roleOf(user), id);
+    return dashboards.get(currentUser.roleOf(user), user.email(), id);
   }
 
   @PutMapping("/{id}")
@@ -57,7 +57,7 @@ public class SavedDashboardController {
 
   @DeleteMapping("/{id}")
   void delete(@PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
-    dashboards.delete(currentUser.roleOf(user), id);
+    dashboards.delete(currentUser.roleOf(user), user.email(), id);
   }
 
   /** Re-runs the dashboard's stored queries and returns current widget specs. */

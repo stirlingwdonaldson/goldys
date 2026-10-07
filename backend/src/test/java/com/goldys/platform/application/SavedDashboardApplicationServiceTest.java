@@ -195,7 +195,7 @@ class SavedDashboardApplicationServiceTest {
             java.time.Instant.EPOCH);
     when(repo.findById(saved.id())).thenReturn(java.util.Optional.of(saved));
 
-    var doc = service.get(OWNER, saved.id());
+    var doc = service.get(OWNER, "a@b.com", saved.id());
 
     assertThat(doc.title()).isEqualTo("Sales");
     assertThat(doc.schemaVersion()).isEqualTo(2);

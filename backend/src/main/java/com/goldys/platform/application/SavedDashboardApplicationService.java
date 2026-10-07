@@ -3,15 +3,18 @@ package com.goldys.platform.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.auth.AccessDeniedException;
+import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
+import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.SavedDashboard;
 import com.goldys.platform.dashboard.SavedDashboardRepository;
 import com.goldys.platform.dashboard.SavedDashboardRevision;
 import com.goldys.platform.dashboard.SavedDashboardRevisionRepository;
+import com.goldys.platform.dashboard.SavedDashboardShare;
 import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
@@ -76,16 +79,15 @@ public class SavedDashboardApplicationService {
     this.metricQueryService = metricQueryService;
   }
 
-  public List<DashboardSummary> list(UserRole role) {
-    permissions.require(role, RESOURCE, PermissionAction.READ);
+  public List<DashboardSummary> list(UserRole role, String email) {
     return repository.findAllByOrderByUpdatedAtDesc().stream()
+        .filter(d -> isVisible(role, email, d))
         .map(d -> new DashboardSummary(d.id(), d.title(), d.updatedAt().toString()))
         .toList();
   }
 
-  public DashboardDocument get(UserRole role, UUID id) {
-    permissions.require(role, RESOURCE, PermissionAction.READ);
-    return toDocument(requireDashboard(id));
+  public DashboardDocument get(UserRole role, String email, UUID id) {
+    return toDocument(requireVisible(role, email, id));
   }
 
   @Transactional
@@ -109,9 +111,8 @@ public class SavedDashboardApplicationService {
 
   @Transactional
   public DashboardDocument update(UserRole role, String email, UUID id, DashboardInput input) {
-    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    SavedDashboard dashboard = requireEditable(role, email, id);
     validate(input);
-    SavedDashboard dashboard = requireDashboard(id);
     dashboard.update(
         input.title(),
         input.description(),
@@ -133,7 +134,7 @@ public class SavedDashboardApplicationService {
 
   @Transactional
   public DashboardDocument restore(UserRole role, String email, UUID id, int revision) {
-    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    requireEditable(role, email, id);
     SavedDashboardRevision rev = findRevision(id, revision);
     DashboardDocument doc = readDocument(rev.document());
     DashboardInput input =
@@ -148,9 +149,30 @@ public class SavedDashboardApplicationService {
   }
 
   @Transactional
-  public void delete(UserRole role, UUID id) {
-    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+  public void delete(UserRole role, String email, UUID id) {
+    requireEditable(role, email, id);
     repository.deleteById(id);
+  }
+
+  @Transactional
+  public void setSharing(
+      UserRole role, String email, UUID id, Visibility visibility, List<UserRole> roles) {
+    SavedDashboard dashboard = requireEditable(role, email, id);
+    if (visibility == null) {
+      throw new IllegalArgumentException("Dashboard visibility is required.");
+    }
+    dashboard.setVisibility(visibility);
+    shares.deleteAll(shares.findByDashboardId(id));
+    for (UserRole r : roles) {
+      shares.save(SavedDashboardShare.create(id, r.department().value(), r.seniority().value()));
+    }
+  }
+
+  public List<UserRole> sharing(UUID id) {
+    return shares.findByDashboardId(id).stream()
+        .map(
+            s -> new UserRole(new DepartmentCode(s.department()), new SeniorityCode(s.seniority())))
+        .toList();
   }
 
   /** Re-runs each widget's stored queries, authorizing per metric at render time. */
@@ -178,8 +200,50 @@ public class SavedDashboardApplicationService {
   private SavedDashboard requireVisible(UserRole role, String email, UUID id) {
     SavedDashboard d = requireDashboard(id);
     if (d.createdBy().equals(email)) return d;
+    switch (d.visibility()) {
+      case PRIVATE -> throw AccessDeniedException.forResource("dashboard");
+      case SHARED -> {
+        if (!isSharedWith(role, id)) throw AccessDeniedException.forResource("dashboard");
+      }
+      case ORG_WIDE -> {
+        /* fall through to read check below */
+      }
+    }
     permissions.require(role, RESOURCE, PermissionAction.READ);
     return d;
+  }
+
+  private SavedDashboard requireEditable(UserRole role, String email, UUID id) {
+    SavedDashboard d = requireDashboard(id);
+    if (d.createdBy().equals(email)) return d;
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    return d;
+  }
+
+  private boolean isVisible(UserRole role, String email, SavedDashboard d) {
+    if (d.createdBy().equals(email)) return true;
+    return switch (d.visibility()) {
+      case PRIVATE -> false;
+      case SHARED -> isSharedWith(role, d.id()) && canRead(role);
+      case ORG_WIDE -> canRead(role);
+    };
+  }
+
+  private boolean isSharedWith(UserRole role, UUID id) {
+    return shares.findByDashboardId(id).stream()
+        .anyMatch(
+            s ->
+                s.department().equals(role.department().value())
+                    && s.seniority().equals(role.seniority().value()));
+  }
+
+  private boolean canRead(UserRole role) {
+    try {
+      permissions.require(role, RESOURCE, PermissionAction.READ);
+      return true;
+    } catch (AccessDeniedException e) {
+      return false;
+    }
   }
 
   /** Dashboard-level filters merged into a widget query, gated by the metric's valid dimensions. */

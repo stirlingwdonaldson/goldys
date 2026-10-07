@@ -134,6 +134,11 @@ public class SavedDashboard {
     this.currentRevision = currentRevision + 1;
   }
 
+  /** Sets the sharing visibility (creator-only, role list, or org-wide). */
+  public void setVisibility(Visibility visibility) {
+    this.visibility = Objects.requireNonNull(visibility, "visibility");
+  }
+
   public UUID id() {
     return id;
   }
