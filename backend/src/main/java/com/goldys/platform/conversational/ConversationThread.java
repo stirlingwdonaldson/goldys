@@ -57,7 +57,13 @@ public class ConversationThread {
 
   public static ConversationThread create(
       UUID userAccountId, String title, String summary, Instant now) {
-    return new ConversationThread(UUID.randomUUID(), userAccountId, title, summary, now, now, null);
+    return create(userAccountId, title, summary, now, UUID.randomUUID());
+  }
+
+  /** Creates a thread with an explicitly supplied id (e.g. a client-minted UUID). */
+  public static ConversationThread create(
+      UUID userAccountId, String title, String summary, Instant now, UUID id) {
+    return new ConversationThread(id, userAccountId, title, summary, now, now, null);
   }
 
   public UUID id() {

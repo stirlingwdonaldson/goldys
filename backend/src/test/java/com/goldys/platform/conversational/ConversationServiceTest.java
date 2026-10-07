@@ -101,10 +101,35 @@ class ConversationServiceTest {
 
   @Test
   void contextForRejectsCrossUserThread() {
-    when(threads.findByIdAndUserAccountId(any(), any())).thenReturn(Optional.empty());
+    UUID threadId = UUID.randomUUID();
+    when(threads.findByIdAndUserAccountId(threadId, OTHER)).thenReturn(Optional.empty());
+    when(threads.existsById(threadId)).thenReturn(true);
 
-    assertThatThrownBy(() -> service.contextFor(OTHER, UUID.randomUUID(), "hello"))
+    assertThatThrownBy(() -> service.contextFor(OTHER, threadId, "hello"))
         .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void contextForCreatesThreadWithClientMintedIdWhenNotOwned() {
+    UUID clientId = UUID.randomUUID();
+    when(threads.findByIdAndUserAccountId(clientId, USER)).thenReturn(Optional.empty());
+    when(threads.existsById(clientId)).thenReturn(false);
+
+    ConversationService.PreparedTurn turn =
+        service.contextFor(USER, clientId, "Why were sales down?");
+    List<Message> context = turn.messages();
+
+    assertThat(turn.threadId()).isEqualTo(clientId);
+    assertThat(context).hasSize(1);
+    assertThat(context.get(0)).isInstanceOf(UserMessage.class);
+    assertThat(context.get(0).getText()).isEqualTo("Why were sales down?");
+
+    ArgumentCaptor<ConversationThread> threadCaptor =
+        ArgumentCaptor.forClass(ConversationThread.class);
+    verify(threads, atLeastOnce()).save(threadCaptor.capture());
+    ConversationThread saved = threadCaptor.getValue();
+    assertThat(saved.id()).isEqualTo(clientId);
+    assertThat(saved.userAccountId()).isEqualTo(USER);
   }
 
   @Test

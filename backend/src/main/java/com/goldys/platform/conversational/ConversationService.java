@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -74,8 +75,19 @@ public class ConversationService {
     if (threadId == null) {
       thread = threads.save(ConversationThread.create(userId, titleFor(message), null, now));
     } else {
-      thread = requireThread(userId, threadId);
-      prior = messages.findByThreadIdOrderByCreatedAtAsc(threadId);
+      Optional<ConversationThread> owned = threads.findByIdAndUserAccountId(threadId, userId);
+      if (owned.isPresent()) {
+        thread = owned.get();
+        prior = messages.findByThreadIdOrderByCreatedAtAsc(threadId);
+      } else if (threads.existsById(threadId)) {
+        // The id exists but belongs to another user: deny rather than hijack or leak it.
+        throw AccessDeniedException.forResource("conversation.thread");
+      } else {
+        // A client-minted id that does not exist yet: adopt it as the new thread's id so the
+        // client's first turn and subsequent turns resolve to the same thread.
+        thread =
+            threads.save(ConversationThread.create(userId, titleFor(message), null, now, threadId));
+      }
     }
 
     ConversationMessage userMessage =
