@@ -37,10 +37,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Saved-dashboard CRUD and rendering. Dashboards persist bounded semantic query configuration only;
- * rendering re-runs those queries through the shared {@link WidgetRenderer} (per-metric
- * authorization is added in a later batch), so a reopened dashboard always shows current resolved
- * data, never a stale snapshot.
+ * Saved-dashboard CRUD, rendering, versioning and sharing. Dashboards persist bounded semantic
+ * query configuration only; rendering re-runs those queries through the shared {@link
+ * WidgetRenderer} with per-metric authorization at render time, so a reopened dashboard always
+ * shows current resolved data, never a stale snapshot, and a denied metric renders an explicit
+ * denial.
  */
 @Service
 public class SavedDashboardApplicationService {
