@@ -8,13 +8,19 @@ import type {
   DailySales,
   DashboardBootstrap,
   DashboardDocument,
+  DashboardFilters,
+  DashboardRevisionSummary,
+  DashboardSharing,
   DashboardSummary,
+  DashboardTemplate,
   LatestSales,
+  MetricQuery,
   OverrideResult,
   ProductOverrideInput,
   RecomputeStatus,
   ReconciliationException,
   ReconciliationRecord,
+  RenderedWidget,
   ResolutionRule,
   RuleAuditEntry,
   SalesTrendPoint,
@@ -22,6 +28,7 @@ import type {
   SaveOverrideInput,
   SaveResolutionRuleInput,
   SavedDashboardSummary,
+  SavedWidget,
   TopSeller,
 } from "./types";
 
@@ -475,11 +482,14 @@ export const demoApi: Api = {
     const now = new Date().toISOString();
     const created: DashboardDocument = {
       id: `dash-${Date.now()}`,
-      schemaVersion: 1,
+      schemaVersion: 2,
       title: input.title,
       description: input.description ?? null,
       layout: input.layout ?? "grid",
       widgets: input.widgets,
+      filters: input.filters ?? emptyFilters(),
+      visibility: input.visibility ?? "PRIVATE",
+      pinned: false,
       createdBy: "You",
       createdAt: now,
       updatedAt: now,
@@ -493,33 +503,174 @@ export const demoApi: Api = {
     savedDashboards = savedDashboards.filter((d) => d.id !== id);
   },
 
-  async renderDashboard(_id: string): Promise<WidgetSpec[]> {
-    void _id; // demo no-op: return a fixed widget, not a re-run
+  async renderDashboard(id: string): Promise<RenderedWidget[]> {
     await delay(300);
-    return [
-      {
-        schemaVersion: 2,
-        id: "demo-sales",
-        type: "time-series",
-        title: "Daily sales",
-        description: "Resolved gross sales per day.",
-        series: [
-          {
-            key: "grossSales",
-            label: "Gross sales",
-            points: [
-              { x: "2026-10-01", y: 9582.11 },
-              { x: "2026-10-02", y: 33909.35 },
-              { x: "2026-10-03", y: 43618.92 },
-              { x: "2026-10-04", y: 29605.13 },
-              { x: "2026-10-05", y: 10865.72 },
-            ],
-          },
-        ],
-        yFormat: "currency",
-      },
-    ];
+    const found = savedDashboards.find((d) => d.id === id);
+    if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
+    // Demo renders each saved widget as the fixed daily-sales time-series spec (the demo has no
+    // real metric query runtime), so the shape mirrors the live RenderedWidget contract.
+    return found.widgets.map((w) => ({
+      widgetId: w.id,
+      widget: demoWidgetSpec(),
+      deniedResource: null,
+    }));
+  },
+
+  async listDashboardTemplates(): Promise<DashboardTemplate[]> {
+    await delay(300);
+    return demoTemplates;
+  },
+
+  async createDashboardFromTemplate(templateId: string): Promise<DashboardDocument> {
+    await delay(400);
+    const template = demoTemplates.find((t) => t.id === templateId);
+    if (!template) throw new ApiError("VALIDATION_FAILED", `Unknown template: ${templateId}`);
+    const now = new Date().toISOString();
+    const created: DashboardDocument = {
+      id: `dash-${Date.now()}`,
+      schemaVersion: 2,
+      title: template.name,
+      description: template.description,
+      layout: "grid",
+      widgets: template.widgets,
+      filters: emptyFilters(),
+      visibility: "PRIVATE",
+      pinned: false,
+      createdBy: "You",
+      createdAt: now,
+      updatedAt: now,
+    };
+    savedDashboards = [created, ...savedDashboards];
+    return created;
+  },
+
+  async listDashboardRevisions(id: string): Promise<DashboardRevisionSummary[]> {
+    await delay(300);
+    const found = savedDashboards.find((d) => d.id === id);
+    if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
+    return [{ revision: 1, createdBy: found.createdBy, createdAt: found.createdAt }];
+  },
+
+  async restoreDashboardRevision(id: string, revision: number): Promise<DashboardDocument> {
+    await delay(400);
+    const found = savedDashboards.find((d) => d.id === id);
+    if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
+    if (revision !== 1) {
+      throw new ApiError("VALIDATION_FAILED", `No revision ${revision} for dashboard ${id}.`);
+    }
+    return { ...found, updatedAt: new Date().toISOString() };
+  },
+
+  async toggleDashboardPin(id: string): Promise<DashboardDocument> {
+    await delay(300);
+    const found = savedDashboards.find((d) => d.id === id);
+    if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
+    found.pinned = !found.pinned;
+    return { ...found };
+  },
+
+  async getDashboardSharing(id: string): Promise<DashboardSharing> {
+    await delay(300);
+    const found = savedDashboards.find((d) => d.id === id);
+    if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
+    return { visibility: found.visibility, roles: [] };
+  },
+
+  async setDashboardSharing(id: string, sharing: DashboardSharing): Promise<DashboardSharing> {
+    await delay(400);
+    const found = savedDashboards.find((d) => d.id === id);
+    if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
+    found.visibility = sharing.visibility;
+    return { ...sharing };
   },
 };
 
 let savedDashboards: DashboardDocument[] = [];
+
+const emptyFilters = (): DashboardFilters => ({ dateRange: null, comparison: null, dimensions: [] });
+
+/** The fixed spec the demo render endpoint returns for every saved widget. */
+function demoWidgetSpec(): WidgetSpec {
+  return {
+    schemaVersion: 2,
+    id: "demo-sales",
+    type: "time-series",
+    title: "Daily sales",
+    description: "Resolved gross sales per day.",
+    series: [
+      {
+        key: "grossSales",
+        label: "Gross sales",
+        points: [
+          { x: "2026-10-01", y: 9582.11 },
+          { x: "2026-10-02", y: 33909.35 },
+          { x: "2026-10-03", y: 43618.92 },
+          { x: "2026-10-04", y: 29605.13 },
+          { x: "2026-10-05", y: 10865.72 },
+        ],
+      },
+    ],
+    yFormat: "currency",
+  };
+}
+
+function demoQuery(metric: string): MetricQuery {
+  const today = new Date();
+  const from = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 6))
+    .toISOString()
+    .slice(0, 10);
+  const to = today.toISOString().slice(0, 10);
+  return {
+    metric,
+    range: { from, to, calendar: "CALENDAR" },
+    grain: "DAY",
+    dimensions: [],
+    comparison: null,
+  };
+}
+
+function demoTsWidget(id: string, metric: string): SavedWidget {
+  return { id, renderType: "time-series", queries: [demoQuery(metric)], layout: { w: 6, h: 2 } };
+}
+
+function demoTableWidget(id: string, metrics: string[]): SavedWidget {
+  return { id, renderType: "table", queries: metrics.map(demoQuery), layout: { w: 12, h: 2 } };
+}
+
+const demoTemplates: DashboardTemplate[] = [
+  {
+    id: "daily",
+    name: "Daily Management",
+    description: "Today's sales, covers, labour and conflicts.",
+    widgets: [
+      demoTsWidget("w1", "sales.gross"),
+      demoTsWidget("w2", "reservations.covers"),
+      demoTsWidget("w3", "labour.cost"),
+    ],
+  },
+  {
+    id: "weekly-foh",
+    name: "Weekly — Front of House",
+    description: "Covers and reservations for the week.",
+    widgets: [demoTsWidget("w1", "reservations.covers")],
+  },
+  {
+    id: "sales",
+    name: "Sales Performance",
+    description: "Gross and net sales trend.",
+    widgets: [demoTsWidget("w1", "sales.gross"), demoTsWidget("w2", "sales.net")],
+  },
+  {
+    id: "labour",
+    name: "Labour",
+    description: "Scheduled/actual hours, cost and variance.",
+    widgets: [
+      demoTableWidget("w1", [
+        "labour.scheduled_hours",
+        "labour.actual_hours",
+        "labour.cost",
+        "labour.hours_variance",
+      ]),
+    ],
+  },
+];
