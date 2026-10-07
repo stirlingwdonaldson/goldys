@@ -33,9 +33,10 @@ semantic layer.
 | Package | Role | May depend on |
 |---|---|---|
 | `api` | REST controllers (thin adapters: identity + delegation + JSON) | `application`, `auth`, `connectors` (webhook ingest) |
-| `conversational` | SSE "Ask Goldy's" endpoint + tool callbacks | `reporting`, `auth`, `api` (shared `NotConfiguredException`) |
+| `conversational` | SSE "Ask Goldy's" endpoint + tool callbacks | `reporting`, `auth`, `api` (shared `NotConfiguredException`), `dashboard` (value records), `semantic` (catalog) |
 | `reporting` | Fixed reporting tools (`ReportingTool`) + dispatch + widget spec | `semantic`, `auth` |
-| `application` | Use-case services: composition + authorization + response mapping | `semantic`, `reconciliation`, `canonical`, `ingestion`, `auth`, `connectors` |
+| `application` | Use-case services: composition + authorization + response mapping | `semantic`, `reconciliation`, `canonical`, `ingestion`, `auth`, `connectors`, `dashboard`, `reporting` |
+| `dashboard` | Saved-dashboard documents, widget records, template catalogue, filters/visibility records + JPA repositories | `semantic` (catalog value types), (JPA) |
 | `semantic` | Business-query interfaces + metric records (leaf) | (nothing in-platform) |
 | `reconciliation` | Projectors, resolvers, resolved read models, overrides, rules | `semantic` (implements it), `canonical`, `auth` |
 | `canonical` | Bitemporal canonical entities + query facades + ingest facades | (JPA + ingestion ids) |
@@ -92,6 +93,8 @@ future step and are not invented here without a stakeholder permission mapping.
 2. `api` never reads `canonical` or the raw ledger.
 3. `reporting` depends only on `semantic` + `auth` (never `canonical`/`reconciliation`).
 4. `conversational` never reaches persistence (`canonical`/`reconciliation`/`ingestion`).
+5. `dashboard` never reaches `reconciliation`/`canonical`/`ingestion`/`api`.
+6. `conversational` never reaches the `dashboard` repositories (only its value records).
 
 ## Shared widget / dashboard runtime
 
@@ -107,12 +110,28 @@ tools return widget specs built from semantic data.
   `WidgetRenderer`. Both the built-in dashboard and Ask Goldy's answers use it; unknown/malformed
   widgets degrade to a notice (validated at the SSE boundary via `parseWidgetSpecs`).
 - **Saved dashboards** (`saved_dashboard` table) persist query configuration only, never embedded
-  data. `GET /api/dashboards/{id}/render` re-runs the stored queries through the tool dispatcher, so
-  a reopened dashboard shows current resolved data. `docs/contracts/widget-spec.schema.json` and
-  `dashboard-document.schema.json` are the machine-readable contracts.
+  data. Each document carries `filters` (dashboard-level reusable filters), `visibility`
+  (`PRIVATE`/`SHARED`/`ORG_WIDE`), `pinned`, and `current_revision`. `GET
+  /api/dashboards/{id}/render` re-runs the stored `MetricQuery`s through `MetricQueryService`,
+  authorizing each metric at render time via
+  `permissions.require(role, metric.requiredPermission, READ)` and merging the dashboard filters
+  through the shared `WidgetRenderer` — so a reopened dashboard shows current resolved data, and a
+  metric the caller may not read renders an explicit denial instead of a value.
+  `docs/contracts/widget-spec.schema.json` and `dashboard-document.schema.json` are the
+  machine-readable contracts.
+- **Versioning** — every create/update/restore writes a `saved_dashboard_revision` snapshot (the
+  serialized document plus the share roles in force), keyed by `current_revision`, so a past
+  revision can be restored through the normal update path.
+- **Sharing** — `saved_dashboard_share` holds one row per role grant (department × seniority) for
+  `SHARED` dashboards; `ORG_WIDE` and `PRIVATE` need no rows.
+- **Templates** — `DashboardTemplateCatalog` exposes nine code-based starting points built from
+  catalogue `MetricId`s (valid by construction); instantiating one routes through the normal create
+  path, never a separate render path.
 
 ### Data-ownership choice
 
-Widgets in a saved dashboard store the semantic query (tool + bounded input), not a snapshot. This
-keeps dashboards live and avoids stale data — unless snapshot semantics are later added explicitly.
+Widgets in a saved dashboard store the semantic query (`MetricQuery` — metric, range, grain,
+dimensions, comparison), not a snapshot. Rendering always re-runs those queries live, so dashboards
+stay current. Revisions snapshot the *document* (query config + shares) for history/restore, never
+the rendered data.
 

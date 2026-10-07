@@ -1,5 +1,7 @@
 package com.goldys.platform.architecture;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameEndingWith;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
@@ -214,4 +216,31 @@ class ArchitectureBoundariesTest {
           .implement(InventoryMetricsQuery.class)
           .should()
           .resideInAPackage("..reconciliation..");
+
+  /**
+   * The dashboard layer is a read-side leaf: query configuration, template catalogue and its own
+   * JPA repositories. It must not reach reconciliation, canonical, ingestion, or the REST `api`
+   * delivery layer.
+   */
+  @ArchTest
+  static final ArchRule dashboardLayerDoesNotReachPersistenceOrApi =
+      noClasses()
+          .that()
+          .resideInAPackage("..dashboard..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..reconciliation..", "..canonical..", "..ingestion..", "..api..");
+
+  /**
+   * Conversational AI may reference dashboard value types (the {@code SavedWidget} / {@code
+   * DashboardFilters} records) to validate a draft, but never the dashboard repositories.
+   */
+  @ArchTest
+  static final ArchRule conversationalDoesNotReachDashboardRepositories =
+      noClasses()
+          .that()
+          .resideInAPackage("..conversational..")
+          .should()
+          .dependOnClassesThat(
+              resideInAPackage("..dashboard..").and(simpleNameEndingWith("Repository")));
 }
