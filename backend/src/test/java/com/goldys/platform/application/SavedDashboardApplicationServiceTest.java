@@ -41,7 +41,8 @@ class SavedDashboardApplicationServiceTest {
   private final SavedDashboardRepository repo = mock(SavedDashboardRepository.class);
   private final MetricCatalog catalog = new MetricCatalog();
   private final WidgetRenderer renderer = new WidgetRenderer(catalog);
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper =
+      new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
   private final com.goldys.platform.auth.PermissionService permissions =
       mock(com.goldys.platform.auth.PermissionService.class);
   private final SavedDashboardRevisionRepository revisions =

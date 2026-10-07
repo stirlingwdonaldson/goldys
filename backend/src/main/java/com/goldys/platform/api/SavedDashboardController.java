@@ -52,7 +52,7 @@ public class SavedDashboardController {
       @PathVariable UUID id,
       @RequestBody SavedDashboardApplicationService.DashboardInput body,
       @AuthenticationPrincipal AccountUserDetails user) {
-    return dashboards.update(currentUser.roleOf(user), id, body);
+    return dashboards.update(currentUser.roleOf(user), user.email(), id, body);
   }
 
   @DeleteMapping("/{id}")

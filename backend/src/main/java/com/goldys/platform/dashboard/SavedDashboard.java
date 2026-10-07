@@ -129,6 +129,11 @@ public class SavedDashboard {
     this.updatedAt = now;
   }
 
+  /** Advances this document to the next revision number, written as a snapshot on save. */
+  public void incrementRevision() {
+    this.currentRevision = currentRevision + 1;
+  }
+
   public UUID id() {
     return id;
   }

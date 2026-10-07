@@ -1,5 +1,6 @@
 package com.goldys.platform.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.PermissionAction;
@@ -9,6 +10,7 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.SavedDashboard;
 import com.goldys.platform.dashboard.SavedDashboardRepository;
+import com.goldys.platform.dashboard.SavedDashboardRevision;
 import com.goldys.platform.dashboard.SavedDashboardRevisionRepository;
 import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
@@ -51,7 +53,7 @@ public class SavedDashboardApplicationService {
   private final WidgetRenderer renderer;
   private final ObjectMapper mapper;
   private final PermissionService permissions;
-  private final SavedDashboardRevisionRepository revisions;
+  private final SavedDashboardRevisionRepository revisionsRepository;
   private final SavedDashboardShareRepository shares;
   private final MetricQueryService metricQueryService;
 
@@ -61,7 +63,7 @@ public class SavedDashboardApplicationService {
       WidgetRenderer renderer,
       ObjectMapper mapper,
       PermissionService permissions,
-      SavedDashboardRevisionRepository revisions,
+      SavedDashboardRevisionRepository revisionsRepository,
       SavedDashboardShareRepository shares,
       MetricQueryService metricQueryService) {
     this.repository = repository;
@@ -69,7 +71,7 @@ public class SavedDashboardApplicationService {
     this.renderer = renderer;
     this.mapper = mapper;
     this.permissions = permissions;
-    this.revisions = revisions;
+    this.revisionsRepository = revisionsRepository;
     this.shares = shares;
     this.metricQueryService = metricQueryService;
   }
@@ -101,11 +103,12 @@ public class SavedDashboardApplicationService {
                 input.visibility(),
                 actorEmail,
                 CLOCK.instant()));
+    writeRevision(saved, actorEmail);
     return toDocument(saved);
   }
 
   @Transactional
-  public DashboardDocument update(UserRole role, UUID id, DashboardInput input) {
+  public DashboardDocument update(UserRole role, String email, UUID id, DashboardInput input) {
     permissions.require(role, RESOURCE, PermissionAction.WRITE);
     validate(input);
     SavedDashboard dashboard = requireDashboard(id);
@@ -117,7 +120,31 @@ public class SavedDashboardApplicationService {
         input.filters(),
         input.visibility(),
         CLOCK.instant());
+    dashboard.incrementRevision();
+    writeRevision(dashboard, email);
     return toDocument(dashboard);
+  }
+
+  public List<DashboardRevisionSummary> revisions(UUID id) {
+    return revisionsRepository.findByDashboardIdOrderByRevisionDesc(id).stream()
+        .map(r -> new DashboardRevisionSummary(r.revision(), r.createdBy(), r.createdAt()))
+        .toList();
+  }
+
+  @Transactional
+  public DashboardDocument restore(UserRole role, String email, UUID id, int revision) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    SavedDashboardRevision rev = findRevision(id, revision);
+    DashboardDocument doc = readDocument(rev.document());
+    DashboardInput input =
+        new DashboardInput(
+            doc.title(),
+            doc.description(),
+            doc.layout(),
+            doc.filters(),
+            doc.visibility(),
+            doc.widgets());
+    return update(role, email, id, input);
   }
 
   @Transactional
@@ -214,6 +241,36 @@ public class SavedDashboardApplicationService {
         d.updatedAt());
   }
 
+  private void writeRevision(SavedDashboard saved, String actorEmail) {
+    revisionsRepository.save(
+        SavedDashboardRevision.create(
+            saved.id(), saved.currentRevision(), serialize(saved), actorEmail, CLOCK.instant()));
+  }
+
+  private SavedDashboardRevision findRevision(UUID id, int revision) {
+    return revisionsRepository.findByDashboardIdOrderByRevisionDesc(id).stream()
+        .filter(r -> r.revision() == revision)
+        .findFirst()
+        .orElseThrow(
+            () -> new IllegalArgumentException("No revision " + revision + " for dashboard " + id));
+  }
+
+  private String serialize(SavedDashboard saved) {
+    try {
+      return mapper.writeValueAsString(toDocument(saved));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("Failed to serialize dashboard " + saved.id(), e);
+    }
+  }
+
+  private DashboardDocument readDocument(String json) {
+    try {
+      return mapper.readValue(json, DashboardDocument.class);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("Failed to deserialize dashboard revision", e);
+    }
+  }
+
   public record DashboardInput(
       String title,
       String description,
@@ -223,6 +280,8 @@ public class SavedDashboardApplicationService {
       List<SavedWidget> widgets) {}
 
   public record DashboardSummary(UUID id, String title, String updatedAt) {}
+
+  public record DashboardRevisionSummary(int revision, String createdBy, Instant createdAt) {}
 
   public record DashboardDocument(
       UUID id,
