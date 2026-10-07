@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isOwner } from "@/lib/roles";
+import { useApi } from "@/lib/demo-mode";
 import { useAskGoldys } from "./use-ask-goldys";
 import { AnswerBlock } from "./answer-block";
 
@@ -29,6 +30,7 @@ const SUGGESTIONS = [
 export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
   const isOwnerRole = isOwner(seniority);
   const [open, setOpen] = useState(false);
+  const api = useApi();
   const { summary, answer, error, working, ask } = useAskGoldys();
 
   useEffect(() => {
@@ -76,7 +78,7 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
           {working ? <p className="text-sm text-muted-foreground">Working…</p> : null}
 
           {summary || answer || error ? (
-            <AnswerBlock summary={summary} answer={answer} error={error} />
+            <AnswerBlock summary={summary} answer={answer} error={error} api={api} />
           ) : null}
         </div>
 
