@@ -25,6 +25,9 @@ import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
 import com.goldys.platform.dashboard.WidgetLayout;
 import com.goldys.platform.reporting.WidgetRenderer;
+import com.goldys.platform.semantic.FreshnessState;
+import com.goldys.platform.semantic.TrustState;
+import com.goldys.platform.semantic.TrustSummary;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
 import com.goldys.platform.semantic.catalog.MetricId;
@@ -38,6 +41,7 @@ import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import com.goldys.platform.widget.WidgetSpec;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -147,6 +151,60 @@ class DashboardRenderTest {
     assertThat(r).hasSize(1);
     assertThat(r.get(0).widget()).isInstanceOf(WidgetSpec.class);
     assertThat(r.get(0).deniedResource()).isNull();
+  }
+
+  @Test
+  void allowedMetricSurfacesItsTrustSummary() {
+    var owner = new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
+    SavedDashboard saved =
+        SavedDashboard.create(
+            "Sales",
+            null,
+            "grid",
+            List.of(
+                new SavedWidget(
+                    "w1",
+                    "time-series",
+                    List.of(query(MetricId.SALES_GROSS)),
+                    new WidgetLayout(6, 2))),
+            DashboardFilters.empty(),
+            Visibility.PRIVATE,
+            "owner@x.com",
+            Instant.EPOCH);
+    when(repo.findById(saved.id())).thenReturn(Optional.of(saved));
+    when(metricQueryService.query(query(MetricId.SALES_GROSS)))
+        .thenReturn(
+            new TimeSeriesResult(
+                MetricId.SALES_GROSS,
+                List.of(
+                    new MetricSeries(
+                        null, List.of(new MetricPoint(SEP_13, new BigDecimal("100"))))),
+                List.of(),
+                new MetricProvenance(
+                        MetricId.SALES_GROSS,
+                        "1",
+                        RANGE,
+                        TimeGrain.DAY,
+                        "resolved_daily_sales",
+                        Instant.EPOCH,
+                        List.of(),
+                        "1")
+                    .withTrust(
+                        new TrustSummary(
+                            TrustState.SINGLE_SOURCE,
+                            FreshnessState.STALE,
+                            "Lightspeed",
+                            Instant.EPOCH,
+                            Instant.EPOCH,
+                            Duration.ofHours(24)))));
+
+    List<SavedDashboardApplicationService.RenderedWidget> r =
+        service.render(owner, "owner@x.com", saved.id());
+
+    assertThat(r).hasSize(1);
+    assertThat(r.get(0).trust()).isNotNull();
+    assertThat(r.get(0).trust().state()).isEqualTo(TrustState.SINGLE_SOURCE);
+    assertThat(r.get(0).trust().freshness()).isEqualTo(FreshnessState.STALE);
   }
 
   private static MetricQuery query(MetricId id) {

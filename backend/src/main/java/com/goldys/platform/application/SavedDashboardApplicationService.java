@@ -22,6 +22,7 @@ import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
 import com.goldys.platform.reporting.WidgetRenderer;
+import com.goldys.platform.semantic.TrustSummary;
 import com.goldys.platform.semantic.catalog.Comparison;
 import com.goldys.platform.semantic.catalog.Dimension;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
@@ -253,11 +254,12 @@ public class SavedDashboardApplicationService {
         permissions.require(role, new ResourceKey(perm), PermissionAction.READ);
         results.add(metricQueryService.query(merged));
       } catch (AccessDeniedException e) {
-        return new RenderedWidget(w.id(), null, perm);
+        return new RenderedWidget(w.id(), null, perm, null);
       }
     }
     WidgetSpec spec = renderer.render(w.id(), w.renderType(), results);
-    return new RenderedWidget(w.id(), spec, null);
+    TrustSummary trust = results.get(0).provenance().trust();
+    return new RenderedWidget(w.id(), spec, null, trust);
   }
 
   private SavedDashboard requireVisible(UserRole role, String email, UUID id) {
@@ -435,7 +437,8 @@ public class SavedDashboardApplicationService {
       Instant updatedAt) {}
 
   /** One widget's render outcome: a resolved spec, or the metric that denied it. */
-  public record RenderedWidget(String widgetId, WidgetSpec widget, String deniedResource) {}
+  public record RenderedWidget(
+      String widgetId, WidgetSpec widget, String deniedResource, TrustSummary trust) {}
 
   /**
    * A revision snapshot: the document plus the share roles in force when the revision was written.

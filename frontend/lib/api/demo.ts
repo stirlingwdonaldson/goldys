@@ -33,6 +33,7 @@ import type {
   SavedDashboardSummary,
   SavedWidget,
   TopSeller,
+  TrustSummary,
 } from "./types";
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -598,6 +599,7 @@ export const demoApi: Api = {
       widgetId: w.id,
       widget: demoWidgetSpec(),
       deniedResource: null,
+      trust: demoTrust(),
     }));
   },
 
@@ -723,6 +725,18 @@ function demoWidgetSpec(): WidgetSpec {
       },
     ],
     yFormat: "currency",
+  };
+}
+
+/** A representative trust summary for the demo render endpoint (verified, freshly resolved). */
+function demoTrust(): TrustSummary {
+  return {
+    state: "VERIFIED",
+    freshness: "FRESH",
+    authoritativeSource: "Lightspeed",
+    resolvedAt: new Date().toISOString(),
+    lastIngestionAt: new Date().toISOString(),
+    threshold: null,
   };
 }
 

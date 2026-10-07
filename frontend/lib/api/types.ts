@@ -268,6 +268,8 @@ export interface RenderedWidget {
   widgetId: string;
   widget: import("@/components/widgets/types").WidgetSpec | null;
   deniedResource: string | null;
+  /** Trust + freshness summary for the widget's metric; null when denied or unresolved. */
+  trust: TrustSummary | null;
 }
 
 /** A named starting-point dashboard built from catalogue metrics. */

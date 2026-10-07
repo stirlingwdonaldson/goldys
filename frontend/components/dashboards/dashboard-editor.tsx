@@ -541,7 +541,7 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
                     {rw.deniedResource ? (
                       <PermissionDenied subject={rw.deniedResource} />
                     ) : rw.widget ? (
-                      <WidgetRenderer widget={rw.widget} />
+                      <WidgetRenderer widget={rw.widget} trust={rw.trust} />
                     ) : null}
                   </div>
                 );
