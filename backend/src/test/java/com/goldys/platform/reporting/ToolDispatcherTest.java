@@ -16,8 +16,16 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.metrics.OperationalMetrics;
+import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricCatalog;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.widget.StatWidgetSpec;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class ToolDispatcherTest {
@@ -46,7 +54,10 @@ class ToolDispatcherTest {
     PermissionService permissions = mock(PermissionService.class);
     ToolDispatcher dispatcher =
         new ToolDispatcher(
-            new ToolRegistry(List.of(t)), permissions, mock(OperationalMetrics.class));
+            new ToolRegistry(List.of(t)),
+            permissions,
+            new MetricCatalog(),
+            mock(OperationalMetrics.class));
 
     dispatcher.dispatch(ToolId.GET_LABOUR_COST, mock(ToolInput.class), OWNER);
 
@@ -60,7 +71,10 @@ class ToolDispatcherTest {
     PermissionService permissions = mock(PermissionService.class);
     ToolDispatcher dispatcher =
         new ToolDispatcher(
-            new ToolRegistry(List.of(t)), permissions, mock(OperationalMetrics.class));
+            new ToolRegistry(List.of(t)),
+            permissions,
+            new MetricCatalog(),
+            mock(OperationalMetrics.class));
 
     ToolResult result =
         dispatcher.dispatch(ToolId.GET_SALES_BY_PERIOD, mock(ToolInput.class), OWNER);
@@ -76,6 +90,7 @@ class ToolDispatcherTest {
         new ToolDispatcher(
             new ToolRegistry(List.of()),
             mock(PermissionService.class),
+            new MetricCatalog(),
             mock(OperationalMetrics.class));
 
     assertThatThrownBy(
@@ -93,10 +108,35 @@ class ToolDispatcherTest {
         .require(any(), any(), any());
     ToolDispatcher dispatcher =
         new ToolDispatcher(
-            new ToolRegistry(List.of(t)), permissions, mock(OperationalMetrics.class));
+            new ToolRegistry(List.of(t)),
+            permissions,
+            new MetricCatalog(),
+            mock(OperationalMetrics.class));
 
     assertThatThrownBy(
             () -> dispatcher.dispatch(ToolId.GET_SALES_BY_PERIOD, mock(ToolInput.class), OWNER))
         .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void authorizesEachMetricBeforeExecution() {
+    ReportingTool t = mock(ReportingTool.class);
+    when(t.id()).thenReturn(ToolId.GET_SALES_BY_PERIOD);
+    when(t.resource()).thenReturn(new ResourceKey("conversational.chat")); // capability (general tool)
+    when(t.toMetricQueries(any())).thenReturn(List.of(
+        new MetricQuery(MetricId.SALES_GROSS,
+            new TimeRange(LocalDate.of(2026,1,1), LocalDate.of(2026,1,2), Calendar.CALENDAR),
+            TimeGrain.DAY, Set.of(), null)));
+    when(t.execute(any(), any())).thenReturn(okResult());
+    PermissionService permissions = mock(PermissionService.class);
+    ToolDispatcher dispatcher = new ToolDispatcher(
+        new ToolRegistry(List.of(t)), permissions, new MetricCatalog(), mock(OperationalMetrics.class));
+
+    dispatcher.dispatch(ToolId.GET_SALES_BY_PERIOD, mock(ToolInput.class), OWNER);
+
+    // capability gate ...
+    verify(permissions).require(OWNER, new ResourceKey("conversational.chat"), PermissionAction.READ);
+    // ... and the per-metric gate (sales.gross -> reconciliation.sales), both before execution.
+    verify(permissions).require(OWNER, new ResourceKey("reconciliation.sales"), PermissionAction.READ);
   }
 }
