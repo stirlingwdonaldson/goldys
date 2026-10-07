@@ -5,6 +5,7 @@ import com.goldys.platform.semantic.LabourMetricsQuery;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +41,15 @@ public class LabourMetricExecutor implements MetricExecutor {
         };
 
     Map<LocalDate, BigDecimal> byDay = new LinkedHashMap<>();
+    Map<LocalDate, Boolean> unresolved = new HashMap<>();
     for (LabourMetric m : labour.dailyLabour(query.range().from(), query.range().to())) {
-      byDay.merge(m.date(), pick.apply(m), BigDecimal::add);
+      BigDecimal v = pick.apply(m);
+      if (v == null) {
+        unresolved.put(m.date(), true);
+        byDay.remove(m.date());
+      } else if (!unresolved.getOrDefault(m.date(), false)) {
+        byDay.merge(m.date(), v, BigDecimal::add);
+      }
     }
     GrainAggregator.Bucket bucket =
         GrainAggregator.sum(byDay, query.range().from(), query.range().to(), query.grain());

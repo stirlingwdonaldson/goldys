@@ -5,6 +5,7 @@ import com.goldys.platform.semantic.ProductSalesMetric;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +39,15 @@ public class ProductMetricExecutor implements MetricExecutor {
         };
 
     Map<LocalDate, BigDecimal> byDay = new LinkedHashMap<>();
+    Map<LocalDate, Boolean> unresolved = new HashMap<>();
     for (ProductSalesMetric m : product.productSales(query.range().from(), query.range().to())) {
-      byDay.merge(m.tradingDate(), pick.apply(m), BigDecimal::add);
+      BigDecimal v = pick.apply(m);
+      if (v == null) {
+        unresolved.put(m.tradingDate(), true);
+        byDay.remove(m.tradingDate());
+      } else if (!unresolved.getOrDefault(m.tradingDate(), false)) {
+        byDay.merge(m.tradingDate(), v, BigDecimal::add);
+      }
     }
     GrainAggregator.Bucket bucket =
         GrainAggregator.sum(byDay, query.range().from(), query.range().to(), query.grain());

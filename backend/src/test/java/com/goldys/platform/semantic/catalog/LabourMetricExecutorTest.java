@@ -84,4 +84,45 @@ class LabourMetricExecutorTest {
     assertThat(((TimeSeriesResult) result).series().get(0).points().get(0).value())
         .isEqualByComparingTo("20.00");
   }
+
+  @Test
+  void flagsADayMissingWhenAnyDepartmentIsUnresolved() {
+    LabourMetricsQuery q = mock(LabourMetricsQuery.class);
+    when(q.dailyLabour(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new LabourMetric(
+                    SEP_13,
+                    "FOH",
+                    new BigDecimal("8.00"),
+                    new BigDecimal("8.00"),
+                    new BigDecimal("200.00"),
+                    new BigDecimal("100.00"),
+                    "agreed",
+                    false),
+                new LabourMetric(
+                    SEP_13,
+                    "BOH",
+                    new BigDecimal("4.00"),
+                    new BigDecimal("4.00"),
+                    new BigDecimal("100.00"),
+                    null,
+                    "agreed",
+                    false)));
+
+    LabourMetricExecutor executor = new LabourMetricExecutor(q, new MetricCatalog());
+    MetricResult result =
+        executor.evaluate(
+            new MetricQuery(
+                MetricId.LABOUR_COST,
+                new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                TimeGrain.DAY,
+                Set.of(),
+                null));
+
+    TimeSeriesResult ts = (TimeSeriesResult) result;
+    assertThat(ts.series().get(0).points().get(0).value()).isNull();
+    assertThat(ts.notices()).containsExactly("1 day(s) unresolved");
+    assertThat(ts.provenance().missingPeriods()).containsExactly(SEP_13);
+  }
 }
