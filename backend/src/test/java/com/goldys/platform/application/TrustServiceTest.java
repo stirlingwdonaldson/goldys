@@ -6,6 +6,8 @@ import static org.mockito.Mockito.when;
 
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.config.FreshnessProperties;
+import com.goldys.platform.reconciliation.DailySalesOverrideService;
+import com.goldys.platform.reconciliation.ResolutionRuleService;
 import com.goldys.platform.semantic.ConnectorHealth;
 import com.goldys.platform.semantic.ConnectorHealthQuery;
 import com.goldys.platform.semantic.FreshnessState;
@@ -246,7 +248,10 @@ class TrustServiceTest {
             Map.of("resolved_daily_sales", THRESHOLD),
             Map.of("resolved_daily_sales", SALES_SOURCES));
     CanonicalDailySalesQuery dailySales = mock(CanonicalDailySalesQuery.class);
-    return new TrustService(resolution, connectors, freshness, catalog, dailySales);
+    DailySalesOverrideService dailyOverrides = mock(DailySalesOverrideService.class);
+    ResolutionRuleService rules = mock(ResolutionRuleService.class);
+    return new TrustService(
+        resolution, connectors, freshness, catalog, dailySales, dailyOverrides, rules);
   }
 
   private static ResolutionState state(LocalDate date, String type, String source) {

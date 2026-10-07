@@ -3,6 +3,8 @@ package com.goldys.platform.application;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.DailySalesView;
 import com.goldys.platform.config.FreshnessProperties;
+import com.goldys.platform.reconciliation.DailySalesOverrideService;
+import com.goldys.platform.reconciliation.ResolutionRuleService;
 import com.goldys.platform.semantic.ConnectorHealth;
 import com.goldys.platform.semantic.ConnectorHealthQuery;
 import com.goldys.platform.semantic.FreshnessState;
@@ -38,18 +40,27 @@ public class TrustService implements TrustQuery {
   private final FreshnessProperties freshness;
   private final MetricCatalog catalog;
   private final CanonicalDailySalesQuery dailySales;
+  private final DailySalesOverrideService dailyOverrides;
+  private final ResolutionRuleService rules;
+
+  private static final String SALES_ENTITY_TYPE = "daily_sales";
+  private static final String SALES_FIELD_KEY = "daily_sales";
 
   public TrustService(
       ResolutionStateQuery resolution,
       ConnectorHealthQuery connectors,
       FreshnessProperties freshness,
       MetricCatalog catalog,
-      CanonicalDailySalesQuery dailySales) {
+      CanonicalDailySalesQuery dailySales,
+      DailySalesOverrideService dailyOverrides,
+      ResolutionRuleService rules) {
     this.resolution = resolution;
     this.connectors = connectors;
     this.freshness = freshness;
     this.catalog = catalog;
     this.dailySales = dailySales;
+    this.dailyOverrides = dailyOverrides;
+    this.rules = rules;
   }
 
   @Override
@@ -87,7 +98,7 @@ public class TrustService implements TrustQuery {
     BigDecimal resolvedValue = resolvedValueFor(metric, state, rows);
     TrustSummary trust = trustFor(metric, new TimeRange(date, date, Calendar.CALENDAR));
     return new Provenance(
-        metric, date, resolvedValue, trust, sources, resolutionDetail(state), rawRecordIds);
+        metric, date, resolvedValue, trust, sources, resolutionDetail(date, state), rawRecordIds);
   }
 
   private static void requireSalesMetric(MetricId metric) {
@@ -128,10 +139,40 @@ public class TrustService implements TrustQuery {
     return null; // "conflict" or "missing" carry no resolved total
   }
 
-  private static ResolutionDetail resolutionDetail(ResolutionState state) {
+  private ResolutionDetail resolutionDetail(LocalDate date, ResolutionState state) {
     if (state == null) {
       return new ResolutionDetail(null, null, "no resolution for this date", null, null);
     }
+    if ("override".equals(state.resolutionType())) {
+      return dailyOverrides
+          .latestFor(date)
+          .map(
+              o ->
+                  new ResolutionDetail(
+                      "override",
+                      o.authoritativeSource(),
+                      o.reason(),
+                      o.actorEmail(),
+                      o.recordedAt()))
+          .orElseGet(() -> synthesized(state));
+    }
+    if ("rule".equals(state.resolutionType())) {
+      return rules
+          .currentView(SALES_ENTITY_TYPE, SALES_FIELD_KEY)
+          .map(
+              r ->
+                  new ResolutionDetail(
+                      "rule",
+                      state.authoritativeSource(),
+                      r.strategy(),
+                      r.updatedBy(),
+                      r.updatedAt()))
+          .orElseGet(() -> synthesized(state));
+    }
+    return synthesized(state);
+  }
+
+  private static ResolutionDetail synthesized(ResolutionState state) {
     String reason =
         switch (state.resolutionType()) {
           case "override" -> "manually overridden";
