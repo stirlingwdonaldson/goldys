@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.goldys.platform.semantic.DailySalesMetric;
 import com.goldys.platform.semantic.InventoryMetric;
 import com.goldys.platform.semantic.InventoryMetricsQuery;
+import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
@@ -235,6 +236,93 @@ class DerivedMetricExecutorTest {
                         null));
 
     assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("0.2000");
+  }
+
+  @Test
+  void fohPercentDividesFohCostByGross() {
+    when(sales.dailySales(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new DailySalesMetric(
+                    SEP_13, new BigDecimal("5000.00"), null, null, "agreed", false)));
+    when(labour.dailyLabour(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new LabourMetric(
+                    SEP_13, "FOH", null, null, null, new BigDecimal("1500.00"), "agreed", false),
+                new LabourMetric(
+                    SEP_13, "BOH", null, null, null, new BigDecimal("500.00"), "agreed", false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.LABOUR_FOH_PERCENT,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("0.3000");
+  }
+
+  @Test
+  void bohPercentDividesBohCostByGross() {
+    when(sales.dailySales(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new DailySalesMetric(
+                    SEP_13, new BigDecimal("5000.00"), null, null, "agreed", false)));
+    when(labour.dailyLabour(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new LabourMetric(
+                    SEP_13, "FOH", null, null, null, new BigDecimal("1500.00"), "agreed", false),
+                new LabourMetric(
+                    SEP_13, "BOH", null, null, null, new BigDecimal("500.00"), "agreed", false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.LABOUR_BOH_PERCENT,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("0.1000");
+  }
+
+  @Test
+  void hoursVarianceSubtractsActualFromScheduled() {
+    when(labour.dailyLabour(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new LabourMetric(
+                    SEP_13,
+                    "FOH",
+                    new BigDecimal("80.00"),
+                    new BigDecimal("90.00"),
+                    null,
+                    null,
+                    "agreed",
+                    false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.LABOUR_HOURS_VARIANCE,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("-10.00");
   }
 
   private static ReservationSummary summary(
