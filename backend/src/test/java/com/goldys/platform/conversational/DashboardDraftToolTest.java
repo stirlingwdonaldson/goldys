@@ -12,6 +12,7 @@ import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.dashboard.DashboardFilters;
+import com.goldys.platform.dashboard.DashboardWidgetValidator;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.WidgetLayout;
 import com.goldys.platform.reporting.ToolDispatcher;
@@ -38,7 +39,8 @@ class DashboardDraftToolTest {
   private static final TimeRange RANGE =
       new TimeRange(LocalDate.of(2026, 9, 13), LocalDate.of(2026, 9, 13), Calendar.CALENDAR);
 
-  private final CreateDashboardDraftTool tool = new CreateDashboardDraftTool(new MetricCatalog());
+  private final CreateDashboardDraftTool tool =
+      new CreateDashboardDraftTool(new DashboardWidgetValidator(new MetricCatalog()));
 
   @Test
   void draftRejectsRankedListRenderTypeForTimeSeriesMetric() {

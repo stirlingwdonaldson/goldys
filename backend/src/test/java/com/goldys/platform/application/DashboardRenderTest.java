@@ -16,6 +16,7 @@ import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.DashboardTemplateCatalog;
+import com.goldys.platform.dashboard.DashboardWidgetValidator;
 import com.goldys.platform.dashboard.SavedDashboard;
 import com.goldys.platform.dashboard.SavedDashboardRepository;
 import com.goldys.platform.dashboard.SavedDashboardRevisionRepository;
@@ -63,6 +64,7 @@ class DashboardRenderTest {
       new SavedDashboardApplicationService(
           repo,
           catalog,
+          new DashboardWidgetValidator(catalog),
           renderer,
           mapper,
           permissions,

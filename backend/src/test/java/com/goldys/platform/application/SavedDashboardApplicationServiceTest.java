@@ -13,6 +13,7 @@ import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.DashboardTemplateCatalog;
+import com.goldys.platform.dashboard.DashboardWidgetValidator;
 import com.goldys.platform.dashboard.SavedDashboard;
 import com.goldys.platform.dashboard.SavedDashboardRepository;
 import com.goldys.platform.dashboard.SavedDashboardRevisionRepository;
@@ -56,6 +57,7 @@ class SavedDashboardApplicationServiceTest {
       new SavedDashboardApplicationService(
           repo,
           catalog,
+          new DashboardWidgetValidator(catalog),
           renderer,
           mapper,
           permissions,
@@ -78,6 +80,7 @@ class SavedDashboardApplicationServiceTest {
         new SavedDashboardApplicationService(
             repo,
             strict,
+            new DashboardWidgetValidator(strict),
             new WidgetRenderer(strict),
             mapper,
             permissions,
@@ -140,6 +143,30 @@ class SavedDashboardApplicationServiceTest {
             () -> service.create(OWNER, "a@b.com", input("X", "pie-chart", MetricId.SALES_GROSS)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("render type");
+  }
+
+  @Test
+  void createRejectsRankedListRenderTypeForTimeSeriesMetric() {
+    assertThatThrownBy(
+            () -> service.create(OWNER, "a@b.com", input("X", "ranked-list", MetricId.SALES_GROSS)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("ranked-list");
+  }
+
+  @Test
+  void createRejectsRankedMetricInCompositeWidget() {
+    var widget =
+        new SavedWidget(
+            "w1",
+            "time-series",
+            List.of(query(MetricId.PRODUCT_TOP_SELLERS), query(MetricId.SALES_GROSS)),
+            new WidgetLayout(6, 2));
+    var input =
+        new SavedDashboardApplicationService.DashboardInput(
+            "X", null, "grid", DashboardFilters.empty(), Visibility.PRIVATE, List.of(widget));
+
+    assertThatThrownBy(() -> service.create(OWNER, "a@b.com", input))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test

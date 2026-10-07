@@ -12,6 +12,7 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.DashboardTemplate;
 import com.goldys.platform.dashboard.DashboardTemplateCatalog;
+import com.goldys.platform.dashboard.DashboardWidgetValidator;
 import com.goldys.platform.dashboard.SavedDashboard;
 import com.goldys.platform.dashboard.SavedDashboardRepository;
 import com.goldys.platform.dashboard.SavedDashboardRevision;
@@ -51,11 +52,10 @@ public class SavedDashboardApplicationService {
   private static final String LAYOUT_GRID = "grid";
   private static final int DOCUMENT_SCHEMA_VERSION = 2;
   private static final Clock CLOCK = Clock.systemUTC();
-  private static final Set<String> RENDER_TYPES =
-      Set.of("stat", "time-series", "bar-chart", "table", "ranked-list");
 
   private final SavedDashboardRepository repository;
   private final MetricCatalog catalog;
+  private final DashboardWidgetValidator widgetValidator;
   private final WidgetRenderer renderer;
   private final ObjectMapper mapper;
   private final PermissionService permissions;
@@ -67,6 +67,7 @@ public class SavedDashboardApplicationService {
   public SavedDashboardApplicationService(
       SavedDashboardRepository repository,
       MetricCatalog catalog,
+      DashboardWidgetValidator widgetValidator,
       WidgetRenderer renderer,
       ObjectMapper mapper,
       PermissionService permissions,
@@ -76,6 +77,7 @@ public class SavedDashboardApplicationService {
       DashboardTemplateCatalog templateCatalog) {
     this.repository = repository;
     this.catalog = catalog;
+    this.widgetValidator = widgetValidator;
     this.renderer = renderer;
     this.mapper = mapper;
     this.permissions = permissions;
@@ -338,15 +340,7 @@ public class SavedDashboardApplicationService {
       if (w.id() == null || w.id().isBlank()) {
         throw new IllegalArgumentException("Widget id is required.");
       }
-      if (w.renderType() == null || !RENDER_TYPES.contains(w.renderType())) {
-        throw new IllegalArgumentException("Unsupported render type: " + w.renderType());
-      }
-      if (w.queries().isEmpty() || w.queries().size() > 4) {
-        throw new IllegalArgumentException("Widget queries must number between 1 and 4.");
-      }
-      for (MetricQuery q : w.queries()) {
-        catalog.definition(q.metric());
-      }
+      widgetValidator.validate(w);
     }
   }
 
