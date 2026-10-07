@@ -58,15 +58,19 @@ class ToolToMetricQueriesTest {
   }
 
   @Test
-  void getFoodCostBridgesToTwoQueries() {
-    GetFoodCostTool tool = new GetFoodCostTool(mockMetricQueryService(), renderer());
-    var input = new GetFoodCostInput(SEP_13, SEP_20);
+  void getInventorySummaryBridgesToThreeQueries() {
+    GetInventorySummaryTool tool =
+        new GetInventorySummaryTool(mockMetricQueryService(), renderer());
+    var input = new GetInventorySummaryInput(SEP_13, SEP_20);
 
     var qs = tool.toMetricQueries(input);
 
-    assertThat(qs).hasSize(2);
+    assertThat(qs).hasSize(3);
     assertThat(qs.stream().map(MetricQuery::metric).toList())
-        .containsExactly(MetricId.INVENTORY_PURCHASES, MetricId.INVENTORY_WASTAGE);
+        .containsExactly(
+            MetricId.INVENTORY_PURCHASES,
+            MetricId.INVENTORY_WASTAGE,
+            MetricId.INVENTORY_FOOD_COST_PERCENT);
   }
 
   @Test

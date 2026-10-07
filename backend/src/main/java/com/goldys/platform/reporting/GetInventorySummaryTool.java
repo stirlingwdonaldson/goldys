@@ -15,35 +15,36 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
-/** Resolved food cost (COGS) and wastage for a date range, emitted as a table widget. */
+/** Resolved inventory purchases (COGS), wastage, and food-cost percentage for a date range. */
 @Component
-public class GetFoodCostTool implements ReportingTool {
+public class GetInventorySummaryTool implements ReportingTool {
   private final MetricQueryService metrics;
   private final WidgetRenderer renderer;
 
-  public GetFoodCostTool(MetricQueryService metrics, WidgetRenderer renderer) {
+  public GetInventorySummaryTool(MetricQueryService metrics, WidgetRenderer renderer) {
     this.metrics = metrics;
     this.renderer = renderer;
   }
 
   @Override
   public ToolId id() {
-    return ToolId.GET_FOOD_COST;
+    return ToolId.GET_INVENTORY_SUMMARY;
   }
 
   @Override
   public String name() {
-    return "get_food_cost";
+    return "get_inventory_summary";
   }
 
   @Override
   public String description() {
-    return "Resolved food cost (COGS from purchases) and wastage for a date range.";
+    return "Resolved inventory purchases (COGS), wastage, and food-cost percentage for a date "
+        + "range.";
   }
 
   @Override
   public Class<? extends ToolInput> inputType() {
-    return GetFoodCostInput.class;
+    return GetInventorySummaryInput.class;
   }
 
   @Override
@@ -53,9 +54,9 @@ public class GetFoodCostTool implements ReportingTool {
 
   @Override
   public ToolResult execute(ToolInput input, UserRole role) {
-    if (!(input instanceof GetFoodCostInput in)) {
+    if (!(input instanceof GetInventorySummaryInput in)) {
       throw new IllegalArgumentException(
-          "Expected GetFoodCostInput, got " + input.getClass().getSimpleName());
+          "Expected GetInventorySummaryInput, got " + input.getClass().getSimpleName());
     }
     List<MetricResult> results = toMetricQueries(in).stream().map(metrics::query).toList();
     WidgetSpec widget = renderer.render(UUID.randomUUID().toString(), "table", results);
@@ -68,12 +69,15 @@ public class GetFoodCostTool implements ReportingTool {
 
   @Override
   public List<MetricQuery> toMetricQueries(ToolInput input) {
-    if (!(input instanceof GetFoodCostInput in)) {
+    if (!(input instanceof GetInventorySummaryInput in)) {
       throw new IllegalArgumentException(
-          "Expected GetFoodCostInput, got " + input.getClass().getSimpleName());
+          "Expected GetInventorySummaryInput, got " + input.getClass().getSimpleName());
     }
     TimeRange range = new TimeRange(in.startDate(), in.endDate(), Calendar.CALENDAR);
-    return List.of(q(MetricId.INVENTORY_PURCHASES, range), q(MetricId.INVENTORY_WASTAGE, range));
+    return List.of(
+        q(MetricId.INVENTORY_PURCHASES, range),
+        q(MetricId.INVENTORY_WASTAGE, range),
+        q(MetricId.INVENTORY_FOOD_COST_PERCENT, range));
   }
 
   private static MetricQuery q(MetricId id, TimeRange range) {

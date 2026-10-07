@@ -5,9 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/** Input for {@link ToolId#GET_FOOD_COST}. */
-public record GetFoodCostInput(LocalDate startDate, LocalDate endDate) implements ToolInput {
-  public GetFoodCostInput {
+/** Input for {@link ToolId#GET_INVENTORY_SUMMARY}. */
+public record GetInventorySummaryInput(LocalDate startDate, LocalDate endDate)
+    implements ToolInput {
+  public GetInventorySummaryInput {
     Objects.requireNonNull(startDate, "startDate");
     Objects.requireNonNull(endDate, "endDate");
     if (endDate.isBefore(startDate)) {
