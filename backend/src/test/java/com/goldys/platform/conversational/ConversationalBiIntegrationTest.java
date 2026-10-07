@@ -62,7 +62,7 @@ class ConversationalBiIntegrationTest {
 
     String raw =
         callback.call(
-            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"GROSS_SALES\"}");
+            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"SALES_GROSS\"}");
 
     assertThat(raw).contains("27650.66");
     assertThat(context.toAnswerPayload().widgets()).hasSize(1);

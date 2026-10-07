@@ -8,7 +8,7 @@ class ReportingToolTest {
 
   @Test
   void exposesItsInputType() {
-    ReportingTool tool = new GetSalesByPeriodTool(null);
+    ReportingTool tool = new GetSalesByPeriodTool(null, null);
 
     assertThat(tool.inputType()).isEqualTo(GetSalesByPeriodInput.class);
   }

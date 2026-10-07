@@ -7,6 +7,7 @@ import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
+import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import com.goldys.platform.widget.TimeSeriesWidgetSpec;
 import java.math.BigDecimal;
@@ -49,7 +50,7 @@ class ReportingToolIntegrationTest {
     ToolResult result =
         dispatcher.dispatch(
             ToolId.GET_SALES_BY_PERIOD,
-            new GetSalesByPeriodInput(SEP_13, SEP_13, Metric.GROSS_SALES),
+            new GetSalesByPeriodInput(SEP_13, SEP_13, MetricId.SALES_GROSS),
             OWNER);
 
     assertThat(result.widget()).isInstanceOf(TimeSeriesWidgetSpec.class);
