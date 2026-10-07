@@ -10,9 +10,18 @@ import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricQuery;
+import com.goldys.platform.semantic.catalog.MetricQueryService;
+import com.goldys.platform.semantic.catalog.RankedListResult;
+import com.goldys.platform.semantic.catalog.TimeGrain;
+import com.goldys.platform.semantic.catalog.TimeRange;
+import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 /**
@@ -22,7 +31,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class DashboardApplicationService {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
-  private static final int TOP_SELLERS_LIMIT = 5;
   private static final int TOP_SELLERS_WINDOW_DAYS = 30;
   private static final int TREND_DAYS = 13; // trailing 14 days inclusive
   private static final int ACTIVITY_DAYS = 14;
@@ -32,18 +40,21 @@ public class DashboardApplicationService {
   private final IngestionService ingestion;
   private final OverrideUsageService overrideUsage;
   private final PermissionService permissions;
+  private final MetricQueryService metrics;
 
   public DashboardApplicationService(
       SalesMetricsQuery salesMetrics,
       ProductMetricsQuery productMetrics,
       IngestionService ingestion,
       OverrideUsageService overrideUsage,
-      PermissionService permissions) {
+      PermissionService permissions,
+      MetricQueryService metrics) {
     this.salesMetrics = salesMetrics;
     this.productMetrics = productMetrics;
     this.ingestion = ingestion;
     this.overrideUsage = overrideUsage;
     this.permissions = permissions;
+    this.metrics = metrics;
   }
 
   public Summary summary(UserRole role) {
@@ -96,17 +107,27 @@ public class DashboardApplicationService {
 
   private List<TopSeller> topSellersInternal() {
     LocalDate to = LocalDate.now();
-    return productMetrics
-        .topSellers(to.minusDays(TOP_SELLERS_WINDOW_DAYS), to, TOP_SELLERS_LIMIT)
-        .stream()
-        .map(t -> new TopSeller(t.productName(), t.quantitySold(), t.amount(), t.hasConflict()))
+    TimeRange range = new TimeRange(to.minusDays(TOP_SELLERS_WINDOW_DAYS), to, Calendar.CALENDAR);
+    RankedListResult result =
+        (RankedListResult)
+            metrics.query(
+                new MetricQuery(
+                    MetricId.PRODUCT_TOP_SELLERS, range, TimeGrain.DAY, Set.of(), null));
+    return result.items().stream()
+        .map(i -> new TopSeller(i.label(), i.secondary(), i.primary(), false))
         .toList();
   }
 
   private List<SalesTrend> salesTrendInternal() {
     LocalDate to = LocalDate.now();
-    return salesMetrics.dailySales(to.minusDays(TREND_DAYS), to).stream()
-        .map(m -> new SalesTrend(m.tradingDate().toString(), m.grossSales()))
+    TimeRange range = new TimeRange(to.minusDays(TREND_DAYS), to, Calendar.CALENDAR);
+    TimeSeriesResult result =
+        (TimeSeriesResult)
+            metrics.query(
+                new MetricQuery(MetricId.SALES_GROSS, range, TimeGrain.DAY, Set.of(), null));
+    return result.series().stream()
+        .flatMap(s -> s.points().stream())
+        .map(p -> new SalesTrend(p.bucketStart().toString(), p.value()))
         .toList();
   }
 
