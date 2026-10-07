@@ -3,6 +3,7 @@ package com.goldys.platform.api;
 import com.goldys.platform.application.SavedDashboardApplicationService;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
+import com.goldys.platform.dashboard.DashboardTemplate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -65,5 +66,57 @@ public class SavedDashboardController {
   List<SavedDashboardApplicationService.RenderedWidget> render(
       @PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
     return dashboards.render(currentUser.roleOf(user), user.email(), id);
+  }
+
+  /** The nine code-based starting-point templates. */
+  @GetMapping("/templates")
+  List<DashboardTemplate> templates(@AuthenticationPrincipal AccountUserDetails user) {
+    return dashboards.templates();
+  }
+
+  /** Copies a template into a new PRIVATE dashboard owned by the caller. */
+  @PostMapping("/from-template/{templateId}")
+  SavedDashboardApplicationService.DashboardDocument fromTemplate(
+      @PathVariable String templateId, @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboards.instantiate(currentUser.roleOf(user), user.email(), templateId);
+  }
+
+  /** Revision history (restricted to viewers of the dashboard). */
+  @GetMapping("/{id}/revisions")
+  List<SavedDashboardApplicationService.DashboardRevisionSummary> revisions(
+      @PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboards.revisions(currentUser.roleOf(user), user.email(), id);
+  }
+
+  /** Restores a revision (writes a new revision). */
+  @PostMapping("/{id}/revisions/{rev}/restore")
+  SavedDashboardApplicationService.DashboardDocument restore(
+      @PathVariable UUID id,
+      @PathVariable int rev,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboards.restore(currentUser.roleOf(user), user.email(), id, rev);
+  }
+
+  /** Toggles the pinned (favourite) flag. */
+  @PutMapping("/{id}/pin")
+  SavedDashboardApplicationService.DashboardDocument pin(
+      @PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboards.pin(currentUser.roleOf(user), user.email(), id);
+  }
+
+  /** Visibility plus the role list that can open a SHARED dashboard. */
+  @GetMapping("/{id}/sharing")
+  SavedDashboardApplicationService.DashboardSharing sharing(
+      @PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboards.sharing(currentUser.roleOf(user), user.email(), id);
+  }
+
+  @PutMapping("/{id}/sharing")
+  SavedDashboardApplicationService.DashboardSharing setSharing(
+      @PathVariable UUID id,
+      @RequestBody SavedDashboardApplicationService.DashboardSharing body,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return dashboards.setSharing(
+        currentUser.roleOf(user), user.email(), id, body.visibility(), body.roles());
   }
 }

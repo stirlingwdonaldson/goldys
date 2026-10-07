@@ -139,6 +139,11 @@ public class SavedDashboard {
     this.visibility = Objects.requireNonNull(visibility, "visibility");
   }
 
+  /** Toggles/ sets the pinned (favourite) flag. */
+  public void setPinned(boolean pinned) {
+    this.pinned = pinned;
+  }
+
   public UUID id() {
     return id;
   }

@@ -16,7 +16,8 @@ class DashboardTemplateCatalogTest {
       assertThat(t.widgets()).isNotEmpty();
       for (var w : t.widgets())
         for (var q : w.queries())
-          assertThat(new MetricCatalog().definition(q.metric())).isNotNull(); // valid by construction
+          assertThat(new MetricCatalog().definition(q.metric()))
+              .isNotNull(); // valid by construction
     }
   }
 

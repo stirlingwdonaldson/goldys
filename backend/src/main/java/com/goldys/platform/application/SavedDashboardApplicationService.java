@@ -120,7 +120,9 @@ public class SavedDashboardApplicationService {
     return templateCatalog.templates();
   }
 
-  /** Copies a template into a new PRIVATE dashboard owned by the caller, via the normal create path. */
+  /**
+   * Copies a template into a new PRIVATE dashboard owned by the caller, via the normal create path.
+   */
   @Transactional
   public DashboardDocument instantiate(UserRole role, String email, String templateId) {
     DashboardTemplate template = templateCatalog.byId(templateId);
@@ -214,6 +216,15 @@ public class SavedDashboardApplicationService {
                         new DepartmentCode(s.department()), new SeniorityCode(s.seniority())))
             .toList();
     return new DashboardSharing(d.visibility(), roles);
+  }
+
+  /** Toggles the pinned (favourite) flag and returns the updated document. */
+  @Transactional
+  public DashboardDocument pin(UserRole role, String email, UUID id) {
+    SavedDashboard d = requireEditable(role, email, id);
+    d.setPinned(!d.pinned());
+    repository.save(d);
+    return toDocument(d);
   }
 
   /** Re-runs each widget's stored queries, authorizing per metric at render time. */
@@ -416,7 +427,9 @@ public class SavedDashboardApplicationService {
   /** One widget's render outcome: a resolved spec, or the metric that denied it. */
   public record RenderedWidget(String widgetId, WidgetSpec widget, String deniedResource) {}
 
-  /** A revision snapshot: the document plus the share roles in force when the revision was written. */
+  /**
+   * A revision snapshot: the document plus the share roles in force when the revision was written.
+   */
   record RevisionSnapshot(DashboardDocument document, List<ShareSnapshot> shares) {}
 
   /** One share role captured in a revision snapshot (department × seniority). */

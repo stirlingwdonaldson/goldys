@@ -104,7 +104,9 @@ public class DashboardTemplateCatalog {
 
   private static SavedWidget table(String id, MetricId... metrics) {
     return new SavedWidget(
-        id, "table", Arrays.stream(metrics).map(DashboardTemplateCatalog::query).toList(),
+        id,
+        "table",
+        Arrays.stream(metrics).map(DashboardTemplateCatalog::query).toList(),
         new WidgetLayout(12, 2));
   }
 
