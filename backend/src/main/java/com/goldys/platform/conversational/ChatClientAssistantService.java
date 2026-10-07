@@ -7,7 +7,9 @@ import com.goldys.platform.reporting.ToolDispatcher;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.tool.ToolCallback;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -40,11 +42,20 @@ public class ChatClientAssistantService implements AssistantService {
     List<ToolCallback> toolCallbacks =
         callbacks.forTools(tools, role, accumulator, dispatcher, mapper);
 
-    return chatClient
-        .prompt()
-        .messages(context)
-        .toolCallbacks(toolCallbacks.toArray(ToolCallback[]::new))
-        .stream()
+    ChatClient.ChatClientRequestSpec request =
+        chatClient
+            .prompt()
+            .messages(context)
+            .toolCallbacks(toolCallbacks.toArray(ToolCallback[]::new));
+
+    // Drive the tool loop through a bounded advisor rather than relying on the model's
+    // internal tool execution, so the per-turn round cap is applied and testable with a
+    // plain ChatModel. When there are no tools there is nothing to bound.
+    if (!toolCallbacks.isEmpty()) {
+      request = request.advisors(boundedToolCallAdvisor());
+    }
+
+    return request.stream()
         .content()
         .filter(Objects::nonNull)
         .<ConversationEvent>map(delta -> new ConversationEvent.TextDelta(delta))
@@ -55,5 +66,11 @@ public class ChatClientAssistantService implements AssistantService {
             e ->
                 Mono.just(
                     new ConversationEvent.Error("Something went wrong generating the answer.")));
+  }
+
+  private static ToolCallAdvisor boundedToolCallAdvisor() {
+    return ToolCallAdvisor.builder()
+        .toolCallingManager(new BoundedToolCallingManager(ToolCallingManager.builder().build()))
+        .build();
   }
 }
