@@ -1,5 +1,6 @@
 package com.goldys.platform.conversational;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -64,26 +65,32 @@ public class ConversationMessage {
         UUID.randomUUID(), threadId, role, content, toolTrace, createdAt);
   }
 
+  @JsonProperty("id")
   public UUID id() {
     return id;
   }
 
+  @JsonProperty("threadId")
   public UUID threadId() {
     return threadId;
   }
 
+  @JsonProperty("role")
   public String role() {
     return role;
   }
 
+  @JsonProperty("content")
   public String content() {
     return content;
   }
 
+  @JsonProperty("toolTrace")
   public List<AnswerPayload.TraceEntry> toolTrace() {
     return toolTrace;
   }
 
+  @JsonProperty("createdAt")
   public Instant createdAt() {
     return createdAt;
   }
