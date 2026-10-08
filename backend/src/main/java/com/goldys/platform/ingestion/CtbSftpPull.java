@@ -1,6 +1,6 @@
 package com.goldys.platform.ingestion;
 
-import java.nio.charset.StandardCharsets;
+import com.goldys.platform.connectors.ctb.CtInvoiceCsvIngestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -8,9 +8,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * Pulls files from the CTB SFTP drop and stores them byte-faithfully in the raw ledger (CSV and PDF
- * alike). Raw-only by design: canonicalization is a separate, later step so the shapes can be
- * checked before anything is interpreted. Disabled until {@code
+ * Pulls files from the CTB SFTP drop. CSVs are fed through the CSV pipeline (raw + canonicalize);
+ * PDFs are stored byte-faithfully raw-only (PDF enrichment is a later phase). Disabled until {@code
  * app.scheduling.ctb-sftp.enabled=true}.
  */
 @Component
@@ -20,10 +19,13 @@ public class CtbSftpPull {
 
   private final SftpDrop drop;
   private final IngestionService ingestion;
+  private final CtInvoiceCsvIngestService csvIngest;
 
-  public CtbSftpPull(SftpDrop drop, IngestionService ingestion) {
+  public CtbSftpPull(
+      SftpDrop drop, IngestionService ingestion, CtInvoiceCsvIngestService csvIngest) {
     this.drop = drop;
     this.ingestion = ingestion;
+    this.csvIngest = csvIngest;
   }
 
   @Scheduled(cron = "${app.scheduling.ctb-sftp.cron:0 0 4 * * *}", zone = "Australia/Melbourne")
@@ -31,18 +33,20 @@ public class CtbSftpPull {
     for (SftpDrop.SftpFile file : drop.list()) {
       try {
         byte[] bytes = drop.download(file.path());
-        boolean csv = file.filename().toLowerCase().endsWith(".csv");
-        ingestion.ingestPush(
-            "CTB",
-            csv ? "ctb-invoices" : "ctb-invoice-pdf",
-            FetchMethod.FILE_EXPORT,
-            csv ? "text/csv" : "application/pdf",
-            bytes,
-            csv ? StandardCharsets.UTF_8.name() : null,
-            "ctb-sftp");
-        log.info("SFTP drop stored {}", file.filename());
+        if (file.filename().toLowerCase().endsWith(".csv")) {
+          csvIngest.ingest(bytes);
+        } else {
+          ingestion.ingestPush(
+              "CTB",
+              "ctb-invoice-pdf",
+              FetchMethod.FILE_EXPORT,
+              "application/pdf",
+              bytes,
+              null,
+              "ctb-sftp");
+        }
+        log.info("SFTP drop processed {}", file.filename());
       } catch (RuntimeException e) {
-        // A failure is already recorded in the ingestion ledger; keep pulling the rest.
         log.warn("SFTP drop pull failed for {}", file.path(), e);
       }
     }
