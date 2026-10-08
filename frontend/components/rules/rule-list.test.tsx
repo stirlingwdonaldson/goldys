@@ -14,7 +14,7 @@ const rows: RuleRow[] = [
     entityType: "product_sales",
     fieldKey: "garlic aioli",
     strategy: "priority",
-    sourcePriority: ["Lightspeed", "Cooking the Books"],
+    sourcePriority: ["LIGHTSPEED", "CTB"],
     updatedAt: "2026-09-29T18:00:00Z",
     updatedBy: "Stirling Donaldson",
   }),

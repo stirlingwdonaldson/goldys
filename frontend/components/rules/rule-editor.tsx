@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { entityLabel, fieldLabel } from "@/lib/rule-logic";
+import { entityLabel, fieldLabel, SOURCES, sourceLabel } from "@/lib/rule-logic";
 import type { CustomLogic, ResolutionRule, RuleStrategy, SaveResolutionRuleInput } from "@/lib/api";
 
 const CUSTOM_OPTIONS: { value: CustomLogic; label: string }[] = [
@@ -30,7 +30,7 @@ const CUSTOM_OPTIONS: { value: CustomLogic; label: string }[] = [
   { value: "newest", label: "Pick newest" },
 ];
 
-const DEFAULT_PRIORITY = ["Cooking the Books", "Lightspeed"];
+const DEFAULT_PRIORITY = [...SOURCES];
 
 interface RuleEditorProps {
   open: boolean;
@@ -62,6 +62,7 @@ export function RuleEditor({
   );
   const [strategy, setStrategy] = useState<RuleStrategy>(initial?.strategy ?? "priority");
   const [customLogic, setCustomLogic] = useState<CustomLogic>(initial?.customLogic ?? "flag");
+  const [priority, setPriority] = useState<string[]>(initial?.sourcePriority ?? DEFAULT_PRIORITY);
   const [recomputeHistory, setRecomputeHistory] = useState(false);
 
   useEffect(() => {
@@ -70,11 +71,22 @@ export function RuleEditor({
       setFieldKey(initial?.fieldKey ?? fieldsByEntity[entities[0]]?.[0] ?? "");
       setStrategy(initial?.strategy ?? "priority");
       setCustomLogic(initial?.customLogic ?? "flag");
+      setPriority(initial?.sourcePriority ?? DEFAULT_PRIORITY);
       setRecomputeHistory(false);
     }
   }, [open, initial, entities, fieldsByEntity]);
 
   const fields = fieldsByEntity[entityType] ?? [];
+
+  function move(index: number, delta: number) {
+    setPriority((prev) => {
+      const next = [...prev];
+      const j = index + delta;
+      if (j < 0 || j >= next.length) return prev;
+      [next[index], next[j]] = [next[j], next[index]];
+      return next;
+    });
+  }
 
   function submit() {
     onSave({
@@ -82,8 +94,7 @@ export function RuleEditor({
       entityType,
       fieldKey,
       strategy,
-      sourcePriority:
-        strategy === "priority" ? (initial?.sourcePriority ?? DEFAULT_PRIORITY) : undefined,
+      sourcePriority: strategy === "priority" ? priority : undefined,
       customLogic: strategy === "custom" ? customLogic : undefined,
     });
   }
@@ -159,6 +170,41 @@ export function RuleEditor({
               </div>
             </RadioGroup>
           </div>
+
+          {strategy === "priority" ? (
+            <div className="flex flex-col gap-2">
+              <Label>Source priority</Label>
+              <p className="text-xs text-muted-foreground">
+                First source wins when they disagree.
+              </p>
+              <ol className="flex flex-col gap-1">
+                {priority.map((code, i) => (
+                  <li key={code} className="flex items-center gap-2 rounded-md border px-3 py-2">
+                    <span className="w-4 text-xs text-muted-foreground">{i + 1}</span>
+                    <span className="flex-1 text-sm">{sourceLabel(code)}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={i === 0}
+                      onClick={() => move(i, -1)}
+                      aria-label={`Move ${sourceLabel(code)} up`}
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={i === priority.length - 1}
+                      onClick={() => move(i, 1)}
+                      aria-label={`Move ${sourceLabel(code)} down`}
+                    >
+                      ↓
+                    </Button>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
 
           {strategy === "custom" ? (
             <div className="flex flex-col gap-2">

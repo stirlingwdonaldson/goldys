@@ -4,6 +4,22 @@ export type CustomLogic = "flag" | "highest" | "lowest" | "newest";
 export const ENTITY_TYPES = ["daily_sales", "product_sales"] as const;
 export type EntityType = (typeof ENTITY_TYPES)[number];
 
+/**
+ * Canonical source-system codes, in the default priority order (first = wins when sources
+ * disagree). The rule engine matches these codes against each source's `sourceSystem`.
+ */
+export const SOURCES = ["LIGHTSPEED", "CTB"] as const;
+
+const SOURCE_LABELS: Record<string, string> = {
+  LIGHTSPEED: "Lightspeed",
+  CTB: "Cooking the Books",
+};
+
+/** Display label for a source-system code (falls back to the code for unknown sources). */
+export function sourceLabel(code: string): string {
+  return SOURCE_LABELS[code] ?? code;
+}
+
 export interface ResolutionRule {
   id: string;
   entityType: string;
@@ -51,7 +67,8 @@ export function buildKnownFields(products: string[]): Record<string, string[]> {
 
 /** One-line effect of a rule, shown in the rule list. */
 export function summarizeRule(rule: ResolutionRule): string {
-  if (rule.strategy === "priority") return `${rule.sourcePriority?.[0] ?? "First source"} wins`;
+  if (rule.strategy === "priority")
+    return `${sourceLabel(rule.sourcePriority?.[0] ?? "") || "First source"} wins`;
   if (rule.strategy === "manual") return "Manual override — always ask";
   return rule.customLogic ? CUSTOM_LABEL[rule.customLogic] : "Flag unresolved";
 }
@@ -59,7 +76,7 @@ export function summarizeRule(rule: ResolutionRule): string {
 /** Secondary line for a rule (e.g. the full source order); empty when none applies. */
 export function ruleDetail(rule: ResolutionRule): string {
   if (rule.strategy === "priority" && rule.sourcePriority && rule.sourcePriority.length > 0) {
-    return `priority: ${rule.sourcePriority.join(" > ")}`;
+    return `priority: ${rule.sourcePriority.map(sourceLabel).join(" > ")}`;
   }
   return "";
 }

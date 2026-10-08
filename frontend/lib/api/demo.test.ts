@@ -8,7 +8,7 @@ describe("demoApi resolution rules", () => {
       entityType: "product_sales",
       fieldKey: "pint carlton draught",
       strategy: "priority",
-      sourcePriority: ["Lightspeed", "Cooking the Books"],
+      sourcePriority: ["LIGHTSPEED", "CTB"],
     });
 
     const rules = await demoApi.listResolutionRules();
@@ -16,7 +16,7 @@ describe("demoApi resolution rules", () => {
 
     expect(edited?.entityType).toBe("product_sales");
     expect(edited?.fieldKey).toBe("pint carlton draught");
-    expect(edited?.sourcePriority).toEqual(["Lightspeed", "Cooking the Books"]);
+    expect(edited?.sourcePriority).toEqual(["LIGHTSPEED", "CTB"]);
   });
 
   it("lists the demo products", async () => {

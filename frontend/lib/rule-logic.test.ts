@@ -15,7 +15,7 @@ function rule(overrides: Partial<ResolutionRule> = {}): ResolutionRule {
     entityType: "daily_sales",
     fieldKey: "daily_sales",
     strategy: "priority",
-    sourcePriority: ["Cooking the Books", "Lightspeed"],
+    sourcePriority: ["CTB", "LIGHTSPEED"],
     updatedAt: "2026-09-29T18:00:00Z",
     updatedBy: "Stirling Donaldson",
     ...overrides,
