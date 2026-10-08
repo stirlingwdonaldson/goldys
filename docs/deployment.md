@@ -140,21 +140,35 @@ database.
 
 ## SFTP drop (invoice ingestion)
 
-CTB's Custom Invoice Export lands on an SFTP server; the backend polls it and
-ingests the files. The platform is an SFTP **client** — you need an SFTP server
-to point it at (e.g. CTB's drop, or one you control). Enable it in `.env.prod`:
+CTB's Custom Invoice Export is pushed by CTB over SFTP into a small `sftp`
+container in this stack; the backend polls that container and ingests the files.
+Both sides share one chrooted user.
 
-| Setting | Meaning |
-|---|---|
-| `CTB_SFTP_ENABLED` | `true` turns the poller on (default `false`). |
-| `CTB_SFTP_HOST` / `CTB_SFTP_PORT` | host and port of the drop (port defaults to 22). |
-| `CTB_SFTP_USER` / `CTB_SFTP_PASSWORD` | credentials to the drop. |
-| `CTB_SFTP_REMOTE_DIR` | directory the files land in (default `/`). |
-| `CTB_SFTP_CRON` | poll schedule, Australia/Melbourne (default `0 15 4 * * *`). |
+Setup:
 
-CSVs are canonicalized (invoice header + lines → COGS); PDFs are stored raw for
-now. To run the poll on demand without waiting for the cron, an operator with the
-`connectors` write permission can hit `POST /api/connectors/CTB/sftp/run`.
+1. In `.env.prod`, set `SFTP_PASSWORD` (required), and optionally `SFTP_USER`
+   (default `ctb`) and `SFTP_PORT` (default `2222`).
+2. In CTB's Custom Invoice Export settings, set:
+   - **Export Method** = SFTP
+   - **Host name** = this VM's public IP (or whatever host CTB can reach)
+   - **Port** = `SFTP_PORT` (default 2222)
+   - **User name** = `SFTP_USER` (default ctb)
+   - **Password** = `SFTP_PASSWORD`
+   - **Folder** = empty (files land in the user's root)
+3. Set `CTB_SFTP_ENABLED=true` in `.env.prod` to start polling, then deploy.
+
+The backend reaches the drop over the internal network (`sftp:22`), so there are
+no separate `CTB_SFTP_HOST`/`CTB_SFTP_PORT`/`CTB_SFTP_USER`/`CTB_SFTP_PASSWORD`
+to set — those are derived from the compose wiring. The poll runs on
+`CTB_SFTP_CRON` (default `0 15 4 * * *`, Melbourne) or on demand via
+`POST /api/connectors/CTB/sftp/run`.
+
+**Security:** the SFTP port is published on the host so CTB can reach it. The
+`sftp` user is SFTP-only (chrooted, no shell). If you know CTB's source IP range,
+restrict `${SFTP_PORT}` to it in the host firewall; otherwise rely on a strong
+`SFTP_PASSWORD` and note the port is internet-facing.
+
+CSVs are canonicalized (header + lines → COGS); PDFs are stored raw for now.
 
 ## Upgrading
 
