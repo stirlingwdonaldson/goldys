@@ -56,6 +56,16 @@ class ApiExceptionHandler {
                 exception.failureType(), exception.getMessage(), correlationId(request), Map.of()));
   }
 
+  /** An entity/domain/raw id that does not exist (data explorer). */
+  @ExceptionHandler(java.util.NoSuchElementException.class)
+  ResponseEntity<ApiErrorResponse> handleNotFound(
+      java.util.NoSuchElementException exception, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(
+            new ApiErrorResponse(
+                "NOT_FOUND", exception.getMessage(), correlationId(request), Map.of()));
+  }
+
   private String correlationId(HttpServletRequest request) {
     String provided = request.getHeader("X-Correlation-ID");
     return (provided != null && !provided.isBlank()) ? provided : UUID.randomUUID().toString();
