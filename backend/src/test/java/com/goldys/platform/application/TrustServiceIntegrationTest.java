@@ -86,23 +86,24 @@ class TrustServiceIntegrationTest {
   }
 
   @Test
-  void singleSourceDerivesSingleSourceTrustAndNoResolvedValue() {
+  void singleSourceDerivesSingleSourceTrustAndResolvedValue() {
     LocalDate date = LocalDate.of(2026, 2, 2);
     UUID light = record(LIGHTSPEED, date, "100.00");
 
     TrustSummary summary = trust.trustFor(METRIC, range(date));
 
     assertThat(summary.state()).isEqualTo(TrustState.SINGLE_SOURCE);
-    assertThat(summary.authoritativeSource()).isNull();
+    assertThat(summary.authoritativeSource()).isEqualTo(LIGHTSPEED);
 
     Provenance provenance = trust.provenanceFor(METRIC, date);
-    assertThat(provenance.resolvedValue()).isNull();
+    assertThat(provenance.resolvedValue()).isEqualByComparingTo("100.00");
     assertThat(provenance.sources())
         .extracting(SourceValue::sourceSystem)
         .containsExactly(LIGHTSPEED);
     assertThat(provenance.rawRecordIds()).containsExactly(light);
-    assertThat(provenance.resolution().kind()).isEqualTo("missing");
-    assertThat(provenance.resolution().reason()).isEqualTo("single source or missing data");
+    assertThat(provenance.resolution().kind()).isEqualTo("single");
+    assertThat(provenance.resolution().reason())
+        .isEqualTo("single source (no data from the other source)");
   }
 
   @Test

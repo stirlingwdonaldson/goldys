@@ -148,7 +148,9 @@ public class TrustService implements TrustQuery {
     if (state == null) {
       return null;
     }
-    if ("override".equals(state.resolutionType()) || "rule".equals(state.resolutionType())) {
+    if ("override".equals(state.resolutionType())
+        || "rule".equals(state.resolutionType())
+        || "single".equals(state.resolutionType())) {
       String authoritative = state.authoritativeSource();
       return rows.stream()
           .filter(r -> r.sourceSystem().equals(authoritative))
@@ -159,7 +161,7 @@ public class TrustService implements TrustQuery {
     if ("agreed".equals(state.resolutionType())) {
       return rows.stream().findFirst().map(r -> valueFor(metric, r)).orElse(null);
     }
-    return null; // "conflict" or "missing" carry no resolved total
+    return null; // "conflict" carries no resolved total
   }
 
   private ResolutionDetail resolutionDetail(LocalDate date, ResolutionState state) {
@@ -202,7 +204,7 @@ public class TrustService implements TrustQuery {
           case "rule" -> "resolved by standing rule";
           case "agreed" -> "sources agree within tolerance";
           case "conflict" -> "conflicting sources unresolved";
-          case "missing" -> "single source or missing data";
+          case "single" -> "single source (no data from the other source)";
           default -> state.resolutionType();
         };
     return new ResolutionDetail(
@@ -227,7 +229,8 @@ public class TrustService implements TrustQuery {
       case "rule" -> TrustState.RESOLVED_BY_RULE;
       case "override" -> TrustState.MANUALLY_OVERRIDDEN;
       case "conflict" -> TrustState.CONFLICTED;
-      default -> TrustState.SINGLE_SOURCE; // "missing" with one source
+      case "single" -> TrustState.SINGLE_SOURCE;
+      default -> TrustState.SINGLE_SOURCE;
     };
   }
 
