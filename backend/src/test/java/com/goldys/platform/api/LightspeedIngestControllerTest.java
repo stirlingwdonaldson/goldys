@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
+import com.goldys.platform.connectors.lightspeed.LightspeedZReportIngestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,6 +24,7 @@ class LightspeedIngestControllerTest {
 
   @MockitoBean LightspeedIngestService ingestService;
   @MockitoBean LightspeedProductIngestService productIngestService;
+  @MockitoBean LightspeedZReportIngestService zReportIngestService;
 
   @Test
   void queryParamTokenIsAccepted() throws Exception {
@@ -53,6 +55,24 @@ class LightspeedIngestControllerTest {
   void productMissingTokenIsRejected() throws Exception {
     mvc.perform(
             post("/api/ingest/lightspeed-products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void zReportQueryParamTokenIsAccepted() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-zreport?token=test-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isAccepted());
+  }
+
+  @Test
+  void zReportMissingTokenIsRejected() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-zreport")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
         .andExpect(status().isUnauthorized());

@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
+import com.goldys.platform.connectors.lightspeed.LightspeedZReportIngestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -29,6 +30,7 @@ class LightspeedIngestControllerSecurityTest {
 
   @MockitoBean LightspeedIngestService ingestService;
   @MockitoBean LightspeedProductIngestService productIngestService;
+  @MockitoBean LightspeedZReportIngestService zReportIngestService;
 
   @Test
   void bodylessWebhookPostIsRejectedNotRedirected() throws Exception {
@@ -39,5 +41,10 @@ class LightspeedIngestControllerSecurityTest {
   @Test
   void bodylessProductWebhookPostIsRejectedNotRedirected() throws Exception {
     mvc.perform(post("/api/ingest/lightspeed-products")).andExpect(status().is4xxClientError());
+  }
+
+  @Test
+  void bodylessZReportWebhookPostIsRejectedNotRedirected() throws Exception {
+    mvc.perform(post("/api/ingest/lightspeed-zreport")).andExpect(status().is4xxClientError());
   }
 }

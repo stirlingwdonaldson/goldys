@@ -56,8 +56,11 @@ Other server-rendered pages (data embedded in the HTML): `/features` (add-ons),
 - **Reports** (Reports menu):
   - `/report/salesummary` — Sales Summary (daily totals).
   - `/report/salesummarybyproduct` — "Sales By" (line items: product, qty, amount).
-  - `/report/zreport` — "Reconciliation" (Z-report / end-of-day). **Not yet
-    ingested** — a daily total to check the transaction-level Sales Feed against.
+  - `/report/zreport` — "Reconciliation" (Z-report / end-of-day). Raw webhook
+    ingest is wired (`POST /api/ingest/lightspeed-zreport`,
+    `fetcher_identity=lightspeed-zreport`, delivered via a scheduled Looker
+    report); the daily-total parser is deferred until the report's CSV columns
+    are confirmed.
   - `/report/salescompare`, `/report/taxes`, `/report/refunds`, etc.
 - **Date scoping** — the Sales Feed "Filter" (`#btnSearch`) sets the range; the
   default export is the current period.
