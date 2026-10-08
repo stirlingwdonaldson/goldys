@@ -119,10 +119,9 @@ public class CtbClient {
   /**
    * One page of POS-sale-item → recipe links plus the total count.
    *
-   * <p>Note: the research puller called this with no params and captured only 100 of the reported
-   * {@code totalCount} 524 rows. We page explicitly ({@code start}/{@code limit}, no {@code
-   * keyword} — the puller sent none) so all rows are pulled; the sample's shortfall is a
-   * research-puller artefact, not an endpoint behaviour.
+   * <p>Verified live: the endpoint honours {@code start}/{@code limit} (an empty-body call returns
+   * a default page of 100), so paging with {@code start}/{@code limit} pulls all rows. The research
+   * sample's 100 rows were its default page, not the whole set.
    */
   public CtbPage searchDistinctSaleItemsForLinking(int start, int limit) {
     return page(
@@ -168,44 +167,17 @@ public class CtbClient {
   }
 
   /**
-   * One page of supplier statements plus the total count. CTB's statement search takes a rolling
-   * date range in addition to {@code start}/{@code limit} (the research puller used 12 months).
+   * All supplier statements in a date range, as one response. Verified live: {@code
+   * ProformaInvoice/SearchStatement} ignores {@code start}/{@code limit} and returns the full list
+   * in a single call (it still reports {@code totalCount}), so it must not be paged — paging would
+   * re-fetch the same rows on every page.
    */
-  public CtbPage searchStatements(int start, int limit, String startDate, String endDate) {
+  public CtbPage getStatements(String startDate, String endDate) {
     return page(
         "ProformaInvoice/SearchStatement",
         post(
             "/ProformaInvoice/SearchStatement",
-            form(
-                "keyword",
-                "",
-                "start",
-                String.valueOf(start),
-                "limit",
-                String.valueOf(limit),
-                "startDate",
-                startDate,
-                "endDate",
-                endDate)));
-  }
-
-  /**
-   * CTB's own POS-vs-expected variance report. Params are a date range, consistent with the other
-   * {@code Sale/*} date-driven actions; the research repo did not pull this endpoint, so the exact
-   * params are unconfirmed against the live account.
-   */
-  public CtbPage getVarianceReportData(String fromDate, String toDate) {
-    return page(
-        "Sale/GetVarianceReportData",
-        post("/Sale/GetVarianceReportData", form("fromDate", fromDate, "toDate", toDate)));
-  }
-
-  /**
-   * Dates with no revenue entry (feeds "ingestion gaps are visible"). Not pulled by the research
-   * repo; params are unconfirmed against the live account — called with an empty body.
-   */
-  public CtbPage missingRevenueReport() {
-    return page("Report/MissingRevenueReport", post("/Report/MissingRevenueReport", ""));
+            form("keyword", "", "startDate", startDate, "endDate", endDate)));
   }
 
   /** Business departments (Food/Beverage). Reference data. */

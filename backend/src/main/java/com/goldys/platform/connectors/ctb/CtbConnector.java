@@ -85,8 +85,6 @@ public class CtbConnector implements SourceConnector {
     pullRaw("ctb-wastage", client::searchWastageRecords, sink);
     pullRaw("ctb-stock-orders", client::searchStockOrders, sink);
     pullStatements(sink);
-    pullVariance(sink);
-    pullSingle("ctb-missing-revenue", client::missingRevenueReport, sink);
     pullReferenceData(sink);
   }
 
@@ -176,26 +174,15 @@ public class CtbConnector implements SourceConnector {
     }
   }
 
-  /** Supplier statements use a rolling 12-month window, matching the research puller. */
+  /**
+   * Supplier statements use a rolling 12-month window. Single-shot: {@code SearchStatement} returns
+   * the full list in one response and ignores {@code start}/{@code limit}, so it must not be paged.
+   */
   private void pullStatements(IngestionSink sink) {
     LocalDate end = LocalDate.now();
     LocalDate start = end.minusMonths(12);
-    pullRaw(
-        "ctb-statements",
-        (s, l) -> client.searchStatements(s, l, start.toString(), end.toString()),
-        sink);
-  }
-
-  /**
-   * CTB's POS variance report (a cross-check for the platform's own reconciliation). The params are
-   * a date range, unconfirmed against the live account; pull a rolling 90-day window to match the
-   * sale-items overlap.
-   */
-  private void pullVariance(IngestionSink sink) {
-    LocalDate to = LocalDate.now();
-    LocalDate from = to.minusDays(90);
     pullSingle(
-        "ctb-variance", () -> client.getVarianceReportData(from.toString(), to.toString()), sink);
+        "ctb-statements", () -> client.getStatements(start.toString(), end.toString()), sink);
   }
 
   private void pullReferenceData(IngestionSink sink) {

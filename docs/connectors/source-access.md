@@ -111,8 +111,9 @@ stock orders, stocktakes, wastage, business departments, currencies, UoMs, etc.
 ### Endpoints to add next (inventory / purchasing / food cost)
 
 List endpoints page with `start` + `limit` and return `totalCount`; `GetAll*`
-endpoints return the full array in one call. Row counts are from the
-2026-08-25 sample pull.
+endpoints return the full array in one call. Row counts are from the 2026-08-25
+sample pull (verified live 2026-10-08; counts have grown since — see the note
+below).
 
 | Domain | Endpoint | Params | Returns |
 |---|---|---|---|
@@ -124,9 +125,7 @@ endpoints return the full array in one call. Row counts are from the
 | Stocktakes | `Stocktake/SearchStocktakes` | `start`,`limit` | stocktake headers (18; no line items) |
 | Wastage | `WastageRecord/SearchWastageRecords` | `start`,`limit` | wastage headers (58; no line items) |
 | Stock orders | `StockOrder/SearchStockOrders` | `start`,`limit` | purchase orders (219) |
-| Statements | `ProformaInvoice/SearchStatement` | `start`,`limit` | supplier statements (152) |
-| Variance | `Sale/GetVarianceReportData` | date range | CTB's own POS-vs-expected variance |
-| Missing revenue | `Report/MissingRevenueReport` | — | dates with no revenue entry |
+| Statements | `ProformaInvoice/SearchStatement` | `startDate`,`endDate` | supplier statements (152) — **not paged**, see note |
 
 Reference/master data (small, slow-changing): `BusinessDepartmentActivity/GetAllDepartments`
 (2), `BusinessDepartmentActivity/GetAllActivities` (8),
@@ -136,6 +135,18 @@ Reference/master data (small, slow-changing): `BusinessDepartmentActivity/GetAll
 `RecipeCategory/GetAllRecipeCategories`, `Setting/GetCompanyInformation`.
 
 Notes:
+
+- **Verified live 2026-10-08** (counts have grown ~2 months since the Aug sample:
+  invoices 784→1,132, recipes 486→661, stocks 1,030→1,175, suppliers 87→109,
+  stocktakes 18→27, wastage 58→112, stock orders 219→452, statements 152→251).
+- `ProformaInvoice/SearchStatement` ignores `start`/`limit` and returns the full
+  date-range list in one response — it must not be paged.
+- `Sale/GetVarianceReportData` returns a **server error** (`IsSuccess: false`,
+  server-error HTML) for both a date range and an empty body — not ingested;
+  params are unconfirmed and the endpoint may be broken for this account.
+- `Report/MissingRevenueReport` returns a **report token** (a hex id in `Info`),
+  not a list of missing dates — the actual missing-dates export is
+  `Revenue/GenerateCSVMissingRevenueDates` (a CSV, not JSON). Not ingested as-is.
 
 - CTB is owned by Quantaco (an analytics competitor) — no public/partner API is
   expected to be forthcoming; treat the internal AJAX endpoints as the ingestion

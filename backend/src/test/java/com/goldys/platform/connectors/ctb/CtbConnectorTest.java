@@ -58,8 +58,6 @@ class CtbConnectorTest {
             "ctb-wastage",
             "ctb-stock-orders",
             "ctb-statements",
-            "ctb-variance",
-            "ctb-missing-revenue",
             "ctb-reference-data");
     verify(client).getAllRecipes();
     verify(client).getAllSuppliers();
@@ -119,9 +117,7 @@ class CtbConnectorTest {
     when(client.searchStocktakes(anyInt(), anyInt())).thenReturn(empty);
     when(client.searchWastageRecords(anyInt(), anyInt())).thenReturn(empty);
     when(client.searchStockOrders(anyInt(), anyInt())).thenReturn(empty);
-    when(client.searchStatements(anyInt(), anyInt(), anyString(), anyString())).thenReturn(empty);
-    when(client.getVarianceReportData(anyString(), anyString())).thenReturn(empty);
-    when(client.missingRevenueReport()).thenReturn(empty);
+    when(client.getStatements(anyString(), anyString())).thenReturn(empty);
     when(client.getAllDepartments()).thenReturn(empty);
     when(client.getAllActivities()).thenReturn(empty);
     when(client.getAllStockCategories()).thenReturn(empty);
