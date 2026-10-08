@@ -1,6 +1,7 @@
 package com.goldys.platform.api;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,7 +14,9 @@ import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.DepartmentCode;
+import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
+import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
@@ -81,7 +84,39 @@ class ProvenanceControllerTest {
         .andExpect(jsonPath("$.sources[1].sourceSystem").value("CTB"))
         .andExpect(jsonPath("$.resolution.kind").value("agreed"));
 
-    verify(permissions).require(any(), any(), any());
+    verify(permissions)
+        .require(any(), eq(new ResourceKey("reconciliation.sales")), eq(PermissionAction.READ));
+  }
+
+  @Test
+  void roleWithoutConnectorsReadGetsProvenanceWithoutRawRecords() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(trustQuery.provenanceFor(MetricId.SALES_GROSS, DATE)).thenReturn(provenance());
+    doThrow(AccessDeniedException.forResource("connectors"))
+        .when(permissions)
+        .require(any(), eq(new ResourceKey("connectors")), eq(PermissionAction.READ));
+
+    mvc.perform(get("/api/provenance/sales.gross/2026-10-07").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.rawRecordIds").isEmpty());
+
+    verify(permissions)
+        .require(any(), eq(new ResourceKey("reconciliation.sales")), eq(PermissionAction.READ));
+    verify(permissions)
+        .require(any(), eq(new ResourceKey("connectors")), eq(PermissionAction.READ));
+  }
+
+  @Test
+  void roleWithConnectorsReadGetsRawRecords() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(trustQuery.provenanceFor(MetricId.SALES_GROSS, DATE)).thenReturn(provenance());
+
+    mvc.perform(get("/api/provenance/sales.gross/2026-10-07").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.rawRecordIds[0]").isString());
+
+    verify(permissions)
+        .require(any(), eq(new ResourceKey("connectors")), eq(PermissionAction.READ));
   }
 
   private static Provenance provenance() {

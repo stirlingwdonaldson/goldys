@@ -65,6 +65,9 @@ public class TrustService implements TrustQuery {
 
   @Override
   public TrustSummary trustFor(MetricId metric, TimeRange range) {
+    if ("derived".equals(catalog.definition(metric).sourceDomain())) {
+      return derivedTrust(metric, range);
+    }
     List<ResolutionState> states = resolution.states(metric, range.from(), range.to());
     String domain = catalog.definition(metric).sourceDomain();
     Duration threshold = freshness.thresholds().getOrDefault(domain, Duration.ofDays(1));
@@ -79,6 +82,26 @@ public class TrustService implements TrustQuery {
             .orElse(null);
     Instant lastIngest = lastIngestionFor(sources, connectors.health());
     return new TrustSummary(state, fresh, authoritative, resolvedAt, lastIngest, threshold);
+  }
+
+  /** A derived metric has no resolution state of its own; trust its base operands instead. */
+  private TrustSummary derivedTrust(MetricId metric, TimeRange range) {
+    TrustSummary worst = null;
+    for (MetricId constituent : catalog.constituents(metric)) {
+      TrustSummary part = trustFor(constituent, range);
+      worst = worst == null ? part : leastTrusted(worst, part);
+    }
+    if (worst == null) {
+      throw new IllegalStateException("derived metric has no constituents: " + metric.value());
+    }
+    return worst;
+  }
+
+  private static TrustSummary leastTrusted(TrustSummary a, TrustSummary b) {
+    if (a.state().ordinal() != b.state().ordinal()) {
+      return a.state().ordinal() > b.state().ordinal() ? a : b;
+    }
+    return a.freshness().ordinal() >= b.freshness().ordinal() ? a : b;
   }
 
   @Override

@@ -237,6 +237,33 @@ class TrustServiceTest {
     assertThat(summary.state()).isEqualTo(TrustState.INCOMPLETE);
   }
 
+  @Test
+  void derivedMetricAggregatesConstituentTrustWithoutResolutionState() {
+    LocalDate day = LocalDate.of(2026, 9, 1);
+    TimeRange range = range(day);
+    ResolutionStateQuery resolution = mock(ResolutionStateQuery.class);
+    when(resolution.states(MetricId.SALES_GROSS, range.from(), range.to()))
+        .thenReturn(List.of(state(day, "agreed", SOURCE)));
+    when(resolution.states(MetricId.RESERVATIONS_COVERS, range.from(), range.to()))
+        .thenReturn(List.of(state(day, "conflict", SOURCE)));
+    ConnectorHealthQuery connectors = mock(ConnectorHealthQuery.class);
+    when(connectors.health()).thenReturn(healthy(SOURCE));
+    TrustService service =
+        new TrustService(
+            resolution,
+            connectors,
+            new FreshnessProperties(Map.of(), Map.of()),
+            catalog,
+            mock(CanonicalDailySalesQuery.class),
+            mock(DailySalesOverrideService.class),
+            mock(ResolutionRuleService.class));
+
+    TrustSummary summary = service.trustFor(MetricId.SALES_AVERAGE_SPEND_PER_COVER, range);
+
+    assertThat(summary.state()).isEqualTo(TrustState.CONFLICTED);
+    assertThat(summary).isNotNull();
+  }
+
   private TrustService service(
       TimeRange range, List<ResolutionState> states, List<ConnectorHealth> health) {
     ResolutionStateQuery resolution = mock(ResolutionStateQuery.class);

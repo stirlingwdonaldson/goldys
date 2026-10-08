@@ -50,6 +50,41 @@ public class MetricCatalog {
           MetricId.PRODUCT_SALES_AMOUNT,
               Set.of(MetricId.PRODUCT_SALES_QUANTITY, MetricId.PRODUCT_TOP_SELLERS));
 
+  /** The base operands each derived metric is computed from; empty for base metrics. */
+  private static final Map<MetricId, Set<MetricId>> CONSTITUENTS =
+      Map.ofEntries(
+          Map.entry(
+              MetricId.RESERVATIONS_NO_SHOW_RATE,
+              Set.of(MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_BOOKINGS)),
+          Map.entry(
+              MetricId.RESERVATIONS_BOOKING_TO_COVER_CONVERSION,
+              Set.of(MetricId.RESERVATIONS_ATTENDED, MetricId.RESERVATIONS_BOOKINGS)),
+          Map.entry(
+              MetricId.RESERVATIONS_AVG_PARTY_SIZE,
+              Set.of(MetricId.RESERVATIONS_COVERS, MetricId.RESERVATIONS_ATTENDED)),
+          Map.entry(
+              MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+              Set.of(MetricId.SALES_GROSS, MetricId.RESERVATIONS_COVERS)),
+          Map.entry(
+              MetricId.LABOUR_HOURS_PER_COVER,
+              Set.of(MetricId.LABOUR_ACTUAL_HOURS, MetricId.RESERVATIONS_COVERS)),
+          Map.entry(
+              MetricId.LABOUR_COST_PER_COVER,
+              Set.of(MetricId.LABOUR_COST, MetricId.RESERVATIONS_COVERS)),
+          Map.entry(
+              MetricId.LABOUR_HOURS_VARIANCE,
+              Set.of(MetricId.LABOUR_SCHEDULED_HOURS, MetricId.LABOUR_ACTUAL_HOURS)),
+          Map.entry(
+              MetricId.LABOUR_FOH_PERCENT, Set.of(MetricId.LABOUR_COST, MetricId.SALES_GROSS)),
+          Map.entry(
+              MetricId.LABOUR_BOH_PERCENT, Set.of(MetricId.LABOUR_COST, MetricId.SALES_GROSS)),
+          Map.entry(
+              MetricId.INVENTORY_FOOD_COST_PERCENT,
+              Set.of(MetricId.INVENTORY_PURCHASES, MetricId.SALES_GROSS)),
+          Map.entry(
+              MetricId.PRODUCT_TOP_SELLERS,
+              Set.of(MetricId.PRODUCT_SALES_AMOUNT, MetricId.PRODUCT_SALES_QUANTITY)));
+
   private final Map<MetricId, MetricDefinition> byId;
 
   public MetricCatalog() {
@@ -315,6 +350,11 @@ public class MetricCatalog {
   /** The metrics a result's provenance points to, so the model can chain a "why" question. */
   public Set<MetricId> related(MetricId id) {
     return RELATED.getOrDefault(id, Set.of());
+  }
+
+  /** The base operands a derived metric is computed from; empty for base metrics. */
+  public Set<MetricId> constituents(MetricId id) {
+    return CONSTITUENTS.getOrDefault(id, Set.of());
   }
 
   private static MetricDefinition base(
