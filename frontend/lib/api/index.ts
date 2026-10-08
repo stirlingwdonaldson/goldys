@@ -62,6 +62,7 @@ export type {
   DashboardSummary,
   ExceptionStatus,
   HealthResponse,
+  InventoryLineBreakdown,
   LatestSales,
   OverrideResult,
   RecomputeState,
@@ -79,5 +80,7 @@ export type {
   SaveOverrideInput,
   SaveResolutionRuleInput,
   SourceValue,
+  SupplierCogs,
   TopSeller,
+  UomUnitCost,
 } from "./types";

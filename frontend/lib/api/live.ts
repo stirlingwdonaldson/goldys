@@ -78,6 +78,10 @@ export const liveApi: Api = {
     fetchApi<import("./types").ReservationSummary | undefined>(
       `/api/reservations/summary?date=${date}`,
     ),
+  getInventoryLines: (from: string, to: string) =>
+    fetchApi<import("./types").InventoryLineBreakdown>(
+      `/api/inventory/lines?from=${from}&to=${to}`,
+    ),
   getTopSellers: () => fetchApi<import("./types").TopSeller[]>("/api/dashboard/top-sellers"),
   getSalesTrend: () =>
     fetchApi<import("./types").SalesTrendPoint[]>("/api/dashboard/sales-trend"),

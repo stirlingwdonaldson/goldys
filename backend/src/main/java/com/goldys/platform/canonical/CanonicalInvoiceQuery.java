@@ -1,5 +1,7 @@
 package com.goldys.platform.canonical;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 
@@ -23,5 +25,14 @@ public class CanonicalInvoiceQuery {
       return Optional.empty();
     }
     return repository.currentInvoiceNumberByPdfFilename(pdfFilename);
+  }
+
+  /** The current supplier name for every current invoice, keyed by invoice number. */
+  public Map<String, String> currentSupplierNames() {
+    Map<String, String> out = new LinkedHashMap<>();
+    for (CanonicalInvoice invoice : repository.findAllCurrent()) {
+      out.put(invoice.invoiceNumber(), invoice.supplierName());
+    }
+    return out;
   }
 }

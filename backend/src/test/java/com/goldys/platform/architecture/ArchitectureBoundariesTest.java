@@ -6,6 +6,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.goldys.platform.semantic.InventoryMetricsQuery;
+import com.goldys.platform.semantic.InvoiceLineMetricsQuery;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.tngtech.archunit.core.importer.ImportOption;
@@ -214,6 +215,17 @@ class ArchitectureBoundariesTest {
       classes()
           .that()
           .implement(InventoryMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  /**
+   * The invoice line-metrics semantic interface is implemented only in the reconciliation package.
+   */
+  @ArchTest
+  static final ArchRule invoiceLineMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(InvoiceLineMetricsQuery.class)
           .should()
           .resideInAPackage("..reconciliation..");
 

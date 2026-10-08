@@ -4,6 +4,9 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.semantic.InvoiceLineMetricsQuery;
+import com.goldys.platform.semantic.SupplierCogs;
+import com.goldys.platform.semantic.UomUnitCost;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricPoint;
@@ -16,6 +19,7 @@ import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 
@@ -29,10 +33,15 @@ public class InventoryReportingService {
   private static final int SCALE = 4;
 
   private final MetricQueryService metrics;
+  private final InvoiceLineMetricsQuery lineMetrics;
   private final PermissionService permissions;
 
-  public InventoryReportingService(MetricQueryService metrics, PermissionService permissions) {
+  public InventoryReportingService(
+      MetricQueryService metrics,
+      InvoiceLineMetricsQuery lineMetrics,
+      PermissionService permissions) {
     this.metrics = metrics;
+    this.lineMetrics = lineMetrics;
     this.permissions = permissions;
   }
 
@@ -80,4 +89,17 @@ public class InventoryReportingService {
       BigDecimal purchases,
       BigDecimal wastage,
       BigDecimal foodCostPercent) {}
+
+  /** Line-level enrichment breakdown (unit cost per UOM, COGS/WET by supplier) for the range. */
+  public LineBreakdown lineBreakdown(UserRole role, LocalDate from, LocalDate to) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return new LineBreakdown(
+        from.toString(),
+        to.toString(),
+        lineMetrics.unitCostByUom(from, to),
+        lineMetrics.cogsBySupplier(from, to));
+  }
+
+  public record LineBreakdown(
+      String from, String to, List<UomUnitCost> unitCostByUom, List<SupplierCogs> cogsBySupplier) {}
 }

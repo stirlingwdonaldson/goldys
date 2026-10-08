@@ -199,11 +199,26 @@ public class CanonicalBrowseQuery {
     c.put("invoice_number", l.invoiceNumber());
     c.put("invoice_date", l.invoiceDate().toString());
     c.put("product_name_key", l.productNameKey());
+    if (l.stockCode() != null) {
+      c.put("stock_code", l.stockCode());
+    }
     c.put("quantity", l.quantity().toPlainString());
     c.put("unit_cost", l.unitCost().toPlainString());
     c.put("line_total", l.lineTotal().toPlainString());
     if (l.category() != null) {
       c.put("category", l.category());
+    }
+    if (l.uom() != null) {
+      c.put("uom", l.uom());
+    }
+    if (l.unitQuantity() != null) {
+      c.put("unit_quantity", l.unitQuantity().toPlainString());
+    }
+    if (l.packSize() != null) {
+      c.put("pack_size", l.packSize().toPlainString());
+    }
+    if (l.wetAmount() != null) {
+      c.put("wet_amount", l.wetAmount().toPlainString());
     }
     return c;
   }
