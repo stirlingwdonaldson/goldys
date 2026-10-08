@@ -33,7 +33,7 @@ class CtbSftpPullTest {
     new CtbSftpPull(drop, ingestion, csvIngest, pdfEnrichment).pull();
 
     verify(csvIngest).ingest(any(byte[].class));
-    verify(pdfEnrichment).enrich(any(byte[].class));
+    verify(pdfEnrichment).enrich(any(byte[].class), eq("bruno.pdf"));
     verify(ingestion)
         .ingestPush(
             eq("CTB"),

@@ -71,7 +71,7 @@ public class CtbSftpPull {
             bytes,
             null,
             "ctb-sftp");
-        pdfEnrichment.enrich(bytes);
+        pdfEnrichment.enrich(bytes, file.filename());
       }
       log.info("SFTP drop processed {}", file.filename());
     } catch (RuntimeException e) {

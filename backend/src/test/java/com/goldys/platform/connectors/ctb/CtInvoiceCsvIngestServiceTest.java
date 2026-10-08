@@ -2,6 +2,8 @@ package com.goldys.platform.connectors.ctb;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,10 +28,11 @@ class CtInvoiceCsvIngestServiceTest {
   @Mock IngestionService ingestion;
   @Mock CanonicalInvoiceIngest canonical;
   @Mock CanonicalInvoiceLineIngest lineCanonical;
+  @Mock InvoiceIngestFlagService flags;
 
   private CtInvoiceCsvIngestService service() {
     return new CtInvoiceCsvIngestService(
-        ingestion, new CtInvoiceCsvParser(), canonical, lineCanonical);
+        ingestion, new CtInvoiceCsvParser(), canonical, lineCanonical, flags);
   }
 
   @Test
@@ -70,5 +73,52 @@ class CtInvoiceCsvIngestServiceTest {
 
     verify(canonical, times(2)).record(any(InvoiceInput.class));
     verify(lineCanonical, times(2)).record(any(InvoiceLineInput.class));
+  }
+
+  @Test
+  void persistsThePdfFilename() {
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(UUID.randomUUID());
+    byte[] csv =
+        ("Invoice,Supplier,Date,PDF,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
+                + "INV-1,Bruno's,2026-09-20,bruno-1.pdf,STK-7,Beer,1 EACH,120.00\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    service().ingest(csv);
+
+    ArgumentCaptor<InvoiceInput> inv = ArgumentCaptor.forClass(InvoiceInput.class);
+    verify(canonical).record(inv.capture());
+    assertThat(inv.getValue().pdfFilename()).isEqualTo("bruno-1.pdf");
+  }
+
+  @Test
+  void flagsAnInvoiceWithNoPdfFilename() {
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(UUID.randomUUID());
+    byte[] csv =
+        ("Invoice,Supplier,Date,PDF,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
+                + "INV-1,Bruno's,2026-09-20,,STK-7,Beer,1 EACH,120.00\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    service().ingest(csv);
+
+    verify(flags)
+        .flag(eq(InvoiceIngestFlagType.MISSING_PDF), eq("INV-1"), isNull(), isNull(), any());
+  }
+
+  @Test
+  void flagsAnInvoiceWithMultiplePdfFilenames() {
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(UUID.randomUUID());
+    byte[] csv =
+        ("Invoice,Supplier,Date,PDF,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
+                + "INV-1,Bruno's,2026-09-20,bruno-1.pdf,STK-7,Beer,1 EACH,120.00\n"
+                + "INV-1,Bruno's,2026-09-20,bruno-2.pdf,STK-8,Chips,2 EACH,10.00\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    service().ingest(csv);
+
+    verify(flags)
+        .flag(eq(InvoiceIngestFlagType.AMBIGUOUS_PDF), eq("INV-1"), isNull(), isNull(), any());
   }
 }

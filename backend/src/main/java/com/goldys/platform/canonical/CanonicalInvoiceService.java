@@ -55,6 +55,7 @@ class CanonicalInvoiceService {
             input.dueDate(),
             input.totalAmount(),
             input.purchaseNumber(),
+            input.pdfFilename(),
             input.accountNumber(),
             input.taxCode(),
             input.amountExTax(),

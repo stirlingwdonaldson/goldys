@@ -112,6 +112,7 @@ class CanonicalInvoiceIntegrationTest {
         null,
         null,
         null,
+        null,
         rawRecord());
   }
 

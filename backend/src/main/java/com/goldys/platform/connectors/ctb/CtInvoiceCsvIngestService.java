@@ -23,16 +23,19 @@ public class CtInvoiceCsvIngestService {
   private final CtInvoiceCsvParser parser;
   private final CanonicalInvoiceIngest canonical;
   private final CanonicalInvoiceLineIngest lineCanonical;
+  private final InvoiceIngestFlagService flags;
 
   public CtInvoiceCsvIngestService(
       IngestionService ingestion,
       CtInvoiceCsvParser parser,
       CanonicalInvoiceIngest canonical,
-      CanonicalInvoiceLineIngest lineCanonical) {
+      CanonicalInvoiceLineIngest lineCanonical,
+      InvoiceIngestFlagService flags) {
     this.ingestion = ingestion;
     this.parser = parser;
     this.canonical = canonical;
     this.lineCanonical = lineCanonical;
+    this.flags = flags;
   }
 
   public void ingest(byte[] csv) {
@@ -62,7 +65,9 @@ public class CtInvoiceCsvIngestService {
               invoice.gstAmount(),
               invoice.freightAmount(),
               null, // freight GST — not a direct column in the current export
+              firstPdfFilename(invoice),
               rawId));
+      flagPdfAnomalies(invoice);
 
       int seq = 0;
       for (CtInvoiceLine line : invoice.lines()) {
@@ -85,6 +90,33 @@ public class CtInvoiceCsvIngestService {
                 null, // wetAmount — PDF enrichment
                 rawId));
       }
+    }
+  }
+
+  /** The invoice's PDF filename (first-seen), or null when the CSV references none. */
+  private static String firstPdfFilename(CtInvoice invoice) {
+    return invoice.pdfFilenames().isEmpty() ? null : invoice.pdfFilenames().get(0);
+  }
+
+  /**
+   * Surfaces PDF anomalies the CSV reveals: no PDF filename at all (missing-pdf), or more than one
+   * distinct filename for one invoice (ambiguous-pdf) — never a silent drop.
+   */
+  private void flagPdfAnomalies(CtInvoice invoice) {
+    if (invoice.pdfFilenames().isEmpty()) {
+      flags.flag(
+          InvoiceIngestFlagType.MISSING_PDF,
+          invoice.invoiceNumber(),
+          null,
+          null,
+          "no PDF filename in CSV");
+    } else if (invoice.pdfFilenames().size() > 1) {
+      flags.flag(
+          InvoiceIngestFlagType.AMBIGUOUS_PDF,
+          invoice.invoiceNumber(),
+          null,
+          null,
+          "multiple PDFs: " + String.join(", ", invoice.pdfFilenames()));
     }
   }
 

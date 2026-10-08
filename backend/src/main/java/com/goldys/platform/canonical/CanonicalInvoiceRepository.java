@@ -11,4 +11,9 @@ interface CanonicalInvoiceRepository extends BitemporalRepository<CanonicalInvoi
       "select i from CanonicalInvoice i where i.sourceRecordRef = :ref "
           + "and i.sourceSystem = :source and i.supersededAt is null")
   Optional<CanonicalInvoice> lockCurrentSourceFact(String source, String ref);
+
+  @Query(
+      "select i.invoiceNumber from CanonicalInvoice i "
+          + "where i.pdfFilename = :pdfFilename and i.supersededAt is null")
+  Optional<String> currentInvoiceNumberByPdfFilename(String pdfFilename);
 }

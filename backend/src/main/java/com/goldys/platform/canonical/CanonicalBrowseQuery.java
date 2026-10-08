@@ -170,6 +170,9 @@ public class CanonicalBrowseQuery {
     if (i.purchaseNumber() != null) {
       c.put("purchase_number", i.purchaseNumber());
     }
+    if (i.pdfFilename() != null) {
+      c.put("pdf_filename", i.pdfFilename());
+    }
     if (i.accountNumber() != null) {
       c.put("account_number", i.accountNumber());
     }
