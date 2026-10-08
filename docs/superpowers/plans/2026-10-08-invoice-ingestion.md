@@ -255,10 +255,11 @@ git commit -m "feat(ingestion): SFTP drop pull, raw-only delivery"
 
 ### STOP — check what landed
 
-Enable `app.scheduling.ctb-sftp.enabled=true` (with `ctb.sftp.*` credentials), let the pull run, and confirm in the ingestion screen / raw ledger that **both** the CSV(s) and the PDF(s) arrived, with correct content types and `fetcher_identity = ctb-sftp`. Decide from here:
+Enable `app.scheduling.ctb-sftp.enabled=true` (with `ctb.sftp.*` credentials), let the pull run, and confirm in the ingestion screen / raw ledger what arrived (content types and `fetcher_identity = ctb-sftp`). **The CSV is expected to be there** — it is the reliable delivery. **The PDFs may or may not be there** — that is the uncertain part.
 
-- If CSVs are present → proceed to Task 2.
-- If the drop shape differs from the assumption (e.g. no PDFs, or an unexpected filename/layout) → **re-evaluate** before writing the parser.
+- CSV present → proceed to Task 2 (the parser is built for the CSV).
+- PDFs present or absent → note it, but it does not block the CSV path; PDF enrichment is Phase 2.
+- Drop shape differs from the assumption (CSV not one-row-per-line, unexpected columns) → **re-evaluate** before writing the parser.
 
 ---
 
@@ -892,6 +893,6 @@ Hardening, deliberately not in this plan — do it after real invoices have land
 ## Known assumptions (validate at the STOP gate)
 
 1. **CSV row denormalization** — one row per line item, header columns repeated; blank-line rows skipped.
-2. **Drop contents** — CSVs and PDFs both land in the drop; the CSV's `PDF` filename matches a real PDF in the drop.
+2. **Drop contents** — the CSV definitely lands in the drop; the PDFs may or may not be there (and the CSV's `PDF` filename may not match an actual delivered PDF).
 3. **COGS ex-tax** — `line_total` ← `LineTotalExTax`. Confirm COGS should be ex-GST.
 4. **Quantity/unit-cost are placeholders** — COGS depends only on `line_total`.
