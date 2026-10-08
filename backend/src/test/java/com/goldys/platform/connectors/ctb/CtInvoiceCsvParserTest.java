@@ -69,6 +69,19 @@ class CtInvoiceCsvParserTest {
   }
 
   @Test
+  void parsesCtbDayMonthYearDates() {
+    byte[] csv =
+        (HEADER
+                + "Goldys,GL-1,9/05/2026,90.91,25.00,22.73,GOLD306600,Bruno's,1/05/2026,346489,117.64,9.09,PO-1,bruno-1.pdf,STK-7,Beer,1,3.00,3.00,true\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    CtInvoice invoice = parser.parse(csv).get(0);
+
+    assertThat(invoice.invoiceDate()).isEqualTo(LocalDate.of(2026, 5, 1));
+    assertThat(invoice.dueDate()).isEqualTo(LocalDate.of(2026, 5, 9));
+  }
+
+  @Test
   void skipsBlankLineRows() {
     byte[] csv =
         (HEADER

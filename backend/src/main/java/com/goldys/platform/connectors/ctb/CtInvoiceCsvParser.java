@@ -8,6 +8,8 @@ import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -164,10 +166,23 @@ public class CtInvoiceCsvParser {
     return blankToNull(get(columns, r, name));
   }
 
+  /**
+   * CTB exports dates as d/M/yyyy (e.g. 1/05/2026, day and month unpadded); ISO is also accepted.
+   */
+  private static final DateTimeFormatter CTB_DATE = DateTimeFormatter.ofPattern("d/M/yyyy");
+
+  private static LocalDate parseDate(String value) {
+    try {
+      return LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE);
+    } catch (DateTimeParseException ignored) {
+      return LocalDate.parse(value, CTB_DATE);
+    }
+  }
+
   private static LocalDate date(Map<String, Integer> columns, CSVRecord r, String name) {
     String value = requireValue(columns, r, name);
     try {
-      return LocalDate.parse(value);
+      return parseDate(value);
     } catch (RuntimeException e) {
       throw new ConnectorFetchException(
           "CONNECTOR_SCHEMA_MISMATCH", "Bad date '" + value + "' for '" + name + "'", e);
@@ -180,7 +195,7 @@ public class CtInvoiceCsvParser {
       return null;
     }
     try {
-      return LocalDate.parse(value);
+      return parseDate(value);
     } catch (RuntimeException e) {
       throw new ConnectorFetchException(
           "CONNECTOR_SCHEMA_MISMATCH", "Bad date '" + value + "' for '" + name + "'", e);
