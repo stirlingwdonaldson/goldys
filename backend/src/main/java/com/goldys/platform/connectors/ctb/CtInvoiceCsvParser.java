@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.csv.CSVFormat;
@@ -17,17 +18,10 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 
 /**
- * Parses the CTB Custom Invoice Export CSV into invoice metadata rows.
- *
- * <p>The export header is read from the CSV itself and the identity columns are validated, so a
- * report-shape change fails loudly rather than silently producing wrong rows. Column names are the
- * literal CTB export headers (note {@code Co./Last Name}, {@code Purchase#}, {@code Supplier
- * Invoice #}, {@code Account #}). Monetary cells are currency-formatted ("$1,234.56") and parsed
- * accordingly.
- *
- * <p>The required identity columns are {@code Co./Last Name}, {@code Supplier Invoice #} and {@code
- * Date}; the tax/freight breakdown and account/purchase numbers are optional and parse to {@code
- * null} when blank.
+ * Parses CTB's Custom Invoice Export CSV — a single file with header AND line columns, one row per
+ * line item, header columns repeated on every row. Rows are grouped by invoice number, so one file
+ * can carry many invoices. Rows whose line description is blank are skipped. This replaces the old
+ * parser that read only the pre-2026 header-only export.
  */
 @Component
 public class CtInvoiceCsvParser {
@@ -38,48 +32,90 @@ public class CtInvoiceCsvParser {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Invoice CSV is empty");
     }
     Map<String, Integer> columns = columnIndex(records.get(0));
-    require(columns, "Co./Last Name", "Supplier Invoice #", "Date");
+    require(
+        columns, "Invoice", "Supplier", "Date", "StockCode", "StockDescription", "LineTotalExTax");
 
-    List<CtInvoice> out = new ArrayList<>();
+    Map<String, Group> groups = new LinkedHashMap<>();
     for (int i = 1; i < records.size(); i++) {
       CSVRecord r = records.get(i);
+      String description = optionalString(columns, r, "StockDescription");
+      if (description == null) {
+        continue; // header-only / blank row — not a line
+      }
+      String invoiceNumber = requireValue(columns, r, "Invoice");
+      Group g =
+          groups.computeIfAbsent(
+              invoiceNumber,
+              k ->
+                  new Group(
+                      requireValue(columns, r, "Supplier"),
+                      optionalString(columns, r, "PONumber"),
+                      date(columns, r, "Date"),
+                      k,
+                      optionalDate(columns, r, "InvoiceDueDate"),
+                      optionalMoney(columns, r, "InvoiceTotalExTax"),
+                      optionalMoney(columns, r, "GST"),
+                      optionalMoney(columns, r, "InvoiceFreight"),
+                      optionalMoney(columns, r, "Total")));
+      g.lines.add(
+          new CtInvoiceLine(
+              optionalString(columns, r, "StockCode"),
+              description,
+              optionalString(columns, r, "LineQuantity"),
+              optionalMoney(columns, r, "LineUnitCostExTax"),
+              money(columns, r, "LineTotalExTax")));
+    }
+
+    List<CtInvoice> out = new ArrayList<>();
+    for (Group g : groups.values()) {
       out.add(
           new CtInvoice(
-              requireValue(columns, r, "Co./Last Name"),
-              optionalString(columns, r, "Purchase#"),
-              date(columns, r, "Date"),
-              requireValue(columns, r, "Supplier Invoice #"),
-              optionalString(columns, r, "Account #"),
-              optionalMoney(columns, r, "Amount"),
-              optionalString(columns, r, "Tax Code"),
-              optionalMoney(columns, r, "GST Amount"),
-              optionalMoney(columns, r, "Freight Amount"),
-              optionalMoney(columns, r, "Freight GST Amount"),
-              optionalMoney(columns, r, "Inc-Tax Amount")));
+              g.supplierName,
+              g.purchaseNumber,
+              g.invoiceDate,
+              g.invoiceNumber,
+              g.dueDate,
+              g.amountExTax,
+              g.gstAmount,
+              g.freightAmount,
+              g.incTaxAmount,
+              g.lines));
     }
     return out;
   }
 
-  private static LocalDate date(Map<String, Integer> columns, CSVRecord r, String name) {
-    String value = requireValue(columns, r, name);
-    try {
-      return LocalDate.parse(value);
-    } catch (RuntimeException e) {
-      throw new ConnectorFetchException(
-          "CONNECTOR_SCHEMA_MISMATCH", "Bad date '" + value + "' for '" + name + "'", e);
-    }
-  }
+  /** Header fields captured from the first line row of an invoice, plus its accumulated lines. */
+  private static final class Group {
+    final String supplierName;
+    final String purchaseNumber;
+    final LocalDate invoiceDate;
+    final String invoiceNumber;
+    final LocalDate dueDate;
+    final BigDecimal amountExTax;
+    final BigDecimal gstAmount;
+    final BigDecimal freightAmount;
+    final BigDecimal incTaxAmount;
+    final List<CtInvoiceLine> lines = new ArrayList<>();
 
-  private static BigDecimal optionalMoney(Map<String, Integer> columns, CSVRecord r, String name) {
-    String value = blankToNull(get(columns, r, name));
-    if (value == null) {
-      return null;
-    }
-    try {
-      return new BigDecimal(value.replace("$", "").replace(",", "").trim());
-    } catch (NumberFormatException e) {
-      throw new ConnectorFetchException(
-          "CONNECTOR_SCHEMA_MISMATCH", "Bad amount '" + value + "' for '" + name + "'", e);
+    Group(
+        String supplierName,
+        String purchaseNumber,
+        LocalDate invoiceDate,
+        String invoiceNumber,
+        LocalDate dueDate,
+        BigDecimal amountExTax,
+        BigDecimal gstAmount,
+        BigDecimal freightAmount,
+        BigDecimal incTaxAmount) {
+      this.supplierName = supplierName;
+      this.purchaseNumber = purchaseNumber;
+      this.invoiceDate = invoiceDate;
+      this.invoiceNumber = invoiceNumber;
+      this.dueDate = dueDate;
+      this.amountExTax = amountExTax;
+      this.gstAmount = gstAmount;
+      this.freightAmount = freightAmount;
+      this.incTaxAmount = incTaxAmount;
     }
   }
 
@@ -126,6 +162,52 @@ public class CtInvoiceCsvParser {
 
   private static String optionalString(Map<String, Integer> columns, CSVRecord r, String name) {
     return blankToNull(get(columns, r, name));
+  }
+
+  private static LocalDate date(Map<String, Integer> columns, CSVRecord r, String name) {
+    String value = requireValue(columns, r, name);
+    try {
+      return LocalDate.parse(value);
+    } catch (RuntimeException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad date '" + value + "' for '" + name + "'", e);
+    }
+  }
+
+  private static LocalDate optionalDate(Map<String, Integer> columns, CSVRecord r, String name) {
+    String value = optionalString(columns, r, name);
+    if (value == null) {
+      return null;
+    }
+    try {
+      return LocalDate.parse(value);
+    } catch (RuntimeException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad date '" + value + "' for '" + name + "'", e);
+    }
+  }
+
+  private static BigDecimal money(Map<String, Integer> columns, CSVRecord r, String name) {
+    String value = requireValue(columns, r, name);
+    try {
+      return new BigDecimal(value.replace("$", "").replace(",", "").trim());
+    } catch (NumberFormatException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad amount '" + value + "' for '" + name + "'", e);
+    }
+  }
+
+  private static BigDecimal optionalMoney(Map<String, Integer> columns, CSVRecord r, String name) {
+    String value = blankToNull(get(columns, r, name));
+    if (value == null) {
+      return null;
+    }
+    try {
+      return new BigDecimal(value.replace("$", "").replace(",", "").trim());
+    } catch (NumberFormatException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad amount '" + value + "' for '" + name + "'", e);
+    }
   }
 
   private static String blankToNull(String value) {
