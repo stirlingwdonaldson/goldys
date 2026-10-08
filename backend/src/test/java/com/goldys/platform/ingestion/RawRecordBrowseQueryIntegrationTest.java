@@ -93,11 +93,28 @@ class RawRecordBrowseQueryIntegrationTest {
     assertThat(detail.isJson()).isFalse();
   }
 
+  @Test
+  void byIdReturnsBase64ForBinaryPayload() {
+    byte[] bytes = new byte[] {0, 1, 2, (byte) 0xFF};
+    UUID id =
+        insertBytes(
+            "CTB", "ctb-invoices-ajax", "API", Instant.parse("2026-10-01T00:00:00Z"), bytes);
+
+    RawRecordDetail detail = browse.byId(id);
+
+    assertThat(detail.isJson()).isFalse();
+    assertThat(detail.payload()).isEqualTo(java.util.Base64.getEncoder().encodeToString(bytes));
+  }
+
   private UUID insert(String source, String fetcher, String method, Instant at) {
     return insert(source, fetcher, method, at, "{}");
   }
 
   private UUID insert(String source, String fetcher, String method, Instant at, String payload) {
+    return insertBytes(source, fetcher, method, at, payload.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private UUID insertBytes(String source, String fetcher, String method, Instant at, byte[] bytes) {
     UUID runId = UUID.randomUUID();
     UUID recordId = UUID.randomUUID();
     jdbc.update(
@@ -105,7 +122,6 @@ class RawRecordBrowseQueryIntegrationTest {
             + "values (?, ?, 'test', 'SUCCESS', now(), 1, 1)",
         runId,
         source);
-    byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
     jdbc.update(
         "insert into raw_record (id, ingestion_run_id, source_system, fetch_method, content_type, payload_bytes, payload_sha256, payload_byte_length, fetcher_identity, fetched_at) "
             + "values (?, ?, ?, ?, 'application/json', ?, ?, ?, ?, ?)",

@@ -2,9 +2,11 @@
 
 import type { GenericRow } from "@/lib/api/types";
 
-/** Renders generic {@link GenericRow}s as a table whose columns come from the first row's keys. */
+/** Renders generic {@link GenericRow}s as a table. Columns are the union of keys across all rows so
+ *  a column that happens to be null in the first row is not hidden when later rows carry it. */
 export function GenericTable({ rows }: { rows: GenericRow[] }) {
-  const columns = rows.length > 0 ? Object.keys(rows[0].columns) : [];
+  const columns =
+    rows.length > 0 ? Array.from(new Set(rows.flatMap((r) => Object.keys(r.columns)))) : [];
   return (
     <div className="overflow-x-auto rounded-lg border">
       <table className="w-full text-sm">

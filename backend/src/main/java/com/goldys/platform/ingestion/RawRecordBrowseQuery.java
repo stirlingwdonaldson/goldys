@@ -46,9 +46,33 @@ public class RawRecordBrowseQuery {
     RawRecord r =
         records.findById(id).orElseThrow(() -> new java.util.NoSuchElementException(id.toString()));
     RawRecordSummary summary = toSummary(r);
-    String payload = new String(r.payloadBytes(), StandardCharsets.UTF_8);
-    boolean isJson = payload.startsWith("{") || payload.startsWith("[");
+    byte[] bytes = r.payloadBytes();
+    String text = new String(bytes, encoding(r.characterEncoding()));
+    boolean isJson = isJsonText(text);
+    // Byte-faithful: JSON is returned as decoded text; anything else is base64 of the exact bytes
+    // so the stored sha-256 remains verifiable by the operator.
+    String payload = isJson ? text : java.util.Base64.getEncoder().encodeToString(bytes);
     return new RawRecordDetail(summary, payload, isJson, r.payloadSha256());
+  }
+
+  private static java.nio.charset.Charset encoding(String name) {
+    if (name == null || name.isBlank()) {
+      return StandardCharsets.UTF_8;
+    }
+    try {
+      return java.nio.charset.Charset.forName(name);
+    } catch (RuntimeException e) {
+      return StandardCharsets.UTF_8;
+    }
+  }
+
+  private static boolean isJsonText(String text) {
+    String s = text;
+    if (!s.isEmpty() && s.charAt(0) == '\uFEFF') {
+      s = s.substring(1);
+    }
+    s = s.stripLeading();
+    return s.startsWith("{") || s.startsWith("[");
   }
 
   private static RawRecordSummary toSummary(RawRecord r) {
