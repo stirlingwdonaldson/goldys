@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  * the FIRST template; more get added as more layouts are pinned.
  */
 @Component
-public class DeterministicInvoicePdfExtractor implements InvoicePdfExtractor {
+public class DeterministicInvoicePdfExtractor implements DeterministicPdfExtractor {
 
   private static final Pattern INVOICE_NUMBER =
       Pattern.compile("Invoice Number\\s+([A-Za-z0-9-]+)");

@@ -645,3 +645,50 @@ Per spec §9 and the measured data, these are explicit follow-ups:
 - **OCR** for the 2 scanned PDFs.
 - **Flag persistence** (`scanned-pdf`, `pdf-only-line`, `pdf-csv-mismatch`, `pdf-unparseable`) — spec §8; the enrichment currently no-ops on no-match.
 - **The `PDF`-filename → invoice-number mapping** (spec §7's preferred join key). Task 5 uses the PDF's own text invoice number, which the deterministic parser reads reliably; the filename→invoice map is the hardening for layouts where the text invoice number is absent or unreliable (e.g. the future LLM path).
+
+---
+
+# Phase 2.5 — LLM fallback, OCR, flags, mapping, reporting (Tasks 6–12)
+
+> These tasks replace the "Deferred" section above. Executed inline with TDD on
+> `feature/pdf-enrichment`. Spec authority: `2026-10-08-pdf-enrichment-design.md` §6–§9.
+
+### Task 6: LLM fallback + hybrid extractor
+
+- Create `LlmInvoicePdfExtractor implements InvoicePdfExtractor` (Spring AI; inject
+  `ObjectProvider<ChatModel>`; schema-prompt to return the `PdfExtractedInvoice`/`PdfExtractedLine`
+  JSON contract; parse with Jackson).
+- Create `HybridInvoicePdfExtractor implements InvoicePdfExtractor` — deterministic first, LLM
+  fallback when the deterministic result is empty. Make it the single `InvoicePdfExtractor` bean.
+- Eval fixtures: a few PDF texts + expected lines to catch hallucination.
+
+### Task 7: More deterministic templates
+
+Per-supplier `InvoicePdfExtractor` templates for the highest-volume suppliers, each returning an
+empty result on a non-matching layout, chained behind the hybrid.
+
+### Task 8: OCR fallback + scan the 2 scanned PDFs
+
+`OcrDocumentTextExtractor implements DocumentTextExtractor` (OpenAI vision through the existing
+ChatModel) used when PdfBox returns empty.
+
+### Task 9: Flag persistence
+
+`invoice_ingest_flag` table (append-only) + entity + repository; emit flags from the
+enrichment/extraction path (scanned-pdf, pdf-unparseable, pdf-only-line, pdf-csv-mismatch,
+missing-pdf).
+
+### Task 10: Filename → invoice-number mapping
+
+Nullable `pdf_filename` on `canonical_invoice`, threaded `CtInvoice → InvoiceInput →
+CanonicalInvoice`; authoritative join key in `CtbSftpPull`/`InvoicePdfEnrichmentService`.
+
+### Task 11: UI + reporting
+
+Expose UOM/pack/unit-quantity/WET in the canonical browse + data-explorer; a line-level view
+(unit-cost-per-UOM, COGS-by-supplier/WET).
+
+### Task 12: Cleanups from review
+
+Transactional enrichment; `(invoice_number, normalized description)` fallback join when stock_code
+absent; keep CSV-authoritative rawRecordId provenance; consolidate `CtInvoicePdfIngestService`.
