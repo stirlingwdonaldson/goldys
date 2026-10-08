@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useApiData } from "@/lib/use-api-data";
 import type { DataPage, GenericRow, RawRecordSummary } from "@/lib/api/types";
 import { GenericTable } from "@/components/data-explorer/generic-table";
@@ -15,7 +16,20 @@ type Section = "raw" | "canonical" | "resolved";
 const emptyPage = (): DataPage<GenericRow> => ({ items: [], total: 0, page: 0, size: 50 });
 
 export default function DataPage() {
-  const [section, setSection] = useState<Section>("raw");
+  return (
+    <Suspense fallback={<LoadingState rows={4} />}>
+      <DataExplorer />
+    </Suspense>
+  );
+}
+
+function DataExplorer() {
+  const searchParams = useSearchParams();
+  const layer = searchParams.get("layer");
+  const deepLinkId = searchParams.get("id");
+  const [section, setSection] = useState<Section>(
+    layer === "canonical" ? "canonical" : layer === "resolved" ? "resolved" : "raw",
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,17 +59,17 @@ export default function DataPage() {
         ))}
       </div>
 
-      {section === "raw" ? <RawSection /> : null}
+      {section === "raw" ? <RawSection initialExpandedId={deepLinkId} /> : null}
       {section === "canonical" ? <CanonicalSection /> : null}
       {section === "resolved" ? <ResolvedSection /> : null}
     </div>
   );
 }
 
-function RawSection() {
+function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }) {
   const [source, setSource] = useState("");
   const [fetcher, setFetcher] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(initialExpandedId ?? null);
 
   const rows = useApiData(
     (api) =>
