@@ -54,9 +54,17 @@ Design assumptions about API access must be checked against what's actually avai
 |---|---|---|
 |**Lightspeed (O-Series / Kounta)**|Public REST API exists but is paid-add-on-gated on the current plan (or ask support to unlock the legacy free tier)|Authenticated back-office scrape of server-rendered pages (working today); richer REST API if unlocked|
 |**Cooking the Books (CTB)**|No public API|Self-serve Custom Invoice Export (CSV/XLSX → scheduled SFTP/email) for production; internal-endpoint scrape exists but is fragile/unsupported — schema-discovery only, not production|
+|**MarketMan**|Buyer-portal internal API (session cookie) + official API v3 (`api.marketman.com/v3`, keys from MarketMan support)|Buyer-portal session scrape today; API v3 once keys are issued. Integrated with Kounta (POS), Xero (accounting), Deputy (labour); customer since 2022, still in daily use as of Sep 2026|
+|**Xero (candidate accounting source)**|OAuth 2.0|A live Xero connection already exists via MarketMan (org "Goldy Enterprises"); read-only OAuth scopes if adopted|
 |**OpenTable**|Partner-gated, no self-serve API|Manual/scripted CSV pull from GuestCenter reporting — plan a scripted browser pull, not a manual export step|
 |**Deputy**|Genuine self-serve OAuth REST API|Standard API connector — cleanest of the five once someone with admin access registers the OAuth client|
 |**Tenzo**|Has a developer API, tier/rawness unconfirmed|Confirm with account manager before treating as a source; useful as cross-check even if aggregated-only|
+
+Note: CTB is really **inventory/purchasing** (recipes, stock, orders, wastage)
+rather than accounting — it was adopted around May 2026 (invoice `createdDate`
+starts 2026-05-13, with invoice dates backdated to 2025-10-28). MarketMan
+overlaps heavily and goes back to 2022; a MarketMan → CTB migration appears to
+be in progress but is unconfirmed.
 
 Note CTB is owned by Quantaco, a hospitality analytics competitor — any request for data broader than the standard export should be framed carefully and isn't guaranteed goodwill.
 
