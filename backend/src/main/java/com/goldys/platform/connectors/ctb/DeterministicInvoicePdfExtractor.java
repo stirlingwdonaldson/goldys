@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class DeterministicInvoicePdfExtractor implements InvoicePdfExtractor {
 
   private static final Pattern INVOICE_NUMBER =
-      Pattern.compile("Invoice Number\\s+([A-Za-z0-9]+)");
+      Pattern.compile("Invoice Number\\s+([A-Za-z0-9-]+)");
 
   private static final Pattern HEADER =
       Pattern.compile("QTY\\s+CODE\\s+DESCRIPTION\\s+UNIT\\s+UNIT PRICE");

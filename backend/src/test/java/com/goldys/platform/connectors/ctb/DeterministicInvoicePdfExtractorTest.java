@@ -34,4 +34,15 @@ class DeterministicInvoicePdfExtractorTest {
   void returnsEmptyForUnrecognizedText() {
     assertThat(extractor.extract("No table here\nJust words\n").lines()).isEmpty();
   }
+
+  @Test
+  void keepsHyphenatedInvoiceNumbersIntact() {
+    PdfExtractedInvoice out =
+        extractor.extract(
+            "Invoice Number\nSI-00008962\n"
+                + "QTY\nCODE\nDESCRIPTION\nUNIT\nUNIT PRICE\n"
+                + "1\nBEEF\nBEEF\nKG\n5.00\n");
+
+    assertThat(out.invoiceNumber()).isEqualTo("SI-00008962");
+  }
 }
