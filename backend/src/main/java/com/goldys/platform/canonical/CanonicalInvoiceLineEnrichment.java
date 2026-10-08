@@ -30,7 +30,7 @@ public class CanonicalInvoiceLineEnrichment {
   }
 
   @Transactional
-  public void enrich(
+  public EnrichmentResult enrich(
       String invoiceNumber,
       String stockCode,
       String uom,
@@ -39,15 +39,18 @@ public class CanonicalInvoiceLineEnrichment {
       BigDecimal wetAmount) {
     List<CanonicalInvoiceLine> matches =
         repository.lockCurrentByInvoiceNumberAndStockCode(invoiceNumber, stockCode);
-    if (matches.size() != 1) {
-      return; // 0 = no CSV line (pdf-only line); >1 = ambiguous, skip rather than guess
+    if (matches.isEmpty()) {
+      return EnrichmentResult.NO_MATCH; // no CSV line (pdf-only line)
+    }
+    if (matches.size() > 1) {
+      return EnrichmentResult.AMBIGUOUS; // duplicate stock code; skip rather than guess
     }
     CanonicalInvoiceLine l = matches.get(0);
     if (Objects.equals(l.uom(), uom)
         && sameAmount(l.unitQuantity(), unitQuantity)
         && sameAmount(l.packSize(), packSize)
         && sameAmount(l.wetAmount(), wetAmount)) {
-      return; // already enriched
+      return EnrichmentResult.UNCHANGED; // already enriched
     }
     Instant now = CLOCK.instant();
     l.supersede(now);
@@ -72,6 +75,7 @@ public class CanonicalInvoiceLineEnrichment {
             unitQuantity,
             packSize,
             wetAmount));
+    return EnrichmentResult.ENRICHED;
   }
 
   private static boolean sameAmount(BigDecimal a, BigDecimal b) {
