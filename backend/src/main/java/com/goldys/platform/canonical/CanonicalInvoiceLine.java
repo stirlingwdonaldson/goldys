@@ -142,11 +142,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
         && sameAmount(quantity, input.quantity())
         && sameAmount(unitCost, input.unitCost())
         && sameAmount(lineTotal, input.lineTotal())
-        && Objects.equals(category, input.category())
-        && Objects.equals(uom, input.uom())
-        && sameAmount(unitQuantity, input.unitQuantity())
-        && sameAmount(packSize, input.packSize())
-        && sameAmount(wetAmount, input.wetAmount());
+        && Objects.equals(category, input.category());
   }
 
   private static boolean sameAmount(BigDecimal a, BigDecimal b) {

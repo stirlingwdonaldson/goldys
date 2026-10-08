@@ -28,7 +28,13 @@ public class InvoicePdfEnrichmentService {
     String text = extractor.extractText(pdf, "application/pdf");
     PdfExtractedInvoice parsed = parser.extract(text);
     for (PdfExtractedLine line : parsed.lines()) {
-      enrichment.enrich(parsed.invoiceNumber(), line);
+      enrichment.enrich(
+          parsed.invoiceNumber(),
+          line.stockCode(),
+          line.uom(),
+          line.unitQuantity(),
+          line.packSize(),
+          line.wetAmount());
     }
   }
 }
