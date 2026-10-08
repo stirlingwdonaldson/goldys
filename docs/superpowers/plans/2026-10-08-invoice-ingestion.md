@@ -2,32 +2,267 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Get CTB supplier invoices ingesting so COGS flows, by replacing the stale `CtInvoiceCsvParser` (old column names, headers-only) with one that reads the current export's header **and** line columns, and canonicalizing headers + lines.
+**Goal:** Get CTB invoices flowing end-to-end for COGS, in this order: **SFTP delivers the files → we check what landed (CSV and PDF) → then canonicalize the CSVs.** The stale `CtInvoiceCsvParser` is replaced along the way. Un-hardened by design — fragility is accepted until real invoices are seen.
 
-**Architecture:** Two changes only — rewrite the parser, and have `CtInvoiceCsvIngestService` canonicalize both the invoice header and each line item. Everything downstream (`canonical_invoice`, `canonical_invoice_line`, `InventoryProjector` → COGS) already exists and needs no change. No new columns, no migration, no new abstractions. This is the **minimal, un-hardened** slice; hardening is deferred until real invoices arrive (see Deferred).
+**Architecture:** Four small changes. First an SFTP pull that downloads every file (CSV + PDF) and stores it byte-faithfully in the raw ledger **without** canonicalizing, so we can see what arrived. Then a rewritten CSV parser (header + line columns), then canonicalization of header + lines, then routing the SFTP CSVs through that canonicalization. PDFs stay raw-only this phase.
 
-**Tech Stack:** Java 25, Spring Boot 3.5, JUnit 5 + AssertJ + Mockito, Apache Commons CSV, Gradle (`backend/gradlew`). Google-Java-Format via `spotlessApply`.
+**Tech Stack:** Java 25, Spring Boot 3.5, Spring Integration SFTP, JUnit 5 + AssertJ + Mockito, Apache Commons CSV, Gradle (`backend/gradlew`). Google-Java-Format via `spotlessApply`.
 
 **Spec:** `docs/superpowers/specs/2026-10-08-invoice-ingestion-design.md` (target state; this plan implements only the CSV path, un-hardened).
 
 ## Global Constraints
 
-- **Byte-faithful raw first:** store the CSV via `IngestionService.ingestPush` before parsing. Unchanged.
-- **Bitemporal canonical, supersede-not-edit:** reuse the existing `CanonicalInvoiceIngest` / `CanonicalInvoiceLineIngest` facades as-is; no new entities or migrations.
+- **Byte-faithful raw first:** every file is stored via `IngestionService.ingestPush` before any parsing. Unchanged.
+- **Bitemporal canonical, supersede-not-edit:** reuse `CanonicalInvoiceIngest` / `CanonicalInvoiceLineIngest` as-is; no new entities or migrations.
 - **Connectors one-way:** no write-back to CTB.
-- **COGS is ex-tax line totals:** `InvoiceLineInput.lineTotal` ← CSV `LineTotalExTax` (the COGS driver, summed by `InventoryProjector`). Header totals are never used for COGS.
-- **Existing canonical field set is untouched** — `InvoiceInput` / `InvoiceLineInput` records do not change shape; unmapped columns are simply `null`.
-- **Minimal, not hardened:** quantity and unit cost are best-effort placeholders; COGS does not depend on them. Fragility is accepted until real invoices arrive.
+- **COGS is ex-tax line totals:** `InvoiceLineInput.lineTotal` ← CSV `LineTotalExTax` (summed by `InventoryProjector`). Header totals are never used for COGS.
+- **Existing canonical field set is untouched** — `InvoiceInput` / `InvoiceLineInput` records do not change shape; unmapped columns are `null`.
+- **SFTP is raw-only delivery first:** the pull stores files without canonicalizing, so the human can verify what arrived before anything is interpreted.
+- **Minimal, not hardened:** quantity and unit cost are best-effort placeholders; COGS depends only on `line_total`.
 
 ## Review Focus
 
-1. **Denormalized row shape** — one row per line, header columns repeated; a blank `StockDescription` row must be skipped, never treated as a line. → Task 1.
-2. **Re-ingest idempotency** — the same CSV dropped twice must not double-count (the existing supersede-not-edit + `sameFact` short-circuit already guarantees this). → Task 2.
-3. **Missing column / empty file** — the parser must fail loudly with `CONNECTOR_SCHEMA_MISMATCH`, not silently produce wrong rows. → Task 1.
+1. **SFTP pull must catch everything** — both CSV and PDF files, stored byte-faithfully with the right content type; a single bad file must not stop the rest. → Task 1.
+2. **Denormalized row shape** — one row per line, header columns repeated; a blank `StockDescription` row must be skipped. → Task 2.
+3. **Re-ingest idempotency** — the same CSV dropped twice must not double-count (supersede-not-edit + `sameFact`). → Task 3.
+4. **Missing column / empty file** — the parser must fail loudly (`CONNECTOR_SCHEMA_MISMATCH`), not silently produce wrong rows. → Task 2.
 
 ---
 
-### Task 1: Rewrite the CSV parser (header + line columns)
+### Task 1: SFTP drop pull (raw-only)
+
+**Files:**
+- Create: `backend/src/main/java/com/goldys/platform/ingestion/SftpDrop.java`
+- Create: `backend/src/main/java/com/goldys/platform/ingestion/CtbSftpPull.java`
+- Create: `backend/src/main/java/com/goldys/platform/ingestion/SpringIntegrationSftpDrop.java`
+- Modify: `backend/build.gradle` (add `spring-integration-sftp`)
+- Test: `backend/src/test/java/com/goldys/platform/ingestion/CtbSftpPullTest.java`
+
+**Interfaces:**
+- Produces: `SftpDrop` — `List<SftpDrop.SftpFile> list()` and `byte[] download(String path)`; `CtbSftpPull` is a `@Scheduled`/`@ConditionalOnProperty` component that stores each file raw via `IngestionService.ingestPush` with `fetcherIdentity = "ctb-sftp"`. Disabled until `app.scheduling.ctb-sftp.enabled=true`.
+
+- [ ] **Step 1: Add the dependency**
+
+In `backend/build.gradle`, after the `spring-ai-starter-model-openai` line, add:
+
+```gradle
+	// SFTP drop delivery (transport behind the SftpDrop port, so it is swappable).
+	implementation 'org.springframework.integration:spring-integration-sftp'
+```
+
+- [ ] **Step 2: Write the port**
+
+```java
+package com.goldys.platform.ingestion;
+
+import java.util.List;
+
+/** Transport-agnostic view of the CTB SFTP drop (spec §10). Swappable so the transport is isolated. */
+public interface SftpDrop {
+  record SftpFile(String path, String filename) {}
+
+  List<SftpFile> list();
+
+  byte[] download(String path);
+}
+```
+
+- [ ] **Step 3: Write the failing test**
+
+```java
+package com.goldys.platform.ingestion;
+
+import static org.mockito.ArgumentMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class CtbSftpPullTest {
+
+  @Mock SftpDrop drop;
+  @Mock IngestionService ingestion;
+
+  @Test
+  void pullsAndStoresRawCsvAndPdf() {
+    SftpDrop.SftpFile csv = new SftpDrop.SftpFile("in/inv.csv", "inv.csv");
+    SftpDrop.SftpFile pdf = new SftpDrop.SftpFile("in/bruno.pdf", "bruno.pdf");
+    when(drop.list()).thenReturn(List.of(csv, pdf));
+    when(drop.download("in/inv.csv")).thenReturn(new byte[] {1});
+    when(drop.download("in/bruno.pdf")).thenReturn(new byte[] {2});
+
+    new CtbSftpPull(drop, ingestion).pull();
+
+    verify(ingestion).ingestPush(
+        eq("CTB"), eq("ctb-invoices"), eq(FetchMethod.FILE_EXPORT), eq("text/csv"),
+        aryEq(new byte[] {1}), eq("UTF-8"), eq("ctb-sftp"));
+    verify(ingestion).ingestPush(
+        eq("CTB"), eq("ctb-invoice-pdf"), eq(FetchMethod.FILE_EXPORT), eq("application/pdf"),
+        aryEq(new byte[] {2}), isNull(), eq("ctb-sftp"));
+  }
+}
+```
+
+- [ ] **Step 4: Run test to verify it fails**
+
+Run: `./gradlew test --tests com.goldys.platform.ingestion.CtbSftpPullTest`
+Expected: compilation FAIL — `CtbSftpPull` does not exist.
+
+- [ ] **Step 5: Write `CtbSftpPull`**
+
+```java
+package com.goldys.platform.ingestion;
+
+import java.nio.charset.StandardCharsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+/**
+ * Pulls files from the CTB SFTP drop and stores them byte-faithfully in the raw ledger (CSV and
+ * PDF alike). Raw-only by design: canonicalization is a separate, later step so the shapes can be
+ * checked before anything is interpreted. Disabled until {@code app.scheduling.ctb-sftp.enabled=true}.
+ */
+@Component
+@ConditionalOnProperty(name = "app.scheduling.ctb-sftp.enabled", havingValue = "true")
+public class CtbSftpPull {
+  private static final Logger log = LoggerFactory.getLogger(CtbSftpPull.class);
+
+  private final SftpDrop drop;
+  private final IngestionService ingestion;
+
+  public CtbSftpPull(SftpDrop drop, IngestionService ingestion) {
+    this.drop = drop;
+    this.ingestion = ingestion;
+  }
+
+  @Scheduled(cron = "${app.scheduling.ctb-sftp.cron:0 0 4 * * *}", zone = "Australia/Melbourne")
+  public void pull() {
+    for (SftpDrop.SftpFile file : drop.list()) {
+      try {
+        byte[] bytes = drop.download(file.path());
+        boolean csv = file.filename().toLowerCase().endsWith(".csv");
+        ingestion.ingestPush(
+            "CTB",
+            csv ? "ctb-invoices" : "ctb-invoice-pdf",
+            FetchMethod.FILE_EXPORT,
+            csv ? "text/csv" : "application/pdf",
+            bytes,
+            csv ? StandardCharsets.UTF_8.name() : null,
+            "ctb-sftp");
+        log.info("SFTP drop stored {}", file.filename());
+      } catch (RuntimeException e) {
+        // A failure is already recorded in the ingestion ledger; keep pulling the rest.
+        log.warn("SFTP drop pull failed for {}", file.path(), e);
+      }
+    }
+  }
+}
+```
+
+- [ ] **Step 6: Run test to verify it passes**
+
+Run: `./gradlew test --tests com.goldys.platform.ingestion.CtbSftpPullTest`
+Expected: PASS.
+
+- [ ] **Step 7: Write the real SFTP adapter (thin, config-gated)**
+
+```java
+package com.goldys.platform.ingestion;
+
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.sftp.session.DefaultSftpSessionFactory;
+import org.springframework.integration.sftp.session.SftpRemoteFileTemplate;
+
+/**
+ * Real SFTP transport, activated only when {@code app.scheduling.ctb-sftp.enabled=true}. Credentials
+ * come from {@code ctb.sftp.*} properties; provisioning is a deploy-time concern.
+ */
+@Configuration
+@ConditionalOnProperty(name = "app.scheduling.ctb-sftp.enabled", havingValue = "true")
+public class SpringIntegrationSftpDrop {
+
+  @Bean
+  SftpDrop sftpDrop(
+      @Value("${ctb.sftp.host}") String host,
+      @Value("${ctb.sftp.port:22}") int port,
+      @Value("${ctb.sftp.user}") String user,
+      @Value("${ctb.sftp.password}") String password,
+      @Value("${ctb.sftp.remote-dir:/}") String remoteDir) {
+    DefaultSftpSessionFactory factory = new DefaultSftpSessionFactory();
+    factory.setHost(host);
+    factory.setPort(port);
+    factory.setUser(user);
+    factory.setPassword(password);
+    factory.setAllowUnknownKeys(true);
+    SftpRemoteFileTemplate template = new SftpRemoteFileTemplate(factory);
+    return new SftpDrop() {
+      @Override
+      public List<SftpFile> list() {
+        List<SftpFile> out = new ArrayList<>();
+        template.execute(session -> {
+          session.list(remoteDir).stream()
+              .filter(f -> f.isFile())
+              .forEach(f -> out.add(new SftpFile(remoteDir + "/" + f.getFilename(), f.getFilename())));
+          return null;
+        });
+        return out;
+      }
+
+      @Override
+      public byte[] download(String path) {
+        return template.execute(session -> {
+          ByteArrayOutputStream buf = new ByteArrayOutputStream();
+          session.readRaw(path, buf);
+          return buf.toByteArray();
+        });
+      }
+    };
+  }
+}
+```
+
+- [ ] **Step 8: Run the full suite, then commit**
+
+Run: `./gradlew test`
+Expected: PASS. (`CtbSftpPull` and `SpringIntegrationSftpDrop` are inert until the property is enabled, so no credentials are needed in CI.)
+
+```bash
+git add backend/build.gradle \
+        backend/src/main/java/com/goldys/platform/ingestion/SftpDrop.java \
+        backend/src/main/java/com/goldys/platform/ingestion/CtbSftpPull.java \
+        backend/src/main/java/com/goldys/platform/ingestion/SpringIntegrationSftpDrop.java \
+        backend/src/test/java/com/goldys/platform/ingestion/CtbSftpPullTest.java
+git commit -m "feat(ingestion): SFTP drop pull, raw-only delivery"
+```
+
+---
+
+### STOP — check what landed
+
+Enable `app.scheduling.ctb-sftp.enabled=true` (with `ctb.sftp.*` credentials), let the pull run, and confirm in the ingestion screen / raw ledger that **both** the CSV(s) and the PDF(s) arrived, with correct content types and `fetcher_identity = ctb-sftp`. Decide from here:
+
+- If CSVs are present → proceed to Task 2.
+- If the drop shape differs from the assumption (e.g. no PDFs, or an unexpected filename/layout) → **re-evaluate** before writing the parser.
+
+---
+
+### Task 2: Rewrite the CSV parser (header + line columns)
 
 **Files:**
 - Create: `backend/src/main/java/com/goldys/platform/connectors/ctb/CtInvoiceLine.java`
@@ -36,7 +271,7 @@
 - Test: rewrite `backend/src/test/java/com/goldys/platform/connectors/ctb/CtInvoiceCsvParserTest.java`
 
 **Interfaces:**
-- Produces: `CtInvoice` (header fields + `List<CtInvoiceLine> lines`) via `CtInvoiceCsvParser.parse(byte[])`. Used by `CtInvoiceCsvIngestService` (Task 2).
+- Produces: `CtInvoice` (header fields + `List<CtInvoiceLine> lines`) via `CtInvoiceCsvParser.parse(byte[])`. Used by `CtInvoiceCsvIngestService` (Task 3).
 
 - [ ] **Step 1: Write the failing test (rewrite `CtInvoiceCsvParserTest`)**
 
@@ -338,14 +573,14 @@ git commit -m "feat(invoice): parse current CTB export header + line columns"
 
 ---
 
-### Task 2: Canonicalize headers + lines in the ingest service
+### Task 3: Canonicalize headers + lines
 
 **Files:**
 - Modify: `backend/src/main/java/com/goldys/platform/connectors/ctb/CtInvoiceCsvIngestService.java`
 - Test: Create `backend/src/test/java/com/goldys/platform/connectors/ctb/CtInvoiceCsvIngestServiceTest.java`
 
 **Interfaces:**
-- Consumes: `CtInvoiceCsvParser.parse` (Task 1), `CanonicalInvoiceIngest.record(InvoiceInput)` and `CanonicalInvoiceLineIngest.record(InvoiceLineInput)` (existing).
+- Consumes: `CtInvoiceCsvParser.parse` (Task 2), `CanonicalInvoiceIngest.record(InvoiceInput)` and `CanonicalInvoiceLineIngest.record(InvoiceLineInput)` (existing).
 - Produces: unchanged `CtInvoiceCsvIngestService.ingest(byte[])` (the controller keeps working).
 
 - [ ] **Step 1: Write the failing test**
@@ -527,20 +762,136 @@ git commit -m "feat(invoice): canonicalize invoice header + lines from CSV"
 
 ---
 
+### Task 4: Route SFTP CSVs through canonicalization
+
+**Files:**
+- Modify: `backend/src/main/java/com/goldys/platform/ingestion/CtbSftpPull.java`
+- Modify: `backend/src/test/java/com/goldys/platform/ingestion/CtbSftpPullTest.java`
+
+**Interfaces:**
+- Consumes: `CtInvoiceCsvIngestService.ingest(byte[])` (Task 3). PDFs stay raw-only (Phase 2).
+
+- [ ] **Step 1: Update the test**
+
+```java
+package com.goldys.platform.ingestion;
+
+import static org.mockito.ArgumentMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.goldys.platform.connectors.ctb.CtInvoiceCsvIngestService;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class CtbSftpPullTest {
+
+  @Mock SftpDrop drop;
+  @Mock IngestionService ingestion;
+  @Mock CtInvoiceCsvIngestService csvIngest;
+
+  @Test
+  void canonicalizesCsvsAndStoresPdfsRaw() {
+    SftpDrop.SftpFile csv = new SftpDrop.SftpFile("in/inv.csv", "inv.csv");
+    SftpDrop.SftpFile pdf = new SftpDrop.SftpFile("in/bruno.pdf", "bruno.pdf");
+    when(drop.list()).thenReturn(List.of(csv, pdf));
+    when(drop.download("in/inv.csv")).thenReturn(new byte[] {1});
+    when(drop.download("in/bruno.pdf")).thenReturn(new byte[] {2});
+
+    new CtbSftpPull(drop, ingestion, csvIngest).pull();
+
+    verify(csvIngest).ingest(aryEq(new byte[] {1}));
+    verify(ingestion).ingestPush(
+        eq("CTB"), eq("ctb-invoice-pdf"), eq(FetchMethod.FILE_EXPORT), eq("application/pdf"),
+        aryEq(new byte[] {2}), isNull(), eq("ctb-sftp"));
+  }
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `./gradlew test --tests com.goldys.platform.ingestion.CtbSftpPullTest`
+Expected: compilation FAIL — `CtbSftpPull` constructor doesn't accept `CtInvoiceCsvIngestService`.
+
+- [ ] **Step 3: Update `CtbSftpPull`**
+
+Change the constructor and the CSV branch so CSVs go through `csvIngest.ingest` (which stores raw + canonicalizes) while PDFs stay raw-only:
+
+```java
+public class CtbSftpPull {
+  private static final Logger log = LoggerFactory.getLogger(CtbSftpPull.class);
+
+  private final SftpDrop drop;
+  private final IngestionService ingestion;
+  private final CtInvoiceCsvIngestService csvIngest;
+
+  public CtbSftpPull(SftpDrop drop, IngestionService ingestion, CtInvoiceCsvIngestService csvIngest) {
+    this.drop = drop;
+    this.ingestion = ingestion;
+    this.csvIngest = csvIngest;
+  }
+
+  @Scheduled(cron = "${app.scheduling.ctb-sftp.cron:0 0 4 * * *}", zone = "Australia/Melbourne")
+  public void pull() {
+    for (SftpDrop.SftpFile file : drop.list()) {
+      try {
+        byte[] bytes = drop.download(file.path());
+        if (file.filename().toLowerCase().endsWith(".csv")) {
+          csvIngest.ingest(bytes); // stores raw + canonicalizes header + lines
+        } else {
+          ingestion.ingestPush(
+              "CTB", "ctb-invoice-pdf", FetchMethod.FILE_EXPORT, "application/pdf", bytes, null, "ctb-sftp");
+        }
+        log.info("SFTP drop processed {}", file.filename());
+      } catch (RuntimeException e) {
+        log.warn("SFTP drop pull failed for {}", file.path(), e);
+      }
+    }
+  }
+}
+```
+
+(Keep the imports from Task 1; drop `StandardCharsets` only if no longer referenced.)
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `./gradlew test --tests com.goldys.platform.ingestion.CtbSftpPullTest`
+Expected: PASS.
+
+- [ ] **Step 5: Run the full suite, then commit**
+
+Run: `./gradlew test`
+Expected: PASS.
+
+```bash
+git add backend/src/main/java/com/goldys/platform/ingestion/CtbSftpPull.java \
+        backend/src/test/java/com/goldys/platform/ingestion/CtbSftpPullTest.java
+git commit -m "feat(ingestion): route SFTP CSVs through canonicalization"
+```
+
+---
+
 ## Deferred until the invoices are in
 
-Everything below is **harden-later** work, deliberately not in this plan. Do it after real invoices have landed and the actual shapes are known:
+Hardening, deliberately not in this plan — do it after real invoices have landed and the actual shapes are known:
 
 - **Structured columns + migration** — `supplier_name_key`, `stock_code`, `uom`, `unit_quantity`, `pack_size` (spec §9.4); nullable `quantity`/`unit_cost`.
 - **Shared `ExtractedInvoice` contract + `InvoiceExtractor` port + `InvoiceNormalizer`** (spec §6–§8).
 - **Robust quantity parsing** (`QuantityText`), flags (`incomplete-invariant`, `quantity-unparseable`, `foreign-currency`, `missing-pdf`, `scanned-pdf`), and a flag persistence surface (spec §11).
-- **SFTP drop + poller** (spec §10).
+- **SFTP idempotency** (move-to-processed / filename tracking so a re-pull doesn't re-store).
 - **PDF enrichment** (`PdfInvoiceExtractor`, CSV↔PDF join) — Phase 2 (spec §12).
 - **Confidence-scored matching + review queue + alias overrides** — Phase 3 (spec §9, §12).
 - **Architecture boundary tests.**
 
-## Known assumptions (validate on first real export)
+## Known assumptions (validate at the STOP gate)
 
 1. **CSV row denormalization** — one row per line item, header columns repeated; blank-line rows skipped.
-2. **COGS ex-tax** — `line_total` ← `LineTotalExTax`. Confirm COGS should be ex-GST.
-3. **Quantity/unit-cost are placeholders** — COGS depends only on `line_total`; quantity is best-effort first-number and unit cost falls back to zero. Neither feeds a metric yet.
+2. **Drop contents** — CSVs and PDFs both land in the drop; the CSV's `PDF` filename matches a real PDF in the drop.
+3. **COGS ex-tax** — `line_total` ← `LineTotalExTax`. Confirm COGS should be ex-GST.
+4. **Quantity/unit-cost are placeholders** — COGS depends only on `line_total`.
