@@ -104,3 +104,9 @@ app:
         - DEPUTY
       resolved_inventory_day:
         - CTB
+  # Scheduled pull for the CTB connector (the only pull connector on a schedule).
+  # "Run now" stays available regardless. Cron is evaluated in Australia/Melbourne.
+  scheduling:
+    ctb:
+      enabled: true
+      cron: "0 0 4 * * *"

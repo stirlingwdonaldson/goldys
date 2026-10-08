@@ -66,7 +66,20 @@ class CanonicalInvoiceIntegrationTest {
 
   private InvoiceInput invoice(String number, String supplier, String date, String total) {
     return new InvoiceInput(
-        "CTB", number, supplier, LocalDate.parse(date), null, new BigDecimal(total), rawRecord());
+        "CTB",
+        number,
+        supplier,
+        LocalDate.parse(date),
+        null,
+        new BigDecimal(total),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        rawRecord());
   }
 
   private InvoiceLineInput line(

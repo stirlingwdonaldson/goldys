@@ -11,6 +11,7 @@ import java.time.Clock;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ class ConnectorRunner {
   ConnectorRunner(
       IngestionRunService runs,
       RawPayloadService payloads,
-      TaskExecutor executor,
+      @Qualifier("applicationTaskExecutor") TaskExecutor executor,
       OperationalMetrics metrics) {
     this.runs = runs;
     this.payloads = payloads;

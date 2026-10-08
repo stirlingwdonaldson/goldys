@@ -31,6 +31,27 @@ class CanonicalInvoice extends BitemporalEntity {
   @Column(name = "total_amount", updatable = false, precision = 14, scale = 4)
   private BigDecimal totalAmount;
 
+  @Column(name = "purchase_number", updatable = false)
+  private String purchaseNumber;
+
+  @Column(name = "account_number", updatable = false)
+  private String accountNumber;
+
+  @Column(name = "tax_code", updatable = false)
+  private String taxCode;
+
+  @Column(name = "amount_ex_tax", updatable = false, precision = 14, scale = 4)
+  private BigDecimal amountExTax;
+
+  @Column(name = "gst_amount", updatable = false, precision = 14, scale = 4)
+  private BigDecimal gstAmount;
+
+  @Column(name = "freight_amount", updatable = false, precision = 14, scale = 4)
+  private BigDecimal freightAmount;
+
+  @Column(name = "freight_gst_amount", updatable = false, precision = 14, scale = 4)
+  private BigDecimal freightGstAmount;
+
   protected CanonicalInvoice() {}
 
   private CanonicalInvoice(
@@ -44,13 +65,27 @@ class CanonicalInvoice extends BitemporalEntity {
       String invoiceNumber,
       LocalDate invoiceDate,
       LocalDate dueDate,
-      BigDecimal totalAmount) {
+      BigDecimal totalAmount,
+      String purchaseNumber,
+      String accountNumber,
+      String taxCode,
+      BigDecimal amountExTax,
+      BigDecimal gstAmount,
+      BigDecimal freightAmount,
+      BigDecimal freightGstAmount) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.supplierName = supplierName;
     this.invoiceNumber = invoiceNumber;
     this.invoiceDate = invoiceDate;
     this.dueDate = dueDate;
     this.totalAmount = totalAmount;
+    this.purchaseNumber = purchaseNumber;
+    this.accountNumber = accountNumber;
+    this.taxCode = taxCode;
+    this.amountExTax = amountExTax;
+    this.gstAmount = gstAmount;
+    this.freightAmount = freightAmount;
+    this.freightGstAmount = freightGstAmount;
   }
 
   static CanonicalInvoice create(
@@ -64,7 +99,14 @@ class CanonicalInvoice extends BitemporalEntity {
       String invoiceNumber,
       LocalDate invoiceDate,
       LocalDate dueDate,
-      BigDecimal totalAmount) {
+      BigDecimal totalAmount,
+      String purchaseNumber,
+      String accountNumber,
+      String taxCode,
+      BigDecimal amountExTax,
+      BigDecimal gstAmount,
+      BigDecimal freightAmount,
+      BigDecimal freightGstAmount) {
     return new CanonicalInvoice(
         logicalEntityId,
         sourceSystem,
@@ -76,7 +118,14 @@ class CanonicalInvoice extends BitemporalEntity {
         invoiceNumber,
         invoiceDate,
         dueDate,
-        totalAmount);
+        totalAmount,
+        purchaseNumber,
+        accountNumber,
+        taxCode,
+        amountExTax,
+        gstAmount,
+        freightAmount,
+        freightGstAmount);
   }
 
   boolean sameFact(InvoiceInput input) {
@@ -84,7 +133,14 @@ class CanonicalInvoice extends BitemporalEntity {
         && Objects.equals(invoiceNumber, input.invoiceNumber())
         && Objects.equals(invoiceDate, input.invoiceDate())
         && Objects.equals(dueDate, input.dueDate())
-        && sameAmount(totalAmount, input.totalAmount());
+        && Objects.equals(purchaseNumber, input.purchaseNumber())
+        && Objects.equals(accountNumber, input.accountNumber())
+        && Objects.equals(taxCode, input.taxCode())
+        && sameAmount(totalAmount, input.totalAmount())
+        && sameAmount(amountExTax, input.amountExTax())
+        && sameAmount(gstAmount, input.gstAmount())
+        && sameAmount(freightAmount, input.freightAmount())
+        && sameAmount(freightGstAmount, input.freightGstAmount());
   }
 
   private static boolean sameAmount(BigDecimal a, BigDecimal b) {
@@ -112,5 +168,33 @@ class CanonicalInvoice extends BitemporalEntity {
 
   BigDecimal totalAmount() {
     return totalAmount;
+  }
+
+  String purchaseNumber() {
+    return purchaseNumber;
+  }
+
+  String accountNumber() {
+    return accountNumber;
+  }
+
+  String taxCode() {
+    return taxCode;
+  }
+
+  BigDecimal amountExTax() {
+    return amountExTax;
+  }
+
+  BigDecimal gstAmount() {
+    return gstAmount;
+  }
+
+  BigDecimal freightAmount() {
+    return freightAmount;
+  }
+
+  BigDecimal freightGstAmount() {
+    return freightGstAmount;
   }
 }

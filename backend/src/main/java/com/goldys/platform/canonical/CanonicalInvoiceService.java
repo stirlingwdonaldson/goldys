@@ -53,7 +53,14 @@ class CanonicalInvoiceService {
             input.invoiceNumber(),
             input.invoiceDate(),
             input.dueDate(),
-            input.totalAmount()));
+            input.totalAmount(),
+            input.purchaseNumber(),
+            input.accountNumber(),
+            input.taxCode(),
+            input.amountExTax(),
+            input.gstAmount(),
+            input.freightAmount(),
+            input.freightGstAmount()));
   }
 
   private static UUID logicalIdFor(String invoiceNumber) {

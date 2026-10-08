@@ -63,7 +63,20 @@ class CanonicalBrowseQueryIntegrationTest {
     UUID raw = rawRecord("CTB");
     invoiceIngest.record(
         new InvoiceInput(
-            "CTB", "INV-1", "Acme Supplies", LocalDate.of(2026, 9, 1), null, bd("250.50"), raw));
+            "CTB",
+            "INV-1",
+            "Acme Supplies",
+            LocalDate.of(2026, 9, 1),
+            null,
+            bd("250.50"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            raw));
 
     DataPage<GenericRow> page = browse.listRows("invoice", 0, 10);
 

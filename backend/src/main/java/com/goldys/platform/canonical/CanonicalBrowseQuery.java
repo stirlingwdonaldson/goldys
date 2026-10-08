@@ -167,6 +167,27 @@ public class CanonicalBrowseQuery {
     if (i.totalAmount() != null) {
       c.put("total_amount", i.totalAmount().toPlainString());
     }
+    if (i.purchaseNumber() != null) {
+      c.put("purchase_number", i.purchaseNumber());
+    }
+    if (i.accountNumber() != null) {
+      c.put("account_number", i.accountNumber());
+    }
+    if (i.taxCode() != null) {
+      c.put("tax_code", i.taxCode());
+    }
+    if (i.amountExTax() != null) {
+      c.put("amount_ex_tax", i.amountExTax().toPlainString());
+    }
+    if (i.gstAmount() != null) {
+      c.put("gst_amount", i.gstAmount().toPlainString());
+    }
+    if (i.freightAmount() != null) {
+      c.put("freight_amount", i.freightAmount().toPlainString());
+    }
+    if (i.freightGstAmount() != null) {
+      c.put("freight_gst_amount", i.freightGstAmount().toPlainString());
+    }
     return c;
   }
 
