@@ -7,6 +7,7 @@ import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class CtInvoiceCsvParserTest {
@@ -28,8 +29,10 @@ class CtInvoiceCsvParserTest {
                 + "STK-8,Bruno Pale Ale,1 EACH,3.00,3.00,true\n")
             .getBytes(StandardCharsets.UTF_8);
 
-    CtInvoice invoice = parser.parse(csv);
+    List<CtInvoice> invoices = parser.parse(csv);
 
+    assertThat(invoices).hasSize(1);
+    CtInvoice invoice = invoices.get(0);
     assertThat(invoice.invoiceNumber()).isEqualTo("INV-2001");
     assertThat(invoice.supplierName()).isEqualTo("Bruno's");
     assertThat(invoice.invoiceDate()).isEqualTo(LocalDate.of(2026, 9, 20));
@@ -45,6 +48,27 @@ class CtInvoiceCsvParserTest {
   }
 
   @Test
+  void groupsLinesByInvoiceNumber() {
+    byte[] csv =
+        (HEADER
+                + "Goldys,GL-1,,,,,GOLD306600,Bruno's,2026-09-20,INV-2001,,,,bruno-1.pdf,STK-7,Beer,1 EACH,3.00,3.00,true\n"
+                + "Goldys,GL-2,,,,,GOLD306600,Bruno's,2026-09-21,INV-2002,,,,bruno-2.pdf,STK-8,Chips,2 EACH,1.50,3.00,true\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    List<CtInvoice> invoices = parser.parse(csv);
+
+    assertThat(invoices).hasSize(2);
+    assertThat(invoices.get(0).invoiceNumber()).isEqualTo("INV-2001");
+    assertThat(invoices.get(0).invoiceDate()).isEqualTo(LocalDate.of(2026, 9, 20));
+    assertThat(invoices.get(0).lines()).hasSize(1);
+    assertThat(invoices.get(0).lines().get(0).stockCode()).isEqualTo("STK-7");
+    assertThat(invoices.get(1).invoiceNumber()).isEqualTo("INV-2002");
+    assertThat(invoices.get(1).invoiceDate()).isEqualTo(LocalDate.of(2026, 9, 21));
+    assertThat(invoices.get(1).lines()).hasSize(1);
+    assertThat(invoices.get(1).lines().get(0).stockCode()).isEqualTo("STK-8");
+  }
+
+  @Test
   void skipsBlankLineRows() {
     byte[] csv =
         (HEADER
@@ -52,7 +76,10 @@ class CtInvoiceCsvParserTest {
                 + "Goldys,GL-1,,,,,GOLD306600,Bruno's,2026-09-20,INV-2001,,,,bruno-1956.pdf,STK-7,Beer,1 EACH,3.00,3.00,true\n")
             .getBytes(StandardCharsets.UTF_8);
 
-    assertThat(parser.parse(csv).lines()).hasSize(1);
+    List<CtInvoice> invoices = parser.parse(csv);
+
+    assertThat(invoices).hasSize(1);
+    assertThat(invoices.get(0).lines()).hasSize(1);
   }
 
   @Test

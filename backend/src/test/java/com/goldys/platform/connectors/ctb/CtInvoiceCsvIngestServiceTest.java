@@ -55,4 +55,20 @@ class CtInvoiceCsvIngestServiceTest {
     assertThat(line.getAllValues().get(0).lineTotal())
         .isEqualByComparingTo(new BigDecimal("120.00"));
   }
+
+  @Test
+  void canonicalizesMultipleInvoices() {
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(UUID.randomUUID());
+    byte[] csv =
+        ("Invoice,Supplier,Date,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
+                + "INV-1,Bruno's,2026-09-20,STK-7,Beer,1 EACH,120.00\n"
+                + "INV-2,Bruno's,2026-09-21,STK-8,Chips,2 EACH,10.00\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    service().ingest(csv);
+
+    verify(canonical, times(2)).record(any(InvoiceInput.class));
+    verify(lineCanonical, times(2)).record(any(InvoiceLineInput.class));
+  }
 }

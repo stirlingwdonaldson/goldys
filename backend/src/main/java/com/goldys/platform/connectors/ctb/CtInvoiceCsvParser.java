@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.csv.CSVFormat;
@@ -18,13 +19,14 @@ import org.springframework.stereotype.Component;
 
 /**
  * Parses CTB's Custom Invoice Export CSV — a single file with header AND line columns, one row per
- * line item, header columns repeated on every row. Rows whose line description is blank are
- * skipped. This replaces the old parser that read only the pre-2026 header-only export.
+ * line item, header columns repeated on every row. Rows are grouped by invoice number, so one file
+ * can carry many invoices. Rows whose line description is blank are skipped. This replaces the old
+ * parser that read only the pre-2026 header-only export.
  */
 @Component
 public class CtInvoiceCsvParser {
 
-  public CtInvoice parse(byte[] csv) {
+  public List<CtInvoice> parse(byte[] csv) {
     List<CSVRecord> records = readAll(csv);
     if (records.size() < 2) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Invoice CSV is empty");
@@ -33,15 +35,29 @@ public class CtInvoiceCsvParser {
     require(
         columns, "Invoice", "Supplier", "Date", "StockCode", "StockDescription", "LineTotalExTax");
 
-    CSVRecord first = records.get(1);
-    List<CtInvoiceLine> lines = new ArrayList<>();
+    Map<String, Group> groups = new LinkedHashMap<>();
     for (int i = 1; i < records.size(); i++) {
       CSVRecord r = records.get(i);
       String description = optionalString(columns, r, "StockDescription");
       if (description == null) {
         continue; // header-only / blank row — not a line
       }
-      lines.add(
+      String invoiceNumber = requireValue(columns, r, "Invoice");
+      Group g =
+          groups.computeIfAbsent(
+              invoiceNumber,
+              k ->
+                  new Group(
+                      requireValue(columns, r, "Supplier"),
+                      optionalString(columns, r, "PONumber"),
+                      date(columns, r, "Date"),
+                      k,
+                      optionalDate(columns, r, "InvoiceDueDate"),
+                      optionalMoney(columns, r, "InvoiceTotalExTax"),
+                      optionalMoney(columns, r, "GST"),
+                      optionalMoney(columns, r, "InvoiceFreight"),
+                      optionalMoney(columns, r, "Total")));
+      g.lines.add(
           new CtInvoiceLine(
               optionalString(columns, r, "StockCode"),
               description,
@@ -50,17 +66,57 @@ public class CtInvoiceCsvParser {
               money(columns, r, "LineTotalExTax")));
     }
 
-    return new CtInvoice(
-        requireValue(columns, first, "Supplier"),
-        optionalString(columns, first, "PONumber"),
-        date(columns, first, "Date"),
-        requireValue(columns, first, "Invoice"),
-        optionalDate(columns, first, "InvoiceDueDate"),
-        optionalMoney(columns, first, "InvoiceTotalExTax"),
-        optionalMoney(columns, first, "GST"),
-        optionalMoney(columns, first, "InvoiceFreight"),
-        optionalMoney(columns, first, "Total"),
-        lines);
+    List<CtInvoice> out = new ArrayList<>();
+    for (Group g : groups.values()) {
+      out.add(
+          new CtInvoice(
+              g.supplierName,
+              g.purchaseNumber,
+              g.invoiceDate,
+              g.invoiceNumber,
+              g.dueDate,
+              g.amountExTax,
+              g.gstAmount,
+              g.freightAmount,
+              g.incTaxAmount,
+              g.lines));
+    }
+    return out;
+  }
+
+  /** Header fields captured from the first line row of an invoice, plus its accumulated lines. */
+  private static final class Group {
+    final String supplierName;
+    final String purchaseNumber;
+    final LocalDate invoiceDate;
+    final String invoiceNumber;
+    final LocalDate dueDate;
+    final BigDecimal amountExTax;
+    final BigDecimal gstAmount;
+    final BigDecimal freightAmount;
+    final BigDecimal incTaxAmount;
+    final List<CtInvoiceLine> lines = new ArrayList<>();
+
+    Group(
+        String supplierName,
+        String purchaseNumber,
+        LocalDate invoiceDate,
+        String invoiceNumber,
+        LocalDate dueDate,
+        BigDecimal amountExTax,
+        BigDecimal gstAmount,
+        BigDecimal freightAmount,
+        BigDecimal incTaxAmount) {
+      this.supplierName = supplierName;
+      this.purchaseNumber = purchaseNumber;
+      this.invoiceDate = invoiceDate;
+      this.invoiceNumber = invoiceNumber;
+      this.dueDate = dueDate;
+      this.amountExTax = amountExTax;
+      this.gstAmount = gstAmount;
+      this.freightAmount = freightAmount;
+      this.incTaxAmount = incTaxAmount;
+    }
   }
 
   private static List<CSVRecord> readAll(byte[] csv) {

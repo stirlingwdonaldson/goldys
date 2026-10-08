@@ -46,40 +46,40 @@ public class CtInvoiceCsvIngestService {
             StandardCharsets.UTF_8.name(),
             "ctb-invoices");
 
-    CtInvoice invoice = parser.parse(csv);
-
-    canonical.record(
-        new InvoiceInput(
-            "CTB",
-            invoice.invoiceNumber(),
-            invoice.supplierName(),
-            invoice.invoiceDate(),
-            invoice.dueDate(),
-            invoice.incTaxAmount(),
-            invoice.purchaseNumber(),
-            null, // account number — not in the current export
-            null, // tax code — not in the current export
-            invoice.amountExTax(),
-            invoice.gstAmount(),
-            invoice.freightAmount(),
-            null, // freight GST — not a direct column in the current export
-            rawId));
-
-    int seq = 0;
-    for (CtInvoiceLine line : invoice.lines()) {
-      seq++;
-      lineCanonical.record(
-          new InvoiceLineInput(
+    for (CtInvoice invoice : parser.parse(csv)) {
+      canonical.record(
+          new InvoiceInput(
               "CTB",
-              invoice.invoiceNumber() + ":" + seq,
               invoice.invoiceNumber(),
+              invoice.supplierName(),
               invoice.invoiceDate(),
-              ProductNameKey.normalize(line.description()),
-              quantity(line.rawQuantity()),
-              line.unitCostExTax() == null ? BigDecimal.ZERO : line.unitCostExTax(),
-              line.lineTotalExTax(),
-              null, // category — PDF-only, not in the CSV
+              invoice.dueDate(),
+              invoice.incTaxAmount(),
+              invoice.purchaseNumber(),
+              null, // account number — not in the current export
+              null, // tax code — not in the current export
+              invoice.amountExTax(),
+              invoice.gstAmount(),
+              invoice.freightAmount(),
+              null, // freight GST — not a direct column in the current export
               rawId));
+
+      int seq = 0;
+      for (CtInvoiceLine line : invoice.lines()) {
+        seq++;
+        lineCanonical.record(
+            new InvoiceLineInput(
+                "CTB",
+                invoice.invoiceNumber() + ":" + seq,
+                invoice.invoiceNumber(),
+                invoice.invoiceDate(),
+                ProductNameKey.normalize(line.description()),
+                quantity(line.rawQuantity()),
+                line.unitCostExTax() == null ? BigDecimal.ZERO : line.unitCostExTax(),
+                line.lineTotalExTax(),
+                null, // category — PDF-only, not in the CSV
+                rawId));
+      }
     }
   }
 
