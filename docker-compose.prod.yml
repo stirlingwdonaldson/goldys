@@ -37,12 +37,17 @@ services:
     environment:
       # One chrooted SFTP-only user for CTB to push the invoice export into. uid/gid are
       # fixed so the named volume is owned consistently across restarts.
-      SFTP_USERS: ${SFTP_USER:-ctb}:${SFTP_PASSWORD:?set SFTP_PASSWORD in .env.prod}:1000:1000
+      SFTP_USERS: ${SFTP_USER:-ctb}:${SFTP_PASSWORD:?set SFTP_PASSWORD in .env.prod}:1000:1000:upload
     volumes:
-      - goldys_sftp_data:/home/${SFTP_USER:-ctb}
+      - goldys_sftp_data:/home/${SFTP_USER:-ctb}/upload
+      # Keep the server's SSH host keys across redeploys so CTB doesn't see "host key changed".
+      - goldys_sftp_hostkeys:/etc/ssh
     ports:
       # CTB pushes to this from outside; firewall it to CTB's IPs if possible.
       - "${SFTP_PORT:-2222}:22"
+
+
+
     restart: unless-stopped
 
   backend:
@@ -61,7 +66,7 @@ services:
       CTB_SFTP_PORT: 22
       CTB_SFTP_USER: ${SFTP_USER:-ctb}
       CTB_SFTP_PASSWORD: ${SFTP_PASSWORD:-}
-      CTB_SFTP_REMOTE_DIR: ${CTB_SFTP_REMOTE_DIR:-/}
+      CTB_SFTP_REMOTE_DIR: ${CTB_SFTP_REMOTE_DIR:-/upload}
       CTB_SFTP_CRON: ${CTB_SFTP_CRON:-0 15 4 * * *}
       LIGHTSPEED_WEBHOOK_TOKEN: ${LIGHTSPEED_WEBHOOK_TOKEN:-}
       OPENTABLE_DROP_TOKEN: ${OPENTABLE_DROP_TOKEN:-}
@@ -117,6 +122,7 @@ services:
 volumes:
   goldys_pg_data:
   goldys_sftp_data:
+  goldys_sftp_hostkeys:
 
 secrets:
   # Sentry org auth token for source map upload during the frontend image build. Read from the
