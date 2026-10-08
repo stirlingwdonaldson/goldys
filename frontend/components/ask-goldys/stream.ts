@@ -1,5 +1,13 @@
 import type { AnswerPayload, DashboardDraft, MetricProvenance, TraceEntry } from "./types";
-import type { DashboardFilters, MetricQuery, SavedWidget, WidgetLayout } from "@/lib/api/types";
+import type {
+  DashboardFilters,
+  FreshnessState,
+  MetricQuery,
+  SavedWidget,
+  TrustState,
+  TrustSummary,
+  WidgetLayout,
+} from "@/lib/api/types";
 import { parseWidgetSpecs } from "@/components/widgets/parse";
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -25,6 +33,39 @@ function parseRange(v: unknown): MetricQuery["range"] | null {
     from: v.from,
     to: v.to,
     calendar: v.calendar === "CALENDAR" ? "CALENDAR" : "TRADING",
+  };
+}
+
+const TRUST_STATES = new Set<TrustState>([
+  "VERIFIED",
+  "RESOLVED_BY_RULE",
+  "MANUALLY_OVERRIDDEN",
+  "SINGLE_SOURCE",
+  "CONFLICTED",
+  "INCOMPLETE",
+  "NOT_RECEIVED",
+]);
+
+const FRESHNESS_STATES = new Set<FreshnessState>(["FRESH", "STALE", "SOURCE_FAILURE", "UNKNOWN"]);
+
+/**
+ * Validate an untrusted trust summary at the boundary. Returns null when the shape is not a
+ * usable summary (missing a known {@link TrustState}); unknown fields degrade to null defaults.
+ */
+function parseTrust(v: unknown): TrustSummary | null {
+  if (!isRecord(v) || typeof v.state !== "string" || !TRUST_STATES.has(v.state as TrustState)) {
+    return null;
+  }
+  return {
+    state: v.state as TrustState,
+    freshness:
+      typeof v.freshness === "string" && FRESHNESS_STATES.has(v.freshness as FreshnessState)
+        ? (v.freshness as FreshnessState)
+        : "UNKNOWN",
+    authoritativeSource: strOrNull(v.authoritativeSource),
+    resolvedAt: strOrNull(v.resolvedAt),
+    lastIngestionAt: strOrNull(v.lastIngestionAt),
+    threshold: typeof v.threshold === "number" ? v.threshold : null,
   };
 }
 
@@ -100,6 +141,7 @@ function parseProvenance(v: unknown): MetricProvenance[] {
       dataFreshness: typeof p.dataFreshness === "string" ? p.dataFreshness : "",
       missingPeriods: strArray(p.missingPeriods),
       calculationVersion: typeof p.calculationVersion === "string" ? p.calculationVersion : "",
+      trust: parseTrust(p.trust),
     });
   }
   return out;

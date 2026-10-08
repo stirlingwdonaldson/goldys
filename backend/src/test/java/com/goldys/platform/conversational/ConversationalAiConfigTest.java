@@ -36,4 +36,18 @@ class ConversationalAiConfigTest {
 
     assertThat(prompt).contains("Never present correlation as causation");
   }
+
+  @Test
+  void systemPromptHedgesUntrustedToolResults() throws IOException {
+    ClassPathResource resource = new ClassPathResource("prompts/ask-goldys-system.txt");
+    assertThat(resource.exists()).isTrue();
+
+    String prompt;
+    try (var in = resource.getInputStream()) {
+      prompt = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    assertThat(prompt).contains("surface that caveat explicitly");
+    assertThat(prompt).contains("rather than presenting the number as settled");
+  }
 }

@@ -152,6 +152,7 @@ describe("AnswerBlock", () => {
               dataFreshness: "2026-10-07T09:00:00Z",
               missingPeriods: ["2026-10-03", "2026-10-04"],
               calculationVersion: "v3",
+              trust: null,
             },
           ],
         },
@@ -166,6 +167,103 @@ describe("AnswerBlock", () => {
     expect(screen.getByText(/2026-10-01 → 2026-10-07/)).toBeInTheDocument();
     expect(screen.getByText(/data as of 2026-10-07T09:00:00Z/i)).toBeInTheDocument();
     expect(screen.getByText(/missing 2026-10-03, 2026-10-04/)).toBeInTheDocument();
+  });
+
+  it("renders a stale trust badge on a tool result", () => {
+    const answer: AnswerPayload = {
+      widgets: [],
+      trace: [
+        {
+          tool: "get_sales_by_period",
+          description: "Resolved daily sales totals.",
+          provenance: [
+            {
+              metric: "sales.gross",
+              definitionVersion: "v1",
+              range: { from: "2026-10-01", to: "2026-10-07", calendar: "TRADING" },
+              grain: "DAY",
+              sourceDomain: "lightspeed",
+              dataFreshness: "2026-10-07T09:00:00Z",
+              missingPeriods: [],
+              calculationVersion: "v3",
+              trust: {
+                state: "VERIFIED",
+                freshness: "STALE",
+                authoritativeSource: "Lightspeed",
+                resolvedAt: null,
+                lastIngestionAt: null,
+                threshold: null,
+              },
+            },
+          ],
+        },
+      ],
+      asOf: "2026-10-02T10:00:00Z",
+      notices: [],
+    };
+    render(<AnswerBlock summary="" answer={answer} error={null} api={stubApi()} />);
+
+    expect(screen.getByText(/get_sales_by_period/i)).toBeInTheDocument();
+    expect(screen.getByText("Verified")).toBeInTheDocument();
+    expect(screen.getByText("stale")).toBeInTheDocument();
+  });
+
+  it("surfaces the worst trust across a tool result's metrics", () => {
+    const answer: AnswerPayload = {
+      widgets: [],
+      trace: [
+        {
+          tool: "get_sales_by_period",
+          description: "Resolved daily sales totals.",
+          provenance: [
+            {
+              metric: "sales.gross",
+              definitionVersion: "v1",
+              range: { from: "2026-10-01", to: "2026-10-07", calendar: "TRADING" },
+              grain: "DAY",
+              sourceDomain: "lightspeed",
+              dataFreshness: "2026-10-07T09:00:00Z",
+              missingPeriods: [],
+              calculationVersion: "v3",
+              trust: {
+                state: "VERIFIED",
+                freshness: "FRESH",
+                authoritativeSource: "Lightspeed",
+                resolvedAt: null,
+                lastIngestionAt: null,
+                threshold: null,
+              },
+            },
+            {
+              metric: "sales.net",
+              definitionVersion: "v1",
+              range: { from: "2026-10-01", to: "2026-10-07", calendar: "TRADING" },
+              grain: "DAY",
+              sourceDomain: "lightspeed",
+              dataFreshness: "2026-10-07T09:00:00Z",
+              missingPeriods: [],
+              calculationVersion: "v3",
+              trust: {
+                state: "CONFLICTED",
+                freshness: "STALE",
+                authoritativeSource: null,
+                resolvedAt: null,
+                lastIngestionAt: null,
+                threshold: null,
+              },
+            },
+          ],
+        },
+      ],
+      asOf: "2026-10-02T10:00:00Z",
+      notices: [],
+    };
+    render(<AnswerBlock summary="" answer={answer} error={null} api={stubApi()} />);
+
+    // The worst trust (CONFLICTED + stale) wins, not the verified metric.
+    expect(screen.getByText("Unresolved conflict")).toBeInTheDocument();
+    expect(screen.getByText("stale")).toBeInTheDocument();
+    expect(screen.queryByText("Verified")).not.toBeInTheDocument();
   });
 
   it("updates a dashboard when the draft has a dashboardId", async () => {
