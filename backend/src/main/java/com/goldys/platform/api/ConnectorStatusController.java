@@ -43,6 +43,14 @@ public class ConnectorStatusController {
     return connectors.run(currentUser.roleOf(user), source);
   }
 
+  /** Triggers the CTB SFTP drop pull on demand. */
+  @PostMapping("/connectors/{source}/sftp/run")
+  ResponseEntity<Void> runSftp(
+      @PathVariable String source, @AuthenticationPrincipal AccountUserDetails user) {
+    connectors.runSftpPull(currentUser.roleOf(user));
+    return ResponseEntity.noContent().build();
+  }
+
   /** Uploads a manually-exported GuestCenter reservations CSV for the OpenTable source. */
   @PostMapping(
       value = "/connectors/opentable/upload",

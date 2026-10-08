@@ -5,12 +5,15 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
+import com.goldys.platform.ingestion.CtbSftpPull;
 import com.goldys.platform.ingestion.FailureDetail;
 import com.goldys.platform.ingestion.IngestionRunSummary;
 import com.goldys.platform.ingestion.IngestionService;
+import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 /** The connectors screen's read model and run/upload actions. */
@@ -34,14 +37,17 @@ public class ConnectorApplicationService {
   private final IngestionService ingestion;
   private final OpenTableCsvIngestService openTableCsvIngest;
   private final PermissionService permissions;
+  private final ObjectProvider<CtbSftpPull> sftpPull;
 
   public ConnectorApplicationService(
       IngestionService ingestion,
       OpenTableCsvIngestService openTableCsvIngest,
-      PermissionService permissions) {
+      PermissionService permissions,
+      ObjectProvider<CtbSftpPull> sftpPull) {
     this.ingestion = ingestion;
     this.openTableCsvIngest = openTableCsvIngest;
     this.permissions = permissions;
+    this.sftpPull = sftpPull;
   }
 
   public List<ConnectorStatus> connectors(UserRole role) {
@@ -75,6 +81,17 @@ public class ConnectorApplicationService {
   public void uploadOpenTableCsv(UserRole role, byte[] bytes) {
     permissions.require(role, RESOURCE, PermissionAction.WRITE);
     openTableCsvIngest.ingest(bytes);
+  }
+
+  /** Triggers the CTB SFTP drop pull on demand (requires {@code ctb.sftp.enabled=true}). */
+  public void runSftpPull(UserRole role) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    CtbSftpPull pull = sftpPull.getIfAvailable();
+    if (pull == null) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_FETCH_FAILED", "SFTP ingestion is not enabled (ctb.sftp.enabled=false)");
+    }
+    pull.pull();
   }
 
   private ConnectorStatus toStatus(IngestionRunSummary run) {

@@ -138,6 +138,24 @@ Never run the equivalent against the prod stack (`docker compose --env-file
 .env.prod -f docker-compose.prod.yml down -v`) — it deletes the production
 database.
 
+## SFTP drop (invoice ingestion)
+
+CTB's Custom Invoice Export lands on an SFTP server; the backend polls it and
+ingests the files. The platform is an SFTP **client** — you need an SFTP server
+to point it at (e.g. CTB's drop, or one you control). Enable it in `.env.prod`:
+
+| Setting | Meaning |
+|---|---|
+| `CTB_SFTP_ENABLED` | `true` turns the poller on (default `false`). |
+| `CTB_SFTP_HOST` / `CTB_SFTP_PORT` | host and port of the drop (port defaults to 22). |
+| `CTB_SFTP_USER` / `CTB_SFTP_PASSWORD` | credentials to the drop. |
+| `CTB_SFTP_REMOTE_DIR` | directory the files land in (default `/`). |
+| `CTB_SFTP_CRON` | poll schedule, Australia/Melbourne (default `0 15 4 * * *`). |
+
+CSVs are canonicalized (invoice header + lines → COGS); PDFs are stored raw for
+now. To run the poll on demand without waiting for the cron, an operator with the
+`connectors` write permission can hit `POST /api/connectors/CTB/sftp/run`.
+
 ## Upgrading
 
 ```bash
