@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Clock;
 import java.util.UUID;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -46,13 +47,26 @@ class ConnectorRunner {
 
   /** Starts a run and executes the connector asynchronously; returns the run id immediately. */
   UUID run(SourceConnector connector, String watermark) {
+    return run(connector, watermark, null);
+  }
+
+  /**
+   * As {@link #run(SourceConnector, String)}, additionally calling {@code onComplete} with the
+   * run's terminal status once the asynchronous fetch has finished. Used by scheduled pulls to
+   * report the real outcome to cron monitoring, which a synchronous caller cannot see.
+   */
+  UUID run(SourceConnector connector, String watermark, Consumer<IngestionStatus> onComplete) {
     UUID runId =
         runs.start(connector.sourceSystem(), connector.connectorName(), watermark, CLOCK.instant());
-    executor.execute(() -> execute(runId, connector, watermark));
+    executor.execute(() -> execute(runId, connector, watermark, onComplete));
     return runId;
   }
 
-  private void execute(UUID runId, SourceConnector connector, String watermark) {
+  private void execute(
+      UUID runId,
+      SourceConnector connector,
+      String watermark,
+      Consumer<IngestionStatus> onComplete) {
     Timer.Sample sample = metrics.start();
     IngestionSink sink =
         payload -> {
@@ -75,6 +89,8 @@ class ConnectorRunner {
     } catch (ConnectorFetchException e) {
       metrics.connectorFailure(connector.sourceSystem());
       runs.recordFailure(runId, e.failureType(), e.getMessage(), stackTraceOf(e), CLOCK.instant());
+      IngestionFailureReporter.reportClassified(
+          runId, connector.sourceSystem(), e.failureType(), e.getMessage(), e);
     } catch (RuntimeException e) {
       // An unclassified fault may carry anything in its message - a URL with a token, a fragment
       // of payload. The stack trace is stored deliberately (accepted tradeoff: the operator who
@@ -84,13 +100,22 @@ class ConnectorRunner {
       metrics.connectorFailure(connector.sourceSystem());
       runs.recordFailure(
           runId, "UNEXPECTED", e.getClass().getName(), stackTraceOf(e), CLOCK.instant());
+      IngestionFailureReporter.reportUnexpected(runId, connector.sourceSystem(), e);
     } finally {
       metrics.stopConnector(sample, connector.sourceSystem());
     }
 
     // This port carries no output watermark yet, so an unchanged run keeps the one it started
     // from rather than silently resetting the source position to null.
-    runs.complete(runId, watermark, CLOCK.instant());
+    IngestionStatus status = runs.complete(runId, watermark, CLOCK.instant());
+    if (onComplete != null) {
+      try {
+        onComplete.accept(status);
+      } catch (RuntimeException e) {
+        // A monitoring callback must never affect the run, which is already closed in the ledger.
+        log.warn("Run-completion callback failed for {}", connector.sourceSystem(), e);
+      }
+    }
   }
 
   private static String stackTraceOf(Throwable t) {

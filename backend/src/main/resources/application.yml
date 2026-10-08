@@ -75,6 +75,25 @@ logging:
   level:
     com.goldys.platform: DEBUG
 
+# Error tracking / tracing / cron monitoring (self-hosted Sentry, VM ops-sentry).
+# An empty DSN disables the SDK entirely, so local dev and the test suite send nothing.
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
+  # Git SHA of the deployed build, passed in at deploy time; lets Sentry say "new in release X".
+  release: ${SENTRY_RELEASE:}
+  # Low traffic, so trace everything by default; lower it if the Sentry VM's disk grows too fast.
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:1.0}
+  # Privacy: no IPs/cookies/user details, and never request bodies (CSV/PDF uploads, webhook
+  # payloads and staff/wage data must not leave the platform).
+  send-default-pii: false
+  max-request-body-size: none
+  in-app-includes: com.goldys.platform
+  logging:
+    # ERROR logs become events; INFO+ become breadcrumbs on whatever event follows.
+    minimum-event-level: error
+    minimum-breadcrumb-level: info
+
 app:
   conversational:
     system-prompt: prompts/ask-goldys-system.txt

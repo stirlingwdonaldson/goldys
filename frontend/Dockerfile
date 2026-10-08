@@ -22,7 +22,28 @@ ENV BACKEND_ORIGIN=$BACKEND_ORIGIN
 # build time). Build with --build-arg NEXT_PUBLIC_DEMO_MODE=true for a demo image.
 ARG NEXT_PUBLIC_DEMO_MODE=false
 ENV NEXT_PUBLIC_DEMO_MODE=$NEXT_PUBLIC_DEMO_MODE
-RUN bun run build
+
+# Sentry. All optional: with no DSN the SDK stays off, and with no auth token the build skips
+# source map upload. The DSN/environment/release are inlined into the browser bundle.
+ARG NEXT_PUBLIC_SENTRY_DSN=
+ARG NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
+# "true" shows Sentry's "Report a problem" button to signed-in users.
+ARG NEXT_PUBLIC_SENTRY_FEEDBACK=false
+ARG SENTRY_RELEASE=
+ARG SENTRY_URL=
+ARG SENTRY_ORG=
+ARG SENTRY_PROJECT=goldys-frontend
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
+    NEXT_PUBLIC_SENTRY_ENVIRONMENT=$NEXT_PUBLIC_SENTRY_ENVIRONMENT \
+    NEXT_PUBLIC_SENTRY_FEEDBACK=$NEXT_PUBLIC_SENTRY_FEEDBACK \
+    NEXT_PUBLIC_SENTRY_RELEASE=$SENTRY_RELEASE \
+    SENTRY_RELEASE=$SENTRY_RELEASE \
+    SENTRY_URL=$SENTRY_URL \
+    SENTRY_ORG=$SENTRY_ORG \
+    SENTRY_PROJECT=$SENTRY_PROJECT
+
+# The auth token arrives as a BuildKit secret so it never lands in an image layer or history.
+RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN bun run build
 
 # ---- runtime ----
 FROM node:22-alpine AS runtime

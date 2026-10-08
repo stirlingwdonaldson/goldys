@@ -54,8 +54,9 @@ class IngestionRunService {
             ingestionRunId, run.sourceSystem(), failureType, detail, stackTrace, occurredAt));
   }
 
+  /** Closes the run and returns the terminal status it was given. */
   @Transactional
-  void complete(UUID ingestionRunId, String outputWatermark, Instant completedAt) {
+  IngestionStatus complete(UUID ingestionRunId, String outputWatermark, Instant completedAt) {
     IngestionRun run = require(ingestionRunId);
     long failureCount = failures.countByIngestionRunId(ingestionRunId);
 
@@ -73,6 +74,7 @@ class IngestionRunService {
     String failureSummary = failureCount == 0 ? null : failureCount + " failure(s) recorded";
     run.complete(status, outputWatermark, failureSummary, completedAt);
     runs.save(run);
+    return status;
   }
 
   /**

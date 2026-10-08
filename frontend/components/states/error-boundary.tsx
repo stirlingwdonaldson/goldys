@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ErrorState } from "./error-state";
 
@@ -24,6 +25,7 @@ export class ScreenErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error("Screen render error", error, info.componentStack);
+    Sentry.captureException(error, { contexts: { react: { componentStack: info.componentStack } } });
   }
 
   render() {

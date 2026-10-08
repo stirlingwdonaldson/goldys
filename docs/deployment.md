@@ -142,6 +142,7 @@ database.
 
 ```bash
 git pull
+export SENTRY_RELEASE=$(git rev-parse --short HEAD)   # tags errors with the deployed commit
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 ```
 
@@ -168,6 +169,40 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml ps
 docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
 curl -s https://platform.swd.sh/api/health
 ```
+
+## Error monitoring (Sentry)
+
+Both apps report to the self-hosted Sentry (`ops-sentry`). Everything is opt-in:
+with the `SENTRY_*` values unset the SDKs stay off and the build skips source map
+upload, so dev, CI and a bare deploy behave exactly as before.
+
+| Setting (`.env.prod`) | Used by | Notes |
+|---|---|---|
+| `SENTRY_BACKEND_DSN` | backend | DSN of the `goldys-backend` project |
+| `SENTRY_FRONTEND_DSN` | frontend (build + runtime) | DSN of `goldys-frontend`; inlined into the browser bundle |
+| `SENTRY_ENVIRONMENT` | both | `production` (default) or e.g. `staging` for a second instance |
+| `SENTRY_RELEASE` | both | export the git SHA before `up --build` (see Upgrading) |
+| `SENTRY_URL`, `SENTRY_ORG` | frontend build | source map upload; use Sentry's **internal** URL |
+| `SENTRY_AUTH_TOKEN` | frontend build | org auth token; passed as a BuildKit secret, never a build arg |
+| `SENTRY_FEEDBACK` | frontend build | `true` shows a "Report a problem" button (Sentry User Feedback) |
+| `SENTRY_TUNNEL_TARGET` | frontend runtime | optional LAN address the `/monitoring` relay forwards to |
+
+Browser events go to `/monitoring` on this site and are relayed server-side
+(`frontend/app/monitoring/route.ts`), because the self-hosted Sentry is plain
+HTTP and an HTTPS page cannot call it directly.
+
+What is reported, and what is deliberately not:
+
+- Unhandled backend and frontend errors, plus every **connector failure** (tagged
+  `source_system` / `failure_type`, grouped per connector and failure mode). The
+  `IngestionFailure` ledger stays the record of truth; Sentry is the alert.
+- The CTB 4am pull checks in to the `ctb-scheduled-pull` cron monitor, created
+  automatically on first run, so a pull that fails, hangs or never runs alerts.
+- Request traces for both apps, linked browser → Next.js → Spring.
+- Every error response carries `X-Correlation-ID`, also tagged on the Sentry event.
+- Never sent: request/response bodies (uploads, webhooks), cookies, user details,
+  stack-frame local variables, or raw exception messages from unclassified
+  connector faults (they may contain tokens or payload fragments).
 
 ## Secrets
 
