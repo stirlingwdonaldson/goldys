@@ -9,6 +9,12 @@ import type {
   ConversationThreadSummary,
   ConversationThreadView,
   DailySales,
+  DataPage,
+  EntityDescriptor,
+  GenericRow,
+  RawRecordDetail,
+  RawRecordFilter,
+  RawRecordSummary,
   DashboardBootstrap,
   DashboardDocument,
   DashboardFilters,
@@ -291,6 +297,84 @@ const demoThreadMessages: Record<string, ConversationMessage[]> = {
         { tool: "query_metric", description: "reservations.covers and no-shows", provenance: [] },
       ],
       createdAt: "2026-10-04T18:40:00Z",
+    },
+  ],
+};
+
+// Data-explorer demo fixtures: a couple of raw records, the descriptor lists, and a few generic rows
+// so the /data screen renders without a backend.
+const demoRawRecords: RawRecordSummary[] = [
+  {
+    id: "raw-1",
+    sourceSystem: "CTB",
+    fetcherIdentity: "ctb-invoices-ajax",
+    fetchMethod: "API",
+    contentType: "application/json",
+    characterEncoding: "UTF-8",
+    fetchedAt: "2026-10-07T12:00:00Z",
+    byteLength: 312,
+    sha256: "0".repeat(64),
+  },
+  {
+    id: "raw-2",
+    sourceSystem: "LIGHTSPEED",
+    fetcherIdentity: "lightspeed-insights",
+    fetchMethod: "FILE_EXPORT",
+    contentType: "application/json",
+    characterEncoding: "UTF-8",
+    fetchedAt: "2026-10-07T11:30:00Z",
+    byteLength: 1540,
+    sha256: "1".repeat(64),
+  },
+];
+
+const demoCanonicalEntities: EntityDescriptor[] = [
+  { id: "daily_sales", label: "Daily sales", placeholder: false },
+  { id: "product_sales", label: "Product sales", placeholder: false },
+  { id: "invoice", label: "Invoices", placeholder: false },
+  { id: "shift", label: "Shifts", placeholder: true },
+];
+
+const demoResolvedDomains: EntityDescriptor[] = [
+  { id: "resolved_daily_sales", label: "Daily sales", placeholder: false },
+  { id: "resolved_inventory_day", label: "Inventory day", placeholder: false },
+];
+
+const demoCanonicalRows: Record<string, GenericRow[]> = {
+  daily_sales: [
+    {
+      id: "daily-1",
+      columns: {
+        source_system: "CTB",
+        source_record_ref: "2026-10-05",
+        trading_date: "2026-10-05",
+        total_sales: "10865.7200",
+      },
+    },
+  ],
+  invoice: [
+    {
+      id: "invoice-1",
+      columns: {
+        source_system: "CTB",
+        source_record_ref: "INV-1",
+        invoice_number: "INV-1",
+        supplier_name: "Acme Supplies",
+      },
+    },
+  ],
+};
+
+const demoResolvedRows: Record<string, GenericRow[]> = {
+  resolved_daily_sales: [
+    {
+      id: "2026-10-05",
+      columns: {
+        trading_date: "2026-10-05",
+        total_sales: "10865.7200",
+        resolution_type: "agreed",
+        authoritative_source: "Lightspeed",
+      },
     },
   ],
 };
@@ -798,6 +882,49 @@ export const demoApi: Api = {
     await delay(300);
     demoThreads = demoThreads.filter((t) => t.id !== id);
     delete demoThreadMessages[id];
+  },
+
+  async listRawRecords(
+    _filter: RawRecordFilter,
+    page: number,
+    size: number,
+  ): Promise<DataPage<RawRecordSummary>> {
+    await delay(300);
+    return { items: demoRawRecords, total: demoRawRecords.length, page, size };
+  },
+
+  async getRawRecord(id: string): Promise<RawRecordDetail> {
+    await delay(300);
+    const record = demoRawRecords.find((r) => r.id === id);
+    if (!record) throw new ApiError("NOT_FOUND", `No raw record ${id}.`);
+    return {
+      summary: record,
+      payload: '{"supplier": "Acme Supplies"}',
+      isJson: true,
+      sha256: record.sha256,
+    };
+  },
+
+  async listCanonicalEntities(): Promise<EntityDescriptor[]> {
+    await delay(300);
+    return demoCanonicalEntities;
+  },
+
+  async listCanonicalRows(entity: string, page: number, size: number): Promise<DataPage<GenericRow>> {
+    await delay(300);
+    const items = demoCanonicalRows[entity] ?? [];
+    return { items, total: items.length, page, size };
+  },
+
+  async listResolvedDomains(): Promise<EntityDescriptor[]> {
+    await delay(300);
+    return demoResolvedDomains;
+  },
+
+  async listResolvedRows(domain: string, page: number, size: number): Promise<DataPage<GenericRow>> {
+    await delay(300);
+    const items = demoResolvedRows[domain] ?? [];
+    return { items, total: items.length, page, size };
   },
 };
 
