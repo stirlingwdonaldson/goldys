@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 /**
@@ -46,7 +47,8 @@ interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
   Double avgFailedDurationSeconds();
 }
 
-interface RawRecordRepository extends JpaRepository<RawRecord, UUID> {
+interface RawRecordRepository
+    extends JpaRepository<RawRecord, UUID>, JpaSpecificationExecutor<RawRecord> {
   List<RawRecord> findByIngestionRunId(UUID ingestionRunId);
 
   List<RawRecord> findBySourceSystem(String sourceSystem);
