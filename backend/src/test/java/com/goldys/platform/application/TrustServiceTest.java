@@ -82,7 +82,7 @@ class TrustServiceTest {
     TimeRange range = range(day);
 
     TrustSummary summary =
-        service(range, List.of(state(day, "missing", SOURCE)), healthy(SOURCE))
+        service(range, List.of(state(day, "single", SOURCE)), healthy(SOURCE))
             .trustFor(METRIC, range);
 
     assertThat(summary.state()).isEqualTo(TrustState.SINGLE_SOURCE);

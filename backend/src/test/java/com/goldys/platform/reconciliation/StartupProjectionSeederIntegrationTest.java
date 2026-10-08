@@ -40,7 +40,7 @@ class StartupProjectionSeederIntegrationTest {
 
     assertThat(repository.count()).isEqualTo(1);
     assertThat(repository.findTopByOrderByTradingDateDesc().get().resolutionType())
-        .isEqualTo("missing");
+        .isEqualTo("single");
   }
 
   @Test

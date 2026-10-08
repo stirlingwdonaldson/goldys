@@ -8,7 +8,7 @@ const existing: ResolutionRule = {
   entityType: "daily_sales",
   fieldKey: "daily_sales",
   strategy: "priority",
-  sourcePriority: ["Cooking the Books", "Lightspeed"],
+  sourcePriority: ["CTB", "LIGHTSPEED"],
   updatedAt: "2026-09-29T18:00:00Z",
   updatedBy: "Stirling Donaldson",
 };
@@ -28,7 +28,7 @@ describe("RuleEditor", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
     expect(existing.strategy).toBe("priority");
-    expect(existing.sourcePriority).toEqual(["Cooking the Books", "Lightspeed"]);
+    expect(existing.sourcePriority).toEqual(["CTB", "LIGHTSPEED"]);
     expect(onCancel).toHaveBeenCalled();
   });
 
@@ -62,7 +62,7 @@ describe("RuleEditor", () => {
       entityType: "product_sales",
       fieldKey: "garlic aioli",
       strategy: "priority",
-      sourcePriority: ["Lightspeed", "Cooking the Books"],
+      sourcePriority: ["LIGHTSPEED", "CTB"],
       updatedAt: "2026-09-28T09:30:00Z",
       updatedBy: "Stirling Donaldson",
     };
@@ -81,7 +81,30 @@ describe("RuleEditor", () => {
       expect.objectContaining({
         id: "rule-2",
         strategy: "priority",
-        sourcePriority: ["Lightspeed", "Cooking the Books"],
+        sourcePriority: ["LIGHTSPEED", "CTB"],
+      }),
+    );
+  });
+
+  it("reorders sources with the up/down controls and submits the new priority", () => {
+    const onSave = vi.fn();
+    render(
+      <RuleEditor
+        open
+        onCancel={() => {}}
+        onSave={onSave}
+        entities={["daily_sales"]}
+        fieldsByEntity={{ daily_sales: ["daily_sales"] }}
+        initial={null}
+      />,
+    );
+    // Default order is Lightspeed first; move "Cooking the Books" up to the top.
+    fireEvent.click(screen.getByRole("button", { name: /move cooking the books up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save rule/i }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        strategy: "priority",
+        sourcePriority: ["CTB", "LIGHTSPEED"],
       }),
     );
   });

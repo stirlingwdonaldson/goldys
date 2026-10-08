@@ -20,7 +20,7 @@ final class DailySalesResolver {
       BigDecimal gst,
       BigDecimal net) {
     boolean hasConflict() {
-      return "conflict".equals(resolutionType) || "missing".equals(resolutionType);
+      return "conflict".equals(resolutionType);
     }
   }
 
@@ -36,6 +36,11 @@ final class DailySalesResolver {
       return Optional.empty();
     }
     String status = classify(sources);
+    if ("single".equals(status)) {
+      // One source reported; resolve to it (SINGLE_SOURCE), never flagged as missing.
+      SourceTotal s = sources.get(0);
+      return Optional.of(result("single", s.sourceSystem(), s));
+    }
     if ("agreed".equals(status)) {
       SourceTotal s = sources.get(0);
       return Optional.of(result("agreed", "agreed", s));
@@ -58,7 +63,7 @@ final class DailySalesResolver {
 
   static String classify(List<SourceTotal> sources) {
     if (sources.size() < 2) {
-      return "missing";
+      return "single";
     }
     BigDecimal first = sources.get(0).totalSales();
     boolean allAgree = sources.stream().allMatch(s -> withinCent(first, s.totalSales()));

@@ -15,14 +15,14 @@ class DailySalesResolverTest {
   private static final LocalDate SEP_13 = LocalDate.of(2026, 9, 13);
 
   @Test
-  void classifiesAgreedConflictAndMissing() {
+  void classifiesAgreedConflictAndSingle() {
     assertThat(classify(List.of(st("LIGHTSPEED", "10.00"), st("CTB", "10.00"))))
         .isEqualTo("agreed");
     assertThat(classify(List.of(st("LIGHTSPEED", "10.00"), st("CTB", "10.005"))))
         .isEqualTo("agreed");
     assertThat(classify(List.of(st("LIGHTSPEED", "10.00"), st("CTB", "12.00"))))
         .isEqualTo("conflict");
-    assertThat(classify(List.of(st("LIGHTSPEED", "10.00")))).isEqualTo("missing");
+    assertThat(classify(List.of(st("LIGHTSPEED", "10.00")))).isEqualTo("single");
   }
 
   @Test
@@ -69,15 +69,16 @@ class DailySalesResolverTest {
   }
 
   @Test
-  void singleSourceIsMissingNotResolved() {
+  void singleSourceResolvesToThatSource() {
     Optional<DailySalesResolver.Result> r =
         DailySalesResolver.resolve(
-            List.of(st("LIGHTSPEED", "27650.66")), Optional.empty(), Optional.empty());
+            List.of(st("CTB", "20990.83")), Optional.empty(), Optional.empty());
 
     assertThat(r).isPresent();
-    assertThat(r.get().resolutionType()).isEqualTo("missing");
-    assertThat(r.get().totalSales()).isNull();
-    assertThat(r.get().hasConflict()).isTrue();
+    assertThat(r.get().resolutionType()).isEqualTo("single");
+    assertThat(r.get().authoritativeSource()).isEqualTo("CTB");
+    assertThat(r.get().totalSales()).isEqualByComparingTo("20990.83");
+    assertThat(r.get().hasConflict()).isFalse();
   }
 
   @Test
