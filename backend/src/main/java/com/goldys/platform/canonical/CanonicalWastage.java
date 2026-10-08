@@ -70,4 +70,20 @@ class CanonicalWastage extends BitemporalEntity {
         quantity,
         reason);
   }
+
+  LocalDate wastageDate() {
+    return wastageDate;
+  }
+
+  String productNameKey() {
+    return productNameKey;
+  }
+
+  BigDecimal quantity() {
+    return quantity;
+  }
+
+  String reason() {
+    return reason;
+  }
 }

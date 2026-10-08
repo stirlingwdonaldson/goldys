@@ -63,4 +63,16 @@ class CanonicalStockCount extends BitemporalEntity {
         productNameKey,
         quantityOnHand);
   }
+
+  LocalDate countedDate() {
+    return countedDate;
+  }
+
+  String productNameKey() {
+    return productNameKey;
+  }
+
+  BigDecimal quantityOnHand() {
+    return quantityOnHand;
+  }
 }
