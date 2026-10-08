@@ -1,5 +1,5 @@
 import type { WidgetSpec } from "@/components/widgets/types";
-import type { DashboardFilters, SavedWidget } from "@/lib/api/types";
+import type { DashboardFilters, SavedWidget, TrustSummary } from "@/lib/api/types";
 
 export type { WidgetSpec };
 
@@ -24,6 +24,8 @@ export interface MetricProvenance {
   dataFreshness: string;
   missingPeriods: string[];
   calculationVersion: string;
+  /** Trust + freshness summary for the metric; null when the backend did not attach one. */
+  trust: TrustSummary | null;
 }
 
 /**

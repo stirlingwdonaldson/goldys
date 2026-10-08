@@ -1,5 +1,6 @@
 package com.goldys.platform.semantic.catalog;
 
+import com.goldys.platform.semantic.TrustQuery;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +12,12 @@ import org.springframework.stereotype.Service;
 public class MetricQueryServiceImpl implements MetricQueryService {
   private final MetricCatalog catalog;
   private final Map<MetricId, MetricExecutor> executors;
+  private final TrustQuery trustQuery;
 
-  public MetricQueryServiceImpl(MetricCatalog catalog, List<MetricExecutor> executors) {
+  public MetricQueryServiceImpl(
+      MetricCatalog catalog, List<MetricExecutor> executors, TrustQuery trustQuery) {
     this.catalog = catalog;
+    this.trustQuery = trustQuery;
     Map<MetricId, MetricExecutor> byId = new HashMap<>();
     for (MetricExecutor executor : executors) {
       for (MetricId id : executor.ids()) {
@@ -40,6 +44,9 @@ public class MetricQueryServiceImpl implements MetricQueryService {
     if (executor == null) {
       throw new IllegalArgumentException("No executor for metric: " + query.metric());
     }
-    return executor.evaluate(query);
+    MetricResult result = executor.evaluate(query);
+    MetricProvenance enriched =
+        result.provenance().withTrust(trustQuery.trustFor(query.metric(), query.range()));
+    return result.withProvenance(enriched);
   }
 }

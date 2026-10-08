@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.goldys.platform.semantic.MissingDataStatus;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.goldys.platform.semantic.ReservationSummary;
 import java.math.BigDecimal;
@@ -56,6 +57,8 @@ class ReservationMetricExecutorTest {
     TimeSeriesResult ts = (TimeSeriesResult) result;
     assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("2");
     assertThat(ts.series().get(0).points().get(1).value()).isNull();
+    assertThat(ts.series().get(0).points().get(1).status())
+        .isEqualTo(MissingDataStatus.NOT_RECEIVED);
     assertThat(ts.notices()).containsExactly("1 day(s) unresolved");
   }
 }

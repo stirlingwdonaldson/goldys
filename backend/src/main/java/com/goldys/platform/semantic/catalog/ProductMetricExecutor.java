@@ -44,7 +44,7 @@ public class ProductMetricExecutor implements MetricExecutor {
       BigDecimal v = pick.apply(m);
       if (v == null) {
         unresolved.put(m.tradingDate(), true);
-        byDay.remove(m.tradingDate());
+        byDay.put(m.tradingDate(), null);
       } else if (!unresolved.getOrDefault(m.tradingDate(), false)) {
         byDay.merge(m.tradingDate(), v, BigDecimal::add);
       }

@@ -7,11 +7,16 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.reconciliation.DailySalesOverrideService;
+import com.goldys.platform.reconciliation.OverrideAuditService;
 import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
 import com.goldys.platform.reconciliation.ProductSalesOverrideService;
 import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
+import com.goldys.platform.reconciliation.RuleAuditService;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -31,6 +36,8 @@ public class ReconciliationApplicationService {
   private final CanonicalProductSalesQuery productSales;
   private final DailySalesOverrideService dailyOverrides;
   private final ProductSalesOverrideService productOverrides;
+  private final RuleAuditService ruleAudit;
+  private final OverrideAuditService overrideAudit;
   private final PermissionService permissions;
 
   public ReconciliationApplicationService(
@@ -40,6 +47,8 @@ public class ReconciliationApplicationService {
       CanonicalProductSalesQuery productSales,
       DailySalesOverrideService dailyOverrides,
       ProductSalesOverrideService productOverrides,
+      RuleAuditService ruleAudit,
+      OverrideAuditService overrideAudit,
       PermissionService permissions) {
     this.dailyExceptions = dailyExceptions;
     this.productExceptions = productExceptions;
@@ -47,6 +56,8 @@ public class ReconciliationApplicationService {
     this.productSales = productSales;
     this.dailyOverrides = dailyOverrides;
     this.productOverrides = productOverrides;
+    this.ruleAudit = ruleAudit;
+    this.overrideAudit = overrideAudit;
     this.permissions = permissions;
   }
 
@@ -61,14 +72,19 @@ public class ReconciliationApplicationService {
         dailySales.currentDailySalesForDate(date).stream()
             .map(s -> new SourceValue(s.sourceSystem(), plain(s.totalSales())))
             .toList();
-    Optional<String> authoritative = dailyOverrides.currentAuthoritativeSource(date);
+    Optional<DailySalesOverrideService.OverrideDetail> override = dailyOverrides.latestFor(date);
     Field field =
         new Field(
             "daily_sales",
             "Daily sales",
             sources,
-            authoritative.isPresent(),
-            authoritative.orElse(null));
+            override.isPresent(),
+            override
+                .map(DailySalesOverrideService.OverrideDetail::authoritativeSource)
+                .orElse(null),
+            override.map(DailySalesOverrideService.OverrideDetail::reason).orElse(null),
+            override.map(DailySalesOverrideService.OverrideDetail::actorEmail).orElse(null),
+            override.map(DailySalesOverrideService.OverrideDetail::recordedAt).orElse(null));
     return new Record(date.toString(), date.toString(), "day", List.of(field));
   }
 
@@ -89,9 +105,20 @@ public class ReconciliationApplicationService {
             .filter(v -> v.productNameKey().equals(product))
             .map(v -> new SourceValue(v.sourceSystem(), productValue(v.quantitySold(), v.amount())))
             .toList();
-    Optional<String> authoritative = productOverrides.currentAuthoritativeSource(date, product);
+    Optional<ProductSalesOverrideService.OverrideDetail> override =
+        productOverrides.latestFor(date, product);
     Field field =
-        new Field(product, product, sources, authoritative.isPresent(), authoritative.orElse(null));
+        new Field(
+            product,
+            product,
+            sources,
+            override.isPresent(),
+            override
+                .map(ProductSalesOverrideService.OverrideDetail::authoritativeSource)
+                .orElse(null),
+            override.map(ProductSalesOverrideService.OverrideDetail::reason).orElse(null),
+            override.map(ProductSalesOverrideService.OverrideDetail::actorEmail).orElse(null),
+            override.map(ProductSalesOverrideService.OverrideDetail::recordedAt).orElse(null));
     return new ProductRecord(product, product, "product", List.of(field));
   }
 
@@ -110,6 +137,36 @@ public class ReconciliationApplicationService {
       String reason) {
     productOverrides.save(role, actorEmail, date, product, source, reason);
     return new OverrideResult(true, product, "product");
+  }
+
+  /**
+   * The reconciliation screen's combined, read-only audit history: every rule change (created /
+   * updated / deleted) plus every manual override (set / removed), newest first. Authorized on the
+   * domain read resource like the other reconciliation reads.
+   */
+  public List<AuditEntry> audit(UserRole role) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    List<AuditEntry> out = new ArrayList<>();
+    for (RuleAuditService.RuleAuditEntry e : ruleAudit.history()) {
+      out.add(
+          new AuditEntry(
+              "rule", e.change(), e.entityType(), e.fieldKey(), null, null, e.by(), e.at()));
+    }
+    for (OverrideAuditService.OverrideAuditEntry o : overrideAudit.history()) {
+      boolean active = o.supersededAt() == null;
+      out.add(
+          new AuditEntry(
+              "override",
+              active ? "set" : "removed",
+              o.entityType(),
+              o.fieldKey(),
+              o.authoritativeSource(),
+              o.reason(),
+              o.by(),
+              active ? o.at() : o.supersededAt()));
+    }
+    out.sort(Comparator.comparing(AuditEntry::at).reversed());
+    return out;
   }
 
   private DailyException toException(ReconciliationExceptionQuery.DailyException e) {
@@ -173,9 +230,23 @@ public class ReconciliationApplicationService {
       String label,
       List<SourceValue> sources,
       boolean overridden,
-      String authoritativeSource) {}
+      String authoritativeSource,
+      String overrideReason,
+      String overrideActor,
+      Instant overrideAt) {}
 
   public record SourceValue(String source, String value) {}
 
   public record OverrideResult(boolean ok, String recordId, String field) {}
+
+  /** One entry in the combined rule + override audit history (see {@link #audit}). */
+  public record AuditEntry(
+      String kind, // "rule" | "override"
+      String change, // rule: created/updated/deleted; override: set/removed
+      String entityType,
+      String fieldKey,
+      String source, // override authoritative source, else null
+      String reason, // override reason, else null
+      String by,
+      Instant at) {}
 }

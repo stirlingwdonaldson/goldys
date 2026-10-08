@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { WidgetRenderer } from "./widget-renderer";
+import { TRUST_LABEL } from "@/components/trust/trust-indicator";
+import type { TrustSummary } from "@/lib/api/types";
 import type { RankedListWidget, StatWidget, TableWidget, WidgetSpec } from "./types";
 
 describe("WidgetRenderer", () => {
@@ -51,5 +53,27 @@ describe("WidgetRenderer", () => {
     const widget = { schemaVersion: 2, id: "w1", type: "pie", title: "Unknown" } as unknown as WidgetSpec;
     render(<WidgetRenderer widget={widget} />);
     expect(screen.getByText(/unsupported/i)).toBeInTheDocument();
+  });
+
+  it("shows a trust badge when a metric is STALE", () => {
+    const widget: StatWidget = {
+      schemaVersion: 2,
+      id: "w1",
+      type: "stat",
+      title: "Sales",
+      value: 10865.72,
+      format: "currency",
+    };
+    const trust: TrustSummary = {
+      state: "SINGLE_SOURCE",
+      freshness: "STALE",
+      authoritativeSource: null,
+      resolvedAt: null,
+      lastIngestionAt: null,
+      threshold: null,
+    };
+    render(<WidgetRenderer widget={widget} trust={trust} />);
+    expect(screen.getByText(TRUST_LABEL.SINGLE_SOURCE)).toBeInTheDocument();
+    expect(screen.getByText("stale")).toBeInTheDocument();
   });
 });

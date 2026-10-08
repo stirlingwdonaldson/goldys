@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
+import com.goldys.platform.semantic.MissingDataStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -122,6 +123,7 @@ class LabourMetricExecutorTest {
 
     TimeSeriesResult ts = (TimeSeriesResult) result;
     assertThat(ts.series().get(0).points().get(0).value()).isNull();
+    assertThat(ts.series().get(0).points().get(0).status()).isEqualTo(MissingDataStatus.UNRESOLVED);
     assertThat(ts.notices()).containsExactly("1 day(s) unresolved");
     assertThat(ts.provenance().missingPeriods()).containsExactly(SEP_13);
   }

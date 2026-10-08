@@ -26,4 +26,6 @@ interface ProductSalesOverrideRepository extends JpaRepository<ProductSalesOverr
   List<ProductSalesOverride> findAllCurrent();
 
   long countByRecordedAtAfter(Instant since);
+
+  List<ProductSalesOverride> findAllByOrderByRecordedAtDesc();
 }

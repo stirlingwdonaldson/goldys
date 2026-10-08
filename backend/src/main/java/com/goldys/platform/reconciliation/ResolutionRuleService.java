@@ -100,6 +100,11 @@ public class ResolutionRuleService {
     return repository.findCurrent(entityType, fieldKey);
   }
 
+  /** The current non-superseded rule for an entity/field pair, for provenance drill-down. */
+  public Optional<ResolutionRuleView> currentView(String entityType, String fieldKey) {
+    return repository.findCurrent(entityType, fieldKey).map(this::toView);
+  }
+
   public Optional<Instant> lastChangedAt() {
     return repository.findFirstByOrderByRecordedAtDesc().map(ResolutionRule::recordedAt);
   }

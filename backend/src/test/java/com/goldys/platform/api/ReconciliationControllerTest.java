@@ -146,6 +146,39 @@ class ReconciliationControllerTest {
         .andExpect(jsonPath("$[1]").value("pint carlton draught"));
   }
 
+  @Test
+  void auditReturnsRuleAndOverrideHistory() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(reconciliation.audit(any()))
+        .thenReturn(
+            List.of(
+                new ReconciliationApplicationService.AuditEntry(
+                    "rule",
+                    "created",
+                    "daily_sales",
+                    "daily_sales",
+                    null,
+                    null,
+                    "a@b.com",
+                    java.time.Instant.parse("2026-09-13T09:00:00Z")),
+                new ReconciliationApplicationService.AuditEntry(
+                    "override",
+                    "set",
+                    "daily_sales",
+                    "daily_sales",
+                    "LIGHTSPEED",
+                    "typo",
+                    "a@b.com",
+                    java.time.Instant.parse("2026-09-14T09:00:00Z"))));
+
+    mvc.perform(get("/api/reconciliation/audit").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].kind").value("rule"))
+        .andExpect(jsonPath("$[0].change").value("created"))
+        .andExpect(jsonPath("$[1].kind").value("override"))
+        .andExpect(jsonPath("$[1].source").value("LIGHTSPEED"));
+  }
+
   private static AccountUserDetails owner() {
     return new AccountUserDetails(
         UUID.randomUUID(), "owner@example.com", "hash", "Owner", "ALL", "OWNER", true);

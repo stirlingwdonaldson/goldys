@@ -63,4 +63,18 @@ class MetricCatalogTest {
         .contains(MetricId.RESERVATIONS_BOOKINGS, MetricId.SALES_AVERAGE_SPEND_PER_COVER);
     assertThat(catalog.related(MetricId.SALES_GST)).isEmpty();
   }
+
+  @Test
+  void derivedMetricsExposeBaseConstituentsAndBaseMetricsDoNot() {
+    MetricCatalog catalog = new MetricCatalog();
+
+    assertThat(catalog.constituents(MetricId.SALES_AVERAGE_SPEND_PER_COVER))
+        .containsExactlyInAnyOrder(MetricId.SALES_GROSS, MetricId.RESERVATIONS_COVERS);
+    assertThat(catalog.constituents(MetricId.LABOUR_HOURS_VARIANCE))
+        .containsExactlyInAnyOrder(MetricId.LABOUR_SCHEDULED_HOURS, MetricId.LABOUR_ACTUAL_HOURS);
+    assertThat(catalog.constituents(MetricId.PRODUCT_TOP_SELLERS))
+        .containsExactlyInAnyOrder(MetricId.PRODUCT_SALES_AMOUNT, MetricId.PRODUCT_SALES_QUANTITY);
+    assertThat(catalog.constituents(MetricId.SALES_GROSS)).isEmpty();
+    assertThat(catalog.constituents(MetricId.RESERVATIONS_BOOKINGS)).isEmpty();
+  }
 }

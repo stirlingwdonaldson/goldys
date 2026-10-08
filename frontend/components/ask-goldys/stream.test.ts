@@ -122,6 +122,7 @@ describe("parseAnswer", () => {
             dataFreshness: "2026-10-07T09:00:00Z",
             missingPeriods: ["2026-10-05"],
             calculationVersion: "1",
+            trust: null,
           },
         ],
       },
@@ -135,6 +136,61 @@ describe("parseAnswer", () => {
       notices: [],
     });
     expect(answer.trace[0].provenance).toEqual([]);
+  });
+
+  it("parses a provenance trust summary and degrades unknown trust to null", () => {
+    const parsed = parseAnswer({
+      trace: [
+        {
+          tool: "get_sales_by_period",
+          description: "x",
+          provenance: [
+            {
+              metric: "sales.gross",
+              definitionVersion: "3",
+              trust: {
+                state: "SINGLE_SOURCE",
+                freshness: "STALE",
+                authoritativeSource: "Lightspeed",
+                resolvedAt: "2026-10-07T10:00:00Z",
+                lastIngestionAt: null,
+                threshold: 86_400_000,
+              },
+            },
+          ],
+        },
+      ],
+      asOf: "",
+      notices: [],
+    });
+    expect(parsed.trace[0].provenance[0].trust).toEqual({
+      state: "SINGLE_SOURCE",
+      freshness: "STALE",
+      authoritativeSource: "Lightspeed",
+      resolvedAt: "2026-10-07T10:00:00Z",
+      lastIngestionAt: null,
+      threshold: 86_400_000,
+    });
+
+    // An unknown state (e.g. a freshness value in the state slot) degrades to null.
+    const unknown = parseAnswer({
+      trace: [
+        {
+          tool: "get_sales_by_period",
+          description: "x",
+          provenance: [
+            {
+              metric: "sales.gross",
+              definitionVersion: "3",
+              trust: { state: "STALE" },
+            },
+          ],
+        },
+      ],
+      asOf: "",
+      notices: [],
+    });
+    expect(unknown.trace[0].provenance[0].trust).toBeNull();
   });
 
   it("drops a trace entry missing tool or description", () => {

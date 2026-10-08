@@ -2,6 +2,7 @@ package com.goldys.platform.semantic.catalog;
 
 import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
+import com.goldys.platform.semantic.MissingDataStatus;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -119,7 +120,10 @@ public class DerivedMetricExecutor implements MetricExecutor {
           (np.value() == null || dp.value() == null || dp.value().signum() == 0)
               ? null
               : np.value().divide(dp.value(), SCALE, RoundingMode.HALF_UP);
-      points.add(new MetricPoint(np.bucketStart(), v));
+      points.add(
+          v == null
+              ? new MetricPoint(np.bucketStart(), null, MissingDataStatus.UNRESOLVED)
+              : new MetricPoint(np.bucketStart(), v));
       if (v == null) {
         notices.add("denominator or input unresolved for " + np.bucketStart());
       }
@@ -140,7 +144,10 @@ public class DerivedMetricExecutor implements MetricExecutor {
       BigDecimal av = a.points().get(i).value();
       BigDecimal bv = b.points().get(i).value();
       BigDecimal v = (av == null || bv == null) ? null : av.subtract(bv);
-      points.add(new MetricPoint(a.points().get(i).bucketStart(), v));
+      points.add(
+          v == null
+              ? new MetricPoint(a.points().get(i).bucketStart(), null, MissingDataStatus.UNRESOLVED)
+              : new MetricPoint(a.points().get(i).bucketStart(), v));
       if (v == null) {
         notices.add("input unresolved for " + a.points().get(i).bucketStart());
       }
@@ -178,7 +185,11 @@ public class DerivedMetricExecutor implements MetricExecutor {
           (dv == null || gv == null || gv.signum() == 0)
               ? null
               : dv.divide(gv, SCALE, RoundingMode.HALF_UP);
-      points.add(new MetricPoint(dept.points().get(i).bucketStart(), v));
+      points.add(
+          v == null
+              ? new MetricPoint(
+                  dept.points().get(i).bucketStart(), null, MissingDataStatus.UNRESOLVED)
+              : new MetricPoint(dept.points().get(i).bucketStart(), v));
       if (v == null) {
         notices.add("unresolved cost or zero gross for " + dept.points().get(i).bucketStart());
       }

@@ -6,7 +6,16 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import { parseWidgetSpecs } from "@/components/widgets/parse";
 import { Button } from "@/components/ui/button";
-import type { Api, DashboardDocument, SavedWidget, SaveDashboardInput } from "@/lib/api/types";
+import { TrustIndicator } from "@/components/trust/trust-indicator";
+import type {
+  Api,
+  DashboardDocument,
+  FreshnessState,
+  SavedWidget,
+  SaveDashboardInput,
+  TrustState,
+  TrustSummary,
+} from "@/lib/api/types";
 import type { AnswerPayload, MetricProvenance } from "./types";
 
 interface AnswerBlockProps {
@@ -30,6 +39,44 @@ function provenanceSummary(p: MetricProvenance): string {
   ];
   if (p.missingPeriods.length) parts.push(`missing ${p.missingPeriods.join(", ")}`);
   return parts.join(" · ");
+}
+
+/** Trust states ordered strongest to weakest; a higher rank is worse (mirrors backend enum ordinal). */
+const TRUST_STATE_RANK: Record<TrustState, number> = {
+  VERIFIED: 0,
+  RESOLVED_BY_RULE: 1,
+  MANUALLY_OVERRIDDEN: 2,
+  SINGLE_SOURCE: 3,
+  CONFLICTED: 4,
+  INCOMPLETE: 5,
+  NOT_RECEIVED: 6,
+};
+
+/** Worst-first freshness ranking: SOURCE_FAILURE > STALE > UNKNOWN > FRESH (mirrors backend). */
+const FRESHNESS_RANK: Record<FreshnessState, number> = {
+  FRESH: 0,
+  UNKNOWN: 1,
+  STALE: 2,
+  SOURCE_FAILURE: 3,
+};
+
+/**
+ * Collapses a trace entry's per-metric trust into a single worst-case summary. A tool result must
+ * not report "verified" while any of its metrics is stale or conflicted, so the state is the
+ * least-trusted {@link TrustState} and the freshness the worst {@link FreshnessState}; the
+ * provenance fields come from the first entry attaining the worst state (mirrors the backend
+ * `aggregateTrust`). A single metric keeps its trust unchanged.
+ */
+function worstTrust(trusts: (TrustSummary | null)[]): TrustSummary | null {
+  let worst: TrustSummary | null = null;
+  let worstFreshness: FreshnessState = "FRESH";
+  for (const t of trusts) {
+    if (!t) continue;
+    if (!worst || TRUST_STATE_RANK[t.state] > TRUST_STATE_RANK[worst.state]) worst = t;
+    if (FRESHNESS_RANK[t.freshness] > FRESHNESS_RANK[worstFreshness]) worstFreshness = t.freshness;
+  }
+  if (!worst) return null;
+  return worst.freshness === worstFreshness ? worst : { ...worst, freshness: worstFreshness };
 }
 
 /** The answer anatomy: summary + widgets + "How I got this" trace + "as of" + notices + draft. */
@@ -130,23 +177,33 @@ export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
         <details className="text-xs text-muted-foreground">
           <summary className="cursor-pointer underline">How I got this</summary>
           <div className="mt-1 space-y-2">
-            {answer.trace.map((t, i) => (
-              <div key={i} className="space-y-1">
-                <p>
-                  {t.tool} — {t.description}
-                </p>
-                {t.provenance.length ? (
-                  <ul className="ml-3 space-y-1 border-l pl-3">
-                    {t.provenance.map((p, j) => (
-                      <li key={j}>
-                        <span className="font-medium text-foreground">{p.metric}</span>
-                        <span> {provenanceSummary(p)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ))}
+            {answer.trace.map((t, i) => {
+              const trust = worstTrust(t.provenance.map((p) => p.trust));
+              return (
+                <div key={i} className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span>
+                      {t.tool} — {t.description}
+                    </span>
+                    {trust ? (
+                      // A non-null representative value tells TrustIndicator to show freshness
+                      // ("stale", "source failed", "updated X ago") rather than a missing reason.
+                      <TrustIndicator trust={trust} value={trust.state === "NOT_RECEIVED" ? null : 1} />
+                    ) : null}
+                  </div>
+                  {t.provenance.length ? (
+                    <ul className="ml-3 space-y-1 border-l pl-3">
+                      {t.provenance.map((p, j) => (
+                        <li key={j}>
+                          <span className="font-medium text-foreground">{p.metric}</span>
+                          <span> {provenanceSummary(p)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              );
+            })}
             <p>As of {answer.asOf}</p>
           </div>
         </details>

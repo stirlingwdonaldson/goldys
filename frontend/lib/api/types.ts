@@ -45,6 +45,10 @@ export interface ReconciliationField {
   sources: SourceValue[];
   overridden: boolean;
   authoritativeSource?: string;
+  /** Why an override was chosen: the reason/actor/timestamp recorded when it was saved. */
+  overrideReason?: string | null;
+  overrideActor?: string | null;
+  overrideAt?: string | null;
 }
 
 export interface ReconciliationRecord {
@@ -192,6 +196,26 @@ export interface RuleAuditEntry {
   by: string;
 }
 
+/** The combined reconciliation audit change kinds (rule + override). */
+export type ReconciliationAuditChange =
+  | "created" // rule
+  | "updated" // rule
+  | "deleted" // rule
+  | "set" // override (authoritative source chosen)
+  | "removed"; // override (superseded / no longer authoritative)
+
+/** One entry in the combined rule + override audit history (mirrors the backend `AuditEntry`). */
+export interface ReconciliationAuditEntry {
+  kind: "rule" | "override";
+  change: ReconciliationAuditChange;
+  entityType: string;
+  fieldKey: string;
+  source: string | null;
+  reason: string | null;
+  by: string;
+  at: string;
+}
+
 /** The bounded semantic query behind a persisted widget. */
 export interface MetricQuery {
   metric: string;
@@ -268,6 +292,8 @@ export interface RenderedWidget {
   widgetId: string;
   widget: import("@/components/widgets/types").WidgetSpec | null;
   deniedResource: string | null;
+  /** Trust + freshness summary for the widget's metric; null when denied or unresolved. */
+  trust: TrustSummary | null;
 }
 
 /** A named starting-point dashboard built from catalogue metrics. */
@@ -342,6 +368,7 @@ export interface Api {
   deleteResolutionRule(id: string): Promise<void>;
   getRecomputeStatus(): Promise<RecomputeStatus>;
   listRuleAudit(): Promise<RuleAuditEntry[]>;
+  listReconciliationAudit(): Promise<ReconciliationAuditEntry[]>;
   listProducts(): Promise<string[]>;
   listDailySales(): Promise<DailySales[]>;
   getLatestSales(): Promise<LatestSales>;
@@ -365,4 +392,70 @@ export interface Api {
   getThread(id: string): Promise<ConversationThreadView>;
   renameThread(id: string, title: string): Promise<ConversationThreadView>;
   deleteThread(id: string): Promise<void>;
+}
+
+/** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */
+export type TrustState =
+  | "VERIFIED"
+  | "RESOLVED_BY_RULE"
+  | "MANUALLY_OVERRIDDEN"
+  | "SINGLE_SOURCE"
+  | "CONFLICTED"
+  | "INCOMPLETE"
+  | "NOT_RECEIVED";
+
+/** Freshness of the source data relative to its ingestion cadence (backend `FreshnessState`). */
+export type FreshnessState = "FRESH" | "STALE" | "SOURCE_FAILURE" | "UNKNOWN";
+
+/** Why a period carries no value, in venue-friendly language (backend `MissingDataStatus`). */
+export type MissingDataStatus =
+  | "ZERO"
+  | "UNKNOWN"
+  | "NOT_RECEIVED"
+  | "UNRESOLVED"
+  | "NOT_APPLICABLE"
+  | "NOT_PERMITTED";
+
+/**
+ * Trust and freshness summary for a metric over a range (mirrors the backend `TrustSummary` record).
+ * `threshold` is the backend `Duration`, serialized by Jackson as a numeric count of milliseconds.
+ */
+export interface TrustSummary {
+  state: TrustState;
+  freshness: FreshnessState;
+  authoritativeSource: string | null;
+  resolvedAt: string | null;
+  lastIngestionAt: string | null;
+  threshold: number | null;
+}
+
+/**
+ * A value contributed by one source system (mirrors the backend `semantic.SourceValue`). Named
+ * `ProvenanceSourceValue` because the reconciliation `SourceValue` above already occupies the
+ * unqualified name with a different shape.
+ */
+export interface ProvenanceSourceValue {
+  sourceSystem: string;
+  value: number | null;
+  recordedAt: string | null;
+}
+
+/** Why and how a resolved value was chosen (mirrors the backend `ResolutionDetail`). */
+export interface ResolutionDetail {
+  kind: string | null;
+  source: string | null;
+  reason: string | null;
+  actor: string | null;
+  at: string | null;
+}
+
+/** Full provenance for one resolved metric value on one date (mirrors the backend `Provenance`). */
+export interface Provenance {
+  metric: string;
+  date: string;
+  resolvedValue: number | null;
+  trust: TrustSummary;
+  sources: ProvenanceSourceValue[];
+  resolution: ResolutionDetail;
+  rawRecordIds: string[];
 }

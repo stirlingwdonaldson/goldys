@@ -9,6 +9,7 @@ import com.goldys.platform.semantic.InventoryMetric;
 import com.goldys.platform.semantic.InventoryMetricsQuery;
 import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
+import com.goldys.platform.semantic.MissingDataStatus;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.goldys.platform.semantic.ReservationSummary;
@@ -99,6 +100,7 @@ class DerivedMetricExecutorTest {
                         null));
 
     assertThat(ts.series().get(0).points().get(0).value()).isNull();
+    assertThat(ts.series().get(0).points().get(0).status()).isEqualTo(MissingDataStatus.UNRESOLVED);
     assertThat(ts.notices()).isNotEmpty();
   }
 

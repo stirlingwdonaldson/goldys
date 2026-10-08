@@ -64,6 +64,23 @@ export function ruleDetail(rule: ResolutionRule): string {
   return "";
 }
 
+/**
+ * The current standing rule for an entity/field, preferring an exact field-key match and falling
+ * back to the entity-wide "*" rule. Returns null when no rule applies.
+ */
+export function matchingRule(
+  rules: ResolutionRule[],
+  entityType: string,
+  fieldKey: string,
+): ResolutionRule | null {
+  const inEntity = rules.filter((r) => r.entityType === entityType);
+  return (
+    inEntity.find((r) => r.fieldKey === fieldKey) ??
+    inEntity.find((r) => r.fieldKey === "*") ??
+    null
+  );
+}
+
 export interface RuleRow {
   entityType: string;
   fieldKey: string;

@@ -27,4 +27,6 @@ interface DailySalesOverrideRepository extends JpaRepository<DailySalesOverride,
   List<DailySalesOverride> findCurrentByDates(Collection<LocalDate> dates);
 
   long countByRecordedAtAfter(Instant since);
+
+  List<DailySalesOverride> findAllByOrderByRecordedAtDesc();
 }

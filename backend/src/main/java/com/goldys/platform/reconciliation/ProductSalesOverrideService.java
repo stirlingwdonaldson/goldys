@@ -71,4 +71,18 @@ public class ProductSalesOverrideService {
         .findCurrent(productNameKey, date)
         .map(ProductSalesOverride::authoritativeSource);
   }
+
+  /** The latest non-superseded manual override for a product/day, for provenance drill-down. */
+  public Optional<OverrideDetail> latestFor(LocalDate date, String productNameKey) {
+    return repository
+        .findCurrent(productNameKey, date)
+        .map(
+            o ->
+                new OverrideDetail(
+                    o.authoritativeSource(), o.reason(), o.actorEmail(), o.recordedAt()));
+  }
+
+  /** A public, immutable view of a manual override for the provenance read model. */
+  public record OverrideDetail(
+      String authoritativeSource, String reason, String actorEmail, Instant recordedAt) {}
 }

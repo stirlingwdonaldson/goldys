@@ -10,6 +10,7 @@ import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { ReconciliationDrillIn } from "@/components/reconciliation/drill-in";
 import { ExceptionsTable } from "@/components/reconciliation/exceptions-table";
+import { ReconciliationAudit } from "@/components/reconciliation/reconciliation-audit";
 
 export default function ReconciliationPage() {
   return (
@@ -28,6 +29,7 @@ function ReconciliationContent() {
   const { data: productExceptions, reload: reloadProducts } = useApiData((a) =>
     a.listProductExceptions(),
   );
+  const { data: audit } = useApiData((a) => a.listReconciliationAudit());
   const { toast } = useToast();
   const recordParam = searchParams.get("record");
   const dateParam = searchParams.get("date");
@@ -169,6 +171,11 @@ function ReconciliationContent() {
           }
         />
       )}
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-muted-foreground">Change history</h2>
+        <ReconciliationAudit entries={audit ?? []} />
+      </section>
     </div>
   );
 }

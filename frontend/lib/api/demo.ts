@@ -23,6 +23,7 @@ import type {
   RecomputeStatus,
   ReconciliationException,
   ReconciliationRecord,
+  ReconciliationAuditEntry,
   RenderedWidget,
   ResolutionRule,
   RuleAuditEntry,
@@ -33,6 +34,7 @@ import type {
   SavedDashboardSummary,
   SavedWidget,
   TopSeller,
+  TrustSummary,
 } from "./types";
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -208,6 +210,31 @@ let ruleAudit: RuleAuditEntry[] = [
   },
 ];
 
+// Combined rule + override history surfaced on the reconciliation screen. Demo fixtures mirror
+// the live `/api/reconciliation/audit` shape (rule created/updated/deleted, override set/removed).
+let reconciliationAudit: ReconciliationAuditEntry[] = [
+  {
+    kind: "rule",
+    change: "created",
+    entityType: "daily_sales",
+    fieldKey: "daily_sales",
+    source: null,
+    reason: null,
+    by: "Stirling Donaldson",
+    at: "2026-09-29T18:00:00Z",
+  },
+  {
+    kind: "override",
+    change: "set",
+    entityType: "daily_sales",
+    fieldKey: "daily_sales",
+    source: "Cooking the Books",
+    reason: "Till reconciliation matched the bank.",
+    by: "Stirling Donaldson",
+    at: "2026-09-30T08:15:00Z",
+  },
+];
+
 // In-memory Ask Goldy's conversation history. Mutable so rename/delete behave like the live
 // endpoints: a renamed thread keeps its spot, a deleted one drops from the list.
 let demoThreads: ConversationThreadSummary[] = [
@@ -366,6 +393,22 @@ export const demoApi: Api = {
     }
     field.overridden = true;
     field.authoritativeSource = input.source;
+    field.overrideReason = input.reason ?? null;
+    field.overrideActor = "You";
+    field.overrideAt = new Date().toISOString();
+    reconciliationAudit = [
+      {
+        kind: "override",
+        change: "set",
+        entityType: "daily_sales",
+        fieldKey: input.field,
+        source: input.source,
+        reason: input.reason ?? null,
+        by: "You",
+        at: new Date().toISOString(),
+      },
+      ...reconciliationAudit,
+    ];
     return { ok: true, recordId: input.recordId, field: input.field };
   },
 
@@ -380,7 +423,23 @@ export const demoApi: Api = {
     if (!record) throw new ApiError("VALIDATION_FAILED", `Unknown product ${input.product}.`);
     record.fields[0].overridden = true;
     record.fields[0].authoritativeSource = input.source;
+    record.fields[0].overrideReason = input.reason ?? null;
+    record.fields[0].overrideActor = "You";
+    record.fields[0].overrideAt = new Date().toISOString();
     productExceptions = productExceptions.filter((e) => e.recordId !== input.product);
+    reconciliationAudit = [
+      {
+        kind: "override",
+        change: "set",
+        entityType: "product_sales",
+        fieldKey: input.product,
+        source: input.source,
+        reason: input.reason ?? null,
+        by: "You",
+        at: new Date().toISOString(),
+      },
+      ...reconciliationAudit,
+    ];
     return { ok: true, recordId: input.product, field: input.product };
   },
 
@@ -414,6 +473,19 @@ export const demoApi: Api = {
         },
         ...ruleAudit,
       ];
+      reconciliationAudit = [
+        {
+          kind: "rule",
+          change: "updated",
+          entityType: existing.entityType,
+          fieldKey: existing.fieldKey,
+          source: null,
+          reason: null,
+          by: "You",
+          at: now,
+        },
+        ...reconciliationAudit,
+      ];
       recomputeStatus = { state: "complete", lastChangedAt: now };
       return { ...existing };
     }
@@ -439,6 +511,19 @@ export const demoApi: Api = {
       },
       ...ruleAudit,
     ];
+    reconciliationAudit = [
+      {
+        kind: "rule",
+        change: "created",
+        entityType: created.entityType,
+        fieldKey: created.fieldKey,
+        source: null,
+        reason: null,
+        by: "You",
+        at: now,
+      },
+      ...reconciliationAudit,
+    ];
     recomputeStatus = { state: "complete", lastChangedAt: now };
     return created;
   },
@@ -459,6 +544,19 @@ export const demoApi: Api = {
       },
       ...ruleAudit,
     ];
+    reconciliationAudit = [
+      {
+        kind: "rule",
+        change: "deleted",
+        entityType: existing.entityType,
+        fieldKey: existing.fieldKey,
+        source: null,
+        reason: null,
+        by: "You",
+        at: new Date().toISOString(),
+      },
+      ...reconciliationAudit,
+    ];
   },
 
   async getRecomputeStatus(): Promise<RecomputeStatus> {
@@ -469,6 +567,11 @@ export const demoApi: Api = {
   async listRuleAudit(): Promise<RuleAuditEntry[]> {
     await delay(300);
     return [...ruleAudit];
+  },
+
+  async listReconciliationAudit(): Promise<ReconciliationAuditEntry[]> {
+    await delay(300);
+    return [...reconciliationAudit];
   },
 
   async listProducts(): Promise<string[]> {
@@ -598,6 +701,7 @@ export const demoApi: Api = {
       widgetId: w.id,
       widget: demoWidgetSpec(),
       deniedResource: null,
+      trust: demoTrust(),
     }));
   },
 
@@ -723,6 +827,18 @@ function demoWidgetSpec(): WidgetSpec {
       },
     ],
     yFormat: "currency",
+  };
+}
+
+/** A representative trust summary for the demo render endpoint (verified, freshly resolved). */
+function demoTrust(): TrustSummary {
+  return {
+    state: "VERIFIED",
+    freshness: "FRESH",
+    authoritativeSource: "Lightspeed",
+    resolvedAt: new Date().toISOString(),
+    lastIngestionAt: new Date().toISOString(),
+    threshold: null,
   };
 }
 

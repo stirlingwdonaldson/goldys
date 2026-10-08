@@ -58,7 +58,7 @@ function document(): DashboardDocument {
 }
 
 function rendered(): RenderedWidget[] {
-  return [{ widgetId: "w1", widget: spec, deniedResource: null }];
+  return [{ widgetId: "w1", widget: spec, deniedResource: null, trust: null }];
 }
 
 function saveResult(input: SaveDashboardInput): DashboardDocument {
@@ -146,7 +146,7 @@ describe("DashboardEditor", () => {
   });
 
   it("renders a per-widget not-permitted placeholder for a denied resource", async () => {
-    const denied: RenderedWidget[] = [{ widgetId: "w1", widget: null, deniedResource: "labour.cost" }];
+    const denied: RenderedWidget[] = [{ widgetId: "w1", widget: null, deniedResource: "labour.cost", trust: null }];
     render(<DashboardEditor api={editorApi({ renderDashboard: async () => denied })} dashboardId="d1" />);
 
     expect(await screen.findByText(/don't have access to labour\.cost/i)).toBeInTheDocument();
