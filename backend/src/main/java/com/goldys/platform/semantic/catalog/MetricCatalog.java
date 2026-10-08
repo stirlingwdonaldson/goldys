@@ -17,6 +17,38 @@ public class MetricCatalog {
   private static final Set<TimeGrain> DAY_WEEK_MONTH =
       Set.of(TimeGrain.DAY, TimeGrain.WEEK, TimeGrain.MONTH);
   private static final Set<TimeGrain> DAY_ONLY = Set.of(TimeGrain.DAY);
+  private static final Map<MetricId, Set<MetricId>> RELATED =
+      Map.of(
+          MetricId.SALES_GROSS,
+              Set.of(
+                  MetricId.RESERVATIONS_COVERS,
+                  MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+                  MetricId.PRODUCT_SALES_AMOUNT,
+                  MetricId.LABOUR_FOH_PERCENT,
+                  MetricId.LABOUR_BOH_PERCENT,
+                  MetricId.INVENTORY_FOOD_COST_PERCENT),
+          MetricId.RESERVATIONS_COVERS,
+              Set.of(
+                  MetricId.RESERVATIONS_BOOKINGS,
+                  MetricId.RESERVATIONS_ATTENDED,
+                  MetricId.RESERVATIONS_NO_SHOWS,
+                  MetricId.SALES_AVERAGE_SPEND_PER_COVER),
+          MetricId.RESERVATIONS_BOOKINGS,
+              Set.of(
+                  MetricId.RESERVATIONS_ATTENDED,
+                  MetricId.RESERVATIONS_COVERS,
+                  MetricId.RESERVATIONS_NO_SHOW_RATE),
+          MetricId.LABOUR_COST,
+              Set.of(
+                  MetricId.LABOUR_SCHEDULED_HOURS,
+                  MetricId.LABOUR_ACTUAL_HOURS,
+                  MetricId.LABOUR_HOURS_VARIANCE,
+                  MetricId.LABOUR_FOH_PERCENT,
+                  MetricId.LABOUR_BOH_PERCENT),
+          MetricId.INVENTORY_PURCHASES,
+              Set.of(MetricId.INVENTORY_WASTAGE, MetricId.INVENTORY_FOOD_COST_PERCENT),
+          MetricId.PRODUCT_SALES_AMOUNT,
+              Set.of(MetricId.PRODUCT_SALES_QUANTITY, MetricId.PRODUCT_TOP_SELLERS));
 
   private final Map<MetricId, MetricDefinition> byId;
 
@@ -278,6 +310,11 @@ public class MetricCatalog {
 
   public Set<MetricId> ids() {
     return byId.keySet();
+  }
+
+  /** The metrics a result's provenance points to, so the model can chain a "why" question. */
+  public Set<MetricId> related(MetricId id) {
+    return RELATED.getOrDefault(id, Set.of());
   }
 
   private static MetricDefinition base(

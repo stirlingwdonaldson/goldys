@@ -1,35 +1,26 @@
 package com.goldys.platform.conversational;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class ChatRequestTest {
 
   @Test
-  void acceptsUserAndAssistantMessages() {
-    ChatRequest request =
-        new ChatRequest(
-            List.of(
-                new ChatRequest.ChatMessage("user", "What were sales last week?"),
-                new ChatRequest.ChatMessage("assistant", "I need a date range.")));
+  void acceptsANewConversationWithoutAThreadId() {
+    ChatRequest request = new ChatRequest(null, "What were sales last week?");
 
-    assertThat(request.messages()).hasSize(2);
-    assertThat(request.messages().get(0).role()).isEqualTo("user");
+    assertThat(request.threadId()).isNull();
+    assertThat(request.message()).isEqualTo("What were sales last week?");
   }
 
   @Test
-  void rejectsAnUnknownRole() {
-    assertThatThrownBy(() -> new ChatRequest.ChatMessage("system", "be helpful"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("role");
-  }
+  void acceptsAnExistingThreadId() {
+    UUID threadId = UUID.randomUUID();
+    ChatRequest request = new ChatRequest(threadId, "And the week before?");
 
-  @Test
-  void rejectsANullContent() {
-    assertThatThrownBy(() -> new ChatRequest.ChatMessage("user", null))
-        .isInstanceOf(NullPointerException.class);
+    assertThat(request.threadId()).isEqualTo(threadId);
+    assertThat(request.message()).isEqualTo("And the week before?");
   }
 }

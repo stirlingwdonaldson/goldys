@@ -16,6 +16,7 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.conversational.AssistantService;
 import com.goldys.platform.conversational.ChatController;
+import com.goldys.platform.conversational.ConversationService;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -37,11 +38,14 @@ class ChatControllerSseTest {
 
   @MockitoBean CurrentUserService currentUser;
   @MockitoBean PermissionService permissions;
+  @MockitoBean ConversationService conversations;
   @MockitoBean AssistantService assistant;
 
   @Test
   void streamsAnSseAnswerForAnAcceptEventStreamRequest() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(conversations.contextFor(any(), any(), any()))
+        .thenReturn(new ConversationService.PreparedTurn(UUID.randomUUID(), List.of()));
     when(assistant.stream(any(), any())).thenReturn(Flux.empty());
 
     mvc.perform(
@@ -50,7 +54,7 @@ class ChatControllerSseTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.TEXT_EVENT_STREAM)
-                .content("{\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+                .content("{\"message\":\"hi\"}"))
         .andExpect(status().isOk());
   }
 

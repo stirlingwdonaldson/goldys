@@ -15,35 +15,36 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
-/** Resolved labour hours/cost/variance for a date range, emitted as a table widget. */
+/** Resolved labour hours, cost, scheduled-vs-actual variance, and FOH/BOH percentages. */
 @Component
-public class GetLabourCostTool implements ReportingTool {
+public class GetLabourVarianceTool implements ReportingTool {
   private final MetricQueryService metrics;
   private final WidgetRenderer renderer;
 
-  public GetLabourCostTool(MetricQueryService metrics, WidgetRenderer renderer) {
+  public GetLabourVarianceTool(MetricQueryService metrics, WidgetRenderer renderer) {
     this.metrics = metrics;
     this.renderer = renderer;
   }
 
   @Override
   public ToolId id() {
-    return ToolId.GET_LABOUR_COST;
+    return ToolId.GET_LABOUR_VARIANCE;
   }
 
   @Override
   public String name() {
-    return "get_labour_cost";
+    return "get_labour_variance";
   }
 
   @Override
   public String description() {
-    return "Resolved labour hours, cost, and scheduled-vs-actual variance for a date range.";
+    return "Resolved labour hours, cost, scheduled-vs-actual variance, and FOH/BOH labour "
+        + "percentages for a date range.";
   }
 
   @Override
   public Class<? extends ToolInput> inputType() {
-    return GetLabourCostInput.class;
+    return GetLabourVarianceInput.class;
   }
 
   @Override
@@ -53,27 +54,33 @@ public class GetLabourCostTool implements ReportingTool {
 
   @Override
   public ToolResult execute(ToolInput input, UserRole role) {
-    if (!(input instanceof GetLabourCostInput in)) {
+    if (!(input instanceof GetLabourVarianceInput in)) {
       throw new IllegalArgumentException(
-          "Expected GetLabourCostInput, got " + input.getClass().getSimpleName());
+          "Expected GetLabourVarianceInput, got " + input.getClass().getSimpleName());
     }
     List<MetricResult> results = toMetricQueries(in).stream().map(metrics::query).toList();
     WidgetSpec widget = renderer.render(UUID.randomUUID().toString(), "table", results);
-    return new ToolResult(widget, results.stream().flatMap(r -> r.notices().stream()).toList());
+    return new ToolResult(
+        widget,
+        results.stream().flatMap(r -> r.notices().stream()).toList(),
+        results.stream().map(MetricResult::provenance).toList(),
+        List.of());
   }
 
   @Override
   public List<MetricQuery> toMetricQueries(ToolInput input) {
-    if (!(input instanceof GetLabourCostInput in)) {
+    if (!(input instanceof GetLabourVarianceInput in)) {
       throw new IllegalArgumentException(
-          "Expected GetLabourCostInput, got " + input.getClass().getSimpleName());
+          "Expected GetLabourVarianceInput, got " + input.getClass().getSimpleName());
     }
     TimeRange range = new TimeRange(in.startDate(), in.endDate(), Calendar.CALENDAR);
     return List.of(
         q(MetricId.LABOUR_SCHEDULED_HOURS, range),
         q(MetricId.LABOUR_ACTUAL_HOURS, range),
         q(MetricId.LABOUR_COST, range),
-        q(MetricId.LABOUR_HOURS_VARIANCE, range));
+        q(MetricId.LABOUR_HOURS_VARIANCE, range),
+        q(MetricId.LABOUR_FOH_PERCENT, range),
+        q(MetricId.LABOUR_BOH_PERCENT, range));
   }
 
   private static MetricQuery q(MetricId id, TimeRange range) {

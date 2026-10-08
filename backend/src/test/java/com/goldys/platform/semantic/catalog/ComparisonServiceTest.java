@@ -2,6 +2,7 @@ package com.goldys.platform.semantic.catalog;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +23,17 @@ class ComparisonServiceTest {
 
     assertThat(reference.from()).isEqualTo(LocalDate.of(2026, 8, 31));
     assertThat(reference.to()).isEqualTo(LocalDate.of(2026, 9, 6));
+  }
+
+  @Test
+  void deltaPercentIsNullWhenCurrentIsNull() {
+    assertThat(ComparisonService.deltaPercent(null, new BigDecimal("1000.00"))).isNull();
+  }
+
+  @Test
+  void deltaPercentIsNullWhenReferenceIsNullOrZero() {
+    assertThat(ComparisonService.deltaPercent(new BigDecimal("1100.00"), null)).isNull();
+    assertThat(ComparisonService.deltaPercent(new BigDecimal("1100.00"), BigDecimal.ZERO)).isNull();
   }
 
   @Test

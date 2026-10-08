@@ -5,6 +5,9 @@ import type {
   ActivityPoint,
   Api,
   ConnectorStatus,
+  ConversationMessage,
+  ConversationThreadSummary,
+  ConversationThreadView,
   DailySales,
   DashboardBootstrap,
   DashboardDocument,
@@ -204,6 +207,66 @@ let ruleAudit: RuleAuditEntry[] = [
     by: "Stirling Donaldson",
   },
 ];
+
+// In-memory Ask Goldy's conversation history. Mutable so rename/delete behave like the live
+// endpoints: a renamed thread keeps its spot, a deleted one drops from the list.
+let demoThreads: ConversationThreadSummary[] = [
+  {
+    id: "thread-1",
+    title: "What were sales last week?",
+    updatedAt: "2026-10-05T09:12:00Z",
+    lastPreview: "Gross sales were $43,691.48 last week, up 4% on the week before…",
+  },
+  {
+    id: "thread-2",
+    title: "Show covers vs no-shows for the weekend",
+    updatedAt: "2026-10-04T18:40:00Z",
+    lastPreview: "Saturday had 214 covers and a 9.4% no-show rate.",
+  },
+];
+
+const demoThreadMessages: Record<string, ConversationMessage[]> = {
+  "thread-1": [
+    {
+      id: "m1",
+      threadId: "thread-1",
+      role: "user",
+      content: "What were sales last week?",
+      toolTrace: [],
+      createdAt: "2026-10-05T09:11:00Z",
+    },
+    {
+      id: "m2",
+      threadId: "thread-1",
+      role: "assistant",
+      content: "Gross sales were $43,691.48 last week, up 4% on the week before.",
+      toolTrace: [
+        { tool: "query_metric", description: "sales.gross over the last trading week", provenance: [] },
+      ],
+      createdAt: "2026-10-05T09:12:00Z",
+    },
+  ],
+  "thread-2": [
+    {
+      id: "m3",
+      threadId: "thread-2",
+      role: "user",
+      content: "Show covers vs no-shows for the weekend",
+      toolTrace: [],
+      createdAt: "2026-10-04T18:39:00Z",
+    },
+    {
+      id: "m4",
+      threadId: "thread-2",
+      role: "assistant",
+      content: "Saturday had 214 covers and a 9.4% no-show rate.",
+      toolTrace: [
+        { tool: "query_metric", description: "reservations.covers and no-shows", provenance: [] },
+      ],
+      createdAt: "2026-10-04T18:40:00Z",
+    },
+  ],
+};
 
 export const demoApi: Api = {
   async getDashboardBootstrap(): Promise<DashboardBootstrap> {
@@ -604,6 +667,33 @@ export const demoApi: Api = {
     if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
     found.visibility = sharing.visibility;
     return { ...sharing };
+  },
+
+  async listThreads(): Promise<ConversationThreadSummary[]> {
+    await delay(300);
+    return [...demoThreads];
+  },
+
+  async getThread(id: string): Promise<ConversationThreadView> {
+    await delay(300);
+    const summary = demoThreads.find((t) => t.id === id);
+    if (!summary) throw new ApiError("VALIDATION_FAILED", `No thread with id ${id}.`);
+    return { id, title: summary.title, messages: demoThreadMessages[id] ?? [] };
+  },
+
+  async renameThread(id: string, title: string): Promise<ConversationThreadView> {
+    await delay(400);
+    const summary = demoThreads.find((t) => t.id === id);
+    if (!summary) throw new ApiError("VALIDATION_FAILED", `No thread with id ${id}.`);
+    summary.title = title;
+    summary.updatedAt = new Date().toISOString();
+    return { id, title, messages: demoThreadMessages[id] ?? [] };
+  },
+
+  async deleteThread(id: string): Promise<void> {
+    await delay(300);
+    demoThreads = demoThreads.filter((t) => t.id !== id);
+    delete demoThreadMessages[id];
   },
 };
 

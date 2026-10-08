@@ -49,4 +49,18 @@ class MetricCatalogTest {
     assertThat(catalog.definition(MetricId.SALES_GROSS).validDimensions()).isEmpty();
     assertThat(catalog.definition(MetricId.RESERVATIONS_NO_SHOW_RATE).validDimensions()).isEmpty();
   }
+
+  @Test
+  void relatedMetricsPointToExplanatoryPeers() {
+    MetricCatalog catalog = new MetricCatalog();
+
+    assertThat(catalog.related(MetricId.SALES_GROSS))
+        .contains(
+            MetricId.RESERVATIONS_COVERS,
+            MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+            MetricId.PRODUCT_SALES_AMOUNT);
+    assertThat(catalog.related(MetricId.RESERVATIONS_COVERS))
+        .contains(MetricId.RESERVATIONS_BOOKINGS, MetricId.SALES_AVERAGE_SPEND_PER_COVER);
+    assertThat(catalog.related(MetricId.SALES_GST)).isEmpty();
+  }
 }

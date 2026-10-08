@@ -10,6 +10,7 @@ import {
   ChefHat,
   LayoutDashboard,
   LayoutGrid,
+  MessagesSquare,
   Scale,
   ScrollText,
   Settings,
@@ -48,6 +49,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { title: "Dashboards", href: "/dashboards", icon: LayoutGrid },
+      { title: "Conversations", href: "/conversations", icon: MessagesSquare },
       { title: "Sales", href: "/sales", icon: TrendingUp },
       { title: "Staff & Labor", href: "/staff", icon: Users },
       { title: "Reservations", href: "/reservations", icon: CalendarDays },

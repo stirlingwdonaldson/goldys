@@ -27,7 +27,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class GetFoodCostToolTest {
+class GetInventorySummaryToolTest {
 
   private static final LocalDate FROM = LocalDate.of(2026, 9, 20);
   private static final LocalDate TO = LocalDate.of(2026, 9, 20);
@@ -37,46 +37,65 @@ class GetFoodCostToolTest {
   private static final WidgetRenderer RENDERER = new WidgetRenderer(new MetricCatalog());
 
   @Test
-  void emitsResolvedFoodCostTable() {
+  void exposesSummaryNameAndBroadenedMetricQueries() {
+    GetInventorySummaryTool tool =
+        new GetInventorySummaryTool(mock(MetricQueryService.class), RENDERER);
+
+    assertThat(tool.name()).isEqualTo("get_inventory_summary");
+    assertThat(tool.toMetricQueries(new GetInventorySummaryInput(FROM, TO)))
+        .extracting(MetricQuery::metric)
+        .contains(
+            MetricId.INVENTORY_PURCHASES,
+            MetricId.INVENTORY_WASTAGE,
+            MetricId.INVENTORY_FOOD_COST_PERCENT);
+  }
+
+  @Test
+  void emitsResolvedInventorySummaryTable() {
     MetricQueryService metrics = mock(MetricQueryService.class);
     when(metrics.query(any()))
         .thenAnswer(
             inv -> {
               MetricId metric = ((MetricQuery) inv.getArgument(0)).metric();
-              if (metric == MetricId.INVENTORY_PURCHASES) {
-                return tsResult(MetricId.INVENTORY_PURCHASES, List.of(), point(FROM, "70.00"));
-              }
-              if (metric == MetricId.INVENTORY_WASTAGE) {
-                return tsResult(MetricId.INVENTORY_WASTAGE, List.of(), point(FROM, null));
-              }
-              throw new IllegalArgumentException("unexpected metric " + metric);
+              return switch (metric) {
+                case INVENTORY_PURCHASES -> tsResult(metric, List.of(), point(FROM, "70.00"));
+                case INVENTORY_WASTAGE -> tsResult(metric, List.of(), point(FROM, null));
+                case INVENTORY_FOOD_COST_PERCENT ->
+                    tsResult(metric, List.of(), point(FROM, "28.50"));
+                default -> throw new IllegalArgumentException("unexpected metric " + metric);
+              };
             });
 
-    GetFoodCostTool tool = new GetFoodCostTool(metrics, RENDERER);
-    ToolResult result = tool.execute(new GetFoodCostInput(FROM, TO), OWNER);
+    GetInventorySummaryTool tool = new GetInventorySummaryTool(metrics, RENDERER);
+    ToolResult result = tool.execute(new GetInventorySummaryInput(FROM, TO), OWNER);
 
     assertThat(result.widget()).isInstanceOf(TableWidgetSpec.class);
     TableWidgetSpec widget = (TableWidgetSpec) result.widget();
     assertThat((BigDecimal) widget.rows().get(0).get("inventory.purchases"))
         .isEqualByComparingTo(new BigDecimal("70.00"));
     assertThat(widget.rows().get(0).get("inventory.wastage")).isNull();
+    assertThat((BigDecimal) widget.rows().get(0).get("inventory.food_cost_percent"))
+        .isEqualByComparingTo(new BigDecimal("28.50"));
+    assertThat(result.notices()).isEmpty();
   }
 
   @Test
   void rejectsEndDateBeforeStartDate() {
     assertThatThrownBy(
-            () -> new GetFoodCostInput(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 20)))
+            () ->
+                new GetInventorySummaryInput(LocalDate.of(2026, 9, 21), LocalDate.of(2026, 9, 20)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("startDate");
   }
 
   @Test
   void rejectsWrongInputType() {
-    GetFoodCostTool tool = new GetFoodCostTool(mock(MetricQueryService.class), RENDERER);
+    GetInventorySummaryTool tool =
+        new GetInventorySummaryTool(mock(MetricQueryService.class), RENDERER);
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("GetFoodCostInput");
+        .hasMessageContaining("GetInventorySummaryInput");
   }
 
   private static TimeSeriesResult tsResult(

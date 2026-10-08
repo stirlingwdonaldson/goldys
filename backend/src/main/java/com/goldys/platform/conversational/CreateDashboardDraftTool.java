@@ -73,7 +73,7 @@ public class CreateDashboardDraftTool implements ReportingTool {
             null,
             null,
             null);
-    return new ToolResult(widget, List.of());
+    return new ToolResult(widget, List.of(), List.of(), List.of());
   }
 
   /** Casts, validates, and returns the non-persisted draft document. */
@@ -83,7 +83,8 @@ public class CreateDashboardDraftTool implements ReportingTool {
           "Expected CreateDashboardDraftInput, got " + input.getClass().getSimpleName());
     }
     validate(in);
-    return new DashboardDraft(in.title(), in.description(), in.filters(), in.widgets());
+    return new DashboardDraft(
+        in.title(), in.description(), in.filters(), in.widgets(), in.dashboardId());
   }
 
   /**

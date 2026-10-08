@@ -1,4 +1,4 @@
-import type { AnswerPayload, ChatMessage, DashboardDraft } from "./types";
+import type { AnswerPayload, DashboardDraft, MetricProvenance, TraceEntry } from "./types";
 import type { DashboardFilters, MetricQuery, SavedWidget, WidgetLayout } from "@/lib/api/types";
 import { parseWidgetSpecs } from "@/components/widgets/parse";
 
@@ -75,7 +75,44 @@ export function parseDraft(v: unknown): DashboardDraft | null {
     widgets: Array.isArray(v.widgets)
       ? v.widgets.map(parseSavedWidget).filter((w): w is SavedWidget => w !== null)
       : [],
+    dashboardId: strOrNull(v.dashboardId),
   };
+}
+
+/**
+ * Validate the untrusted provenance list at the boundary. Malformed provenance entries are
+ * dropped wholesale (falling back to an empty provenance for that trace entry) rather than
+ * partially parsed.
+ */
+function parseProvenance(v: unknown): MetricProvenance[] {
+  if (!Array.isArray(v)) return [];
+  const out: MetricProvenance[] = [];
+  for (const p of v) {
+    if (!isRecord(p) || typeof p.metric !== "string" || typeof p.definitionVersion !== "string") {
+      continue;
+    }
+    out.push({
+      metric: p.metric,
+      definitionVersion: p.definitionVersion,
+      range: parseRange(p.range) ?? { from: "", to: "", calendar: "CALENDAR" },
+      grain: p.grain === "WEEK" || p.grain === "MONTH" ? p.grain : "DAY",
+      sourceDomain: typeof p.sourceDomain === "string" ? p.sourceDomain : "",
+      dataFreshness: typeof p.dataFreshness === "string" ? p.dataFreshness : "",
+      missingPeriods: strArray(p.missingPeriods),
+      calculationVersion: typeof p.calculationVersion === "string" ? p.calculationVersion : "",
+    });
+  }
+  return out;
+}
+
+function parseTrace(v: unknown): TraceEntry[] {
+  if (!Array.isArray(v)) return [];
+  const out: TraceEntry[] = [];
+  for (const t of v) {
+    if (!isRecord(t) || typeof t.tool !== "string" || typeof t.description !== "string") continue;
+    out.push({ tool: t.tool, description: t.description, provenance: parseProvenance(t.provenance) });
+  }
+  return out;
 }
 
 /** Parse a single `\n\n`-delimited SSE block into its event name and data string. */
@@ -103,10 +140,16 @@ interface StreamHandlers {
 }
 
 /**
- * POST the message history to the chat endpoint and stream the SSE response. Native
- * `fetch` + `ReadableStream` (not `EventSource`, which cannot POST).
+ * POST a single user turn to the chat endpoint and stream the SSE response. The backend owns the
+ * thread and conversation history (server-authoritative), so the client only sends `threadId` and
+ * the new `message` — never the assistant messages or a full history array. Native `fetch` +
+ * `ReadableStream` (not `EventSource`, which cannot POST).
  */
-export async function streamChat(messages: ChatMessage[], handlers: StreamHandlers): Promise<void> {
+export async function streamChat(
+  threadId: string,
+  message: string,
+  handlers: StreamHandlers,
+): Promise<void> {
   const csrf = csrfToken();
   const response = await fetch("/api/conversational/chat", {
     method: "POST",
@@ -116,7 +159,7 @@ export async function streamChat(messages: ChatMessage[], handlers: StreamHandle
       ...(csrf ? { "X-XSRF-TOKEN": csrf } : {}),
     },
     credentials: "same-origin",
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ threadId, message }),
   });
 
   if (!response.ok) {
@@ -166,20 +209,10 @@ export async function streamChat(messages: ChatMessage[], handlers: StreamHandle
 }
 
 /** Validate the untrusted answer payload at the boundary; malformed widgets are dropped. */
-function parseAnswer(payload: Record<string, unknown>): AnswerPayload {
+export function parseAnswer(payload: Record<string, unknown>): AnswerPayload {
   return {
     widgets: parseWidgetSpecs(payload.widgets),
-    trace: Array.isArray(payload.trace)
-      ? payload.trace
-          .filter(
-            (t): t is { tool: string; description: string } =>
-              typeof t === "object" &&
-              t !== null &&
-              typeof (t as { tool?: unknown }).tool === "string" &&
-              typeof (t as { description?: unknown }).description === "string",
-          )
-          .map((t) => ({ tool: t.tool, description: t.description }))
-      : [],
+    trace: parseTrace(payload.trace),
     asOf: typeof payload.asOf === "string" ? payload.asOf : "",
     notices: Array.isArray(payload.notices)
       ? payload.notices.filter((n): n is string => typeof n === "string")

@@ -18,6 +18,7 @@ import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.conversational.ChatController;
+import com.goldys.platform.conversational.ConversationService;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,7 @@ class ChatControllerTest {
 
   @MockitoBean CurrentUserService currentUser;
   @MockitoBean PermissionService permissions;
+  @MockitoBean ConversationService conversations;
 
   @Test
   void deniesANonOwner() throws Exception {
@@ -51,7 +53,7 @@ class ChatControllerTest {
                 .with(authenticated(manager()))
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+                .content("{\"message\":\"hi\"}"))
         .andExpect(status().isForbidden());
   }
 
@@ -66,10 +68,23 @@ class ChatControllerTest {
                 .with(authenticated(owner()))
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+                .content("{\"message\":\"hi\"}"))
         .andExpect(status().isServiceUnavailable())
         .andExpect(jsonPath("$.code").value("NOT_CONFIGURED"))
         .andExpect(jsonPath("$.message").exists());
+  }
+
+  @Test
+  void returnsBadRequestWhenMessageIsBlank() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+
+    mvc.perform(
+            post("/api/conversational/chat")
+                .with(authenticated(owner()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"  \"}"))
+        .andExpect(status().isBadRequest());
   }
 
   private static AccountUserDetails owner() {

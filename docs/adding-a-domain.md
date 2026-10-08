@@ -32,7 +32,7 @@ For each new canonical entity, mirror the named reference files:
 | Override | `<Domain>Override` + `Repository` + `Service` (permission-gated write + re-project) | `ReservationOverrideService` |
 | Application | `<Domain>ReportingService` (authorize read + cross-domain composition) | `ReservationReportingService`, `LabourReportingService` |
 | API | `<Domain>Controller` (thin delivery) | `ReservationController` |
-| Reporting tool | `<Domain>Tool` + `Input` + `ToolId` entry | `GetReservationSummaryTool`, `GetLabourCostTool` |
+| Reporting tool | `<Domain>Tool` + `Input` + `ToolId` entry | `GetReservationSummaryTool`, `GetLabourVarianceTool` |
 | Permissions | new `ResourceKey` + a `V<n>__seed_*` migration (seed `ALL × OWNER` only) | `V23__seed_domain_permissions.sql` |
 | Architecture test | extend `ArchitectureBoundariesTest` (controller not canonical; tool semantic-only; interface implemented in `reconciliation`) | the `reservation*`/`labour*`/`inventory*` rules |
 | Startup seed | add the projector to `StartupProjectionSeeder` | — |

@@ -20,7 +20,7 @@ public class ConversationContext {
   private volatile DashboardDraft draft;
 
   public void record(ReportingTool tool, ToolResult result) {
-    trace.add(new AnswerPayload.TraceEntry(tool.name(), tool.description()));
+    trace.add(new AnswerPayload.TraceEntry(tool.name(), tool.description(), result.provenance()));
     widgets.add(result.widget());
     notices.addAll(result.notices());
   }

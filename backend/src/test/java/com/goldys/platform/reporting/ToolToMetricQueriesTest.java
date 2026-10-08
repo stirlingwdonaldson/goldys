@@ -38,33 +38,39 @@ class ToolToMetricQueriesTest {
   }
 
   @Test
-  void getLabourCostBridgesToFourQueries() {
-    GetLabourCostTool tool = new GetLabourCostTool(mockMetricQueryService(), renderer());
-    var input = new GetLabourCostInput(SEP_13, SEP_20);
+  void getLabourVarianceBridgesToSixQueries() {
+    GetLabourVarianceTool tool = new GetLabourVarianceTool(mockMetricQueryService(), renderer());
+    var input = new GetLabourVarianceInput(SEP_13, SEP_20);
 
     var qs = tool.toMetricQueries(input);
 
-    assertThat(qs).hasSize(4);
+    assertThat(qs).hasSize(6);
     assertThat(qs.stream().map(MetricQuery::metric).toList())
         .containsExactly(
             MetricId.LABOUR_SCHEDULED_HOURS,
             MetricId.LABOUR_ACTUAL_HOURS,
             MetricId.LABOUR_COST,
-            MetricId.LABOUR_HOURS_VARIANCE);
+            MetricId.LABOUR_HOURS_VARIANCE,
+            MetricId.LABOUR_FOH_PERCENT,
+            MetricId.LABOUR_BOH_PERCENT);
     assertThat(qs.get(0).range().calendar()).isEqualTo(Calendar.CALENDAR);
     assertThat(qs.get(0).grain()).isEqualTo(TimeGrain.DAY);
   }
 
   @Test
-  void getFoodCostBridgesToTwoQueries() {
-    GetFoodCostTool tool = new GetFoodCostTool(mockMetricQueryService(), renderer());
-    var input = new GetFoodCostInput(SEP_13, SEP_20);
+  void getInventorySummaryBridgesToThreeQueries() {
+    GetInventorySummaryTool tool =
+        new GetInventorySummaryTool(mockMetricQueryService(), renderer());
+    var input = new GetInventorySummaryInput(SEP_13, SEP_20);
 
     var qs = tool.toMetricQueries(input);
 
-    assertThat(qs).hasSize(2);
+    assertThat(qs).hasSize(3);
     assertThat(qs.stream().map(MetricQuery::metric).toList())
-        .containsExactly(MetricId.INVENTORY_PURCHASES, MetricId.INVENTORY_WASTAGE);
+        .containsExactly(
+            MetricId.INVENTORY_PURCHASES,
+            MetricId.INVENTORY_WASTAGE,
+            MetricId.INVENTORY_FOOD_COST_PERCENT);
   }
 
   @Test

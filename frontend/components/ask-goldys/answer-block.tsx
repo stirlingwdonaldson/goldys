@@ -6,8 +6,8 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import { parseWidgetSpecs } from "@/components/widgets/parse";
 import { Button } from "@/components/ui/button";
-import type { Api, DashboardDocument, SavedWidget } from "@/lib/api/types";
-import type { AnswerPayload } from "./types";
+import type { Api, DashboardDocument, SavedWidget, SaveDashboardInput } from "@/lib/api/types";
+import type { AnswerPayload, MetricProvenance } from "./types";
 
 interface AnswerBlockProps {
   summary: string;
@@ -20,6 +20,16 @@ interface AnswerBlockProps {
 function draftWidgetSummary(widget: SavedWidget): string {
   const count = widget.queries.length;
   return `${widget.renderType} · ${count} ${count === 1 ? "metric" : "metrics"}`;
+}
+
+/** A human-readable one-liner for a metric's provenance: range + freshness + unresolved periods. */
+function provenanceSummary(p: MetricProvenance): string {
+  const parts = [
+    `${p.range.from} → ${p.range.to}`,
+    `data as of ${p.dataFreshness}`,
+  ];
+  if (p.missingPeriods.length) parts.push(`missing ${p.missingPeriods.join(", ")}`);
+  return parts.join(" · ");
 }
 
 /** The answer anatomy: summary + widgets + "How I got this" trace + "as of" + notices + draft. */
@@ -35,14 +45,17 @@ export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
     setSaving(true);
     setSaveError(null);
     try {
-      const doc = await api.saveDashboard({
+      const input: SaveDashboardInput = {
         title: draft.title,
         description: draft.description ?? null,
         layout: "grid",
         filters: draft.filters,
         visibility: "PRIVATE",
         widgets: draft.widgets,
-      });
+      };
+      const doc = draft.dashboardId
+        ? await api.updateDashboard(draft.dashboardId, input)
+        : await api.saveDashboard(input);
       setSaved(doc);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Couldn't save the dashboard.");
@@ -116,11 +129,23 @@ export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
       {answer?.trace.length ? (
         <details className="text-xs text-muted-foreground">
           <summary className="cursor-pointer underline">How I got this</summary>
-          <div className="mt-1 space-y-1">
+          <div className="mt-1 space-y-2">
             {answer.trace.map((t, i) => (
-              <p key={i}>
-                {t.tool} — {t.description}
-              </p>
+              <div key={i} className="space-y-1">
+                <p>
+                  {t.tool} — {t.description}
+                </p>
+                {t.provenance.length ? (
+                  <ul className="ml-3 space-y-1 border-l pl-3">
+                    {t.provenance.map((p, j) => (
+                      <li key={j}>
+                        <span className="font-medium text-foreground">{p.metric}</span>
+                        <span> {provenanceSummary(p)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
             ))}
             <p>As of {answer.asOf}</p>
           </div>

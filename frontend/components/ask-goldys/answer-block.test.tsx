@@ -56,7 +56,13 @@ describe("AnswerBlock", () => {
   it("shows summary, trace, as-of, and notices", () => {
     const answer: AnswerPayload = {
       widgets: [],
-      trace: [{ tool: "get_sales_by_period", description: "Resolved daily sales totals." }],
+      trace: [
+        {
+          tool: "get_sales_by_period",
+          description: "Resolved daily sales totals.",
+          provenance: [],
+        },
+      ],
       asOf: "2026-10-02T10:00:00Z",
       notices: ["1 date(s) have no resolved total (unresolved conflict)."],
     };
@@ -127,5 +133,73 @@ describe("AnswerBlock", () => {
     // The button is re-enabled for a retry.
     expect(screen.getByRole("button", { name: /save dashboard/i })).toBeEnabled();
     expect(saveDashboard).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders provenance detail in the trace", () => {
+    const answer: AnswerPayload = {
+      widgets: [],
+      trace: [
+        {
+          tool: "get_sales_by_period",
+          description: "Resolved daily sales totals.",
+          provenance: [
+            {
+              metric: "sales.gross",
+              definitionVersion: "v1",
+              range: { from: "2026-10-01", to: "2026-10-07", calendar: "TRADING" },
+              grain: "DAY",
+              sourceDomain: "lightspeed",
+              dataFreshness: "2026-10-07T09:00:00Z",
+              missingPeriods: ["2026-10-03", "2026-10-04"],
+              calculationVersion: "v3",
+            },
+          ],
+        },
+      ],
+      asOf: "2026-10-02T10:00:00Z",
+      notices: [],
+    };
+    render(<AnswerBlock summary="" answer={answer} error={null} api={stubApi()} />);
+
+    expect(screen.getByText(/get_sales_by_period/i)).toBeInTheDocument();
+    expect(screen.getByText("sales.gross")).toBeInTheDocument();
+    expect(screen.getByText(/2026-10-01 → 2026-10-07/)).toBeInTheDocument();
+    expect(screen.getByText(/data as of 2026-10-07T09:00:00Z/i)).toBeInTheDocument();
+    expect(screen.getByText(/missing 2026-10-03, 2026-10-04/)).toBeInTheDocument();
+  });
+
+  it("updates a dashboard when the draft has a dashboardId", async () => {
+    const updateDashboard = vi.fn(async () => savedDocument());
+    const saveDashboard = vi.fn(async () => savedDocument());
+    const answer: AnswerPayload = {
+      widgets: [],
+      trace: [],
+      asOf: "2026-10-07T10:00:00Z",
+      notices: [],
+      draft: { ...draft(), dashboardId: "d1" },
+    };
+    render(
+      <AnswerBlock
+        summary=""
+        answer={answer}
+        error={null}
+        api={stubApi({ updateDashboard, saveDashboard })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /save dashboard/i }));
+
+    await waitFor(() => expect(updateDashboard).toHaveBeenCalledTimes(1));
+    expect(updateDashboard).toHaveBeenCalledWith("d1", {
+      title: "Weekly sales",
+      description: "Gross sales by day",
+      layout: "grid",
+      filters: { dateRange: null, comparison: null, dimensions: [] },
+      visibility: "PRIVATE",
+      widgets: [widget()],
+    });
+    expect(saveDashboard).not.toHaveBeenCalled();
+
+    expect(await screen.findByText(/dashboard saved/i)).toBeInTheDocument();
   });
 });

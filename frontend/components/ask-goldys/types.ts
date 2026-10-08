@@ -6,6 +6,24 @@ export type { WidgetSpec };
 export interface TraceEntry {
   tool: string;
   description: string;
+  provenance: MetricProvenance[];
+}
+
+/**
+ * Where a metric result came from. Mirrors the backend's `MetricProvenance` record: the metric
+ * id, its catalogue definition version, the exact range/grain it was evaluated at, the source
+ * domain, the freshness of the source data, the periods that had no resolved data, and the
+ * calculation version.
+ */
+export interface MetricProvenance {
+  metric: string;
+  definitionVersion: string;
+  range: { from: string; to: string; calendar: "TRADING" | "CALENDAR" };
+  grain: "DAY" | "WEEK" | "MONTH";
+  sourceDomain: string;
+  dataFreshness: string;
+  missingPeriods: string[];
+  calculationVersion: string;
 }
 
 /**
@@ -18,6 +36,8 @@ export interface DashboardDraft {
   description: string | null;
   filters: DashboardFilters;
   widgets: SavedWidget[];
+  /** Set when the backend has already persisted this draft; null/absent otherwise. */
+  dashboardId?: string | null;
 }
 
 export interface AnswerPayload {

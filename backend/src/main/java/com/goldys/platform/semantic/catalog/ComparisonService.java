@@ -31,8 +31,8 @@ public class ComparisonService {
   public record ComparisonResult(
       MetricResult current, MetricResult reference, BigDecimal deltaPercent) {}
 
-  static BigDecimal deltaPercent(BigDecimal current, BigDecimal reference) {
-    if (reference == null || reference.signum() == 0) {
+  public static BigDecimal deltaPercent(BigDecimal current, BigDecimal reference) {
+    if (current == null || reference == null || reference.signum() == 0) {
       return null;
     }
     return current.subtract(reference).divide(reference, 4, RoundingMode.HALF_UP);
