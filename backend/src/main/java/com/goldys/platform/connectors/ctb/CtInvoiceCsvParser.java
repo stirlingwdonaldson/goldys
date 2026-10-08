@@ -17,70 +17,50 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 
 /**
- * Parses the CTB Custom Invoice Export CSV into invoice metadata rows.
- *
- * <p>The export header is read from the CSV itself and the identity columns are validated, so a
- * report-shape change fails loudly rather than silently producing wrong rows. Column names are the
- * literal CTB export headers (note {@code Co./Last Name}, {@code Purchase#}, {@code Supplier
- * Invoice #}, {@code Account #}). Monetary cells are currency-formatted ("$1,234.56") and parsed
- * accordingly.
- *
- * <p>The required identity columns are {@code Co./Last Name}, {@code Supplier Invoice #} and {@code
- * Date}; the tax/freight breakdown and account/purchase numbers are optional and parse to {@code
- * null} when blank.
+ * Parses CTB's Custom Invoice Export CSV — a single file with header AND line columns, one row per
+ * line item, header columns repeated on every row. Rows whose line description is blank are
+ * skipped. This replaces the old parser that read only the pre-2026 header-only export.
  */
 @Component
 public class CtInvoiceCsvParser {
 
-  public List<CtInvoice> parse(byte[] csv) {
+  public CtInvoice parse(byte[] csv) {
     List<CSVRecord> records = readAll(csv);
     if (records.size() < 2) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Invoice CSV is empty");
     }
     Map<String, Integer> columns = columnIndex(records.get(0));
-    require(columns, "Co./Last Name", "Supplier Invoice #", "Date");
+    require(
+        columns, "Invoice", "Supplier", "Date", "StockCode", "StockDescription", "LineTotalExTax");
 
-    List<CtInvoice> out = new ArrayList<>();
+    CSVRecord first = records.get(1);
+    List<CtInvoiceLine> lines = new ArrayList<>();
     for (int i = 1; i < records.size(); i++) {
       CSVRecord r = records.get(i);
-      out.add(
-          new CtInvoice(
-              requireValue(columns, r, "Co./Last Name"),
-              optionalString(columns, r, "Purchase#"),
-              date(columns, r, "Date"),
-              requireValue(columns, r, "Supplier Invoice #"),
-              optionalString(columns, r, "Account #"),
-              optionalMoney(columns, r, "Amount"),
-              optionalString(columns, r, "Tax Code"),
-              optionalMoney(columns, r, "GST Amount"),
-              optionalMoney(columns, r, "Freight Amount"),
-              optionalMoney(columns, r, "Freight GST Amount"),
-              optionalMoney(columns, r, "Inc-Tax Amount")));
+      String description = optionalString(columns, r, "StockDescription");
+      if (description == null) {
+        continue; // header-only / blank row — not a line
+      }
+      lines.add(
+          new CtInvoiceLine(
+              optionalString(columns, r, "StockCode"),
+              description,
+              optionalString(columns, r, "LineQuantity"),
+              optionalMoney(columns, r, "LineUnitCostExTax"),
+              money(columns, r, "LineTotalExTax")));
     }
-    return out;
-  }
 
-  private static LocalDate date(Map<String, Integer> columns, CSVRecord r, String name) {
-    String value = requireValue(columns, r, name);
-    try {
-      return LocalDate.parse(value);
-    } catch (RuntimeException e) {
-      throw new ConnectorFetchException(
-          "CONNECTOR_SCHEMA_MISMATCH", "Bad date '" + value + "' for '" + name + "'", e);
-    }
-  }
-
-  private static BigDecimal optionalMoney(Map<String, Integer> columns, CSVRecord r, String name) {
-    String value = blankToNull(get(columns, r, name));
-    if (value == null) {
-      return null;
-    }
-    try {
-      return new BigDecimal(value.replace("$", "").replace(",", "").trim());
-    } catch (NumberFormatException e) {
-      throw new ConnectorFetchException(
-          "CONNECTOR_SCHEMA_MISMATCH", "Bad amount '" + value + "' for '" + name + "'", e);
-    }
+    return new CtInvoice(
+        requireValue(columns, first, "Supplier"),
+        optionalString(columns, first, "PONumber"),
+        date(columns, first, "Date"),
+        requireValue(columns, first, "Invoice"),
+        optionalDate(columns, first, "InvoiceDueDate"),
+        optionalMoney(columns, first, "InvoiceTotalExTax"),
+        optionalMoney(columns, first, "GST"),
+        optionalMoney(columns, first, "InvoiceFreight"),
+        optionalMoney(columns, first, "Total"),
+        lines);
   }
 
   private static List<CSVRecord> readAll(byte[] csv) {
@@ -126,6 +106,52 @@ public class CtInvoiceCsvParser {
 
   private static String optionalString(Map<String, Integer> columns, CSVRecord r, String name) {
     return blankToNull(get(columns, r, name));
+  }
+
+  private static LocalDate date(Map<String, Integer> columns, CSVRecord r, String name) {
+    String value = requireValue(columns, r, name);
+    try {
+      return LocalDate.parse(value);
+    } catch (RuntimeException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad date '" + value + "' for '" + name + "'", e);
+    }
+  }
+
+  private static LocalDate optionalDate(Map<String, Integer> columns, CSVRecord r, String name) {
+    String value = optionalString(columns, r, name);
+    if (value == null) {
+      return null;
+    }
+    try {
+      return LocalDate.parse(value);
+    } catch (RuntimeException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad date '" + value + "' for '" + name + "'", e);
+    }
+  }
+
+  private static BigDecimal money(Map<String, Integer> columns, CSVRecord r, String name) {
+    String value = requireValue(columns, r, name);
+    try {
+      return new BigDecimal(value.replace("$", "").replace(",", "").trim());
+    } catch (NumberFormatException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad amount '" + value + "' for '" + name + "'", e);
+    }
+  }
+
+  private static BigDecimal optionalMoney(Map<String, Integer> columns, CSVRecord r, String name) {
+    String value = blankToNull(get(columns, r, name));
+    if (value == null) {
+      return null;
+    }
+    try {
+      return new BigDecimal(value.replace("$", "").replace(",", "").trim());
+    } catch (NumberFormatException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad amount '" + value + "' for '" + name + "'", e);
+    }
   }
 
   private static String blankToNull(String value) {
