@@ -13,8 +13,7 @@ read-only: the platform never writes back to a source system (per
 |---|---|---|---|
 | Lightspeed (O-Series / Kounta) | Browser scrape of the back office (no usable public API for the sales feed) | Email + password form | Deterministic Playwright: login → Sales Feed → export CSV |
 | Cooking the Books (CTB) | Authenticated internal AJAX endpoints (ASP.NET MVC + ExtJS; no public API) | `POST /Account/Login` → session cookie | Session-authenticated POSTs to controller actions |
-| MarketMan | Buyer-portal internal API + official API v3 (`api.marketman.com/v3`) | Session cookie (buyer portal) or `AUTH_TOKEN` header (v3) | Session-authenticated POSTs to `/api/<Controller>/<Action>` |
-| Xero (candidate accounting source) | OAuth 2.0 | Read-only OAuth scopes | Not yet connected; a live Xero connection already exists via MarketMan |
+| MarketMan (history only) | Buyer-portal internal API + official API v3 (`api.marketman.com/v3`) | Session cookie (buyer portal) or `AUTH_TOKEN` header (v3) | One-time historical pull of pre-CTB numbers; not a recurring connector |
 
 ## Lightspeed (O-Series / Kounta)
 
@@ -154,11 +153,15 @@ Notes:
 ## MarketMan
 
 Inventory, purchasing, recipe-costing and menu-engineering system. Buyer portal
-at `https://buyer.marketman.com`; Goldy's has been a customer since 2022-08-02
-and was still in daily use at the 2026-09-03 capture (orders placed 1–2 Sep,
-yesterday's POS sales present). Integrations: **Kounta** (POS), **Xero**
-(accounting, org "Goldy Enterprises"), **Deputy** (labour) — so some figures are
+at `https://buyer.marketman.com`; Goldy's has been a customer since 2022-08-02.
+Integrations: **Kounta** (POS) and **Deputy** (labour) — so some figures are
 derived from those systems and are cross-checks, not original records.
+
+**Status: history only.** MarketMan is kept for old (pre-CTB) numbers and only
+needs to be pulled once, not ingested on a schedule. It still showed live
+orders and sales at the 2026-09-03 capture, so a future job is flagged to
+determine when the business migrated from MarketMan to CTB (CTB was adopted
+~May 2026; MarketMan goes back to 2022).
 
 - **Buyer-portal internal API** (what was captured): mostly
   `POST /api/<Controller>/<Action>` with the logged-in session cookie. Responses

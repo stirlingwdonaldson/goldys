@@ -140,11 +140,13 @@ Add after the CTB section:
 ## MarketMan
 
 Inventory, purchasing, recipe-costing and menu-engineering system. Buyer portal
-at `https://buyer.marketman.com`; Goldy's has been a customer since 2022-08-02
-and was still in daily use at the 2026-09-03 capture (orders placed 1–2 Sep,
-yesterday's POS sales present). Integrations: **Kounta** (POS), **Xero**
-(accounting, org "Goldy Enterprises"), **Deputy** (labour) — so some figures
-are derived from those systems and are cross-checks, not original records.
+at `https://buyer.marketman.com`; Goldy's has been a customer since 2022-08-02.
+Integrations: **Kounta** (POS) and **Deputy** (labour) — so some figures are
+derived from those systems and are cross-checks, not original records.
+
+**Status: history only.** MarketMan is kept for old (pre-CTB) numbers and only
+needs to be pulled once, not ingested on a schedule. A future job is flagged to
+determine when the business migrated from MarketMan to CTB.
 
 - **Buyer-portal internal API** (what was captured): mostly
   `POST /api/<Controller>/<Action>` with the logged-in session cookie. Responses
@@ -172,7 +174,7 @@ are derived from those systems and are cross-checks, not original records.
   is a permission problem, not an auth or code problem.
 ```
 
-- [ ] **Step 5: Update the Summary table** to add MarketMan (and note Xero as a candidate accounting source).
+- [ ] **Step 5: Update the Summary table** to add MarketMan (history only).
 
 - [ ] **Step 6: Commit** (`docs/connectors/source-access.md`).
 
@@ -181,17 +183,16 @@ are derived from those systems and are cross-checks, not original records.
 **Files:**
 - Modify: `docs/system-context.md`
 
-- [ ] **Step 1: Add MarketMan and Xero rows; amend the CTB row.**
+- [ ] **Step 1: Add a MarketMan (history-only) row; amend the CTB row.**
 
 In the table under "Per-Source Ingestion Reality":
 
 |Source|API access|Working ingestion path|
 |---|---|---|
-|**MarketMan**|Buyer-portal internal API (session cookie) + official API v3 (`api.marketman.com/v3`, keys from support) | Buyer-portal scrape today; API v3 once keys issued. Integrated with Kounta (POS), Xero (accounting), Deputy (labour); customer since 2022, still in daily use as of Sep 2026 |
-|**Xero (candidate accounting source)**|OAuth 2.0 | A live Xero connection already exists via MarketMan (org "Goldy Enterprises"); read-only OAuth scopes if adopted |
+|**MarketMan (history only)**|Buyer-portal internal API (session cookie) + official API v3 (`api.marketman.com/v3`, keys from support) | One-time historical pull of pre-CTB numbers; not a recurring connector. Integrated with Kounta (POS) and Deputy (labour); customer since 2022 |
 |**Cooking the Books (CTB)**|No public API | … (keep existing) — note: CTB is inventory/purchasing rather than accounting, adopted ~May 2026 |
 
-- [ ] **Step 2: Add a one-line note** after the table that CTB is really inventory/purchasing (adopted ~May 2026), and that MarketMan overlaps heavily (a CTB↔MarketMan migration appears in progress).
+- [ ] **Step 2: Add a one-line note** after the table that CTB is really inventory/purchasing (adopted ~May 2026), and that a future job is flagged to determine the MarketMan → CTB migration date.
 
 - [ ] **Step 3: Commit.**
 
@@ -200,7 +201,7 @@ In the table under "Per-Source Ingestion Reality":
 **Files:**
 - Modify: `.env.example`
 
-- [ ] **Step 1: Add commented, empty credential slots** for CTB, MarketMan, Lightspeed, and Xero (names exactly as in the research repo's `.env.example`):
+- [ ] **Step 1: Add commented, empty credential slots** for CTB, MarketMan, and Lightspeed (names exactly as in the research repo's `.env.example`):
 
 ```bash
 # ---- Cooking the Books (CTB) ----
@@ -225,11 +226,6 @@ In the table under "Per-Source Ingestion Reality":
 # LIGHTSPEED_PASSWORD=
 # LIGHTSPEED_CLIENT_ID=
 # LIGHTSPEED_CLIENT_SECRET=
-
-# ---- Xero (candidate accounting source) ----
-# XERO_CLIENT_ID=
-# XERO_CLIENT_SECRET=
-# XERO_TENANT_ID=
 ```
 
 - [ ] **Step 2: Commit.**
@@ -239,10 +235,9 @@ In the table under "Per-Source Ingestion Reality":
 Show the doc diff and the PRD-contradiction list (below) before continuing.
 
 **PRD statements these findings contradict (for owner decision):**
-1. `docs/prd.md` Problem Statement calls CTB "accounting (Cooking the Books)". CTB is inventory/purchasing/recipes/revenue, not accounting; its `*/GetIntegrationConfiguration` endpoints are all empty (nothing exported). The live accounting system is **Xero** (via MarketMan).
+1. `docs/prd.md` Problem Statement calls CTB "accounting (Cooking the Books)". CTB is inventory/purchasing/recipes/revenue, not accounting; its `*/GetIntegrationConfiguration` endpoints are all empty (nothing exported anywhere). Accounting is out of scope (Xero dropped by owner), so the PRD's "accounting" role for CTB should just be relabelled to inventory/purchasing.
 2. PRD Requirement 4 (and the `new-connector` skill) say CTB ingestion should use the self-serve Custom Invoice Export and that the internal endpoints are "schema-discovery only". The existing `CtbConnector` already ingests CTB via the internal endpoints (`Revenue/SearchRevenues`, `Sale/SearchSaleItemsByDateRange`) for production, and this work extends that further — so the "internal endpoints are discovery-only" stance is already superseded in code.
-3. PRD implies a stable set of systems; the research shows a **CTB↔MarketMan migration in progress** (MarketMan since 2022 and still live Sep 2026; CTB adopted ~May 2026 with invoices backdated to Oct 2025). The "authoritative for purchasing/recipes" question (Phase 4) is unresolved.
-4. PRD Non-Goals "keep MVP source count at four" — MarketMan and Xero are two additional live sources overlapping the four; not a hard contradiction, but the scope assumption no longer matches reality.
+3. PRD implies a stable set of systems; the research shows a **CTB↔MarketMan migration in progress**. Per owner decision, CTB is the current/ongoing system and MarketMan is history-only (old numbers, pulled once). The remaining unknown is the **migration date** (a flagged future job) — not a contradiction, just an open item.
 
 ---
 
@@ -349,20 +344,33 @@ No new canonical type is proposed in this phase. If the owner later wants canoni
 
 ---
 
-## Phase 4 — MarketMan (STOP and ask before building)
+## Phase 4 — MarketMan (history-only, one-time pull)
 
-**Must ask the owner before any code:**
-1. Which system is authoritative for purchasing/recipes — MarketMan or CTB? (A migration from MarketMan → CTB appears in progress but is unconfirmed.)
-2. Is MarketMan needed for history only, or ongoing?
-3. Do we have API v3 keys yet, or should v1 use the buyer-portal session (`MARKETMAN_COOKIE` or `MARKETMAN_EMAIL`/`MARKETMAN_PASSWORD`)?
+**Owner decision (2026-10-08):** MarketMan is kept for old (pre-CTB) numbers
+only, and the data only needs to be pulled once. It is not a recurring
+connector.
 
-**Planned shape (after answers):** a new `MarketManConnector implements SourceConnector` in `connectors/marketman/`, raw-ledger-first, starting with the "High value" endpoints in `recommended-endpoints.md`. Skip `Items/GetItemDetails` (permission-blocked on "View Recipes"). Reference-data and read-only actions only — never Add/Save/Update/Delete/Approve/Transfer/MarkAsExported.
+**Planned shape:** a one-time historical extraction of the "High value"
+endpoints in `recommended-endpoints.md`, stored in the raw ledger
+(byte-faithful, `source_system=MARKETMAN`, `fetch_method=SCRAPE`), using a
+buyer-portal session (`MARKETMAN_COOKIE` or `MARKETMAN_EMAIL`/`MARKETMAN_PASSWORD`).
+Skip `Items/GetItemDetails` (permission-blocked on "View Recipes"). Read-only
+actions only — never Add/Save/Update/Delete/Approve/Transfer/MarkAsExported.
+
+**Future job (flagged):** determine when the business migrated from MarketMan
+to CTB, so the historical pull's range is known and old numbers can be spliced
+onto CTB's series without overlap.
 
 ---
 
 ## Out of scope
 
-- Xero connector (short ADR proposal only, if useful).
+- Xero (dropped by owner — no accounting source in scope).
 - Tenzo.
 - Lightspeed internal POS register API.
 - Pulling the full ~78k customer list from Lightspeed.
+
+## Future job
+
+- Determine when the business migrated from MarketMan to CTB (bounds the
+  MarketMan historical pull and the splice point onto CTB's series).
