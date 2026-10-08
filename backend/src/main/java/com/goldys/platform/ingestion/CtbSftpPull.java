@@ -8,12 +8,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * Pulls files from the CTB SFTP drop. CSVs are fed through the CSV pipeline (raw + canonicalize);
- * PDFs are stored byte-faithfully raw-only (PDF enrichment is a later phase). Disabled until {@code
- * app.scheduling.ctb-sftp.enabled=true}.
+ * Polls the CTB SFTP drop for invoice files. CSVs are fed through the CSV pipeline (raw +
+ * canonicalize); PDFs are stored byte-faithfully raw-only (PDF enrichment is a later phase).
+ * Disabled until {@code ctb.sftp.enabled=true}; cron in Australia/Melbourne.
  */
 @Component
-@ConditionalOnProperty(name = "app.scheduling.ctb-sftp.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "ctb.sftp.enabled", havingValue = "true")
 public class CtbSftpPull {
   private static final Logger log = LoggerFactory.getLogger(CtbSftpPull.class);
 
@@ -28,27 +28,33 @@ public class CtbSftpPull {
     this.csvIngest = csvIngest;
   }
 
-  @Scheduled(cron = "${app.scheduling.ctb-sftp.cron:0 0 4 * * *}", zone = "Australia/Melbourne")
+  @Scheduled(cron = "${ctb.sftp.cron:0 15 4 * * *}", zone = "Australia/Melbourne")
   public void pull() {
-    for (SftpDrop.SftpFile file : drop.list()) {
-      try {
-        byte[] bytes = drop.download(file.path());
-        if (file.filename().toLowerCase().endsWith(".csv")) {
-          csvIngest.ingest(bytes);
-        } else {
-          ingestion.ingestPush(
-              "CTB",
-              "ctb-invoice-pdf",
-              FetchMethod.FILE_EXPORT,
-              "application/pdf",
-              bytes,
-              null,
-              "ctb-sftp");
+    try {
+      for (SftpDrop.SftpFile file : drop.list()) {
+        try {
+          byte[] bytes = drop.download(file.path());
+          if (file.filename().toLowerCase().endsWith(".csv")) {
+            csvIngest.ingest(bytes);
+          } else {
+            ingestion.ingestPush(
+                "CTB",
+                "ctb-invoice-pdf",
+                FetchMethod.FILE_EXPORT,
+                "application/pdf",
+                bytes,
+                null,
+                "ctb-sftp");
+          }
+          log.info("SFTP drop processed {}", file.filename());
+        } catch (RuntimeException e) {
+          // Keep pulling the rest; a single bad file must not stop the poll.
+          log.warn("SFTP drop pull failed for {}", file.path(), e);
         }
-        log.info("SFTP drop processed {}", file.filename());
-      } catch (RuntimeException e) {
-        log.warn("SFTP drop pull failed for {}", file.path(), e);
       }
+    } catch (RuntimeException e) {
+      // list() itself failed (e.g. unreachable host); surface it without killing the task thread.
+      log.warn("SFTP drop poll failed", e);
     }
   }
 }

@@ -38,6 +38,9 @@ describe("POST /monitoring (Sentry tunnel)", () => {
       "http://sentry.example.test/api/7/envelope/",
       expect.objectContaining({ method: "POST" }),
     );
+    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
+    expect(headers["X-Sentry-Auth"]).toContain("sentry_key=publickey");
+    expect(response.headers.get("X-Sentry-Tunnel")).toBe("upstream");
   });
 
   it("honours an internal forwarding target", async () => {
@@ -57,7 +60,9 @@ describe("POST /monitoring (Sentry tunnel)", () => {
       "http://otherkey@sentry.example.test/7",
       "http://publickey@evil.example.test/7",
     ]) {
-      expect((await POST(envelope(other))).status).toBe(403);
+      const response = await POST(envelope(other));
+      expect(response.status).toBe(403);
+      expect(response.headers.get("X-Sentry-Tunnel")).toBe("dsn-mismatch");
     }
     expect(fetchMock).not.toHaveBeenCalled();
   });

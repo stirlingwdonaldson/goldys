@@ -14,12 +14,15 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
+import com.goldys.platform.ingestion.CtbSftpPull;
 import com.goldys.platform.ingestion.FailureDetail;
 import com.goldys.platform.ingestion.IngestionRunSummary;
 import com.goldys.platform.ingestion.IngestionService;
+import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 
 class ConnectorApplicationServiceTest {
 
@@ -29,8 +32,12 @@ class ConnectorApplicationServiceTest {
   private final PermissionService permissions = mock(PermissionService.class);
   private final IngestionService ingestion = mock(IngestionService.class);
   private final OpenTableCsvIngestService openTable = mock(OpenTableCsvIngestService.class);
+
+  @SuppressWarnings("unchecked")
+  private final ObjectProvider<CtbSftpPull> sftpPull = mock(ObjectProvider.class);
+
   private final ConnectorApplicationService service =
-      new ConnectorApplicationService(ingestion, openTable, permissions);
+      new ConnectorApplicationService(ingestion, openTable, permissions, sftpPull);
 
   @Test
   void mergesKnownSourcesWithLatestRunAndFlagsRunnable() {
@@ -107,5 +114,24 @@ class ConnectorApplicationServiceTest {
     service.uploadOpenTableCsv(OWNER, bytes);
 
     verify(openTable).ingest(bytes);
+  }
+
+  @Test
+  void runSftpPullDelegatesWhenEnabled() {
+    CtbSftpPull pull = mock(CtbSftpPull.class);
+    when(sftpPull.getIfAvailable()).thenReturn(pull);
+
+    service.runSftpPull(OWNER);
+
+    verify(pull).pull();
+  }
+
+  @Test
+  void runSftpPullThrowsWhenDisabled() {
+    when(sftpPull.getIfAvailable()).thenReturn(null);
+
+    assertThatThrownBy(() -> service.runSftpPull(OWNER))
+        .isInstanceOf(ConnectorFetchException.class)
+        .hasMessageContaining("not enabled");
   }
 }

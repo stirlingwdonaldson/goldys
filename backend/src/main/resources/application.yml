@@ -129,3 +129,16 @@ app:
     ctb:
       enabled: true
       cron: "0 0 4 * * *"
+
+# Cooking the Books SFTP drop — the Custom Invoice Export lands here and is polled by the
+# SFTP pull. Disabled by default; set ctb.sftp.enabled=true and provide host/user/password
+# (CTB_SFTP_HOST/USER/PASSWORD) to turn it on. Cron is Australia/Melbourne.
+ctb:
+  sftp:
+    enabled: ${CTB_SFTP_ENABLED:false}
+    cron: ${CTB_SFTP_CRON:0 15 4 * * *}
+    host: ${CTB_SFTP_HOST:}
+    port: ${CTB_SFTP_PORT:22}
+    user: ${CTB_SFTP_USER:}
+    password: ${CTB_SFTP_PASSWORD:}
+    remote-dir: ${CTB_SFTP_REMOTE_DIR:/}
