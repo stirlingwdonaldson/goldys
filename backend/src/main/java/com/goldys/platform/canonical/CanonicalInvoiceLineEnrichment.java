@@ -9,15 +9,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Applies PDF enrichment to a canonical line: finds the current line by (invoice_number,
- * stock_code) and supersedes it with the PDF's uom/unit_quantity/pack_size/wet_amount, keeping the
- * CSV's quantity/unit_cost/line_total (CSV is authoritative). A no-op when no line matches, when
- * the stock code is ambiguous (more than one current line), or when the fields are already present.
+ * Applies PDF enrichment to a canonical line: finds the current line and supersedes it with the
+ * PDF's uom/unit_quantity/pack_size/wet_amount, keeping the CSV's quantity/unit_cost/line_total
+ * (CSV is authoritative). Matching is on {@code (invoice_number, stock_code)} first, falling back
+ * to {@code (invoice_number, normalized description)} when the stock code is absent or unmatched
+ * (spec §7).
  *
- * <p>This deliberately does NOT route through {@link CanonicalInvoiceLineService#record}:
- * enrichment changes only the PDF-owned fields, which {@link CanonicalInvoiceLine#sameFact} must
- * not compare — otherwise a later CSV re-ingest (which supplies {@code null} for those fields)
- * would un-enrich the line and churn versions on every poll.
+ * <p><b>Explicitly per-line transactional:</b> each {@link #enrich} call is its own transaction.
+ * This is deliberate rather than a single whole-PDF transaction — it keeps the (potentially slow,
+ * network-bound) text extraction/LLM parse outside any DB transaction, and means one anomalous line
+ * cannot roll back the rest of a PDF's enrichment.
+ *
+ * <p><b>Provenance:</b> the successor reuses the CSV line's {@code rawRecordId}, never a PDF raw id
+ * — the enriched row's provenance stays anchored to the authoritative CSV source, and only the
+ * PDF-owned fields change.
  */
 @Service
 public class CanonicalInvoiceLineEnrichment {
@@ -33,17 +38,25 @@ public class CanonicalInvoiceLineEnrichment {
   public EnrichmentResult enrich(
       String invoiceNumber,
       String stockCode,
+      String description,
       String uom,
       BigDecimal unitQuantity,
       BigDecimal packSize,
       BigDecimal wetAmount) {
     List<CanonicalInvoiceLine> matches =
-        repository.lockCurrentByInvoiceNumberAndStockCode(invoiceNumber, stockCode);
+        stockCode == null || stockCode.isBlank()
+            ? List.of()
+            : repository.lockCurrentByInvoiceNumberAndStockCode(invoiceNumber, stockCode);
+    if (matches.isEmpty() && description != null && !description.isBlank()) {
+      matches =
+          repository.lockCurrentByInvoiceNumberAndProductNameKey(
+              invoiceNumber, ProductNameKey.normalize(description));
+    }
     if (matches.isEmpty()) {
       return EnrichmentResult.NO_MATCH; // no CSV line (pdf-only line)
     }
     if (matches.size() > 1) {
-      return EnrichmentResult.AMBIGUOUS; // duplicate stock code; skip rather than guess
+      return EnrichmentResult.AMBIGUOUS; // duplicate code/description; skip rather than guess
     }
     CanonicalInvoiceLine l = matches.get(0);
     if (Objects.equals(l.uom(), uom)

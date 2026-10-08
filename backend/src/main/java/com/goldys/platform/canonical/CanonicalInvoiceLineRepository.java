@@ -22,4 +22,11 @@ interface CanonicalInvoiceLineRepository extends BitemporalRepository<CanonicalI
           + "and l.stockCode = :stockCode and l.supersededAt is null")
   List<CanonicalInvoiceLine> lockCurrentByInvoiceNumberAndStockCode(
       String invoiceNumber, String stockCode);
+
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query(
+      "select l from CanonicalInvoiceLine l where l.invoiceNumber = :invoiceNumber "
+          + "and l.productNameKey = :productNameKey and l.supersededAt is null")
+  List<CanonicalInvoiceLine> lockCurrentByInvoiceNumberAndProductNameKey(
+      String invoiceNumber, String productNameKey);
 }

@@ -38,12 +38,12 @@ class InvoicePdfEnrichmentServiceTest {
                 "PDF-OWN-NUMBER",
                 List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null))));
     when(invoiceQuery.invoiceNumberForPdfFilename("bruno-1.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), any(), any(), any(), any()))
+    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
 
     service().enrich(new byte[] {1}, "bruno-1.pdf");
 
-    verify(enrichment).enrich(eq("INV-1"), eq("CODE"), any(), any(), any(), any());
+    verify(enrichment).enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any());
     verify(flags, never()).flag(any(), any(), any(), any(), anyString());
   }
 
@@ -56,12 +56,14 @@ class InvoicePdfEnrichmentServiceTest {
                 "PDF-OWN-NUMBER",
                 List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null))));
     when(invoiceQuery.invoiceNumberForPdfFilename("unknown.pdf")).thenReturn(Optional.empty());
-    when(enrichment.enrich(eq("PDF-OWN-NUMBER"), eq("CODE"), any(), any(), any(), any()))
+    when(enrichment.enrich(
+            eq("PDF-OWN-NUMBER"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
 
     service().enrich(new byte[] {1}, "unknown.pdf");
 
-    verify(enrichment).enrich(eq("PDF-OWN-NUMBER"), eq("CODE"), any(), any(), any(), any());
+    verify(enrichment)
+        .enrich(eq("PDF-OWN-NUMBER"), eq("CODE"), eq("desc"), any(), any(), any(), any());
   }
 
   @Test
@@ -90,7 +92,7 @@ class InvoicePdfEnrichmentServiceTest {
                 "INV-1",
                 List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null))));
     when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), any(), any(), any(), any()))
+    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.NO_MATCH);
 
     service().enrich(new byte[] {1}, "a.pdf");

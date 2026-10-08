@@ -53,6 +53,7 @@ public class InvoicePdfEnrichmentService {
           enrichment.enrich(
               invoiceNumber,
               line.stockCode(),
+              line.description(),
               line.uom(),
               line.unitQuantity(),
               line.packSize(),

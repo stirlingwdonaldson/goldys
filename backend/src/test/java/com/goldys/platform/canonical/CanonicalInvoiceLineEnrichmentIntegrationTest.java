@@ -46,7 +46,7 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             null,
             rawRecord()));
 
-    enrichment.enrich("INV-9001", "BEEF025", "KG", null, null, null);
+    enrichment.enrich("INV-9001", "BEEF025", null, "KG", null, null, null);
 
     assertThat(
             jdbc.queryForObject(
@@ -76,13 +76,42 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             null,
             rawRecord()));
 
-    enrichment.enrich("INV-9002", "NOPE", "KG", null, null, null);
+    enrichment.enrich("INV-9002", "NOPE", null, "KG", null, null, null);
 
     assertThat(
             jdbc.queryForObject(
                 "select uom from canonical_invoice_line where invoice_number = 'INV-9002'",
                 String.class))
         .isNull();
+  }
+
+  @Test
+  void enrichesByDescriptionWhenStockCodeIsAbsent() {
+    lineService.record(
+        new InvoiceLineInput(
+            "CTB",
+            "INV-9005:1",
+            "INV-9005",
+            LocalDate.of(2026, 9, 20),
+            "beef rump cap",
+            null, // no stock code on the CSV line
+            new BigDecimal("3.25"),
+            new BigDecimal("31.50"),
+            new BigDecimal("102.38"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            rawRecord()));
+
+    enrichment.enrich("INV-9005", null, "BEEF RUMP CAP", "KG", null, null, null);
+
+    assertThat(
+            jdbc.queryForObject(
+                "select uom from canonical_invoice_line where invoice_number = 'INV-9005' and superseded_at is null",
+                String.class))
+        .isEqualTo("KG");
   }
 
   @Test
@@ -105,8 +134,8 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             null,
             rawRecord()));
 
-    enrichment.enrich("INV-9003", "BEEF025", "KG", null, null, null);
-    enrichment.enrich("INV-9003", "BEEF025", "KG", null, null, null);
+    enrichment.enrich("INV-9003", "BEEF025", null, "KG", null, null, null);
+    enrichment.enrich("INV-9003", "BEEF025", null, "KG", null, null, null);
 
     assertThat(
             jdbc.queryForObject(
@@ -136,7 +165,7 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             rawRecord());
     lineService.record(csv);
 
-    enrichment.enrich("INV-9004", "BEEF025", "KG", null, null, null);
+    enrichment.enrich("INV-9004", "BEEF025", null, "KG", null, null, null);
 
     // Re-ingest the same CSV line (uom=null) — enrichment must survive, no version churn.
     lineService.record(csv);
