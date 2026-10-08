@@ -49,7 +49,7 @@ export async function POST(request: Request): Promise<Response> {
     envelopeDsn.username !== dsn.username ||
     projectIdOf(envelopeDsn) !== projectId
   ) {
-    return new Response(null, { status: 403 });
+    return new Response(null, { status: 403, headers: { "X-Sentry-Tunnel": "dsn-mismatch" } });
   }
 
   // Default to the DSN's own host; SENTRY_TUNNEL_TARGET can point at the LAN address instead
@@ -62,11 +62,21 @@ export async function POST(request: Request): Promise<Response> {
     const upstream = await fetch(`${target}/api/${projectId}/envelope/`, {
       method: "POST",
       body,
-      headers: { "Content-Type": "application/x-sentry-envelope" },
+      headers: {
+        "Content-Type": "application/x-sentry-envelope",
+        // Authenticate explicitly with the DSN's public key. Relying on Relay to read the DSN out
+        // of the envelope header alone was rejected (403) by the self-hosted instance.
+        "X-Sentry-Auth": `Sentry sentry_version=7, sentry_key=${dsn.username}, sentry_client=goldys-tunnel/1.0`,
+      },
     });
-    return new Response(null, { status: upstream.status });
+    // Pass Sentry's own (non-sensitive) reason through, and mark the response as upstream so a
+    // 403 from Sentry can be told apart from this route's own DSN-mismatch 403.
+    return new Response(await upstream.text(), {
+      status: upstream.status,
+      headers: { "X-Sentry-Tunnel": "upstream" },
+    });
   } catch {
     // Sentry unreachable: losing a monitoring event must never surface as an app error.
-    return new Response(null, { status: 202 });
+    return new Response(null, { status: 202, headers: { "X-Sentry-Tunnel": "unreachable" } });
   }
 }
