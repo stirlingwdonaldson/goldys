@@ -44,8 +44,15 @@ public class CtInvoiceCsvIngestService {
               invoice.invoiceNumber(),
               invoice.supplierName(),
               invoice.invoiceDate(),
-              invoice.dueDate(),
-              invoice.totalAmount(),
+              null,
+              invoice.incTaxAmount(),
+              invoice.purchaseNumber(),
+              invoice.accountNumber(),
+              invoice.taxCode(),
+              invoice.amountExTax(),
+              invoice.gstAmount(),
+              invoice.freightAmount(),
+              invoice.freightGstAmount(),
               rawId));
     }
   }
