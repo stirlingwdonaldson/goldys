@@ -5,13 +5,19 @@ package com.goldys.platform.connectors.ctb;
  * case the measured data revealed). Stored as the flag's enum name on {@link InvoiceIngestFlag}.
  */
 public enum InvoiceIngestFlagType {
-  /** A PDF has no extractable text layer (a scan) — the OCR fallback path applies. */
+  /**
+   * A PDF has no extractable text layer (a scan). Reserved — OCR handles scans transparently, so a
+   * scan only surfaces as {@link #PDF_UNPARSEABLE} if OCR also fails.
+   */
   SCANNED_PDF,
   /** A PDF's text could not be reduced to any usable line items. */
   PDF_UNPARSEABLE,
   /** A parsed PDF line has no matching CSV line (not canonicalized). */
   PDF_ONLY_LINE,
-  /** A PDF line's total disagrees with the CSV line total (CSV wins). */
+  /**
+   * A PDF line's total disagrees with the CSV line total (CSV wins). Reserved — the PDF line
+   * contract carries no total to compare against the CSV's LineTotalExTax yet.
+   */
   PDF_CSV_MISMATCH,
   /** A CSV row's PDF filename is absent from the drop. */
   MISSING_PDF,

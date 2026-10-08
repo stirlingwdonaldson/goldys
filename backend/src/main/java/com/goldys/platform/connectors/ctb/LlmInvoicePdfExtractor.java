@@ -95,7 +95,13 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
       json = content.substring(open, close + 1);
     }
     try {
-      return mapper.readValue(json, PdfExtractedInvoice.class);
+      PdfExtractedInvoice invoice = mapper.readValue(json, PdfExtractedInvoice.class);
+      // A schema-shaped object that omits `lines` (or emits `"lines": null`) deserializes to a
+      // null list — treat it as unparseable rather than NPE-ing in the caller.
+      if (invoice == null || invoice.lines() == null) {
+        return new PdfExtractedInvoice(invoice == null ? null : invoice.invoiceNumber(), List.of());
+      }
+      return invoice;
     } catch (Exception e) {
       log.warn("Could not parse LLM invoice output as JSON contract", e);
       return new PdfExtractedInvoice(null, List.of());

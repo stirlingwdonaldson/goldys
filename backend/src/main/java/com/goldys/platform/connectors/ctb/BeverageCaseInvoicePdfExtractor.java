@@ -3,6 +3,7 @@ package com.goldys.platform.connectors.ctb;
 import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
  * the hybrid extractor falls through (spec §6).
  */
 @Component
+@Order(3)
 public class BeverageCaseInvoicePdfExtractor extends LinearizedColumnPdfExtractor {
 
   private static final Pattern HEADER = Pattern.compile("QTY\\s+CODE\\s+DESCRIPTION\\s+UNIT PRICE");

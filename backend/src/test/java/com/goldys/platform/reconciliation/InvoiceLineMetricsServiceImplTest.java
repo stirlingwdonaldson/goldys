@@ -47,6 +47,32 @@ class InvoiceLineMetricsServiceImplTest {
   }
 
   @Test
+  void adjustsQuantityByUnitQuantityWhenEnriched() {
+    when(inventory.currentEnrichedLines())
+        .thenReturn(
+            List.of(
+                new EnrichedInvoiceLine(
+                    "INV-1",
+                    LocalDate.of(2026, 9, 1),
+                    "key",
+                    null,
+                    new BigDecimal("4"),
+                    BigDecimal.ZERO,
+                    new BigDecimal("100.00"),
+                    "EACH",
+                    new BigDecimal("48"),
+                    null,
+                    null)));
+
+    List<UomUnitCost> result =
+        service.unitCostByUom(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
+
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).quantity()).isEqualByComparingTo("192"); // 4 × 48
+    assertThat(result.get(0).unitCost()).isEqualByComparingTo("0.5208"); // 100 / 192
+  }
+
+  @Test
   void aggregatesCogsAndWetBySupplierDescending() {
     when(invoices.currentSupplierNames())
         .thenReturn(Map.of("INV-1", "Paramount Liquor", "INV-2", "Oranges & Lemons"));

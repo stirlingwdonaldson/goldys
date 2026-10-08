@@ -38,15 +38,13 @@ public class InvoiceLineMetricsServiceImpl implements InvoiceLineMetricsQuery {
 
   @Override
   public List<UomUnitCost> unitCostByUom(LocalDate from, LocalDate to) {
-    Map<String, BigDecimal[]> byUom = new LinkedHashMap<>(); // [lineTotal, quantity]
+    Map<String, BigDecimal[]> byUom = new LinkedHashMap<>(); // [lineTotal, effective quantity]
     for (EnrichedInvoiceLine line : inRange(from, to)) {
       BigDecimal[] acc =
           byUom.computeIfAbsent(
               line.uom(), k -> new BigDecimal[] {BigDecimal.ZERO, BigDecimal.ZERO});
       acc[0] = acc[0].add(line.lineTotal());
-      if (line.quantity() != null) {
-        acc[1] = acc[1].add(line.quantity());
-      }
+      acc[1] = acc[1].add(effectiveQuantity(line));
     }
     List<UomUnitCost> out = new ArrayList<>();
     for (Map.Entry<String, BigDecimal[]> e : byUom.entrySet()) {
@@ -56,6 +54,23 @@ public class InvoiceLineMetricsServiceImpl implements InvoiceLineMetricsQuery {
     out.sort(
         Comparator.comparing(UomUnitCost::uom, Comparator.nullsLast(Comparator.naturalOrder())));
     return out;
+  }
+
+  /**
+   * Quantity in base units, so the blended unit cost is per the UOM's base unit: the CSV's coarse
+   * {@code quantity} times the PDF's {@code unitQuantity} (the per-pack count) when it was
+   * enriched, otherwise the coarse quantity alone. This is a best-effort blend — the CSV's coarse
+   * quantity (which falls back to 1 when unparseable) means a few lines contribute an imprecise
+   * denominator, so the figure is an approximation, not an exact cost-per-unit.
+   */
+  private static BigDecimal effectiveQuantity(EnrichedInvoiceLine line) {
+    if (line.quantity() == null) {
+      return BigDecimal.ZERO;
+    }
+    if (line.unitQuantity() != null) {
+      return line.quantity().multiply(line.unitQuantity());
+    }
+    return line.quantity();
   }
 
   @Override

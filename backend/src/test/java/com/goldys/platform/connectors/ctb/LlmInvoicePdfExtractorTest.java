@@ -88,6 +88,35 @@ class LlmInvoicePdfExtractorTest {
   }
 
   @Test
+  void returnsEmptyWhenSchemaShapedJsonOmitsLines() {
+    ChatModel model = mock(ChatModel.class);
+    when(model.call(any(Prompt.class)))
+        .thenReturn(
+            new ChatResponse(
+                List.of(new Generation(new AssistantMessage("{\"invoiceNumber\":\"INV-9\"}")))));
+    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
+
+    PdfExtractedInvoice out = extractor.extract("text");
+
+    assertThat(out.invoiceNumber()).isEqualTo("INV-9");
+    assertThat(out.lines()).isEmpty();
+  }
+
+  @Test
+  void returnsEmptyWhenLinesIsExplicitlyNull() {
+    ChatModel model = mock(ChatModel.class);
+    when(model.call(any(Prompt.class)))
+        .thenReturn(
+            new ChatResponse(
+                List.of(
+                    new Generation(
+                        new AssistantMessage("{\"invoiceNumber\":null,\"lines\":null}")))));
+    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
+
+    assertThat(extractor.extract("text").lines()).isEmpty();
+  }
+
+  @Test
   void returnsEmptyWhenTheModelCallFails() {
     ChatModel model = mock(ChatModel.class);
     when(model.call(any(Prompt.class))).thenThrow(new RuntimeException("boom"));

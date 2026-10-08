@@ -2,6 +2,7 @@ package com.goldys.platform.connectors.ctb;
 
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
  * empty invoice on any other layout so the hybrid extractor falls through (spec §6).
  */
 @Component
+@Order(2)
 public class ProducePackInvoicePdfExtractor extends LinearizedColumnPdfExtractor {
 
   private static final Pattern HEADER =
