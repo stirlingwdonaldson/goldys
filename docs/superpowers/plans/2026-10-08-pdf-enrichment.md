@@ -638,6 +638,8 @@ git commit -m "feat(ingestion): wire PDF enrichment into the SFTP pull"
 
 ## Deferred (not in this plan)
 
+> **These were implemented as Phase 2.5 below (Tasks 6–12).** Kept here for history.
+
 Per spec §9 and the measured data, these are explicit follow-ups:
 
 - **LLM fallback** (`InvoicePdfExtractor` impl using Spring AI, schema-prompted) — requires the ChatModel to be configured (`SPRING_AI_MODEL_CHAT=openai` + key), which it currently isn't in prod. The port in Task 2 is the seam.
