@@ -59,10 +59,15 @@ class CanonicalInvoiceLineService {
             input.invoiceNumber(),
             input.invoiceDate(),
             input.productNameKey(),
+            input.stockCode(),
             input.quantity(),
             input.unitCost(),
             input.lineTotal(),
-            input.category()));
+            input.category(),
+            input.uom(),
+            input.unitQuantity(),
+            input.packSize(),
+            input.wetAmount()));
   }
 
   private static UUID logicalIdFor(String invoiceNumber, String sourceRecordRef) {

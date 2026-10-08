@@ -74,10 +74,15 @@ public class CtInvoiceCsvIngestService {
                 invoice.invoiceNumber(),
                 invoice.invoiceDate(),
                 ProductNameKey.normalize(line.description()),
+                line.stockCode(),
                 quantity(line.rawQuantity()),
                 line.unitCostExTax() == null ? BigDecimal.ZERO : line.unitCostExTax(),
                 line.lineTotalExTax(),
                 null, // category — PDF-only, not in the CSV
+                null, // uom — PDF enrichment
+                null, // unitQuantity — PDF enrichment
+                null, // packSize — PDF enrichment
+                null, // wetAmount — PDF enrichment
                 rawId));
       }
     }

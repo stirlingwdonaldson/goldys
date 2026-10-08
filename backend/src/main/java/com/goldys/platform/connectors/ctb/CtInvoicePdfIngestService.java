@@ -55,10 +55,15 @@ public class CtInvoicePdfIngestService {
               invoiceNumber,
               invoiceDate,
               line.productNameKey(),
+              null, // stockCode — not extracted by the provisional PDF parser
               line.quantity(),
               line.unitCost(),
               line.lineTotal(),
-              null,
+              null, // category
+              null, // uom
+              null, // unitQuantity
+              null, // packSize
+              null, // wetAmount
               rawId));
     }
   }
