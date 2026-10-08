@@ -1,6 +1,7 @@
 package com.goldys.platform.ingestion;
 
 import com.goldys.platform.connectors.ctb.CtInvoiceCsvIngestService;
+import com.goldys.platform.connectors.ctb.InvoicePdfEnrichmentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -9,8 +10,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Polls the CTB SFTP drop for invoice files. CSVs are fed through the CSV pipeline (raw +
- * canonicalize); PDFs are stored byte-faithfully raw-only (PDF enrichment is a later phase).
- * Disabled until {@code ctb.sftp.enabled=true}; cron in Australia/Melbourne.
+ * canonicalize); PDFs are stored byte-faithfully raw and enriched onto the CSV lines. Disabled
+ * until {@code ctb.sftp.enabled=true}; cron in Australia/Melbourne.
  */
 @Component
 @ConditionalOnProperty(name = "ctb.sftp.enabled", havingValue = "true")
@@ -20,12 +21,17 @@ public class CtbSftpPull {
   private final SftpDrop drop;
   private final IngestionService ingestion;
   private final CtInvoiceCsvIngestService csvIngest;
+  private final InvoicePdfEnrichmentService pdfEnrichment;
 
   public CtbSftpPull(
-      SftpDrop drop, IngestionService ingestion, CtInvoiceCsvIngestService csvIngest) {
+      SftpDrop drop,
+      IngestionService ingestion,
+      CtInvoiceCsvIngestService csvIngest,
+      InvoicePdfEnrichmentService pdfEnrichment) {
     this.drop = drop;
     this.ingestion = ingestion;
     this.csvIngest = csvIngest;
+    this.pdfEnrichment = pdfEnrichment;
   }
 
   @Scheduled(cron = "${ctb.sftp.cron:0 15 4 * * *}", zone = "Australia/Melbourne")
@@ -45,6 +51,7 @@ public class CtbSftpPull {
                 bytes,
                 null,
                 "ctb-sftp");
+            pdfEnrichment.enrich(bytes);
           }
           log.info("SFTP drop processed {}", file.filename());
         } catch (RuntimeException e) {

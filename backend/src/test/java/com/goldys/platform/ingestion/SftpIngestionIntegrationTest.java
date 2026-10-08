@@ -34,6 +34,7 @@ class SftpIngestionIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired IngestionService ingestion;
   @Autowired CtInvoiceCsvIngestService csvIngest;
+  @Autowired com.goldys.platform.connectors.ctb.InvoicePdfEnrichmentService pdfEnrichment;
 
   @TempDir Path dir;
 
@@ -67,7 +68,7 @@ class SftpIngestionIntegrationTest {
       factory.setAllowUnknownKeys(true);
       SftpDrop drop = SpringIntegrationSftpDrop.create(new SftpRemoteFileTemplate(factory), "/");
 
-      new CtbSftpPull(drop, ingestion, csvIngest).pull();
+      new CtbSftpPull(drop, ingestion, csvIngest, pdfEnrichment).pull();
 
       assertThat(
               jdbc.queryForObject(
