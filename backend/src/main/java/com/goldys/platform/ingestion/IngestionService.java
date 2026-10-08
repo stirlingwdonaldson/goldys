@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
@@ -54,6 +55,16 @@ public class IngestionService {
 
   /** Run a pull connector now and return its resulting run summary. */
   public IngestionRunSummary runConnector(String source) {
+    return runConnector(source, null);
+  }
+
+  /**
+   * As {@link #runConnector(String)}, but reports the run's terminal status to {@code onComplete}
+   * once the asynchronous fetch finishes (for cron monitoring). If a run is already in flight no
+   * new run starts, and {@code onComplete} receives {@code null} immediately: the tick was skipped,
+   * not failed. A {@code null} callback behaves exactly like {@link #runConnector(String)}.
+   */
+  public IngestionRunSummary runConnector(String source, Consumer<IngestionStatus> onComplete) {
     SourceConnector connector = connectors.get(source.trim().toUpperCase(Locale.ROOT));
     if (connector == null) {
       throw new IllegalArgumentException("Unknown source: " + source);
@@ -63,9 +74,15 @@ public class IngestionService {
     String sourceSystem = connector.sourceSystem();
     var active = runRepository.findFirstBySourceSystemOrderByStartedAtDesc(sourceSystem);
     if (active.isPresent() && active.get().status() == IngestionStatus.RUNNING) {
+      if (onComplete != null) {
+        onComplete.accept(null);
+      }
       return toSummary(active.get());
     }
-    UUID runId = connectorRunner.run(connector, null);
+    UUID runId =
+        onComplete == null
+            ? connectorRunner.run(connector, null)
+            : connectorRunner.run(connector, null, onComplete);
     return runSummary(runId);
   }
 
@@ -109,6 +126,7 @@ public class IngestionService {
       // Record the failure and close the run so the fault is observable, not a dangling RUNNING.
       runs.recordFailure(
           runId, "UNEXPECTED", e.getClass().getName(), stackTraceOf(e), CLOCK.instant());
+      IngestionFailureReporter.reportUnexpected(runId, sourceSystem, e);
       runs.complete(runId, null, CLOCK.instant());
       throw e;
     }

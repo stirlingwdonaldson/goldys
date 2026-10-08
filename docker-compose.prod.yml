@@ -50,6 +50,11 @@ services:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       APP_LIGHTSPEED_BACKFILL: ${APP_LIGHTSPEED_BACKFILL:-}
+      # Sentry (ops-sentry). Unset DSN = SDK off. SENTRY_RELEASE is the deployed git SHA.
+      SENTRY_DSN: ${SENTRY_BACKEND_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-1.0}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -58,8 +63,28 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        # NEXT_PUBLIC_* values are inlined into the browser bundle at build time.
+        NEXT_PUBLIC_SENTRY_DSN: ${SENTRY_FRONTEND_DSN:-}
+        NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+        NEXT_PUBLIC_SENTRY_FEEDBACK: ${SENTRY_FEEDBACK:-false}
+        SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+        # Source map upload target. Use Sentry's internal address: the public hostname's
+        # management API sits behind Cloudflare Access.
+        SENTRY_URL: ${SENTRY_URL:-}
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_FRONTEND_PROJECT:-goldys-frontend}
+      secrets:
+        - sentry_auth_token
     environment:
       PORT: "3000"
+      # Server-side SDK + the /monitoring tunnel that relays browser events to Sentry.
+      SENTRY_DSN: ${SENTRY_FRONTEND_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+      # Optional: where the tunnel forwards to (e.g. http://192.168.4.36:9000). Defaults to the
+      # DSN's own host.
+      SENTRY_TUNNEL_TARGET: ${SENTRY_TUNNEL_TARGET:-}
     ports:
       # Bind to 127.0.0.1 when the edge reaches this VM over a tunnel
       # (cloudflared etc.); use 0.0.0.0 only with a host firewall restricting the
@@ -71,3 +96,9 @@ services:
 
 volumes:
   goldys_pg_data:
+
+secrets:
+  # Sentry org auth token for source map upload during the frontend image build. Read from the
+  # environment, never written to the image. Unset = build still succeeds, no source maps.
+  sentry_auth_token:
+    environment: SENTRY_AUTH_TOKEN

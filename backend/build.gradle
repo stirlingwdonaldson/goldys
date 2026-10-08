@@ -27,6 +27,9 @@ dependencies {
 	// Operational metrics: micrometer core + actuator endpoints + Prometheus export.
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+	// Error tracking, tracing and cron monitoring (self-hosted Sentry). Inert when SENTRY_DSN is
+	// unset, so local dev and tests are unaffected. Boot 3.x uses the -jakarta starter.
+	implementation 'io.sentry:sentry-spring-boot-starter-jakarta:8.59.0'
 	runtimeOnly 'org.postgresql:postgresql'
 
 	// Schema is owned by versioned migrations, not Hibernate auto-DDL - see

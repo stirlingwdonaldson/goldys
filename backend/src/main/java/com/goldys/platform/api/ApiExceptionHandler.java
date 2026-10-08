@@ -1,10 +1,10 @@
 package com.goldys.platform.api;
 
 import com.goldys.platform.auth.AccessDeniedException;
+import com.goldys.platform.config.CorrelationIdFilter;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -66,8 +66,8 @@ class ApiExceptionHandler {
                 "NOT_FOUND", exception.getMessage(), correlationId(request), Map.of()));
   }
 
+  /** Resolved once per request by {@link CorrelationIdFilter}, which also tags it in Sentry. */
   private String correlationId(HttpServletRequest request) {
-    String provided = request.getHeader("X-Correlation-ID");
-    return (provided != null && !provided.isBlank()) ? provided : UUID.randomUUID().toString();
+    return CorrelationIdFilter.of(request);
   }
 }
