@@ -35,11 +35,19 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Invoice metadata (`canonical_invoice`)
 
-- **Source:** `CTB` (custom invoice-export CSV).
+- **Source:** `CTB` — two ingestion paths for the same records:
+  - **Custom Invoice Export CSV** upload (`/api/ingest/ctb-invoices`, `fetch_method=FILE_EXPORT`,
+    `fetcher_identity=ctb-invoices`), and
+  - **`Invoice/SearchInvoices`** AJAX pull (`fetch_method=API`,
+    `fetcher_identity=ctb-invoices-ajax`).
 - **Logical identity:** `UUID.nameUUIDFromBytes("invoice:" + invoiceNumber)`.
 - **Source identity:** `(source_system = CTB, source_record_ref = invoice number)`.
-- **Matching strategy:** deterministic single source.
-- **Confidence:** n/a.
+- **Matching strategy:** both paths key on `invoice_number` (exact). The CSV path canonicalizes
+  today; the AJAX path is **raw-ledger only** and is deliberately *not* canonicalized yet, so the
+  two paths cannot silently double-count the same invoice. Before the AJAX path feeds
+  `canonical_invoice`, the two must be de-duplicated on `invoice_number` (a second path for the same
+  number supersedes rather than appends, per the bitemporal close-and-reinsert pattern).
+- **Confidence:** high for the `invoice_number` join (exact).
 - **Manual resolution path:** not yet wired; COGS comes from line items, so invoice-header totals
   are metadata only.
 
