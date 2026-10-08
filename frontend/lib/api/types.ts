@@ -392,6 +392,16 @@ export interface Api {
   getThread(id: string): Promise<ConversationThreadView>;
   renameThread(id: string, title: string): Promise<ConversationThreadView>;
   deleteThread(id: string): Promise<void>;
+  listRawRecords(
+    filter: RawRecordFilter,
+    page: number,
+    size: number,
+  ): Promise<DataPage<RawRecordSummary>>;
+  getRawRecord(id: string): Promise<RawRecordDetail>;
+  listCanonicalEntities(): Promise<EntityDescriptor[]>;
+  listCanonicalRows(entity: string, page: number, size: number): Promise<DataPage<GenericRow>>;
+  listResolvedDomains(): Promise<EntityDescriptor[]>;
+  listResolvedRows(domain: string, page: number, size: number): Promise<DataPage<GenericRow>>;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */
@@ -458,4 +468,55 @@ export interface Provenance {
   sources: ProvenanceSourceValue[];
   resolution: ResolutionDetail;
   rawRecordIds: string[];
+}
+
+/** Optional filter for the data explorer's raw-record list. */
+export interface RawRecordFilter {
+  source?: string;
+  fetcher?: string;
+  method?: string;
+  from?: string;
+  to?: string;
+}
+
+/** Metadata for one raw ingestion record, without the payload bytes. */
+export interface RawRecordSummary {
+  id: string;
+  sourceSystem: string;
+  fetcherIdentity: string;
+  fetchMethod: string;
+  contentType: string;
+  characterEncoding: string | null;
+  fetchedAt: string;
+  byteLength: number;
+  sha256: string;
+}
+
+/** One raw record's metadata plus its payload. */
+export interface RawRecordDetail {
+  summary: RawRecordSummary;
+  payload: string;
+  isJson: boolean;
+  sha256: string;
+}
+
+/** A browsable canonical entity type or resolved domain. */
+export interface EntityDescriptor {
+  id: string;
+  label: string;
+  placeholder: boolean;
+}
+
+/** One entity/domain row rendered as an ordered column map. */
+export interface GenericRow {
+  id: string;
+  columns: Record<string, string>;
+}
+
+/** A paged result for the explorer's list endpoints. */
+export interface DataPage<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
 }

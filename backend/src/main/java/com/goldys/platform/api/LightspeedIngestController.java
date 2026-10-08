@@ -2,6 +2,7 @@ package com.goldys.platform.api;
 
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
+import com.goldys.platform.connectors.lightspeed.LightspeedZReportIngestService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,14 +29,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class LightspeedIngestController {
   private final LightspeedIngestService ingestService;
   private final LightspeedProductIngestService productIngestService;
+  private final LightspeedZReportIngestService zReportIngestService;
   private final String webhookToken;
 
   public LightspeedIngestController(
       LightspeedIngestService ingestService,
       LightspeedProductIngestService productIngestService,
+      LightspeedZReportIngestService zReportIngestService,
       @Value("${lightspeed.webhook-token:}") String webhookToken) {
     this.ingestService = ingestService;
     this.productIngestService = productIngestService;
+    this.zReportIngestService = zReportIngestService;
     this.webhookToken = webhookToken;
   }
 
@@ -64,6 +68,19 @@ public class LightspeedIngestController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     productIngestService.ingest(body);
+    return ResponseEntity.accepted().build();
+  }
+
+  @PostMapping("/lightspeed-zreport")
+  ResponseEntity<Void> lightspeedZReport(
+      @RequestBody byte[] body,
+      @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+      @RequestParam(value = "token", required = false) String queryToken) {
+    String provided = StringUtils.hasText(token) ? token : queryToken;
+    if (!tokenValid(provided)) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    zReportIngestService.ingest(body);
     return ResponseEntity.accepted().build();
   }
 

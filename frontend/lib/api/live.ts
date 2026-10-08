@@ -127,4 +127,27 @@ export const liveApi: Api = {
     }),
   deleteThread: (id: string) =>
     fetchApi<void>(`/api/conversational/threads/${id}`, { method: "DELETE" }),
+  listRawRecords: (filter: import("./types").RawRecordFilter, page: number, size: number) => {
+    const q = new URLSearchParams({ page: String(page), size: String(size) });
+    if (filter.source) q.set("source", filter.source);
+    if (filter.fetcher) q.set("fetcher", filter.fetcher);
+    if (filter.method) q.set("method", filter.method);
+    if (filter.from) q.set("from", filter.from);
+    if (filter.to) q.set("to", filter.to);
+    return fetchApi<import("./types").DataPage<import("./types").RawRecordSummary>>(
+      `/api/data/raw?${q.toString()}`,
+    );
+  },
+  getRawRecord: (id: string) =>
+    fetchApi<import("./types").RawRecordDetail>(`/api/data/raw/${id}`),
+  listCanonicalEntities: () => fetchApi<import("./types").EntityDescriptor[]>("/api/data/canonical"),
+  listCanonicalRows: (entity: string, page: number, size: number) =>
+    fetchApi<import("./types").DataPage<import("./types").GenericRow>>(
+      `/api/data/canonical/${entity}?page=${page}&size=${size}`,
+    ),
+  listResolvedDomains: () => fetchApi<import("./types").EntityDescriptor[]>("/api/data/resolved"),
+  listResolvedRows: (domain: string, page: number, size: number) =>
+    fetchApi<import("./types").DataPage<import("./types").GenericRow>>(
+      `/api/data/resolved/${domain}?page=${page}&size=${size}`,
+    ),
 };

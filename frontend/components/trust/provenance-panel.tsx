@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { getProvenance } from "@/lib/api/provenance";
 import type { Provenance } from "@/lib/api/types";
 
@@ -100,7 +101,20 @@ function ProvenanceDetail({ provenance }: { provenance: Provenance }) {
       {provenance.rawRecordIds.length ? (
         <div>
           <dt className="font-medium text-foreground">Raw records</dt>
-          <dd className="break-all text-muted-foreground">{provenance.rawRecordIds.join(", ")}</dd>
+          <dd>
+            <ul className="space-y-1">
+              {provenance.rawRecordIds.map((id) => (
+                <li key={id} className="break-all">
+                  <Link
+                    href={`/data?layer=raw&id=${id}`}
+                    className="text-muted-foreground underline underline-offset-2"
+                  >
+                    {id}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </dd>
         </div>
       ) : null}
     </dl>

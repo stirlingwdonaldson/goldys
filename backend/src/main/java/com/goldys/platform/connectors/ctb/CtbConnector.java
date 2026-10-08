@@ -16,10 +16,18 @@ import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 /**
  * Pulls CTB daily revenue and per-product sale items through the authenticated AJAX endpoints,
  * streaming each page to the sink immediately and canonicalizing daily totals + per-product totals.
+ *
+ * <p>The inventory/purchasing endpoints (invoices, recipes, stocks, suppliers, stocktakes, wastage,
+ * stock orders, statements, variance, missing-revenue, and reference data) are ingested to the raw
+ * ledger only — each under its own {@code fetcherIdentity} so the ledger distinguishes them — with
+ * no canonicalization yet. See {@code docs/connectors/matching-and-identity.md} for the invoice
+ * double-source note and the deferred canonical types.
  */
 public class CtbConnector implements SourceConnector {
   private static final int PAGE_SIZE = 200;
@@ -66,6 +74,18 @@ public class CtbConnector implements SourceConnector {
 
     pullRevenue(watermark, sink);
     pullSaleItems(watermark, sink);
+
+    // Inventory / purchasing / food-cost endpoints — raw ledger only, per fetcher identity.
+    pullRaw("ctb-invoices-ajax", client::searchInvoices, sink);
+    pullRaw("ctb-sale-recipe-links", client::searchDistinctSaleItemsForLinking, sink);
+    pullSingle("ctb-recipes", client::getAllRecipes, sink);
+    pullRaw("ctb-stocks", client::searchStocks, sink);
+    pullSingle("ctb-suppliers", client::getAllSuppliers, sink);
+    pullRaw("ctb-stocktakes", client::searchStocktakes, sink);
+    pullRaw("ctb-wastage", client::searchWastageRecords, sink);
+    pullRaw("ctb-stock-orders", client::searchStockOrders, sink);
+    pullStatements(sink);
+    pullReferenceData(sink);
   }
 
   private void pullRevenue(String watermark, IngestionSink sink) {
@@ -79,17 +99,9 @@ public class CtbConnector implements SourceConnector {
 
     while (pages < MAX_PAGES) {
       CtbClient.CtbPage page = client.searchRevenues(start, PAGE_SIZE);
-      byte[] bytes = page.json().getBytes(StandardCharsets.UTF_8);
-      UUID rawId =
-          sink.accept(
-              new FetchedPayload(
-                  FetchMethod.API,
-                  "application/json",
-                  bytes,
-                  StandardCharsets.UTF_8.name(),
-                  "ctb-revenue"));
+      UUID rawId = writeRaw(page.json(), "ctb-revenue", sink);
 
-      for (CtbRevenue revenue : parser.parse(bytes)) {
+      for (CtbRevenue revenue : parser.parse(page.json().getBytes(StandardCharsets.UTF_8))) {
         if (since != null && revenue.revenueDate().isBefore(since)) {
           continue;
         }
@@ -132,17 +144,9 @@ public class CtbConnector implements SourceConnector {
     while (pages < MAX_PAGES) {
       CtbClient.CtbPage page =
           client.searchSaleItems(day.toString(), day.toString(), start, PAGE_SIZE);
-      byte[] bytes = page.json().getBytes(StandardCharsets.UTF_8);
-      UUID rawId =
-          sink.accept(
-              new FetchedPayload(
-                  FetchMethod.API,
-                  "application/json",
-                  bytes,
-                  StandardCharsets.UTF_8.name(),
-                  "ctb-revenue"));
+      UUID rawId = writeRaw(page.json(), "ctb-revenue", sink);
 
-      for (CtbSaleItem item : saleItemParser.parse(bytes)) {
+      for (CtbSaleItem item : saleItemParser.parse(page.json().getBytes(StandardCharsets.UTF_8))) {
         String key = ProductNameKey.normalize(item.stockDescription());
         byProduct.merge(
             key,
@@ -168,6 +172,64 @@ public class CtbConnector implements SourceConnector {
     for (ProductSalesInput input : byProduct.values()) {
       productSales.record(input);
     }
+  }
+
+  /**
+   * Supplier statements use a rolling 12-month window. Single-shot: {@code SearchStatement} returns
+   * the full list in one response and ignores {@code start}/{@code limit}, so it must not be paged.
+   */
+  private void pullStatements(IngestionSink sink) {
+    LocalDate end = LocalDate.now();
+    LocalDate start = end.minusMonths(12);
+    pullSingle(
+        "ctb-statements", () -> client.getStatements(start.toString(), end.toString()), sink);
+  }
+
+  private void pullReferenceData(IngestionSink sink) {
+    pullSingle("ctb-reference-data", client::getAllDepartments, sink);
+    pullSingle("ctb-reference-data", client::getAllActivities, sink);
+    pullSingle("ctb-reference-data", client::getAllStockCategories, sink);
+    pullSingle("ctb-reference-data", client::getAllUoms, sink);
+    pullSingle("ctb-reference-data", client::getAllSupplierMeasurements, sink);
+    pullSingle("ctb-reference-data", client::getAllMeasurementConversions, sink);
+  }
+
+  /** Page through a paged-list endpoint ({@code start}/{@code limit}/{@code totalCount}). */
+  private void pullRaw(
+      String fetcherIdentity,
+      BiFunction<Integer, Integer, CtbClient.CtbPage> pageFn,
+      IngestionSink sink) {
+    int start = 0;
+    int pages = 0;
+    int total = -1;
+    while (pages < MAX_PAGES) {
+      CtbClient.CtbPage page = pageFn.apply(start, PAGE_SIZE);
+      writeRaw(page.json(), fetcherIdentity, sink);
+      total = page.totalCount();
+      pages++;
+      if (start + PAGE_SIZE >= total) {
+        break;
+      }
+      start += PAGE_SIZE;
+    }
+  }
+
+  /** Pull a single-response endpoint (reference data, {@code GetAll*}). */
+  private void pullSingle(
+      String fetcherIdentity, Supplier<CtbClient.CtbPage> pageFn, IngestionSink sink) {
+    writeRaw(pageFn.get().json(), fetcherIdentity, sink);
+  }
+
+  /** Store one raw page byte-faithfully and return its ledger id. */
+  private UUID writeRaw(String json, String fetcherIdentity, IngestionSink sink) {
+    byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+    return sink.accept(
+        new FetchedPayload(
+            FetchMethod.API,
+            "application/json",
+            bytes,
+            StandardCharsets.UTF_8.name(),
+            fetcherIdentity));
   }
 
   private static LocalDate watermarkDate(String watermark) {
