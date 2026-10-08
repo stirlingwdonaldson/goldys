@@ -30,4 +30,12 @@ public class InventoryController {
       @AuthenticationPrincipal AccountUserDetails user) {
     return reporting.summary(currentUser.roleOf(user), from, to);
   }
+
+  @GetMapping("/lines")
+  InventoryReportingService.LineBreakdown lines(
+      @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return reporting.lineBreakdown(currentUser.roleOf(user), from, to);
+  }
 }

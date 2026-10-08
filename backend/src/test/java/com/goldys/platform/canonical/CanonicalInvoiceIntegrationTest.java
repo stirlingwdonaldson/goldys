@@ -49,9 +49,14 @@ class CanonicalInvoiceIntegrationTest {
             "INV-1001",
             LocalDate.of(2026, 9, 20),
             "potatoes",
+            null,
             new BigDecimal("2"),
             new BigDecimal("12.50"),
             new BigDecimal("27.00"),
+            null,
+            null,
+            null,
+            null,
             null,
             before.rawRecordId());
 
@@ -64,6 +69,34 @@ class CanonicalInvoiceIntegrationTest {
         .isEqualByComparingTo(new BigDecimal("27.00"));
   }
 
+  @Test
+  void persistsStockCodeAndUom() {
+    InvoiceLineInput line =
+        new InvoiceLineInput(
+            "CTB",
+            "INV-3001:1",
+            "INV-3001",
+            LocalDate.of(2026, 9, 20),
+            "beef rump cap",
+            "BEEF025",
+            new BigDecimal("3.25"),
+            new BigDecimal("31.50"),
+            new BigDecimal("102.38"),
+            null,
+            "KG",
+            null,
+            null,
+            null,
+            rawRecord());
+    lineService.record(line);
+
+    assertThat(
+            jdbc.queryForObject(
+                "select stock_code || '|' || uom from canonical_invoice_line where invoice_number = 'INV-3001'",
+                String.class))
+        .isEqualTo("BEEF025|KG");
+  }
+
   private InvoiceInput invoice(String number, String supplier, String date, String total) {
     return new InvoiceInput(
         "CTB",
@@ -72,6 +105,7 @@ class CanonicalInvoiceIntegrationTest {
         LocalDate.parse(date),
         null,
         new BigDecimal(total),
+        null,
         null,
         null,
         null,
@@ -90,9 +124,14 @@ class CanonicalInvoiceIntegrationTest {
         number,
         LocalDate.parse(date),
         product,
+        null,
         new BigDecimal("2"),
         new BigDecimal("12.50"),
         new BigDecimal(lineTotal),
+        null,
+        null,
+        null,
+        null,
         null,
         rawRecord());
   }

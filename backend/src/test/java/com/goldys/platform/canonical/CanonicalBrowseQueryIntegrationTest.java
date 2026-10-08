@@ -76,6 +76,7 @@ class CanonicalBrowseQueryIntegrationTest {
             null,
             null,
             null,
+            "acme-1.pdf",
             raw));
 
     DataPage<GenericRow> page = browse.listRows("invoice", 0, 10);
@@ -86,6 +87,7 @@ class CanonicalBrowseQueryIntegrationTest {
     assertThat(row.columns()).containsEntry("supplier_name", "Acme Supplies");
     assertThat(row.columns()).containsEntry("invoice_date", "2026-09-01");
     assertThat(row.columns()).containsEntry("total_amount", "250.5000");
+    assertThat(row.columns()).containsEntry("pdf_filename", "acme-1.pdf");
     assertThat(row.columns()).doesNotContainKey("due_date");
   }
 

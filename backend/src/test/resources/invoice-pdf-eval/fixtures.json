@@ -1,0 +1,29 @@
+[
+  {
+    "name": "liquor-with-wet",
+    "text": "PARAMOUNT LIQUOR PTY LTD\nABN 12 345 678 901\nTax Invoice\nInvoice Number: PL-004821\nDate: 15/09/2026\n\nCode         Description            Qty   Unit Price   WET\nGOLD306600   GOLDY'S HOUSE RED 1L   12    21.50    18.50\nSPIRIT001    GIN 700ML              6     38.00    12.75\n\nTotal Ex Tax   402.00\nWET Total      31.25\nGST            43.33\nTotal          476.58\n",
+    "invoiceNumber": "PL-004821",
+    "lines": [
+      {"stockCode": "GOLD306600", "quantity": 12, "uom": null, "unitQuantity": null, "packSize": null, "wetAmount": 18.50},
+      {"stockCode": "SPIRIT001", "quantity": 6, "uom": null, "unitQuantity": null, "packSize": null, "wetAmount": 12.75}
+    ]
+  },
+  {
+    "name": "produce-with-uom-and-pack",
+    "text": "ORANGES & LEMONS PTY LTD\nTax Invoice\nInvoice No: OL-009134\n\nCODE       DESCRIPTION        QTY   UOM   PACK\nCITR001    ORANGES NAVEL      10    KG    4\nLEMON002   LEMONS             5     KG    2\n\nTotal                        $87.40\n",
+    "invoiceNumber": "OL-009134",
+    "lines": [
+      {"stockCode": "CITR001", "quantity": 10, "uom": "KG", "unitQuantity": null, "packSize": 4, "wetAmount": null},
+      {"stockCode": "LEMON002", "quantity": 5, "uom": "KG", "unitQuantity": null, "packSize": 2, "wetAmount": null}
+    ]
+  },
+  {
+    "name": "beverage-with-unit-quantity",
+    "text": "SEALANE BEVERAGES\nABN 98 765 432 109\nTax Invoice\nInvoice #: SL-77120\n\nCode      Description             Qty         Unit Price\nCOLA001   COLA CANS 375ML         4 CTN / 48 EACH   62.40\nWATER002  SPARKLING WATER 1L      2 CTN / 12 EACH   18.00\n",
+    "invoiceNumber": "SL-77120",
+    "lines": [
+      {"stockCode": "COLA001", "quantity": 4, "uom": "CTN", "unitQuantity": 48, "packSize": null, "wetAmount": null},
+      {"stockCode": "WATER002", "quantity": 2, "uom": "CTN", "unitQuantity": 12, "packSize": null, "wetAmount": null}
+    ]
+  }
+]

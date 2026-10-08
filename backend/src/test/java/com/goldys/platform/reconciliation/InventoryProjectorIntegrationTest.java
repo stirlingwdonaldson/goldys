@@ -55,9 +55,14 @@ class InventoryProjectorIntegrationTest {
             invoiceNumber,
             date,
             product,
+            null,
             new BigDecimal("2"),
             new BigDecimal("12.50"),
             new BigDecimal(lineTotal),
+            null,
+            null,
+            null,
+            null,
             null,
             rawRecord()));
   }

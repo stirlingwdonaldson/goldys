@@ -11,8 +11,13 @@ public record InvoiceLineInput(
     String invoiceNumber,
     LocalDate invoiceDate,
     String productNameKey,
+    String stockCode,
     BigDecimal quantity,
     BigDecimal unitCost,
     BigDecimal lineTotal,
     String category,
+    String uom,
+    BigDecimal unitQuantity,
+    BigDecimal packSize,
+    BigDecimal wetAmount,
     UUID rawRecordId) {}

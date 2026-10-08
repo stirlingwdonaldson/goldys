@@ -14,6 +14,7 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.semantic.InvoiceLineMetricsQuery;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricPoint;
 import com.goldys.platform.semantic.catalog.MetricProvenance;
@@ -43,7 +44,8 @@ class InventoryReportingServiceTest {
         .require(any(), any(), any());
 
     InventoryReportingService service =
-        new InventoryReportingService(mock(MetricQueryService.class), permissions);
+        new InventoryReportingService(
+            mock(MetricQueryService.class), mock(InvoiceLineMetricsQuery.class), permissions);
 
     assertThatThrownBy(() -> service.summary(OWNER, FROM, TO))
         .isInstanceOf(AccessDeniedException.class);
@@ -58,7 +60,8 @@ class InventoryReportingServiceTest {
             MetricId.SALES_GROSS, new BigDecimal("1000.00"));
 
     PermissionService permissions = mock(PermissionService.class);
-    InventoryReportingService service = new InventoryReportingService(metrics, permissions);
+    InventoryReportingService service =
+        new InventoryReportingService(metrics, mock(InvoiceLineMetricsQuery.class), permissions);
 
     InventoryReportingService.InventorySummary summary = service.summary(OWNER, FROM, TO);
 
@@ -76,7 +79,8 @@ class InventoryReportingServiceTest {
             MetricId.SALES_GROSS, null);
 
     InventoryReportingService service =
-        new InventoryReportingService(metrics, mock(PermissionService.class));
+        new InventoryReportingService(
+            metrics, mock(InvoiceLineMetricsQuery.class), mock(PermissionService.class));
 
     InventoryReportingService.InventorySummary summary = service.summary(OWNER, FROM, TO);
 

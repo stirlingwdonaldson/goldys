@@ -34,6 +34,9 @@ class CanonicalInvoice extends BitemporalEntity {
   @Column(name = "purchase_number", updatable = false)
   private String purchaseNumber;
 
+  @Column(name = "pdf_filename", updatable = false)
+  private String pdfFilename;
+
   @Column(name = "account_number", updatable = false)
   private String accountNumber;
 
@@ -67,6 +70,7 @@ class CanonicalInvoice extends BitemporalEntity {
       LocalDate dueDate,
       BigDecimal totalAmount,
       String purchaseNumber,
+      String pdfFilename,
       String accountNumber,
       String taxCode,
       BigDecimal amountExTax,
@@ -80,6 +84,7 @@ class CanonicalInvoice extends BitemporalEntity {
     this.dueDate = dueDate;
     this.totalAmount = totalAmount;
     this.purchaseNumber = purchaseNumber;
+    this.pdfFilename = pdfFilename;
     this.accountNumber = accountNumber;
     this.taxCode = taxCode;
     this.amountExTax = amountExTax;
@@ -101,6 +106,7 @@ class CanonicalInvoice extends BitemporalEntity {
       LocalDate dueDate,
       BigDecimal totalAmount,
       String purchaseNumber,
+      String pdfFilename,
       String accountNumber,
       String taxCode,
       BigDecimal amountExTax,
@@ -120,6 +126,7 @@ class CanonicalInvoice extends BitemporalEntity {
         dueDate,
         totalAmount,
         purchaseNumber,
+        pdfFilename,
         accountNumber,
         taxCode,
         amountExTax,
@@ -134,6 +141,7 @@ class CanonicalInvoice extends BitemporalEntity {
         && Objects.equals(invoiceDate, input.invoiceDate())
         && Objects.equals(dueDate, input.dueDate())
         && Objects.equals(purchaseNumber, input.purchaseNumber())
+        && Objects.equals(pdfFilename, input.pdfFilename())
         && Objects.equals(accountNumber, input.accountNumber())
         && Objects.equals(taxCode, input.taxCode())
         && sameAmount(totalAmount, input.totalAmount())
@@ -172,6 +180,10 @@ class CanonicalInvoice extends BitemporalEntity {
 
   String purchaseNumber() {
     return purchaseNumber;
+  }
+
+  String pdfFilename() {
+    return pdfFilename;
   }
 
   String accountNumber() {

@@ -111,6 +111,29 @@ export interface ReservationSummary {
   bookingToCoverConversion: number | null;
 }
 
+/** Blended unit cost for one unit-of-measure over a period (mirrors `semantic.UomUnitCost`). */
+export interface UomUnitCost {
+  uom: string | null;
+  lineTotal: number;
+  quantity: number;
+  unitCost: number | null;
+}
+
+/** Purchases and WET grouped by supplier over a period (mirrors `semantic.SupplierCogs`). */
+export interface SupplierCogs {
+  supplier: string;
+  lineTotal: number;
+  wetAmount: number;
+}
+
+/** Line-level inventory enrichment breakdown for the Kitchen screen. */
+export interface InventoryLineBreakdown {
+  from: string;
+  to: string;
+  unitCostByUom: UomUnitCost[];
+  cogsBySupplier: SupplierCogs[];
+}
+
 /**
  * The latest trading date's resolved total, or nulls when there is no data yet or the latest
  * date is still unresolved. `total: null` with a non-null `date` means "needs a decision".
@@ -373,6 +396,7 @@ export interface Api {
   listDailySales(): Promise<DailySales[]>;
   getLatestSales(): Promise<LatestSales>;
   getReservationSummary(date: string): Promise<ReservationSummary | undefined>;
+  getInventoryLines(from: string, to: string): Promise<InventoryLineBreakdown>;
   getTopSellers(): Promise<TopSeller[]>;
   getSalesTrend(): Promise<SalesTrendPoint[]>;
   listDashboards(): Promise<SavedDashboardSummary[]>;

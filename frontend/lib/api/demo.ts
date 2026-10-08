@@ -693,6 +693,27 @@ export const demoApi: Api = {
     };
   },
 
+  async getInventoryLines(
+    from: string,
+    to: string,
+  ): Promise<import("./types").InventoryLineBreakdown> {
+    await delay(300);
+    return {
+      from,
+      to,
+      unitCostByUom: [
+        { uom: "KG", lineTotal: 4820.5, quantity: 310, unitCost: 15.55 },
+        { uom: "EACH", lineTotal: 1240.0, quantity: 200, unitCost: 6.2 },
+        { uom: null, lineTotal: 890.0, quantity: 120, unitCost: 7.42 },
+      ],
+      cogsBySupplier: [
+        { supplier: "Paramount Liquor", lineTotal: 9240.0, wetAmount: 610.5 },
+        { supplier: "Oranges & Lemons", lineTotal: 4820.5, wetAmount: 0 },
+        { supplier: "Sealane Beverages", lineTotal: 1240.0, wetAmount: 0 },
+      ],
+    };
+  },
+
   async getTopSellers(): Promise<TopSeller[]> {
     await delay(300);
     return [

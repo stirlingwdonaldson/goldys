@@ -23,4 +23,5 @@ public record InvoiceInput(
     BigDecimal gstAmount,
     BigDecimal freightAmount,
     BigDecimal freightGstAmount,
+    String pdfFilename,
     UUID rawRecordId) {}
