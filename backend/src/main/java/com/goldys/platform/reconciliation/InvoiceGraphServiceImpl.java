@@ -18,8 +18,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 /**
- * {@link InvoiceGraphQuery} over canonical invoice facts. Supplier identity is the normalized
- * name on the invoice header; lines whose invoice number has no header bucket to {@code "Unknown"}.
+ * {@link InvoiceGraphQuery} over canonical invoice facts. Supplier identity is the normalized name
+ * on the invoice header; lines whose invoice number has no header bucket to {@code "Unknown"}.
  * Spend is the sum of line totals, falling back to header totals when a supplier has invoices but
  * no lines.
  */
@@ -82,8 +82,9 @@ public class InvoiceGraphServiceImpl implements InvoiceGraphQuery {
         out.add(new SupplierGraphNode(supplier, 0, lineSpend.get(supplier)));
       }
     }
-    out.sort(Comparator.comparing(
-        SupplierGraphNode::totalSpend, Comparator.nullsLast(Comparator.reverseOrder())));
+    out.sort(
+        Comparator.comparing(
+            SupplierGraphNode::totalSpend, Comparator.nullsLast(Comparator.reverseOrder())));
     if (hasUnknown) {
       out.add(new SupplierGraphNode(UNKNOWN, 0, unknownSpend));
     }
@@ -91,15 +92,19 @@ public class InvoiceGraphServiceImpl implements InvoiceGraphQuery {
   }
 
   @Override
-  public List<InvoiceGraphNode> invoicesForSupplier(
-      String supplier, LocalDate from, LocalDate to) {
+  public List<InvoiceGraphNode> invoicesForSupplier(String supplier, LocalDate from, LocalDate to) {
     return invoices.currentInvoices().stream()
         .filter(i -> supplier.equals(i.supplierName()))
         .filter(i -> inRange(i.invoiceDate(), from, to))
         .sorted(Comparator.comparing(InvoiceMetadataView::invoiceDate).reversed())
-        .map(i -> new InvoiceGraphNode(
-            i.invoiceNumber(), i.invoiceDate(), i.totalAmount(),
-            i.purchaseNumber(), i.pdfFilename()))
+        .map(
+            i ->
+                new InvoiceGraphNode(
+                    i.invoiceNumber(),
+                    i.invoiceDate(),
+                    i.totalAmount(),
+                    i.purchaseNumber(),
+                    i.pdfFilename()))
         .toList();
   }
 
@@ -108,9 +113,15 @@ public class InvoiceGraphServiceImpl implements InvoiceGraphQuery {
     return inventory.currentEnrichedLines().stream()
         .filter(l -> invoiceNumber.equals(l.invoiceNumber()))
         .sorted(Comparator.comparing(EnrichedInvoiceLine::lineTotal).reversed())
-        .map(l -> new LineGraphNode(
-            l.productNameKey(), l.stockCode(), l.quantity(), l.unitCost(),
-            l.lineTotal(), l.uom()))
+        .map(
+            l ->
+                new LineGraphNode(
+                    l.productNameKey(),
+                    l.stockCode(),
+                    l.quantity(),
+                    l.unitCost(),
+                    l.lineTotal(),
+                    l.uom()))
         .toList();
   }
 

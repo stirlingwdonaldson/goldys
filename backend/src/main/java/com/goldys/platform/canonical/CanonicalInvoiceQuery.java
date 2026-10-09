@@ -44,7 +44,11 @@ public class CanonicalInvoiceQuery {
 
   private static InvoiceMetadataView toView(CanonicalInvoice i) {
     return new InvoiceMetadataView(
-        i.supplierName(), i.invoiceNumber(), i.invoiceDate(), i.totalAmount(),
-        i.purchaseNumber(), i.pdfFilename());
+        i.supplierName(),
+        i.invoiceNumber(),
+        i.invoiceDate(),
+        i.totalAmount(),
+        i.purchaseNumber(),
+        i.pdfFilename());
   }
 }

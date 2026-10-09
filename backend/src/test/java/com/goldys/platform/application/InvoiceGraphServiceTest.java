@@ -60,7 +60,6 @@ class InvoiceGraphServiceTest {
 
     service.suppliers(role(), LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
 
-    verify(permissions)
-        .require(role(), new ResourceKey("inventory.cost"), PermissionAction.READ);
+    verify(permissions).require(role(), new ResourceKey("inventory.cost"), PermissionAction.READ);
   }
 }

@@ -61,8 +61,14 @@ class InventoryControllerTest {
   void invoicesReturnsTheSuppliersInvoices() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(graph.invoicesForSupplier(any(), any(), any(), any()))
-        .thenReturn(List.of(new InvoiceGraphNode(
-            "INV-1042", LocalDate.of(2026, 9, 28), new BigDecimal("1420.15"), "PO-88", "inv-1042.pdf")));
+        .thenReturn(
+            List.of(
+                new InvoiceGraphNode(
+                    "INV-1042",
+                    LocalDate.of(2026, 9, 28),
+                    new BigDecimal("1420.15"),
+                    "PO-88",
+                    "inv-1042.pdf")));
 
     mvc.perform(
             get("/api/inventory/graph/suppliers/{supplier}/invoices", "A. Foods")
@@ -78,13 +84,17 @@ class InventoryControllerTest {
   void linesReturnsTheInvoicesLines() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(graph.linesForInvoice(any(), any()))
-        .thenReturn(List.of(new LineGraphNode(
-            "chicken breast", "CB-1", new BigDecimal("4"),
-            new BigDecimal("12.5"), new BigDecimal("50.00"), "CTN")));
+        .thenReturn(
+            List.of(
+                new LineGraphNode(
+                    "chicken breast",
+                    "CB-1",
+                    new BigDecimal("4"),
+                    new BigDecimal("12.5"),
+                    new BigDecimal("50.00"),
+                    "CTN")));
 
-    mvc.perform(
-            get("/api/inventory/graph/invoices/INV-1042/lines")
-                .with(authenticated(owner())))
+    mvc.perform(get("/api/inventory/graph/invoices/INV-1042/lines").with(authenticated(owner())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].productNameKey").value("chicken breast"))
         .andExpect(jsonPath("$[0].uom").value("CTN"));

@@ -29,17 +29,19 @@ class InvoiceGraphServiceImplTest {
   @Test
   void ranksSuppliersBySpendAndCountsInvoices() {
     when(invoices.currentInvoices())
-        .thenReturn(List.of(
-            invoice("A. Foods", "INV-1", "2026-09-01", "100.00"),
-            invoice("A. Foods", "INV-2", "2026-09-02", "50.00"),
-            invoice("B. Beverages", "INV-3", "2026-09-03", "10.00")));
+        .thenReturn(
+            List.of(
+                invoice("A. Foods", "INV-1", "2026-09-01", "100.00"),
+                invoice("A. Foods", "INV-2", "2026-09-02", "50.00"),
+                invoice("B. Beverages", "INV-3", "2026-09-03", "10.00")));
     when(invoices.currentSupplierNames())
         .thenReturn(Map.of("INV-1", "A. Foods", "INV-2", "A. Foods", "INV-3", "B. Beverages"));
     when(inventory.currentEnrichedLines())
-        .thenReturn(List.of(
-            line("INV-1", "2026-09-01", "20.00"),
-            line("INV-2", "2026-09-02", "30.00"),
-            line("INV-3", "2026-09-03", "5.00")));
+        .thenReturn(
+            List.of(
+                line("INV-1", "2026-09-01", "20.00"),
+                line("INV-2", "2026-09-02", "30.00"),
+                line("INV-3", "2026-09-03", "5.00")));
 
     List<SupplierGraphNode> result = service.suppliers(FROM, TO);
 
@@ -81,11 +83,12 @@ class InvoiceGraphServiceImplTest {
   @Test
   void filtersInvoicesBySupplierNameAndDateDescending() {
     when(invoices.currentInvoices())
-        .thenReturn(List.of(
-            invoice("A. Foods", "INV-1", "2026-09-01", "100.00"),
-            invoice("A. Foods", "INV-2", "2026-09-28", "50.00"),
-            invoice("A. Foods", "INV-3", "2026-10-15", "1.00"),
-            invoice("B. Beverages", "INV-4", "2026-09-05", "10.00")));
+        .thenReturn(
+            List.of(
+                invoice("A. Foods", "INV-1", "2026-09-01", "100.00"),
+                invoice("A. Foods", "INV-2", "2026-09-28", "50.00"),
+                invoice("A. Foods", "INV-3", "2026-10-15", "1.00"),
+                invoice("B. Beverages", "INV-4", "2026-09-05", "10.00")));
 
     List<InvoiceGraphNode> result = service.invoicesForSupplier("A. Foods", FROM, TO);
 
@@ -97,9 +100,8 @@ class InvoiceGraphServiceImplTest {
   @Test
   void filtersLinesByInvoiceNumber() {
     when(inventory.currentEnrichedLines())
-        .thenReturn(List.of(
-            line("INV-1", "2026-09-01", "20.00"),
-            line("INV-2", "2026-09-02", "30.00")));
+        .thenReturn(
+            List.of(line("INV-1", "2026-09-01", "20.00"), line("INV-2", "2026-09-02", "30.00")));
 
     List<LineGraphNode> result = service.linesForInvoice("INV-1");
 
@@ -116,7 +118,16 @@ class InvoiceGraphServiceImplTest {
 
   private static EnrichedInvoiceLine line(String invoice, String date, String lineTotal) {
     return new EnrichedInvoiceLine(
-        invoice, LocalDate.parse(date), "key", null, BigDecimal.ONE, BigDecimal.ZERO,
-        new BigDecimal(lineTotal), null, null, null, null);
+        invoice,
+        LocalDate.parse(date),
+        "key",
+        null,
+        BigDecimal.ONE,
+        BigDecimal.ZERO,
+        new BigDecimal(lineTotal),
+        null,
+        null,
+        null,
+        null);
   }
 }

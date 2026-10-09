@@ -13,9 +13,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 /**
- * The invoice node graph's read model: authorizes the read and delegates to the semantic
- * {@link InvoiceGraphQuery}. Uses the same {@code inventory.cost} gate as
- * {@link InventoryReportingService}.
+ * The invoice node graph's read model: authorizes the read and delegates to the semantic {@link
+ * InvoiceGraphQuery}. Uses the same {@code inventory.cost} gate as {@link
+ * InventoryReportingService}.
  */
 @Service
 public class InvoiceGraphService {

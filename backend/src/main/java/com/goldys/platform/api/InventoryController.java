@@ -69,8 +69,7 @@ public class InventoryController {
 
   @GetMapping("/graph/invoices/{invoiceNumber}/lines")
   List<LineGraphNode> linesForInvoice(
-      @PathVariable String invoiceNumber,
-      @AuthenticationPrincipal AccountUserDetails user) {
+      @PathVariable String invoiceNumber, @AuthenticationPrincipal AccountUserDetails user) {
     return graph.linesForInvoice(currentUser.roleOf(user), invoiceNumber);
   }
 }
