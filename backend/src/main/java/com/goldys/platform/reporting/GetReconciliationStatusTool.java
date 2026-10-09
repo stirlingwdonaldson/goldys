@@ -103,7 +103,9 @@ public class GetReconciliationStatusTool implements ReportingTool {
 
     // Per-source connector freshness.
     for (ConnectorHealth c : connectors.health()) {
-      rows.add(statusRow(c.source(), "last run " + c.lastRunAt() + " (" + c.status() + ")"));
+      rows.add(
+          statusRow(
+              c.source(), c.connector() + ": last run " + c.lastRunAt() + " (" + c.status() + ")"));
     }
 
     List<Column> columns =

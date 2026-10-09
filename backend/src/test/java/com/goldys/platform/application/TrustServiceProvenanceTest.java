@@ -97,7 +97,8 @@ class TrustServiceProvenanceTest {
     when(resolution.states(METRIC, DATE, DATE)).thenReturn(List.of(state));
 
     ConnectorHealthQuery connectors = mock(ConnectorHealthQuery.class);
-    when(connectors.health()).thenReturn(List.of(new ConnectorHealth(LIGHTSPEED, AT, "SUCCESS")));
+    when(connectors.health())
+        .thenReturn(List.of(new ConnectorHealth(LIGHTSPEED, "lightspeed-products", AT, "SUCCESS")));
 
     CanonicalDailySalesQuery dailySales = mock(CanonicalDailySalesQuery.class);
     when(dailySales.currentDailySalesForDate(DATE))

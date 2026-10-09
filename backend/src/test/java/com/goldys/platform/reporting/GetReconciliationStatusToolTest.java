@@ -77,7 +77,8 @@ class GetReconciliationStatusToolTest {
 
     ConnectorHealthQuery connectors = mock(ConnectorHealthQuery.class);
     when(connectors.health())
-        .thenReturn(List.of(new ConnectorHealth("LIGHTSPEED", LAST_RUN, "SUCCESS")));
+        .thenReturn(
+            List.of(new ConnectorHealth("LIGHTSPEED", "lightspeed-products", LAST_RUN, "SUCCESS")));
 
     GetReconciliationStatusTool tool =
         new GetReconciliationStatusTool(metrics, sales, product, connectors);
@@ -103,7 +104,7 @@ class GetReconciliationStatusToolTest {
             row("Labour", "1 unresolved days"),
             row("Inventory", "0 unresolved days"),
             row("Product", "2 unresolved days"),
-            row("LIGHTSPEED", "last run " + LAST_RUN + " (SUCCESS)"));
+            row("LIGHTSPEED", "lightspeed-products: last run " + LAST_RUN + " (SUCCESS)"));
   }
 
   @Test

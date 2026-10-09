@@ -32,6 +32,16 @@ interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
           + "(select max(r2.startedAt) from IngestionRun r2 where r2.sourceSystem = r.sourceSystem)")
   List<IngestionRun> latestPerSource();
 
+  /**
+   * The latest run per (source system, connector name), so a successful CSV push does not mask a
+   * partial web pull for the same source.
+   */
+  @Query(
+      "select r from IngestionRun r where r.startedAt = "
+          + "(select max(r2.startedAt) from IngestionRun r2 "
+          + "where r2.sourceSystem = r.sourceSystem and r2.connectorName = r.connectorName)")
+  List<IngestionRun> latestPerConnector();
+
   /** Status distribution for the ingestion-health completeness calculation. */
   @Query(
       "select new com.goldys.platform.ingestion.StatusCount(r.status, count(r)) "
