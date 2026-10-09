@@ -1003,7 +1003,7 @@ Document, per canonical entity (reservation, labour entry, invoice, invoice line
 ### Task X3: Domain runbook
 
 **Files:**
-- Create: `docs/adding-a-domain.md`
+- Create: `docs/architecture/adding-a-domain.md`
 
 A runbook capturing the slice recipe: the component checklist (canonical entity + input + ingest + service + query + view; migration; projector + listener + resolved entity + repository; semantic interface + records; resolved query; override; application service + controller; reporting tool + input + ToolId; permission resource + seed; architecture test), with the sales/reservations files named as the copy references.
 

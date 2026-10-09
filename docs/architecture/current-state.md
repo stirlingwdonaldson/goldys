@@ -43,15 +43,24 @@ semantic layer.
 | `ingestion` | Raw ledger + connector runner + run/failure tracking | (JPA) |
 | `connectors` | Vendor adapters behind the `SourceConnector` port | `canonical` (ingest), `ingestion` |
 | `auth` | Identity, roles, table-driven permissions | (JPA) |
+| `widget` | Versioned widget spec records (the only thing the frontend renders) | (nothing in-platform) |
+| `config`, `metrics` | Security, request filters, Micrometer metric names | — |
 
 ## Application services
 
 Use-case services that a controller delegates to; each owns a coherent read model or write action.
 
-- `DashboardApplicationService` — dashboard summary + activity + top sellers + sales trend.
+- `DashboardApplicationService` — dashboard bootstrap, summary, activity, top sellers, sales trend.
+- `SavedDashboardApplicationService` — saved dashboards: CRUD, templates, sharing, revisions, render.
 - `SalesReportingService` — Sales screen's per-source listing + resolved latest total.
+- `ReservationReportingService`, `LabourReportingService`, `InventoryReportingService` — domain
+  summaries, including cross-domain composition (e.g. hours per cover, food cost %).
 - `ReconciliationApplicationService` — exceptions, drill-in, and manual overrides.
-- `ConnectorApplicationService` — connector statuses, run, and CSV upload.
+- `ConnectorApplicationService` / `ConnectorHealthService` — connector statuses, run, CSV upload,
+  freshness.
+- `DataExplorerService` — raw / canonical / resolved browsing for the Data explorer.
+- `TrustService` / `DataQualityService` — provenance drill-down, trust and freshness state.
+- `InvoiceGraphService` — supplier → invoice → line graph for the Kitchen screen.
 
 `ResolutionRuleController` is intentionally unchanged: it is already a thin adapter over
 `ResolutionRuleService` (which owns rule validation, WRITE authorization, and projection recompute)
@@ -83,9 +92,11 @@ One authorization decision per use case, deliberately placed:
   `ResolutionRuleService`) keep their single `WRITE` check at the mutation boundary.
 - **Semantic queries** are pure reads and never authorize.
 
-The resource model is still the broad `reconciliation.sales` (plus `connectors`,
-`conversational.chat`). Metric-specific resources (`sales.metrics`, `product.metrics`, …) are a
-future step and are not invented here without a stakeholder permission mapping.
+Resources in use: `reconciliation.sales`, `reconciliation.status`, `connectors`,
+`reservations.metrics`, `labour.hours`, `labour.cost`, `labour.wages`, `inventory.cost`,
+`inventory.stock`, `conversational.chat`, `conversational.threads`, `dashboards`. Each metric in
+the catalogue names its required resource (`docs/metrics/catalog.md`). All are granted to
+`ALL × OWNER` only; department-scoped grants wait on the stakeholder field-to-role mapping.
 
 ## Architecture rules (enforced by `ArchitectureBoundariesTest`)
 

@@ -1009,7 +1009,7 @@ git commit -m "feat: build reconciliation list, drill-in, and override flow"
 
 **Files:**
 - Modify: `frontend/app/(app)/connectors/page.tsx`
-- Modify: `docs/testing.md`
+- Modify: `docs/operations/testing.md`
 
 **Interfaces:**
 - Consumes: `useApiData`, `listConnectorStatuses`, `ConnectorStatus`.
@@ -1091,7 +1091,7 @@ export default function ConnectorsPage() {
 }
 ```
 
-- [ ] **Step 2: Record verification in `docs/testing.md`**
+- [ ] **Step 2: Record verification in `docs/operations/testing.md`**
 
 Append a note under the frontend section:
 
@@ -1116,7 +1116,7 @@ Expected: all pass.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /srv/ai/projects/goldys && git add "frontend/app/(app)/connectors/page.tsx" docs/testing.md
+cd /srv/ai/projects/goldys && git add "frontend/app/(app)/connectors/page.tsx" docs/operations/testing.md
 git commit -m "feat: build connectors status screen"
 ```
 

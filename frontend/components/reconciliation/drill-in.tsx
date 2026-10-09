@@ -31,7 +31,7 @@ interface DrillInProps {
 /**
  * The body of the reconciliation side sheet. Exception-first: fields that need a
  * decision are shown in full; fields where every source agrees are collapsed out
- * of the way but one click from view (docs/design-system.md §6).
+ * of the way but one click from view (docs/design/design-system.md §6).
  */
 export function ReconciliationDrillIn({ fetchRecord, deps, onSave, saving }: DrillInProps) {
   const { data: record, loading, error, reload } = useApiData(fetchRecord, deps);

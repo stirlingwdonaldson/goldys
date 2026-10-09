@@ -44,9 +44,16 @@ Evaluate every change across these five dimensions:
 - Any unnecessary re-renders (in UI components)?
 - Any missing pagination on list endpoints?
 
+## Repository-specific checks
+
+In this repository, also review every change against `.claude/rules/architecture-invariants.md`
+and `docs/architecture/current-state.md`. A violated invariant (raw ledger mutated, canonical row
+updated in place, a business consumer reading canonical or raw data, a second permission check,
+an unbounded AI tool parameter) is **Critical**, not a style issue.
+
 ## Output Format
 
-Categorize every finding, using the same severity labels as the `code-review-and-quality` skill:
+Categorize every finding with one of these severity labels:
 
 **Critical** — Blocks merge (security vulnerability, data loss risk, broken functionality)
 

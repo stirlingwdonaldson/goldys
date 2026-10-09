@@ -360,7 +360,7 @@ actions only — never Add/Save/Update/Delete/Approve/Transfer/MarkAsExported.
 **Deferred:** the connector is not built this pass — the research recorded
 endpoint URLs and response envelopes but **not the request bodies**, and the
 email/password login fields are unconfirmed, so a correct connector would
-require guessing. See `docs/adr-marketman-history.md`. Build it once there's a
+require guessing. See `docs/decisions/marketman-history-only.md`. Build it once there's a
 live browser session to capture the POST bodies, or MarketMan API v3 keys.
 
 **Future job (flagged):** determine when the business migrated from MarketMan

@@ -1,61 +1,78 @@
 # Goldy's Unified Data Platform
 
-Data integration and analytics platform for Goldy's, with automated
-reconciliation, dashboards, reporting, exports, and AI-assisted insights.
+Data integration and analytics for Goldy's pub. It pulls the venue's operational
+systems into one immutable record, reconciles the places where they disagree, and
+serves dashboards, reports and an AI assistant from the reconciled result.
 
-The implementation has been cleared for a deliberate Phase 1 rebuild. The
-repository retains build configuration, application configuration, the V1
-Flyway baseline, and product/design context. Follow the approved
-[Phase 1 specification](docs/superpowers/specs/2026-09-19-phase-one-mvp-design.md)
-and [foundation implementation plan](docs/superpowers/plans/2026-09-19-phase-one-foundation.md);
-previously documented classes and screens no longer exist unless a later commit
-restores them.
+```
+raw ledger (append-only, byte-faithful)
+  → bitemporal canonical facts
+    → reconciliation (rules + manual overrides)
+      → resolved projections
+        → semantic queries → REST API · dashboards · Ask Goldy's
+```
 
-Read [`docs/system-context.md`](docs/system-context.md) for architecture
-invariants and [`docs/prd.md`](docs/prd.md) for scope and acceptance criteria
-before implementing connectors, reconciliation, or reporting behavior.
+Start with [`docs/README.md`](docs/README.md), the index for everything else.
+Architecture decisions live in [`docs/system-context.md`](docs/system-context.md);
+scope and acceptance criteria in [`docs/prd.md`](docs/prd.md).
 
 ## Layout
 
-- `backend/` — Java 25, Spring Boot 3.5. The Phase 1 foundation is in place:
-  byte-faithful ingestion ledger with append-only raw records and first-class
-  run/failure tracking, a vendor-neutral connector port, OIDC-to-staff-profile
-  session mapping with a table-driven permission service, and bitemporal
-  canonical sale-item/shift persistence with raw provenance. Schema is owned by
-  Flyway migrations V1–V4.
-- `frontend/` — Next.js (App Router) + TypeScript + Tailwind + shadcn/ui, run
-  with Bun 1.4.2. A minimal application shell is restored; reconciliation and
-  connector screens land with later vertical slices. See
-  `docs/design-system.md` for retained frontend decisions.
-- `docker-compose.yml` — local Postgres 16 for dev, published on host port
-  **5433** so it does not collide with a native Postgres on 5432.
+- `backend/`: Java 25, Spring Boot 3.5, Spring AI, PostgreSQL 16 (Flyway-owned schema).
+  A modular monolith; package boundaries are described in
+  [`docs/architecture/current-state.md`](docs/architecture/current-state.md) and
+  enforced by `ArchitectureBoundariesTest`.
+- `frontend/`: Next.js 15 (App Router), React 19, TypeScript, Tailwind, shadcn/ui,
+  Recharts, React Flow. Bun 1.4.2 only.
+- `docker-compose.yml`: local Postgres 16 on host port **5433**.
+- `docker-compose.prod.yml`: production stack (frontend, backend, postgres, sftp).
+- `docs/`: architecture, requirements, connector notes, design system, runbooks,
+  audits, and dated design records.
 
-## Verification
+## What exists today
 
-See [`docs/testing.md`](docs/testing.md) for the reproducible commands. Summary
-of what was verified on this tree:
+| Area | State |
+|---|---|
+| Raw ledger | `raw_record` with `BYTEA` payloads, SHA-256 and length, DB-enforced append-only; ingestion runs and failures are first-class (`SUCCESS`/`PARTIAL`/`FAILED`/`NO_NEW_DATA`) |
+| Canonical layer | Bitemporal entities for daily sales, product sales, reservations, labour, invoices, invoice lines, stock counts and wastage |
+| Reconciliation | Daily and product sales compared across Lightspeed and CTB; source-priority resolution rules with audit; manual overrides per domain; recomputable resolved projections |
+| Connectors | Lightspeed (Insights webhooks), CTB (scheduled AJAX pull, invoice CSV + PDF over SFTP), OpenTable (manual CSV drop), Deputy (raw-only webhook) |
+| Semantic layer | Metric catalogue ([`docs/metrics/catalog.md`](docs/metrics/catalog.md)) with base and derived metrics, provenance and trust/freshness state |
+| Ask Goldy's | Spring AI chat over a fixed, enum-validated tool set; per-metric authorization; persisted threads; renders typed widget specs |
+| Dashboards | Overview dashboard plus saved custom dashboards (templates, sharing, revisions), re-rendered live |
+| Frontend | Sales, Staff & labour, Reservations, Kitchen, Reconciliation, Resolution rules, Data health, Data explorer, Logs, Conversations, Custom dashboards, Settings |
+| Auth | Email + password accounts; table-driven `(department, seniority, resource)` permissions |
+| Ops | Docker Compose deploy at `platform.swd.sh`, Sentry (self-hosted), Micrometer/Prometheus |
 
-- `backend`: `./gradlew test spotlessCheck build` passes. Integration tests run
-  against real PostgreSQL 16 via Testcontainers (never H2): byte round-trip and
-  append-only rejection, run status derivation (SUCCESS/PARTIAL/FAILED/
-  NO_NEW_DATA), connector partial-failure, OIDC NOT_PERMITTED, table-driven
-  permissions, and canonical idempotency/as-of/concurrent-supersession.
-- `backend`: the schema is owned by Flyway (`src/main/resources/db/migration`)
-  with `hibernate.ddl-auto: validate`. `V1__baseline_schema.sql` is immutable
-  history; V2–V4 add the ingestion ledger, staff profiles, and canonical
-  provenance. Migrations assume an empty rebuild database.
-- `backend`: builds run on Gradle 9.5.0 via the committed wrapper, pinned
-  deliberately (Gradle itself, not just the toolchain, must parse Java 25 class
-  files). `spotlessApply` formats Java; `spotlessCheck` is the CI-side equivalent.
-- `frontend`: `bun run typecheck`, `bun run lint`, and `bun run build` all pass
-  with Bun 1.4.2; the root route renders with a clean console.
-- `docker-compose.yml`: `docker compose config` validates (Postgres 16 on host
-  5433). `docker compose up` and live OIDC login were **not** exercised in the
-  sessions that built this foundation; confirm both before treating the
-  foundation as deployable.
+Not built yet: Smart Exporter (PRD Req. 10), Automation Hub, an automated OpenTable
+pull, Deputy canonicalization, MarketMan history import, and a permission admin UI.
+[`docs/audits/production-data/`](docs/audits/production-data/README.md) records what
+production actually contains and the prioritised gaps.
 
-Two inputs gate their dependent Phase 1 behavior: the **entity-matching
-strategy** (what identifies "the same event" across sources) and the
-**field-to-role permission mapping** (which fields each department × seniority
-combination can see). The foundation may implement the mechanisms, but must not
-guess matching tolerances, permission seed data, or protected field rendering.
+## Open questions
+
+Two stakeholder inputs gate their dependent behaviour (tracked in
+[`docs/prd.md`](docs/prd.md#open-questions)):
+
+- **Field-to-role permission mapping**: which fields each department × seniority
+  combination may see. Until it's decided, permissions are seeded for `ALL × OWNER`
+  only.
+- **Department and seniority values** beyond BOH/FOH/ALL and Staff/Manager/Owner.
+
+## Development
+
+```bash
+docker compose up -d                       # Postgres on :5433
+cd backend && SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/goldys ./gradlew bootRun
+cd frontend && bun install && bun run dev  # http://localhost:3000, proxies /api to :8080
+```
+
+Checks (what CI runs, plus Vitest):
+
+```bash
+cd backend && ./gradlew test spotlessCheck build
+cd frontend && bun run typecheck && bun run lint && bun run test && bun run build
+```
+
+See [`docs/operations/testing.md`](docs/operations/testing.md) and
+[`docs/operations/deployment.md`](docs/operations/deployment.md).

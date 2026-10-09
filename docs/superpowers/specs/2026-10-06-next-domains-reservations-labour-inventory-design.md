@@ -445,7 +445,7 @@ round-trip against a fixture, and Flyway migration tests.
 - Matching strategies: `matching-and-identity.md`.
 - Dashboard/AI: reservation/labour/inventory reporting tools + widget specs; AI tools
   reuse the semantic services.
-- Architecture tests + `docs/adding-a-domain.md` runbook.
+- Architecture tests + `docs/architecture/adding-a-domain.md` runbook.
 
 ### Remaining source-data gaps
 

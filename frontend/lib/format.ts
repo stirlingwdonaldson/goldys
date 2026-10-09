@@ -3,7 +3,7 @@
  *
  * Every formatter accepts the loose shapes the API returns (numbers, numeric
  * strings, null) and renders an em dash for anything missing or non-numeric.
- * A missing value is never shown as "0" (docs/design-system.md: never hide absence).
+ * A missing value is never shown as "0" (docs/design/design-system.md: never hide absence).
  */
 
 export type Numeric = number | string | null | undefined;

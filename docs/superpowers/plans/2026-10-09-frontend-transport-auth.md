@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 15.5.25, React 19.3.0, TypeScript 5.9.3, Bun 1.4.2, Node 22.22.1, Vitest 5.0.1, existing Radix/shadcn and Sonner; proposed Zod 4.6.5 runtime and MSW 3.0.2 development additions.
 
-**Spec:** [Approved frontend target architecture](../../frontend-target-architecture.md), specifically transport/failure model and identity freshness; scope is PR 1 of [migration roadmap](../../frontend-migration-plan.md). Source evidence and outstanding live limitations: [audit](../../frontend-audit.md), [verification](../../frontend-verification.md).
+**Spec:** [Approved frontend target architecture](../../frontend/target-architecture.md), specifically transport/failure model and identity freshness; scope is PR 1 of [migration roadmap](../../frontend/migration-plan.md). Source evidence and outstanding live limitations: [audit](../../frontend/audit.md), [verification](../../frontend/verification.md).
 
 **Execution status:** Native execution approved and all seven tasks implemented on
 `fix/frontend-transport-auth`. Fresh whole-branch review's important signup recovery finding
@@ -74,7 +74,7 @@ All paths below are repository-relative. Test files sit beside their subjects, m
 | `frontend/app/login/page.tsx`, `login-page.test.tsx` | Guarded form action, safe feedback and routing tests |
 | `frontend/app/signup/page.tsx`, `signup-page.test.tsx` | Explicit partial signup and action tests |
 | `.github/workflows/ci.yml` | Run frontend Vitest; pin compatible Node runtime |
-| `docs/frontend-verification.md`, `docs/frontend-dependency-decisions.md` | Installed versions, results, intentional changes and rollback evidence |
+| `docs/frontend/verification.md`, `docs/frontend/dependency-decisions.md` | Installed versions, results, intentional changes and rollback evidence |
 
 Files ending `.test.ts`/`.test.tsx` and `auth-schema.ts`/`api-server.ts` are new. Other files are modifications. Existing global `frontend/tests/setup.ts` remains the Recharts/DOM setup; MSW is opt-in. Business components are not relocated. Chat's duplicate CSRF helper is consolidated with its streaming lifecycle in its own plan.
 
@@ -646,7 +646,7 @@ preserving cards/tokens/layout. accountCreated is local form state, reset by nav
 
 ## Task 7: Enforce frontend regressions in CI and record evidence
 
-**Files:** Modify `.github/workflows/ci.yml`, `docs/frontend-verification.md`, `docs/frontend-dependency-decisions.md`.
+**Files:** Modify `.github/workflows/ci.yml`, `docs/frontend/verification.md`, `docs/frontend/dependency-decisions.md`.
 
 **Interfaces:** Consume completed prior tasks and existing frontend CI job. Produce a Vitest CI gate and actual PR evidence; no deployment change.
 

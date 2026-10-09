@@ -2,7 +2,7 @@
 
 Status: **reviewed sequencing**, with architecture approved for implementation planning on
 2026-10-09. This roadmap is not itself an executable implementation plan.
-Baseline: `f6140b8`. Review [target architecture](frontend-target-architecture.md) first.
+Baseline: `f6140b8`. Review [target architecture](target-architecture.md) first.
 Each slice should get an implementation plan, focused regression tests and its own review.
 No push, merge or deployment is implied. Source audit precedes migration; live measurements
 and authenticated fixtures still need collection.
@@ -23,7 +23,7 @@ and authenticated fixtures still need collection.
 ### PR 0 — Audit and architectural review artifacts (this branch)
 
 Problem/root cause: findings were hypotheses without checkout-specific evidence.
-Affected files: the five `docs/frontend-*.md` deliverables. Adds no product dependencies or
+Affected files: the five `docs/frontend/*.md` deliverables. Adds no product dependencies or
 behavior changes. Records existing tests/checks and demo browser limitations. Rollback:
 revert documentation. Residual risk: no live authenticated verification; execution plans require review.
 
@@ -40,7 +40,7 @@ expected-body semantics (including backend empty 200 delete), explicit redirect 
 Clear stale identity, fence profile refreshes, consume logout rejection and expose pending/error.
 MSW enters here for real transport integration tests. Zod starts with profile validation so
 malformed authentication responses cannot become a signed-in identity. Detailed executable
-plan: [transport and authentication](superpowers/plans/2026-10-09-frontend-transport-auth.md).
+plan: [transport and authentication](../superpowers/plans/2026-10-09-frontend-transport-auth.md).
 
 Rejected: switching to Axios or synthesizing sign-out from any parse error. Regression cases:
 Headers/tuples, CSRF/content types, 204/empty 200 vs required JSON, malformed/error envelopes,
@@ -186,7 +186,7 @@ security tests and authenticated integration fixture coverage.
 
 Include problem/affected files, evidence/root cause, solution and rejected alternatives,
 dependency changes, preserved/intentional behavior, tests added, commands and actual exit
-results, migration/rollback steps and residual risks. Update `frontend-verification.md` with
+results, migration/rollback steps and residual risks. Update `verification.md` with
 counts and matching environment/sample methodology. Never describe proposed improvements as
 measured wins. Keep commits concern-specific and task branches short-lived; no direct main commit.
 

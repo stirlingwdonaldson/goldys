@@ -7,7 +7,7 @@
 
 Show the data the backend already serves but the frontend didn't, using the shadcn **data table**
 for lists and **n8n-style node graphs** (nodes + edges) where lineage/flow is the point. Visual rules
-come from `docs/design-system.md` (shadcn defaults, no custom fonts, light only) — the node canvas is
+come from `docs/design/design-system.md` (shadcn defaults, no custom fonts, light only) — the node canvas is
 the only bespoke-looking surface.
 
 ## 2. Gaps found before this branch
@@ -67,7 +67,7 @@ figures still fail closed on absent seniority).
   live `ConnectorStatus.source` equals raw `sourceSystem`, which is what lets the pipeline match a
   connector to its raw-record count. Demo `listRawRecords` now honours the `source` filter.
 - New dependencies: `@tanstack/react-table`, `@xyflow/react`.
-- `docs/design-system.md` §3 (screen inventory) and §6 (data-table + node-graph patterns) updated.
+- `docs/design/design-system.md` §3 (screen inventory) and §6 (data-table + node-graph patterns) updated.
 
 ## 4. Deliberate decisions
 

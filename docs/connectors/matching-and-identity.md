@@ -53,16 +53,20 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Invoice line (`canonical_invoice_line`)
 
-- **Source:** `CTB` (bulk-exported invoice PDFs, text-extracted).
+- **Source:** `CTB` Custom Invoice Export CSV (authoritative), enriched from the matching invoice
+  PDF delivered over SFTP.
 - **Logical identity:** `UUID.nameUUIDFromBytes("invoice-line:" + invoiceNumber + ":" +
   sourceRecordRef)`.
 - **Source identity:** `(source_system = CTB, source_record_ref = invoice number + ":" + line seq)`.
-- **Matching strategy:** the one genuine intra-source match — invoice metadata (CSV) ↔ line items
-  (PDF) are joined on `invoice_number` (exact match). The line also carries a denormalized
-  `invoice_date` so COGS can be bucketed by date from lines alone; a line ingested before its
-  invoice metadata still contributes to the correct day's COGS.
-- **Confidence:** high for the invoice-number join (exact); line-item text parsing is provisional
-  pending a real invoice PDF.
+- **Matching strategy:** invoice metadata ↔ lines join on `invoice_number` (exact). PDFs never
+  create lines on their own: `InvoicePdfEnrichmentService` resolves a PDF to its invoice through
+  the CSV's persisted `pdf_filename` (falling back to the invoice number in the PDF text only when
+  the filename does not resolve), then enriches the existing CSV lines (stock code, unit of measure, unit
+  quantity, pack size, WET amount). Lines carry a denormalized `invoice_date` so COGS can be bucketed by date from lines
+  alone.
+- **Confidence:** high for the invoice-number and filename joins (exact). PDF text extraction is
+  per-supplier-layout (`*InvoicePdfExtractor`, with an LLM fallback); unmatched or inconsistent
+  PDFs raise `InvoiceIngestFlag` rows instead of being dropped.
 - **Manual resolution path:** `InventoryOverrideService.save(...)` sets an override for a
   `trading_date`, replacing the computed purchases (COGS).
 

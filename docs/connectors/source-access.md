@@ -9,11 +9,13 @@ read-only: the platform never writes back to a source system (per
 
 ## Summary
 
-| Source | Access | Auth | Ingestion |
+| Source | Access | Auth | Path the platform uses today |
 |---|---|---|---|
-| Lightspeed (O-Series / Kounta) | Browser scrape of the back office (no usable public API for the sales feed) | Email + password form | Deterministic Playwright: login → Sales Feed → export CSV |
-| Cooking the Books (CTB) | Authenticated internal AJAX endpoints (ASP.NET MVC + ExtJS; no public API) | `POST /Account/Login` → session cookie | Session-authenticated POSTs to controller actions |
-| MarketMan (history only) | Buyer-portal internal API + official API v3 (`api.marketman.com/v3`) | Session cookie (buyer portal) or `AUTH_TOKEN` header (v3) | One-time historical pull of pre-CTB numbers; not a recurring connector |
+| Lightspeed (O-Series / Kounta) | Back office is server-rendered (no usable public API on this plan); Lightspeed Insights (Looker) can email/webhook scheduled reports | Email + password form (back office) | Scheduled Insights reports pushed to `POST /api/ingest/lightspeed`, `/lightspeed-products`, `/lightspeed-zreport` (token-gated webhooks). The back-office CSV scrape below is the documented fallback |
+| Cooking the Books (CTB) | Authenticated internal AJAX endpoints (ASP.NET MVC + ExtJS; no public API) | `POST /Account/Login` → session cookie | `CtbConnector` pull (daily 4am + "run now"), Custom Invoice Export CSV + invoice PDFs via the SFTP drop (`CtbSftpPull`), or CSV upload to `POST /api/ingest/ctb-invoices` |
+| OpenTable | GuestCenter only; partner-gated API | Email + password form | Manual GuestCenter CSV export posted to `POST /api/ingest/opentable`. See [`opentable.md`](opentable.md) |
+| Deputy | Self-serve OAuth REST API + webhooks | OAuth client (owner-registered) | Webhook to `POST /api/ingest/deputy`, raw-ledger only until the payload schema is confirmed |
+| MarketMan (history only) | Buyer-portal internal API + official API v3 (`api.marketman.com/v3`) | Session cookie (buyer portal) or `AUTH_TOKEN` header (v3) | Not built. One-time historical pull of pre-CTB numbers, see [`../decisions/marketman-history-only.md`](../decisions/marketman-history-only.md) |
 
 ## Lightspeed (O-Series / Kounta)
 

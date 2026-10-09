@@ -19,7 +19,7 @@
 | Source | Role |
 |---|---|
 | Lightspeed (O-Series/Kounta) | POS |
-| Cooking the Books (CTB) | Accounting |
+| Cooking the Books (CTB) | Inventory/purchasing (invoices, recipes, stock), plus a second sales feed used to cross-check Lightspeed |
 | OpenTable | Reservations |
 | Deputy | Payroll/rostering |
 
@@ -80,11 +80,13 @@ Sequencing constraints (`system-context.md` Build Order Prerequisites) are bindi
 
 | Question | Blocks |
 |---|---|
-| Entity-matching keys/tolerances per canonical entity type | Requirement 5 (reconciliation UI) implementation |
+| Entity-matching keys/tolerances per canonical entity type | Answered for current entities in `docs/connectors/matching-and-identity.md`; extend it per new source/entity |
 | Full list of department/seniority values beyond BOH/FOH, Staff/Manager/Owner | Requirement 3 permission table population |
 | Field-to-role mapping (which fields each department × seniority sees) | Requirement 3 acceptance criteria, Requirement 5 implementation |
 
-Do not implement Requirement 5 or populate Requirement 3's permission table until the corresponding open question is resolved — resolving it is design work, not a formality, per `prd.md`.
+Requirement 5 is built against the documented matching strategy. Requirement 3's permission table is populated for `ALL × OWNER` only; do not add department-scoped rows until the field-to-role mapping is resolved — that is design work, not a formality, per `prd.md`.
+
+**Where the build stands (2026-10-09):** Phase 1 Requirements 1–7 are implemented, with two gaps against Requirement 4 (OpenTable is a manual CSV drop rather than a scripted pull; Deputy is ingested raw-only). Phase 2 Requirements 8 (rule engine) and 9 (Conversational BI) are implemented; Requirement 10 (Smart Exporter) and the Automation Hub are not. See the root `README.md`.
 
 ## Doc Map
 
@@ -92,5 +94,6 @@ Do not implement Requirement 5 or populate Requirement 3's permission table unti
 |---|---|
 | Is X in scope / what phase is X in / exact acceptance criteria | `prd.md` |
 | Exact schema/versioning pattern, tech stack, per-source ingestion mechanics, architectural invariants | `system-context.md` |
-| What's actually implemented vs. scaffolded right now | root `README.md` |
+| What's actually implemented right now | root `README.md` |
+| How the code is organised | `architecture/current-state.md` |
 | Product identity, scope boundary, roadmap position at a glance | this doc |

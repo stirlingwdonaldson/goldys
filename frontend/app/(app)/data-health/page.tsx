@@ -206,7 +206,7 @@ export default function DataHealthPage() {
 /**
  * One source. A failure states what happened and puts the fix next to it
  * (heuristic 9); "No new data" stays neutral because it is an expected state,
- * not a fault (docs/design-system.md).
+ * not a fault (docs/design/design-system.md).
  */
 function ConnectorCard({
   connector: c,
