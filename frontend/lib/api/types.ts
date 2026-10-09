@@ -111,6 +111,44 @@ export interface ReservationSummary {
   bookingToCoverConversion: number | null;
 }
 
+/** One day's resolved covers (mirrors `semantic.CoversMetric`). */
+export interface DailyCovers {
+  date: string;
+  covers: number;
+  authoritativeSource: string | null;
+  hasConflict: boolean;
+}
+
+/**
+ * Period totals for the Staff & Labor screen (mirrors `LabourReportingService.LabourSummary`).
+ * Every figure is null when nothing resolved for the period — never a fabricated zero. The
+ * department percentages are fractions (0.28 = 28%) of gross sales.
+ */
+export interface LabourSummary {
+  from: string;
+  to: string;
+  scheduledHours: number | null;
+  actualHours: number | null;
+  labourCost: number | null;
+  variance: number | null;
+  hoursPerCover: number | null;
+  labourCostPerCover: number | null;
+  fohLabourCostPercent: number | null;
+  bohLabourCostPercent: number | null;
+}
+
+/**
+ * Period totals for the Kitchen screen (mirrors `InventoryReportingService.InventorySummary`).
+ * `foodCostPercent` is purchases ÷ gross sales as a fraction; null when either side is missing.
+ */
+export interface InventorySummary {
+  from: string;
+  to: string;
+  purchases: number | null;
+  wastage: number | null;
+  foodCostPercent: number | null;
+}
+
 /** Blended unit cost for one unit-of-measure over a period (mirrors `semantic.UomUnitCost`). */
 export interface UomUnitCost {
   uom: string | null;
@@ -132,6 +170,32 @@ export interface InventoryLineBreakdown {
   to: string;
   unitCostByUom: UomUnitCost[];
   cogsBySupplier: SupplierCogs[];
+}
+
+/** One supplier in the invoice node graph (mirrors `semantic.SupplierGraphNode`). */
+export interface SupplierGraphNode {
+  name: string;
+  invoiceCount: number;
+  totalSpend: number | null;
+}
+
+/** One invoice header in the invoice node graph (mirrors `semantic.InvoiceGraphNode`). */
+export interface InvoiceGraphNode {
+  invoiceNumber: string;
+  invoiceDate: string;
+  totalAmount: number | null;
+  purchaseNumber: string | null;
+  pdfFilename: string | null;
+}
+
+/** One invoice line in the invoice node graph (mirrors `semantic.LineGraphNode`). */
+export interface LineGraphNode {
+  productNameKey: string;
+  stockCode: string | null;
+  quantity: number;
+  unitCost: number;
+  lineTotal: number;
+  uom: string | null;
 }
 
 /**
@@ -397,6 +461,17 @@ export interface Api {
   getLatestSales(): Promise<LatestSales>;
   getReservationSummary(date: string): Promise<ReservationSummary | undefined>;
   getInventoryLines(from: string, to: string): Promise<InventoryLineBreakdown>;
+  getInventorySummary(from: string, to: string): Promise<InventorySummary>;
+  getInvoiceGraphSuppliers(from: string, to: string): Promise<SupplierGraphNode[]>;
+  getInvoiceGraphInvoices(
+    supplier: string,
+    from: string,
+    to: string,
+  ): Promise<InvoiceGraphNode[]>;
+  getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]>;
+  getLabourSummary(from: string, to: string): Promise<LabourSummary>;
+  listDailyCovers(from: string, to: string): Promise<DailyCovers[]>;
+  getProvenance(metricId: string, date: string): Promise<Provenance>;
   getTopSellers(): Promise<TopSeller[]>;
   getSalesTrend(): Promise<SalesTrendPoint[]>;
   listDashboards(): Promise<SavedDashboardSummary[]>;

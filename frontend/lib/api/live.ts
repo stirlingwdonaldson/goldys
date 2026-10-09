@@ -1,4 +1,10 @@
 import { fetchApi } from "./client";
+import { getProvenance } from "./provenance";
+import {
+  getInvoiceGraphSuppliers,
+  getInvoiceGraphInvoices,
+  getInvoiceGraphLines,
+} from "./invoice-graph";
 import type {
   ActivityPoint,
   Api,
@@ -82,6 +88,16 @@ export const liveApi: Api = {
     fetchApi<import("./types").InventoryLineBreakdown>(
       `/api/inventory/lines?from=${from}&to=${to}`,
     ),
+  getInventorySummary: (from: string, to: string) =>
+    fetchApi<import("./types").InventorySummary>(`/api/inventory/summary?from=${from}&to=${to}`),
+  getLabourSummary: (from: string, to: string) =>
+    fetchApi<import("./types").LabourSummary>(`/api/labour/summary?from=${from}&to=${to}`),
+  listDailyCovers: (from: string, to: string) =>
+    fetchApi<import("./types").DailyCovers[]>(`/api/reservations/covers?from=${from}&to=${to}`),
+  getProvenance,
+  getInvoiceGraphSuppliers,
+  getInvoiceGraphInvoices,
+  getInvoiceGraphLines,
   getTopSellers: () => fetchApi<import("./types").TopSeller[]>("/api/dashboard/top-sellers"),
   getSalesTrend: () =>
     fetchApi<import("./types").SalesTrendPoint[]>("/api/dashboard/sales-trend"),

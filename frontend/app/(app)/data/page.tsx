@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useApiData } from "@/lib/use-api-data";
+import { RESOLVED_SCREENS } from "@/lib/data-layers";
 import type { DataPage, GenericRow, RawRecordSummary } from "@/lib/api/types";
 import { GenericTable } from "@/components/data-explorer/generic-table";
 import { LoadingState } from "@/components/states/loading-state";
@@ -20,14 +21,6 @@ const PAGE_SIZE = 50;
 
 const emptyPage = (): DataPage<GenericRow> => ({ items: [], total: 0, page: 0, size: PAGE_SIZE });
 
-/** Which existing screen each resolved domain jumps to. */
-const RESOLVED_SCREENS: Record<string, string> = {
-  resolved_daily_sales: "/sales",
-  resolved_product_sales: "/sales",
-  resolved_reservation_day: "/reservations",
-  resolved_labour_day: "/staff",
-  resolved_inventory_day: "/kitchen",
-};
 
 export default function DataPage() {
   return (
@@ -41,6 +34,8 @@ function DataExplorer() {
   const searchParams = useSearchParams();
   const layer = searchParams.get("layer");
   const deepLinkId = searchParams.get("id");
+  // `entity` deep-links a canonical entity or resolved domain (e.g. from the Data health pipeline map).
+  const deepLinkEntity = searchParams.get("entity");
   const [section, setSection] = useState<Section>(
     layer === "canonical" ? "canonical" : layer === "resolved" ? "resolved" : "raw",
   );
@@ -58,8 +53,12 @@ function DataExplorer() {
       </Tabs>
 
       {section === "raw" ? <RawSection initialExpandedId={deepLinkId} /> : null}
-      {section === "canonical" ? <CanonicalSection /> : null}
-      {section === "resolved" ? <ResolvedSection /> : null}
+      {section === "canonical" ? (
+        <CanonicalSection initialEntity={layer === "canonical" ? deepLinkEntity : null} />
+      ) : null}
+      {section === "resolved" ? (
+        <ResolvedSection initialDomain={layer === "resolved" ? deepLinkEntity : null} />
+      ) : null}
     </div>
   );
 }
@@ -258,9 +257,9 @@ function RawPayload({ id }: { id: string }) {
   );
 }
 
-function CanonicalSection() {
+function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) {
   const entities = useApiData((api) => api.listCanonicalEntities(), []);
-  const [entity, setEntity] = useState("");
+  const [entity, setEntity] = useState(initialEntity ?? "");
   const [page, setPage] = useState(0);
   const selected = entity || entities.data?.[0]?.id || "";
   const rows = useApiData(
@@ -324,16 +323,16 @@ function CanonicalSection() {
   );
 }
 
-function ResolvedSection() {
+function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
   const domains = useApiData((api) => api.listResolvedDomains(), []);
-  const [domain, setDomain] = useState("");
+  const [domain, setDomain] = useState(initialDomain ?? "");
   const [page, setPage] = useState(0);
   const selected = domain || domains.data?.[0]?.id || "";
   const rows = useApiData(
     (api) => (selected ? api.listResolvedRows(selected, page, PAGE_SIZE) : Promise.resolve(emptyPage())),
     [selected, page],
   );
-  const screen = RESOLVED_SCREENS[selected];
+  const screen = RESOLVED_SCREENS[selected]?.href;
 
   if (domains.loading) return <LoadingState rows={3} />;
   if (domains.error) {

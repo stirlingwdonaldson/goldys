@@ -44,6 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: "Sales", href: "/sales", icon: TrendingUp, keywords: ["revenue", "takings"] },
       { title: "Staff & labour", href: "/staff", icon: Users, keywords: ["roster", "wages", "deputy"] },
       { title: "Reservations", href: "/reservations", icon: CalendarDays, keywords: ["covers", "bookings", "opentable"] },
+      { title: "Kitchen", href: "/kitchen", icon: ChefHat, keywords: ["food cost", "stock", "invoices", "suppliers"] },
       { title: "Custom dashboards", href: "/dashboards", icon: LayoutGrid, keywords: ["widgets", "reports"] },
       { title: "Conversations", href: "/conversations", icon: MessagesSquare, keywords: ["ask", "chat", "threads"] },
     ],
@@ -62,7 +63,6 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Coming soon",
     comingSoon: true,
     items: [
-      { title: "Kitchen", href: "/kitchen", icon: ChefHat, keywords: ["food cost", "stock"] },
       { title: "Recipes", href: "/recipes", icon: BookOpen, keywords: ["costing"] },
     ],
   },

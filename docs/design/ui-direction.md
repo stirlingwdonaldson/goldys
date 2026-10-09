@@ -91,6 +91,8 @@ doesn't fit, collapse it:
 | Sub-views | `Tabs` (segmented) and `ToggleGroup`, never hand-rolled buttons |
 | Errors | `ErrorState` (retry plus copy reference) and `Alert` with cause, impact and fix |
 | Irreversible actions | Confirm in a `Dialog` that names the consequence |
+| Lists of records | `components/data-table/data-table.tsx` (TanStack). Format dates with `formatDay`, money with `formatCurrency`, sources with `SourceLabel` in cell renderers |
+| Lineage and flow | `components/flow/FlowCanvas`. Node tones reuse the status tokens (`warn` is `--status-conflict`) |
 
 ## Heuristic rules of thumb
 
