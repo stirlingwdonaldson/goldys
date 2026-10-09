@@ -1,0 +1,10 @@
+source_invoice_rows,source_invoice_number_keys,colliding_invoice_number_keys,cross_supplier_collisions,source_keys_missing_canonical,canonical_keys_absent_source
+1174,1172,2,2,5,0
+source_days,days_spanning_raw_pages,missing_canonical_days,mismatch_over_four_decimal_tolerance,exact_decimal_mismatches,maximum_gross_rounding_delta
+187,0,0,0,0,0.0000
+sale_product_rows,distinct_stock_codes,nonzero_food_cost_rows,nonzero_unit_cost_rows,recipe_named_rows,discounted_rows,taxed_rows
+12951,502,8704,8709,12951,11707,11683
+sale_codes,link_codes,exact_code_overlap
+502,601,502
+supplier_stock_pairs,repeated_purchase_pairs,changing_price_candidates
+962,513,183

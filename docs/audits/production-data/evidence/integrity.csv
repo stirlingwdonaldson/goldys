@@ -1,0 +1,50 @@
+failure_type,boundary,safe_detail,count
+CONNECTOR_AUTH_FAILED,other,other (not exported),10
+CONNECTOR_FETCH_FAILED,searchRevenues,other (not exported),6
+CONNECTOR_SCHEMA_MISMATCH,getAllRecipes,Non-JSON response,5
+source_system,current_rows,dates,min,max,gross_net_gst_mismatch,negative_gross,zero_gross
+CTB,187,187,2026-04-02,2026-10-08,0,0,0
+LIGHTSPEED,8,8,2026-09-26,2026-10-08,0,0,0
+headers,old_dates,future_dates,total_missing,ex_tax_missing,gst_missing,freight_missing,account_missing,tax_code_missing,freight_gst_missing,pdf_missing,header_tax_mismatch
+1167,1,0,0,0,0,0,1167,1167,1167,5,0
+lines,quantity_one,quantity_zero,unit_cost_zero,quantity_cost_mismatch,stock_missing,category_missing,uom_missing,unit_quantity_missing,pack_size_missing,wet_missing,negative_lines,old_dates
+6156,2546,0,22,79,478,6156,2124,5201,5825,5978,111,12
+ambiguous_header_keys,headers_without_lines,orphan_invoice_keys,header_line_ex_tax_mismatches,mismatch_after_freight
+0,0,0,97,97
+repeated_line_groups,repeated_line_excess
+18,79
+stock_codes,codes_with_multiple_names
+960,9
+product_keys,names_with_multiple_codes
+946,18
+sale_products,purchase_products,overlapping_names
+520,946,1
+dates_checked,missing_keys,amount_mismatches,null_wastage,null_stock
+164,0,0,164,164
+product_days_checked,missing_keys,value_mismatches
+13185,0,0
+resolution_type,authoritative_source,has_conflict,dates,missing_gross,missing_net,gross_net_gst_mismatches
+override,LIGHTSPEED,f,2,0,0,0
+rule,CTB,f,6,0,0,0
+single,CTB,f,179,0,0,0
+resolved_rows,no_authoritative_fact,authoritative_value_mismatches
+187,0,0
+entity_type,field_key,strategy,source_priority,recorded_at,superseded_at
+daily_sales,daily_sales,priority,"[""Cooking the Books"", ""Lightspeed""]",2026-10-08 03:50:29.253126+00,2026-10-08 03:50:39.327058+00
+daily_sales,daily_sales,priority,"[""Cooking the Books"", ""Lightspeed""]",2026-10-08 03:50:39.327058+00,2026-10-08 03:50:46.075866+00
+daily_sales,daily_sales,priority,"[""LIGHTSPEED"", ""CTB""]",2026-10-08 04:10:26.119401+00,2026-10-08 12:03:14.398568+00
+daily_sales,daily_sales,custom,,2026-10-08 12:03:14.398568+00,
+trading_date,authoritative_source,recorded_at,superseded_at
+2026-10-05,LIGHTSPEED,2026-10-07 07:14:45.579319+00,
+2026-10-06,LIGHTSPEED,2026-10-07 07:14:41.054757+00,
+overlapping_days,gross_mismatch_days,net_mismatch_days,min,max
+93,21,93,2026-07-08,2026-10-08
+invoice_date,line_count,projection_delta
+2026-10-08,10,0.0000
+2026-10-05,56,0.0000
+2026-10-02,42,0.0000
+trading_date,sources,min,max,source_gross_delta
+2026-10-02,1,33909.3515,33909.3515,0.0000
+2026-10-03,2,223.0000,43618.9219,43395.9219
+2026-10-05,2,10865.7247,11813.4400,947.7153
+2026-10-08,2,15855.3200,16006.7040,151.3840

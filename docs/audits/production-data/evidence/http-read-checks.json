@@ -1,0 +1,56 @@
+[
+  {
+    "path": "/api/health",
+    "accept": "*/*",
+    "status": 200,
+    "content_type": "application/json"
+  },
+  {
+    "path": "/api/sales/daily",
+    "accept": "*/*",
+    "status": 302,
+    "location_path": "/login",
+    "content_type": null
+  },
+  {
+    "path": "/api/data/canonical",
+    "accept": "*/*",
+    "status": 302,
+    "location_path": "/login",
+    "content_type": null
+  },
+  {
+    "path": "/api/inventory/summary?from=2026-10-01&to=2026-10-08",
+    "accept": "*/*",
+    "status": 302,
+    "location_path": "/login",
+    "content_type": null
+  },
+  {
+    "path": "/api/health",
+    "accept": "application/json",
+    "status": 200,
+    "content_type": "application/json"
+  },
+  {
+    "path": "/api/sales/daily",
+    "accept": "application/json",
+    "status": 302,
+    "location_path": "/login",
+    "content_type": null
+  },
+  {
+    "path": "/api/data/canonical",
+    "accept": "application/json",
+    "status": 302,
+    "location_path": "/login",
+    "content_type": null
+  },
+  {
+    "path": "/api/inventory/summary?from=2026-10-01&to=2026-10-08",
+    "accept": "application/json",
+    "status": 302,
+    "location_path": "/login",
+    "content_type": null
+  }
+]

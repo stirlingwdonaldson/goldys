@@ -1,0 +1,237 @@
+erDiagram
+    %% Solid lines: enforced PostgreSQL FK. Dotted lines: application/natural-key relation only.
+    ingestion_run ||--o{ raw_record : ingestion_run_id
+    ingestion_run ||--o{ ingestion_failure : ingestion_run_id
+    raw_record ||--o{ canonical_daily_sales : raw_record_id
+    raw_record ||--o{ canonical_product_sales : raw_record_id
+    raw_record ||--o{ canonical_invoice : raw_record_id
+    raw_record ||--o{ canonical_invoice_line : raw_record_id
+    raw_record ||--o{ canonical_labour_entry : raw_record_id
+    raw_record ||--o{ canonical_reservation : raw_record_id
+    raw_record ||--o{ canonical_sale_item : raw_record_id
+    raw_record ||--o{ canonical_shift : raw_record_id
+    raw_record ||--o{ canonical_stock_count : raw_record_id
+    raw_record ||--o{ canonical_wastage : raw_record_id
+    user_account ||--o{ conversation_thread : user_account_id
+    conversation_thread ||--o{ conversation_message : thread_id
+    saved_dashboard ||--o{ saved_dashboard_revision : dashboard_id
+    saved_dashboard ||--o{ saved_dashboard_share : dashboard_id
+    canonical_invoice ||..o{ canonical_invoice_line : "invoice_number only; collision risk"
+    canonical_daily_sales }o..o| resolved_daily_sales : "date and chosen source; no FK"
+    canonical_product_sales }o..o| resolved_product_sales : "date and product_name_key; no FK"
+    canonical_invoice_line }o..o| resolved_inventory_day : "invoice_date sum; no FK"
+    canonical_labour_entry }o..o| resolved_labour_day : "date department; EMPTY"
+    canonical_reservation }o..o| resolved_reservation_day : "date service period; EMPTY"
+    daily_sales_override }o..|| resolved_daily_sales : "date decision"
+    product_sales_override }o..|| resolved_product_sales : "date product decision"
+    inventory_override }o..|| resolved_inventory_day : "date decision"
+    labour_override }o..|| resolved_labour_day : "date department decision"
+    reservation_override }o..|| resolved_reservation_day : "date service decision"
+    resolution_rule }o..o{ resolved_daily_sales : "current entity field rule"
+    reconciliation_exception }o..o{ resolved_daily_sales : "unresolved exception key"
+    invoice_ingest_flag }o..o{ canonical_invoice : "invoice number optional; no FK"
+    ingestion_run {
+        uuid id PK
+        varchar source_system
+        varchar connector_name
+        varchar status
+        bigint fetched_count
+        bigint persisted_count
+        timestamptz started_at
+    }
+    raw_record {
+        uuid id PK
+        uuid ingestion_run_id FK
+        varchar source_system
+        varchar fetcher_identity
+        bytea payload_bytes
+        char payload_sha256
+        jsonb parsed_payload "all null"
+    }
+    canonical_daily_sales {
+        uuid id PK
+        uuid logical_entity_id
+        uuid raw_record_id FK
+        date trading_date
+        numeric total_sales
+        numeric gst_total
+        numeric net_total
+        timestamptz recorded_at
+        timestamptz superseded_at
+    }
+    canonical_product_sales {
+        uuid id PK
+        uuid raw_record_id FK
+        date trading_date
+        varchar product_name_key
+        numeric quantity_sold
+        numeric amount
+    }
+    canonical_invoice {
+        uuid id PK
+        uuid raw_record_id FK
+        varchar invoice_number "not supplier scoped"
+        varchar supplier_name "no supplier ID"
+        date invoice_date
+        numeric total_amount
+        numeric amount_ex_tax
+        varchar pdf_filename
+    }
+    canonical_invoice_line {
+        uuid id PK
+        uuid raw_record_id FK "CSV even after PDF enrichment"
+        varchar source_record_ref "invoice number plus ordinal"
+        varchar invoice_number "no header FK"
+        varchar stock_code
+        varchar product_name_key
+        numeric quantity
+        numeric unit_cost
+        numeric line_total
+        varchar category "all null"
+        varchar uom
+    }
+    canonical_labour_entry {
+        uuid id PK
+        uuid raw_record_id FK
+        varchar staff_ref
+        date labour_date
+        numeric actual_hours
+        numeric actual_cost
+    }
+    canonical_reservation {
+        uuid id PK
+        uuid raw_record_id FK
+        varchar source_record_ref
+        timestamptz reservation_at
+        int party_size
+        varchar status
+    }
+    canonical_sale_item {
+        uuid id PK
+        uuid raw_record_id FK
+        varchar item_name "EMPTY placeholder"
+    }
+    canonical_shift {
+        uuid id PK
+        uuid raw_record_id FK
+        uuid staff_member_ref "EMPTY; no employee FK"
+    }
+    canonical_stock_count {
+        uuid id PK
+        uuid raw_record_id FK
+        varchar product_name_key "EMPTY"
+    }
+    canonical_wastage {
+        uuid id PK
+        uuid raw_record_id FK
+        varchar product_name_key "EMPTY"
+    }
+    resolved_daily_sales {
+        date trading_date PK
+        numeric total_sales
+        text authoritative_source
+        text resolution_type
+    }
+    resolved_product_sales {
+        date trading_date PK
+        varchar product_name_key PK
+        numeric amount
+    }
+    resolved_inventory_day {
+        date trading_date PK
+        numeric purchases
+        numeric wastage "all null"
+        numeric stock_on_hand "all null"
+    }
+    resolved_labour_day {
+        date trading_date PK
+        text department PK
+    }
+    resolved_reservation_day {
+        date trading_date PK
+        text service_period PK
+    }
+    permission {
+        uuid id PK
+        varchar department
+        varchar seniority
+        varchar resource
+        boolean can_read
+    }
+    flyway_schema_history {
+        int installed_rank PK
+        varchar version
+        boolean success
+    }
+    saved_dashboard {
+        uuid id PK
+        jsonb widgets
+        jsonb filters
+    }
+    saved_dashboard_revision {
+        uuid id PK
+        uuid dashboard_id FK
+        jsonb document
+    }
+    saved_dashboard_share {
+        uuid id PK
+        uuid dashboard_id FK
+    }
+    user_account {
+        uuid id PK
+        varchar department
+        varchar seniority
+    }
+    conversation_thread {
+        uuid id PK
+        uuid user_account_id FK
+    }
+    conversation_message {
+        uuid id PK
+        uuid thread_id FK
+    }
+    ingestion_failure {
+        uuid id PK
+        uuid ingestion_run_id FK
+        varchar failure_type
+    }
+    daily_sales_override {
+        uuid id PK
+        date trading_date
+    }
+    product_sales_override {
+        uuid id PK
+        date trading_date
+        varchar product_name_key
+    }
+    inventory_override {
+        uuid id PK
+        date trading_date
+    }
+    labour_override {
+        uuid id PK
+        date trading_date
+        text department
+    }
+    reservation_override {
+        uuid id PK
+        date trading_date
+        text service_period
+    }
+    resolution_rule {
+        uuid id PK
+        varchar entity_type
+        varchar field_key
+        timestamptz superseded_at
+    }
+    reconciliation_exception {
+        text entity_type PK
+        text entity_key PK
+        date trading_date PK
+        text field_key PK
+    }
+    invoice_ingest_flag {
+        uuid id PK
+        varchar flag_type
+        varchar invoice_number
+    }

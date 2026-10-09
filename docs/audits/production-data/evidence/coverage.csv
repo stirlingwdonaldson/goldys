@@ -1,0 +1,45 @@
+source_system,fetch_method,content_type,fetcher_identity,raw_records,parsed_payload_present,min,max,bytes,largest_payload
+CTB,FILE_EXPORT,text/csv,ctb-invoices,14,0,2026-10-08 11:09:40.7116+00,2026-10-09 00:24:00.742394+00,4755090,805323
+CTB,API,application/json,ctb-invoices-ajax,30,0,2026-10-08 04:46:42.510496+00,2026-10-08 17:21:40.502816+00,6661722,227787
+CTB,API,application/json,ctb-revenue,973,0,2026-10-06 01:11:45.234165+00,2026-10-08 17:21:37.268094+00,56977097,87260
+CTB,API,application/json,ctb-sale-recipe-links,20,0,2026-10-08 04:46:48.838389+00,2026-10-08 17:21:51.149358+00,693125,45724
+CTB,FILE_EXPORT,application/pdf,ctb-sftp,2654,0,2026-10-08 11:09:00.725728+00,2026-10-08 18:30:59.817368+00,387285526,3654560
+LIGHTSPEED,FILE_EXPORT,application/json,lightspeed-insights,24,0,2026-09-21 20:16:08.206575+00,2026-10-08 19:09:34.403845+00,173989,51298
+source_system,connector_name,status,runs,min,max,fetched,persisted,incomplete_runs
+CTB,ctb-invoice-pdf,SUCCESS,2654,2026-10-08 11:09:00.67799+00,2026-10-08 18:30:59.810716+00,2654,2654,0
+CTB,ctb-invoices,SUCCESS,14,2026-10-08 11:09:40.696736+00,2026-10-09 00:24:00.687227+00,14,14,0
+CTB,ctb-revenue,FAILED,16,2026-10-02 12:43:10.438771+00,2026-10-06 01:06:52.882229+00,0,0,0
+CTB,ctb-revenue,PARTIAL,5,2026-10-08 04:33:45.093699+00,2026-10-08 17:00:00.047201+00,535,535,0
+CTB,ctb-revenue,SUCCESS,6,2026-10-06 01:11:43.166217+00,2026-10-06 08:04:34.681665+00,488,488,0
+LIGHTSPEED,lightspeed-insights,SUCCESS,24,2026-09-21 20:16:08.081863+00,2026-10-08 19:09:34.391227+00,24,24,0
+source_system,connector_name,status,runs,max,sum,sum
+CTB,ctb-invoice-pdf,SUCCESS,2654,2026-10-08 18:30:59.810716+00,2654,2654
+CTB,ctb-invoices,SUCCESS,14,2026-10-09 00:24:00.687227+00,14,14
+CTB,ctb-revenue,FAILED,16,2026-10-06 01:06:52.882229+00,0,0
+CTB,ctb-revenue,PARTIAL,5,2026-10-08 17:00:00.047201+00,535,535
+CTB,ctb-revenue,SUCCESS,6,2026-10-06 08:04:34.681665+00,488,488
+LIGHTSPEED,lightspeed-insights,SUCCESS,13,2026-10-08 19:09:34.391227+00,13,13
+source_system,failure_type,count,min,max
+CTB,CONNECTOR_AUTH_FAILED,10,2026-10-02 12:43:10.953427+00,2026-10-02 13:55:37.099353+00
+CTB,CONNECTOR_FETCH_FAILED,6,2026-10-02 14:17:15.457961+00,2026-10-06 01:06:55.492617+00
+CTB,CONNECTOR_SCHEMA_MISMATCH,5,2026-10-08 04:46:58.376911+00,2026-10-08 17:21:51.187406+00
+flag_type,count,count,min,max
+MISSING_PDF,6,6,2026-10-08 17:15:16.319944+00,2026-10-09 00:19:00.69541+00
+PDF_ONLY_LINE,910,540,2026-10-08 17:20:33.459553+00,2026-10-08 18:31:00.990983+00
+source_system,fetcher_identity,raw_records,raw_with_any_canonical_history,raw_with_current_canonical,canonical_versions
+CTB,ctb-invoices,14,6,6,18209
+CTB,ctb-invoices-ajax,30,0,0,0
+CTB,ctb-revenue,973,110,106,13464
+CTB,ctb-sale-recipe-links,20,0,0,0
+CTB,ctb-sftp,2654,0,0,0
+LIGHTSPEED,lightspeed-insights,24,9,8,11
+source_system,raw_rows,distinct_payloads
+CTB,3691,1389
+LIGHTSPEED,24,11
+source_system,connector_name,status,runs,ledger_counter_mismatches,empty_success_runs
+CTB,ctb-invoice-pdf,SUCCESS,2654,0,0
+CTB,ctb-invoices,SUCCESS,14,0,0
+CTB,ctb-revenue,FAILED,16,0,0
+CTB,ctb-revenue,PARTIAL,5,0,0
+CTB,ctb-revenue,SUCCESS,6,0,0
+LIGHTSPEED,lightspeed-insights,SUCCESS,24,0,0
