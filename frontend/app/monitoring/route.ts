@@ -53,7 +53,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // Default to the DSN's own host; SENTRY_TUNNEL_TARGET can point at the LAN address instead
-  // (e.g. http://192.168.4.36:9000) to skip the round trip through Cloudflare.
+  // (e.g. http://192.168.4.41:9000) to skip the round trip through Cloudflare.
   const target = (process.env.SENTRY_TUNNEL_TARGET || `${dsn.protocol}//${dsn.host}`).replace(
     /\/+$/,
     "",
