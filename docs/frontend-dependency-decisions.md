@@ -1,6 +1,6 @@
 # Frontend dependency decisions — proposal
 
-Audited HEAD: `f6140b8`. No dependency changes in this audit. Resolved versions below are
+Audited HEAD: `f6140b8`. The original audit made no dependency changes. Resolved versions below are
 from the existing Bun lock/install, not suggested upgrades. Restore with Bun 1.4.2 and
 `bun install --frozen-lockfile`. Next is 15.5.25 and React is 19.3.0 at this checkout.
 
@@ -9,7 +9,7 @@ from the existing Bun lock/install, not suggested upgrades. Restore with Bun 1.4
 | Dependency | Decision / introduction | Reason and rejected alternative |
 | --- | --- | --- |
 | `@tanstack/react-query` | Add in scoped server-state foundation | Cache, dedupe, lifecycle/invalidation; avoid extending a bespoke query framework. No token/form/UI state in Query. |
-| `zod` | Add with selective trust-boundary validation | Versioned/discriminated widget and dashboard/auth schemas with diagnostics. Infer types to avoid maintaining a second handwritten type system. |
+| `zod` | Add in PR 1 with auth response validation; extend in schema slice | Begin with malformed-identity protection, then versioned/discriminated widget and dashboard schemas with diagnostics. Infer types to avoid maintaining a second handwritten type system. |
 | `react-hook-form` | Add with dashboard editor migration | Dirty-state, validation and widget field arrays; simple login and other small forms need not migrate. |
 | `@hookform/resolvers` | Add with RHF/Zod editor | Reuse schema validation; avoid custom adapter code. |
 | `msw` (dev) | Add with transport/query integration tests | Exercise real adapter/HTTP behavior including malformed/permission/abort cases. Existing local Api unit stubs remain useful. |
@@ -20,8 +20,12 @@ from the existing Bun lock/install, not suggested upgrades. Restore with Bun 1.4
 | Grid-layout/graph-layout libraries | Defer | Existing grid/keyboard controls and React Flow work. Drag/resize is not an approved new product requirement. |
 | Redux/Zustand/competing UI framework | Reject for this migration | No demonstrated need for broad global state or second design system. |
 
-Package versions for new additions must be pinned through Bun's lockfile after checking the
-official compatibility documentation against React 19, Next 15, Vitest 5 and Bun 1.4.2.
+PR 1 installs exact Zod 4.6.5 and MSW 3.0.2. MSW requires Node >=22.12.0; CI now pins local
+Node 22.22.1. Transport/auth integration tests execute with the installed packages; MSW 3's
+`onUnhandledFrame: "error"` policy prevents accidental live requests. Install scripts remain
+blocked; the existing unrs-resolver postinstall was not enabled. Package versions for future additions
+must be pinned through Bun's lockfile after checking official compatibility documentation
+against React 19, Next 15, Vitest 5 and Bun 1.4.2.
 Do not invent a tested version or bundle benefit before installation and verification.
 No removals are justified by the audit. Remove useApiData only after its last consumer migrates.
 
@@ -83,3 +87,10 @@ No removals are justified by the audit. Remove useApiData only after its last co
 Source: `frontend/package.json:16–63`, `frontend/bun.lock`, `bun pm ls` and installed package
 metadata. Total direct declarations: 45. Do not sweep unused primitives out solely from this
 inventory; verify imports and product usage before a separately reviewable removal.
+
+PR 1 retains all 45 original direct declarations and adds two (31 runtime + 16 development).
+Next/React/Sentry/design-system versions are retained. Native `bun audit` reports the same
+16 advisories as the untouched baseline (9 high, 7 moderate); MSW introduces an additional
+development path through Vite to the already-present PostCSS group, not a new advisory.
+Audit exit is 1. Remediation requires an independently reviewed dependency update before a
+production release; this PR does not assert dependency-security clearance.

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { isApiError, login } from "@/lib/api";
+import { useRef, useState } from "react";
+import { login } from "@/lib/api";
+import { AuthFeedback } from "@/components/auth/auth-feedback";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,11 +19,14 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [submitting, setSubmitting] = useState(false);
+  const busy = useRef(false);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (busy.current) return;
+    busy.current = true;
     setError(null);
     setSubmitting(true);
     try {
@@ -30,7 +34,9 @@ export default function LoginPage() {
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(isApiError(err) ? err.message : "Something went wrong. Try again.");
+      setError(err);
+    } finally {
+      busy.current = false;
       setSubmitting(false);
     }
   }
@@ -46,6 +52,7 @@ export default function LoginPage() {
           <form onSubmit={onSubmit} className="space-y-4">
             <Input
               type="email"
+              aria-label="Email"
               autoComplete="email"
               placeholder="Email"
               value={email}
@@ -54,13 +61,14 @@ export default function LoginPage() {
             />
             <Input
               type="password"
+              aria-label="Password"
               autoComplete="current-password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            <AuthFeedback error={error} />
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Signing in…" : "Sign in"}
             </Button>

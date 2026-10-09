@@ -2,12 +2,8 @@ import type { CustomLogic, ResolutionRule, RuleStrategy } from "@/lib/rule-logic
 
 export type { CustomLogic, ResolutionRule, RuleStrategy };
 
-/** The current staff identity the backend resolves from the OIDC session. */
-export interface CurrentUser {
-  displayName: string;
-  department: string;
-  seniority: string;
-}
+/** The validated staff profile for the current Spring session. */
+export type { CurrentUser } from "./auth-schema";
 
 /** `GET /api/health` response body. */
 export interface HealthResponse {

@@ -1,5 +1,7 @@
-import { ApiError } from "./errors";
-import type { ApiErrorResponse } from "./types";
+import { ApiError, isAbortError } from "./errors";
+import { readApiResponse, type JsonResponseOptions, type OptionalJsonResponseOptions, type ResponseOptions, type VoidResponseOptions } from "./response";
+
+export type { JsonResponseOptions, OptionalJsonResponseOptions, VoidResponseOptions } from "./response";
 
 /** The CSRF token Spring sets in a cookie, read back into the X-XSRF-TOKEN header. */
 function csrfToken(): string | null {
@@ -10,56 +12,38 @@ function csrfToken(): string | null {
 
 /**
  * Fetch a backend endpoint and parse either its JSON body (2xx) or the stable
- * error envelope (any non-2xx). Every failure is a typed {@link ApiError};
- * this function never throws a bare `SyntaxError` or `TypeError`.
+ * error envelope (any non-2xx). Endpoint owners declare optional/void bodies and schemas.
+ * Failures are ApiError; native cancellations remain AbortError.
  */
-export async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
+export function fetchApi<T>(path: string, init: RequestInit | undefined, options: OptionalJsonResponseOptions<T>): Promise<T | undefined>;
+export function fetchApi<T>(path: string, init?: RequestInit, options?: JsonResponseOptions<T>): Promise<T>;
+export function fetchApi<T extends void = void>(path: string, init: RequestInit | undefined, options: VoidResponseOptions): Promise<T>;
+export async function fetchApi(path: string, init?: RequestInit, options: ResponseOptions<unknown> = { responseType: "json" }): Promise<unknown> {
+  let headers: Headers;
+  try {
+    headers = new Headers(init?.headers);
+    if (!headers.has("Accept")) headers.set("Accept", "application/json");
+    const method = (init?.method ?? "GET").toUpperCase();
+    if (method !== "GET" && method !== "HEAD") {
+      const csrf = csrfToken();
+      if (csrf !== null) headers.set("X-XSRF-TOKEN", csrf);
+    }
+  } catch (cause) {
+    throw new ApiError("REQUEST_CONFIGURATION_ERROR", "The request could not be prepared.", undefined, undefined,
+      { kind: "unexpected", cause });
+  }
+
   let response: Response;
   try {
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-      ...((init?.headers as Record<string, string> | undefined) ?? {}),
-    };
-    const csrf = csrfToken();
-    const method = (init?.method ?? "GET").toUpperCase();
-    if (csrf && method !== "GET" && method !== "HEAD") {
-      headers["X-XSRF-TOKEN"] = csrf;
-    }
     response = await fetch(path, { ...init, headers, credentials: "same-origin" });
-  } catch {
+  } catch (cause) {
+    if (isAbortError(cause)) throw cause;
     throw new ApiError(
       "NETWORK_ERROR",
       "Could not reach the server. Check your connection and try again.",
+      undefined, undefined, { kind: "network", cause },
     );
   }
 
-  if (response.ok) {
-    if (response.status === 204) return undefined as T;
-    try {
-      return (await response.json()) as T;
-    } catch {
-      // A 2xx with a non-JSON body (proxy shell HTML, gateway interstitial) must
-      // not leak a raw SyntaxError through the abstraction that promises typed errors.
-      throw new ApiError(
-        "UNPARSEABLE_RESPONSE",
-        "The server returned a response that could not be read.",
-      );
-    }
-  }
-
-  let body: ApiErrorResponse | null = null;
-  try {
-    body = (await response.json()) as ApiErrorResponse;
-  } catch {
-    body = null;
-  }
-
-  if (body && typeof body.code === "string" && typeof body.message === "string") {
-    throw new ApiError(body.code, body.message, body.correlationId, body.fields);
-  }
-
-  throw new ApiError(
-    "UNPARSEABLE_RESPONSE",
-    `The server returned an error (HTTP ${response.status}) that could not be read.`,
-  );
+  return readApiResponse(path, response, options);
 }
