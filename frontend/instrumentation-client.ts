@@ -1,6 +1,6 @@
 // Browser-side Sentry. Inert unless NEXT_PUBLIC_SENTRY_DSN was set at build time.
 import * as Sentry from "@sentry/nextjs";
-import { dataCollection } from "./lib/sentry-options";
+import { dataCollection, beforeSend } from "./lib/sentry-options";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
@@ -16,6 +16,7 @@ Sentry.init({
   tunnel: "/monitoring",
   // No bodies, cookies, user details or local variables: this app shows staff and wage data.
   dataCollection,
+  beforeSend,
   // Low traffic: trace every page load and navigation. Relative /api calls get trace headers by
   // default, so a slow dashboard links straight through to the Spring Boot transaction behind it.
   tracesSampleRate: 1.0,
