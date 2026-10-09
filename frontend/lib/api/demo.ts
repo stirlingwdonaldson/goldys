@@ -25,6 +25,7 @@ import type {
   LatestSales,
   DailyCovers,
   InventorySummary,
+  InvoiceIngestFlag,
   InvoiceGraphNode,
   LabourSummary,
   LineGraphNode,
@@ -774,6 +775,14 @@ export const demoApi: Api = {
         purchaseNumber: "PO-91",
         pdfFilename: "inv-1091.pdf",
       },
+    ];
+  },
+
+  async listInvoiceFlags(): Promise<InvoiceIngestFlag[]> {
+    await delay(300);
+    return [
+      { flagType: "PDF_ONLY_LINE", invoiceNumber: "INV-1042", pdfFilename: "inv-1042.pdf", stockCode: "CB-1", detail: "PDF line has no matching CSV line", occurredAt: "2026-10-08T18:30:00Z" },
+      { flagType: "MISSING_PDF", invoiceNumber: "INV-1091", pdfFilename: null, stockCode: null, detail: "no PDF filename in CSV", occurredAt: "2026-10-09T00:24:00Z" },
     ];
   },
 

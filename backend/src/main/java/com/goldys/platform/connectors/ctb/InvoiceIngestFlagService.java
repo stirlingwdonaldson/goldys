@@ -1,7 +1,9 @@
 package com.goldys.platform.connectors.ctb;
 
+import com.goldys.platform.semantic.InvoiceIngestFlagView;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,5 +36,20 @@ public class InvoiceIngestFlagService {
     repository.save(
         InvoiceIngestFlag.create(
             type, invoiceNumber, pdfFilename, stockCode, detail, Instant.now(CLOCK)));
+  }
+
+  /** Every recorded flag, most recent first, as a read-only semantic view. */
+  public List<InvoiceIngestFlagView> listFlags() {
+    return repository.findAllByOrderByOccurredAtDesc().stream()
+        .map(
+            f ->
+                new InvoiceIngestFlagView(
+                    f.flagType().name(),
+                    f.invoiceNumber(),
+                    f.pdfFilename(),
+                    f.stockCode(),
+                    f.detail(),
+                    f.occurredAt()))
+        .toList();
   }
 }

@@ -2,9 +2,11 @@ package com.goldys.platform.api;
 
 import com.goldys.platform.application.InventoryReportingService;
 import com.goldys.platform.application.InvoiceGraphService;
+import com.goldys.platform.application.InvoiceIngestFlagQueryService;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.semantic.InvoiceGraphNode;
+import com.goldys.platform.semantic.InvoiceIngestFlagView;
 import com.goldys.platform.semantic.LineGraphNode;
 import com.goldys.platform.semantic.SupplierGraphNode;
 import java.time.LocalDate;
@@ -23,14 +25,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class InventoryController {
   private final InventoryReportingService reporting;
   private final InvoiceGraphService graph;
+  private final InvoiceIngestFlagQueryService flags;
   private final CurrentUserService currentUser;
 
   public InventoryController(
       InventoryReportingService reporting,
       InvoiceGraphService graph,
+      InvoiceIngestFlagQueryService flags,
       CurrentUserService currentUser) {
     this.reporting = reporting;
     this.graph = graph;
+    this.flags = flags;
     this.currentUser = currentUser;
   }
 
@@ -71,5 +76,10 @@ public class InventoryController {
   List<LineGraphNode> linesForInvoice(
       @PathVariable String invoiceNumber, @AuthenticationPrincipal AccountUserDetails user) {
     return graph.linesForInvoice(currentUser.roleOf(user), invoiceNumber);
+  }
+
+  @GetMapping("/flags")
+  List<InvoiceIngestFlagView> flags(@AuthenticationPrincipal AccountUserDetails user) {
+    return flags.flags(currentUser.roleOf(user));
   }
 }
