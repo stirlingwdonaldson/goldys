@@ -1,5 +1,6 @@
 package com.goldys.platform.ingestion;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +71,13 @@ public class SpringIntegrationSftpDrop {
         String processedDir = dir + "/processed";
         template.execute(
             session -> {
-              session.mkdir(processedDir);
+              try {
+                session.mkdir(processedDir);
+              } catch (IOException e) {
+                // OpenSSH returns a generic "Failure" (not a distinct "already exists") when the
+                // directory is already there; the rename below is the real operation and fails
+                // loudly if the directory truly is absent.
+              }
               session.rename(path, processedDir + "/" + filename);
               return null;
             });
