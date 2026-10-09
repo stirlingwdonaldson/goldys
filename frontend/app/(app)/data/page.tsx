@@ -12,6 +12,8 @@ import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/layout/page-header";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Section = "raw" | "canonical" | "resolved";
 
@@ -40,31 +42,15 @@ function DataExplorer() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Data explorer</h1>
-        <p className="text-sm text-muted-foreground">
-          Browse raw ingested records, canonical entities, and resolved views.
-        </p>
-      </div>
+      <PageHeader title="Data explorer" description="Browse raw ingested records, canonical entities, and resolved views." />
 
-      <div className="flex gap-2">
-        {(
-          [
-            ["raw", "Raw"],
-            ["canonical", "Canonical"],
-            ["resolved", "Resolved"],
-          ] as [Section, string][]
-        ).map(([id, label]) => (
-          <Button
-            key={id}
-            variant={section === id ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSection(id)}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
+      <Tabs value={section} onValueChange={(v) => setSection(v as Section)}>
+        <TabsList aria-label="Data layer">
+          <TabsTrigger value="raw">Raw</TabsTrigger>
+          <TabsTrigger value="canonical">Canonical</TabsTrigger>
+          <TabsTrigger value="resolved">Resolved</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {section === "raw" ? <RawSection initialExpandedId={deepLinkId} /> : null}
       {section === "canonical" ? (

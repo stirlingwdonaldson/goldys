@@ -119,7 +119,7 @@ export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
       {summary ? <p className="text-sm">{summary}</p> : null}
 
       {answer?.notices.length ? (
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="rounded-lg bg-status-conflict-soft px-3 py-2 text-sm text-status-conflict">
           {answer.notices.join(" ")}{" "}
           <a href="/reconciliation" className="underline">
             Reconcile these first.
@@ -152,7 +152,7 @@ export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
           ) : null}
 
           {saved ? (
-            <p className="text-sm text-green-700">
+            <p className="text-sm text-status-success">
               Dashboard saved:{" "}
               <Link href="/dashboards" className="underline">
                 {saved.title}

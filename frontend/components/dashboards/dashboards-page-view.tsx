@@ -18,6 +18,7 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { DashboardCard } from "@/components/dashboards/dashboard-card";
 import { DashboardEditor } from "@/components/dashboards/dashboard-editor";
 import type { Api, SavedDashboardSummary } from "@/lib/api/types";
+import { PageHeader } from "@/components/layout/page-header";
 
 /** Pinned dashboards first, then most recently updated. */
 function sortDashboards(list: SavedDashboardSummary[]): SavedDashboardSummary[] {
@@ -145,16 +146,18 @@ export function DashboardsPageView({ api }: { api: Api }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Dashboards</h1>
-          <p className="text-sm text-muted-foreground">Saved reporting views, rendered live.</p>
-        </div>
-        <Button onClick={() => setTemplatesOpen(true)}>
+      <PageHeader
+        title="Custom dashboards"
+        description="Saved reporting views, rendered live."
+        actions={
+          <>
+            <Button onClick={() => setTemplatesOpen(true)}>
           <Plus className="h-4 w-4" aria-hidden="true" />
           New from template
         </Button>
-      </div>
+          </>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {sorted.map((d) => (

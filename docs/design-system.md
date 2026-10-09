@@ -13,13 +13,11 @@ doc describes layout intent only, not final field lists.
 
 ## 1. Design principles
 
-- **Use shadcn's out-of-the-box look, unmodified.** Typography, spacing
-  scale, border radius, and the neutral `slate` palette should match what
-  you see scrolling shadcn's own example sites and blocks — not a custom
-  re-tune. Don't introduce a custom font, a different spacing scale, or
-  re-tuned neutrals. The only addition is semantic status colors (§5),
-  since shadcn's default theme doesn't ship any and this product needs them
-  on day one.
+- **Built on shadcn/ui, with Goldy's own visual direction.** Components stay
+  shadcn primitives. Global styling (inset panel, ink plus one gold accent,
+  soft status pills, source identity tiles, Geist type) and component
+  choices follow [`design/ui-direction.md`](design/ui-direction.md), which
+  supersedes the earlier "shadcn unmodified" rule.
 - **Minimize cognitive load over raw data density.** The default failure
   mode for a reconciliation/reporting tool is dumping every field into a
   giant table and letting the user hunt for what matters. Don't build that.
@@ -109,53 +107,17 @@ The repository remains Bun-only and uses the committed ESLint configuration.
 
 ## 5. Visual tokens
 
+Tokens are defined in `frontend/app/globals.css` and documented in
+[`design/ui-direction.md`](design/ui-direction.md#tokens). The semantic rules
+from earlier drafts still hold:
 
-**Base theme: shadcn defaults, unmodified.** Retained `components.json` uses
-`baseColor: slate` and style `default`. When `app/globals.css` and components
-are restored, use shadcn's default variables, radius, and font stack. Don't
-hand-tune hues, spacing, or type scale before checking component usage.
-
-**One real gap: semantic status colors.** Default shadcn ships
-`primary`/`secondary`/`muted`/`accent`/`destructive` but nothing for
-"conflict," "resolved," or "no data" — states this product needs
-immediately. Proposed additions to `app/globals.css` under `:root` (mirror
-in `.dark`, dormant):
-
-```css
---status-success: 142 71% 35%;      /* resolved / matches across sources */
---status-success-foreground: 0 0% 100%;
---status-warning: 38 92% 50%;       /* field-level conflict, needs a decision */
---status-warning-foreground: 222.2 84% 4.9%;
---status-missing: 215 16% 65%;      /* "no data from source X" */
---status-missing-foreground: 0 0% 100%;
-```
-
-Wire into `tailwind.config.ts`'s `theme.extend.colors` the same way
-`destructive`/`muted` are wired, so they're usable as `bg-status-warning`,
-`text-status-missing`, etc.
-
-`--destructive` stays reserved for genuine system failures (a crashed
-connector), not conflicts — a conflict is an expected, resolvable state, not
-an error. Add status tokens to `:root` and Tailwind when the first UI that uses
-them is implemented; do not add dormant dark-mode variants during Phase 1.
-
-**Sidebar tokens — use shadcn defaults when the shell lands.** Pull the
-`--sidebar-*` variables from the real shadcn registry rather than guessing.
-`--sidebar-background: 0 0% 98%` is `#FAFAFA` and requires no custom override:
-
-```css
---sidebar-background: 0 0% 98%;
---sidebar-foreground: 240 5.3% 26.1%;
---sidebar-primary: 240 5.9% 10%;
---sidebar-primary-foreground: 0 0% 98%;
---sidebar-accent: 240 4.8% 95.9%;
---sidebar-accent-foreground: 240 5.9% 10%;
---sidebar-border: 220 13% 91%;
---sidebar-ring: 217.2 91.2% 59.8%;
-```
-
-Use shadcn's default card radius. Revisit it only against a real Phase 1 screen,
-not from a deleted preview implementation.
+- `--status-conflict` (formerly `--status-warning`) marks a field-level
+  conflict that needs a decision.
+- `--status-missing` marks "no data from source X".
+- `--status-success` marks resolved or matching values.
+- `--destructive` is reserved for genuine system failures (a crashed
+  connector), never conflicts. A conflict is an expected, resolvable state.
+- Source colours (`--source-*`) encode identity only, never state.
 
 ## 6. Core interaction patterns
 
@@ -203,7 +165,7 @@ not from a deleted preview implementation.
   rather than prose or a list. Build the graph as a pure `ColumnGraph` (columns
   of nodes + edges, unit-testable) and let `layoutColumns` place it. Node and
   edge tone reuse the status tokens: `fail` = destructive, `warn` =
-  status-warning (conflicts are resolvable, not errors), `missing` = dashed
+  status-conflict (conflicts are resolvable, not errors), `missing` = dashed
   status-missing, `info` = status-info. Only draw edges the API actually
   states — never infer lineage the backend doesn't report. The canvas is
   read-only, scroll-wheel zoom is off so the page still scrolls, and a node's
@@ -211,7 +173,7 @@ not from a deleted preview implementation.
 
 ## 7. Open items
 
-- Type scale / spacing density — using shadcn defaults as-is; revisit only
+- Type scale / spacing density — set by `design/ui-direction.md` (Geist, 24px page titles); revisit only
   if a specific screen (e.g. the reconciliation drill-in table) proves
   genuinely too dense once built.
 - Role/permission admin screen — no design yet, not yet scheduled.

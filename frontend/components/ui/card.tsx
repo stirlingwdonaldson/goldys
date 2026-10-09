@@ -9,7 +9,8 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      // Goldy's: flat cards with the larger radius; the inset panel carries the elevation.
+      "rounded-xl border bg-card text-card-foreground",
       className
     )}
     {...props}

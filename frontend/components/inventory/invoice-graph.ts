@@ -1,6 +1,7 @@
 import { Inbox, Package, Receipt, Truck } from "lucide-react";
 import type { ColumnGraph, FlowTone, StepNodeData } from "@/components/flow/types";
 import type { InvoiceGraphNode, LineGraphNode, SupplierGraphNode } from "@/lib/api/types";
+import { formatCurrency } from "@/lib/format";
 
 export const SUPPLIER_TOP_N = 8;
 export const INVOICE_TOP_N = 8;
@@ -21,10 +22,6 @@ export interface InvoiceGraphInput {
   lines: LineGraphNode[] | null;
   focusedSupplier: string | null;
   focusedInvoice: string | null;
-}
-
-function money(v: number | null | undefined): string {
-  return v == null || !Number.isFinite(Number(v)) ? "—" : `$${Number(v).toFixed(2)}`;
 }
 
 function plural(n: number, one: string, many: string): string {
@@ -52,7 +49,7 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
     id: `sup:${s.name}`,
     data: {
       title: s.name,
-      subtitle: `${money(s.totalSpend)} · ${plural(s.invoiceCount, "invoice", "invoices")}`,
+      subtitle: `${formatCurrency(s.totalSpend)} · ${plural(s.invoiceCount, "invoice", "invoices")}`,
       icon: Truck,
       tone: (s.invoiceCount > 0 && (s.totalSpend == null || s.totalSpend === 0)
         ? "missing"
@@ -66,7 +63,7 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
       id: "sup:__other__",
       data: {
         title: `Other ${plural(restSuppliers.length, "supplier", "suppliers")}`,
-        subtitle: money(restSuppliers.reduce((sum, s) => sum + (s.totalSpend ?? 0), 0)),
+        subtitle: formatCurrency(restSuppliers.reduce((sum, s) => sum + (s.totalSpend ?? 0), 0)),
         icon: Truck,
         tone: "neutral",
       },
@@ -78,7 +75,7 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
       id: "sup:unknown",
       data: {
         title: "Unknown supplier",
-        subtitle: money(unknown.totalSpend),
+        subtitle: formatCurrency(unknown.totalSpend),
         detail: "Lines with no matching invoice",
         icon: Truck,
         tone: "warn",
@@ -114,7 +111,7 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
       id: `inv:${inv.invoiceNumber}`,
       data: {
         title: inv.invoiceNumber,
-        subtitle: `${inv.invoiceDate} · ${money(inv.totalAmount)}`,
+        subtitle: `${inv.invoiceDate} · ${formatCurrency(inv.totalAmount)}`,
         detail: inv.purchaseNumber ?? inv.pdfFilename ?? undefined,
         icon: Receipt,
         tone: "neutral",
@@ -127,7 +124,7 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
         id: "inv:__other__",
         data: {
           title: `Other ${plural(restInvoices.length, "invoice", "invoices")}`,
-          subtitle: money(restInvoices.reduce((sum, i) => sum + (i.totalAmount ?? 0), 0)),
+          subtitle: formatCurrency(restInvoices.reduce((sum, i) => sum + (i.totalAmount ?? 0), 0)),
           icon: Receipt,
           tone: "neutral",
         },
@@ -148,7 +145,7 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
       id: `line:${input.focusedInvoice}:${l.productNameKey ?? l.stockCode ?? "(unnamed)"}`,
       data: {
         title: l.productNameKey ?? l.stockCode ?? "(unnamed)",
-        subtitle: `${l.quantity} × ${money(l.unitCost)}`,
+        subtitle: `${l.quantity} × ${formatCurrency(l.unitCost)}`,
         detail: l.uom ?? undefined,
         icon: Package,
         tone: "neutral",
@@ -160,7 +157,7 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
         id: "line:__other__",
         data: {
           title: `Other ${plural(restLines.length, "line", "lines")}`,
-          subtitle: money(restLines.reduce((sum, l) => sum + l.lineTotal, 0)),
+          subtitle: formatCurrency(restLines.reduce((sum, l) => sum + l.lineTotal, 0)),
           icon: Package,
           tone: "neutral",
         },

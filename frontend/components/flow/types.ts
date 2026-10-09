@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 
 /**
  * How a node reads at a glance. Mirrors the design system's status vocabulary:
- * `ok` → status-success, `warn` → status-warning (expected, resolvable), `fail` →
+ * `ok` → status-success, `warn` → status-conflict (expected, resolvable), `fail` →
  * destructive (a genuine system fault), `missing` → status-missing ("no data"),
  * `info` → status-info (resolved by a rule or a person), `neutral` → no status.
  */

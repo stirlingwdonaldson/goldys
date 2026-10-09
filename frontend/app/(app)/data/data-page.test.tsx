@@ -92,7 +92,8 @@ describe("DataPage", () => {
     expect(screen.getByText("CTB")).toBeInTheDocument();
     expect(screen.getByText("ctb-invoices-ajax")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Canonical"));
+    // Radix Tabs activate on mouse-down, not click.
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Canonical" }), { button: 0 });
     expect(screen.getByText("trading_date")).toBeInTheDocument();
     expect(screen.getByText("2026-10-05")).toBeInTheDocument();
   });

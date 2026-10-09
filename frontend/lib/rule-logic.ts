@@ -1,3 +1,5 @@
+import { sourceIdentity } from "@/lib/sources";
+
 export type RuleStrategy = "priority" | "manual" | "custom";
 export type CustomLogic = "flag" | "highest" | "lowest" | "newest";
 
@@ -10,16 +12,9 @@ export type EntityType = (typeof ENTITY_TYPES)[number];
  */
 export const SOURCES = ["LIGHTSPEED", "CTB"] as const;
 
-const SOURCE_LABELS: Record<string, string> = {
-  LIGHTSPEED: "Lightspeed",
-  CTB: "Cooking the Books",
-  DEPUTY: "Deputy",
-  OPENTABLE: "OpenTable",
-};
-
 /** Display label for a source-system code (falls back to the code for unknown sources). */
 export function sourceLabel(code: string): string {
-  return SOURCE_LABELS[code] ?? code;
+  return sourceIdentity(code).label;
 }
 
 export interface ResolutionRule {

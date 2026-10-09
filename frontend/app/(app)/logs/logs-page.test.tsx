@@ -25,10 +25,10 @@ vi.mock("@/lib/use-api-data", () => ({
 describe("LogsPage", () => {
   it("renders a table row and reveals the stack trace when expanded", () => {
     render(<LogsPage />);
-    expect(screen.getByText("CTB")).toBeInTheDocument();
+    expect(screen.getByText("Cooking the Books")).toBeInTheDocument();
     // stack trace hidden until the row is clicked
     expect(screen.queryByText(/RuntimeException: boom/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText("CTB"));
+    fireEvent.click(screen.getByText("Cooking the Books"));
     expect(screen.getByText(/RuntimeException: boom/)).toBeInTheDocument();
   });
 });

@@ -8,6 +8,9 @@ import { ConnectorStatusBadge } from "@/components/connectors/connector-status-b
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import type { ConnectorStatus } from "@/lib/api";
+import { PageHeader } from "@/components/layout/page-header";
+import { SourceLabel } from "@/components/sources/source-tile";
+import { sourceIdentity } from "@/lib/sources";
 
 function stackTraceOf(c: ConnectorStatus): string {
   return c.failure?.stackTrace ?? "";
@@ -36,18 +39,18 @@ export default function LogsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Logs</h1>
-          <p className="text-sm text-muted-foreground">
-            Connector runs and the full failure detail behind each.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => copy(allText)} disabled={!allText}>
+      <PageHeader
+        title="Logs"
+        description="Connector runs and the full failure detail behind each."
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => copy(allText)} disabled={!allText}>
           <Copy className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Copy all
         </Button>
-      </div>
+          </>
+        }
+      />
 
       <div className="rounded-lg border">
         <table className="w-full text-sm">
@@ -96,7 +99,11 @@ function FragmentRow({
         onClick={onToggle}
         data-testid={`row-${c.source}`}
       >
-        <td className="px-4 py-2 font-medium">{c.source}</td>
+        <td className="px-4 py-2 font-medium">
+          <SourceLabel source={c.source}>
+            <span>{sourceIdentity(c.source).label}</span>
+          </SourceLabel>
+        </td>
         <td className="px-4 py-2 text-muted-foreground">{c.connectorName}</td>
         <td className="px-4 py-2">
           <ConnectorStatusBadge status={c.status} />
@@ -111,7 +118,7 @@ function FragmentRow({
           <Button
             variant="ghost"
             size="sm"
-            aria-label={`Copy ${c.source} log`}
+            aria-label={`Copy ${sourceIdentity(c.source).label} log`}
             disabled={!stackTraceOf(c)}
             onClick={(e) => {
               e.stopPropagation();

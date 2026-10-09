@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-export const metadata: Metadata = { title: "Staff & Labor" };
+export const metadata: Metadata = { title: "Staff & labour" };
 
 export default function StaffLayout({ children }: { children: ReactNode }) {
   return <>{children}</>;

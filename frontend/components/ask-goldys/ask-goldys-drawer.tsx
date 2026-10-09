@@ -20,6 +20,9 @@ interface AskGoldysDrawerProps {
   seniority?: string;
 }
 
+/** Window event that opens the drawer from elsewhere (the command palette). */
+export const OPEN_ASK_EVENT = "goldys:open-ask";
+
 const SUGGESTIONS = [
   "What were sales last week?",
   "Show sales for the last 7 days",
@@ -33,15 +36,22 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
   const api = useApi();
   const { summary, answer, error, working, ask } = useAskGoldys();
 
+  // ⌘J toggles the drawer (⌘K belongs to the command palette, which can also
+  // open this drawer by dispatching OPEN_ASK_EVENT).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();
         setOpen((o) => !o);
       }
     };
+    const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener(OPEN_ASK_EVENT, onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(OPEN_ASK_EVENT, onOpen);
+    };
   }, []);
 
   if (!isOwnerRole) return null;
@@ -49,9 +59,10 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
+        <Button variant="outline" size="sm" className="gap-1.5" aria-label="Ask Goldy's (⌘J)" title="Ask Goldy's (⌘J)">
           <Sparkles className="h-4 w-4" aria-hidden="true" />
-          Ask Goldy&apos;s
+          {/* Icon-only on narrow headers so the label never wraps. */}
+          <span className="hidden lg:inline">Ask Goldy&apos;s</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="flex w-full flex-col gap-4 sm:max-w-lg">

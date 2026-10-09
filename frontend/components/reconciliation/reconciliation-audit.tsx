@@ -28,7 +28,7 @@ export function ReconciliationAudit({ entries }: { entries: ReconciliationAuditE
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-xl border">
       {entries.map((e, i) => (
         <div
           key={`${e.kind}:${e.change}:${e.at}:${i}`}

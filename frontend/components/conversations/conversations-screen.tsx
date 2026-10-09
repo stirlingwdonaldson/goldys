@@ -24,6 +24,7 @@ import type {
   ConversationMessage,
   ConversationThreadSummary,
 } from "@/lib/api/types";
+import { PageHeader } from "@/components/layout/page-header";
 
 /** A stable, short human-readable date for a thread row. */
 function formatUpdatedAt(iso: string): string {
@@ -76,10 +77,7 @@ export function ConversationsScreen({ api }: { api: Api }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Conversations</h1>
-        <p className="text-sm text-muted-foreground">Your Ask Goldy&apos;s history.</p>
-      </div>
+      <PageHeader title="Conversations" description="Your Ask Goldy’s history." />
 
       <ul className="flex flex-col gap-2">
         {threads.map((t) => (

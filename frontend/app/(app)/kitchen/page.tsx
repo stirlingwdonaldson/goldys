@@ -10,14 +10,12 @@ import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { InvoiceGraphView } from "@/components/inventory/invoice-graph-view";
 import type { InventorySummary, SupplierCogs, UomUnitCost } from "@/lib/api";
-
-function money(v: number | null | undefined): string {
-  return v == null || !Number.isFinite(Number(v)) ? "—" : `$${Number(v).toFixed(2)}`;
-}
-
-function pct(v: number | null): string {
-  return v == null ? "—" : `${(v * 100).toFixed(1)}%`;
-}
+import { currencyColumn, numberColumn } from "@/components/data-table/columns";
+import { StatCard } from "@/components/data-display/stat-card";
+import { PageHeader } from "@/components/layout/page-header";
+import { Section } from "@/components/layout/section";
+import { InlineError } from "@/components/states/inline-error";
+import { formatCurrency, formatPercent } from "@/lib/format";
 
 /** Trailing 30-day window, so the screen renders without any date inputs. */
 function defaultRange(): { from: string; to: string } {
@@ -34,24 +32,9 @@ const uomColumns: ColumnDef<UomUnitCost>[] = [
     meta: { title: "Measure" },
     enableHiding: false,
   },
-  {
-    accessorKey: "lineTotal",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Line total" />,
-    cell: ({ row }) => <span className="tabular-nums">{money(row.original.lineTotal)}</span>,
-    meta: { title: "Line total", align: "right" },
-  },
-  {
-    accessorKey: "quantity",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Quantity" />,
-    cell: ({ row }) => <span className="tabular-nums">{row.original.quantity}</span>,
-    meta: { title: "Quantity", align: "right" },
-  },
-  {
-    accessorKey: "unitCost",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Unit cost" />,
-    cell: ({ row }) => <span className="tabular-nums">{money(row.original.unitCost)}</span>,
-    meta: { title: "Unit cost", align: "right" },
-  },
+  currencyColumn("lineTotal", "Line total", (r) => r.lineTotal),
+  numberColumn("quantity", "Quantity", (r) => r.quantity, 3),
+  currencyColumn("unitCost", "Unit cost", (r) => r.unitCost),
 ];
 
 const supplierColumns: ColumnDef<SupplierCogs>[] = [
@@ -61,36 +44,20 @@ const supplierColumns: ColumnDef<SupplierCogs>[] = [
     meta: { title: "Supplier" },
     enableHiding: false,
   },
-  {
-    accessorKey: "lineTotal",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="COGS" />,
-    cell: ({ row }) => <span className="tabular-nums">{money(row.original.lineTotal)}</span>,
-    meta: { title: "COGS", align: "right" },
-  },
-  {
-    accessorKey: "wetAmount",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="WET" />,
-    cell: ({ row }) => <span className="tabular-nums">{money(row.original.wetAmount)}</span>,
-    meta: { title: "WET", align: "right" },
-  },
+  currencyColumn("lineTotal", "COGS", (r) => r.lineTotal),
+  currencyColumn("wetAmount", "WET", (r) => r.wetAmount),
 ];
-
-function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
-  return (
-    <div className="rounded-lg border p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
-    </div>
-  );
-}
 
 function SummaryStats({ s }: { s: InventorySummary }) {
   return (
     <div className="grid gap-4 sm:grid-cols-3">
-      <Stat label="Purchases" value={money(s.purchases)} hint="Invoiced stock, last 30 days" />
-      <Stat label="Wastage" value={money(s.wastage)} hint="Recorded waste, last 30 days" />
-      <Stat label="Food cost" value={pct(s.foodCostPercent)} hint="Purchases as a share of gross sales" />
+      <StatCard label="Purchases" value={formatCurrency(s.purchases)} hint="Invoiced stock, last 30 days" />
+      <StatCard label="Wastage" value={formatCurrency(s.wastage)} hint="Recorded waste, last 30 days" />
+      <StatCard
+        label="Food cost"
+        value={formatPercent(s.foodCostPercent)}
+        hint="Purchases as a share of gross sales"
+      />
     </div>
   );
 }
@@ -117,23 +84,20 @@ export default function KitchenPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Kitchen</h1>
-        <p className="text-sm text-muted-foreground">
-          Food cost, stock, and wastage — unit cost per measure and spend by supplier.
-        </p>
-      </div>
+      <PageHeader
+        title="Kitchen"
+        description="Food cost, stock, and wastage — unit cost per measure and spend by supplier."
+      />
 
       {summary.loading ? <LoadingState rows={1} /> : null}
       {summary.error ? (
-        <p className="text-sm text-destructive">Couldn&apos;t load the 30-day totals.</p>
+        <InlineError>Couldn&apos;t load the 30-day totals. Refresh the page to try again.</InlineError>
       ) : null}
       {summary.data ? <SummaryStats s={summary.data} /> : null}
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold">Purchase lineage</h2>
+      <Section title="Purchase lineage">
         <InvoiceGraphView from={from} to={to} />
-      </section>
+      </Section>
 
       {uom.length === 0 && suppliers.length === 0 ? (
         <EmptyState
@@ -143,20 +107,18 @@ export default function KitchenPage() {
       ) : null}
 
       {uom.length > 0 ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold">Unit cost per measure</h2>
+        <Section title="Unit cost per measure">
           <DataTable
             columns={uomColumns}
             data={uom}
             initialSorting={[{ id: "lineTotal", desc: true }]}
             getRowId={(r) => r.uom ?? "(unmeasured)"}
           />
-        </section>
+        </Section>
       ) : null}
 
       {suppliers.length > 0 ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold">Spend by supplier</h2>
+        <Section title="Spend by supplier">
           <DataTable
             columns={supplierColumns}
             data={suppliers}
@@ -165,7 +127,7 @@ export default function KitchenPage() {
             initialSorting={[{ id: "lineTotal", desc: true }]}
             getRowId={(r) => r.supplier}
           />
-        </section>
+        </Section>
       ) : null}
     </div>
   );

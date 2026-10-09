@@ -9,17 +9,17 @@ import type { FlowTone, StepNode } from "./types";
 
 /** Icon-tile tint per tone. The tile carries the colour; the card body stays neutral. */
 const TILE_CLASS: Record<FlowTone, string> = {
-  ok: "bg-status-success/10 text-status-success",
-  warn: "bg-status-warning/15 text-amber-700",
-  fail: "bg-destructive/10 text-destructive",
+  ok: "bg-status-success-soft text-status-success",
+  warn: "bg-status-conflict-soft text-status-conflict",
+  fail: "bg-destructive-soft text-destructive",
   missing: "bg-muted text-status-missing",
-  info: "bg-status-info/10 text-status-info",
+  info: "bg-status-info-soft text-status-info",
   neutral: "bg-muted text-foreground",
 };
 
 const BORDER_CLASS: Record<FlowTone, string> = {
   ok: "border-border",
-  warn: "border-status-warning",
+  warn: "border-status-conflict",
   fail: "border-destructive",
   missing: "border-dashed border-status-missing",
   info: "border-border",
@@ -29,10 +29,10 @@ const BORDER_CLASS: Record<FlowTone, string> = {
 /** The small corner badge n8n uses to show a node's last outcome. Only problems + success get one. */
 function CornerBadge({ tone }: { tone: FlowTone }) {
   const config = {
-    ok: { Icon: Check, cls: "bg-status-success text-status-success-foreground", label: "OK" },
-    warn: { Icon: AlertTriangle, cls: "bg-status-warning text-status-warning-foreground", label: "Needs attention" },
+    ok: { Icon: Check, cls: "bg-status-success text-white", label: "OK" },
+    warn: { Icon: AlertTriangle, cls: "bg-status-conflict text-white", label: "Needs attention" },
     fail: { Icon: X, cls: "bg-destructive text-destructive-foreground", label: "Failed" },
-    missing: { Icon: CircleDashed, cls: "bg-status-missing text-status-missing-foreground", label: "No data" },
+    missing: { Icon: CircleDashed, cls: "bg-status-missing text-white", label: "No data" },
   } as const;
   if (!(tone in config)) return null;
   const { Icon, cls, label } = config[tone as keyof typeof config];

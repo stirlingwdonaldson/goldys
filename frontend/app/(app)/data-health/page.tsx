@@ -1,12 +1,25 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Activity, Timer, Wrench } from "lucide-react";
+import Link from "next/link";
+import { Activity, AlertTriangle, RefreshCw, Timer, Upload, Wrench } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
 import { useApi } from "@/lib/demo-mode";
-import { isApiError } from "@/lib/api";
+import { isApiError, type ConnectorStatus } from "@/lib/api";
+import { useToast } from "@/components/feedback/toast";
+import { useShellStatus } from "@/components/app-shell/shell-status";
+import { PageHeader } from "@/components/layout/page-header";
+import { SourceTile } from "@/components/sources/source-tile";
+import { sourceIdentity } from "@/lib/sources";
+import { formatAgo, formatDateTime } from "@/lib/format";
+import { InlineError } from "@/components/states/inline-error";
+import { Section } from "@/components/layout/section";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { ConnectorStatusBadge } from "@/components/connectors/connector-status-badge";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { StatCard } from "@/components/data-display/stat-card";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { PipelineMap } from "@/components/pipeline/pipeline-map";
 import { Button } from "@/components/ui/button";
@@ -16,29 +29,34 @@ import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 
-function SectionError({ message }: { message: string }) {
-  return <p className="text-sm text-destructive">{message}</p>;
-}
-
 export default function DataHealthPage() {
   const api = useApi();
   const connectors = useApiData((api) => api.listConnectorStatuses());
   const summary = useApiData((api) => api.getDashboardSummary());
   const activity = useApiData((api) => api.getDashboardActivity());
   const [running, setRunning] = useState<string | null>(null);
-  const [runError, setRunError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadMessage, setUploadMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const { toast } = useToast();
+  const shell = useShellStatus();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function run(source: string) {
     setRunning(source);
-    setRunError(null);
     try {
-      await api.runConnector(source);
+      const result = await api.runConnector(source);
       await connectors.reload();
+      shell.refresh();
+      toast(
+        result.status === "failed"
+          ? { title: `${sourceIdentity(source).label} run failed`, description: "See the card for what went wrong.", tone: "error" }
+          : { title: `${sourceIdentity(source).label} ran`, description: result.status === "no_new_data" ? "No new data since the last run." : "New data is in.", tone: "success" },
+      );
     } catch (e) {
-      setRunError(isApiError(e) ? e.message : "Something went wrong running the connector.");
+      toast({
+        title: `Couldn't run ${sourceIdentity(source).label}`,
+        description: isApiError(e) ? e.message : "Something went wrong starting the connector. Try again in a minute.",
+        tone: "error",
+      });
     } finally {
       setRunning(null);
     }
@@ -46,13 +64,17 @@ export default function DataHealthPage() {
 
   async function uploadCsv(file: File) {
     setUploading(true);
-    setUploadMessage(null);
     try {
       await api.uploadOpenTableCsv(file);
-      setUploadMessage({ ok: true, text: "CSV uploaded and ingested." });
+      toast({ title: "OpenTable CSV imported", description: file.name, tone: "success" });
       await connectors.reload();
+      shell.refresh();
     } catch (e) {
-      setUploadMessage({ ok: false, text: isApiError(e) ? e.message : "Upload failed." });
+      toast({
+        title: "Couldn't import that CSV",
+        description: isApiError(e) ? e.message : "Check it's the reservations export from OpenTable and try again.",
+        tone: "error",
+      });
     } finally {
       setUploading(false);
     }
@@ -80,27 +102,58 @@ export default function DataHealthPage() {
     );
   }
 
+  const failing = connectors.data.filter((c) => c.status === "failed").length;
+
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Data health</h1>
-        <p className="text-sm text-muted-foreground">
-          Ingestion and connector status across your sources.
-        </p>
-      </div>
+      <PageHeader
+        title="Data health"
+        status={
+          failing > 0 ? (
+            <Badge variant="failed">
+              {failing} {failing === 1 ? "source" : "sources"} failing
+            </Badge>
+          ) : (
+            <Badge variant="success">All sources healthy</Badge>
+          )
+        }
+        description="When each source last delivered data, and what to do when one stops."
+      />
 
-      {runError && <p className="text-sm text-destructive">{runError}</p>}
-      {uploadMessage && (
-        <p className={`text-sm ${uploadMessage.ok ? "text-emerald-600" : "text-destructive"}`}>
-          {uploadMessage.text}
-        </p>
-      )}
+      {/* Hidden file input for the OpenTable CSV upload, triggered from its card. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) uploadCsv(file);
+          e.target.value = "";
+        }}
+      />
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <section className="grid gap-4 lg:grid-cols-2" aria-label="Sources">
+        {connectors.data.map((c) => (
+          <ConnectorCard
+            key={c.source}
+            connector={c}
+            running={running === c.source}
+            busy={running !== null}
+            uploading={uploading}
+            onRun={() => run(c.source)}
+            onUpload={() => fileInputRef.current?.click()}
+          />
+        ))}
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Ingestion summary">
         {summary.loading ? (
-          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-28 w-full rounded-xl" />
         ) : summary.error ? (
-          <SectionError message="Couldn't load ingestion summary." />
+          <InlineError>Couldn&apos;t load the ingestion summary. Refresh the page to try again.</InlineError>
         ) : (
           <>
             <StatCard
@@ -129,87 +182,125 @@ export default function DataHealthPage() {
         )}
       </section>
 
-      <section className="flex flex-col gap-2">
-        <div>
-          <h2 className="text-sm font-semibold">How data flows</h2>
-          <p className="text-xs text-muted-foreground">
-            Each source lands in the raw ledger, becomes canonical entities, then resolves into the
-            figures your screens show. Select a step to open it.
-          </p>
-        </div>
+      <Section
+        title="How data flows"
+        description="Each source lands in the raw ledger, becomes canonical entities, then resolves into the figures your screens show. Select a step to open it."
+        card
+      >
         <PipelineMap connectors={connectors.data} />
-      </section>
-
-      <section className="rounded-lg border">
-        {connectors.data.map((c, i) => (
-          <div
-            key={c.source}
-            className={`flex items-center justify-between gap-4 p-4 ${i > 0 ? "border-t" : ""}`}
-          >
-            <div>
-              <p className="text-sm font-medium">{c.source}</p>
-              <p className="text-xs text-muted-foreground">
-                {c.connectorName}
-                {c.lastRunAt
-                  ? ` · last run ${new Date(c.lastRunAt).toLocaleString()}`
-                  : " · never run"}
-              </p>
-              {c.failure ? (
-                <p className="text-xs text-destructive">
-                  {c.failure.type}: {c.failure.message}
-                </p>
-              ) : null}
-            </div>
-            <div className="flex items-center gap-2">
-              <ConnectorStatusBadge status={c.status} />
-              {c.source.toLowerCase() === "opentable" ? (
-                <>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv,text/csv"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) uploadCsv(file);
-                      e.target.value = "";
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                  >
-                    {uploading ? "Uploading…" : "Upload CSV"}
-                  </Button>
-                </>
-              ) : c.runnable ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => run(c.source)}
-                  disabled={running !== null}
-                >
-                  {running === c.source ? "Running…" : "Run now"}
-                </Button>
-              ) : (
-                <span className="text-xs text-muted-foreground">Push-only</span>
-              )}
-            </div>
-          </div>
-        ))}
-      </section>
+      </Section>
 
       <section className="flex flex-col gap-3">
         {activity.loading ? (
-          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full rounded-xl" />
         ) : activity.error ? (
-          <SectionError message="Couldn't load activity." />
+          <InlineError>Couldn&apos;t load run activity. Refresh the page to try again.</InlineError>
         ) : (
           <ActivityChart title="Run activity · last 14 days" points={activity.data ?? []} />
         )}
       </section>
     </div>
+  );
+}
+
+/**
+ * One source. A failure states what happened and puts the fix next to it
+ * (heuristic 9); "No new data" stays neutral because it is an expected state,
+ * not a fault (docs/design-system.md).
+ */
+function ConnectorCard({
+  connector: c,
+  running,
+  busy,
+  uploading,
+  onRun,
+  onUpload,
+}: {
+  connector: ConnectorStatus;
+  running: boolean;
+  busy: boolean;
+  uploading: boolean;
+  onRun: () => void;
+  onUpload: () => void;
+}) {
+  const failed = c.status === "failed";
+  const isUpload = c.source.toLowerCase() === "opentable";
+  // Sources arrive as codes ("LIGHTSPEED"); people read the registry's display name.
+  const name = sourceIdentity(c.source).label;
+  const action = isUpload ? (
+    <Button variant="outline" size="sm" onClick={onUpload} disabled={uploading}>
+      <Upload aria-hidden="true" />
+      {uploading ? "Uploading…" : "Upload CSV"}
+    </Button>
+  ) : c.runnable ? (
+    <Button variant={failed ? "default" : "outline"} size="sm" onClick={onRun} disabled={busy}>
+      <RefreshCw className={running ? "animate-spin" : undefined} aria-hidden="true" />
+      {running ? "Running…" : failed ? "Run again" : "Run now"}
+    </Button>
+  ) : (
+    <span className="text-xs text-muted-foreground">Sends data to us automatically</span>
+  );
+
+  return (
+    <Card
+      role="group"
+      className={cn("flex flex-col gap-4 p-4", failed && "border-destructive/30")}
+      aria-label={name}
+    >
+      <div className="flex items-center gap-3">
+        <SourceTile source={c.source} size="lg" />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{name}</p>
+          <p className="truncate text-xs text-muted-foreground">{c.connectorName}</p>
+        </div>
+        <div className="ml-auto">
+          <ConnectorStatusBadge status={c.status} />
+        </div>
+      </div>
+
+      {c.failure ? (
+        <Alert variant="destructive" className="border-0 bg-destructive-soft">
+          <AlertTriangle aria-hidden="true" />
+          <AlertTitle className="text-foreground">
+            {c.failure.type} at {formatDateTime(c.failure.at)}
+          </AlertTitle>
+          <AlertDescription className="text-muted-foreground">
+            {c.failure.message ?? "The source didn't say why."} Figures from {name} after this run
+            are missing until it succeeds. Check the connection, then run it again.
+          </AlertDescription>
+        </Alert>
+      ) : failed ? (
+        <Alert variant="destructive" className="border-0 bg-destructive-soft">
+          <AlertTriangle aria-hidden="true" />
+          <AlertTitle className="text-foreground">The latest run failed</AlertTitle>
+          <AlertDescription className="text-muted-foreground">
+            Figures from {name} may be out of date.{" "}
+            <Link href="/logs" className="font-medium text-foreground underline underline-offset-2">
+              Check the logs
+            </Link>{" "}
+            for the cause{c.runnable ? ", then run it again" : ""}.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <dl className="grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <dt className="text-muted-foreground">Last run</dt>
+          <dd className="mt-0.5 text-sm font-medium">
+            {c.lastRunAt ? (
+              <span title={formatDateTime(c.lastRunAt)}>{formatAgo(c.lastRunAt)}</span>
+            ) : (
+              "Never"
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Recent failures</dt>
+          <dd className="mt-0.5 text-sm font-medium tabular-nums">{c.failureCount}</dd>
+        </div>
+      </dl>
+
+      <div className="mt-auto flex items-center gap-2">{action}</div>
+    </Card>
   );
 }

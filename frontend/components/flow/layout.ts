@@ -11,7 +11,7 @@ const EDGE_STROKE: Record<FlowTone, string> = {
   ok: "hsl(var(--muted-foreground) / 0.45)",
   neutral: "hsl(var(--muted-foreground) / 0.45)",
   info: "hsl(var(--status-info))",
-  warn: "hsl(var(--status-warning))",
+  warn: "hsl(var(--status-conflict))",
   fail: "hsl(var(--destructive))",
   missing: "hsl(var(--status-missing))",
 };

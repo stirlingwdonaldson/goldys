@@ -12,8 +12,8 @@ import {
 import { flattenSeries } from "./flatten";
 import type { BarChartWidget } from "./types";
 import { WidgetShell } from "./widget-shell";
+import { CHART_TOOLTIP_PROPS, formatXTick, AXIS_TICK, STATUS_SERIES_COLORS } from "./chart-style";
 
-const COLORS = ["#16a34a", "#dc2626", "#2563eb", "#ca8a04"];
 
 export function BarChartWidgetView({ widget }: { widget: BarChartWidget }) {
   const data = flattenSeries(widget.series);
@@ -29,18 +29,19 @@ export function BarChartWidgetView({ widget }: { widget: BarChartWidget }) {
       <div role="img" aria-label={widget.title} className="h-48 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
-            <XAxis dataKey="x" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
-            <Tooltip />
+            <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
+            <XAxis dataKey="x" tick={AXIS_TICK} tickLine={false} axisLine={false} minTickGap={16} tickFormatter={formatXTick} />
+            <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} />
+            <Tooltip {...CHART_TOOLTIP_PROPS} labelFormatter={formatXTick} cursor={{ fill: "hsl(var(--muted))" }} />
             {widget.series.map((s, i) => (
               <Bar
                 key={s.key}
                 dataKey={s.key}
                 name={s.label}
                 stackId={widget.stacked ? "a" : undefined}
-                fill={COLORS[i % COLORS.length]}
-                radius={widget.stacked && i === widget.series.length - 1 ? [3, 3, 0, 0] : [3, 3, 0, 0]}
+                fill={STATUS_SERIES_COLORS[i % STATUS_SERIES_COLORS.length]}
+                maxBarSize={22}
+                radius={!widget.stacked || i === widget.series.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
               />
             ))}
           </BarChart>

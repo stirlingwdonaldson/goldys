@@ -77,7 +77,7 @@ export function RuleList({ rows, onEdit, onDelete, onNew }: RuleListProps) {
                       </Button>
                     </>
                   ) : (
-                    <Badge variant="outline" className="border-transparent bg-status-warning/15 text-status-warning-foreground">
+                    <Badge variant="conflict">
                       Unresolved
                     </Badge>
                   )}

@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { Hourglass } from "lucide-react";
+import { IconTile } from "@/components/ui/icon-tile";
+import { Card } from "@/components/ui/card";
 
 interface AwaitingDataProps {
   label: string;
@@ -21,13 +23,15 @@ export function AwaitingData({
   icon: Icon = Hourglass,
 }: AwaitingDataProps) {
   return (
-    <div className="rounded-lg border border-dashed bg-card p-4">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+    <Card className="flex flex-col gap-3 border-dashed p-4">
+      <div className="flex items-center gap-2.5 text-sm font-medium">
+        <IconTile>
+          <Icon />
+        </IconTile>
         <span>{label}</span>
       </div>
-      <p className="mt-3 text-sm text-muted-foreground">{description}</p>
-      <p className="mt-2 text-xs text-muted-foreground/70">{reason}</p>
-    </div>
+      <p className="text-sm text-muted-foreground">{description}</p>
+      <p className="mt-auto text-xs text-muted-foreground/80">{reason}</p>
+    </Card>
   );
 }
