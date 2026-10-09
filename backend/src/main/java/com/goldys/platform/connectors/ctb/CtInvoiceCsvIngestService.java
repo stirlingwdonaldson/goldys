@@ -7,8 +7,11 @@ import com.goldys.platform.canonical.InvoiceLineInput;
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
+import com.goldys.platform.ingestion.IngestionStageKind;
+import com.goldys.platform.ingestion.IngestionStageOutcome;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -49,48 +52,69 @@ public class CtInvoiceCsvIngestService {
             StandardCharsets.UTF_8.name(),
             "ctb-invoices");
 
-    for (CtInvoice invoice : parser.parse(csv)) {
-      canonical.record(
-          new InvoiceInput(
-              "CTB",
-              invoice.invoiceNumber(),
-              invoice.supplierName(),
-              invoice.invoiceDate(),
-              invoice.dueDate(),
-              invoice.incTaxAmount(),
-              invoice.purchaseNumber(),
-              null, // account number — not in the current export
-              null, // tax code — not in the current export
-              invoice.amountExTax(),
-              invoice.gstAmount(),
-              invoice.freightAmount(),
-              null, // freight GST — not a direct column in the current export
-              firstPdfFilename(invoice),
-              rawId));
-      flagPdfAnomalies(invoice);
-
-      int seq = 0;
-      for (CtInvoiceLine line : invoice.lines()) {
-        seq++;
-        lineCanonical.record(
-            new InvoiceLineInput(
-                "CTB",
-                invoice.invoiceNumber() + ":" + seq,
-                invoice.invoiceNumber(),
-                invoice.invoiceDate(),
-                ProductNameKey.normalize(line.description()),
-                line.stockCode(),
-                quantity(line.rawQuantity()),
-                line.unitCostExTax() == null ? BigDecimal.ZERO : line.unitCostExTax(),
-                line.lineTotalExTax(),
-                null, // category — PDF-only, not in the CSV
-                null, // uom — PDF enrichment
-                null, // unitQuantity — PDF enrichment
-                null, // packSize — PDF enrichment
-                null, // wetAmount — PDF enrichment
-                rawId));
-      }
+    List<CtInvoice> invoices;
+    try {
+      invoices = parser.parse(csv);
+    } catch (RuntimeException e) {
+      ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
+      throw e;
     }
+    ingestion.recordStage(
+        rawId,
+        IngestionStageKind.PARSED,
+        invoices.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
+
+    try {
+      for (CtInvoice invoice : invoices) {
+        canonical.record(
+            new InvoiceInput(
+                "CTB",
+                invoice.invoiceNumber(),
+                invoice.supplierName(),
+                invoice.invoiceDate(),
+                invoice.dueDate(),
+                invoice.incTaxAmount(),
+                invoice.purchaseNumber(),
+                null, // account number — not in the current export
+                null, // tax code — not in the current export
+                invoice.amountExTax(),
+                invoice.gstAmount(),
+                invoice.freightAmount(),
+                null, // freight GST — not a direct column in the current export
+                firstPdfFilename(invoice),
+                rawId));
+        flagPdfAnomalies(invoice);
+
+        int seq = 0;
+        for (CtInvoiceLine line : invoice.lines()) {
+          seq++;
+          lineCanonical.record(
+              new InvoiceLineInput(
+                  "CTB",
+                  invoice.invoiceNumber() + ":" + seq,
+                  invoice.invoiceNumber(),
+                  invoice.invoiceDate(),
+                  ProductNameKey.normalize(line.description()),
+                  line.stockCode(),
+                  quantity(line.rawQuantity()),
+                  line.unitCostExTax() == null ? BigDecimal.ZERO : line.unitCostExTax(),
+                  line.lineTotalExTax(),
+                  null, // category — PDF-only, not in the CSV
+                  null, // uom — PDF enrichment
+                  null, // unitQuantity — PDF enrichment
+                  null, // packSize — PDF enrichment
+                  null, // wetAmount — PDF enrichment
+                  rawId));
+        }
+      }
+    } catch (RuntimeException e) {
+      ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
+      throw e;
+    }
+    ingestion.recordStage(
+        rawId,
+        IngestionStageKind.CANONICALIZED,
+        invoices.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
   }
 
   /** The invoice's PDF filename (first-seen), or null when the CSV references none. */

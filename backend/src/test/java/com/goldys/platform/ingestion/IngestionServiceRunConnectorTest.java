@@ -62,6 +62,8 @@ class IngestionServiceRunConnectorTest {
         mock(RawPayloadService.class),
         repository,
         mock(IngestionFailureRepository.class),
+        mock(RawRecordRepository.class),
+        mock(IngestionStageRepository.class),
         runner,
         connectors);
   }

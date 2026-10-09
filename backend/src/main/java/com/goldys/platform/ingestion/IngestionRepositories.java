@@ -54,5 +54,9 @@ interface RawRecordRepository
   List<RawRecord> findBySourceSystem(String sourceSystem);
 }
 
+interface IngestionStageRepository extends JpaRepository<IngestionStage, UUID> {
+  List<IngestionStage> findByIngestionRunId(UUID ingestionRunId);
+}
+
 /** A status → count aggregate used by the ingestion-health read model. */
 record StatusCount(IngestionStatus status, long count) {}

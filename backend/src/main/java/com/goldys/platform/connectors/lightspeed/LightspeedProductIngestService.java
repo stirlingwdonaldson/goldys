@@ -7,6 +7,8 @@ import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.ProductSalesInput;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
+import com.goldys.platform.ingestion.IngestionStageKind;
+import com.goldys.platform.ingestion.IngestionStageOutcome;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -51,8 +53,17 @@ public class LightspeedProductIngestService {
 
     // The "Sales By" report has no per-row date; attribute to the day the report arrived.
     LocalDate tradingDate = LocalDate.now();
-    List<LightspeedProductSale> rows =
-        parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8), tradingDate);
+    List<LightspeedProductSale> rows;
+    try {
+      rows = parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8), tradingDate);
+    } catch (RuntimeException e) {
+      ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
+      throw e;
+    }
+    ingestion.recordStage(
+        rawId,
+        IngestionStageKind.PARSED,
+        rows.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
 
     Map<String, ProductSalesInput> byProduct = new LinkedHashMap<>();
     for (LightspeedProductSale row : rows) {
@@ -70,9 +81,18 @@ public class LightspeedProductIngestService {
                   a.amount().add(b.amount()),
                   rawId));
     }
-    for (ProductSalesInput input : byProduct.values()) {
-      canonical.record(input);
+    try {
+      for (ProductSalesInput input : byProduct.values()) {
+        canonical.record(input);
+      }
+    } catch (RuntimeException e) {
+      ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
+      throw e;
     }
+    ingestion.recordStage(
+        rawId,
+        IngestionStageKind.CANONICALIZED,
+        rows.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
   }
 
   private static String extractCsv(byte[] body) {
