@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.goldys.platform.config.SecurityConfig;
+import com.goldys.platform.connectors.lightspeed.LightspeedDeletedSaleIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedPaymentIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
@@ -31,6 +32,7 @@ class LightspeedIngestControllerSecurityTest {
 
   @MockitoBean LightspeedIngestService ingestService;
   @MockitoBean LightspeedPaymentIngestService paymentIngestService;
+  @MockitoBean LightspeedDeletedSaleIngestService deletedSaleIngestService;
   @MockitoBean LightspeedProductIngestService productIngestService;
   @MockitoBean LightspeedZReportIngestService zReportIngestService;
 
@@ -53,5 +55,11 @@ class LightspeedIngestControllerSecurityTest {
   @Test
   void bodylessPaymentsWebhookPostIsRejectedNotRedirected() throws Exception {
     mvc.perform(post("/api/ingest/lightspeed-payments")).andExpect(status().is4xxClientError());
+  }
+
+  @Test
+  void bodylessDeletedSalesWebhookPostIsRejectedNotRedirected() throws Exception {
+    mvc.perform(post("/api/ingest/lightspeed-deleted-sales"))
+        .andExpect(status().is4xxClientError());
   }
 }

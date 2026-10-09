@@ -1,5 +1,6 @@
 package com.goldys.platform.api;
 
+import com.goldys.platform.connectors.lightspeed.LightspeedDeletedSaleIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedPaymentIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class LightspeedIngestController {
   private final LightspeedIngestService ingestService;
   private final LightspeedPaymentIngestService paymentIngestService;
+  private final LightspeedDeletedSaleIngestService deletedSaleIngestService;
   private final LightspeedProductIngestService productIngestService;
   private final LightspeedZReportIngestService zReportIngestService;
   private final String webhookToken;
@@ -37,11 +39,13 @@ public class LightspeedIngestController {
   public LightspeedIngestController(
       LightspeedIngestService ingestService,
       LightspeedPaymentIngestService paymentIngestService,
+      LightspeedDeletedSaleIngestService deletedSaleIngestService,
       LightspeedProductIngestService productIngestService,
       LightspeedZReportIngestService zReportIngestService,
       @Value("${lightspeed.webhook-token:}") String webhookToken) {
     this.ingestService = ingestService;
     this.paymentIngestService = paymentIngestService;
+    this.deletedSaleIngestService = deletedSaleIngestService;
     this.productIngestService = productIngestService;
     this.zReportIngestService = zReportIngestService;
     this.webhookToken = webhookToken;
@@ -98,6 +102,19 @@ public class LightspeedIngestController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     paymentIngestService.ingest(body);
+    return ResponseEntity.accepted().build();
+  }
+
+  @PostMapping("/lightspeed-deleted-sales")
+  ResponseEntity<Void> lightspeedDeletedSales(
+      @RequestBody byte[] body,
+      @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+      @RequestParam(value = "token", required = false) String queryToken) {
+    String provided = StringUtils.hasText(token) ? token : queryToken;
+    if (!tokenValid(provided)) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    deletedSaleIngestService.ingest(body);
     return ResponseEntity.accepted().build();
   }
 
