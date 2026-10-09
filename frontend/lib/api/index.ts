@@ -45,7 +45,7 @@ export async function logout(): Promise<void> {
   return fetchApi<void>("/api/auth/logout", { method: "POST" });
 }
 
-export { ApiError, isApiError } from "./errors";
+export { ApiError, isApiError, isAbortError } from "./errors";
 export type { ApiErrorCode } from "./errors";
 export type {
   ActivityPoint,
