@@ -42,7 +42,7 @@ export async function login(input: LoginInput): Promise<CurrentUser> {
 }
 
 export async function logout(): Promise<void> {
-  return fetchApi<void>("/api/auth/logout", { method: "POST" });
+  return fetchApi<void>("/api/auth/logout", { method: "POST" }, { responseType: "void" });
 }
 
 export { ApiError, isApiError, isAbortError } from "./errors";

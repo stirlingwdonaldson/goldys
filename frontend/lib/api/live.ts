@@ -48,7 +48,7 @@ export const liveApi: Api = {
   uploadOpenTableCsv: (file: File) => {
     const form = new FormData();
     form.append("file", file);
-    return fetchApi<void>("/api/connectors/opentable/upload", { method: "POST", body: form });
+    return fetchApi<void>("/api/connectors/opentable/upload", { method: "POST", body: form }, { responseType: "void" });
   },
   listProductExceptions: () =>
     fetchApi<ReconciliationException[]>("/api/reconciliation/products/exceptions"),
@@ -72,7 +72,7 @@ export const liveApi: Api = {
       body: JSON.stringify(input),
     }),
   deleteResolutionRule: (id: string) =>
-    fetchApi<void>(`/api/reconciliation/rules/${id}`, { method: "DELETE" }),
+    fetchApi<void>(`/api/reconciliation/rules/${id}`, { method: "DELETE" }, { responseType: "void" }),
   getRecomputeStatus: () => fetchApi<RecomputeStatus>("/api/reconciliation/recompute/status"),
   listRuleAudit: () => fetchApi<RuleAuditEntry[]>("/api/reconciliation/rules/audit"),
   listReconciliationAudit: () =>
@@ -81,8 +81,9 @@ export const liveApi: Api = {
   listDailySales: () => fetchApi<import("./types").DailySales[]>("/api/sales/daily"),
   getLatestSales: () => fetchApi<import("./types").LatestSales>("/api/sales/latest"),
   getReservationSummary: (date: string) =>
-    fetchApi<import("./types").ReservationSummary | undefined>(
+    fetchApi<import("./types").ReservationSummary>(
       `/api/reservations/summary?date=${date}`,
+      undefined, { allowNoContent: true },
     ),
   getInventoryLines: (from: string, to: string) =>
     fetchApi<import("./types").InventoryLineBreakdown>(
@@ -116,7 +117,7 @@ export const liveApi: Api = {
       body: JSON.stringify(input),
     }),
   deleteDashboard: (id: string) =>
-    fetchApi<void>(`/api/dashboards/${id}`, { method: "DELETE" }),
+    fetchApi<void>(`/api/dashboards/${id}`, { method: "DELETE" }, { responseType: "void" }),
   renderDashboard: (id: string) => fetchApi<RenderedWidget[]>(`/api/dashboards/${id}/render`),
   listDashboardTemplates: () => fetchApi<DashboardTemplate[]>("/api/dashboards/templates"),
   createDashboardFromTemplate: (templateId: string) =>
@@ -146,7 +147,7 @@ export const liveApi: Api = {
       body: JSON.stringify({ title }),
     }),
   deleteThread: (id: string) =>
-    fetchApi<void>(`/api/conversational/threads/${id}`, { method: "DELETE" }),
+    fetchApi<void>(`/api/conversational/threads/${id}`, { method: "DELETE" }, { responseType: "void" }),
   listRawRecords: (filter: import("./types").RawRecordFilter, page: number, size: number) => {
     const q = new URLSearchParams({ page: String(page), size: String(size) });
     if (filter.source) q.set("source", filter.source);
