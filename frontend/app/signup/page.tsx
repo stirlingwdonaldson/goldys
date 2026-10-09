@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { isApiError, login, signup } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,19 +21,33 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [correlationId, setCorrelationId] = useState<string | undefined>();
+  const [accountCreated, setAccountCreated] = useState(false);
+  const busy = useRef(false);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (busy.current || accountCreated) return;
+    busy.current = true;
     setError(null);
+    setCorrelationId(undefined);
     setSubmitting(true);
+    let created = false;
     try {
       await signup({ email, displayName, password });
+      created = true;
+      setAccountCreated(true);
       // Auto-login with the same credentials, then land in the app.
       await login({ email, password });
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(isApiError(err) ? err.message : "Something went wrong. Try again.");
+      const uncertain = !created && isApiError(err) && err.code === "NETWORK_ERROR";
+      setError(uncertain ? "Couldn't confirm account creation. If you already created an account, sign in."
+        : isApiError(err) ? err.message : "Something went wrong. Try again.");
+      setCorrelationId(isApiError(err) ? err.correlationId : undefined);
+    } finally {
+      busy.current = false;
       setSubmitting(false);
     }
   }
@@ -48,8 +62,16 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
+          {accountCreated ? (
+            <div className="space-y-4">
+              <p role="status">{submitting ? "Signing in…" : "Account created. Sign in to continue."}</p>
+              {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
+              {correlationId ? <p className="break-words text-xs text-muted-foreground">Reference: {correlationId}</p> : null}
+              {!submitting ? <Link href="/login" className="underline">Sign in</Link> : null}
+            </div>
+          ) : <form onSubmit={onSubmit} className="space-y-4">
             <Input
+              aria-label="Full name"
               autoComplete="name"
               placeholder="Full name"
               value={displayName}
@@ -58,6 +80,7 @@ export default function SignupPage() {
             />
             <Input
               type="email"
+              aria-label="Work email"
               autoComplete="email"
               placeholder="Work email"
               value={email}
@@ -66,6 +89,7 @@ export default function SignupPage() {
             />
             <Input
               type="password"
+              aria-label="Password"
               autoComplete="new-password"
               placeholder="Password (at least 8 characters)"
               minLength={8}
@@ -73,17 +97,18 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            {correlationId ? <p className="break-words text-xs text-muted-foreground">Reference: {correlationId}</p> : null}
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Creating account…" : "Sign up"}
             </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          </form>}
+          {!accountCreated ? <p className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login" className="underline">
               Sign in
             </Link>
-          </p>
+          </p> : null}
         </CardContent>
       </Card>
     </main>

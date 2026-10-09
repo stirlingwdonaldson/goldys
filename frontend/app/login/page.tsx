@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { isApiError, login } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,10 +20,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [correlationId, setCorrelationId] = useState<string | undefined>();
+  const busy = useRef(false);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (busy.current) return;
+    busy.current = true;
     setError(null);
+    setCorrelationId(undefined);
     setSubmitting(true);
     try {
       await login({ email, password });
@@ -31,6 +36,9 @@ export default function LoginPage() {
       router.refresh();
     } catch (err) {
       setError(isApiError(err) ? err.message : "Something went wrong. Try again.");
+      setCorrelationId(isApiError(err) ? err.correlationId : undefined);
+    } finally {
+      busy.current = false;
       setSubmitting(false);
     }
   }
@@ -46,6 +54,7 @@ export default function LoginPage() {
           <form onSubmit={onSubmit} className="space-y-4">
             <Input
               type="email"
+              aria-label="Email"
               autoComplete="email"
               placeholder="Email"
               value={email}
@@ -54,13 +63,15 @@ export default function LoginPage() {
             />
             <Input
               type="password"
+              aria-label="Password"
               autoComplete="current-password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            {correlationId ? <p className="break-words text-xs text-muted-foreground">Reference: {correlationId}</p> : null}
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Signing in…" : "Sign in"}
             </Button>
