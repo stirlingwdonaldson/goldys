@@ -16,8 +16,8 @@ export function SalesTrend({ points }: { points: SalesTrendPoint[] }) {
     schemaVersion: 2,
     id: "sales-trend",
     type: "time-series",
-    title: "Sales · last 14 days",
-    description: "Resolved gross sales per day.",
+    title: "Gross sales by day",
+    description: "Last 14 days, reconciled. Gaps are days still awaiting a decision.",
     series: [
       {
         key: "total",

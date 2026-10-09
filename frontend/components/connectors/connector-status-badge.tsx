@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import type { ConnectorRunStatus } from "@/lib/api";
 
 const STATUS_LABEL: Record<ConnectorRunStatus, string> = {
@@ -10,16 +10,18 @@ const STATUS_LABEL: Record<ConnectorRunStatus, string> = {
   never_run: "Never run",
 };
 
-const STATUS_CLASS: Record<ConnectorRunStatus, string> = {
-  success: "border-transparent bg-status-success text-status-success-foreground",
-  partial: "border-transparent bg-status-warning text-status-warning-foreground",
-  failed: "border-transparent bg-destructive text-destructive-foreground",
-  no_new_data: "border-transparent bg-muted text-muted-foreground",
-  running: "border-transparent bg-status-info text-status-info-foreground",
-  never_run: "border-transparent bg-muted text-muted-foreground",
+// "No new data" stays neutral and "Failed" stays red: an expected quiet period
+// must never look like a system fault (docs/design-system.md).
+const STATUS_VARIANT: Record<ConnectorRunStatus, BadgeProps["variant"]> = {
+  success: "success",
+  partial: "conflict",
+  failed: "failed",
+  no_new_data: "neutral",
+  running: "info",
+  never_run: "neutral",
 };
 
 /** A status badge for a connector run, shared by the dashboard and connectors screens. */
 export function ConnectorStatusBadge({ status }: { status: ConnectorRunStatus }) {
-  return <Badge className={STATUS_CLASS[status]}>{STATUS_LABEL[status]}</Badge>;
+  return <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>;
 }

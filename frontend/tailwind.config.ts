@@ -1,10 +1,11 @@
 import type { Config } from "tailwindcss";
+import { fontFamily } from "tailwindcss/defaultTheme";
 import tailwindcssAnimate from "tailwindcss-animate";
 
 // shadcn/ui's standard tailwind config shape (CSS-variable-driven theme).
-// `bunx shadcn@latest add` may rewrite this file; the `status` and `sidebar`
-// color groups below are Goldy's own additions and must survive any such
-// rewrite, or the semantic status / sidebar tokens stop resolving.
+// `bunx shadcn add` may rewrite this file; the `brand`, `status`, `source` and
+// `sidebar` color groups and the font families below are Goldy's own additions
+// (docs/design/ui-direction.md) and must survive any such rewrite.
 const config: Config = {
   darkMode: ["class"],
   content: [
@@ -18,7 +19,16 @@ const config: Config = {
       screens: { "2xl": "1400px" },
     },
     extend: {
+      fontFamily: {
+        // Set by geist/font in app/layout.tsx.
+        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
+        mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+      },
       colors: {
+        brand: {
+          DEFAULT: "hsl(var(--brand))",
+          foreground: "hsl(var(--brand-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -35,6 +45,7 @@ const config: Config = {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+          soft: "hsl(var(--destructive-soft))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -62,19 +73,37 @@ const config: Config = {
         status: {
           success: {
             DEFAULT: "hsl(var(--status-success))",
-            foreground: "hsl(var(--status-success-foreground))",
+            soft: "hsl(var(--status-success-soft))",
           },
-          warning: {
-            DEFAULT: "hsl(var(--status-warning))",
-            foreground: "hsl(var(--status-warning-foreground))",
-          },
-          info: {
-            DEFAULT: "hsl(var(--status-info))",
-            foreground: "hsl(var(--status-info-foreground))",
+          conflict: {
+            DEFAULT: "hsl(var(--status-conflict))",
+            soft: "hsl(var(--status-conflict-soft))",
           },
           missing: {
             DEFAULT: "hsl(var(--status-missing))",
-            foreground: "hsl(var(--status-missing-foreground))",
+            soft: "hsl(var(--status-missing-soft))",
+          },
+          info: {
+            DEFAULT: "hsl(var(--status-info))",
+            soft: "hsl(var(--status-info-soft))",
+          },
+        },
+        source: {
+          lightspeed: {
+            DEFAULT: "hsl(var(--source-lightspeed))",
+            soft: "hsl(var(--source-lightspeed-soft))",
+          },
+          ctb: {
+            DEFAULT: "hsl(var(--source-ctb))",
+            soft: "hsl(var(--source-ctb-soft))",
+          },
+          opentable: {
+            DEFAULT: "hsl(var(--source-opentable))",
+            soft: "hsl(var(--source-opentable-soft))",
+          },
+          deputy: {
+            DEFAULT: "hsl(var(--source-deputy))",
+            soft: "hsl(var(--source-deputy-soft))",
           },
         },
         sidebar: {

@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import type { FreshnessState, MissingDataStatus, TrustState, TrustSummary } from "@/lib/api/types";
 
 /** Venue-friendly labels for each trust state (mirrors the trust vocabulary in the design spec). */
@@ -22,14 +22,16 @@ export const MISSING_LABEL: Record<MissingDataStatus, string> = {
   NOT_PERMITTED: "Not permitted",
 };
 
-const TRUST_CLASS: Record<TrustState, string> = {
-  VERIFIED: "border-transparent bg-status-success text-status-success-foreground",
-  RESOLVED_BY_RULE: "border-transparent bg-status-info text-status-info-foreground",
-  MANUALLY_OVERRIDDEN: "border-transparent bg-status-info text-status-info-foreground",
-  SINGLE_SOURCE: "border-transparent bg-status-warning text-status-warning-foreground",
-  CONFLICTED: "border-transparent bg-destructive text-destructive-foreground",
-  INCOMPLETE: "border-transparent bg-status-warning text-status-warning-foreground",
-  NOT_RECEIVED: "border-transparent bg-status-missing text-status-missing-foreground",
+// A conflict is an expected, resolvable state, so it uses the conflict tone rather
+// than destructive (which is reserved for genuine system failures).
+export const TRUST_VARIANT: Record<TrustState, BadgeProps["variant"]> = {
+  VERIFIED: "success",
+  RESOLVED_BY_RULE: "info",
+  MANUALLY_OVERRIDDEN: "info",
+  SINGLE_SOURCE: "neutral",
+  CONFLICTED: "conflict",
+  INCOMPLETE: "conflict",
+  NOT_RECEIVED: "missing",
 };
 
 const FRESHNESS_LABEL: Record<Exclude<FreshnessState, "FRESH">, string> = {
@@ -80,7 +82,7 @@ export function TrustIndicator({ trust, value = null, status = null }: TrustIndi
   const secondary = missing ? (status ? MISSING_LABEL[status] : "No data") : freshnessText(trust);
   return (
     <span className="inline-flex items-center gap-1.5">
-      <Badge className={TRUST_CLASS[trust.state]}>{TRUST_LABEL[trust.state]}</Badge>
+      <Badge variant={TRUST_VARIANT[trust.state]}>{TRUST_LABEL[trust.state]}</Badge>
       <span className="text-xs text-muted-foreground">{secondary}</span>
     </span>
   );

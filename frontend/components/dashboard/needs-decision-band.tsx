@@ -1,25 +1,38 @@
 import Link from "next/link";
-import { Scale } from "lucide-react";
+import { ArrowRight, CircleCheck, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface NeedsDecisionBandProps {
   openCount: number;
   href?: string;
 }
 
-/** The dashboard's one live signal: how many numbers still need a decision. */
+/**
+ * The dashboard's one live signal: how many numbers still need a decision.
+ * When there is work, it carries the screen's single gold action.
+ */
 export function NeedsDecisionBand({ openCount, href = "/reconciliation" }: NeedsDecisionBandProps) {
   const hasConflicts = openCount > 0;
+  const Icon = hasConflicts ? Scale : CircleCheck;
   return (
     <div
-      className={`flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between ${
+      className={cn(
+        "flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center",
         hasConflicts
-          ? "border-transparent bg-status-warning/15"
-          : "border-transparent bg-status-success/10"
-      }`}
+          ? "border-status-conflict/20 bg-status-conflict-soft"
+          : "border-status-success/15 bg-status-success-soft",
+      )}
     >
-      <div className="flex items-start gap-3">
-        <Scale className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+      <div className="flex items-center gap-3">
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-background",
+            hasConflicts ? "text-status-conflict" : "text-status-success",
+          )}
+        >
+          <Icon className="size-[18px]" aria-hidden="true" />
+        </span>
         <div>
           <p className="text-sm font-semibold">
             {hasConflicts
@@ -28,14 +41,15 @@ export function NeedsDecisionBand({ openCount, href = "/reconciliation" }: Needs
           </p>
           <p className="text-sm text-muted-foreground">
             {hasConflicts
-              ? "These figures will disagree in your reports until resolved."
+              ? "These figures will show as disputed in your reports until resolved."
               : "Every reported figure currently agrees across your sources."}
           </p>
         </div>
       </div>
-      <Button asChild variant={hasConflicts ? "default" : "outline"} size="sm">
+      <Button asChild variant={hasConflicts ? "brand" : "outline"} size="sm" className="sm:ml-auto">
         <Link href={href}>
           {hasConflicts ? "Review in Reconciliation" : "Open Reconciliation"}
+          <ArrowRight aria-hidden="true" />
         </Link>
       </Button>
     </div>

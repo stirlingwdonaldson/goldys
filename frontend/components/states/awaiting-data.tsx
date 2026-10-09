@@ -21,13 +21,15 @@ export function AwaitingData({
   icon: Icon = Hourglass,
 }: AwaitingDataProps) {
   return (
-    <div className="rounded-lg border border-dashed bg-card p-4">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+    <div className="flex flex-col gap-3 rounded-xl border border-dashed p-4">
+      <div className="flex items-center gap-2.5 text-sm font-medium">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-muted">
+          <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+        </span>
         <span>{label}</span>
       </div>
-      <p className="mt-3 text-sm text-muted-foreground">{description}</p>
-      <p className="mt-2 text-xs text-muted-foreground/70">{reason}</p>
+      <p className="text-sm text-muted-foreground">{description}</p>
+      <p className="mt-auto text-xs text-muted-foreground/80">{reason}</p>
     </div>
   );
 }

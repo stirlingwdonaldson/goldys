@@ -5,6 +5,7 @@ import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
 import type { SupplierCogs, UomUnitCost } from "@/lib/api";
+import { PageHeader } from "@/components/layout/page-header";
 
 function money(v: number | null | undefined): string {
   return v == null || !Number.isFinite(Number(v)) ? "—" : `$${Number(v).toFixed(2)}`;
@@ -37,12 +38,7 @@ export default function KitchenPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Kitchen</h1>
-        <p className="text-sm text-muted-foreground">
-          Food cost, stock, and wastage — unit cost per measure and spend by supplier.
-        </p>
-      </div>
+      <PageHeader title="Kitchen" description="Food cost, stock, and wastage — unit cost per measure and spend by supplier." />
 
       {uom.length === 0 && suppliers.length === 0 ? (
         <EmptyState

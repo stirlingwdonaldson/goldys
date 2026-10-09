@@ -1,130 +1,136 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/reconciliation/pagination";
-import type { ExceptionStatus, ReconciliationException, SourceValue } from "@/lib/api";
+import { SourceLabel } from "@/components/sources/source-tile";
+import { formatCurrency, formatDay } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import type { ExceptionStatus, ReconciliationException } from "@/lib/api";
+import { difference, parseAmount } from "./source-values";
 
 const PAGE_SIZE = 25;
 
-type StatusFilter = "all" | "conflict" | "missing";
+export type StatusFilter = "all" | "conflict" | "missing";
 
-interface ExceptionsTableProps {
+interface ExceptionsListProps {
   kind: "daily" | "product";
   exceptions: ReconciliationException[];
+  status: StatusFilter;
+  query: string;
+  selectedId: string | null;
   onReview: (ex: ReconciliationException) => void;
+  /** J/K/Enter only act while no sheet or dialog is open. */
+  keyboardEnabled: boolean;
 }
 
-function formatValue(kind: "daily" | "product", value: string | null): string {
-  if (value == null) return "no data";
-  if (kind === "daily") {
-    const n = Number(value);
-    if (Number.isFinite(n)) {
-      return `$${n.toLocaleString("en-AU", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
-    }
-  }
-  return value;
+function isoDay(s: string): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? formatDay(s) : s;
 }
 
-function StatusBadge({ status }: { status: ExceptionStatus }) {
+/** "gross_sales" → "Gross sales". */
+function humanize(field: string): string {
+  const words = field.replace(/[_-]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** Counts (quantity sold, covers) are not money, so only other numeric fields get "$". */
+function isMoneyField(field: string): boolean {
+  return !/quantity|qty|count|covers/i.test(field);
+}
+
+function formatValue(kind: "daily" | "product", field: string, value: string | null): string {
+  if (value == null) return "No data";
+  const n = kind === "daily" ? parseAmount(value) : null;
+  if (n == null) return value;
+  return isMoneyField(field) ? formatCurrency(n) : n.toLocaleString("en-AU");
+}
+
+export function StatusBadge({ status, missingSource }: { status: ExceptionStatus; missingSource?: string }) {
   return status === "conflict" ? (
-    <Badge className="border-transparent bg-status-warning text-status-warning-foreground">
-      Conflict
-    </Badge>
+    <Badge variant="conflict">Conflict</Badge>
   ) : (
-    <Badge className="border-transparent bg-status-missing text-status-missing-foreground">
+    // Kept short so it never wraps in the row; the source with no data is named in the
+    // values column and in the tooltip.
+    <Badge variant="missing" title={missingSource ? `No data from ${missingSource}` : undefined}>
       Missing data
     </Badge>
   );
 }
 
-/** The "why": each source's reported value, plus the reason this record needs a decision. */
-function SourcesCell({
+export function filterExceptions(
+  exceptions: ReconciliationException[],
+  status: StatusFilter,
+  query: string,
+): ReconciliationException[] {
+  const q = query.trim().toLowerCase();
+  return exceptions.filter((e) => {
+    if (status !== "all" && e.status !== status) return false;
+    if (!q) return true;
+    const haystack = [e.recordId, e.id, e.entity, e.field, isoDay(e.recordId), isoDay(e.id.split(":")[0])]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(q);
+  });
+}
+
+/**
+ * The reconciliation queue. Each row shows every source's value and the size of
+ * the gap, so most decisions can be sized up before opening the record.
+ */
+export function ExceptionsList({
   kind,
-  sources,
+  exceptions,
   status,
-}: {
-  kind: "daily" | "product";
-  sources: SourceValue[];
-  status: ExceptionStatus;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      {sources.map((s) => (
-        <div key={s.source} className="flex items-baseline gap-2">
-          <span className="w-24 shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
-            {s.source}
-          </span>
-          <span
-            className={
-              s.value == null ? "text-sm text-muted-foreground" : "text-sm font-medium tabular-nums"
-            }
-          >
-            {formatValue(kind, s.value)}
-          </span>
-        </div>
-      ))}
-      <p className="mt-1 text-xs text-muted-foreground">
-        {status === "conflict"
-          ? "These figures disagree — review and choose the authoritative one."
-          : "Only one source has data — the other source is absent."}
-      </p>
-    </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-        active
-          ? "border-primary bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-/** A paginated table of reconciliation exceptions with status filtering. */
-export function ExceptionsTable({ kind, exceptions, onReview }: ExceptionsTableProps) {
-  const [status, setStatus] = useState<StatusFilter>("all");
+  query,
+  selectedId,
+  onReview,
+  keyboardEnabled,
+}: ExceptionsListProps) {
   const [page, setPage] = useState(1);
+  const [active, setActive] = useState(0);
+  const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  const filtered = status === "all" ? exceptions : exceptions.filter((e) => e.status === status);
+  const filtered = filterExceptions(exceptions, status, query);
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
   const start = (safePage - 1) * PAGE_SIZE;
   const rows = filtered.slice(start, start + PAGE_SIZE);
 
-  const conflictCount = exceptions.filter((e) => e.status === "conflict").length;
-  const missingCount = exceptions.filter((e) => e.status === "missing").length;
-
-  function changeStatus(next: StatusFilter) {
-    setStatus(next);
+  // Reset to the first page when the filter changes underneath us.
+  useEffect(() => {
     setPage(1);
-  }
+    setActive(0);
+  }, [status, query, kind]);
+
+  // J/K to move, Enter to open: a long queue shouldn't need the mouse (heuristic 7).
+  useEffect(() => {
+    if (!keyboardEnabled) return;
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "j" || e.key === "k") {
+        e.preventDefault();
+        setActive((i) => {
+          const next = e.key === "j" ? Math.min(rows.length - 1, i + 1) : Math.max(0, i - 1);
+          rowRefs.current[next]?.focus();
+          return next;
+        });
+      } else if (e.key === "Enter" && rows[active] && document.activeElement === document.body) {
+        onReview(rows[active]);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [keyboardEnabled, rows, active, onReview]);
 
   if (exceptions.length === 0) {
     return (
-      <div className="rounded-lg border bg-card p-6 text-center">
-        <p className="text-sm font-medium">All reconciled</p>
+      <div className="flex flex-col items-center rounded-xl border border-dashed px-6 py-12 text-center">
+        <CheckCircle2 className="size-6 text-status-success" aria-hidden="true" />
+        <p className="mt-3 text-sm font-semibold">All reconciled</p>
         <p className="mt-1 text-sm text-muted-foreground">
           No {kind === "daily" ? "daily-sales" : "product-sales"} items need a decision right now.
         </p>
@@ -133,77 +139,92 @@ export function ExceptionsTable({ kind, exceptions, onReview }: ExceptionsTableP
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-card">
-      <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
-        <span className="text-xs font-medium text-muted-foreground">Filter:</span>
-        <FilterChip active={status === "all"} onClick={() => changeStatus("all")}>
-          All ({exceptions.length})
-        </FilterChip>
-        <FilterChip active={status === "conflict"} onClick={() => changeStatus("conflict")}>
-          Conflicts ({conflictCount})
-        </FilterChip>
-        <FilterChip active={status === "missing"} onClick={() => changeStatus("missing")}>
-          Missing ({missingCount})
-        </FilterChip>
+    <div className="flex flex-col gap-2">
+      <div className="overflow-hidden rounded-xl border">
+        {rows.length === 0 ? (
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+            Nothing matches these filters.
+          </p>
+        ) : (
+          <ul>
+            {rows.map((ex, i) => {
+              const gap = difference(ex.sources);
+              const missing = ex.sources.find((s) => s.value == null)?.source;
+              const date = kind === "product" ? ex.id.split(":")[0] : ex.recordId;
+              const label = humanize(ex.field);
+              const selected = selectedId === ex.recordId || selectedId === ex.id;
+              return (
+                <li key={ex.id} className="border-t first:border-t-0">
+                  <button
+                    type="button"
+                    ref={(el) => {
+                      rowRefs.current[i] = el;
+                    }}
+                    onClick={() => onReview(ex)}
+                    onFocus={() => setActive(i)}
+                    aria-label={`Review ${kind === "product" ? ex.recordId : ""} ${isoDay(date)} ${ex.field}`.replace(/\s+/g, " ").trim()}
+                    className={cn(
+                      // Wide: one line of [record | values | status]. Narrow: values drop to their own
+                      // row under the record instead of wrapping mid-cell.
+                      "grid w-full grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 px-4 py-3 text-left lg:grid-cols-[minmax(7rem,9rem)_1fr_auto]",
+                      "transition-colors hover:bg-muted/50 focus-visible:bg-muted/60 focus-visible:outline-none",
+                      selected && "bg-muted/60 shadow-[inset_3px_0_0_hsl(var(--primary))]",
+                    )}
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">
+                        {kind === "product" ? ex.recordId : isoDay(date)}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {kind === "product" ? `${isoDay(date)} · ${label}` : label}
+                      </span>
+                    </span>
+                    <span className="col-span-2 row-start-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 lg:col-span-1 lg:row-start-auto">
+                      {ex.sources.map((s) => (
+                        <SourceLabel key={s.source} source={s.source}>
+                          <span
+                            className={cn(
+                              "text-sm tabular-nums",
+                              s.value == null ? "italic text-muted-foreground" : "font-medium",
+                            )}
+                          >
+                            {formatValue(kind, ex.field, s.value)}
+                          </span>
+                        </SourceLabel>
+                      ))}
+                      {gap != null ? (
+                        <Badge variant="neutral" className="tabular-nums">
+                          Δ {kind === "daily" && isMoneyField(ex.field) ? formatCurrency(gap) : gap.toLocaleString("en-AU")}
+                        </Badge>
+                      ) : null}
+                    </span>
+                    <span className="col-start-2 row-start-1 flex items-center gap-2 lg:col-start-3">
+                      <StatusBadge status={ex.status} missingSource={missing} />
+                      <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <Pagination
+          page={safePage}
+          pageCount={pageCount}
+          onPageChange={setPage}
+          from={filtered.length === 0 ? 0 : start + 1}
+          to={Math.min(start + PAGE_SIZE, filtered.length)}
+          total={filtered.length}
+        />
       </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-xs text-muted-foreground">
-              {kind === "product" && (
-                <th scope="col" className="px-4 py-2 font-medium">
-                  Date
-                </th>
-              )}
-              <th scope="col" className="px-4 py-2 font-medium">
-                {kind === "product" ? "Product" : "Trading date"}
-              </th>
-              <th scope="col" className="px-4 py-2 font-medium">
-                Status
-              </th>
-              <th scope="col" className="px-4 py-2 font-medium">
-                Sources
-              </th>
-              <th scope="col" className="px-4 py-2">
-                <span className="sr-only">Action</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((ex) => (
-              <tr key={ex.id} className="border-b last:border-0 hover:bg-accent/40">
-                {kind === "product" && (
-                  <td className="px-4 py-3 align-top tabular-nums text-muted-foreground">
-                    {ex.id.split(":")[0]}
-                  </td>
-                )}
-                <td className="px-4 py-3 align-top font-medium">{ex.recordId}</td>
-                <td className="px-4 py-3 align-top">
-                  <StatusBadge status={ex.status} />
-                </td>
-                <td className="px-4 py-3 align-top">
-                  <SourcesCell kind={kind} sources={ex.sources} status={ex.status} />
-                </td>
-                <td className="px-4 py-3 align-top text-right">
-                  <Button variant="outline" size="sm" onClick={() => onReview(ex)}>
-                    Review
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <Pagination
-        page={safePage}
-        pageCount={pageCount}
-        onPageChange={setPage}
-        from={filtered.length === 0 ? 0 : start + 1}
-        to={Math.min(start + PAGE_SIZE, filtered.length)}
-        total={filtered.length}
-      />
+      <p className="hidden items-center gap-1.5 px-1 text-xs text-muted-foreground md:flex">
+        <Kbd>J</Kbd>
+        <Kbd>K</Kbd> move · <Kbd>Enter</Kbd> open · <Kbd>Esc</Kbd> close
+      </p>
     </div>
   );
+}
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return <kbd className="rounded border bg-muted px-1.5 font-mono text-[10.5px]">{children}</kbd>;
 }

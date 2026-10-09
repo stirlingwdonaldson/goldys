@@ -21,7 +21,7 @@ export function DisagreementExplanation({ field, rule }: DisagreementExplanation
     : "No result chosen yet — review the figures and pick the authoritative source below.";
 
   return (
-    <div className="mt-3 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+    <div className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
       <p className="font-medium text-foreground">Why this needs attention</p>
       <p className="mt-1">
         The sources disagree on {field.label}: {sources}.

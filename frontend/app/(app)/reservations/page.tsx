@@ -5,6 +5,7 @@ import { useApiData } from "@/lib/use-api-data";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { AwaitingData } from "@/components/states/awaiting-data";
+import { PageHeader } from "@/components/layout/page-header";
 
 /** The venue's "today" as YYYY-MM-DD, using the browser's local calendar date. */
 function today(): string {
@@ -46,10 +47,7 @@ export default function ReservationsPage() {
   if (!s) {
     return (
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-xl font-semibold">Reservations</h1>
-          <p className="text-sm text-muted-foreground">Covers, bookings, and no-shows.</p>
-        </div>
+        <PageHeader title="Reservations" description="Covers, bookings, and no-shows." />
         <AwaitingData
           label="Reservations"
           description="Today's covers, bookings, no-shows, and walk-ins."
@@ -62,10 +60,7 @@ export default function ReservationsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Reservations</h1>
-        <p className="text-sm text-muted-foreground">Covers, bookings, and no-shows.</p>
-      </div>
+      <PageHeader title="Reservations" description="Covers, bookings, and no-shows." />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Stat label="Bookings" value={whole(s.bookings)} />

@@ -2,49 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Goldy's visual direction (docs/design/ui-direction.md). Variable names and the
+ * HSL-triplet format stay shadcn's, so every shadcn component restyles from
+ * these values without per-component edits. Light mode only during Phase 1.
+ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 100%; /* the raised inset panel */
+    --foreground: 240 6% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 6% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-    --status-success: 142 71% 35%;
-    --status-success-foreground: 0 0% 100%;
-    --status-warning: 38 92% 50%;
-    --status-warning-foreground: 222.2 84% 4.9%;
-    --status-info: 217 91% 60%;
-    --status-info-foreground: 0 0% 100%;
-    --status-missing: 215 16% 65%;
-    --status-missing-foreground: 0 0% 100%;
+    --popover-foreground: 240 6% 10%;
+    --primary: 240 6% 10%; /* ink: buttons, active nav */
+    --primary-foreground: 0 0% 100%;
+    --brand: 45 90% 60%; /* Goldy's gold: the one main action per screen */
+    --brand-foreground: 240 6% 10%;
+    --secondary: 60 6% 93%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 60 6% 93%;
+    --muted-foreground: 240 4% 35%;
+    --accent: 60 6% 93%;
+    --accent-foreground: 240 6% 10%;
+    --destructive: 0 73% 42%; /* genuine system failures only, never conflicts */
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 82% 96%;
+    --border: 50 9% 89%;
+    --input: 50 9% 86%;
+    --ring: 45 90% 45%;
+    --radius: 0.75rem;
+
+    /* Charts follow the status convention: green is good/healthy, red is bad/failed.
+       Never ink-black series. Further series fall back to source hues. */
+    --chart-1: 142 60% 36%;
+    --chart-2: 0 73% 50%;
+    --chart-3: 252 56% 57%;
+    --chart-4: 175 77% 26%;
+    --chart-5: 224 64% 50%;
+
+    /* Semantic status. Tinted "soft" backgrounds pair with the solid hue as text. */
+    --status-success: 142 72% 29%;
+    --status-success-soft: 141 45% 93%;
+    --status-conflict: 21 90% 40%; /* expected, resolvable disagreement; orange so it never reads as the gold brand */
+    --status-conflict-soft: 24 85% 94%;
+    --status-missing: 219 19% 40%;
+    --status-missing-soft: 218 32% 95%;
+    --status-info: 224 64% 45%;
+    --status-info-soft: 223 70% 95%;
+
+    /* Source identity. Used for source tiles and chart series only, never to encode state. */
+    --source-lightspeed: 252 56% 57%;
+    --source-lightspeed-soft: 254 76% 96%;
+    --source-ctb: 175 77% 26%;
+    --source-ctb-soft: 172 47% 92%;
+    --source-opentable: 322 65% 46%;
+    --source-opentable-soft: 323 70% 95%;
+    --source-deputy: 224 64% 50%;
+    --source-deputy-soft: 222 76% 95%;
+
+    --sidebar-background: 60 9% 95%; /* the canvas behind the inset panel */
+    --sidebar-foreground: 240 4% 35%;
+    --sidebar-primary: 240 6% 10%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 60 6% 91%;
+    --sidebar-accent-foreground: 240 6% 10%;
+    --sidebar-border: 50 9% 89%;
+    --sidebar-ring: 45 90% 45%;
   }
 }
 
@@ -53,6 +77,12 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-sidebar text-foreground antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 }

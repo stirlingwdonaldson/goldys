@@ -1,16 +1,26 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { History, Search } from "lucide-react";
 import { useApi } from "@/lib/demo-mode";
 import { useApiData } from "@/lib/use-api-data";
 import { useToast } from "@/components/feedback/toast";
+import { useShellStatus } from "@/components/app-shell/shell-status";
+import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { ReconciliationDrillIn } from "@/components/reconciliation/drill-in";
-import { ExceptionsTable } from "@/components/reconciliation/exceptions-table";
+import { ExceptionsList, type StatusFilter } from "@/components/reconciliation/exceptions-table";
 import { ReconciliationAudit } from "@/components/reconciliation/reconciliation-audit";
+import type { ReconciliationException } from "@/lib/api";
 
 export default function ReconciliationPage() {
   return (
@@ -20,72 +30,93 @@ export default function ReconciliationPage() {
   );
 }
 
+type Tab = "daily" | "product";
+
+/**
+ * All view state lives in the URL (tab, filter, search, open record), so Back
+ * closes the sheet instead of leaving the page, and any view can be bookmarked
+ * or shared (heuristics 3 and 7).
+ */
 function ReconciliationContent() {
   const api = useApi();
-  const searchParams = useSearchParams();
-  const { data: exceptions, loading, error, reload } = useApiData((a) =>
-    a.listReconciliationExceptions(),
-  );
-  const { data: productExceptions, reload: reloadProducts } = useApiData((a) =>
-    a.listProductExceptions(),
-  );
-  const { data: audit } = useApiData((a) => a.listReconciliationAudit());
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
   const { toast } = useToast();
-  const recordParam = searchParams.get("record");
-  const dateParam = searchParams.get("date");
-  const productParam = searchParams.get("product");
-  const [selectedId, setSelectedId] = useState<string | null>(recordParam);
-  const [selectedProduct, setSelectedProduct] = useState<{
-    date: string;
-    product: string;
-  } | null>(dateParam && productParam ? { date: dateParam, product: productParam } : null);
-  const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"daily" | "product">("daily");
+  const shell = useShellStatus();
 
-  async function handleSave(field: string, source: string, reason?: string) {
-    if (!selectedId) return;
-    setSaving(true);
-    try {
-      await api.saveOverride({ recordId: selectedId, field, source, reason });
-      toast({
-        title: "Override saved",
-        description: `${field} is now resolved from ${source}.`,
-        tone: "success",
-      });
-      await reload();
-      setSelectedId(null);
-    } catch (e) {
-      toast({
-        title: "Couldn't save override",
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
-    } finally {
-      setSaving(false);
+  const { data: exceptions, loading, error, reload } = useApiData((a) => a.listReconciliationExceptions());
+  const { data: productExceptions, reload: reloadProducts } = useApiData((a) => a.listProductExceptions());
+  const { data: audit, reload: reloadAudit } = useApiData((a) => a.listReconciliationAudit());
+
+  const tab: Tab = params.get("tab") === "product" ? "product" : "daily";
+  const statusParam = params.get("status");
+  const status: StatusFilter = statusParam === "conflict" || statusParam === "missing" ? statusParam : "all";
+  const query = params.get("q") ?? "";
+  const recordId = params.get("record");
+  const date = params.get("date");
+  const product = params.get("product");
+  const sheetOpen = Boolean(recordId || (date && product));
+
+  const [saving, setSaving] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  // Whether *we* pushed the open-record entry; if so, closing pops it so Back stays meaningful.
+  const pushedRecord = useRef(false);
+
+  const setParams = useCallback(
+    (patch: Record<string, string | null>, mode: "push" | "replace" = "replace") => {
+      const next = new URLSearchParams(params.toString());
+      for (const [k, v] of Object.entries(patch)) {
+        if (v == null || v === "") next.delete(k);
+        else next.set(k, v);
+      }
+      const qs = next.toString();
+      const url = qs ? `${pathname}?${qs}` : pathname;
+      if (mode === "push") router.push(url, { scroll: false });
+      else router.replace(url, { scroll: false });
+    },
+    [params, pathname, router],
+  );
+
+  const openRecord = useCallback(
+    (ex: ReconciliationException) => {
+      pushedRecord.current = true;
+      if (tab === "product") setParams({ record: null, date: ex.id.split(":")[0], product: ex.recordId }, "push");
+      else setParams({ record: ex.recordId, date: null, product: null }, "push");
+    },
+    [setParams, tab],
+  );
+
+  function closeRecord() {
+    if (pushedRecord.current) {
+      pushedRecord.current = false;
+      router.back();
+    } else {
+      setParams({ record: null, date: null, product: null });
     }
   }
 
-  async function handleProductSave(_field: string, source: string, reason?: string) {
-    if (!selectedProduct) return;
+  async function handleSave(field: string, source: string, reason: string, label: string) {
     setSaving(true);
     try {
-      await api.saveProductOverride({
-        date: selectedProduct.date,
-        product: selectedProduct.product,
-        source,
-        reason,
-      });
+      if (recordId) {
+        await api.saveOverride({ recordId, field, source, reason });
+      } else if (date && product) {
+        await api.saveProductOverride({ date, product, source, reason });
+      }
+      const subject = recordId ? label : product;
       toast({
-        title: "Override saved",
-        description: `${selectedProduct.product} is now resolved from ${source}.`,
+        title: `${subject} now uses ${source}`,
+        description: "Saved to the change history.",
         tone: "success",
       });
-      await reloadProducts();
-      setSelectedProduct(null);
+      await Promise.all([reload(), reloadProducts(), reloadAudit()]);
+      shell.refresh();
+      closeRecord();
     } catch (e) {
       toast({
-        title: "Couldn't save override",
-        description: e instanceof Error ? e.message : undefined,
+        title: "Couldn't save your decision",
+        description: e instanceof Error ? `${e.message} Your choice is still selected; try again.` : undefined,
         tone: "error",
       });
     } finally {
@@ -106,102 +137,109 @@ function ReconciliationContent() {
     );
   }
 
-  if (selectedId) {
-    return (
-      <ReconciliationDrillIn
-        fetchRecord={(api) => api.getReconciliationRecord(selectedId)}
-        deps={[selectedId]}
-        onBack={() => setSelectedId(null)}
-        onSave={handleSave}
-        saving={saving}
-      />
-    );
-  }
-
-  if (selectedProduct) {
-    return (
-      <ReconciliationDrillIn
-        fetchRecord={(api) =>
-          api.getProductRecord(selectedProduct.date, selectedProduct.product)
-        }
-        deps={[selectedProduct.date, selectedProduct.product]}
-        onBack={() => setSelectedProduct(null)}
-        onSave={handleProductSave}
-        saving={saving}
-      />
-    );
-  }
-
   const daily = exceptions ?? [];
   const products = productExceptions ?? [];
   const total = daily.length + products.length;
+  const current = tab === "daily" ? daily : products;
+  const counts = {
+    all: current.length,
+    conflict: current.filter((e) => e.status === "conflict").length,
+    missing: current.filter((e) => e.status === "missing").length,
+  };
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Reconciliation</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {total === 0
-            ? "Field-level discrepancies between your sources."
-            : `${total} ${total === 1 ? "item needs" : "items need"} a decision — where sources disagree or one is missing.`}
-        </p>
+      <PageHeader
+        title="Reconciliation"
+        status={total > 0 ? <Badge variant="conflict">{total} open</Badge> : <Badge variant="success">All clear</Badge>}
+        description="Figures where your sources disagree or one is missing. Fields that agree are hidden."
+        actions={
+          <Button variant="ghost" size="sm" onClick={() => setHistoryOpen(true)}>
+            <History aria-hidden="true" />
+            Change history
+          </Button>
+        }
+      />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Tabs value={tab} onValueChange={(v) => setParams({ tab: v === "daily" ? null : v, status: null })}>
+          <TabsList aria-label="Reconciliation categories">
+            <TabsTrigger value="daily">
+              Daily sales <span className="tabular-nums text-muted-foreground">{daily.length}</span>
+            </TabsTrigger>
+            <TabsTrigger value="product">
+              Product sales <span className="tabular-nums text-muted-foreground">{products.length}</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <ToggleGroup
+          type="single"
+          size="sm"
+          variant="outline"
+          value={status}
+          onValueChange={(v) => v && setParams({ status: v === "all" ? null : v })}
+          aria-label="Filter by status"
+          className="gap-0 [&>*]:rounded-none [&>*:first-child]:rounded-l-lg [&>*:last-child]:rounded-r-lg [&>*+*]:-ml-px"
+        >
+          <ToggleGroupItem value="all">All {counts.all}</ToggleGroupItem>
+          <ToggleGroupItem value="conflict">Conflicts {counts.conflict}</ToggleGroupItem>
+          <ToggleGroupItem value="missing">Missing {counts.missing}</ToggleGroupItem>
+        </ToggleGroup>
+
+        <div className="relative ml-auto w-full sm:w-64">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(e) => setParams({ q: e.target.value })}
+            placeholder={tab === "daily" ? "Filter by date" : "Filter by product or date"}
+            aria-label="Filter exceptions"
+            className="h-9 pl-8"
+          />
+        </div>
       </div>
 
-      <div role="tablist" aria-label="Reconciliation categories" className="flex gap-4 border-b">
-        <TabButton active={tab === "daily"} onClick={() => setTab("daily")}>
-          Daily sales ({daily.length})
-        </TabButton>
-        <TabButton active={tab === "product"} onClick={() => setTab("product")}>
-          Product sales ({products.length})
-        </TabButton>
-      </div>
+      <ExceptionsList
+        kind={tab}
+        exceptions={current}
+        status={status}
+        query={query}
+        selectedId={tab === "daily" ? recordId : product}
+        onReview={openRecord}
+        keyboardEnabled={!sheetOpen && !historyOpen}
+      />
 
-      {tab === "daily" ? (
-        <ExceptionsTable
-          kind="daily"
-          exceptions={daily}
-          onReview={(ex) => setSelectedId(ex.recordId)}
-        />
-      ) : (
-        <ExceptionsTable
-          kind="product"
-          exceptions={products}
-          onReview={(ex) =>
-            setSelectedProduct({ date: ex.id.split(":")[0], product: ex.recordId })
-          }
-        />
-      )}
+      <Sheet open={sheetOpen} onOpenChange={(o) => !o && closeRecord()}>
+        <SheetContent side="right" className="flex flex-col gap-0 p-0 sm:max-w-md">
+          {recordId ? (
+            <ReconciliationDrillIn
+              fetchRecord={(a) => a.getReconciliationRecord(recordId)}
+              deps={[recordId]}
+              onSave={handleSave}
+              saving={saving}
+            />
+          ) : date && product ? (
+            <ReconciliationDrillIn
+              fetchRecord={(a) => a.getProductRecord(date, product)}
+              deps={[date, product]}
+              onSave={handleSave}
+              saving={saving}
+            />
+          ) : null}
+        </SheetContent>
+      </Sheet>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-muted-foreground">Change history</h2>
-        <ReconciliationAudit entries={audit ?? []} />
-      </section>
+      {/* History is one click away rather than always rendered under the queue (heuristic 8). */}
+      <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
+        <SheetContent side="right" className="flex flex-col gap-4 overflow-y-auto sm:max-w-md">
+          <SheetHeader className="text-left">
+            <SheetTitle>Change history</SheetTitle>
+            <SheetDescription>Every rule change and manual decision, newest first.</SheetDescription>
+          </SheetHeader>
+          <ReconciliationAudit entries={audit ?? []} />
+        </SheetContent>
+      </Sheet>
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={`border-b-2 px-2 pb-2 text-sm font-medium transition-colors ${
-        active
-          ? "border-primary text-foreground"
-          : "border-transparent text-muted-foreground hover:text-foreground"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

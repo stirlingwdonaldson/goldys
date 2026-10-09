@@ -1,0 +1,1046 @@
+<title>Goldy's UI Direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a long reference doc; full-bleed mockup "screens" (always light, they show the product) between narrow prose columns. */
+:root {
+  /* page chrome */
+  --bg: #FAFAF8;
+  --fg: #17171A;
+  --fg-2: #55555C;
+  --fg-3: #8A8A90;
+  --line: #E6E5E0;
+  --panel: #FFFFFF;
+  --code-bg: #F2F2EE;
+  --accent: #8A6400;
+  --accent-fill: #F5C83B;
+  --pin: #17171A;
+  --pin-fg: #F5C83B;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* the proposed product palette, used inside mockups (deliberately light: Phase 1 is light-mode only) */
+  --g-canvas: #F4F4F1;
+  --g-surface: #FFFFFF;
+  --g-ink: #17171A;
+  --g-ink-2: #55555C;
+  --g-ink-3: #8A8A90;
+  --g-line: #E6E5E0;
+  --g-hover: #EEEEEA;
+  --g-gold: #F5C83B;
+  --g-gold-soft: #FDF4D3;
+  --g-gold-ink: #6B4E00;
+  --g-ok: #15803D; --g-ok-soft: #E7F5EC;
+  --g-conflict: #C2410C; --g-conflict-soft: #FDEEE4;
+  --g-missing: #52607A; --g-missing-soft: #EEF1F6;
+  --g-fail: #B91C1C; --g-fail-soft: #FDECEC;
+  --g-ls: #6E56CF; --g-ls-soft: #F1EDFC;
+  --g-ctb: #0F766E; --g-ctb-soft: #E3F4F2;
+  --g-ot: #C2298A; --g-ot-soft: #FBEAF4;
+  --g-dep: #2F5BD0; --g-dep-soft: #E9EFFC;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121214; --fg: #EDEDEA; --fg-2: #A9A9AE; --fg-3: #77777D; --line: #2A2A2E;
+    --panel: #1A1A1D; --code-bg: #1E1E21; --accent: #F5C83B; --accent-fill: #F5C83B;
+    --pin: #F5C83B; --pin-fg: #17171A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121214; --fg: #EDEDEA; --fg-2: #A9A9AE; --fg-3: #77777D; --line: #2A2A2E;
+  --panel: #1A1A1D; --code-bg: #1E1E21; --accent: #F5C83B; --accent-fill: #F5C83B;
+  --pin: #F5C83B; --pin-fg: #17171A; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+.wrap { padding-inline: 16px; padding-block: 48px 96px; }
+.col { max-width: 760px; margin-inline: auto; }
+.wide { max-width: 1240px; margin-inline: auto; }
+h1, h2, h3 { text-wrap: balance; letter-spacing: -0.02em; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(32px, 5vw, 46px); font-weight: 650; }
+h2 { font-size: 26px; font-weight: 650; }
+h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-3); font-weight: 500; }
+.lede { font-size: 18px; color: var(--fg-2); max-width: 62ch; }
+.muted { color: var(--fg-2); }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+:not(pre) > code { background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+a { color: inherit; text-decoration-color: var(--fg-3); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+section { margin-top: 88px; }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+.toc a { text-decoration: none; font-size: 13px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); background: var(--panel); }
+.toc a:hover { color: var(--fg); border-color: var(--fg-3); }
+
+/* six moves */
+.moves { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 28px; }
+.move { background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.move .from { font-size: 12px; color: var(--fg-3); }
+.move p { font-size: 14px; color: var(--fg-2); }
+.move .demo { margin-top: auto; padding-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+/* mockup frame */
+.frame-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 16px; }
+.frame-scroll { overflow-x: auto; border-radius: 16px; border: 1px solid var(--line); }
+.frame-note { font-size: 13px; color: var(--fg-3); margin-top: 10px; }
+.toggle-pins { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 28px; margin-top: 20px; font-size: 14px; color: var(--fg-2); }
+.notes li { list-style: none; display: flex; gap: 10px; align-items: baseline; }
+.notes ul { padding: 0; margin: 0; display: contents; }
+.notes .k { flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 500; background: var(--pin); color: var(--pin-fg); border-radius: 999px; padding: 1px 7px; }
+
+/* ===== product mockup styles (fixed light palette) ===== */
+.app { --r: 12px; color-scheme: light; color: var(--g-ink); background: var(--g-canvas); font-family: var(--font-sans); font-size: 13px; line-height: 1.45; display: grid; grid-template-columns: 228px 1fr; min-width: 1060px; padding: 8px 8px 8px 0; }
+.app button { font: inherit; color: inherit; }
+.app .tab-num, .app .num { font-variant-numeric: tabular-nums; }
+.side { padding: 10px 10px 10px 12px; display: flex; flex-direction: column; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 6px 6px; }
+.logo { width: 30px; height: 30px; border-radius: 9px; background: var(--g-gold); display: grid; place-items: center; font-weight: 700; font-size: 15px; color: var(--g-ink); }
+.brand b { font-size: 14px; font-weight: 650; display: block; line-height: 1.1; }
+.brand small { font-size: 11.5px; color: var(--g-ink-3); }
+.search { display: flex; align-items: center; gap: 8px; background: var(--g-surface); border: 1px solid var(--g-line); border-radius: 9px; padding: 7px 9px; color: var(--g-ink-3); }
+.kbd { margin-left: auto; font-family: var(--font-mono); font-size: 10.5px; border: 1px solid var(--g-line); border-radius: 5px; padding: 0 5px; color: var(--g-ink-3); background: var(--g-canvas); }
+.nav-group { display: flex; flex-direction: column; gap: 1px; }
+.nav-label { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--g-ink-3); font-weight: 500; padding: 4px 8px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; font-size: 13.5px; color: var(--g-ink-2); }
+.nav-item svg { width: 16px; height: 16px; flex: none; }
+.nav-item.on { background: var(--g-ink); color: #fff; font-weight: 500; }
+.nav-item .count { margin-left: auto; font-size: 11px; font-weight: 600; background: var(--g-conflict-soft); color: var(--g-conflict); border-radius: 999px; padding: 0 7px; }
+.nav-item.on .count { background: rgba(255,255,255,.16); color: #fff; }
+.nav-item .dot { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--g-fail); }
+.nav-item.soon { color: var(--g-ink-3); }
+.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--g-line); padding-top: 10px; }
+.me { display: flex; align-items: center; gap: 9px; padding: 6px 8px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--g-gold-soft); color: var(--g-gold-ink); display: grid; place-items: center; font-weight: 600; font-size: 11px; }
+.me b { font-weight: 550; font-size: 13px; display: block; line-height: 1.15; }
+.me small { color: var(--g-ink-3); font-size: 11.5px; }
+
+.main { background: var(--g-surface); border: 1px solid var(--g-line); border-radius: 14px; box-shadow: 0 1px 2px rgba(23,23,26,.04), 0 4px 16px rgba(23,23,26,.04); display: flex; flex-direction: column; min-width: 0; position: relative; overflow: hidden; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 22px; border-bottom: 1px solid var(--g-line); }
+.crumbs { display: flex; gap: 6px; align-items: center; color: var(--g-ink-3); font-size: 13px; }
+.crumbs b { color: var(--g-ink); font-weight: 500; }
+.topbar .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.fresh { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--g-ink-2); border: 1px solid var(--g-line); border-radius: 999px; padding: 4px 10px 4px 8px; }
+.fresh i { width: 7px; height: 7px; border-radius: 50%; background: var(--g-ok); box-shadow: 0 0 0 3px var(--g-ok-soft); }
+.fresh.warn i { background: var(--g-fail); box-shadow: 0 0 0 3px var(--g-fail-soft); }
+.btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 9px; padding: 7px 12px; font-weight: 550; font-size: 13px; border: 1px solid var(--g-line); background: var(--g-surface); cursor: default; white-space: nowrap; }
+.btn svg { width: 15px; height: 15px; }
+.btn.ink { background: var(--g-ink); color: #fff; border-color: var(--g-ink); }
+.btn.gold { background: var(--g-gold); color: var(--g-ink); border-color: #E2B42A; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--g-ink-2); }
+.btn.sm { padding: 5px 10px; font-size: 12.5px; }
+.content { padding: 24px 26px 30px; display: flex; flex-direction: column; gap: 22px; }
+.page-head { display: flex; align-items: end; gap: 16px; flex-wrap: wrap; }
+.page-head h4 { margin: 0; font-size: 24px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; }
+.page-head p { color: var(--g-ink-2); font-size: 13.5px; margin-top: 4px; }
+.page-head .right { margin-left: auto; display: flex; gap: 8px; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 9px; font-size: 11.5px; font-weight: 550; white-space: nowrap; line-height: 1.7; }
+.pill.ok { background: var(--g-ok-soft); color: var(--g-ok); }
+.pill.conflict { background: var(--g-conflict-soft); color: var(--g-conflict); }
+.pill.missing { background: var(--g-missing-soft); color: var(--g-missing); }
+.pill.fail { background: var(--g-fail-soft); color: var(--g-fail); }
+.pill.neutral { background: var(--g-hover); color: var(--g-ink-2); }
+.pill.gold { background: var(--g-gold-soft); color: var(--g-gold-ink); }
+.pill svg { width: 12px; height: 12px; }
+.src { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--g-ink-2); white-space: nowrap; }
+.tile { width: 20px; height: 20px; border-radius: 6px; display: inline-grid; place-items: center; font-size: 9.5px; font-weight: 700; flex: none; letter-spacing: 0; }
+.tile.lg { width: 34px; height: 34px; border-radius: 9px; font-size: 12px; }
+.t-ls { background: var(--g-ls-soft); color: var(--g-ls); }
+.t-ctb { background: var(--g-ctb-soft); color: var(--g-ctb); }
+.t-ot { background: var(--g-ot-soft); color: var(--g-ot); }
+.t-dep { background: var(--g-dep-soft); color: var(--g-dep); }
+.t-gold { background: var(--g-gold-soft); color: var(--g-gold-ink); }
+.t-ink { background: var(--g-hover); color: var(--g-ink-2); }
+
+.callout { display: flex; align-items: center; gap: 14px; border-radius: var(--r); padding: 14px 16px; background: var(--g-conflict-soft); border: 1px solid #F6D3BF; }
+.callout b { font-weight: 600; font-size: 14px; }
+.callout p { color: var(--g-ink-2); font-size: 13px; }
+.callout .btn { margin-left: auto; }
+.ic-tile { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+.ic-tile svg { width: 18px; height: 18px; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--g-line); border-radius: var(--r); }
+.kpi { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--g-line); }
+.kpi .lab { display: flex; justify-content: space-between; align-items: center; color: var(--g-ink-2); font-size: 12.5px; }
+.kpi .val { font-size: 27px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.kpi .row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--g-ink-3); flex-wrap: wrap; }
+.delta { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 0 7px; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.delta.good { background: var(--g-ok-soft); color: var(--g-ok); }
+.delta.bad { background: var(--g-fail-soft); color: var(--g-fail); }
+.kpi svg.spark { width: 100%; height: 34px; display: block; }
+.kpi .foot { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 2px; }
+
+.grid2 { display: grid; grid-template-columns: 1.55fr 1fr; gap: 16px; }
+.card { border: 1px solid var(--g-line); border-radius: var(--r); padding: 16px 18px; min-width: 0; }
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.card-head h5 { margin: 0; font-size: 14px; font-weight: 600; }
+.card-head .right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.kebab { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; color: var(--g-ink-3); }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--g-ink-2); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+svg.chart { width: 100%; height: 210px; display: block; overflow: visible; }
+svg.chart text { font-family: var(--font-sans); font-size: 11px; fill: var(--g-ink-3); }
+
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.t th { text-align: left; font-weight: 500; color: var(--g-ink-3); font-size: 12px; padding: 0 0 8px; border-bottom: 1px solid var(--g-line); }
+table.t td { padding: 9px 0; border-bottom: 1px solid var(--g-line); vertical-align: middle; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t .r { text-align: right; font-variant-numeric: tabular-nums; }
+.share { display: inline-block; height: 6px; border-radius: 3px; background: var(--g-gold); vertical-align: middle; }
+.sub { display: block; font-size: 11.5px; color: var(--g-ink-3); }
+
+/* pins */
+.has-pin { position: relative; }
+.pin { position: absolute; z-index: 5; font-family: var(--font-mono); font-size: 10px; font-weight: 500; background: var(--g-ink); color: var(--g-gold); border-radius: 999px; padding: 1px 6px; box-shadow: 0 0 0 2px var(--g-surface); pointer-events: none; line-height: 1.5; }
+.pins-off .pin { display: none; }
+
+/* reconciliation */
+.seg { display: inline-flex; background: var(--g-hover); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg span { padding: 5px 12px; border-radius: 8px; font-size: 13px; color: var(--g-ink-2); font-weight: 500; }
+.seg span.on { background: var(--g-surface); color: var(--g-ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.seg em { font-style: normal; color: var(--g-ink-3); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.tgroup { display: inline-flex; border: 1px solid var(--g-line); border-radius: 9px; overflow: hidden; }
+.tgroup span { padding: 5px 11px; font-size: 12.5px; color: var(--g-ink-2); }
+.tgroup span + span { border-left: 1px solid var(--g-line); }
+.tgroup span.on { background: var(--g-ink); color: #fff; }
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toolbar .search { min-width: 220px; margin-left: auto; padding: 6px 9px; }
+.ex-list { border: 1px solid var(--g-line); border-radius: var(--r); overflow: hidden; }
+.ex { display: grid; grid-template-columns: 112px 1fr auto; gap: 14px; padding: 12px 14px; align-items: center; border-top: 1px solid var(--g-line); }
+.ex:first-child { border-top: 0; }
+.ex.sel { background: #FBFBF8; box-shadow: inset 3px 0 0 var(--g-ink); }
+.ex .date b { font-weight: 600; display: block; }
+.ex .vals { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.ex .vals .src b { color: var(--g-ink); font-weight: 550; font-variant-numeric: tabular-nums; }
+.ex .vals .none { color: var(--g-ink-3); font-style: italic; }
+.ex .field { font-size: 12px; color: var(--g-ink-3); }
+.list-foot { display: flex; justify-content: space-between; color: var(--g-ink-3); font-size: 12px; padding: 10px 2px 0; }
+.list-foot .kbd { margin-left: 0; }
+.recon { display: grid; grid-template-columns: 1fr 400px; min-height: 640px; }
+.recon-left { padding: 24px 26px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.sheet { border-left: 1px solid var(--g-line); background: var(--g-surface); box-shadow: -12px 0 32px rgba(23,23,26,.06); display: flex; flex-direction: column; }
+.sheet-head { padding: 18px 20px 14px; border-bottom: 1px solid var(--g-line); display: flex; flex-direction: column; gap: 6px; }
+.sheet-head .top { display: flex; align-items: center; gap: 8px; }
+.sheet-head .top .x { margin-left: auto; color: var(--g-ink-3); display: flex; gap: 6px; align-items: center; font-size: 11.5px; }
+.sheet-head h6 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -0.015em; }
+.sheet-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.explain { background: var(--g-canvas); border-radius: 10px; padding: 11px 12px; font-size: 12.5px; color: var(--g-ink-2); }
+.explain b { color: var(--g-ink); font-weight: 600; }
+.choice { border: 1px solid var(--g-line); border-radius: 11px; padding: 12px; display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; }
+.choice.on { border-color: var(--g-ink); box-shadow: 0 0 0 1px var(--g-ink); }
+.radio { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--g-ink-3); grid-row: span 2; }
+.choice.on .radio { border: 5px solid var(--g-ink); }
+.choice .amt { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.choice .meta { grid-column: 2 / 4; font-size: 11.5px; color: var(--g-ink-3); }
+.field-lab { font-size: 12.5px; font-weight: 550; display: flex; justify-content: space-between; }
+.field-lab span { font-weight: 400; color: var(--g-ink-3); }
+.textarea { border: 1px solid var(--g-line); border-radius: 9px; padding: 9px 10px; min-height: 64px; color: var(--g-ink); font-size: 12.5px; }
+.textarea .caret { display: inline-block; width: 1px; height: 14px; background: var(--g-ink); vertical-align: -2px; }
+.rule-line { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--g-ink-2); }
+.agree { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--g-ink-2); border-top: 1px dashed var(--g-line); padding-top: 12px; }
+.sheet-foot { padding: 14px 20px; border-top: 1px solid var(--g-line); display: flex; gap: 8px; justify-content: flex-end; }
+.toast { position: absolute; left: 26px; bottom: 22px; background: var(--g-ink); color: #fff; border-radius: 12px; padding: 11px 12px 11px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.18); font-size: 13px; }
+.toast .ok { width: 18px; height: 18px; border-radius: 50%; background: #2EA35A; display: grid; place-items: center; }
+.toast .undo { color: var(--g-gold); font-weight: 600; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,.08); }
+
+/* data health */
+.conns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.conn { border: 1px solid var(--g-line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.conn.failed { border-color: #F2C4C4; }
+.conn-head { display: flex; gap: 12px; align-items: center; }
+.conn-head b { font-weight: 600; font-size: 14px; display: block; line-height: 1.2; }
+.conn-head small { color: var(--g-ink-3); font-size: 12px; }
+.conn-head .pill { margin-left: auto; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.facts div { font-size: 12px; color: var(--g-ink-3); }
+.facts b { display: block; font-size: 13px; color: var(--g-ink); font-weight: 550; font-variant-numeric: tabular-nums; }
+.bars30 { display: flex; gap: 2px; height: 22px; align-items: stretch; }
+.bars30 i { flex: 1; border-radius: 2px; background: var(--g-ok); opacity: .75; }
+.bars30 i.n { background: var(--g-line); opacity: 1; }
+.bars30 i.f { background: var(--g-fail); opacity: 1; }
+.bars30 i.m { background: var(--g-missing); opacity: .5; }
+.bars-cap { display: flex; justify-content: space-between; font-size: 11px; color: var(--g-ink-3); margin-top: -6px; }
+.alert { display: flex; gap: 10px; background: var(--g-fail-soft); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; color: var(--g-ink); align-items: start; }
+.alert svg { width: 16px; height: 16px; color: var(--g-fail); flex: none; margin-top: 2px; }
+.alert p { color: var(--g-ink-2); }
+.alert .acts { display: flex; gap: 6px; margin-top: 8px; }
+.conn .actions { display: flex; gap: 8px; align-items: center; }
+.conn .actions .sub { margin-left: auto; }
+
+/* rules canvas */
+.canvas { background-color: var(--g-canvas); background-image: radial-gradient(#D9D8D2 1px, transparent 1.2px); background-size: 18px 18px; padding: 34px 24px 40px; display: flex; flex-direction: column; align-items: center; min-width: 1060px; position: relative; }
+.canvas-bar { position: absolute; top: 14px; left: 16px; right: 16px; display: flex; align-items: center; gap: 10px; }
+.canvas-bar b { font-size: 15px; font-weight: 650; }
+.canvas-bar .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.node { background: var(--g-surface); border: 1px solid var(--g-line); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 3px 10px rgba(0,0,0,.04); padding: 12px 14px; display: flex; gap: 12px; align-items: center; width: 330px; }
+.node b { font-weight: 600; font-size: 13.5px; display: block; }
+.node small { color: var(--g-ink-3); font-size: 12px; }
+.node .ic-tile { width: 34px; height: 34px; }
+.wire { width: 1.5px; height: 26px; background: #C9C8C1; position: relative; }
+.plus { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 16px; height: 16px; border-radius: 5px; background: var(--g-surface); border: 1px solid #C9C8C1; display: grid; place-items: center; font-size: 12px; line-height: 1; color: var(--g-ink-2); }
+.branch { position: relative; width: 600px; height: 34px; }
+.branch .h { position: absolute; top: 0; left: 135px; right: 135px; height: 18px; border: 1.5px solid #C9C8C1; border-bottom: 0; border-radius: 12px 12px 0 0; }
+.branch .lab { position: absolute; top: -10px; background: var(--g-surface); border: 1px solid var(--g-line); border-radius: 999px; padding: 0 9px; font-size: 11.5px; color: var(--g-ink-2); }
+.branch .v1 { position: absolute; top: 18px; left: 134px; width: 1.5px; height: 16px; background: #C9C8C1; }
+.branch .v2 { position: absolute; top: 18px; right: 134px; width: 1.5px; height: 16px; background: #C9C8C1; }
+.branches { display: flex; gap: 0; width: 600px; justify-content: space-between; align-items: flex-start; }
+.branches > div { width: 270px; display: flex; flex-direction: column; align-items: center; }
+.branches .node { width: 270px; }
+.endcap { font-size: 12px; color: var(--g-ink-3); display: inline-flex; gap: 5px; align-items: center; }
+.zoom { position: absolute; left: 16px; bottom: 14px; display: flex; background: var(--g-surface); border: 1px solid var(--g-line); border-radius: 9px; }
+.zoom span { padding: 4px 10px; color: var(--g-ink-2); font-size: 12px; }
+.zoom span + span { border-left: 1px solid var(--g-line); }
+
+/* doc tables & code */
+.tbl-wrap { overflow-x: auto; margin-top: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+table.doc { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 680px; }
+table.doc th { text-align: left; font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--fg-3); padding: 12px 16px; border-bottom: 1px solid var(--line); }
+table.doc td { padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--fg-2); }
+table.doc td:first-child { color: var(--fg); }
+table.doc tr:last-child td { border-bottom: 0; }
+.hk { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; white-space: nowrap; color: var(--fg-2); display: inline-block; margin: 0 4px 4px 0; }
+.code-wrap { position: relative; margin-top: 20px; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; color: var(--fg); margin: 0; }
+pre .c { color: var(--fg-3); }
+.copy { position: absolute; top: 10px; right: 10px; font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 24px; }
+.sw { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); }
+.sw i { display: block; height: 48px; border-bottom: 1px solid var(--line); }
+.sw div { padding: 8px 10px; font-size: 12.5px; }
+.sw small { display: block; color: var(--fg-3); font-family: var(--font-mono); font-size: 11px; }
+
+/* heuristics */
+.heur { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; margin-top: 28px; }
+.h { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.h-top { display: flex; gap: 10px; align-items: baseline; }
+.h-top .n { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 500; }
+.h .lbl { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--fg-3); font-weight: 500; margin-bottom: 2px; }
+.h p { font-size: 14px; color: var(--fg-2); }
+.h .fix p { color: var(--fg); }
+.callbox { border-left: 3px solid var(--accent-fill); padding: 4px 0 4px 16px; margin-top: 24px; color: var(--fg-2); }
+
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  section { margin-top: 64px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 8-8"/><path d="M14 7h7v7"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M4 7h16M4 7l-2.5 6a3 3 0 0 0 5 0zM20 7l-2.5 6a3 3 0 0 0 5 0z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+    <symbol id="i-log" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h3"/></symbol>
+    <symbol id="i-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-chevr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-split" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6M12 9l-6 6v6M12 9l6 6v6"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.4M12 17h.01"/></symbol>
+  </defs>
+</svg>
+
+<main class="wrap">
+  <header class="col">
+    <p class="eyebrow">Goldy's Data Platform · Frontend rewrite brief · October 2026</p>
+    <h1 style="margin-top:12px">Goldy's UI Direction</h1>
+    <p class="lede" style="margin-top:16px">A warmer, more legible look for the rewrite, built on the same shadcn/ui primitives. It borrows the inset panel and big-number tiles from Klaviyo, the ink-and-one-bright-accent palette from Apollo, and the flow canvas from HoneyBook. Every change is tied to one of Nielsen's ten usability heuristics, and the audit at the end points at the current code that each fix replaces.</p>
+    <nav class="toc" aria-label="Sections">
+      <a href="#moves">Six global moves</a>
+      <a href="#overview">Overview screen</a>
+      <a href="#recon">Reconciliation</a>
+      <a href="#health">Data health</a>
+      <a href="#rules">Resolution rules</a>
+      <a href="#tokens">Tokens</a>
+      <a href="#components">Component choices</a>
+      <a href="#audit">Heuristic audit</a>
+    </nav>
+  </header>
+
+  <!-- ============ MOVES ============ -->
+  <section id="moves" class="col">
+    <p class="eyebrow">What changes globally</p>
+    <h2 style="margin-top:8px">Six moves</h2>
+    <p class="muted" style="margin-top:12px">Most of the "less bland" effect comes from these six changes to tokens and shared components. Screens pick them up without per-page styling.</p>
+  </section>
+  <div class="wide">
+    <div class="moves">
+      <div class="move">
+        <h3>Inset content panel</h3>
+        <p class="from">From: flat white page with a hairline header</p>
+        <p>The sidebar sits on a warm grey canvas and the page lives in a raised white panel. This is shadcn's <code>variant="inset"</code> sidebar, so it costs one prop.</p>
+      </div>
+      <div class="move">
+        <h3>Ink plus one gold</h3>
+        <p class="from">From: slate primary everywhere</p>
+        <p>Near-black for active nav and most buttons. Goldy's gold is used once per screen, for the action that matters most.</p>
+        <div class="demo" style="--g-ink:#17171A"><span class="app" style="display:contents"><span class="btn ink sm">Save</span><span class="btn gold sm">Review 3 items</span></span></div>
+      </div>
+      <div class="move">
+        <h3>Soft status pills</h3>
+        <p class="from">From: solid filled badges</p>
+        <p>Tinted background with coloured text, as in Klaviyo's Poor/Excellent tags. Conflicts move to orange so they never read as the gold brand colour.</p>
+        <div class="demo"><span class="app" style="display:contents"><span class="pill conflict">Conflict</span><span class="pill missing">No data from CTB</span><span class="pill ok">Resolved</span><span class="pill fail">Failed</span></span></div>
+      </div>
+      <div class="move">
+        <h3>Source identity tiles</h3>
+        <p class="from">From: uppercase grey source labels</p>
+        <p>Each source system keeps one tinted tile and colour everywhere it appears, so people recognise Lightspeed or Deputy at a glance instead of reading labels.</p>
+        <div class="demo"><span class="app" style="display:contents"><span class="src"><span class="tile t-ls">LS</span>Lightspeed</span><span class="src"><span class="tile t-ctb">CB</span>Cooking the Books</span><span class="src"><span class="tile t-ot">OT</span>OpenTable</span><span class="src"><span class="tile t-dep">DP</span>Deputy</span></span></div>
+      </div>
+      <div class="move">
+        <h3>Bigger, tighter type</h3>
+        <p class="from">From: system stack, 20px page titles</p>
+        <p>Geist at 24px semibold for page titles, 27px tabular figures for KPIs, 13.5px nav. Numbers always use <code>tabular-nums</code>.</p>
+      </div>
+      <div class="move">
+        <h3>Panels instead of page swaps</h3>
+        <p class="from">From: drill-ins that replace the whole page</p>
+        <p>Details open in a URL-addressable side sheet, so the list stays visible, browser Back works, and Esc closes it.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ OVERVIEW MOCKUP ============ -->
+  <section id="overview" class="wide">
+    <div class="frame-head">
+      <div class="stack" style="gap:6px">
+        <p class="eyebrow">Mockup 1</p>
+        <h2>Overview (today's Dashboard)</h2>
+      </div>
+      <button class="toggle-pins" type="button" id="pinsBtn" aria-pressed="true">Hide heuristic pins</button>
+    </div>
+    <div class="frame-scroll" id="mock-overview">
+      <div class="app">
+        <aside class="side">
+          <div class="brand"><span class="logo">G</span><span><b>Goldy's</b><small>Data platform</small></span></div>
+          <div class="search has-pin"><svg width="14" height="14"><use href="#i-search"/></svg>Search or jump to…<span class="kbd">⌘K</span><span class="pin" style="right:-6px;top:-8px">H7</span></div>
+          <div class="nav-group">
+            <div class="nav-label">Business</div>
+            <div class="nav-item on"><svg><use href="#i-home"/></svg>Overview</div>
+            <div class="nav-item"><svg><use href="#i-trend"/></svg>Sales</div>
+            <div class="nav-item"><svg><use href="#i-users"/></svg>Staff &amp; labour</div>
+            <div class="nav-item"><svg><use href="#i-cal"/></svg>Reservations</div>
+            <div class="nav-item has-pin"><svg><use href="#i-grid"/></svg>Custom dashboards<span class="pin" style="right:-6px;top:-6px">H2</span></div>
+          </div>
+          <div class="nav-group">
+            <div class="nav-label">Data</div>
+            <div class="nav-item has-pin"><svg><use href="#i-scale"/></svg>Reconciliation<span class="count">3</span><span class="pin" style="right:-6px;top:-10px">H1</span></div>
+            <div class="nav-item"><svg><use href="#i-shield"/></svg>Resolution rules</div>
+            <div class="nav-item"><svg><use href="#i-pulse"/></svg>Data health<span class="dot" title="A source failed"></span></div>
+            <div class="nav-item"><svg><use href="#i-db"/></svg>Data explorer</div>
+            <div class="nav-item"><svg><use href="#i-log"/></svg>Logs</div>
+          </div>
+          <div class="nav-group">
+            <div class="nav-label has-pin">Coming soon <svg width="14" height="14"><use href="#i-chevr"/></svg><span class="pin" style="right:20px;top:-6px">H8</span></div>
+          </div>
+          <div class="side-foot">
+            <div class="nav-item"><svg><use href="#i-cog"/></svg>Settings</div>
+            <div class="me"><span class="avatar">AM</span><span><b>Alex Murray</b><small>Owner · All departments</small></span></div>
+          </div>
+        </aside>
+
+        <div class="main">
+          <div class="topbar">
+            <div class="crumbs has-pin">Business <svg width="12" height="12"><use href="#i-chevr"/></svg> <b>Overview</b><span class="pin" style="right:-30px;top:-4px">H1</span></div>
+            <div class="right">
+              <span class="fresh warn has-pin"><i></i>Data as of 6:15 am · 3 of 4 sources fresh<span class="pin" style="right:-8px;top:-12px">H1</span></span>
+              <span class="btn sm has-pin"><svg><use href="#i-spark"/></svg>Ask Goldy's<span class="pin" style="right:-8px;top:-12px">H10</span></span>
+            </div>
+          </div>
+          <div class="content">
+            <div class="page-head">
+              <div>
+                <h4>Good morning, Alex</h4>
+                <p>Week of Mon 29 Sep to Sun 5 Oct 2026, compared with the week before.</p>
+              </div>
+              <div class="right">
+                <span class="btn has-pin"><svg><use href="#i-cal"/></svg>Last 7 days vs prior <svg><use href="#i-chev"/></svg><span class="pin" style="right:-8px;top:-10px">H6</span></span>
+              </div>
+            </div>
+
+            <div class="callout has-pin">
+              <div class="ic-tile" style="background:#fff;color:var(--g-conflict)"><svg><use href="#i-scale"/></svg></div>
+              <div>
+                <b>3 numbers need a decision before they're reported</b>
+                <p>Net sales for Sat 4 Oct differ by $412.30 between Lightspeed and Cooking the Books, plus 2 more.</p>
+              </div>
+              <span class="btn gold">Review 3 items <svg><use href="#i-chevr"/></svg></span>
+              <span class="pin" style="right:-8px;top:-10px">H1</span>
+            </div>
+
+            <div class="kpis">
+              <div class="kpi has-pin">
+                <div class="lab">Net sales <svg width="14" height="14" style="color:var(--g-ink-3)"><use href="#i-help"/></svg></div>
+                <div class="val">$98,420</div>
+                <div class="row"><span class="delta good">▲ 6.2%</span>vs $92,675</div>
+                <svg class="spark" data-spark="11.2,9.8,12.4,13.1,16.9,21.3,14.0" data-color="#17171A" data-flag="5"></svg>
+                <div class="foot"><span class="src"><span class="tile t-ls">LS</span>Lightspeed</span><span class="pill conflict">1 day disputed</span></div>
+                <span class="pin" style="right:8px;top:8px">H5</span>
+              </div>
+              <div class="kpi">
+                <div class="lab">Covers <svg width="14" height="14" style="color:var(--g-ink-3)"><use href="#i-help"/></svg></div>
+                <div class="val">1,284</div>
+                <div class="row"><span class="delta good">▲ 3.1%</span>vs 1,245</div>
+                <svg class="spark" data-spark="142,131,158,169,214,281,189" data-color="#17171A"></svg>
+                <div class="foot"><span class="src"><span class="tile t-ot">OT</span>OpenTable</span><span class="pill neutral">CSV · 4 days old</span></div>
+              </div>
+              <div class="kpi has-pin">
+                <div class="lab">Labour, % of sales <svg width="14" height="14" style="color:var(--g-ink-3)"><use href="#i-help"/></svg></div>
+                <div class="val">27.4%</div>
+                <div class="row"><span class="delta good">▼ 1.2 pts</span>vs 28.6%</div>
+                <svg class="spark" data-spark="31.2,30.1,28.8,27.9,25.1,22.4,28.0" data-color="#17171A"></svg>
+                <div class="foot"><span class="src"><span class="tile t-dep">DP</span>Deputy</span><span class="pill fail">Sync failed 5:45 am</span></div>
+                <span class="pin" style="right:8px;top:8px">H2</span>
+              </div>
+              <div class="kpi">
+                <div class="lab">Spend per cover <svg width="14" height="14" style="color:var(--g-ink-3)"><use href="#i-help"/></svg></div>
+                <div class="val">$76.65</div>
+                <div class="row"><span class="delta good">▲ 2.9%</span>vs $74.44</div>
+                <svg class="spark" data-spark="72.1,74.8,73.9,75.2,78.9,79.4,74.3" data-color="#17171A"></svg>
+                <div class="foot"><span class="src"><span class="tile t-ls">LS</span><span class="tile t-ot" style="margin-left:-8px;box-shadow:0 0 0 2px #fff">OT</span>Two sources</span><span class="pill ok"><svg><use href="#i-check"/></svg>Verified</span></div>
+              </div>
+            </div>
+
+            <div class="grid2">
+              <div class="card">
+                <div class="card-head">
+                  <h5>Net sales by day</h5>
+                  <div class="legend"><span><i style="background:var(--g-ink)"></i>This week</span><span><i style="background:#D9D8D2"></i>Prior week</span><span><i style="background:var(--g-conflict-soft);border:1.5px dashed var(--g-conflict)"></i>Disputed</span></div>
+                  <div class="right"><span class="kebab"><svg width="16" height="16"><use href="#i-dots"/></svg></span></div>
+                </div>
+                <svg class="chart" id="salesChart" role="img" aria-label="Net sales by day, this week versus prior week"></svg>
+              </div>
+              <div class="card">
+                <div class="card-head"><h5>Top sellers</h5><div class="right"><span class="kebab"><svg width="16" height="16"><use href="#i-dots"/></svg></span></div></div>
+                <table class="t">
+                  <thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Net sales</th></tr></thead>
+                  <tbody>
+                    <tr><td>Pint, house lager<span class="sub">Tap beer</span></td><td class="r">1,412</td><td class="r">$12,708<span class="sub"><span class="share" style="width:64px"></span></span></td></tr>
+                    <tr><td>Chicken parmigiana<span class="sub">Mains</span></td><td class="r">318</td><td class="r">$8,904<span class="sub"><span class="share" style="width:45px"></span></span></td></tr>
+                    <tr><td>Schooner, pale ale<span class="sub">Tap beer</span></td><td class="r">946</td><td class="r">$7,568<span class="sub"><span class="share" style="width:38px"></span></span></td></tr>
+                    <tr><td>Sunday roast<span class="sub">Specials</span></td><td class="r">141</td><td class="r">$4,794<span class="sub"><span class="share" style="width:24px"></span></span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="frame-note">Example figures for illustration only. Metric definitions come from <code>docs/metrics/catalog.md</code>, not from this mockup.</p>
+    <div class="notes"><ul>
+      <li><span class="k">H1</span><span>A freshness chip in every page header says when data was last pulled and how many sources are current. It turns red when a source fails and links to Data health.</span></li>
+      <li><span class="k">H1</span><span>Reconciliation carries a live count in the sidebar, and the callout names the specific number and gap instead of a generic count.</span></li>
+      <li><span class="k">H2</span><span>"Dashboard" and "Dashboards" become "Overview" and "Custom dashboards". The labour delta is green because down is good, so colour follows meaning, not arrow direction.</span></li>
+      <li><span class="k">H5</span><span>A KPI that includes an unresolved day says so on the tile. The disputed bar in the chart is drawn differently, so nobody reports a figure that is still in question.</span></li>
+      <li><span class="k">H6</span><span>The period control shows the comparison it applies, so readers don't have to remember what "vs prior" means.</span></li>
+      <li><span class="k">H7</span><span>⌘K opens a command palette for pages, records ("Sat 4 Oct net sales") and actions ("Run Deputy sync").</span></li>
+      <li><span class="k">H8</span><span>Kitchen and Recipes are placeholders, so they move into a collapsed "Coming soon" group instead of taking two nav slots.</span></li>
+      <li><span class="k">H10</span><span>A <code>?</code> on each KPI opens a HoverCard with the definition and source. Ask Goldy's stays in the header.</span></li>
+    </ul></div>
+  </section>
+
+  <!-- ============ RECON MOCKUP ============ -->
+  <section id="recon" class="wide">
+    <div class="frame-head">
+      <div class="stack" style="gap:6px">
+        <p class="eyebrow">Mockup 2</p>
+        <h2>Reconciliation with a side sheet</h2>
+      </div>
+    </div>
+    <div class="frame-scroll">
+      <div class="app">
+        <aside class="side">
+          <div class="brand"><span class="logo">G</span><span><b>Goldy's</b><small>Data platform</small></span></div>
+          <div class="search"><svg width="14" height="14"><use href="#i-search"/></svg>Search or jump to…<span class="kbd">⌘K</span></div>
+          <div class="nav-group">
+            <div class="nav-label">Business</div>
+            <div class="nav-item"><svg><use href="#i-home"/></svg>Overview</div>
+            <div class="nav-item"><svg><use href="#i-trend"/></svg>Sales</div>
+            <div class="nav-item"><svg><use href="#i-users"/></svg>Staff &amp; labour</div>
+            <div class="nav-item"><svg><use href="#i-cal"/></svg>Reservations</div>
+            <div class="nav-item"><svg><use href="#i-grid"/></svg>Custom dashboards</div>
+          </div>
+          <div class="nav-group">
+            <div class="nav-label">Data</div>
+            <div class="nav-item on"><svg><use href="#i-scale"/></svg>Reconciliation<span class="count">3</span></div>
+            <div class="nav-item"><svg><use href="#i-shield"/></svg>Resolution rules</div>
+            <div class="nav-item"><svg><use href="#i-pulse"/></svg>Data health<span class="dot"></span></div>
+            <div class="nav-item"><svg><use href="#i-db"/></svg>Data explorer</div>
+            <div class="nav-item"><svg><use href="#i-log"/></svg>Logs</div>
+          </div>
+          <div class="side-foot">
+            <div class="nav-item"><svg><use href="#i-cog"/></svg>Settings</div>
+            <div class="me"><span class="avatar">AM</span><span><b>Alex Murray</b><small>Owner · All departments</small></span></div>
+          </div>
+        </aside>
+
+        <div class="main">
+          <div class="topbar">
+            <div class="crumbs has-pin">Data <svg width="12" height="12"><use href="#i-chevr"/></svg> Reconciliation <svg width="12" height="12"><use href="#i-chevr"/></svg> <b>Sat 4 Oct · Net sales</b><span class="pin" style="right:-30px;top:-4px">H3</span></div>
+            <div class="right"><span class="fresh warn"><i></i>Data as of 6:15 am · 3 of 4 sources fresh</span><span class="btn sm"><svg><use href="#i-spark"/></svg>Ask Goldy's</span></div>
+          </div>
+          <div class="recon">
+            <div class="recon-left">
+              <div class="page-head">
+                <div>
+                  <h4>Reconciliation</h4>
+                  <p>Figures where your sources disagree or one is missing. Fields that agree are hidden.</p>
+                </div>
+                <div class="right"><span class="btn ghost">Change history</span></div>
+              </div>
+              <div class="toolbar">
+                <div class="seg has-pin"><span class="on">Daily sales<em>2</em></span><span>Product sales<em>1</em></span><span class="pin" style="right:-8px;top:-10px">H4</span></div>
+                <div class="tgroup"><span class="on">All</span><span>Conflicts</span><span>Missing</span></div>
+                <div class="search"><svg width="14" height="14"><use href="#i-search"/></svg>Filter by date or item</div>
+              </div>
+              <div class="ex-list">
+                <div class="ex sel">
+                  <div class="date"><b>Sat 4 Oct</b><span class="field">Net sales</span></div>
+                  <div class="vals">
+                    <span class="src"><span class="tile t-ls">LS</span><b>$14,980.50</b></span>
+                    <span class="src"><span class="tile t-ctb">CB</span><b>$14,568.20</b></span>
+                    <span class="pill neutral num">Δ $412.30</span>
+                  </div>
+                  <span class="pill conflict">Conflict</span>
+                </div>
+                <div class="ex">
+                  <div class="date"><b>Thu 2 Oct</b><span class="field">Net sales</span></div>
+                  <div class="vals">
+                    <span class="src"><span class="tile t-ls">LS</span><b>$9,812.40</b></span>
+                    <span class="src"><span class="tile t-ctb">CB</span><span class="none">No data</span></span>
+                  </div>
+                  <span class="pill missing">No data from CTB</span>
+                </div>
+              </div>
+              <div class="list-foot"><span><span class="kbd">J</span> <span class="kbd">K</span> move · <span class="kbd">Enter</span> open · <span class="kbd">Esc</span> close</span><span>2 of 2 shown</span></div>
+              <div class="has-pin" style="height:0"><span class="pin" style="left:240px;top:-30px">H7</span></div>
+            </div>
+
+            <aside class="sheet">
+              <div class="sheet-head">
+                <div class="top"><span class="pill conflict">Conflict</span><span class="x">Esc to close ✕</span></div>
+                <h6>Net sales · Saturday 4 October 2026</h6>
+              </div>
+              <div class="sheet-body">
+                <div class="explain"><b>Lightspeed is $412.30 (2.8%) higher than Cooking the Books.</b> Until you choose, reports show this day as disputed.</div>
+                <div class="rule-line has-pin"><svg width="14" height="14"><use href="#i-shield"/></svg>No resolution rule covers this yet. <a href="#rules">Create one</a><span class="pin" style="right:-4px;top:-10px">H6</span></div>
+                <div class="choice on">
+                  <span class="radio"></span>
+                  <span class="src"><span class="tile t-ls">LS</span><b style="color:var(--g-ink);font-weight:550">Lightspeed</b></span>
+                  <span class="amt">$14,980.50</span>
+                  <span class="meta">POS close-out · imported Sun 5 Oct, 3:02 am</span>
+                </div>
+                <div class="choice">
+                  <span class="radio"></span>
+                  <span class="src"><span class="tile t-ctb">CB</span><b style="color:var(--g-ink);font-weight:550">Cooking the Books</b></span>
+                  <span class="amt">$14,568.20</span>
+                  <span class="meta">Daily journal · imported Sun 5 Oct, 6:00 am</span>
+                </div>
+                <div class="stack has-pin" style="gap:6px">
+                  <div class="field-lab">Reason <span>Required · saved to the audit log</span></div>
+                  <div class="textarea">Refund of $412.30 voided at close, CTB journal not updated<span class="caret"></span></div>
+                  <span class="pin" style="right:-4px;top:-8px">H5</span>
+                </div>
+                <div class="agree">11 other fields agree across both sources <span class="btn ghost sm">View all fields <svg><use href="#i-chevr"/></svg></span></div>
+              </div>
+              <div class="sheet-foot"><span class="btn ghost">Cancel</span><span class="btn ink">Use Lightspeed value</span></div>
+            </aside>
+          </div>
+          <div class="toast has-pin"><span class="ok"><svg width="11" height="11" style="color:#fff"><use href="#i-check"/></svg></span>Thu 2 Oct net sales now uses Lightspeed.<span class="undo">Undo</span><span class="pin" style="right:-8px;top:-10px">H3</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><ul>
+      <li><span class="k">H3</span><span>The open record lives in the URL (<code>?record=…</code>). Back closes the sheet instead of leaving the page, and links to a record can be shared.</span></li>
+      <li><span class="k">H3</span><span>Every saved override shows an Undo toast. Undo writes a new superseding override that restores the earlier value, so the bitemporal history is kept intact.</span></li>
+      <li><span class="k">H4</span><span>The hand-rolled tab and filter-chip buttons become shadcn <code>Tabs</code> and <code>ToggleGroup</code>, so they look and behave the same on every screen.</span></li>
+      <li><span class="k">H5</span><span>A reason is required before saving (it is optional today). The button says exactly what will happen: "Use Lightspeed value".</span></li>
+      <li><span class="k">H6</span><span>The sheet shows whether a resolution rule already applies, so the person deciding doesn't have to remember the rule set.</span></li>
+      <li><span class="k">H7</span><span>J/K/Enter/Esc for moving through a long queue. Filters are stored in the URL so a filtered view can be bookmarked.</span></li>
+    </ul></div>
+  </section>
+
+  <!-- ============ DATA HEALTH ============ -->
+  <section id="health" class="wide">
+    <div class="frame-head">
+      <div class="stack" style="gap:6px">
+        <p class="eyebrow">Mockup 3</p>
+        <h2>Data health</h2>
+      </div>
+    </div>
+    <div class="frame-scroll">
+      <div class="app" style="grid-template-columns:1fr;padding:8px">
+        <div class="main">
+          <div class="topbar">
+            <div class="crumbs">Data <svg width="12" height="12"><use href="#i-chevr"/></svg> <b>Data health</b></div>
+            <div class="right"><span class="btn sm"><svg><use href="#i-spark"/></svg>Ask Goldy's</span></div>
+          </div>
+          <div class="content">
+            <div class="page-head">
+              <div><h4>Data health</h4><p>When each source last delivered data, and what to do when one stops.</p></div>
+              <div class="right"><span class="btn"><svg><use href="#i-refresh"/></svg>Run all</span></div>
+            </div>
+            <div class="conns">
+              <div class="conn failed has-pin">
+                <div class="conn-head"><span class="tile lg t-dep">DP</span><div><b>Deputy</b><small>Rostering and timesheets · API</small></div><span class="pill fail">Failed</span></div>
+                <div class="alert">
+                  <svg><use href="#i-alert"/></svg>
+                  <div>
+                    <b>Deputy rejected our access token at 5:45 am.</b>
+                    <p>Labour figures after Sat 4 Oct are missing until this is fixed. Reconnect Goldy's in Deputy's integration settings, then run again.</p>
+                    <div class="acts"><span class="btn ink sm">Run again</span><span class="btn ghost sm">Copy error ID</span></div>
+                  </div>
+                </div>
+                <div class="bars30" data-bars="ooooooooooooooooooooooooooofff"></div>
+                <div class="bars-cap"><span>30 days ago</span><span>Today</span></div>
+                <span class="pin" style="right:8px;top:-10px">H9</span>
+              </div>
+              <div class="conn has-pin">
+                <div class="conn-head"><span class="tile lg t-ctb">CB</span><div><b>Cooking the Books</b><small>Accounting · SFTP export</small></div><span class="pill neutral">No new data</span></div>
+                <div class="facts">
+                  <div>Last checked<b>Today 6:00 am</b></div>
+                  <div>Last new file<b>Fri 3 Oct</b></div>
+                  <div>Records, 7 days<b>1,904</b></div>
+                </div>
+                <div class="bars30" data-bars="oooooooooooooooooooooooooonnn"></div>
+                <div class="bars-cap"><span>30 days ago</span><span>Today</span></div>
+                <div class="actions"><span class="btn sm"><svg><use href="#i-refresh"/></svg>Check now</span><span class="sub">Checks every 15 minutes</span></div>
+                <span class="pin" style="right:8px;top:-10px">H1</span>
+              </div>
+              <div class="conn">
+                <div class="conn-head"><span class="tile lg t-ls">LS</span><div><b>Lightspeed</b><small>Point of sale · API</small></div><span class="pill ok"><svg><use href="#i-check"/></svg>Healthy</span></div>
+                <div class="facts">
+                  <div>Last run<b>Today 6:02 am</b></div>
+                  <div>New records<b>412</b></div>
+                  <div>Records, 7 days<b>9,318</b></div>
+                </div>
+                <div class="bars30" data-bars="oooooooooooooooooooooooooooooo"></div>
+                <div class="bars-cap"><span>30 days ago</span><span>Today</span></div>
+                <div class="actions"><span class="btn sm"><svg><use href="#i-refresh"/></svg>Run now</span><span class="sub">Runs hourly</span></div>
+              </div>
+              <div class="conn">
+                <div class="conn-head"><span class="tile lg t-ot">OT</span><div><b>OpenTable</b><small>Reservations · manual CSV</small></div><span class="pill missing">4 days old</span></div>
+                <div class="facts">
+                  <div>Last upload<b>Sun 5 Oct</b></div>
+                  <div>Rows imported<b>286</b></div>
+                  <div>Covers in file<b>1,284</b></div>
+                </div>
+                <div class="bars30" data-bars="mmmmmmommmmmmommmmmmommmmmmonnn"></div>
+                <div class="bars-cap"><span>30 days ago</span><span>Today</span></div>
+                <div class="actions"><span class="btn gold sm"><svg><use href="#i-upload"/></svg>Upload this week's CSV</span><span class="sub">Drop a file anywhere on this card</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><ul>
+      <li><span class="k">H9</span><span>A failure says what happened, what it affects, and the fix, with the action next to it. The correlation ID moves behind "Copy error ID" instead of being shown raw.</span></li>
+      <li><span class="k">H1</span><span>"No new data" is neutral grey and "Failed" is red, as <code>design-system.md</code> requires. The 30-day strip shows a gap starting before anyone has to ask.</span></li>
+    </ul></div>
+  </section>
+
+  <!-- ============ RULES CANVAS ============ -->
+  <section id="rules" class="wide">
+    <div class="frame-head">
+      <div class="stack" style="gap:6px">
+        <p class="eyebrow">Mockup 4 · optional</p>
+        <h2>Resolution rules as a flow</h2>
+      </div>
+    </div>
+    <div class="frame-scroll">
+      <div class="canvas app" style="display:flex;padding-top:64px">
+        <div class="canvas-bar">
+          <b>Net sales, daily</b><span class="pill gold">Draft</span>
+          <div class="right"><span style="font-size:12px;color:var(--g-ink-3);font-style:italic">Unsaved changes</span><span class="btn sm">Test against last 30 days</span><span class="btn ink sm">Save rule</span></div>
+        </div>
+        <div class="node"><span class="ic-tile t-gold"><svg><use href="#i-bolt"/></svg></span><div><b>When sources disagree on net sales</b><small>Lightspeed and Cooking the Books</small></div></div>
+        <div class="wire"><span class="plus">+</span></div>
+        <div class="node"><span class="ic-tile t-ink"><svg><use href="#i-split"/></svg></span><div><b>Does Lightspeed have a value?</b><small>Condition</small></div></div>
+        <div class="branch"><div class="h"></div><span class="lab" style="left:248px">Yes</span><span class="lab" style="right:252px;display:none"></span><div class="v1"></div><div class="v2"></div></div>
+        <div class="branches">
+          <div>
+            <div class="node"><span class="ic-tile t-ls"><span style="font-weight:700;font-size:11px">LS</span></span><div><b>Use Lightspeed</b><small>Record as resolved by rule</small></div></div>
+            <div class="wire"></div>
+            <span class="endcap"><svg width="13" height="13"><use href="#i-check"/></svg>End</span>
+          </div>
+          <div>
+            <div class="node" style="border-color:#F6D3BF"><span class="ic-tile" style="background:var(--g-conflict-soft);color:var(--g-conflict)"><svg><use href="#i-flag"/></svg></span><div><b>Flag for review</b><small>Appears in Reconciliation</small></div></div>
+            <div class="wire"></div>
+            <span class="endcap"><svg width="13" height="13"><use href="#i-check"/></svg>End</span>
+          </div>
+        </div>
+        <div class="zoom"><span>⤢</span><span>−</span><span>100%</span><span>+</span></div>
+      </div>
+    </div>
+    <p class="frame-note">Shown with "No" on the right branch. This is a layout idea only. The real conditions, tolerances and source priorities wait on the PRD's open entity-matching question, so none are proposed here.</p>
+    <div class="callbox"><p>Why this helps: a rule list asks people to simulate the logic in their head. A top-to-bottom flow matches how a manager already explains it ("if the till has a number, trust the till, otherwise flag it"), which covers H2 and H6. "Test against last 30 days" is a preview before saving, for H5. Build it from Cards and Buttons on a dotted background. It doesn't need a canvas library until rules branch more than twice.</p></div>
+  </section>
+
+  <!-- ============ TOKENS ============ -->
+  <section id="tokens" class="col">
+    <p class="eyebrow">Drop-in for app/globals.css</p>
+    <h2 style="margin-top:8px">Tokens</h2>
+    <p class="muted" style="margin-top:12px">Same variable names and HSL format shadcn expects, so every component restyles without edits. Two additions: <code>--brand</code> for the gold, and <code>--status-conflict</code>, which replaces the amber <code>--status-warning</code> so a conflict can't be mistaken for the brand colour.</p>
+  </section>
+  <div class="wide">
+    <div class="swatches">
+      <div class="sw"><i style="background:#F4F4F1"></i><div>Canvas<small>--sidebar-background</small></div></div>
+      <div class="sw"><i style="background:#FFFFFF"></i><div>Panel<small>--background</small></div></div>
+      <div class="sw"><i style="background:#17171A"></i><div>Ink<small>--primary</small></div></div>
+      <div class="sw"><i style="background:#F5C83B"></i><div>Goldy's gold<small>--brand</small></div></div>
+      <div class="sw"><i style="background:#C2410C"></i><div>Conflict<small>--status-conflict</small></div></div>
+      <div class="sw"><i style="background:#52607A"></i><div>No data<small>--status-missing</small></div></div>
+      <div class="sw"><i style="background:#15803D"></i><div>Resolved<small>--status-success</small></div></div>
+      <div class="sw"><i style="background:#B91C1C"></i><div>Failed<small>--destructive</small></div></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="code-wrap">
+      <button class="copy" type="button" id="copyBtn">Copy</button>
+<pre id="tokensCode"><span class="c">/* app/globals.css — proposed :root (light only, per Phase 1) */</span>
+:root {
+  --background: 0 0% 100%;            <span class="c">/* the inset panel */</span>
+  --foreground: 240 6% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 6% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 6% 10%;
+  --primary: 240 6% 10%;              <span class="c">/* ink: buttons, active nav */</span>
+  --primary-foreground: 0 0% 100%;
+  --brand: 45 90% 60%;                <span class="c">/* Goldy's gold: one CTA per screen */</span>
+  --brand-foreground: 240 6% 10%;
+  --secondary: 60 6% 93%;
+  --secondary-foreground: 240 6% 10%;
+  --muted: 60 6% 93%;
+  --muted-foreground: 240 4% 35%;
+  --accent: 60 6% 93%;
+  --accent-foreground: 240 6% 10%;
+  --destructive: 0 73% 42%;           <span class="c">/* real system failures only */</span>
+  --destructive-foreground: 0 0% 100%;
+  --border: 50 9% 89%;
+  --input: 50 9% 86%;
+  --ring: 45 90% 45%;
+  --radius: 0.75rem;
+
+  --status-success: 142 72% 29%;
+  --status-success-soft: 141 45% 93%;
+  --status-conflict: 21 90% 40%;      <span class="c">/* replaces --status-warning */</span>
+  --status-conflict-soft: 24 85% 94%;
+  --status-missing: 219 19% 40%;
+  --status-missing-soft: 218 32% 95%;
+  --destructive-soft: 0 82% 96%;
+
+  --source-lightspeed: 252 56% 57%;
+  --source-ctb: 175 77% 26%;
+  --source-opentable: 322 65% 46%;
+  --source-deputy: 224 64% 50%;
+
+  --sidebar-background: 60 9% 95%;    <span class="c">/* the canvas behind the panel */</span>
+  --sidebar-foreground: 240 4% 35%;
+  --sidebar-primary: 240 6% 10%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 60 6% 91%;
+  --sidebar-accent-foreground: 240 6% 10%;
+  --sidebar-border: 50 9% 89%;
+  --sidebar-ring: 45 90% 45%;
+}
+
+<span class="c">/* app/layout.tsx: next/font/google → Geist + Geist_Mono,
+   exposed as --font-sans / --font-mono and wired in tailwind.config.ts.
+   Body copy text-sm, page titles text-2xl font-semibold tracking-tight,
+   all figures tabular-nums. */</span></pre>
+    </div>
+    <p class="muted" style="margin-top:16px;font-size:14px">Soft tints are used as <code>bg-status-conflict-soft text-status-conflict</code>. Source colours are only for the identity tiles and chart series, never for state.</p>
+  </div>
+
+  <!-- ============ COMPONENTS ============ -->
+  <section id="components" class="col">
+    <p class="eyebrow">Still shadcn/ui, different picks</p>
+    <h2 style="margin-top:8px">Component choices</h2>
+    <p class="muted" style="margin-top:12px">Each swap replaces a hand-rolled or lower-level pattern with the shadcn component designed for the job. Add them with <code>bunx shadcn@latest add</code>.</p>
+  </section>
+  <div class="wide">
+    <div class="tbl-wrap">
+      <table class="doc">
+        <thead><tr><th>Today</th><th>Use instead</th><th>Why</th><th>Heuristic</th></tr></thead>
+        <tbody>
+          <tr><td>Static "Goldy's Data Platform" text in <code>app-header.tsx</code></td><td><code>Breadcrumb</code> + freshness chip + page actions</td><td>Shows where you are and how current the data is on every page</td><td><span class="hk">H1</span><span class="hk">H6</span></td></tr>
+          <tr><td>Drill-in that replaces the page via <code>useState</code> in <code>reconciliation/page.tsx</code></td><td><code>Sheet</code> (right side) driven by <code>?record=</code></td><td>List stays in view; Back and Esc work; links are shareable</td><td><span class="hk">H3</span><span class="hk">H6</span></td></tr>
+          <tr><td>Custom <code>TabButton</code> and <code>FilterChip</code></td><td><code>Tabs</code> (segmented style) and <code>ToggleGroup</code></td><td>One look and keyboard model everywhere; correct ARIA for free</td><td><span class="hk">H4</span></td></tr>
+          <tr><td>Custom toast in <code>components/feedback/toast.tsx</code></td><td><code>Sonner</code> with an action button</td><td>Undo on every reversible write; stacked, consistent placement</td><td><span class="hk">H3</span><span class="hk">H1</span></td></tr>
+          <tr><td>Nothing</td><td><code>Command</code> (⌘K)</td><td>Jump to pages, records and actions without the mouse</td><td><span class="hk">H7</span></td></tr>
+          <tr><td>Solid status <code>Badge</code></td><td><code>Badge</code> with soft cva variants: conflict, missing, success, failed, neutral</td><td>Calmer, and state still reads at a glance</td><td><span class="hk">H8</span><span class="hk">H4</span></td></tr>
+          <tr><td><code>StatCard</code> with label and value</td><td>KPI tile: value, delta pill, sparkline, source tile, trust pill, <code>HoverCard</code> definition</td><td>Every number carries its comparison, source and state</td><td><span class="hk">H1</span><span class="hk">H10</span></td></tr>
+          <tr><td>Bare red text for connector errors</td><td><code>Alert</code> with cause, impact, fix and an action</td><td>Errors you can act on without leaving the card</td><td><span class="hk">H9</span></td></tr>
+          <tr><td>Hand-built tables in Data explorer and Logs</td><td><code>Table</code> + TanStack data table (sticky header, column toggles, URL filters)</td><td>Scanning and filtering large lists</td><td><span class="hk">H7</span></td></tr>
+          <tr><td>Flat 13-item nav</td><td><code>Sidebar variant="inset"</code> with <code>Collapsible</code> groups, counts and status dots</td><td>Shorter nav; problems show up wherever you are</td><td><span class="hk">H8</span><span class="hk">H1</span></td></tr>
+          <tr><td>No period control</td><td><code>Popover</code> + <code>Calendar</code> with presets ("Last 7 days vs prior")</td><td>The comparison is stated, not remembered</td><td><span class="hk">H6</span><span class="hk">H2</span></td></tr>
+          <tr><td>Ingestion completeness as a number</td><td><code>Progress</code> or a 30-day status strip</td><td>Gaps show before someone asks</td><td><span class="hk">H1</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ AUDIT ============ -->
+  <section id="audit" class="col">
+    <p class="eyebrow">Nielsen's 10, applied to the current frontend</p>
+    <h2 style="margin-top:8px">Heuristic audit</h2>
+    <p class="muted" style="margin-top:12px">Each card names a problem in today's code and the fix the rewrite should make. File paths are relative to <code>frontend/</code>.</p>
+  </section>
+  <div class="wide">
+    <div class="heur">
+      <div class="h"><div class="h-top"><span class="n">H1</span><h3>Visibility of system status</h3></div>
+        <div><p class="lbl">Now</p><p>Data freshness only appears on Data health. Only two loading spinners exist across all components, so most buttons give no feedback while working.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p>Freshness chip in the header, counts and failure dots in the sidebar, and a pending state on every async button.</p></div></div>
+      <div class="h"><div class="h-top"><span class="n">H2</span><h3>Match with the real world</h3></div>
+        <div><p class="lbl">Now</p><p>"Dashboard" and "Dashboards" sit next to each other in <code>app-sidebar.tsx</code>. "Staff &amp; Labor" uses US spelling while figures are formatted en-AU.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p>"Overview" and "Custom dashboards", Australian spelling, and pub terms (covers, trading day). Deltas are coloured by good or bad, not by direction.</p></div></div>
+      <div class="h"><div class="h-top"><span class="n">H3</span><h3>User control and freedom</h3></div>
+        <div><p class="lbl">Now</p><p>The reconciliation drill-in is component state, so browser Back leaves the page. A saved override has no undo.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p>URL-driven Sheet that closes with Esc and Back. An Undo toast that writes a superseding override.</p></div></div>
+      <div class="h"><div class="h-top"><span class="n">H4</span><h3>Consistency and standards</h3></div>
+        <div><p class="lbl">Now</p><p>Tabs and filter chips are hand-rolled in <code>reconciliation/page.tsx</code> and <code>exceptions-table.tsx</code>. Nav labels mix Title Case and sentence case.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p>shadcn <code>Tabs</code> and <code>ToggleGroup</code> only. Sentence case everywhere. One status-pill component.</p></div></div>
+      <div class="h"><div class="h-top"><span class="n">H5</span><h3>Error prevention</h3></div>
+        <div><p class="lbl">Now</p><p>An override saves in one click, and the reason is optional (<code>reasons[field] || undefined</code> in <code>drill-in.tsx</code>). KPI tiles don't show that they include disputed days.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p>Required reason, a button that names its effect, and "1 day disputed" on any figure built on unresolved data.</p></div></div>
+      <div class="h"><div class="h-top"><span class="n">H6</span><h3>Recognition rather than recall</h3></div>
+        <div><p class="lbl">Now</p><p>Sources appear as small uppercase grey labels. Nothing in the drill-in says whether a resolution rule already covers the field.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p>Persistent source tiles and colours, the matching rule shown in the sheet, and recent records in ⌘K.</p></div></div>
+      <div class="h"><div class="h-top"><span class="n">H7</span><h3>Flexibility and efficiency</h3></div>
+        <div><p class="lbl">Now</p><p>No keyboard shortcuts or global search. Filters reset when you leave a page.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p>⌘K palette, J/K/Enter/Esc in queues, and filters stored in the URL.</p></div></div>
+      <div class="h"><div class="h-top"><span class="n">H8</span><h3>Aesthetic and minimalist design</h3></div>
+        <div><p class="lbl">Now</p><p>Kitchen and Recipes are placeholders but take full nav slots. Change history always renders under the exceptions list.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p>"Coming soon" collapsed group, history behind a button, and one gold action per screen.</p></div></div>
+      <div class="h"><div class="h-top"><span class="n">H9</span><h3>Help users recover from errors</h3></div>
+        <div><p class="lbl">Now</p><p><code>ErrorState</code> already shows a correlation ID and retry, which is good. Connector run failures in <code>data-health/page.tsx</code> are a single red line.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p><code>Alert</code> with cause, impact, fix and action. The correlation ID goes behind a copy button.</p></div></div>
+      <div class="h"><div class="h-top"><span class="n">H10</span><h3>Help and documentation</h3></div>
+        <div><p class="lbl">Now</p><p>Ask Goldy's is the only help, and it isn't linked to the number you're looking at.</p></div>
+        <div class="fix"><p class="lbl">Fix</p><p>A <code>?</code> HoverCard on each metric, with its definition from <code>docs/metrics/catalog.md</code> and an "Ask about this number" link into Ask Goldy's.</p></div></div>
+    </div>
+  </div>
+
+  <section class="col">
+    <h2>Before the rewrite starts</h2>
+    <div class="stack" style="margin-top:16px">
+      <p class="muted"><code>docs/design-system.md</code> §1 and §5 currently say to use shadcn's look "unmodified" with no custom font. This direction replaces those two sections. The rest of that doc still holds: exception-first reconciliation, absence and conflict never hidden, failure distinct from "no new data", and light mode only.</p>
+      <p class="muted">The rename from <code>--status-warning</code> to <code>--status-conflict</code> affects every component that uses <code>bg-status-warning</code>. Make it in the same change as the token swap.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  // Sparklines: one scale per tile, endpoint emphasised, optional flagged (disputed) point.
+  document.querySelectorAll("svg.spark").forEach(function (svg) {
+    var vals = svg.dataset.spark.split(",").map(Number);
+    var flag = svg.dataset.flag != null ? Number(svg.dataset.flag) : -1;
+    var w = 200, h = 34, pad = 3;
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    var x = function (i) { return pad + i * (w - pad * 2) / (vals.length - 1); };
+    var y = function (v) { return h - pad - (v - min) / (max - min || 1) * (h - pad * 2); };
+    svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+    svg.setAttribute("preserveAspectRatio", "none");
+    var pts = vals.map(function (v, i) { return x(i) + "," + y(v); }).join(" ");
+    var area = "M" + x(0) + "," + h + " L" + pts.split(" ").join(" L") + " L" + x(vals.length - 1) + "," + h + " Z";
+    var ns = "http://www.w3.org/2000/svg";
+    var a = document.createElementNS(ns, "path"); a.setAttribute("d", area); a.setAttribute("fill", "#17171A"); a.setAttribute("fill-opacity", "0.06"); svg.appendChild(a);
+    var l = document.createElementNS(ns, "polyline"); l.setAttribute("points", pts); l.setAttribute("fill", "none"); l.setAttribute("stroke", "#17171A"); l.setAttribute("stroke-width", "1.5"); l.setAttribute("vector-effect", "non-scaling-stroke"); svg.appendChild(l);
+    if (flag >= 0) {
+      var f = document.createElementNS(ns, "line"); f.setAttribute("x1", x(flag)); f.setAttribute("x2", x(flag)); f.setAttribute("y1", 0); f.setAttribute("y2", h); f.setAttribute("stroke", "#C2410C"); f.setAttribute("stroke-dasharray", "2 2"); f.setAttribute("vector-effect", "non-scaling-stroke"); svg.appendChild(f);
+    }
+  });
+
+  // Net sales by day ($k). Saturday this week is disputed (Lightspeed figure shown).
+  var days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var cur = [11.2, 9.8, 12.4, 13.1, 16.9, 21.3, 14.0];
+  var prev = [10.6, 9.9, 11.3, 12.2, 16.1, 19.8, 12.8];
+  var svg = document.getElementById("salesChart");
+  var ns = "http://www.w3.org/2000/svg";
+  var W = 560, H = 210, L = 38, R = 6, T = 8, B = 24;
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  var maxV = 25, ticks = [0, 5, 10, 15, 20, 25];
+  var yv = function (v) { return T + (H - T - B) * (1 - v / maxV); };
+  function el(tag, attrs, text) { var e = document.createElementNS(ns, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text) e.textContent = text; svg.appendChild(e); return e; }
+  ticks.forEach(function (t) {
+    el("line", { x1: L, x2: W - R, y1: yv(t), y2: yv(t), stroke: "#EEEEEA", "stroke-width": 1 });
+    el("text", { x: L - 8, y: yv(t) + 4, "text-anchor": "end" }, "$" + t + "k");
+  });
+  var slot = (W - L - R) / days.length, bw = 16;
+  days.forEach(function (d, i) {
+    var cx = L + slot * i + slot / 2;
+    el("rect", { x: cx - bw - 2, y: yv(prev[i]), width: bw, height: yv(0) - yv(prev[i]), rx: 3, fill: "#D9D8D2" });
+    if (i === 5) {
+      el("rect", { x: cx + 2, y: yv(cur[i]), width: bw, height: yv(0) - yv(cur[i]), rx: 3, fill: "#FDEEE4", stroke: "#C2410C", "stroke-width": 1.5, "stroke-dasharray": "3 2" });
+    } else {
+      el("rect", { x: cx + 2, y: yv(cur[i]), width: bw, height: yv(0) - yv(cur[i]), rx: 3, fill: "#17171A" });
+    }
+    el("text", { x: cx, y: H - 6, "text-anchor": "middle" }, d);
+  });
+  el("text", { x: L + slot * 5 + slot / 2 + 10, y: yv(cur[5]) - 7, "text-anchor": "middle", fill: "#C2410C", "font-weight": "600" }, "$21.3k?");
+
+  // 30-day ingestion strips.
+  document.querySelectorAll(".bars30").forEach(function (b) {
+    var s = b.dataset.bars.slice(-30);
+    for (var i = 0; i < s.length; i++) {
+      var c = s[i];
+      var it = document.createElement("i");
+      if (c === "n") it.className = "n";
+      if (c === "f") it.className = "f";
+      if (c === "m") it.className = "m";
+      b.appendChild(it);
+    }
+  });
+
+  // Pins toggle.
+  var btn = document.getElementById("pinsBtn");
+  var on = true;
+  btn.addEventListener("click", function () {
+    on = !on;
+    document.querySelector("main").classList.toggle("pins-off", !on);
+    btn.textContent = on ? "Hide heuristic pins" : "Show heuristic pins";
+    btn.setAttribute("aria-pressed", String(on));
+  });
+
+  // Copy tokens.
+  var copy = document.getElementById("copyBtn");
+  copy.addEventListener("click", function () {
+    var text = document.getElementById("tokensCode").innerText;
+    navigator.clipboard.writeText(text).then(function () {
+      copy.textContent = "Copied";
+      setTimeout(function () { copy.textContent = "Copy"; }, 1600);
+    }).catch(function () {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById("tokensCode"));
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      copy.textContent = "Press ⌘C";
+    });
+  });
+})();
+</script>

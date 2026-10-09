@@ -3,6 +3,7 @@
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import type { RankedListWidget } from "@/components/widgets/types";
 import type { TopSeller } from "@/lib/api";
+import { formatCurrency } from "@/lib/format";
 
 function num(v: number | string | null): number | null {
   if (v === null || v === undefined) return null;
@@ -17,7 +18,7 @@ function fmt(v: number | string | null): string {
 
 function money(v: number | string | null): string {
   const n = num(v);
-  return n === null ? "—" : `$${n.toFixed(2)}`;
+  return n === null ? "—" : formatCurrency(n);
 }
 
 /** Ranked best-sellers, rendered through the shared widget runtime. */

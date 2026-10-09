@@ -1,15 +1,17 @@
 "use client";
 
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import { flattenSeries } from "./flatten";
+import { formatValue } from "./format";
+import { CHART_TOOLTIP_PROPS, SERIES_COLORS, compactAxis, formatXTick } from "./chart-style";
 import type { TimeSeriesWidget } from "./types";
 import { WidgetShell } from "./widget-shell";
 
@@ -26,24 +28,40 @@ export function TimeSeriesWidgetView({ widget }: { widget: TimeSeriesWidget }) {
     <WidgetShell title={widget.title} description={widget.description}>
       <div role="img" aria-label={widget.title} className="h-48 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="x" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={48} />
-            <Tooltip />
-            {widget.series.map((s, i) => (
-              <Line
-                key={s.key}
-                type="monotone"
-                dataKey={s.key}
-                name={s.label}
-                connectNulls={false}
-                stroke={i === 0 ? "#2563eb" : "#16a34a"}
-                strokeWidth={2}
-                dot={false}
-              />
-            ))}
-          </LineChart>
+          <AreaChart data={data} margin={{ top: 4, right: 8, left: -8, bottom: 0 }}>
+            <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
+            <XAxis dataKey="x" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} minTickGap={16} tickFormatter={formatXTick} />
+            <YAxis
+              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+              tickLine={false}
+              axisLine={false}
+              width={52}
+              tickFormatter={(v: number) => compactAxis(v, widget.yFormat)}
+            />
+            <Tooltip
+              {...CHART_TOOLTIP_PROPS}
+              labelFormatter={formatXTick}
+              formatter={(v: number) => formatValue(v, widget.yFormat)}
+            />
+            {widget.series.map((s, i) => {
+              const color = SERIES_COLORS[i % SERIES_COLORS.length];
+              return (
+                <Area
+                  key={s.key}
+                  type="monotone"
+                  dataKey={s.key}
+                  name={s.label}
+                  connectNulls={false}
+                  stroke={color}
+                  fill={color}
+                  fillOpacity={i === 0 ? 0.07 : 0}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, strokeWidth: 0 }}
+                />
+              );
+            })}
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </WidgetShell>

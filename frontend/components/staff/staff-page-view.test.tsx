@@ -6,7 +6,7 @@ describe("StaffPageView", () => {
   it("renders roster for everyone and labor cost for an Owner", () => {
     render(<StaffPageView seniority="OWNER" />);
     expect(screen.getByText("Rostering & hours")).toBeInTheDocument();
-    expect(screen.getByText("Labor cost as a % of sales.")).toBeInTheDocument();
+    expect(screen.getByText("Labour cost as a % of sales.")).toBeInTheDocument();
     expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
   });
 
@@ -14,7 +14,7 @@ describe("StaffPageView", () => {
     render(<StaffPageView seniority="MANAGER" />);
     expect(screen.getByText("Rostering & hours")).toBeInTheDocument();
     expect(screen.getByText(/owner only/i)).toBeInTheDocument();
-    expect(screen.queryByText("Labor cost as a % of sales.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Labour cost as a % of sales.")).not.toBeInTheDocument();
   });
 
   it("fails closed (locks labor cost) when seniority is absent", () => {

@@ -11,6 +11,7 @@ import { BusinessKpiGrid } from "@/components/dashboard/business-kpi-grid";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { TopSellers } from "@/components/dashboard/top-sellers";
 import { SalesTrend } from "@/components/dashboard/sales-trend";
+import { PageHeader } from "@/components/layout/page-header";
 
 export default function DashboardPage() {
   // One bootstrap request replaces the previous five independent fetches.
@@ -39,17 +40,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Your numbers, verified.</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Overview" description="Your numbers, verified across every source." />
 
       <NeedsDecisionBand openCount={data.summary.openConflicts} />
 
-      <BusinessKpiGrid seniority={user?.seniority} latestSales={data.latestSales} />
+      <BusinessKpiGrid
+        seniority={user?.seniority}
+        latestSales={data.latestSales}
+        salesTrend={data.salesTrend}
+      />
 
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <SalesTrend points={data.salesTrend} />
         <ActivityChart points={data.activity} />
       </section>

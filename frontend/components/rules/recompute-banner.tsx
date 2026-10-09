@@ -10,7 +10,7 @@ interface RecomputeBannerProps {
 export function RecomputeBanner({ status }: RecomputeBannerProps) {
   if (status.state === "recomputing") {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-transparent bg-status-warning/15 p-3 text-sm">
+      <div className="flex items-center gap-2 rounded-xl border border-transparent bg-status-info-soft p-3 text-sm text-status-info">
         <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
         <span>Rules changed — recomputing resolved views…</span>
       </div>
@@ -19,7 +19,7 @@ export function RecomputeBanner({ status }: RecomputeBannerProps) {
 
   if (status.state === "failed") {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-transparent bg-destructive/10 p-3 text-sm text-destructive">
+      <div className="flex items-center gap-2 rounded-xl border border-transparent bg-destructive-soft p-3 text-sm text-destructive">
         <AlertCircle className="h-4 w-4" aria-hidden="true" />
         <span>Recompute failed. Resolved views may be stale.</span>
       </div>
@@ -28,7 +28,7 @@ export function RecomputeBanner({ status }: RecomputeBannerProps) {
 
   if (status.state === "complete" && status.lastChangedAt) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-transparent bg-status-success/10 p-3 text-sm">
+      <div className="flex items-center gap-2 rounded-xl border border-transparent bg-status-success-soft p-3 text-sm text-status-success">
         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
         <span>
           Rules apply immediately · last changed{" "}
@@ -39,7 +39,7 @@ export function RecomputeBanner({ status }: RecomputeBannerProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border p-3 text-sm text-muted-foreground">
+    <div className="flex items-center gap-2 rounded-xl border p-3 text-sm text-muted-foreground">
       <RefreshCw className="h-4 w-4" aria-hidden="true" />
       <span>Resolved views have never been recomputed.</span>
     </div>

@@ -5,10 +5,13 @@ import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
 import type { DailySales } from "@/lib/api";
+import { PageHeader } from "@/components/layout/page-header";
+import { SourceLabel } from "@/components/sources/source-tile";
+import { formatCurrency, formatDay } from "@/lib/format";
 
 function money(v: number | string): string {
   const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) ? `$${n.toFixed(2)}` : "—";
+  return Number.isFinite(n) ? formatCurrency(n) : "—";
 }
 
 function polylinePoints(values: number[]): string {
@@ -44,13 +47,10 @@ export default function SalesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Sales</h1>
-        <p className="text-sm text-muted-foreground">Daily sales totals across your sources.</p>
-      </div>
+      <PageHeader title="Sales" description="Daily sales totals across your sources." />
 
-      <section className="rounded-lg border p-4">
-        <h2 className="text-sm font-semibold text-muted-foreground">Daily sales</h2>
+      <section className="rounded-xl border p-5">
+        <h2 className="text-sm font-semibold">Daily sales</h2>
         <div role="img" aria-label="Daily sales trend" className="mt-3 h-48">
           {values.length > 0 ? (
             <svg
@@ -62,7 +62,7 @@ export default function SalesPage() {
               <polyline
                 points={polylinePoints(values)}
                 fill="none"
-                stroke="#2563eb"
+                stroke="hsl(var(--chart-1))"
                 strokeWidth="2"
                 vectorEffect="non-scaling-stroke"
               />
@@ -79,7 +79,7 @@ export default function SalesPage() {
           description="Daily sales will appear here once sources ingest."
         />
       ) : (
-        <section className="rounded-lg border">
+        <section className="overflow-x-auto rounded-xl border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-muted-foreground">
@@ -92,12 +92,14 @@ export default function SalesPage() {
             </thead>
             <tbody>
               {rows.map((r: DailySales) => (
-                <tr key={`${r.date}-${r.source}`} className="border-b">
-                  <td className="px-4 py-2">{r.date}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{r.source}</td>
-                  <td className="px-4 py-2 text-right">{money(r.totalSales)}</td>
-                  <td className="px-4 py-2 text-right">{money(r.gst)}</td>
-                  <td className="px-4 py-2 text-right">{money(r.net)}</td>
+                <tr key={`${r.date}-${r.source}`} className="border-b last:border-0">
+                  <td className="px-4 py-2.5">{formatDay(r.date)}</td>
+                  <td className="px-4 py-2.5">
+                    <SourceLabel source={r.source} />
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{money(r.totalSales)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{money(r.gst)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{money(r.net)}</td>
                 </tr>
               ))}
             </tbody>
