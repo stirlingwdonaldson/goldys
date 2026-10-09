@@ -45,10 +45,10 @@ describe("POST /monitoring (Sentry tunnel)", () => {
 
   it("honours an internal forwarding target", async () => {
     vi.stubEnv("SENTRY_DSN", DSN);
-    vi.stubEnv("SENTRY_TUNNEL_TARGET", "http://192.168.4.36:9000/");
+    vi.stubEnv("SENTRY_TUNNEL_TARGET", "http://192.168.4.41:9000/");
     await POST(envelope(DSN));
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://192.168.4.36:9000/api/7/envelope/",
+      "http://192.168.4.41:9000/api/7/envelope/",
       expect.anything(),
     );
   });
