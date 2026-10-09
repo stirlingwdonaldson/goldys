@@ -39,6 +39,7 @@ public class SecurityConfig {
                     AntPathRequestMatcher.antMatcher("/api/health"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-payments"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/opentable"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/deputy"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/ctb-invoices"),
@@ -64,6 +65,7 @@ public class SecurityConfig {
             csrf.ignoringRequestMatchers(
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-payments"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/opentable"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/deputy"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/ctb-invoices"),
