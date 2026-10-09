@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   // Standalone output produces a self-contained `server.js` the Docker runtime
   // image runs under Node — no dev server, no Bun needed at runtime.
   output: "standalone",
+  // This package is self-contained. Parent/worktree lockfiles must not widen server traces.
+  outputFileTracingRoot: __dirname,
   // Proxy API calls and the OIDC login/callback flows to the Spring Boot
   // backend so the browser's same-origin session cookies reach it. Defaults to
   // local dev; set BACKEND_ORIGIN when frontend and backend aren't co-located

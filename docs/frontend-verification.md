@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 source audit and local baseline; migration not implemented. Audited commit:
+Phase 0 source audit and local baseline, followed by PR 1 implementation evidence below. Audited commit:
 `f6140b8e2fa13d0c26f1e168c2dfe0bc689e0a18`, 2026-10-09. Proposed architecture requires review.
 No improvement is claimed. Local checks are not GitHub CI results.
 
@@ -146,7 +146,141 @@ claiming gains. Use the deployed standalone server for the subsequent production
 | Tests/coverage/CI | 186 passing local tests; coverage unknown; remote CI unverified |
 | Remaining debt | all migration slices, stable identity limitations, no rich explorer schema/sort contract, concurrency semantics, live regression evidence |
 
-Recommendation: review identity/transport/query ownership first, then implement the first
-small foundation slice. Subsequent business-widget/entity exploration work should build on
+Recommendation after the first foundation slice: proceed to scoped Query and Overview through
+their separate plan. Subsequent business-widget/entity exploration work should build on
 validated documents, explicit provenance, supported query semantics and measured pagination;
 drag/drop layout, SQL-like querying and additional global state are not justified by this audit.
+
+## PR 1 — transport and authentication implementation
+
+Branch `fix/frontend-transport-auth`, based on approved planning commit `7f6acd2`.
+The original audit-only checkpoint above is historical; the following records this slice.
+
+### Problem, solution and preserved behavior
+
+- Headers objects/tuples lost values; aborts became network failures; HTTP status, parse causes
+  and header correlation disappeared. Native fetch now preserves these, with explicit response
+  contracts and one internal response parser (`lib/api/response.ts`).
+- Empty successful deletes/upload/logout are accepted only in void mode. Reservation 204 is
+  explicitly optional; required JSON 204/empty bodies remain diagnosable protocol errors.
+- Error envelopes retain valid codes even when optional metadata is malformed; diagnostics
+  contain paths/codes. Unknown/5xx backend messages do not become user-facing copy.
+- Zod validates all profile-returning auth responses; CurrentUser is inferred from that schema.
+  Future role strings and extra backend fields remain compatible; no subject id is invented.
+- Profile verification aborts/fences previous requests, clears stale presentation identity,
+  and consumes late success/rejection. 401/recognized same-origin auth redirect is sign-out;
+  403, integrity, proxy and network failures are persistent errors with retry/correlation.
+- Logout, login and signup have explicit pending/failure outcomes and duplicate-submit guards.
+  Successful signup followed by failed auto-login preserves confirmed creation and offers
+  sign-in rather than another account-creation request. Network-uncertain signup says so.
+- Three auth error/correlation blocks share AuthFeedback; confirmed-creation and signed-in
+  presentation are focused components. Local form state stays local. No Query/cache migration,
+  arbitrary-widget execution, authorization change or new global state manager is included.
+- Frontend CI now runs Vitest and pins Node 22.22.1 alongside Bun 1.4.2. Native fetch was kept;
+  Axios, global-state wrappers and migrating simple forms to RHF were rejected for this slice.
+
+### Regression evidence
+
+Observed RED runs: errors 2 failing; request handling 8 failing; response boundary 35 failing;
+decoder/prototype-key edge cases 3 failing; auth response validation 4 failing plus missing
+schema module; identity/logout 16 failing with unhandled rejections; auth forms 9 failing.
+Tests were then made green; no original tests were deleted or disabled.
+
+Latest complete suite before final review: **53 files / 290 tests passed** (baseline 43/186;
+104 additional tests). Typecheck and ESLint pass without suppressions. Production build
+passes after scoping the standalone trace root; all 21 static pages were generated and
+the standalone server starts successfully with copied public/static assets. Native audit exits 1
+with **16 pre-existing advisories (9 high, 7 moderate)**, also reproduced on the untouched
+baseline. Browser results are below; final independent review is recorded separately after completion.
+
+MSW tests use real adapters/HTTP handling; race tests deliberately use promises that ignore
+AbortSignal. Multipart tests use Node's native File/FormData because jsdom's File serialization
+fails inside Node Request. React 19 StrictMode is enabled at the RTL root; Vitest 5 setup hooks
+do not accidentally return mock functions as cleanup callbacks. Test-only setup is named
+setupApiServer, not a React hook. Coverage percentage remains unknown; remote CI is not run.
+
+### First Load JS after PR 1
+
+| Route | Audit baseline | PR 1 | Difference |
+| --- | ---: | ---: | ---: |
+| Overview | 341 kB | 367 kB | +26 kB |
+| Custom dashboards | 363 kB | 388 kB | +25 kB |
+| Data explorer | 268 kB | 293 kB | +25 kB |
+| Login/signup | 201 kB | 226 kB | +25 kB |
+
+Next/React versions are unchanged; shared framework/Sentry JS remains 186 kB. The auth schema
+foundation adds approximately 25 kB to affected route loads. This is a measured bundle cost,
+not a performance improvement. Selective/lazy schema loading can be evaluated in the later
+performance slice. No comparable before/after runtime latency measurement was collected here.
+
+### Dependency audit triage and release prerequisite
+
+| Group | Existing affected path / assessment | Follow-up |
+| --- | --- | --- |
+| brace-expansion, braces | Build/lint/Sentry bundler glob processing; current inputs are repository files/patterns | Review compatible transitive fixes; not automatically exempt from CI/build risk |
+| Next 15.5.25 | Two self-hosted SSG/ISR cache-poisoning advisories; patched range starts 15.5.27 | Separate tested Next patch update before production release |
+| PostCSS 8.4.31 | Next's older nested version; direct/Vite PostCSS 8.5.28 is newer | Review Next/transitive source-map fixes against actual CSS build inputs |
+| postcss-selector-parser 6.1.4 | Tailwind CSS selector processing | Review compatible fix; keep frontend-generated CSS free of untrusted documents |
+| sharp 0.35.4 | Next image optimizer transitive runtime; no next/image consumers found, but framework endpoint remains available | Do not declare unreachable solely from imports; upgrade/review optimizer path before release |
+| source-map-js 1.2.1 | PostCSS/build and jsdom/test source-map processing | Review fixed compatible version and verify build/test |
+
+No forced audit remediation or major upgrades were applied. This is an unresolved release
+prerequisite, not a passing security check or permission to deploy.
+
+### Structural review and rulings
+
+Ripwire's explicit `7f6acd2..HEAD` comparison identified auth UI growth. After extracting
+actual repeated feedback and presentation, SignupPage complexity fell from 26 to 10 and
+UserMenu's major verbosity finding disappeared. LoginPage remains 67 lines vs 60; this
+bounded growth implements guarded submissions and accessible feedback without another
+form/state wrapper. The tool still reports that finding; no thresholds/acks were weakened.
+New parser complexity and JSX-only dead-code candidates are visible review signals, not
+proof of runtime failure. Full suite/typecheck/browser checks verify affected consumers.
+
+Rulings: response parsing is a focused internal module; installed MSW 3 uses onUnhandledFrame;
+native Node multipart fixtures supplement browser checks; root StrictMode/block-bodied test
+hooks preserve lifecycle semantics; test setup naming/cancelActive resolve lint without
+suppression; pre-existing audit findings need a separate release remediation; auth feedback/
+presentation extraction responds to measured duplication; bounded LoginPage/parser growth
+is retained for explicit ownership. Next trace root is explicitly this independent frontend
+package: the parent lockfile widened worktree output and the first 120s pipeline timed out
+after compilation during tracing. Future external workspace imports need explicit trace inclusion.
+
+### Migration, rollback and remaining debt
+
+No wire endpoint, database or saved document format changes. Revert response policies and
+void caller changes together; schema/type changes together; auth provider/UI as their unit.
+Remove Zod/MSW only after checking imports and restoring the prior lock. Trace-root rollback
+must restore the deployment's intended standalone layout, not delete parent lockfiles.
+
+Query/cache isolation, remaining mutations, dashboard/widget schemas, editor dirty-state,
+stream cancellation and monitoring completion remain in the roadmap. Current profile has no
+stable subject; external same-profile session replacement is not identifiable. Original
+redirect status/correlation is hidden by followed browser fetch. Causes must be sanitized
+before later telemetry reporting. Live backend/test credentials remain unavailable; controlled
+HTTP fixtures are not proof of production authorization. No API deduplication or latency
+improvement is claimed by this slice.
+
+### Built-browser regression results
+
+Production standalone server, cached Playwright-core 1.63.0/Chromium build 1243, fresh contexts
+at **1440×900 and 320×900**, same synthetic route handlers. Ten scenarios completed (five per
+viewport): profile outage/retry, login failure/success, partial signup, logout success, logout
+failure/reverification. Captured screenshots preserve the current typography/cards/tokens;
+partial-signup at 320px has no horizontal document overflow.
+
+| Scenario (each viewport) | Observed HTTP sequence | Verified outcome |
+| --- | --- | --- |
+| Profile retry | `/api/me` 500 → 200 | Demo Overview remains available; Owner control absent until verified; retry restores profile |
+| Login | login 500 → 200; `/api/me` 200 | Safe alert/correlation, then navigation to Overview |
+| Partial signup | signup 201; login 401 | One creation, confirmed account state, sign-in link; no create button |
+| Logout success | `/api/me` 200; logout 204 | Pending button, one logout, identity cleared and success toast; no redundant profile GET |
+| Logout failure | `/api/me` 200; logout 500; `/api/me` 401 | Failure consumed, uncertainty toast, reverified signed-out state |
+
+No page exceptions/unhandled promise failures were observed in any scenario. Success logout
+has zero console errors; negative scenarios contain only the expected browser “Failed to load
+resource” messages for deliberately injected 401/500 responses. This is controlled HTTP/browser
+evidence, not live Spring authorization verification or a clean-console claim for outages.
+The harness scopes alerts to the application's paragraph: Next also supplies its own route
+announcer with role=alert. Screenshots and raw test/build/browser logs are archived in
+`/tmp/opencode/goldys-auth-verification/`; they contain synthetic fixtures, not live credentials.

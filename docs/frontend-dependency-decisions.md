@@ -1,6 +1,6 @@
 # Frontend dependency decisions — proposal
 
-Audited HEAD: `f6140b8`. No dependency changes in this audit. Resolved versions below are
+Audited HEAD: `f6140b8`. The original audit made no dependency changes. Resolved versions below are
 from the existing Bun lock/install, not suggested upgrades. Restore with Bun 1.4.2 and
 `bun install --frozen-lockfile`. Next is 15.5.25 and React is 19.3.0 at this checkout.
 
@@ -20,9 +20,10 @@ from the existing Bun lock/install, not suggested upgrades. Restore with Bun 1.4
 | Grid-layout/graph-layout libraries | Defer | Existing grid/keyboard controls and React Flow work. Drag/resize is not an approved new product requirement. |
 | Redux/Zustand/competing UI framework | Reject for this migration | No demonstrated need for broad global state or second design system. |
 
-The first-slice plan proposes Zod 4.6.5 and MSW 3.0.2 from registry metadata inspected
-2026-10-09; MSW requires Node >=22.12.0, so the plan pins CI to local Node 22.22.1. These
-versions are not installed or compatibility-tested yet. Package versions for new additions
+PR 1 installs exact Zod 4.6.5 and MSW 3.0.2. MSW requires Node >=22.12.0; CI now pins local
+Node 22.22.1. Transport/auth integration tests execute with the installed packages; MSW 3's
+`onUnhandledFrame: "error"` policy prevents accidental live requests. Install scripts remain
+blocked; the existing unrs-resolver postinstall was not enabled. Package versions for future additions
 must be pinned through Bun's lockfile after checking official compatibility documentation
 against React 19, Next 15, Vitest 5 and Bun 1.4.2.
 Do not invent a tested version or bundle benefit before installation and verification.
@@ -86,3 +87,10 @@ No removals are justified by the audit. Remove useApiData only after its last co
 Source: `frontend/package.json:16–63`, `frontend/bun.lock`, `bun pm ls` and installed package
 metadata. Total direct declarations: 45. Do not sweep unused primitives out solely from this
 inventory; verify imports and product usage before a separately reviewable removal.
+
+PR 1 retains all 45 original direct declarations and adds two (31 runtime + 16 development).
+Next/React/Sentry/design-system versions are retained. Native `bun audit` reports the same
+16 advisories as the untouched baseline (9 high, 7 moderate); MSW introduces an additional
+development path through Vite to the already-present PostCSS group, not a new advisory.
+Audit exit is 1. Remediation requires an independently reviewed dependency update before a
+production release; this PR does not assert dependency-security clearance.

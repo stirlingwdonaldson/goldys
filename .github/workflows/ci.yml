@@ -26,10 +26,15 @@ jobs:
         run: ./gradlew test spotlessCheck build
 
   frontend:
-    name: Frontend (typecheck, lint, build)
+    name: Frontend (typecheck, lint, test, build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.1"
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -40,9 +45,9 @@ jobs:
         working-directory: frontend
         run: bun install --frozen-lockfile
 
-      - name: Type check, lint, and build
+      - name: Type check, lint, test, and build
         working-directory: frontend
-        run: bun run typecheck && bun run lint && bun run build
+        run: bun run typecheck && bun run lint && bun run test && bun run build
 
   docker:
     name: Docker images (build)
