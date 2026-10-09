@@ -23,6 +23,10 @@ import type {
   DashboardSummary,
   DashboardTemplate,
   LatestSales,
+  DailyCovers,
+  InventorySummary,
+  LabourSummary,
+  Provenance,
   MetricQuery,
   OverrideResult,
   ProductOverrideInput,
@@ -110,10 +114,10 @@ const records: Record<string, ReconciliationRecord> = {
 };
 
 const connectorStatuses: ConnectorStatus[] = [
-  { source: "Lightspeed", connectorName: "lightspeed-scrape", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0, runnable: false },
-  { source: "Cooking the Books", connectorName: "ctb-export", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1, runnable: true },
-  { source: "Deputy", connectorName: "deputy-api", lastRunAt: "2026-09-19T22:30:00Z", status: "failed", failureCount: 2, runnable: false },
-  { source: "OpenTable", connectorName: "opentable-guestcenter", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
+  { source: "LIGHTSPEED", connectorName: "lightspeed-scrape", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0, runnable: false },
+  { source: "CTB", connectorName: "ctb-export", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1, runnable: true },
+  { source: "DEPUTY", connectorName: "deputy-api", lastRunAt: "2026-09-19T22:30:00Z", status: "failed", failureCount: 2, runnable: false },
+  { source: "OPENTABLE", connectorName: "opentable-guestcenter", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
 ];
 
 let productExceptions: ReconciliationException[] = [
@@ -327,6 +331,18 @@ const demoRawRecords: RawRecordSummary[] = [
     sha256: "1".repeat(64),
   },
 ];
+
+demoRawRecords.push({
+  id: "raw-3",
+  sourceSystem: "DEPUTY",
+  fetcherIdentity: "deputy-timesheets",
+  fetchMethod: "API",
+  contentType: "application/json",
+  characterEncoding: "UTF-8",
+  fetchedAt: "2026-10-07T10:15:00Z",
+  byteLength: 2210,
+  sha256: "2".repeat(64),
+});
 
 const demoCanonicalEntities: EntityDescriptor[] = [
   { id: "daily_sales", label: "Daily sales", placeholder: false },
@@ -714,6 +730,37 @@ export const demoApi: Api = {
     };
   },
 
+  async getInventorySummary(from: string, to: string): Promise<InventorySummary> {
+    await delay(300);
+    return { from, to, purchases: 6950.5, wastage: 412.8, foodCostPercent: 0.2914 };
+  },
+
+  async getLabourSummary(from: string, to: string): Promise<LabourSummary> {
+    await delay(300);
+    return {
+      from,
+      to,
+      scheduledHours: 1184,
+      actualHours: 1231.5,
+      labourCost: 41872.4,
+      variance: 47.5,
+      hoursPerCover: 0.29,
+      labourCostPerCover: 9.86,
+      fohLabourCostPercent: 0.1412,
+      bohLabourCostPercent: 0.1637,
+    };
+  },
+
+  async listDailyCovers(from: string, to: string): Promise<DailyCovers[]> {
+    await delay(300);
+    return demoCovers(from, to);
+  },
+
+  async getProvenance(metricId: string, date: string): Promise<Provenance> {
+    await delay(300);
+    return demoProvenance(metricId, date);
+  },
+
   async getTopSellers(): Promise<TopSeller[]> {
     await delay(300);
     return [
@@ -911,7 +958,10 @@ export const demoApi: Api = {
     size: number,
   ): Promise<DataPage<RawRecordSummary>> {
     await delay(300);
-    return { items: demoRawRecords, total: demoRawRecords.length, page, size };
+    const items = _filter.source
+      ? demoRawRecords.filter((r) => r.sourceSystem.toLowerCase() === _filter.source!.toLowerCase())
+      : demoRawRecords;
+    return { items, total: items.length, page, size };
   },
 
   async getRawRecord(id: string): Promise<RawRecordDetail> {
@@ -1050,3 +1100,55 @@ const demoTemplates: DashboardTemplate[] = [
     ],
   },
 ];
+
+/** A deterministic covers series for the demo: weekends busier, one conflicted day. */
+function demoCovers(from: string, to: string): DailyCovers[] {
+  const out: DailyCovers[] = [];
+  const end = new Date(`${to}T00:00:00Z`);
+  for (let d = new Date(`${from}T00:00:00Z`); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    const dow = d.getUTCDay();
+    const base = dow === 5 || dow === 6 ? 340 : dow === 0 ? 290 : 210;
+    const date = d.toISOString().slice(0, 10);
+    out.push({
+      date,
+      covers: base + ((d.getUTCDate() * 37) % 45),
+      authoritativeSource: "OPENTABLE",
+      hasConflict: d.getUTCDate() % 11 === 0,
+    });
+  }
+  return out.reverse();
+}
+
+/**
+ * Demo provenance: two sources that disagree on odd days (resolved by the source-priority rule)
+ * and agree on even days, so the provenance graph shows both shapes.
+ */
+function demoProvenance(metricId: string, date: string): Provenance {
+  const day = Number(date.slice(-2)) || 1;
+  const base = metricId.startsWith("reservations") ? 300 + day : 10000 + day * 137.25;
+  const conflict = day % 2 === 1;
+  const primary = { sourceSystem: "LIGHTSPEED", value: base, recordedAt: `${date}T23:40:00Z` };
+  const secondary = {
+    sourceSystem: "CTB",
+    value: conflict ? Math.round((base - 42.5) * 100) / 100 : base,
+    recordedAt: `${date}T23:55:00Z`,
+  };
+  return {
+    metric: metricId,
+    date,
+    resolvedValue: base,
+    trust: {
+      state: conflict ? "RESOLVED_BY_RULE" : "VERIFIED",
+      freshness: "FRESH",
+      authoritativeSource: "LIGHTSPEED",
+      resolvedAt: `${date}T23:59:00Z`,
+      lastIngestionAt: `${date}T23:55:00Z`,
+      threshold: 0.5,
+    },
+    sources: [primary, secondary],
+    resolution: conflict
+      ? { kind: "rule", source: "LIGHTSPEED", reason: "priority", actor: "owner@goldys.example", at: `${date}T23:59:00Z` }
+      : { kind: "agreed", source: "LIGHTSPEED", reason: "sources agree within tolerance", actor: null, at: `${date}T23:59:00Z` },
+    rawRecordIds: ["raw-2", "raw-1"],
+  };
+}

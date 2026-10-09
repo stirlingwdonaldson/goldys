@@ -1,6 +1,14 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Workflow } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
+import { sourceLabel } from "@/lib/rule-logic";
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { Button } from "@/components/ui/button";
+import { ProvenanceSheet, type ProvenanceTarget } from "@/components/trust/provenance-sheet";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
@@ -18,8 +26,65 @@ function polylinePoints(values: number[]): string {
     .join(" ");
 }
 
+function toNumber(v: number | string): number {
+  return typeof v === "number" ? v : Number(v);
+}
+
+function salesColumns(onTrace: (date: string) => void): ColumnDef<DailySales>[] {
+  const moneyColumn = (key: "totalSales" | "gst" | "net", title: string): ColumnDef<DailySales> => ({
+    id: key,
+    accessorFn: (r) => toNumber(r[key]),
+    header: ({ column }) => <DataTableColumnHeader column={column} title={title} />,
+    cell: ({ row }) => <span className="tabular-nums">{money(row.original[key])}</span>,
+    meta: { title, align: "right" },
+  });
+  return [
+    {
+      accessorKey: "date",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
+      meta: { title: "Date" },
+      enableHiding: false,
+    },
+    {
+      // Filter and sort on the label the user sees, not the source-system code.
+      id: "source",
+      accessorFn: (r) => sourceLabel(r.source),
+      header: "Source",
+      cell: ({ getValue }) => <span className="text-muted-foreground">{getValue() as string}</span>,
+      meta: { title: "Source" },
+    },
+    moneyColumn("totalSales", "Total sales"),
+    moneyColumn("gst", "GST"),
+    moneyColumn("net", "Net"),
+    {
+      id: "trace",
+      header: () => <span className="sr-only">Trace</span>,
+      cell: ({ row }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7"
+          aria-label={`Trace sales for ${row.original.date}`}
+          onClick={() => onTrace(row.original.date)}
+        >
+          <Workflow className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+          Trace
+        </Button>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      meta: { align: "right" },
+    },
+  ];
+}
+
 export default function SalesPage() {
   const sales = useApiData((api) => api.listDailySales());
+  const [trace, setTrace] = useState<ProvenanceTarget | null>(null);
+  const columns = useMemo(
+    () => salesColumns((date) => setTrace({ metricId: "sales.gross", metricLabel: "Gross sales", date })),
+    [],
+  );
 
   if (sales.loading) return <LoadingState rows={5} />;
   if (sales.error) {
@@ -79,31 +144,20 @@ export default function SalesPage() {
           description="Daily sales will appear here once sources ingest."
         />
       ) : (
-        <section className="rounded-lg border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="px-4 py-2 font-medium">Date</th>
-                <th className="px-4 py-2 font-medium">Source</th>
-                <th className="px-4 py-2 text-right font-medium">Total sales</th>
-                <th className="px-4 py-2 text-right font-medium">GST</th>
-                <th className="px-4 py-2 text-right font-medium">Net</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r: DailySales) => (
-                <tr key={`${r.date}-${r.source}`} className="border-b">
-                  <td className="px-4 py-2">{r.date}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{r.source}</td>
-                  <td className="px-4 py-2 text-right">{money(r.totalSales)}</td>
-                  <td className="px-4 py-2 text-right">{money(r.gst)}</td>
-                  <td className="px-4 py-2 text-right">{money(r.net)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-semibold">Daily totals by source</h2>
+          <DataTable
+            columns={columns}
+            data={rows}
+            filterColumn="source"
+            filterPlaceholder="Filter by source"
+            initialSorting={[{ id: "date", desc: true }]}
+            getRowId={(r) => `${r.date}-${r.source}`}
+          />
         </section>
       )}
+
+      <ProvenanceSheet target={trace} onClose={() => setTrace(null)} />
     </div>
   );
 }
