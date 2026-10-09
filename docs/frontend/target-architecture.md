@@ -1,6 +1,6 @@
 # Frontend target architecture — proposal for review
 
-Status: **proposed**, grounded in [audit](frontend-audit.md) at `f6140b8`.
+Status: **proposed**, grounded in [audit](audit.md) at `f6140b8`.
 This is the architectural review artifact; it does not indicate implementation approval.
 
 ## Intent and invariants

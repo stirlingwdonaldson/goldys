@@ -1,7 +1,16 @@
 # OpenTable (GuestCenter) Access
 
-How the OpenTable connector reaches reservation data. Records login and export
-mechanics and the CSV columns, never credentials.
+How reservation data gets from OpenTable GuestCenter into the platform. Records
+login and export mechanics and the CSV columns, never credentials.
+
+## Current path: manual CSV drop
+
+An operator exports the GuestCenter Reservations CSV and posts it to
+`POST /api/ingest/opentable` (token-gated by `OPENTABLE_DROP_TOKEN`, fail-closed when
+unset). `OpenTableCsvIngestService` stores the bytes in the raw ledger, then parses
+and canonicalizes each row into `canonical_reservation`. A scripted Playwright pull
+was designed (`docs/superpowers/specs/2026-09-23-opentable-*.md`) but is **not**
+implemented; the login and export notes below are kept for when it is.
 
 ## Login
 
@@ -11,7 +20,8 @@ mechanics and the CSV columns, never credentials.
 ## Reservations export
 
 - Navigate to the Reservations report and choose the date range, then trigger the
-  CSV export. The browser download is captured by Playwright (`page.waitForDownload`).
+  CSV export. A future scripted pull would capture the download with Playwright
+  (`page.waitForDownload`).
 - Provisionally: report at `https://guestcenter.opentable.com/reports/reservations`,
   export button labelled "Export".
 

@@ -19,7 +19,7 @@ demo mode, clearly labeled, and never presented as production data.
 ## 2. Sources of Truth and Current Baseline
 
 - Architecture/scope: `docs/system-context.md`, `docs/prd.md`.
-- Screen behavior and visual treatment: `docs/design-system.md` (§3 screen inventory,
+- Screen behavior and visual treatment: `docs/design/design-system.md` (§3 screen inventory,
   §5 status tokens, §6 reconciliation exception-first + permission-denied patterns).
 - Reconciliation concepts: the Phase 1 spec's Requirements 5–6 (field-level conflicts,
   manual override, "no data from source X", connector failure states).

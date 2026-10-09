@@ -113,7 +113,7 @@ services:
     ports:
       # Bind to 127.0.0.1 when the edge reaches this VM over a tunnel
       # (cloudflared etc.); use 0.0.0.0 only with a host firewall restricting the
-      # port to the edge's IP ranges. See docs/deployment.md.
+      # port to the edge's IP ranges. See docs/operations/deployment.md.
       - "${BIND_ADDRESS:-0.0.0.0}:${PORT:-3000}:3000"
     restart: unless-stopped
     depends_on:

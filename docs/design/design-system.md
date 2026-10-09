@@ -1,8 +1,9 @@
 # Frontend Design System
 
-**Status:** Draft — principles, screen inventory, and visual direction are
-settled. Revisit once a couple of real screens (dashboard, reconciliation
-view) exist to react to.
+**Status:** Living reference. Principles and the screen inventory below describe
+the shipped frontend. Visual tokens and global styling are defined in
+[`ui-direction.md`](ui-direction.md), which overrides §1's original "shadcn
+unmodified" rule and §5's tokens.
 
 **Non-normative for architecture** — this doc governs visual/interaction
 decisions only. It never overrides `system-context.md` or `prd.md`; where a
@@ -16,7 +17,7 @@ doc describes layout intent only, not final field lists.
 - **Built on shadcn/ui, with Goldy's own visual direction.** Components stay
   shadcn primitives. Global styling (inset panel, ink plus one gold accent,
   soft status pills, source identity tiles, Geist type) and component
-  choices follow [`design/ui-direction.md`](design/ui-direction.md), which
+  choices follow [`ui-direction.md`](ui-direction.md), which
   supersedes the earlier "shadcn unmodified" rule.
 - **Minimize cognitive load over raw data density.** The default failure
   mode for a reconciliation/reporting tool is dumping every field into a
@@ -72,8 +73,12 @@ actually being built:
 | Data health / ingestion health | Requirement 6 | Connector status, ingestion completeness, run activity, and the pipeline node graph (§6); failure states visually distinct from "no new data" |
 | Permission-denied state | Requirement 3 | Explicit "not permitted" — never a silently filtered or partial-looking view |
 | Role/permission admin (future) | Requirement 3 | Not scheduled yet; deferred design |
-| Conversational BI widgets | Requirement 9 (Phase 2) | Deferred — depends on the JSON widget schema landing first |
-| Smart Exporter | Requirement 10 (Phase 2) | Deferred — reuses Conversational BI's rendering, no separate design needed yet |
+| Resolution rules | Requirement 8 (Phase 2) | Source-priority rules per field, with audit history; changes trigger recompute |
+| Data explorer | Requirement 6 | Raw / canonical / resolved browsing with server-side paging; raw payload detail |
+| Logs | Requirement 6 | Ingestion run and failure log viewer |
+| Ask Goldy's / Conversations | Requirement 9 (Phase 2) | Chat over the fixed reporting-tool set; answers render through the shared widget registry; threads persist |
+| Custom dashboards | Requirement 9 (Phase 2) | Saved widget documents (query config only, re-rendered live), templates, sharing, revisions |
+| Smart Exporter | Requirement 10 (Phase 2) | Not built — reuses the widget/tool infrastructure when it lands |
 
 ### Blocked screens
 
@@ -88,27 +93,29 @@ final field list against a guess.
 
 ## 4. Navigation & layout shell
 
-The cleared rebuild baseline retains shadcn configuration but no application
-shell or components. When the Phase 1 shell is implemented, use shadcn's
-`sidebar-07` block as the starting point and adapt it to Goldy's grouped
-navigation: a **Business** group (Dashboard, Sales, Staff & Labor,
-Reservations, Kitchen, Recipes), a **Data** group (Reconciliation, Data
-health), and **Settings** in the footer. Diagnostics live under Data health,
+The shell is built from shadcn's `sidebar-07` block (inset variant, per
+`ui-direction.md`). Navigation is defined in `frontend/lib/nav.ts`: a
+**Business** group (Overview, Sales, Staff & labour, Reservations, Kitchen,
+Custom dashboards, Conversations), a **Data** group (Reconciliation,
+Resolution rules, Data health, Data explorer, Logs), a **Coming soon** group
+(Recipes), and **Settings** in the footer. A ⌘K command palette searches the
+same nav items. Diagnostics live under Data health,
 never on the Dashboard.
 
 Goldy's is a single venue and workspace. Do not carry over multi-workspace,
 "Add team," billing, or upgrade behavior from demo blocks. User identity comes
-from the backend-owned OIDC session, and any avatar fallback derives from the
-current staff profile rather than placeholder data.
+from the backend-owned session (`GET /api/me`), and any avatar fallback derives
+from the current staff profile rather than placeholder data.
 
-Until approved backend DTOs exist, keep restored frontend surfaces minimal;
-do not recreate the deleted mock dashboard and present it as operational data.
+Never present fixture data as operational data: demo mode is always labelled
+with the "Demo data" banner, and screens without a backing endpoint render an
+`AwaitingData` state instead of invented figures.
 The repository remains Bun-only and uses the committed ESLint configuration.
 
 ## 5. Visual tokens
 
 Tokens are defined in `frontend/app/globals.css` and documented in
-[`design/ui-direction.md`](design/ui-direction.md#tokens). The semantic rules
+[`ui-direction.md`](ui-direction.md#tokens). The semantic rules
 from earlier drafts still hold:
 
 - `--status-conflict` (formerly `--status-warning`) marks a field-level
@@ -173,12 +180,11 @@ from earlier drafts still hold:
 
 ## 7. Open items
 
-- Type scale / spacing density — set by `design/ui-direction.md` (Geist, 24px page titles); revisit only
+- Type scale / spacing density — set by `ui-direction.md` (Geist, 24px page titles); revisit only
   if a specific screen (e.g. the reconciliation drill-in table) proves
   genuinely too dense once built.
 - Role/permission admin screen — no design yet, not yet scheduled.
 - Reconciliation view's field list — blocked on PRD open questions (§3).
-- Reconciliation view and connector-status screen — neither exists in the
-  cleared baseline; implement them only against approved backend contracts.
-- Re-establish and record `bun run build`, `bun run lint`, and type-check results
-  as frontend slices are restored.
+- Frontend architecture follow-ups (server-state caching, transport errors,
+  editor/explorer decomposition) — proposed in [`../frontend/`](../frontend/audit.md),
+  not yet approved.

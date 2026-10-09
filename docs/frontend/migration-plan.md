@@ -1,7 +1,7 @@
 # Frontend migration roadmap — proposed review slices
 
 Status: **proposed sequencing**, not an approved executable implementation plan.
-Baseline: `f6140b8`. Review [target architecture](frontend-target-architecture.md) first.
+Baseline: `f6140b8`. Review [target architecture](target-architecture.md) first.
 Each slice should get an implementation plan, focused regression tests and its own review.
 No push, merge or deployment is implied. Source audit precedes migration; live measurements
 and authenticated fixtures still need collection.
@@ -22,7 +22,7 @@ and authenticated fixtures still need collection.
 ### PR 0 — Audit and architectural review artifacts (this branch)
 
 Problem/root cause: findings were hypotheses without checkout-specific evidence.
-Affected files: the five `docs/frontend-*.md` deliverables. Adds no product dependencies or
+Affected files: the five `docs/frontend/*.md` deliverables. Adds no product dependencies or
 behavior changes. Records existing tests/checks and demo browser limitations. Rollback:
 revert documentation. Residual risk: no live authenticated verification; proposals unapproved.
 
@@ -178,7 +178,7 @@ security tests and authenticated integration fixture coverage.
 
 Include problem/affected files, evidence/root cause, solution and rejected alternatives,
 dependency changes, preserved/intentional behavior, tests added, commands and actual exit
-results, migration/rollback steps and residual risks. Update `frontend-verification.md` with
+results, migration/rollback steps and residual risks. Update `verification.md` with
 counts and matching environment/sample methodology. Never describe proposed improvements as
 measured wins. Keep commits concern-specific and task branches short-lived; no direct main commit.
 

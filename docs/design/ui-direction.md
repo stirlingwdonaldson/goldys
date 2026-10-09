@@ -1,10 +1,10 @@
 # UI Direction
 
-**Status:** Approved direction, implemented on `feature/ui-direction` (October 2026).
+**Status:** Approved and implemented (merged to `main` from `feature/ui-direction`, October 2026).
 **Mockups:** [`ui-direction-mockups.html`](ui-direction-mockups.html). Open it in a
 browser. It holds the four annotated screen mockups and the full heuristic audit.
 **Scope:** Visual and interaction decisions only. This doc replaces §1's "shadcn
-unmodified" principle and §5's tokens in [`../design-system.md`](../design-system.md).
+unmodified" principle and §5's tokens in [`design-system.md`](design-system.md).
 Everything else in that doc still applies.
 
 The goal is a warmer, more legible UI on the same shadcn/ui primitives, with

@@ -3,6 +3,7 @@
 **Status:** Draft for review
 **Audience:** AI coding sessions building this system, sequenced by an eng collaborator. Written for precision over narrative — treat every requirement below as literal, not illustrative.
 **Source of truth:** `system-context.md` (architecture invariants, tech stack, per-source ingestion reality). This PRD does not override that doc's architectural decisions; it scopes and sequences them into shippable phases.
+**Implementation status (2026-10-09):** Requirements 1–9 are implemented; Requirement 4 has two gaps (OpenTable arrives as a manual CSV drop, not a scripted pull; Deputy is raw-ledger only). Requirements 10 (Smart Exporter) and 12 (Automation Hub) are not built. The acceptance-criteria checkboxes below were never ticked and do not track progress; the root `README.md` does.
 
 ---
 
@@ -204,9 +205,9 @@ Grouped by persona. "AI coding session" stories describe what the *build* must p
 
 ## Open Questions
 
-- **[Engineering] Entity-matching tolerances.** The requirement to define an entity-matching strategy (Requirement #7) is scoped as "must happen before the reconciliation UI is built," but the specific matching keys/tolerances per entity type are not yet drafted — this is real design work, not a formality, and should be time-boxed to a single focused session against real sample data (e.g. a day of Lightspeed and CTB records side by side) rather than left open-ended.
-- **[Stakeholder] Exact department and seniority values beyond the ones named so far.** BOH, FOH, and Owner/Manager/Staff are established; whether there are other departments (e.g. Bar as distinct from FOH) or seniority nuances (e.g. a shift-lead level between Staff and Manager) should be confirmed before Requirement #3's permission table is populated, even though the model itself doesn't need to change to accommodate them later.
-- **[Stakeholder] Exact field/entity-to-role mapping.** The role model's shape (department × seniority) is decided, but which specific fields and entities each combination can see hasn't been enumerated yet — that mapping is what actually populates Requirement 3's acceptance criteria and should be drafted before the reconciliation UI (Requirement 5) is built against it.
+- **[Engineering] Entity-matching tolerances.** *Status: answered for the current entities* — see `docs/connectors/matching-and-identity.md` (per-entity identity and matching) and `docs/connectors/line-item-matching.md` (Lightspeed ↔ CTB product matching, measured on a real week). Extend those docs for each new source or entity. Original note: the requirement to define an entity-matching strategy (Requirement #7) is scoped as "must happen before the reconciliation UI is built," but the specific matching keys/tolerances per entity type are not yet drafted — this is real design work, not a formality, and should be time-boxed to a single focused session against real sample data (e.g. a day of Lightspeed and CTB records side by side) rather than left open-ended.
+- **[Stakeholder] Exact department and seniority values beyond the ones named so far.** *Status: open.* BOH, FOH, and Owner/Manager/Staff are established; whether there are other departments (e.g. Bar as distinct from FOH) or seniority nuances (e.g. a shift-lead level between Staff and Manager) should be confirmed before Requirement #3's permission table is populated, even though the model itself doesn't need to change to accommodate them later.
+- **[Stakeholder] Exact field/entity-to-role mapping.** *Status: open — permissions are seeded for `ALL × OWNER` only (migrations V6, V13, V18, V23, V26).* The role model's shape (department × seniority) is decided, but which specific fields and entities each combination can see hasn't been enumerated yet — that mapping is what actually populates Requirement 3's acceptance criteria and should be drafted before the reconciliation UI (Requirement 5) is built against it.
 
 ## Timeline Considerations
 

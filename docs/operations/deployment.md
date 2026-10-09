@@ -28,13 +28,13 @@ SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/goldys ./gradlew bootRun
 ## Production
 
 ```bash
-cp .env.example .env.prod                 # fill in POSTGRES_PASSWORD + OIDC_*
+cp .env.example .env.prod                 # fill in POSTGRES_PASSWORD and any connector tokens
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 ```
 
 This builds and runs three containers — `frontend` (published on `${PORT:-3000}`),
 `backend`, and `postgres`. Only `frontend` is reachable from the host; it proxies
-`/api` and `/oauth2` to `backend` over the internal network.
+`/api` to `backend` over the internal network.
 
 ## Staging / second instance (a different port)
 
@@ -79,46 +79,28 @@ plain-HTTP origin bypasses TLS and access controls.
 After going live, smoke-test a full login and confirm the browser lands back on
 `https://platform.swd.sh/` (never `http://backend:8080/...`).
 
-## OIDC (optional)
+## Accounts and the first administrator
 
-Login is optional. Without OIDC the app runs and the UI shows "Sign in" — you can
-deploy and view the site first, then wire up login later.
+Login is email + password, handled by the backend (`/api/auth/signup`,
+`/api/auth/login`, session cookie). There is no external identity provider.
 
-To enable login:
-
-1. Register this exact redirect URI with your identity provider:
-
-   ```
-   https://platform.swd.sh/login/oauth2/code/goldys
-   ```
-
-2. Copy `.env.oidc.example` to `.env.oidc` and fill in the four values
-   (`CLIENT_ID`, `CLIENT_SECRET`, `SCOPE`, `ISSUER_URI`).
-
-3. Restart the backend:
-
-   ```bash
-   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d backend
-   ```
-
-### Permissions (admin bootstrap)
-
-The `V6` migration seeds a single administrator grant: department `ALL`, seniority
-`OWNER`, with read+write on `reconciliation.sales` and `connectors`. Finer-grained
-roles are added as later migrations — no seniority is special-cased in code.
-
-A permission grant only applies once an identity resolves to a staff profile. To
-make your own login an administrator: enable OIDC, sign in once, then read your
-OIDC `iss` and `sub` (visible in the backend debug log) and insert the profile:
+New accounts sign up at `/signup` and start as `ALL × STAFF`, which holds no
+permission grants, so they see explicit "not permitted" states until promoted.
+Promotion is a manual database edit; there is no admin UI yet:
 
 ```sql
-INSERT INTO staff_profile (id, oidc_issuer, oidc_subject, display_name, department, seniority, active, created_at, updated_at)
-VALUES (gen_random_uuid(), '<your-issuer>', '<your-subject>', 'Stirling Donaldson', 'ALL', 'OWNER', true, now(), now());
+UPDATE user_account SET department = 'ALL', seniority = 'OWNER'
+WHERE email = 'you@example.com';
 ```
 
-Until that row exists your identity is authenticated but profile-less, and the
-reconciliation endpoints answer `NOT_PERMITTED` (explicit denial, never a
-silently filtered result).
+Permission grants are table-driven `(department, seniority, resource)` rows
+seeded by migrations (`V6`, `V13`, `V18`, `V23`, `V26`). Today only `ALL × OWNER` holds
+grants; BOH/FOH-specific rows wait on the stakeholder field-to-role mapping (see
+`docs/prd.md` Open Questions). No seniority is special-cased in code.
+
+> `.env.oidc.example`, the `/oauth2` rewrites in `frontend/next.config.ts`, and some
+> code comments still mention OIDC. They are leftovers from the original OIDC
+> design (replaced by `V7`/`V8`) and are not used.
 
 ## Database
 
@@ -168,7 +150,10 @@ to set — those are derived from the compose wiring. The poll runs on
 restrict `${SFTP_PORT}` to it in the host firewall; otherwise rely on a strong
 `SFTP_PASSWORD` and note the port is internet-facing.
 
-CSVs are canonicalized (header + lines → COGS); PDFs are stored raw for now.
+CSVs are canonicalized (header + lines → COGS) and are authoritative. PDFs are stored
+raw, then `InvoicePdfEnrichmentService` extracts their line detail and enriches the
+matching CSV lines (joined by the CSV's `pdf_filename`); anomalies are raised as
+invoice ingest flags rather than dropped.
 
 ## Upgrading
 

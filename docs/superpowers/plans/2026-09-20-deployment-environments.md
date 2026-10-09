@@ -356,7 +356,7 @@ Insert after the header comment (line 1) of `docker-compose.yml`:
 
 ```yaml
 # Development only. For the production stack (backend + frontend + Postgres,
-# served from platform.swd.sh), see docker-compose.prod.yml and docs/deployment.md.
+# served from platform.swd.sh), see docker-compose.prod.yml and docs/operations/deployment.md.
 ```
 
 - [ ] **Step 5: Verify compose config interpolates and enforces required vars**
@@ -435,13 +435,13 @@ git commit -m "ci: build docker images to catch Dockerfile breakage"
 ### Task 5: Deployment runbook
 
 **Files:**
-- Create: `docs/deployment.md`
+- Create: `docs/operations/deployment.md`
 
 **Interfaces:**
 - Consumes: everything above.
 - Produces: operator-facing runbook for dev and prod, DNS/edge, OIDC, upgrade, and rollback.
 
-- [ ] **Step 1: Write `docs/deployment.md`**
+- [ ] **Step 1: Write `docs/operations/deployment.md`**
 
 ```markdown
 # Deployment
@@ -566,7 +566,7 @@ Expected: clean (no trailing whitespace/conflict markers).
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /srv/ai/projects/goldys && git add docs/deployment.md
+cd /srv/ai/projects/goldys && git add docs/operations/deployment.md
 git commit -m "docs: add deployment runbook"
 ```
 
@@ -579,5 +579,5 @@ git commit -m "docs: add deployment runbook"
 - [ ] `docker compose --env-file .env.example -f docker-compose.prod.yml config` validates, and a missing required var fails loudly.
 - [ ] CI `docker` job builds both images on PR/push.
 - [ ] `.gitignore` excludes real `.env` files while `.env.example` stays committed.
-- [ ] `docs/deployment.md` covers dev, prod, DNS/edge, OIDC, upgrade, and rollback.
+- [ ] `docs/operations/deployment.md` covers dev, prod, DNS/edge, OIDC, upgrade, and rollback.
 - [ ] Five atomic Conventional Commits; no secrets or unrelated untracked files staged.

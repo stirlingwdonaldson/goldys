@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 
 /**
  * Stands in for an Owner-only surface (wage and labour cost) for every other role.
- * An explicit locked state, never a blank or partial tile (docs/design-system.md).
+ * An explicit locked state, never a blank or partial tile (docs/design/design-system.md).
  */
 export function OwnerOnlyTile({
   label,

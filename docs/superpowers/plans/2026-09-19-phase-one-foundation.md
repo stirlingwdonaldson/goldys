@@ -65,7 +65,7 @@ frontend/
   app/             minimal App Router shell
   lib/api/         typed backend contracts
 docs/contracts/    frozen Phase 2 interface artifacts
-docs/testing.md    reproducible verification workflow
+docs/operations/testing.md    reproducible verification workflow
 ```
 
 ### Task 1: Align Guidance With the Rebuild Baseline
@@ -74,7 +74,7 @@ docs/testing.md    reproducible verification workflow
 - Modify: `README.md`
 - Modify: `CLAUDE.md`
 - Modify: `.claude/rules/architecture-invariants.md`
-- Modify: `docs/design-system.md`
+- Modify: `docs/design/design-system.md`
 
 **Interfaces:**
 - Consumes: approved Phase 1 spec
@@ -84,7 +84,7 @@ docs/testing.md    reproducible verification workflow
 
 ```bash
 rg -n "Implemented in code|20 tests, 0 failures|frontend/components|see the javadoc" \
-  README.md CLAUDE.md .claude/rules/architecture-invariants.md docs/design-system.md
+  README.md CLAUDE.md .claude/rules/architecture-invariants.md docs/design/design-system.md
 ```
 
 Expected: matches naming deleted classes, tests, and frontend components.
@@ -107,7 +107,7 @@ Link the approved spec and this plan from `README.md` and `CLAUDE.md`.
 
 ```bash
 ! rg -n "Implemented in code|20 tests, 0 failures|see the javadoc on each class" \
-  README.md CLAUDE.md .claude/rules/architecture-invariants.md docs/design-system.md
+  README.md CLAUDE.md .claude/rules/architecture-invariants.md docs/design/design-system.md
 rg -n "phase-one-mvp-design.md|phase-one-foundation.md" README.md CLAUDE.md
 git diff --check
 ```
@@ -117,7 +117,7 @@ Expected: no stale-state match, both plan pointers found, clean diff.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add README.md CLAUDE.md .claude/rules/architecture-invariants.md docs/design-system.md
+git add README.md CLAUDE.md .claude/rules/architecture-invariants.md docs/design/design-system.md
 git commit -m "docs: align guidance with rebuild baseline"
 ```
 
@@ -1217,7 +1217,7 @@ git commit -m "feat: persist canonical sale and shift versions"
 ### Task 16: Publish and Run the Foundation Verification Workflow
 
 **Files:**
-- Create: `docs/testing.md`
+- Create: `docs/operations/testing.md`
 - Modify: `README.md`
 - Modify: `backend/src/main/resources/application.yml`
 
@@ -1257,7 +1257,7 @@ security:
 
 - [ ] **Step 3: Update verified-state documentation honestly**
 
-Link `docs/testing.md`; record commands that actually ran. Do not claim Docker
+Link `docs/operations/testing.md`; record commands that actually ran. Do not claim Docker
 Compose or live OIDC verification unless those checks succeeded.
 
 - [ ] **Step 4: Run the complete checkpoint**
@@ -1274,7 +1274,7 @@ Expected: all commands pass.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add docs/testing.md README.md backend/src/main/resources/application.yml
+git add docs/operations/testing.md README.md backend/src/main/resources/application.yml
 git commit -m "docs: publish foundation verification workflow"
 ```
 

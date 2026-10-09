@@ -1,69 +1,91 @@
 ---
 name: new-connector
-description: Scaffold a new SourceConnector implementation (Lightspeed, Cooking the Books, OpenTable, Deputy) following this repo's connector-isolation pattern. Use when asked to build, add, or start a connector for one of the PRD's Phase 1 sources.
+description: Add or extend a source integration (Lightspeed, Cooking the Books, OpenTable, Deputy, or a new source) following this repo's connector-isolation and raw-ledger pattern. Use when asked to build, add, or change a connector, webhook ingest, CSV/PDF drop, or SFTP pull.
 ---
 
-Goldy's platform ingests from four in-scope Phase 1 sources (PRD Requirement
-4): **Lightspeed**, **Cooking the Books (CTB)**, **OpenTable**, **Deputy**.
-Each becomes one class implementing `com.goldys.platform.connector.SourceConnector`.
+Goldy's ingests from four Phase 1 sources: **Lightspeed** (POS), **Cooking the
+Books / CTB** (inventory, purchasing, and a second sales feed), **OpenTable**
+(reservations), and **Deputy** (labour). MarketMan is history-only (one-time
+pull, see `docs/decisions/marketman-history-only.md`). Tenzo is out of scope.
+
+Paths below are relative to `backend/src/main/java/com/goldys/platform/`.
 
 ## Before writing code
 
-1. Read `docs/system-context.md`'s "Per-Source Ingestion Reality" table for
-   the source you're building. Do not assume a clean REST API exists —
-   confirm the actual working path:
-   - **Lightspeed**: authenticated back-office scrape of server-rendered
-     pages (working path today). Only use the REST API if the paid tier is
-     confirmed unlocked — don't block on it.
-   - **Cooking the Books (CTB)**: self-serve Custom Invoice Export
-     (CSV/XLSX) via scheduled SFTP or email — the standard export only.
-     Do not build against CTB's internal-endpoint scrape for production
-     ingestion (schema-discovery use only). CTB is owned by Quantaco, a
-     competitor — don't request fields beyond the standard export.
-   - **OpenTable**: scripted browser pull from GuestCenter reporting. Must be
-     automatable — not a manual export step.
-   - **Deputy**: standard OAuth REST API. Confirm the OAuth client is
-     registered (handled by the project owner) before starting — but don't
-     chase ownership of that task.
-2. Check `docs/prd.md` Requirement 4's acceptance criteria for this
-   connector before considering it done.
+1. Read the source's row in `docs/system-context.md` ("Per-Source Ingestion
+   Reality") and its section in `docs/connectors/source-access.md`. Don't assume
+   a clean REST API exists.
+2. Read `docs/connectors/matching-and-identity.md` for the canonical entity the
+   source feeds. If it's a new entity, follow `docs/architecture/adding-a-domain.md`
+   and add a section to the matching doc.
+3. Look at what already exists for the source in `connectors/<source>/` and
+   `api/*IngestController.java`. Most sources already have an ingestion path.
 
-## Implementation pattern
+| Source | Current path | Code |
+|---|---|---|
+| Lightspeed | Insights webhook (sales, products, Z-report) | `connectors/lightspeed/`, `api/LightspeedIngestController` |
+| CTB | Scheduled AJAX pull (pull connector), invoice CSV/PDF drop, SFTP poll | `connectors/ctb/`, `ingestion/CtbScheduledPull`, `ingestion/CtbSftpPull` |
+| OpenTable | Manual GuestCenter CSV drop | `connectors/opentable/`, `api/OpenTableCsvIngestController` |
+| Deputy | Webhook, raw-ledger only until the payload schema is confirmed | `api/DeputyIngestController` |
 
-1. Add a new class in `backend/src/main/java/com/goldys/platform/connector/`
-   (or a source-specific subpackage) implementing `SourceConnector`:
-   - `sourceSystem()` returns the matching `SourceSystem` enum value (add one
-     to `raw/SourceSystem.java` only if it's genuinely missing — the four
-     Phase 1 sources plus `MANUAL_ENTRY` already exist; don't add `TENZO`,
-     it's explicitly out of scope for both phases).
-   - `fetch()` pulls new/changed records since the last successful run,
-     writes each one to `RawRecordRepository` via a `RawRecord` using the
-     correct `FetchMethod` (`SCRAPE`, `CSV_EXPORT`, or `API_JSON`), and
-     returns an `IngestionRunResult`.
-2. **Every raw payload goes through the shared envelope** — source system,
-   fetch method, content type, fetched-at, fetcher identity all non-null. No
-   source-specific staging table, no bypassing `RawRecordRepository`.
-3. **Report failures, don't swallow them.** Any auth failure, timeout,
-   partial fetch, or schema mismatch writes an `IngestionFailure` (via
-   `IngestionFailureRepository`) with a `failureType`, `detail`, and
-   `occurredAt` — then still return `IngestionRunResult.failure(detail)`.
-   A failed run must never look identical to "no new data."
-4. Don't map raw records into canonical entities as part of the connector
-   itself unless the task explicitly asks for that — check whether that
-   mapping step already exists or is a separate concern before adding it
-   here.
-5. Follow `.claude/rules/architecture-invariants.md`'s connector section —
-   if implementing this connector would require changing the
-   `SourceConnector` interface itself, stop and flag it rather than widening
-   the port for one vendor's quirk.
+## Pick the pattern
 
-## After implementing
+**Pull** (the platform fetches on a schedule or "run now"): implement
+`ingestion/port/SourceConnector`.
 
-- Confirm against Requirement 4's acceptance criteria: scheduled success
-  writes correctly-tagged raw records; failure writes a failure state, not
-  silence; the source's native format passes through the same envelope as
-  every other source.
-- If this is one of the first two connectors producing overlapping canonical
-  entities, note that Requirement 5 (reconciliation UI) still can't be built
-  against them until the entity-matching strategy (open question in
-  `docs/prd.md`) is resolved.
+```java
+public interface SourceConnector {
+  String sourceSystem();     // e.g. "CTB" — recorded on every run, payload, failure
+  String connectorName();    // which adapter, e.g. "ctb-revenue"
+  void fetch(String watermark, IngestionSink sink);
+}
+```
+
+- Hand each payload to `sink.accept(new FetchedPayload(fetchMethod,
+  contentType, bytes, charset, fetcherIdentity))` as soon as you have it. The
+  sink stores it and returns the raw record id. Streaming means pages already
+  fetched survive a later failure and the run ends `PARTIAL`.
+- Register the connector as a Spring `@Bean` (see `connectors/ctb/CtbConfig`);
+  `IngestionService` collects every `SourceConnector` bean, and `ConnectorRunner`
+  creates the `IngestionRun`, records failures, and sets the final status.
+- For expected source failures (bad credentials, changed page, rejected
+  request) throw `ConnectorFetchException(failureType, message)`. The message is
+  shown to operators: never include payload contents, credentials, or tokens.
+
+**Push** (the source or an operator sends us data: webhook, CSV/PDF upload,
+SFTP drop): call `IngestionService.ingestPush(sourceSystem, connectorName,
+fetchMethod, contentType, bytes, charset, fetcherIdentity)` first, then parse
+the stored bytes. `connectors/opentable/OpenTableCsvIngestService` is the
+smallest example.
+
+- Public ingest endpoints are gated by a shared token header and fail closed
+  when the token is unset (see `api/LightspeedIngestController`). Add the token
+  to `.env.example`.
+
+## Rules
+
+- **Raw first.** Bytes go to the raw ledger byte-faithful before any parsing,
+  using the right `FetchMethod` (`API`, `FILE_EXPORT`, `SCRAPE`, `MANUAL`). No
+  source-specific staging tables.
+- **Use a distinct `fetcherIdentity`** per endpoint or export type, so the
+  ledger can tell them apart (CTB uses one per AJAX endpoint).
+- **Canonicalize through the public ingest facade** (`Canonical*Ingest`),
+  passing the raw record id. Never write canonical repositories directly from a
+  connector. Raw-only ingestion (no canonical mapping yet) is fine and common;
+  say so in the class Javadoc.
+- **Don't widen the port.** If the connector needs a change to
+  `SourceConnector`, `IngestionSink`, or `FetchedPayload`, stop and flag it.
+- **One-way only.** Never write back to a source system.
+- **Never commit credentials.** Read them from environment variables and
+  document the names in `.env.example`.
+
+## Done means
+
+- Tests: parser unit tests from a real (sanitised) sample in
+  `src/test/resources/fixtures/`, plus an integration test that the payload
+  lands in `raw_record` and that a failure produces a `FAILED`/`PARTIAL` run with
+  an `IngestionFailure`, not an empty success.
+- `./gradlew test spotlessCheck` passes.
+- `docs/connectors/source-access.md` describes the access path, and
+  `docs/connectors/matching-and-identity.md` describes identity for any new
+  canonical entity.

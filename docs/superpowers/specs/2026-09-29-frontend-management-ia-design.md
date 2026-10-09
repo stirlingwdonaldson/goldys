@@ -33,7 +33,7 @@ fabricated numbers or a mock presented as operational data.
 
 Architecture and invariants come from `docs/system-context.md`; scope and
 acceptance criteria from `docs/prd.md`; visual/interaction treatment from
-`docs/design-system.md`. This doc changes only the frontend information
+`docs/design/design-system.md`. This doc changes only the frontend information
 architecture and screen inventory; it does not alter those sources.
 
 Current baseline (verified against the tree on this branch):
@@ -71,7 +71,7 @@ backed by live data today. The rest are forward-looking placeholders.
 - New placeholder-backed business sub-pages: Sales, Staff & Labor, Reservations,
   Kitchen, Recipes.
 - A reusable `AwaitingData` placeholder pattern and a `NeedsDecisionBand` hero.
-- `docs/design-system.md` screen-inventory and navigation updates.
+- `docs/design/design-system.md` screen-inventory and navigation updates.
 
 ### Out of scope
 
@@ -256,7 +256,7 @@ Existing reusable pieces stay: `ConnectorStatusBadge`, `ActivityChart`,
 
 ## 9. Commands
 
-Unchanged (see `docs/testing.md` and the Phase 1 spec §12):
+Unchanged (see `docs/operations/testing.md` and the Phase 1 spec §12):
 
 - Install: `bun install`
 - Dev: `bun run dev`
@@ -284,7 +284,7 @@ test: cover awaiting-data and needs-decision band
 
 ### Always
 
-- Honor `docs/design-system.md`: shadcn defaults, light mode, calm/trustworthy,
+- Honor `docs/design/design-system.md`: shadcn defaults, light mode, calm/trustworthy,
   semantic status colors.
 - Never present fabricated business numbers as operational data.
 - Use `PermissionDenied` for restricted surfaces; never a partial view.
@@ -311,7 +311,7 @@ test: cover awaiting-data and needs-decision band
 | Dashboard looks empty (5/6 areas placeholder) | Managers perceive low value | Trust-first hero gives a real, actionable signal; placeholders name what's coming |
 | Placeholders read as bugs, not intentional | Confusion | Single `AwaitingData` pattern with a consistent reason line |
 | `/connectors` removal breaks bookmarks/links | Broken deep links | Redirect `/connectors` → `/data-health` |
-| Page set diverges from PRD screen inventory | Design drift | Update `docs/design-system.md` in the same change |
+| Page set diverges from PRD screen inventory | Design drift | Update `docs/design/design-system.md` in the same change |
 
 ## 13. Success criteria
 

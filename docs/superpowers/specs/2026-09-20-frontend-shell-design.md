@@ -22,7 +22,7 @@ protected content.
 
 Architecture decisions come from `docs/system-context.md`; scope and acceptance
 criteria from `docs/prd.md`; visual/interaction treatment from
-`docs/design-system.md`. The Phase 1 rebuild spec and foundation plan
+`docs/design/design-system.md`. The Phase 1 rebuild spec and foundation plan
 (`docs/superpowers/specs/2026-09-19-phase-one-mvp-design.md`,
 `docs/superpowers/plans/2026-09-19-phase-one-foundation.md`) define the backend
 the frontend must render against.

@@ -33,7 +33,7 @@ which forwards to the VM's exposed port.
 - `backend/src/main/resources/application-prod.yml` (prod Spring profile).
 - Root `.env.example` documenting every variable, and `.gitignore` for real env files.
 - A CI job that builds both images (no push) to catch Dockerfile breakage.
-- `docs/deployment.md` runbook (dev, prod, DNS/edge, OIDC, upgrade/rollback).
+- `docs/operations/deployment.md` runbook (dev, prod, DNS/edge, OIDC, upgrade/rollback).
 
 ### Out of scope
 
@@ -133,7 +133,7 @@ docker-compose.yml             (modify: pointer comment only)
 .env.example
 .gitignore                     (modify: ignore real .env files)
 .github/workflows/ci.yml       (modify: add docker build job)
-docs/deployment.md
+docs/operations/deployment.md
 ```
 
 ## 11. Boundaries

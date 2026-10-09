@@ -188,7 +188,7 @@ a partial or filtered result.
   misleading). A note in the descriptor marks them "model placeholder — ingestion source not yet
   defined"; when those domains are built they must be updated here.
 - Because canonical and resolved browsing go through the registry, any new domain added via
-  `docs/adding-a-domain.md` is surfaced by adding one descriptor + mapper — the single point of change
+  `docs/architecture/adding-a-domain.md` is surfaced by adding one descriptor + mapper — the single point of change
   the explorer needs to keep covering "all the data".
 
 ## 11. Error handling and empty states

@@ -19,7 +19,7 @@ criterion.
 ## 2. Sources of Truth and Current Baseline
 
 Architecture decisions come from `docs/system-context.md`; scope and acceptance
-criteria come from `docs/prd.md`; `docs/design-system.md` governs Phase 1 UI
+criteria come from `docs/prd.md`; `docs/design/design-system.md` governs Phase 1 UI
 behavior and visual treatment.
 
 The implementation was intentionally cleared on branch
@@ -276,7 +276,7 @@ in logs or error responses.
 
 ## 10. Frontend Interaction Design
 
-Follow `docs/design-system.md`: shadcn defaults, light mode, desktop-first,
+Follow `docs/design/design-system.md`: shadcn defaults, light mode, desktop-first,
 calm presentation, and semantic status colors.
 
 The reconciliation landing view is exception-first. It shows conflicting or

@@ -1,5 +1,5 @@
 # Development only. For the production stack (backend + frontend + Postgres,
-# served from platform.swd.sh), see docker-compose.prod.yml and docs/deployment.md.
+# served from platform.swd.sh), see docker-compose.prod.yml and docs/operations/deployment.md.
 #
 # Local dev Postgres only.
 #

@@ -92,7 +92,7 @@ interface AwaitingDataProps {
 
 /**
  * A forward-looking placeholder for a surface that is not wired to data yet.
- * Deliberately renders no values — see docs/design-system.md ("never present
+ * Deliberately renders no values — see docs/design/design-system.md ("never present
  * mock data as operational"). Distinct from `EmptyState`, which means "the data
  * exists but is empty right now".
  */
@@ -1099,7 +1099,7 @@ git commit -m "feat: regroup sidebar into Business / Data / Settings navigation"
 ## Task 8: Update the design-system doc
 
 **Files:**
-- Modify: `docs/design-system.md`
+- Modify: `docs/design/design-system.md`
 
 **Interfaces:**
 - None. Documentation only.
@@ -1163,7 +1163,7 @@ Append to §6 "Core interaction patterns" (after the connector-failure bullet):
 - [ ] **Step 4: Commit**
 
 ```bash
-git add docs/design-system.md
+git add docs/design/design-system.md
 git commit -m "docs: update design-system screen inventory and navigation"
 ```
 

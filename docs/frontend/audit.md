@@ -14,7 +14,7 @@ for review. Implementation and live regression verification remain outstanding.
 Evidence categories: **source** establishes an implementation fact; **executed check**
 establishes a result in this environment; **browser** establishes observed demo behavior.
 Source analysis does not establish request savings or production performance.
-See [verification](frontend-verification.md) for commands, environment and measurements.
+See [verification](verification.md) for commands, environment and measurements.
 
 ## Findings revalidated
 
@@ -55,7 +55,7 @@ Ripwire `ripwire frontend --report`: 217 indexed files, 819 symbols, 501 edges, 
 clusters and no detected cycles. Many symbols are isolated: this map is a navigation aid,
 not proof of full import-graph coverage. High-leverage contracts: widgets/types, api/types,
 current-user-provider, api/client, chat stream. Dependency inventory:
-[dependency decisions](frontend-dependency-decisions.md).
+[dependency decisions](dependency-decisions.md).
 
 ## Complete useApiData consumer inventory
 

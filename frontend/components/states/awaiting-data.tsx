@@ -12,7 +12,7 @@ interface AwaitingDataProps {
 
 /**
  * A forward-looking placeholder for a surface that is not wired to data yet.
- * Deliberately renders no values — see docs/design-system.md ("never present
+ * Deliberately renders no values — see docs/design/design-system.md ("never present
  * mock data as operational"). Distinct from `EmptyState`, which means "the data
  * exists but is empty right now".
  */

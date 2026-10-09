@@ -1207,7 +1207,7 @@ git commit -m "feat: render phase one screens with honest empty states"
 ### Task 6: Full verification and browser pass
 
 **Files:**
-- Modify: `docs/testing.md` (record the frontend verification as exercised, not as a claim about data screens)
+- Modify: `docs/operations/testing.md` (record the frontend verification as exercised, not as a claim about data screens)
 
 **Interfaces:**
 - Consumes: everything above.
@@ -1240,14 +1240,14 @@ With the dev server running, open the app and confirm:
 - Settings shows "Not signed in" (or the profile when authenticated).
 - With the backend down, navigating still works and the header shows the calm "Sign in" state — no blank page, no console stack trace leaking to the user (an internal `console.error` from a real render bug is acceptable; a user-facing blank page is not).
 
-- [ ] **Step 4: Update `docs/testing.md`**
+- [ ] **Step 4: Update `docs/operations/testing.md`**
 
 Add a short "Frontend verification" note recording the commands that actually ran and the browser pass, without claiming the data screens are operational (they are honest empty states until later slices).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /srv/ai/projects/goldys && git add docs/testing.md
+cd /srv/ai/projects/goldys && git add docs/operations/testing.md
 git commit -m "docs: record frontend shell verification"
 ```
 

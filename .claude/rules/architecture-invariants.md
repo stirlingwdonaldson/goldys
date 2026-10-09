@@ -5,78 +5,94 @@ paths:
 
 # Backend architecture invariants
 
-These are pinned in `docs/system-context.md` and govern the Phase 1 rebuild.
-The cleared baseline does not contain the classes named below until an approved
-implementation task restores them. Violating an invariant is a design
-regression, not a style nit — treat it that way even under time pressure.
+These are pinned in `docs/system-context.md`; the current package map and the
+enforced dependency rules are in `docs/architecture/current-state.md`. Violating
+an invariant is a design regression, not a style nit, so treat it that way even
+under time pressure. Paths below are relative to
+`backend/src/main/java/com/goldys/platform/`.
 
-## Raw log (`ingestion/RawRecord.java`)
+## Raw ledger (`ingestion/RawRecord.java`)
 
-- Every ingested payload — API JSON, CSV/XLSX, scraped HTML, manual entry —
-  lands in `raw_record` byte-faithful, before any parsing/transformation.
-- Rows are never updated or deleted by application code. A correction is a
-  new row, not an edit.
-- All source shapes use the same raw-record ledger rather than source-specific
-  staging tables. Authoritative bytes live in `BYTEA` with a SHA-256 digest and
-  byte length; JSONB, when present, is derived and never the audit source.
-- Connector failures go to `IngestionFailure`, not silence. `failureType` is
-  a plain string on purpose (new connectors can report unanticipated failure
-  modes without a schema change) — don't tighten it to an enum without
+- Every ingested payload (API JSON, CSV/XLSX, PDF, scraped HTML, webhook body,
+  manual entry) lands in `raw_record` byte-faithful, before any parsing or
+  transformation, through `IngestionService` / `RawPayloadService`. There are no
+  source-specific staging tables.
+- Authoritative bytes live in `payload_bytes` (`BYTEA`) with `payload_sha256` and
+  `payload_byte_length` (V2). JSONB, where present, is derived and never the audit
+  source.
+- Rows are never updated or deleted. A database trigger
+  (`raw_record_append_only`) rejects mutation; a correction is a new row.
+- Connector failures are recorded as `IngestionFailure` rows on an
+  `IngestionRun` with status `FAILED` or `PARTIAL`, never silence. `failureType`
+  is a plain string on purpose (new connectors can report unanticipated failure
+  modes without a schema change), so don't tighten it to an enum without
   checking whether that constraint is still wanted.
 
 ## Bitemporal canonical layer (`canonical/BitemporalEntity.java`)
 
 - Two independent time axes: `validFrom`/`validTo` (when the fact was true in
-  the real world) and `recordedAt`/`supersededAt` (when we recorded/replaced
-  it). Don't collapse these into one timestamp pair.
+  the real world) and `recordedAt`/`supersededAt` (when we recorded or replaced
+  it). Don't collapse them into one timestamp pair.
 - Never `UPDATE` a canonical row in place when a later raw record supersedes
-  it. Close the old row (`supersede()`) and insert a new one. This is what
-  makes "query as of a past system time" and rule recomputation possible.
-- New canonical entity types use the shared `BitemporalEntity` pattern once it
-  is restored — don't invent a parallel versioning scheme.
-- The V1 `canonical_shift` and `canonical_sale_item` columns are placeholders
-  pending entity-matching design. Don't treat their shape as a final matching
-  contract.
+  it. Close the old version (`supersede()`) and insert a new one via
+  `BitemporalRepository`. This is what makes as-of queries and rule
+  recomputation possible.
+- Every canonical entity extends `BitemporalEntity` and carries the raw record
+  id it came from. Don't invent a parallel versioning scheme.
+- Matching and identity rules per entity are pinned in
+  `docs/connectors/matching-and-identity.md`. Don't change an entity's logical
+  identity without updating that doc.
+
+## Resolved layer and read direction (`reconciliation/`, `semantic/`)
+
+- Resolved projections (`resolved_*` tables) are disposable: projectors can
+  truncate and rebuild them from canonical state plus overrides and rules.
+  Never store information only in a resolved row.
+- Business consumers (`api`, `reporting`, `conversational`, `dashboard`) read
+  resolved data through `semantic` query interfaces, never `canonical` or the
+  raw ledger. Reconciliation internals may read canonical freely.
+- `ArchitectureBoundariesTest` enforces these package rules. Extend it when you
+  add a package or domain rather than working around it.
 
 ## Permission model (`auth/`)
 
-- `PermissionService` is the *only* enforcement point once restored. Don't add
-  a second, parallel permission check anywhere else — reconciliation UI and
-  (Phase 2) AI tool calls both route through it.
-- Permissions are table-driven `(Department, Seniority, resource)` rows, not
-  named roles. Adding a new `Department` or `Seniority` value must never
-  require editing an existing `Permission` row — only new rows.
-- Do not encode `OWNER > MANAGER > STAFF` as an ordinal/numeric shortcut in a
-  permission check. Owner's broader access comes from explicit `Permission`
-  rows (often via `Department.ALL`), not a hardcoded bypass.
-- A denied check must throw/return an explicit `AccessDeniedException` —
-  never a silently filtered or partial result.
-- `Permission` rows ship empty in V1. Don't populate them with
-  guessed field-to-role mappings — that's an open question requiring
-  stakeholder input (see `docs/prd.md`'s Open Questions).
+- `PermissionService.require(role, resource, action)` is the only enforcement
+  point. Application services authorize reads, `ToolDispatcher` authorizes AI
+  tool calls, and domain write services authorize at the mutation boundary.
+  Don't add a parallel check anywhere else.
+- Permissions are table-driven `(department, seniority, resource)` rows, not
+  named roles. Adding a department or seniority value must never require editing
+  an existing `Permission` row, only adding new rows.
+- Do not encode `OWNER > MANAGER > STAFF` as an ordinal shortcut. Owner access
+  comes from explicit rows (seeded as `ALL × OWNER`), not a hardcoded bypass.
+- A denied check throws `AccessDeniedException`, which surfaces as an explicit
+  "not permitted", never a silently filtered or partial result.
+- Seed new resources for `ALL × OWNER` only. BOH/FOH-specific grants wait on the
+  stakeholder field-to-role mapping (open question in `docs/prd.md`). Don't
+  guess them.
 
-## Connectors (`ingestion/port/SourceConnector.java`)
+## Connectors (`ingestion/port/`, `connectors/`)
 
-- Every vendor integration implements the one `SourceConnector` port. If
-  adding a connector forces a change to that interface, the interface is
-  leaking a vendor-specific concern — reconsider the change instead of the
-  interface.
-- A `fetch()` implementation must report failures via `IngestionFailure`
-  (see above), never throw silently or just return zero rows.
-- Check `docs/system-context.md`'s "Per-Source Ingestion Reality" table
-  before assuming an API exists — Lightspeed, CTB, and OpenTable all route
-  through scrapes/exports, not clean REST APIs, in Phase 1.
+- Pull connectors implement `SourceConnector` (`sourceSystem()`,
+  `connectorName()`, `fetch(watermark, IngestionSink)`) and are run by
+  `ConnectorRunner`. Push ingestion (webhooks, CSV/PDF drops, SFTP) goes through
+  `IngestionService.ingestPush(...)`. Either way, bytes hit the raw ledger before
+  parsing.
+- If adding a connector forces a change to the port, the port is leaking a
+  vendor concern. Reconsider the change instead of widening the interface.
+- Report expected source failures by throwing `ConnectorFetchException` with a
+  `failureType`. Its message is operator-facing and must never contain payload
+  contents, credentials, or tokens.
+- Connectors are one-way. Nothing ever writes back to a source system.
+- Check `docs/system-context.md`'s "Per-Source Ingestion Reality" table and
+  `docs/connectors/source-access.md` before assuming an API exists.
 
-## AI tools / widgets (Phase 2 contract artifacts only)
+## AI tools and widgets (`reporting/`, `conversational/`, `widget/`)
 
-- No Phase 2 runtime is implemented in Phase 1. Versioned documentation and
-  schema artifacts lock the boundary for later modules.
-- Every future tool takes a bounded, enum-validated parameter set. Never add a
-  tool whose parameters accept an arbitrary
-  field name or free-text filter expression — that's freeform query
-  generation with extra steps, which the tool boundary exists to prevent.
-- Every future tool dispatcher enforces `PermissionService` before dispatch;
-  no tool-calling path may bypass it.
-- Reporting/dashboards (once they exist) read only from resolved views,
-  never canonical or raw tables directly, even before the full Reconciliation
-  Engine UI is built.
+- Every tool takes a bounded, enum-validated parameter set. Never add a tool
+  whose parameters accept an arbitrary field name, SQL, or a free-text filter
+  expression. That is freeform query generation with extra steps, which the
+  tool boundary exists to prevent. Contract: `docs/contracts/ai-tool-boundary.md`.
+- Tools return typed widget specs (schema version 2), never executable UI code.
+- Saved dashboards store query configuration, never rendered data, and are
+  re-authorized per metric at render time.

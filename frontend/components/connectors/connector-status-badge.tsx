@@ -11,7 +11,7 @@ const STATUS_LABEL: Record<ConnectorRunStatus, string> = {
 };
 
 // "No new data" stays neutral and "Failed" stays red: an expected quiet period
-// must never look like a system fault (docs/design-system.md).
+// must never look like a system fault (docs/design/design-system.md).
 const STATUS_VARIANT: Record<ConnectorRunStatus, BadgeProps["variant"]> = {
   success: "success",
   partial: "conflict",

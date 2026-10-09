@@ -26,7 +26,7 @@ architecture.
   `docs/contracts/ai-tool-boundary.md`; widget schema:
   `docs/contracts/widget-spec.schema.json` (v1: `stat`, `table`, `line-chart`,
   `bar-chart`).
-- Visual/interaction treatment: `docs/design-system.md`.
+- Visual/interaction treatment: `docs/design/design-system.md`.
 
 Baseline shell (from the frontend management IA work, `docs/superpowers/specs/
 2026-09-29-frontend-management-ia-design.md`): sidebar groups **Business**
