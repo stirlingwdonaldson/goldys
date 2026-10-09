@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/states/empty-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { InvoiceGraphView } from "@/components/inventory/invoice-graph-view";
 import type { InventorySummary, SupplierCogs, UomUnitCost } from "@/lib/api";
 
 function money(v: number | null | undefined): string {
@@ -128,6 +129,11 @@ export default function KitchenPage() {
         <p className="text-sm text-destructive">Couldn&apos;t load the 30-day totals.</p>
       ) : null}
       {summary.data ? <SummaryStats s={summary.data} /> : null}
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-sm font-semibold">Purchase lineage</h2>
+        <InvoiceGraphView from={from} to={to} />
+      </section>
 
       {uom.length === 0 && suppliers.length === 0 ? (
         <EmptyState

@@ -3,7 +3,6 @@ import type { InvoiceGraphNode, LineGraphNode, SupplierGraphNode } from "@/lib/a
 import {
   buildInvoiceGraph,
   SUPPLIER_TOP_N,
-  supplierDrillId,
   invoiceDrillId,
   type InvoiceGraphInput,
 } from "./invoice-graph";
