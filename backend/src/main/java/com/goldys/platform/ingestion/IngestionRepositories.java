@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Persistence boundaries for the ingestion ledger.
@@ -42,11 +43,15 @@ interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
           + "where r2.sourceSystem = r.sourceSystem and r2.connectorName = r.connectorName)")
   List<IngestionRun> latestPerConnector();
 
-  /** Status distribution for the ingestion-health completeness calculation. */
+  /**
+   * Status distribution for the ingestion-health completeness calculation, excluding one raw-only
+   * connector (the PDF-enrichment writes) that is not data delivery.
+   */
   @Query(
       "select new com.goldys.platform.ingestion.StatusCount(r.status, count(r)) "
-          + "from IngestionRun r group by r.status")
-  List<StatusCount> statusCounts();
+          + "from IngestionRun r where r.connectorName <> :excludedConnector group by r.status")
+  List<StatusCount> statusCountsExcludingConnector(
+      @Param("excludedConnector") String excludedConnector);
 
   /** Mean run duration (seconds) of failed/partial runs, for the time-to-detect metric. */
   @Query(

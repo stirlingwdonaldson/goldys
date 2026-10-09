@@ -1,6 +1,7 @@
 package com.goldys.platform.ingestion;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -71,9 +72,32 @@ class IngestionServiceHealthTest {
     assertThat(service.health().timeToDetectFailure()).isEqualTo("1m avg");
   }
 
+  @Test
+  void pdfEnrichmentWritesAreExcludedFromCompleteness() {
+    IngestionService service =
+        service(
+            List.of(
+                completed("CTB", "ctb-revenue", IngestionStatus.SUCCESS, T0, T0.plusSeconds(60)),
+                completed(
+                    "CTB", "ctb-invoice-pdf", IngestionStatus.SUCCESS, T0, T0.plusSeconds(60)),
+                completed(
+                    "CTB", "ctb-invoice-pdf", IngestionStatus.SUCCESS, T0, T0.plusSeconds(60)),
+                completed(
+                    "CTB", "ctb-invoice-pdf", IngestionStatus.SUCCESS, T0, T0.plusSeconds(60)),
+                completed("CTB", "ctb-invoices", IngestionStatus.FAILED, T0, T0.plusSeconds(60))));
+
+    // Excluding the three PDF writes leaves 1 clean of 2 data-delivery runs -> 50%.
+    assertThat(service.health().completenessPercent()).isEqualTo(50);
+  }
+
   private static IngestionRun completed(
       String source, IngestionStatus status, Instant start, Instant end) {
-    IngestionRun run = IngestionRun.start(source, source + "-connector", null, start);
+    return completed(source, source + "-connector", status, start, end);
+  }
+
+  private static IngestionRun completed(
+      String source, String connector, IngestionStatus status, Instant start, Instant end) {
+    IngestionRun run = IngestionRun.start(source, connector, null, start);
     run.complete(status, null, null, end);
     return run;
   }
@@ -81,12 +105,15 @@ class IngestionServiceHealthTest {
   private static IngestionService service(List<IngestionRun> runs) {
     IngestionRunRepository repository = mock(IngestionRunRepository.class);
 
-    // Derive the aggregates the real repository now computes in SQL.
+    // Derive the aggregates the real repository now computes in SQL, excluding the raw-only PDF
+    // enrichment connector that completeness must ignore.
     Map<IngestionStatus, Long> counts =
-        runs.stream().collect(Collectors.groupingBy(IngestionRun::status, Collectors.counting()));
+        runs.stream()
+            .filter(r -> !"ctb-invoice-pdf".equals(r.connectorName()))
+            .collect(Collectors.groupingBy(IngestionRun::status, Collectors.counting()));
     List<StatusCount> statusCounts =
         counts.entrySet().stream().map(e -> new StatusCount(e.getKey(), e.getValue())).toList();
-    when(repository.statusCounts()).thenReturn(statusCounts);
+    when(repository.statusCountsExcludingConnector(any())).thenReturn(statusCounts);
 
     double avgSeconds =
         runs.stream()

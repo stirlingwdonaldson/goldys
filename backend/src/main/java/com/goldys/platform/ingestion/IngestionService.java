@@ -26,6 +26,9 @@ import org.springframework.stereotype.Service;
 public class IngestionService {
   private static final Clock CLOCK = Clock.systemUTC();
 
+  /** Raw-only connector whose runs are stored evidence, not data delivery (PDF enrichment). */
+  private static final String PDF_ENRICHMENT_CONNECTOR = "ctb-invoice-pdf";
+
   private final IngestionRunService runs;
   private final RawPayloadService payloads;
   private final IngestionRunRepository runRepository;
@@ -194,11 +197,12 @@ public class IngestionService {
   /**
    * Dashboard health metrics derived from the ledger.
    *
-   * <p>Completeness is the share of <em>completed</em> runs (any terminal status) that ran cleanly
-   * — {@code SUCCESS} or {@code NO_NEW_DATA}. {@code PARTIAL} and {@code FAILED} both count against
-   * it, since a partial run still carries a silent-gap risk. A dangling {@code RUNNING} row (a
-   * crash that never completed) is excluded from both numbers: it is neither a clean run nor a
-   * measured failure duration.
+   * <p>Completeness is the share of <em>completed</em> data-delivery runs (any terminal status,
+   * excluding raw-only {@code ctb-invoice-pdf} enrichment writes) that ran cleanly — {@code
+   * SUCCESS} or {@code NO_NEW_DATA}. {@code PARTIAL} and {@code FAILED} both count against it,
+   * since a partial run still carries a silent-gap risk. A dangling {@code RUNNING} row (a crash
+   * that never completed) is excluded from both numbers: it is neither a clean run nor a measured
+   * failure duration.
    *
    * <p>Time-to-detect is the mean {@code startedAt → completedAt} duration of runs that recorded a
    * failure ({@code FAILED} or {@code PARTIAL}). This is a proxy for "how long until a failed run
@@ -209,7 +213,8 @@ public class IngestionService {
     long completed = 0;
     long clean = 0;
     long failed = 0;
-    for (StatusCount statusCount : runRepository.statusCounts()) {
+    for (StatusCount statusCount :
+        runRepository.statusCountsExcludingConnector(PDF_ENRICHMENT_CONNECTOR)) {
       if (statusCount.status() != IngestionStatus.RUNNING) {
         completed += statusCount.count();
       }
