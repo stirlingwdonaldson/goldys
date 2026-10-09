@@ -1,4 +1,4 @@
-import { ApiError } from "./errors";
+import { ApiError, isAbortError } from "./errors";
 import type { ApiErrorResponse } from "./types";
 
 /** The CSRF token Spring sets in a cookie, read back into the X-XSRF-TOKEN header. */
@@ -14,22 +14,29 @@ function csrfToken(): string | null {
  * this function never throws a bare `SyntaxError` or `TypeError`.
  */
 export async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
+  let headers: Headers;
+  try {
+    headers = new Headers(init?.headers);
+    if (!headers.has("Accept")) headers.set("Accept", "application/json");
+    const method = (init?.method ?? "GET").toUpperCase();
+    if (method !== "GET" && method !== "HEAD") {
+      const csrf = csrfToken();
+      if (csrf !== null) headers.set("X-XSRF-TOKEN", csrf);
+    }
+  } catch (cause) {
+    throw new ApiError("REQUEST_CONFIGURATION_ERROR", "The request could not be prepared.", undefined, undefined,
+      { kind: "unexpected", cause });
+  }
+
   let response: Response;
   try {
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-      ...((init?.headers as Record<string, string> | undefined) ?? {}),
-    };
-    const csrf = csrfToken();
-    const method = (init?.method ?? "GET").toUpperCase();
-    if (csrf && method !== "GET" && method !== "HEAD") {
-      headers["X-XSRF-TOKEN"] = csrf;
-    }
     response = await fetch(path, { ...init, headers, credentials: "same-origin" });
-  } catch {
+  } catch (cause) {
+    if (isAbortError(cause)) throw cause;
     throw new ApiError(
       "NETWORK_ERROR",
       "Could not reach the server. Check your connection and try again.",
+      undefined, undefined, { kind: "network", cause },
     );
   }
 
