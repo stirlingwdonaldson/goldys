@@ -9,7 +9,7 @@ from the existing Bun lock/install, not suggested upgrades. Restore with Bun 1.4
 | Dependency | Decision / introduction | Reason and rejected alternative |
 | --- | --- | --- |
 | `@tanstack/react-query` | Add in scoped server-state foundation | Cache, dedupe, lifecycle/invalidation; avoid extending a bespoke query framework. No token/form/UI state in Query. |
-| `zod` | Add with selective trust-boundary validation | Versioned/discriminated widget and dashboard/auth schemas with diagnostics. Infer types to avoid maintaining a second handwritten type system. |
+| `zod` | Add in PR 1 with auth response validation; extend in schema slice | Begin with malformed-identity protection, then versioned/discriminated widget and dashboard schemas with diagnostics. Infer types to avoid maintaining a second handwritten type system. |
 | `react-hook-form` | Add with dashboard editor migration | Dirty-state, validation and widget field arrays; simple login and other small forms need not migrate. |
 | `@hookform/resolvers` | Add with RHF/Zod editor | Reuse schema validation; avoid custom adapter code. |
 | `msw` (dev) | Add with transport/query integration tests | Exercise real adapter/HTTP behavior including malformed/permission/abort cases. Existing local Api unit stubs remain useful. |
@@ -20,8 +20,11 @@ from the existing Bun lock/install, not suggested upgrades. Restore with Bun 1.4
 | Grid-layout/graph-layout libraries | Defer | Existing grid/keyboard controls and React Flow work. Drag/resize is not an approved new product requirement. |
 | Redux/Zustand/competing UI framework | Reject for this migration | No demonstrated need for broad global state or second design system. |
 
-Package versions for new additions must be pinned through Bun's lockfile after checking the
-official compatibility documentation against React 19, Next 15, Vitest 5 and Bun 1.4.2.
+The first-slice plan proposes Zod 4.6.5 and MSW 3.0.2 from registry metadata inspected
+2026-10-09; MSW requires Node >=22.12.0, so the plan pins CI to local Node 22.22.1. These
+versions are not installed or compatibility-tested yet. Package versions for new additions
+must be pinned through Bun's lockfile after checking official compatibility documentation
+against React 19, Next 15, Vitest 5 and Bun 1.4.2.
 Do not invent a tested version or bundle benefit before installation and verification.
 No removals are justified by the audit. Remove useApiData only after its last consumer migrates.
 

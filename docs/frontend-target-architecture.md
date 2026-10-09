@@ -1,7 +1,8 @@
 # Frontend target architecture — proposal for review
 
-Status: **proposed**, grounded in [audit](frontend-audit.md) at `f6140b8`.
-This is the architectural review artifact; it does not indicate implementation approval.
+Status: **reviewed and approved for implementation planning** by the user on 2026-10-09,
+grounded in [audit](frontend-audit.md) at `f6140b8`. Approval permits the written first-slice
+plan; implementation begins after plan review and selection of an execution method.
 
 ## Intent and invariants
 

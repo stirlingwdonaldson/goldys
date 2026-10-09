@@ -1,6 +1,7 @@
 # Frontend migration roadmap — proposed review slices
 
-Status: **proposed sequencing**, not an approved executable implementation plan.
+Status: **reviewed sequencing**, with architecture approved for implementation planning on
+2026-10-09. This roadmap is not itself an executable implementation plan.
 Baseline: `f6140b8`. Review [target architecture](frontend-target-architecture.md) first.
 Each slice should get an implementation plan, focused regression tests and its own review.
 No push, merge or deployment is implied. Source audit precedes migration; live measurements
@@ -13,7 +14,7 @@ and authenticated fixtures still need collection.
 - [x] Restore existing frozen dependencies and execute baseline checks.
 - [x] Inspect backend auth, dashboard, explorer and correlation contracts.
 - [ ] Complete production-like authenticated browser baseline and API captures.
-- [ ] Review architecture and dependency proposals.
+- [x] Review architecture and dependency proposals.
 - [ ] Approve written first-slice spec and executable plan; select execution method.
 - [ ] Implement and verify each slice below; update audit/verification after each.
 
@@ -24,7 +25,7 @@ and authenticated fixtures still need collection.
 Problem/root cause: findings were hypotheses without checkout-specific evidence.
 Affected files: the five `docs/frontend-*.md` deliverables. Adds no product dependencies or
 behavior changes. Records existing tests/checks and demo browser limitations. Rollback:
-revert documentation. Residual risk: no live authenticated verification; proposals unapproved.
+revert documentation. Residual risk: no live authenticated verification; execution plans require review.
 
 ### PR 1 — Reliable transport and authentication lifecycle
 
@@ -33,7 +34,9 @@ current-user provider, user menu, auth pages; contract tests. Preserve Api adapt
 auth. Add standard Headers, structured status/cause/header-correlation, abort classification,
 expected-body semantics (including backend empty 200 delete), explicit redirect diagnostics.
 Clear stale identity, fence profile refreshes, consume logout rejection and expose pending/error.
-MSW can enter here for real transport integration tests.
+MSW enters here for real transport integration tests. Zod starts with profile validation so
+malformed authentication responses cannot become a signed-in identity. Detailed executable
+plan: [transport and authentication](superpowers/plans/2026-10-09-frontend-transport-auth.md).
 
 Rejected: switching to Axios or synthesizing sign-out from any parse error. Regression cases:
 Headers/tuples, CSRF/content types, 204/empty 200 vs required JSON, malformed/error envelopes,
@@ -70,8 +73,9 @@ pretending the action failed and inviting duplicate creation.
 
 ### PR 4 — Runtime dashboard/widget/auth contracts
 
-Depends on PR 1; coordinate with PRs 2–3 at the Api seam. Add Zod. Define version-aware
-dashboard/query/layout/auth and discriminated widget schemas; infer types, retain nullable trust,
+Depends on PR 1; coordinate with PRs 2–3 at the Api seam. Extend the Zod foundation introduced
+for authentication in PR 1. Define version-aware dashboard/query/layout and discriminated
+widget schemas; infer types, retain nullable trust,
 permission outcomes and provenance. Apply at saved-document/render/auth/SSE trust boundaries.
 Use structured path/code diagnostics and safe user messages; no silent drop-to-empty behavior.
 
@@ -161,7 +165,7 @@ tables; keep lightweight widget tables if their semantics differ.
 
 ### PR 11 — CI, monitoring privacy and measured performance
 
-Test integration begins earlier; this slice completes `ci.yml` Vitest and Playwright jobs,
+PR 1 adds the Vitest CI gate; this slice completes Playwright jobs and builds on that gate,
 browser fixtures/artifacts and privacy/reporting checks. Preserve self-hosted relay. Add
 safe correlation tags and single-owner async reporting. Review 100% trace sampling and query
 parameter collection against actual deployment load/privacy needs; do not change blindly.
