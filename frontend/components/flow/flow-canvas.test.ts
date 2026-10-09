@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
+import { Box } from "lucide-react";
 import { resolveNodeClick } from "./flow-canvas";
 import type { StepNodeData } from "./types";
 
 const data = (overrides: Partial<StepNodeData> = {}): StepNodeData => ({
   title: "Node",
-  icon: () => null,
+  icon: Box,
   tone: "neutral",
   ...overrides,
 });
