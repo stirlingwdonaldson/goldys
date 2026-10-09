@@ -1,11 +1,15 @@
 package com.goldys.platform.connectors.ctb;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 interface InvoiceIngestFlagRepository extends JpaRepository<InvoiceIngestFlag, UUID> {
+
+  /** All flags, most recent first, for the read API. */
+  List<InvoiceIngestFlag> findAllByOrderByOccurredAtDesc();
 
   /**
    * True when an equivalent flag already exists, so a re-pull does not pile up duplicates. Each

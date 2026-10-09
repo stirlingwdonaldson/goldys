@@ -204,6 +204,16 @@ export interface LatestSales {
   authoritativeSource: string | null;
 }
 
+/** One invoice-ingestion anomaly, read-only (mirrors the backend `InvoiceIngestFlagView`). */
+export interface InvoiceIngestFlag {
+  flagType: string;
+  invoiceNumber: string | null;
+  pdfFilename: string | null;
+  stockCode: string | null;
+  detail: string | null;
+  occurredAt: string;
+}
+
 export interface DashboardSummary {
   ingestionCompleteness: number | null;
   openConflicts: number;
@@ -465,6 +475,7 @@ export interface Api {
     to: string,
   ): Promise<InvoiceGraphNode[]>;
   getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]>;
+  listInvoiceFlags(): Promise<InvoiceIngestFlag[]>;
   getLabourSummary(from: string, to: string): Promise<LabourSummary>;
   listDailyCovers(from: string, to: string): Promise<DailyCovers[]>;
   getProvenance(metricId: string, date: string): Promise<Provenance>;

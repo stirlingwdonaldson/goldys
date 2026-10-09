@@ -9,7 +9,7 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { InvoiceGraphView } from "@/components/inventory/invoice-graph-view";
-import type { InventorySummary, SupplierCogs, UomUnitCost } from "@/lib/api";
+import type { InventorySummary, SupplierCogs, UomUnitCost, InvoiceIngestFlag } from "@/lib/api";
 import { currencyColumn, numberColumn } from "@/components/data-table/columns";
 import { StatCard } from "@/components/data-display/stat-card";
 import { PageHeader } from "@/components/layout/page-header";
@@ -48,6 +48,33 @@ const supplierColumns: ColumnDef<SupplierCogs>[] = [
   currencyColumn("wetAmount", "WET", (r) => r.wetAmount),
 ];
 
+const flagColumns: ColumnDef<InvoiceIngestFlag>[] = [
+  {
+    accessorKey: "flagType",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Flag" />,
+    meta: { title: "Flag" },
+    enableHiding: false,
+  },
+  {
+    accessorKey: "invoiceNumber",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Invoice" />,
+    meta: { title: "Invoice" },
+    cell: ({ getValue }) => (getValue<string | null>() ?? "—"),
+  },
+  {
+    accessorKey: "pdfFilename",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="PDF" />,
+    meta: { title: "PDF" },
+    cell: ({ getValue }) => (getValue<string | null>() ?? "—"),
+  },
+  {
+    accessorKey: "detail",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Detail" />,
+    meta: { title: "Detail" },
+    cell: ({ getValue }) => (getValue<string | null>() ?? "—"),
+  },
+];
+
 function SummaryStats({ s }: { s: InventorySummary }) {
   return (
     <div className="grid gap-4 sm:grid-cols-3">
@@ -66,6 +93,7 @@ export default function KitchenPage() {
   const { from, to } = defaultRange();
   const lines = useApiData((api) => api.getInventoryLines(from, to), [from, to]);
   const summary = useApiData((api) => api.getInventorySummary(from, to), [from, to]);
+  const flags = useApiData((api) => api.listInvoiceFlags());
 
   if (lines.loading) return <LoadingState rows={6} />;
   if (lines.error) {
@@ -98,6 +126,25 @@ export default function KitchenPage() {
       <Section title="Purchase lineage">
         <InvoiceGraphView from={from} to={to} />
       </Section>
+
+      {flags.loading ? <LoadingState rows={2} /> : null}
+      {flags.error ? (
+        <InlineError>Couldn&apos;t load invoice ingestion flags. Refresh the page to try again.</InlineError>
+      ) : null}
+      {flags.data && flags.data.length > 0 ? (
+        <Section title="Invoice ingestion flags">
+          <DataTable
+            columns={flagColumns}
+            data={flags.data}
+            filterColumn="flagType"
+            filterPlaceholder="Filter flags"
+            initialSorting={[{ id: "flagType", desc: false }]}
+            getRowId={(r) =>
+              `${r.flagType}|${r.invoiceNumber ?? ""}|${r.pdfFilename ?? ""}|${r.stockCode ?? ""}`
+            }
+          />
+        </Section>
+      ) : null}
 
       {uom.length === 0 && suppliers.length === 0 ? (
         <EmptyState

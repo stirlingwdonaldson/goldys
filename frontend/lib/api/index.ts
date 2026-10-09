@@ -67,6 +67,7 @@ export type {
   InventoryLineBreakdown,
   InventorySummary,
   InvoiceGraphNode,
+  InvoiceIngestFlag,
   LabourSummary,
   LineGraphNode,
   LatestSales,

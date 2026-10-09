@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.goldys.platform.application.InventoryReportingService;
 import com.goldys.platform.application.InvoiceGraphService;
+import com.goldys.platform.application.InvoiceIngestFlagQueryService;
 import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.auth.DepartmentCode;
@@ -16,9 +17,11 @@ import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.semantic.InvoiceGraphNode;
+import com.goldys.platform.semantic.InvoiceIngestFlagView;
 import com.goldys.platform.semantic.LineGraphNode;
 import com.goldys.platform.semantic.SupplierGraphNode;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +42,7 @@ class InventoryControllerTest {
 
   @MockitoBean InventoryReportingService reporting;
   @MockitoBean InvoiceGraphService graph;
+  @MockitoBean InvoiceIngestFlagQueryService flags;
   @MockitoBean CurrentUserService currentUser;
 
   @Test
@@ -98,6 +102,26 @@ class InventoryControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].productNameKey").value("chicken breast"))
         .andExpect(jsonPath("$[0].uom").value("CTN"));
+  }
+
+  @Test
+  void flagsReturnsRecordedIngestionFlags() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(flags.flags(any()))
+        .thenReturn(
+            List.of(
+                new InvoiceIngestFlagView(
+                    "MISSING_PDF",
+                    "INV-1042",
+                    null,
+                    null,
+                    "no PDF filename in CSV",
+                    Instant.EPOCH)));
+
+    mvc.perform(get("/api/inventory/flags").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].flagType").value("MISSING_PDF"))
+        .andExpect(jsonPath("$[0].invoiceNumber").value("INV-1042"));
   }
 
   private static AccountUserDetails owner() {
