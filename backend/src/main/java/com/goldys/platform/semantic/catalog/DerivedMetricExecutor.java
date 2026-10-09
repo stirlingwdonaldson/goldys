@@ -14,7 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 /** Executes derived metrics as plain functions over base-metric results. */
@@ -94,13 +93,22 @@ public class DerivedMetricExecutor implements MetricExecutor {
     };
   }
 
-  /** Per-day value map for a base metric, obtained by querying its base executor at DAY grain. */
+  /**
+   * Per-day value map for a base metric, obtained by querying its base executor at DAY grain. A day
+   * with no resolved value stays present with a {@code null} value so downstream {@link
+   * GrainAggregator} can flag it {@code UNRESOLVED} rather than silently zeroing the gap. Built
+   * with an explicit loop because {@code Collectors.toMap} rejects null values.
+   */
   private Map<LocalDate, BigDecimal> daySeries(MetricQuery query, MetricId operand) {
     MetricQuery sub = new MetricQuery(operand, query.range(), TimeGrain.DAY, Set.of(), null);
     TimeSeriesResult r = (TimeSeriesResult) base.get(operand).evaluate(sub);
-    return r.series().stream()
-        .flatMap(s -> s.points().stream())
-        .collect(Collectors.toMap(MetricPoint::bucketStart, MetricPoint::value, (a, b) -> a));
+    Map<LocalDate, BigDecimal> byDay = new HashMap<>();
+    for (MetricSeries series : r.series()) {
+      for (MetricPoint point : series.points()) {
+        byDay.putIfAbsent(point.bucketStart(), point.value());
+      }
+    }
+    return byDay;
   }
 
   /** numerator ÷ denominator, computed per bucket at the requested grain (ratio of bucket sums). */
