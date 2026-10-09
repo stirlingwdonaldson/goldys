@@ -25,7 +25,9 @@ import type {
   LatestSales,
   DailyCovers,
   InventorySummary,
+  InvoiceGraphNode,
   LabourSummary,
+  LineGraphNode,
   Provenance,
   MetricQuery,
   OverrideResult,
@@ -38,6 +40,7 @@ import type {
   ResolutionRule,
   RuleAuditEntry,
   SalesTrendPoint,
+  SupplierGraphNode,
   SaveDashboardInput,
   SaveOverrideInput,
   SaveResolutionRuleInput,
@@ -733,6 +736,54 @@ export const demoApi: Api = {
   async getInventorySummary(from: string, to: string): Promise<InventorySummary> {
     await delay(300);
     return { from, to, purchases: 6950.5, wastage: 412.8, foodCostPercent: 0.2914 };
+  },
+
+  async getInvoiceGraphSuppliers(from: string, to: string): Promise<SupplierGraphNode[]> {
+    await delay(300);
+    void from;
+    void to;
+    return [
+      { name: "Paramount Liquor", invoiceCount: 214, totalSpend: 9240.0 },
+      { name: "Oranges & Lemons", invoiceCount: 98, totalSpend: 4820.5 },
+      { name: "Sealane Beverages", invoiceCount: 51, totalSpend: 1240.0 },
+      { name: "Unknown", invoiceCount: 0, totalSpend: 12.4 },
+    ];
+  },
+
+  async getInvoiceGraphInvoices(
+    supplier: string,
+    from: string,
+    to: string,
+  ): Promise<InvoiceGraphNode[]> {
+    await delay(300);
+    void supplier;
+    void from;
+    void to;
+    return [
+      {
+        invoiceNumber: "INV-1042",
+        invoiceDate: "2026-09-28",
+        totalAmount: 1420.15,
+        purchaseNumber: "PO-88",
+        pdfFilename: "inv-1042.pdf",
+      },
+      {
+        invoiceNumber: "INV-1091",
+        invoiceDate: "2026-09-21",
+        totalAmount: 980.4,
+        purchaseNumber: "PO-91",
+        pdfFilename: "inv-1091.pdf",
+      },
+    ];
+  },
+
+  async getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]> {
+    await delay(300);
+    void invoiceNumber;
+    return [
+      { productNameKey: "chicken breast", stockCode: "CB-1", quantity: 4, unitCost: 12.5, lineTotal: 50.0, uom: "CTN" },
+      { productNameKey: "beef mince", stockCode: "BM-2", quantity: 10, unitCost: 9.0, lineTotal: 90.0, uom: "KG" },
+    ];
   },
 
   async getLabourSummary(from: string, to: string): Promise<LabourSummary> {

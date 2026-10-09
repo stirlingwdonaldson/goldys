@@ -172,6 +172,32 @@ export interface InventoryLineBreakdown {
   cogsBySupplier: SupplierCogs[];
 }
 
+/** One supplier in the invoice node graph (mirrors `semantic.SupplierGraphNode`). */
+export interface SupplierGraphNode {
+  name: string;
+  invoiceCount: number;
+  totalSpend: number | null;
+}
+
+/** One invoice header in the invoice node graph (mirrors `semantic.InvoiceGraphNode`). */
+export interface InvoiceGraphNode {
+  invoiceNumber: string;
+  invoiceDate: string;
+  totalAmount: number | null;
+  purchaseNumber: string | null;
+  pdfFilename: string | null;
+}
+
+/** One invoice line in the invoice node graph (mirrors `semantic.LineGraphNode`). */
+export interface LineGraphNode {
+  productNameKey: string;
+  stockCode: string | null;
+  quantity: number;
+  unitCost: number;
+  lineTotal: number;
+  uom: string | null;
+}
+
 /**
  * The latest trading date's resolved total, or nulls when there is no data yet or the latest
  * date is still unresolved. `total: null` with a non-null `date` means "needs a decision".
@@ -436,6 +462,13 @@ export interface Api {
   getReservationSummary(date: string): Promise<ReservationSummary | undefined>;
   getInventoryLines(from: string, to: string): Promise<InventoryLineBreakdown>;
   getInventorySummary(from: string, to: string): Promise<InventorySummary>;
+  getInvoiceGraphSuppliers(from: string, to: string): Promise<SupplierGraphNode[]>;
+  getInvoiceGraphInvoices(
+    supplier: string,
+    from: string,
+    to: string,
+  ): Promise<InvoiceGraphNode[]>;
+  getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]>;
   getLabourSummary(from: string, to: string): Promise<LabourSummary>;
   listDailyCovers(from: string, to: string): Promise<DailyCovers[]>;
   getProvenance(metricId: string, date: string): Promise<Provenance>;
