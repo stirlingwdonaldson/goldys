@@ -160,7 +160,7 @@ Setup:
 The backend reaches the drop over the internal network (`sftp:22`), so there are
 no separate `CTB_SFTP_HOST`/`CTB_SFTP_PORT`/`CTB_SFTP_USER`/`CTB_SFTP_PASSWORD`
 to set — those are derived from the compose wiring. The poll runs on
-`CTB_SFTP_CRON` (default `0 15 4 * * *`, Melbourne) or on demand via
+`CTB_SFTP_CRON` (default `0 */15 * * * *` — every 15 min, Melbourne) or on demand via
 `POST /api/connectors/CTB/sftp/run`.
 
 **Security:** the SFTP port is published on the host so CTB can reach it. The

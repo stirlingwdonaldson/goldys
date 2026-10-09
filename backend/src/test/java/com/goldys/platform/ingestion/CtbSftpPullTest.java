@@ -43,5 +43,7 @@ class CtbSftpPullTest {
             any(byte[].class),
             isNull(),
             eq("ctb-sftp"));
+    verify(drop).markProcessed("in/inv.csv");
+    verify(drop).markProcessed("in/bruno.pdf");
   }
 }

@@ -1,5 +1,6 @@
 package com.goldys.platform.ingestion;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +60,26 @@ public class SpringIntegrationSftpDrop {
               try (InputStream in = session.readRaw(path)) {
                 return in.readAllBytes();
               }
+            });
+      }
+
+      @Override
+      public void markProcessed(String path) {
+        int slash = path.lastIndexOf('/');
+        String dir = slash <= 0 ? base : path.substring(0, slash);
+        String filename = path.substring(slash + 1);
+        String processedDir = dir + "/processed";
+        template.execute(
+            session -> {
+              try {
+                session.mkdir(processedDir);
+              } catch (IOException e) {
+                // OpenSSH returns a generic "Failure" (not a distinct "already exists") when the
+                // directory is already there; the rename below is the real operation and fails
+                // loudly if the directory truly is absent.
+              }
+              session.rename(path, processedDir + "/" + filename);
+              return null;
             });
       }
     };
