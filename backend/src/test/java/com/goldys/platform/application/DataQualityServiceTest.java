@@ -61,8 +61,8 @@ class DataQualityServiceTest {
     when(health.health())
         .thenReturn(
             List.of(
-                new ConnectorHealth("LIGHTSPEED", Instant.now(), "SUCCESS"),
-                new ConnectorHealth("CTB", Instant.now(), "FAILED")));
+                new ConnectorHealth("LIGHTSPEED", "lightspeed-products", Instant.now(), "SUCCESS"),
+                new ConnectorHealth("CTB", "ctb-revenue", Instant.now(), "FAILED")));
     when(connectors.connectors(OPERATOR))
         .thenReturn(
             List.of(
@@ -85,6 +85,25 @@ class DataQualityServiceTest {
   }
 
   @Test
+  void partialConnectorIsResponsible() {
+    TimeRange range = range(DATE);
+    when(trust.trustFor(METRIC, range))
+        .thenReturn(
+            new TrustSummary(
+                TrustState.VERIFIED, FreshnessState.SOURCE_FAILURE, null, null, null, THRESHOLD));
+    when(health.health())
+        .thenReturn(List.of(new ConnectorHealth("CTB", "ctb-revenue", Instant.now(), "PARTIAL")));
+    when(connectors.connectors(OPERATOR))
+        .thenReturn(
+            List.of(new ConnectorStatus("CTB", "ctb-revenue", null, "partial", 1, null, false)));
+
+    var responsible = service.responsibleConnectors(OPERATOR, METRIC, range);
+
+    assertThat(responsible).hasSize(1);
+    assertThat(responsible.get(0).source()).isEqualTo("CTB");
+  }
+
+  @Test
   void staleSourceIsResponsible() {
     TimeRange range = range(DATE);
     when(trust.trustFor(METRIC, range))
@@ -92,7 +111,8 @@ class DataQualityServiceTest {
             new TrustSummary(
                 TrustState.VERIFIED, FreshnessState.STALE, null, null, null, THRESHOLD));
     Instant staleAt = Instant.now().minus(THRESHOLD).minusSeconds(60);
-    when(health.health()).thenReturn(List.of(new ConnectorHealth("CTB", staleAt, "SUCCESS")));
+    when(health.health())
+        .thenReturn(List.of(new ConnectorHealth("CTB", "ctb-revenue", staleAt, "SUCCESS")));
     when(connectors.connectors(OPERATOR))
         .thenReturn(
             List.of(

@@ -93,7 +93,11 @@ public class DataQualityService {
     Duration threshold = freshness.thresholds().getOrDefault(domain, Duration.ofDays(1));
     return health.stream()
         .filter(c -> sources.contains(c.source()))
-        .filter(c -> "FAILED".equals(c.status()) || stale(c, threshold, now))
+        .filter(
+            c ->
+                "FAILED".equals(c.status())
+                    || "PARTIAL".equals(c.status())
+                    || stale(c, threshold, now))
         .map(ConnectorHealth::source)
         .collect(Collectors.toSet());
   }

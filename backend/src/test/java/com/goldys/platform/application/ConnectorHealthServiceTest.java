@@ -15,7 +15,7 @@ class ConnectorHealthServiceTest {
   @Test
   void mapsLatestRunsToHealth() {
     IngestionService ingestion = mock(IngestionService.class);
-    when(ingestion.latestRunPerSource())
+    when(ingestion.latestRunPerConnector())
         .thenReturn(
             List.of(
                 new IngestionRunSummary(
@@ -31,6 +31,7 @@ class ConnectorHealthServiceTest {
 
     assertThat(health).hasSize(1);
     assertThat(health.get(0).source()).isEqualTo("OPENTABLE");
+    assertThat(health.get(0).connector()).isEqualTo("opentable-csv-drop");
     assertThat(health.get(0).status()).isEqualTo("SUCCESS");
     assertThat(health.get(0).lastRunAt()).isEqualTo(Instant.parse("2026-10-06T10:00:00Z"));
   }

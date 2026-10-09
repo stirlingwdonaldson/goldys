@@ -248,7 +248,8 @@ public class TrustService implements TrustQuery {
     List<ConnectorHealth> domainHealth =
         health.stream().filter(c -> sources.contains(c.source())).toList();
     if (domainHealth.isEmpty()) return FreshnessState.UNKNOWN;
-    if (domainHealth.stream().anyMatch(c -> "FAILED".equals(c.status()))) {
+    if (domainHealth.stream()
+        .anyMatch(c -> "FAILED".equals(c.status()) || "PARTIAL".equals(c.status()))) {
       return FreshnessState.SOURCE_FAILURE;
     }
     Instant freshest =

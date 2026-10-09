@@ -17,8 +17,10 @@ public class ConnectorHealthService implements ConnectorHealthQuery {
 
   @Override
   public List<ConnectorHealth> health() {
-    return ingestion.latestRunPerSource().stream()
-        .map(r -> new ConnectorHealth(r.sourceSystem(), r.startedAt(), r.status()))
+    return ingestion.latestRunPerConnector().stream()
+        .map(
+            r ->
+                new ConnectorHealth(r.sourceSystem(), r.connectorName(), r.startedAt(), r.status()))
         .toList();
   }
 }

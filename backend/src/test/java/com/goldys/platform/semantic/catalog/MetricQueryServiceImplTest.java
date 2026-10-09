@@ -137,7 +137,7 @@ class MetricQueryServiceImplTest {
         .thenReturn(List.of(new ResolutionState(RANGE.from(), "agreed", "pos", Instant.EPOCH)));
     ConnectorHealthQuery connectors = mock(ConnectorHealthQuery.class);
     when(connectors.health())
-        .thenReturn(List.of(new ConnectorHealth("pos", Instant.now(), "SUCCESS")));
+        .thenReturn(List.of(new ConnectorHealth("pos", "pos", Instant.now(), "SUCCESS")));
     TrustService trustService =
         new TrustService(
             resolution,

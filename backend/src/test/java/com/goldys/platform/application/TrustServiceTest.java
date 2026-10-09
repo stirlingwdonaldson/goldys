@@ -135,7 +135,20 @@ class TrustServiceTest {
     LocalDate day = LocalDate.of(2026, 9, 1);
     TimeRange range = range(day);
     List<ConnectorHealth> health =
-        List.of(new ConnectorHealth(LIGHTSPEED, Instant.now(), "FAILED"));
+        List.of(new ConnectorHealth(LIGHTSPEED, "lightspeed-products", Instant.now(), "FAILED"));
+
+    TrustSummary summary =
+        service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
+
+    assertThat(summary.freshness()).isEqualTo(FreshnessState.SOURCE_FAILURE);
+  }
+
+  @Test
+  void partialConnectorIsSourceFailure() {
+    LocalDate day = LocalDate.of(2026, 9, 1);
+    TimeRange range = range(day);
+    List<ConnectorHealth> health =
+        List.of(new ConnectorHealth(CTB, "ctb-revenue", Instant.now(), "PARTIAL"));
 
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
@@ -149,8 +162,8 @@ class TrustServiceTest {
     TimeRange range = range(day);
     List<ConnectorHealth> health =
         List.of(
-            new ConnectorHealth(LIGHTSPEED, Instant.now(), "SUCCESS"),
-            new ConnectorHealth(CTB, Instant.now(), "FAILED"));
+            new ConnectorHealth(LIGHTSPEED, "lightspeed-products", Instant.now(), "SUCCESS"),
+            new ConnectorHealth(CTB, "ctb-revenue", Instant.now(), "FAILED"));
 
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
@@ -163,7 +176,8 @@ class TrustServiceTest {
     LocalDate day = LocalDate.of(2026, 9, 1);
     TimeRange range = range(day);
     Instant staleAt = Instant.now().minus(THRESHOLD).minusSeconds(60);
-    List<ConnectorHealth> health = List.of(new ConnectorHealth(LIGHTSPEED, staleAt, "SUCCESS"));
+    List<ConnectorHealth> health =
+        List.of(new ConnectorHealth(LIGHTSPEED, "lightspeed-products", staleAt, "SUCCESS"));
 
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
@@ -178,7 +192,7 @@ class TrustServiceTest {
     TimeRange range = range(day);
     Instant lightspeedAt = Instant.now().minus(Duration.ofMinutes(7));
     List<ConnectorHealth> health =
-        List.of(new ConnectorHealth(LIGHTSPEED, lightspeedAt, "SUCCESS"));
+        List.of(new ConnectorHealth(LIGHTSPEED, "lightspeed-products", lightspeedAt, "SUCCESS"));
 
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
@@ -196,8 +210,8 @@ class TrustServiceTest {
     Instant freshAt = Instant.now().minusSeconds(10);
     List<ConnectorHealth> health =
         List.of(
-            new ConnectorHealth(LIGHTSPEED, staleAt, "SUCCESS"),
-            new ConnectorHealth(CTB, freshAt, "SUCCESS"));
+            new ConnectorHealth(LIGHTSPEED, "lightspeed-products", staleAt, "SUCCESS"),
+            new ConnectorHealth(CTB, "ctb-revenue", freshAt, "SUCCESS"));
 
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
@@ -286,7 +300,7 @@ class TrustServiceTest {
   }
 
   private static List<ConnectorHealth> healthy(String source) {
-    return List.of(new ConnectorHealth(source, Instant.now(), "SUCCESS"));
+    return List.of(new ConnectorHealth(source, source, Instant.now(), "SUCCESS"));
   }
 
   private static TimeRange range(LocalDate day) {

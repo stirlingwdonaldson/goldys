@@ -165,6 +165,11 @@ public class IngestionService {
     return runRepository.latestPerSource().stream().map(this::toSummary).toList();
   }
 
+  /** The latest run for each (source, connector). One query, indexed, regardless of ledger size. */
+  public List<IngestionRunSummary> latestRunPerConnector() {
+    return runRepository.latestPerConnector().stream().map(this::toSummary).toList();
+  }
+
   private IngestionRunSummary toSummary(IngestionRun run) {
     return new IngestionRunSummary(
         run.sourceSystem(),
