@@ -65,13 +65,13 @@ actually being built:
 | Screen | PRD ref | Notes |
 |---|---|---|
 | Dashboard / business KPI overview | Goals 1–2, Success Metrics | Trust-first: a live "Needs a decision" band above a five-tile business KPI grid. Business areas render as `AwaitingData` placeholders until reporting endpoints land; no ingestion/connector diagnostics on this screen |
-| Sales | Goals 1–2 | Placeholder; net sales trend, vs-prior-period, product mix |
-| Staff & Labor | Requirement 3 | Placeholder; roster, scheduled vs actual hours, labor % (wage figures Owner-only) |
-| Reservations | Goals 1–2 | Placeholder; covers, bookings, no-shows |
-| Kitchen | — | Forward-looking placeholder; food cost, stock, wastage (inventory not ingested) |
+| Sales | Goals 1–2 | Daily sales trend + daily totals data table; each row has a "Trace" action opening the provenance graph. Vs-prior-period and product mix not yet built |
+| Staff & Labor | Requirement 3 | 30-day hours (scheduled, actual, variance, per cover) for all roles; labor cost and FOH/BOH % Owner-only (fails closed). `AwaitingData` when nothing resolved |
+| Reservations | Goals 1–2 | Today's summary stats + 30-day daily covers data table with a source-disagreement badge and "Trace" |
+| Kitchen | — | 30-day purchases, wastage, food cost % + unit-cost-per-measure and spend-by-supplier data tables (from enriched invoices) |
 | Recipes | — | Forward-looking placeholder; recipe list + ingredient costing (not ingested) |
 | Reconciliation view | Requirement 5 | Exception-first summary + drill-in comparison. See §6 |
-| Data health / ingestion health | Requirement 6 | Connector status, ingestion completeness, run activity; failure states visually distinct from "no new data" |
+| Data health / ingestion health | Requirement 6 | Connector status, ingestion completeness, run activity, and the pipeline node graph (§6); failure states visually distinct from "no new data" |
 | Permission-denied state | Requirement 3 | Explicit "not permitted" — never a silently filtered or partial-looking view |
 | Role/permission admin (future) | Requirement 3 | Not scheduled yet; deferred design |
 | Conversational BI widgets | Requirement 9 (Phase 2) | Deferred — depends on the JSON widget schema landing first |
@@ -190,6 +190,24 @@ not from a deleted preview implementation.
   muted reason line (e.g. "Awaiting Deputy reporting") — never fabricated
   numbers. Distinct from an empty state, which means "the data exists but is
   empty right now".
+
+- **Lists of records — the shadcn "data table".** Any screen listing records
+  uses `components/data-table/data-table.tsx` (TanStack Table on the shadcn
+  `Table` primitives): sortable headers via `DataTableColumnHeader`, an
+  optional text filter, a column-visibility menu, and client pagination
+  (`pageSize={false}` when the server pages). Numeric columns set
+  `meta: { align: "right" }`. Don't hand-roll `<table>` markup for new lists.
+- **Lineage and flow — n8n-style node graphs.** When the point is *how data
+  got here* (pipeline stages, a figure's provenance), draw it as a
+  left-to-right node graph with `components/flow/FlowCanvas` (`@xyflow/react`)
+  rather than prose or a list. Build the graph as a pure `ColumnGraph` (columns
+  of nodes + edges, unit-testable) and let `layoutColumns` place it. Node and
+  edge tone reuse the status tokens: `fail` = destructive, `warn` =
+  status-warning (conflicts are resolvable, not errors), `missing` = dashed
+  status-missing, `info` = status-info. Only draw edges the API actually
+  states — never infer lineage the backend doesn't report. The canvas is
+  read-only, scroll-wheel zoom is off so the page still scrolls, and a node's
+  `href` makes it a link.
 
 ## 7. Open items
 

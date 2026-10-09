@@ -13,6 +13,8 @@ export const SOURCES = ["LIGHTSPEED", "CTB"] as const;
 const SOURCE_LABELS: Record<string, string> = {
   LIGHTSPEED: "Lightspeed",
   CTB: "Cooking the Books",
+  DEPUTY: "Deputy",
+  OPENTABLE: "OpenTable",
 };
 
 /** Display label for a source-system code (falls back to the code for unknown sources). */

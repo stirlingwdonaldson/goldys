@@ -8,6 +8,7 @@ import { isApiError } from "@/lib/api";
 import { ConnectorStatusBadge } from "@/components/connectors/connector-status-badge";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
+import { PipelineMap } from "@/components/pipeline/pipeline-map";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/states/empty-state";
@@ -126,6 +127,17 @@ export default function DataHealthPage() {
             />
           </>
         )}
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <div>
+          <h2 className="text-sm font-semibold">How data flows</h2>
+          <p className="text-xs text-muted-foreground">
+            Each source lands in the raw ledger, becomes canonical entities, then resolves into the
+            figures your screens show. Select a step to open it.
+          </p>
+        </div>
+        <PipelineMap connectors={connectors.data} />
       </section>
 
       <section className="rounded-lg border">
