@@ -1,6 +1,7 @@
 package com.goldys.platform.canonical;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -34,5 +35,16 @@ public class CanonicalInvoiceQuery {
       out.put(invoice.invoiceNumber(), invoice.supplierName());
     }
     return out;
+  }
+
+  /** All current invoice metadata, so modules outside this package can read invoices. */
+  public List<InvoiceMetadataView> currentInvoices() {
+    return repository.findAllCurrent().stream().map(CanonicalInvoiceQuery::toView).toList();
+  }
+
+  private static InvoiceMetadataView toView(CanonicalInvoice i) {
+    return new InvoiceMetadataView(
+        i.supplierName(), i.invoiceNumber(), i.invoiceDate(), i.totalAmount(),
+        i.purchaseNumber(), i.pdfFilename());
   }
 }
