@@ -102,6 +102,8 @@ class IngestionServiceHealthTest {
         mock(RawPayloadService.class),
         repository,
         mock(IngestionFailureRepository.class),
+        mock(RawRecordRepository.class),
+        mock(IngestionStageRepository.class),
         mock(ConnectorRunner.class),
         List.<SourceConnector>of());
   }
