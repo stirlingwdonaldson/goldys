@@ -6,10 +6,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { ApiError, getCurrentUser, isApiError, type CurrentUser } from "@/lib/api";
+import { ApiError, getCurrentUser, isApiError, isAbortError, type CurrentUser } from "@/lib/api";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated" | "error";
 
@@ -18,6 +19,7 @@ interface CurrentUserContextValue {
   status: AuthStatus;
   error: ApiError | null;
   refresh: () => void;
+  clear: () => void;
 }
 
 const CurrentUserContext = createContext<CurrentUserContextValue | null>(null);
@@ -32,38 +34,60 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [error, setError] = useState<ApiError | null>(null);
+  const generation = useRef(0);
+  const active = useRef<AbortController | null>(null);
+
+  const cancelActive = useCallback(() => {
+    const current = ++generation.current;
+    active.current?.abort();
+    active.current = null;
+    return current;
+  }, []);
 
   const refresh = useCallback(() => {
+    const current = cancelActive();
+    const controller = new AbortController();
+    active.current = controller;
+    // A prior identity must not grant presentation privileges during verification.
+    setUser(null);
     setStatus("loading");
     setError(null);
-    getCurrentUser()
+    void getCurrentUser({ signal: controller.signal })
       .then((u) => {
+        if (current !== generation.current) return;
         setUser(u);
         setStatus("authenticated");
       })
       .catch((e: unknown) => {
+        if (current !== generation.current || isAbortError(e)) return;
         const err = isApiError(e)
           ? e
-          : new ApiError("UNEXPECTED_STATUS", "Something went wrong loading your profile.");
+          : new ApiError("UNEXPECTED_STATUS", "Something went wrong loading your profile.", undefined, undefined,
+            { kind: "unexpected", cause: e });
+        setUser(null);
         setError(err);
-        // NOT_PERMITTED (authenticated but no active profile) and an unparseable
-        // response (the empty 401/403 body when OIDC isn't configured, or a
-        // login-page redirect) are calm "not signed in" states, not server faults.
-        // Everything else — a network failure, a real 5xx — is an error with a
-        // retry path in the UI.
-        const signedOut =
-          err.code === "NOT_PERMITTED" || err.code === "UNPARSEABLE_RESPONSE";
+        const signedOut = err.status === 401 || err.code === "AUTH_REQUIRED";
         setStatus(signedOut ? "unauthenticated" : "error");
       });
-  }, []);
+  }, [cancelActive]);
+
+  const clear = useCallback(() => {
+    cancelActive();
+    setUser(null);
+    setError(null);
+    setStatus("unauthenticated");
+  }, [cancelActive]);
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
+    return () => {
+      cancelActive();
+    };
+  }, [refresh, cancelActive]);
 
   const value = useMemo(
-    () => ({ user, status, error, refresh }),
-    [user, status, error, refresh],
+    () => ({ user, status, error, refresh, clear }),
+    [user, status, error, refresh, clear],
   );
 
   return <CurrentUserContext.Provider value={value}>{children}</CurrentUserContext.Provider>;
