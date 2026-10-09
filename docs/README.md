@@ -47,6 +47,8 @@ consequences, status).
 
 ### Frontend and design
 
+- [../DESIGN.md](../DESIGN.md): short entry point for design agents (impeccable), linking
+  the two docs below and the constraints they must respect.
 - [design/design-system.md](design/design-system.md): principles, screen inventory,
   interaction patterns (reconciliation, data tables, node graphs).
 - [design/ui-direction.md](design/ui-direction.md): visual direction and tokens; overrides

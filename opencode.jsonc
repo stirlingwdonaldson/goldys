@@ -1,8 +1,17 @@
 {
+  // opencode V2 config. Agent guidance lives in AGENTS.md; this file only wires tools.
   "$schema": "https://opencode.ai/config.json",
+
+  // Pinned so a new upstream release never runs on this box (which also hosts
+  // production) without review. Bump deliberately.
   "plugins": [
-	  "superpowers@git+https://github.com/obra/superpowers.git"
+    "superpowers@git+https://github.com/obra/superpowers.git#v6.4.2"
   ],
+
+  // Always loaded alongside AGENTS.md. Claude Code scopes this file to backend/**;
+  // opencode has no path scoping, so it is loaded for every session.
+  "instructions": [".claude/rules/architecture-invariants.md"],
+
   "mcp": {
     "servers": {
       "playwright": {
@@ -10,45 +19,55 @@
         "command": [
           "npx",
           "-y",
-          "@playwright/mcp@latest",
+          "@playwright/mcp@0.0.83",
           "--headless",
           "--user-data-dir=/srv/ai/data/browser-profiles/goldys"
         ],
-	"codemode": false
+        "codemode": false,
+        // First start may download the package; don't time out on a cold cache.
+        "timeout": { "startup": 60000 }
       }
     }
   },
 
-  "permissions": [
-    {
-      "action": "shell",
-      "resource": "*",
-      "effect": "ask"
-    },
-    {
-      "action": "shell",
-      "resource": "git status*",
-      "effect": "allow"
-    },
-    {
-      "action": "shell",
-      "resource": "git diff*",
-      "effect": "allow"
-    },
-    {
-      "action": "shell",
-      "resource": "git log*",
-      "effect": "allow"
-    },
-    {
-      "action": "shell",
-      "resource": "git push*",
-      "effect": "ask"
-    },
-    {
-      "action": "subagent",
-      "resource": "*",
-      "effect": "allow"
+  // Format each edited Java file with the project's own Spotless config (same
+  // google-java-format version CI checks). The IDE hook formats only the given file.
+  "formatter": {
+    "spotless-java": {
+      "command": [
+        "backend/gradlew",
+        "-p",
+        "backend",
+        "-q",
+        "spotlessApply",
+        "-PspotlessIdeHook=$FILE"
+      ],
+      "extensions": [".java"]
     }
+  },
+
+  // Last matching rule wins: broad rules first, exceptions after. Deny rules still
+  // apply in auto-approve mode.
+  "permissions": [
+    { "action": "shell", "resource": "*", "effect": "ask" },
+    { "action": "shell", "resource": "git status*", "effect": "allow" },
+    { "action": "shell", "resource": "git diff*", "effect": "allow" },
+    { "action": "shell", "resource": "git log*", "effect": "allow" },
+    { "action": "shell", "resource": "git push*", "effect": "ask" },
+    { "action": "subagent", "resource": "*", "effect": "allow" },
+
+    // This VM also runs production (see AGENTS.md "Safety"). Production operations
+    // are for the human; these rules make the dangerous ones impossible for agents.
+    { "action": "shell", "resource": "*docker-compose.prod.yml*", "effect": "deny" },
+    { "action": "shell", "resource": "*.env.prod*", "effect": "deny" },
+    { "action": "shell", "resource": "*down -v*", "effect": "deny" },
+    { "action": "shell", "resource": "*down --volumes*", "effect": "deny" },
+    { "action": "shell", "resource": "docker volume rm*", "effect": "deny" },
+    { "action": "shell", "resource": "docker volume prune*", "effect": "deny" },
+    { "action": "shell", "resource": "docker system prune*", "effect": "deny" },
+    { "action": "shell", "resource": "git push --force*", "effect": "deny" },
+    { "action": "shell", "resource": "git push -f*", "effect": "deny" },
+    { "action": "read", "resource": "*.env.prod", "effect": "deny" },
+    { "action": "edit", "resource": "*.env.prod", "effect": "deny" }
   ]
 }
