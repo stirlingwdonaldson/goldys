@@ -329,6 +329,30 @@ class DerivedMetricExecutorTest {
   }
 
   @Test
+  void hoursVarianceIsUnresolvedWhenScheduledHoursAreMissing() {
+    when(labour.dailyLabour(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new LabourMetric(
+                    SEP_13, "FOH", null, new BigDecimal("90.00"), null, null, "agreed", false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.LABOUR_HOURS_VARIANCE,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isNull();
+    assertThat(ts.series().get(0).points().get(0).status()).isEqualTo(MissingDataStatus.UNRESOLVED);
+    assertThat(ts.notices()).isNotEmpty();
+  }
+
+  @Test
   void hoursPerCoverDividesActualHoursByCovers() {
     when(reservations.dailySummaries(SEP_13, SEP_13))
         .thenReturn(List.of(summary(SEP_13, 100, 90, 180, 10)));
