@@ -15,7 +15,7 @@ and authenticated fixtures still need collection.
 - [x] Inspect backend auth, dashboard, explorer and correlation contracts.
 - [ ] Complete production-like authenticated browser baseline and API captures.
 - [x] Review architecture and dependency proposals.
-- [ ] Approve written first-slice spec and executable plan; select execution method.
+- [x] Approve written first-slice spec and executable plan; select execution method (Native).
 - [ ] Implement and verify each slice below; update audit/verification after each.
 
 ## Ordered PRs
@@ -28,6 +28,10 @@ behavior changes. Records existing tests/checks and demo browser limitations. Ro
 revert documentation. Residual risk: no live authenticated verification; execution plans require review.
 
 ### PR 1 — Reliable transport and authentication lifecycle
+
+Implemented locally on `fix/frontend-transport-auth`; 297 tests, typecheck/lint/build and
+controlled browser verification pass. Important independent-review recovery finding fixed.
+Live backend/remote CI verification and dependency-security remediation remain release prerequisites.
 
 Depends on architecture review. Affected: `lib/api/client.ts`, `errors.ts`, `index.ts`,
 current-user provider, user menu, auth pages; contract tests. Preserve Api adapters and server

@@ -3,7 +3,8 @@
 ## Status
 
 Phase 0 source audit and local baseline, followed by PR 1 implementation evidence below. Audited commit:
-`f6140b8e2fa13d0c26f1e168c2dfe0bc689e0a18`, 2026-10-09. Proposed architecture requires review.
+`f6140b8e2fa13d0c26f1e168c2dfe0bc689e0a18`, 2026-10-09. The architecture and first-slice plan
+were approved for native execution.
 No improvement is claimed. Local checks are not GitHub CI results.
 
 ## Environment and reproducibility
@@ -186,8 +187,10 @@ decoder/prototype-key edge cases 3 failing; auth response validation 4 failing p
 schema module; identity/logout 16 failing with unhandled rejections; auth forms 9 failing.
 Tests were then made green; no original tests were deleted or disabled.
 
-Latest complete suite before final review: **53 files / 290 tests passed** (baseline 43/186;
-104 additional tests). Typecheck and ESLint pass without suppressions. Production build
+Complete suite before final review: **53 files / 290 tests passed** (baseline 43/186;
+104 additional tests). Signup recovery and SDK privacy fixes expand this to **54 files / 297
+tests** (111 added), with typecheck/lint/build passing after the fixes.
+Typecheck and ESLint pass without suppressions. Production build
 passes after scoping the standalone trace root; all 21 static pages were generated and
 the standalone server starts successfully with copied public/static assets. Native audit exits 1
 with **16 pre-existing advisories (9 high, 7 moderate)**, also reproduced on the untouched
@@ -206,9 +209,10 @@ setupApiServer, not a React hook. Coverage percentage remains unknown; remote CI
 | Overview | 341 kB | 367 kB | +26 kB |
 | Custom dashboards | 363 kB | 388 kB | +25 kB |
 | Data explorer | 268 kB | 293 kB | +25 kB |
-| Login/signup | 201 kB | 226 kB | +25 kB |
+| Login | 201 kB | 226 kB | +25 kB |
+| Signup (after review fix) | 201 kB | 227 kB | +26 kB |
 
-Next/React versions are unchanged; shared framework/Sentry JS remains 186 kB. The auth schema
+Next/React versions are unchanged; shared framework/Sentry JS is 187 kB (baseline 186 kB). The auth schema
 foundation adds approximately 25 kB to affected route loads. This is a measured bundle cost,
 not a performance improvement. Selective/lazy schema loading can be evaluated in the later
 performance slice. No comparable before/after runtime latency measurement was collected here.
@@ -256,17 +260,18 @@ must restore the deployment's intended standalone layout, not delete parent lock
 Query/cache isolation, remaining mutations, dashboard/widget schemas, editor dirty-state,
 stream cancellation and monitoring completion remain in the roadmap. Current profile has no
 stable subject; external same-profile session replacement is not identifiable. Original
-redirect status/correlation is hidden by followed browser fetch. Causes must be sanitized
-before later telemetry reporting. Live backend/test credentials remain unavailable; controlled
+redirect status/correlation is hidden by followed browser fetch. Shared Sentry beforeSend
+sanitizes linked API cause messages while preserving causes locally; future custom reporting
+must preserve that boundary. Live backend/test credentials remain unavailable; controlled
 HTTP fixtures are not proof of production authorization. No API deduplication or latency
 improvement is claimed by this slice.
 
 ### Built-browser regression results
 
 Production standalone server, cached Playwright-core 1.63.0/Chromium build 1243, fresh contexts
-at **1440×900 and 320×900**, same synthetic route handlers. Ten scenarios completed (five per
+at **1440×900 and 320×900**, same synthetic route handlers. Twelve scenarios completed (six per
 viewport): profile outage/retry, login failure/success, partial signup, logout success, logout
-failure/reverification. Captured screenshots preserve the current typography/cards/tokens;
+failure/reverification, including malformed-success signup recovery. Captured screenshots preserve the current typography/cards/tokens;
 partial-signup at 320px has no horizontal document overflow.
 
 | Scenario (each viewport) | Observed HTTP sequence | Verified outcome |
@@ -274,6 +279,7 @@ partial-signup at 320px has no horizontal document overflow.
 | Profile retry | `/api/me` 500 → 200 | Demo Overview remains available; Owner control absent until verified; retry restores profile |
 | Login | login 500 → 200; `/api/me` 200 | Safe alert/correlation, then navigation to Overview |
 | Partial signup | signup 201; login 401 | One creation, confirmed account state, sign-in link; no create button |
+| Malformed signup success | signup 201 with invalid JSON | Uncertain recovery with diagnostics/correlation, no repeated creation or auto-login |
 | Logout success | `/api/me` 200; logout 204 | Pending button, one logout, identity cleared and success toast; no redundant profile GET |
 | Logout failure | `/api/me` 200; logout 500; `/api/me` 401 | Failure consumed, uncertainty toast, reverified signed-out state |
 
@@ -284,3 +290,41 @@ evidence, not live Spring authorization verification or a clean-console claim fo
 The harness scopes alerts to the application's paragraph: Next also supplies its own route
 announcer with role=alert. Screenshots and raw test/build/browser logs are archived in
 `/tmp/opencode/goldys-auth-verification/`; they contain synthetic fixtures, not live credentials.
+
+### Independent review and final fixes
+
+The fresh reviewer examined `7f6acd2..91299eb`, found no critical issues, one important
+signup-recovery gap and one minor custom-abort-reason limitation. Incomplete/malformed/body-read
+failure after signup 201 was reproduced (three failing tests), then fixed without accepting
+the invalid profile or repeating creation. A fourth test preserves confirmed creation when
+auto-login returns invalid success. Browser recovery checks run on both viewports.
+
+An additional actual SDK reproduction proved that default LinkedErrors copies cause messages
+into events. Three reporting-boundary tests were observed failing, then passed with shared
+beforeSend applied to browser/server/edge configs. Original causes remain available locally;
+linked API cause text is withheld from telemetry. Safe code/status/correlation tags retain
+diagnostic linkage; invalid metadata is not reported. Unrelated exception reporting and the
+self-hosted relay remain intact; no duplicate capture path was added. Final complete suite:
+**54 files / 297 tests passed**; typecheck/lint/build pass. No second reviewer was dispatched.
+
+Deferred minor: cancellation with an explicit non-AbortError reason can be classified as
+network/protocol failure. Current controllers use default AbortError; cover supplied-signal
+state before introducing cancellation variants in later Query work.
+
+### Slice completion accounting
+
+- Infrastructure mechanisms removed: **0**; useApiData remains for its own migration. The
+  transport entrypoint is 16 lines shorter while a 113-line response module adds reliability;
+  this is responsibility separation, not a claimed net infrastructure reduction.
+- Pattern families consolidated: **2** — three auth feedback blocks and three profile
+  invalidation sites. CurrentUser's handwritten interface is replaced with schema inference.
+- Dependencies: **2 added / 0 removed / 45 retained** (Zod runtime, MSW development).
+- Requests: successful logout avoids the old unconditional profile refresh (source comparison
+  plus controlled post-change request counts). No shared-query deduplication or live before/after
+  request reduction is claimed.
+- Bundle cost: +25–26 kB on primary routes; shared JS +1 kB. Runtime latency/coverage percentages
+  remain unmeasured. All original 186 tests retained; 111 added; CI includes tests but remote
+  workflow results remain unverified.
+- Next work: scoped Query/Overview with identity-aware cache clearing, then library/actions,
+  high-risk dashboard/widget schemas, editing, exploration and stream lifecycle. Dependency
+  advisory remediation and live verification are prerequisites before a production release.

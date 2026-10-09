@@ -10,6 +10,11 @@
 
 **Spec:** [Approved frontend target architecture](../../frontend-target-architecture.md), specifically transport/failure model and identity freshness; scope is PR 1 of [migration roadmap](../../frontend-migration-plan.md). Source evidence and outstanding live limitations: [audit](../../frontend-audit.md), [verification](../../frontend-verification.md).
 
+**Execution status:** Native execution approved and all seven tasks implemented on
+`fix/frontend-transport-auth`. Fresh whole-branch review's important signup recovery finding
+was reproduced and fixed; current verification and deferred limitations are in the linked
+verification document. The checklists below preserve the approved execution instructions.
+
 ## Global Constraints
 
 - Preserve Spring Boot API compatibility unless a coordinated contract change is explicitly necessary.
@@ -688,4 +693,6 @@ Residual risks: no stable profile subject or Query cache yet; existing useApiDat
 
 Coverage: error metadata→Task 1; Headers/CSRF/request cancellation→Task 2; body expectations/envelopes/redirects/MSW→Task 3; auth schemas→Task 4; stale role/logout→Task 5; auth form outcomes→Task 6; CI/evidence→Task 7. The five Review Focus cases have explicit owners/tests. Requirements outside PR 1 remain in the linked roadmap, not silently dropped from the overall migration.
 
-Review this plan and choose **Native** or **Subagent-driven**. Native is recommended for the seven-task slice: transport options, schema types and identity consumers form a sequential chain that benefits from one implementation context, followed by a fresh whole-branch reviewer. Subagent-driven provides independent per-task implementation/review with higher context cost. No execution method has been selected.
+The user selected **Native**. Implementation and the fresh whole-branch review are complete;
+the single important finding was fixed through RED→GREEN tests and a passing full suite.
+No push, merge or deployment is included. Subsequent roadmap slices require their own plans.
