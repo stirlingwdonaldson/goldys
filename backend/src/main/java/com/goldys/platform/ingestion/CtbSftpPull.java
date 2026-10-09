@@ -35,7 +35,7 @@ public class CtbSftpPull {
     this.pdfEnrichment = pdfEnrichment;
   }
 
-  @Scheduled(cron = "${ctb.sftp.cron:0 15 4 * * *}", zone = "Australia/Melbourne")
+  @Scheduled(cron = "${ctb.sftp.cron:0 */15 * * * *}", zone = "Australia/Melbourne")
   public void pull() {
     try {
       List<SftpDrop.SftpFile> files = drop.list();
@@ -74,8 +74,10 @@ public class CtbSftpPull {
         pdfEnrichment.enrich(bytes, file.filename());
       }
       log.info("SFTP drop processed {}", file.filename());
+      drop.markProcessed(file.path());
     } catch (RuntimeException e) {
-      // Keep pulling the rest; a single bad file must not stop the poll.
+      // Keep pulling the rest; a single bad file must not stop the poll. If markProcessed failed
+      // after a successful ingest, the file stays and is re-processed next tick (idempotent).
       log.warn("SFTP drop pull failed for {}", file.path(), e);
     }
   }

@@ -61,6 +61,20 @@ public class SpringIntegrationSftpDrop {
               }
             });
       }
+
+      @Override
+      public void markProcessed(String path) {
+        int slash = path.lastIndexOf('/');
+        String dir = slash <= 0 ? base : path.substring(0, slash);
+        String filename = path.substring(slash + 1);
+        String processedDir = dir + "/processed";
+        template.execute(
+            session -> {
+              session.mkdir(processedDir);
+              session.rename(path, processedDir + "/" + filename);
+              return null;
+            });
+      }
     };
   }
 

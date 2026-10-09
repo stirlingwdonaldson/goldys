@@ -136,7 +136,7 @@ app:
 ctb:
   sftp:
     enabled: ${CTB_SFTP_ENABLED:false}
-    cron: ${CTB_SFTP_CRON:0 15 4 * * *}
+    cron: ${CTB_SFTP_CRON:0 */15 * * * *}
     host: ${CTB_SFTP_HOST:}
     port: ${CTB_SFTP_PORT:22}
     user: ${CTB_SFTP_USER:}

@@ -11,4 +11,7 @@ public interface SftpDrop {
   List<SftpFile> list();
 
   byte[] download(String path);
+
+  /** Moves a successfully-processed file out of the poll directory so it is not re-processed. */
+  void markProcessed(String path);
 }
