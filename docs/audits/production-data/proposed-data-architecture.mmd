@@ -1,0 +1,30 @@
+flowchart TB
+    Sources["Verified source contracts: API / report / webhook / SFTP"] --> Attempts["Dataset attempts and request-window manifests"]
+    Attempts --> Raw["Immutable raw bytes / hash / dataset / window / page"]
+    Raw --> Parsed["Versioned immutable parser/extractor outputs"]
+    Parsed --> Validate["Grain-aware validation, control sums, rejected/empty/partial outcomes"]
+    Validate --> Masters["Source-scoped venue, supplier, product, stock, employee and recipe identities"]
+    Validate --> Facts["Atomic facts at real received grain: sale/line, invoice/line, product-day, timesheet, reservation, movement"]
+    Masters --> Bridges["Versioned aliases / product-recipe / recipe-ingredient / service links"]
+    Bridges --> Facts
+    Facts --> Canonical["Canonical observation history with explicit system and business time"]
+    Raw --> Lineage["Many-contributor and field-level evidence graph"]
+    Parsed --> Lineage
+    Canonical --> Lineage
+    Canonical --> Resolved["Rebuildable current/as-of analytical views and reconciled facts"]
+    Validate --> Quality["Dataset availability, freshness, completeness and ambiguity"]
+    Resolved --> Catalog["Authorised typed dataset metadata, keys, units, grain and join cardinality"]
+    Catalog --> Planner["Validated relational plan compiler; parameterised SELECT only"]
+    Planner --> Execution["Dedicated read-only PostgreSQL role; time/row/byte/concurrency limits"]
+    Execution --> Results["Typed results plus quality, permissions and lineage"]
+    Resolved --> Governed["Existing governed metric catalogue retained"]
+    Planner --> Definitions["Versioned saved queries and declarative calculated metrics"]
+    Definitions --> Governed
+    Quality --> Results
+    Lineage --> Results
+    Governed --> Screens["Consistent dashboards and domain APIs"]
+    Results --> Explorer["SQL-like Explorer: filter/join/group/calculate/save/drill"]
+    Catalog --> AI["AI discovers authorised metadata and proposes typed plans"]
+    AI --> Planner
+    Results --> AI
+    Execution -. "Only if measured workload requires isolation" .-> Future["Read replica / analytical read store; warehouse later if justified"]

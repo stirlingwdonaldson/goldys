@@ -1,0 +1,41 @@
+domain,versions,valid_equals_recorded,open_valid_to,invalid_system_intervals,discontinuous_chains,orphan_raw_refs
+daily_sales,203,203,203,0,0,0
+invoice,2333,2333,2333,0,0,0
+invoice_line,15876,15876,15876,0,0,0
+product_sales,13272,13272,13272,0,0,0
+source_system,current_rows,present_dates,calendar_span,absent_calendar_dates
+CTB,187,187,190,3
+LIGHTSPEED,8,8,13,5
+multisource_dates,differing_source_dates,frontend_resolved_different_dates,unresolved_conflicts,rule_chosen_dates,override_chosen_dates
+8,8,8,0,6,2
+source_system,connector_name,status,last_run,last_complete
+CTB,ctb-invoice-pdf,SUCCESS,2026-10-08 18:30:59.810716+00,2026-10-08 18:30:59.827474+00
+CTB,ctb-invoices,SUCCESS,2026-10-09 00:24:00.687227+00,2026-10-09 00:24:00.752442+00
+CTB,ctb-revenue,FAILED,2026-10-06 01:06:52.882229+00,2026-10-06 01:06:55.513144+00
+CTB,ctb-revenue,PARTIAL,2026-10-08 17:00:00.047201+00,2026-10-08 17:21:51.221156+00
+CTB,ctb-revenue,SUCCESS,2026-10-06 08:04:34.681665+00,2026-10-06 08:16:30.305682+00
+LIGHTSPEED,lightspeed-insights,SUCCESS,2026-10-08 19:09:34.391227+00,2026-10-08 19:09:34.408053+00
+department,seniority,resource,can_read,can_write
+ALL,OWNER,connectors,t,t
+ALL,OWNER,conversational.chat,t,t
+ALL,OWNER,conversational.threads,t,t
+ALL,OWNER,dashboards,t,t
+ALL,OWNER,inventory.cost,t,t
+ALL,OWNER,inventory.stock,t,t
+ALL,OWNER,labour.cost,t,t
+ALL,OWNER,labour.hours,t,t
+ALL,OWNER,labour.wages,t,t
+ALL,OWNER,reconciliation.sales,t,t
+ALL,OWNER,reconciliation.status,t,t
+ALL,OWNER,reservations.metrics,t,t
+dashboards,widgets,empty_filter_documents
+4,7,0
+widget_field
+id
+layout
+queries
+renderType
+line_identities,identities_with_date_changes
+6156,1
+previous_friday,daily_sources,product_days,sale_item_rows,shift_rows,reservation_rows
+2026-10-02,1,174,0,0,0

@@ -1,0 +1,7883 @@
+[
+  {
+    "fetcher_identity": "ctb-invoices",
+    "fetched_at": "2026-10-09 00:21:00.329136+00",
+    "content_type": "text/csv",
+    "csv_headers": [
+      "Invoice",
+      "Supplier",
+      "Date",
+      "StockCode",
+      "StockDescription",
+      "LineQuantity",
+      "LineTotalExTax"
+    ],
+    "csv_rows": 1,
+    "csv_missing": {
+      "Invoice": 0,
+      "Supplier": 0,
+      "Date": 0,
+      "StockCode": 0,
+      "StockDescription": 0,
+      "LineQuantity": 0,
+      "LineTotalExTax": 0
+    },
+    "csv_distinct_counts": {
+      "Invoice": 1,
+      "Date": 1,
+      "StockCode": 1,
+      "LineQuantity": 1
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "ctb-invoices",
+    "fetched_at": "2026-10-09 00:22:00.330391+00",
+    "content_type": "text/csv",
+    "csv_headers": [
+      "Invoice",
+      "Supplier",
+      "Date",
+      "StockCode",
+      "StockDescription",
+      "LineQuantity",
+      "LineTotalExTax"
+    ],
+    "csv_rows": 1,
+    "csv_missing": {
+      "Invoice": 0,
+      "Supplier": 0,
+      "Date": 0,
+      "StockCode": 0,
+      "StockDescription": 0,
+      "LineQuantity": 0,
+      "LineTotalExTax": 0
+    },
+    "csv_distinct_counts": {
+      "Invoice": 1,
+      "Date": 1,
+      "StockCode": 1,
+      "LineQuantity": 1
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "ctb-invoices",
+    "fetched_at": "2026-10-09 00:23:00.275839+00",
+    "content_type": "text/csv",
+    "csv_headers": [
+      "Invoice",
+      "Supplier",
+      "Date",
+      "StockCode",
+      "StockDescription",
+      "LineQuantity",
+      "LineTotalExTax"
+    ],
+    "csv_rows": 1,
+    "csv_missing": {
+      "Invoice": 0,
+      "Supplier": 0,
+      "Date": 0,
+      "StockCode": 0,
+      "StockDescription": 0,
+      "LineQuantity": 0,
+      "LineTotalExTax": 0
+    },
+    "csv_distinct_counts": {
+      "Invoice": 1,
+      "Date": 1,
+      "StockCode": 1,
+      "LineQuantity": 1
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "ctb-invoices",
+    "fetched_at": "2026-10-09 00:24:00.742394+00",
+    "content_type": "text/csv",
+    "csv_headers": [
+      "Invoice",
+      "Supplier",
+      "Date",
+      "StockCode",
+      "StockDescription",
+      "LineQuantity",
+      "LineTotalExTax"
+    ],
+    "csv_rows": 1,
+    "csv_missing": {
+      "Invoice": 0,
+      "Supplier": 0,
+      "Date": 0,
+      "StockCode": 0,
+      "StockDescription": 0,
+      "LineQuantity": 0,
+      "LineTotalExTax": 0
+    },
+    "csv_distinct_counts": {
+      "Invoice": 1,
+      "Date": 1,
+      "StockCode": 1,
+      "LineQuantity": 1
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "ctb-invoices-ajax",
+    "fetched_at": "2026-10-08 17:21:39.371055+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 200
+      },
+      "$.data[].attachedFileType": {
+        "str": 200
+      },
+      "$.data[].businessDepartmentId": {
+        "int": 200
+      },
+      "$.data[].createdBy": {
+        "str": 200
+      },
+      "$.data[].createdDate": {
+        "str": 200
+      },
+      "$.data[].creditNoteProformaInvoiceId": {
+        "int": 200
+      },
+      "$.data[].creditNoteStatus": {
+        "str": 200
+      },
+      "$.data[].discount": {
+        "float": 200
+      },
+      "$.data[].freightIncludeGST": {
+        "float": 200
+      },
+      "$.data[].inputPersonName": {
+        "str": 200
+      },
+      "$.data[].invoiceDate": {
+        "str": 200
+      },
+      "$.data[].invoiceId": {
+        "int": 200
+      },
+      "$.data[].invoiceNo": {
+        "str": 200
+      },
+      "$.data[].isAiExtracted": {
+        "NoneType": 199,
+        "bool": 1
+      },
+      "$.data[].isExportedToAccountingSystem": {
+        "bool": 200
+      },
+      "$.data[].isReturned": {
+        "bool": 200
+      },
+      "$.data[].metaData": {
+        "str": 200
+      },
+      "$.data[].orderReferenceNo": {
+        "str": 200
+      },
+      "$.data[].outletName": {
+        "str": 200
+      },
+      "$.data[].outlets": {
+        "str": 200
+      },
+      "$.data[].pdfFile": {
+        "str": 200
+      },
+      "$.data[].receivedDate": {
+        "str": 200
+      },
+      "$.data[].status": {
+        "str": 200
+      },
+      "$.data[].supplierCurrency": {
+        "str": 200
+      },
+      "$.data[].supplierId": {
+        "int": 200
+      },
+      "$.data[].supplierName": {
+        "str": 200
+      },
+      "$.data[].systemCurrency": {
+        "str": 200
+      },
+      "$.data[].totalAmount": {
+        "float": 200
+      },
+      "$.data[].totalDiscount": {
+        "float": 200
+      },
+      "$.data[].totalTax": {
+        "float": 200
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        200
+      ]
+    },
+    "source_totalCount": 1174
+  },
+  {
+    "fetcher_identity": "ctb-invoices-ajax",
+    "fetched_at": "2026-10-08 17:21:39.77239+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 200
+      },
+      "$.data[].attachedFileType": {
+        "str": 200
+      },
+      "$.data[].businessDepartmentId": {
+        "int": 200
+      },
+      "$.data[].createdBy": {
+        "str": 200
+      },
+      "$.data[].createdDate": {
+        "str": 200
+      },
+      "$.data[].creditNoteProformaInvoiceId": {
+        "int": 200
+      },
+      "$.data[].creditNoteStatus": {
+        "str": 200
+      },
+      "$.data[].discount": {
+        "float": 200
+      },
+      "$.data[].freightIncludeGST": {
+        "float": 200
+      },
+      "$.data[].inputPersonName": {
+        "str": 200
+      },
+      "$.data[].invoiceDate": {
+        "str": 200
+      },
+      "$.data[].invoiceId": {
+        "int": 200
+      },
+      "$.data[].invoiceNo": {
+        "str": 200
+      },
+      "$.data[].isAiExtracted": {
+        "NoneType": 199,
+        "bool": 1
+      },
+      "$.data[].isExportedToAccountingSystem": {
+        "bool": 200
+      },
+      "$.data[].isReturned": {
+        "bool": 200
+      },
+      "$.data[].metaData": {
+        "str": 200
+      },
+      "$.data[].orderReferenceNo": {
+        "str": 200
+      },
+      "$.data[].outletName": {
+        "str": 200
+      },
+      "$.data[].outlets": {
+        "str": 200
+      },
+      "$.data[].pdfFile": {
+        "str": 200
+      },
+      "$.data[].receivedDate": {
+        "str": 200
+      },
+      "$.data[].status": {
+        "str": 200
+      },
+      "$.data[].supplierCurrency": {
+        "str": 200
+      },
+      "$.data[].supplierId": {
+        "int": 200
+      },
+      "$.data[].supplierName": {
+        "str": 200
+      },
+      "$.data[].systemCurrency": {
+        "str": 200
+      },
+      "$.data[].totalAmount": {
+        "float": 200
+      },
+      "$.data[].totalDiscount": {
+        "float": 200
+      },
+      "$.data[].totalTax": {
+        "float": 200
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        200
+      ]
+    },
+    "source_totalCount": 1174
+  },
+  {
+    "fetcher_identity": "ctb-invoices-ajax",
+    "fetched_at": "2026-10-08 17:21:40.146857+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 200
+      },
+      "$.data[].attachedFileType": {
+        "str": 200
+      },
+      "$.data[].businessDepartmentId": {
+        "int": 200
+      },
+      "$.data[].createdBy": {
+        "str": 200
+      },
+      "$.data[].createdDate": {
+        "str": 200
+      },
+      "$.data[].creditNoteProformaInvoiceId": {
+        "int": 200
+      },
+      "$.data[].creditNoteStatus": {
+        "str": 200
+      },
+      "$.data[].discount": {
+        "float": 200
+      },
+      "$.data[].freightIncludeGST": {
+        "float": 200
+      },
+      "$.data[].inputPersonName": {
+        "str": 200
+      },
+      "$.data[].invoiceDate": {
+        "str": 200
+      },
+      "$.data[].invoiceId": {
+        "int": 200
+      },
+      "$.data[].invoiceNo": {
+        "str": 200
+      },
+      "$.data[].isAiExtracted": {
+        "NoneType": 197,
+        "bool": 3
+      },
+      "$.data[].isExportedToAccountingSystem": {
+        "bool": 200
+      },
+      "$.data[].isReturned": {
+        "bool": 200
+      },
+      "$.data[].metaData": {
+        "str": 200
+      },
+      "$.data[].orderReferenceNo": {
+        "str": 200
+      },
+      "$.data[].outletName": {
+        "str": 200
+      },
+      "$.data[].outlets": {
+        "str": 200
+      },
+      "$.data[].pdfFile": {
+        "str": 200
+      },
+      "$.data[].receivedDate": {
+        "str": 200
+      },
+      "$.data[].status": {
+        "str": 200
+      },
+      "$.data[].supplierCurrency": {
+        "str": 200
+      },
+      "$.data[].supplierId": {
+        "int": 200
+      },
+      "$.data[].supplierName": {
+        "str": 200
+      },
+      "$.data[].systemCurrency": {
+        "str": 200
+      },
+      "$.data[].totalAmount": {
+        "float": 200
+      },
+      "$.data[].totalDiscount": {
+        "float": 200
+      },
+      "$.data[].totalTax": {
+        "float": 200
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        200
+      ]
+    },
+    "source_totalCount": 1174
+  },
+  {
+    "fetcher_identity": "ctb-invoices-ajax",
+    "fetched_at": "2026-10-08 17:21:40.502816+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 174
+      },
+      "$.data[].attachedFileType": {
+        "str": 174
+      },
+      "$.data[].businessDepartmentId": {
+        "int": 174
+      },
+      "$.data[].createdBy": {
+        "str": 174
+      },
+      "$.data[].createdDate": {
+        "str": 174
+      },
+      "$.data[].creditNoteProformaInvoiceId": {
+        "int": 174
+      },
+      "$.data[].creditNoteStatus": {
+        "str": 174
+      },
+      "$.data[].discount": {
+        "float": 174
+      },
+      "$.data[].freightIncludeGST": {
+        "float": 174
+      },
+      "$.data[].inputPersonName": {
+        "str": 174
+      },
+      "$.data[].invoiceDate": {
+        "str": 174
+      },
+      "$.data[].invoiceId": {
+        "int": 174
+      },
+      "$.data[].invoiceNo": {
+        "str": 174
+      },
+      "$.data[].isAiExtracted": {
+        "bool": 5,
+        "NoneType": 169
+      },
+      "$.data[].isExportedToAccountingSystem": {
+        "bool": 174
+      },
+      "$.data[].isReturned": {
+        "bool": 174
+      },
+      "$.data[].metaData": {
+        "str": 174
+      },
+      "$.data[].orderReferenceNo": {
+        "str": 174
+      },
+      "$.data[].outletName": {
+        "str": 174
+      },
+      "$.data[].outlets": {
+        "str": 174
+      },
+      "$.data[].pdfFile": {
+        "str": 174
+      },
+      "$.data[].receivedDate": {
+        "str": 174
+      },
+      "$.data[].status": {
+        "str": 174
+      },
+      "$.data[].supplierCurrency": {
+        "str": 174
+      },
+      "$.data[].supplierId": {
+        "int": 174
+      },
+      "$.data[].supplierName": {
+        "str": 174
+      },
+      "$.data[].systemCurrency": {
+        "str": 174
+      },
+      "$.data[].totalAmount": {
+        "float": 174
+      },
+      "$.data[].totalDiscount": {
+        "float": 174
+      },
+      "$.data[].totalTax": {
+        "float": 174
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        174
+      ]
+    },
+    "source_totalCount": 1174
+  },
+  {
+    "fetcher_identity": "ctb-revenue",
+    "fetched_at": "2026-10-08 17:20:54.806677+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 115
+      },
+      "$.data[].amount": {
+        "float": 115
+      },
+      "$.data[].childGroupData": {
+        "NoneType": 115
+      },
+      "$.data[].costPerUnit": {
+        "float": 62,
+        "int": 53
+      },
+      "$.data[].discountedAmount": {
+        "float": 115
+      },
+      "$.data[].foodCost": {
+        "float": 74,
+        "int": 41
+      },
+      "$.data[].parentStockCode": {
+        "str": 115
+      },
+      "$.data[].portionUOMInRecipe": {
+        "str": 115
+      },
+      "$.data[].portionWeightInRecipe": {
+        "int": 115
+      },
+      "$.data[].profit": {
+        "float": 74,
+        "int": 41
+      },
+      "$.data[].quantitySold": {
+        "int": 115
+      },
+      "$.data[].recipeName": {
+        "str": 115
+      },
+      "$.data[].saleDate": {
+        "NoneType": 115
+      },
+      "$.data[].siteNumber": {
+        "int": 115
+      },
+      "$.data[].stockCode": {
+        "str": 115
+      },
+      "$.data[].stockDescription": {
+        "str": 115
+      },
+      "$.data[].taxAmount": {
+        "float": 115
+      },
+      "$.data[].totalFoodCost": {
+        "float": 62,
+        "int": 53
+      },
+      "$.data[].uniqueGroupId": {
+        "str": 115
+      },
+      "$.data[].uniqueId": {
+        "int": 115
+      },
+      "$.data[].unitPrice": {
+        "float": 114,
+        "int": 1
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        115
+      ]
+    },
+    "source_totalCount": 115
+  },
+  {
+    "fetcher_identity": "ctb-revenue",
+    "fetched_at": "2026-10-08 17:20:59.665883+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 91
+      },
+      "$.data[].amount": {
+        "float": 91
+      },
+      "$.data[].childGroupData": {
+        "NoneType": 91
+      },
+      "$.data[].costPerUnit": {
+        "float": 49,
+        "int": 42
+      },
+      "$.data[].discountedAmount": {
+        "float": 91
+      },
+      "$.data[].foodCost": {
+        "float": 58,
+        "int": 33
+      },
+      "$.data[].parentStockCode": {
+        "str": 91
+      },
+      "$.data[].portionUOMInRecipe": {
+        "str": 91
+      },
+      "$.data[].portionWeightInRecipe": {
+        "int": 91
+      },
+      "$.data[].profit": {
+        "float": 58,
+        "int": 33
+      },
+      "$.data[].quantitySold": {
+        "int": 91
+      },
+      "$.data[].recipeName": {
+        "str": 91
+      },
+      "$.data[].saleDate": {
+        "NoneType": 91
+      },
+      "$.data[].siteNumber": {
+        "int": 91
+      },
+      "$.data[].stockCode": {
+        "str": 91
+      },
+      "$.data[].stockDescription": {
+        "str": 91
+      },
+      "$.data[].taxAmount": {
+        "float": 91
+      },
+      "$.data[].totalFoodCost": {
+        "float": 49,
+        "int": 42
+      },
+      "$.data[].uniqueGroupId": {
+        "str": 91
+      },
+      "$.data[].uniqueId": {
+        "int": 91
+      },
+      "$.data[].unitPrice": {
+        "float": 90,
+        "int": 1
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        91
+      ]
+    },
+    "source_totalCount": 91
+  },
+  {
+    "fetcher_identity": "ctb-revenue",
+    "fetched_at": "2026-10-08 17:21:31.119973+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 122
+      },
+      "$.data[].amount": {
+        "float": 122
+      },
+      "$.data[].childGroupData": {
+        "NoneType": 122
+      },
+      "$.data[].costPerUnit": {
+        "float": 70,
+        "int": 52
+      },
+      "$.data[].discountedAmount": {
+        "float": 122
+      },
+      "$.data[].foodCost": {
+        "float": 82,
+        "int": 40
+      },
+      "$.data[].parentStockCode": {
+        "str": 122
+      },
+      "$.data[].portionUOMInRecipe": {
+        "str": 122
+      },
+      "$.data[].portionWeightInRecipe": {
+        "int": 122
+      },
+      "$.data[].profit": {
+        "float": 82,
+        "int": 40
+      },
+      "$.data[].quantitySold": {
+        "int": 122
+      },
+      "$.data[].recipeName": {
+        "str": 122
+      },
+      "$.data[].saleDate": {
+        "NoneType": 122
+      },
+      "$.data[].siteNumber": {
+        "int": 122
+      },
+      "$.data[].stockCode": {
+        "str": 122
+      },
+      "$.data[].stockDescription": {
+        "str": 122
+      },
+      "$.data[].taxAmount": {
+        "float": 122
+      },
+      "$.data[].totalFoodCost": {
+        "float": 69,
+        "int": 53
+      },
+      "$.data[].uniqueGroupId": {
+        "str": 122
+      },
+      "$.data[].uniqueId": {
+        "int": 122
+      },
+      "$.data[].unitPrice": {
+        "float": 122
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        122
+      ]
+    },
+    "source_totalCount": 122
+  },
+  {
+    "fetcher_identity": "ctb-revenue",
+    "fetched_at": "2026-10-08 17:21:37.268094+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 146
+      },
+      "$.data[].amount": {
+        "float": 146
+      },
+      "$.data[].childGroupData": {
+        "NoneType": 146
+      },
+      "$.data[].costPerUnit": {
+        "float": 81,
+        "int": 65
+      },
+      "$.data[].discountedAmount": {
+        "float": 146
+      },
+      "$.data[].foodCost": {
+        "float": 96,
+        "int": 50
+      },
+      "$.data[].parentStockCode": {
+        "str": 146
+      },
+      "$.data[].portionUOMInRecipe": {
+        "str": 146
+      },
+      "$.data[].portionWeightInRecipe": {
+        "int": 146
+      },
+      "$.data[].profit": {
+        "float": 96,
+        "int": 50
+      },
+      "$.data[].quantitySold": {
+        "int": 146
+      },
+      "$.data[].recipeName": {
+        "str": 146
+      },
+      "$.data[].saleDate": {
+        "NoneType": 146
+      },
+      "$.data[].siteNumber": {
+        "int": 146
+      },
+      "$.data[].stockCode": {
+        "str": 146
+      },
+      "$.data[].stockDescription": {
+        "str": 146
+      },
+      "$.data[].taxAmount": {
+        "float": 146
+      },
+      "$.data[].totalFoodCost": {
+        "float": 80,
+        "int": 66
+      },
+      "$.data[].uniqueGroupId": {
+        "str": 146
+      },
+      "$.data[].uniqueId": {
+        "int": 146
+      },
+      "$.data[].unitPrice": {
+        "float": 146
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        146
+      ]
+    },
+    "source_totalCount": 146
+  },
+  {
+    "fetcher_identity": "ctb-sale-recipe-links",
+    "fetched_at": "2026-10-08 17:21:43.241452+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 200
+      },
+      "$.data[].isRecipeActive": {
+        "bool": 200
+      },
+      "$.data[].recipeFolderName": {
+        "str": 166,
+        "NoneType": 34
+      },
+      "$.data[].recipeId": {
+        "int": 200
+      },
+      "$.data[].recipeName": {
+        "str": 200
+      },
+      "$.data[].saleItemRecipeId": {
+        "int": 200
+      },
+      "$.data[].saleItemStockCode": {
+        "str": 200
+      },
+      "$.data[].saleItemStockDescription": {
+        "str": 200
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        200
+      ]
+    },
+    "source_totalCount": 639
+  },
+  {
+    "fetcher_identity": "ctb-sale-recipe-links",
+    "fetched_at": "2026-10-08 17:21:45.925084+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 200
+      },
+      "$.data[].isRecipeActive": {
+        "bool": 200
+      },
+      "$.data[].recipeFolderName": {
+        "str": 160,
+        "NoneType": 40
+      },
+      "$.data[].recipeId": {
+        "int": 200
+      },
+      "$.data[].recipeName": {
+        "str": 200
+      },
+      "$.data[].saleItemRecipeId": {
+        "int": 200
+      },
+      "$.data[].saleItemStockCode": {
+        "str": 200
+      },
+      "$.data[].saleItemStockDescription": {
+        "str": 200
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        200
+      ]
+    },
+    "source_totalCount": 639
+  },
+  {
+    "fetcher_identity": "ctb-sale-recipe-links",
+    "fetched_at": "2026-10-08 17:21:48.602955+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 200
+      },
+      "$.data[].isRecipeActive": {
+        "bool": 200
+      },
+      "$.data[].recipeFolderName": {
+        "NoneType": 46,
+        "str": 154
+      },
+      "$.data[].recipeId": {
+        "int": 200
+      },
+      "$.data[].recipeName": {
+        "str": 200
+      },
+      "$.data[].saleItemRecipeId": {
+        "int": 200
+      },
+      "$.data[].saleItemStockCode": {
+        "str": 200
+      },
+      "$.data[].saleItemStockDescription": {
+        "str": 200
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        200
+      ]
+    },
+    "source_totalCount": 639
+  },
+  {
+    "fetcher_identity": "ctb-sale-recipe-links",
+    "fetched_at": "2026-10-08 17:21:51.149358+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.data": {
+        "list": 1
+      },
+      "$.data[]": {
+        "dict": 39
+      },
+      "$.data[].isRecipeActive": {
+        "bool": 39
+      },
+      "$.data[].recipeFolderName": {
+        "NoneType": 18,
+        "str": 21
+      },
+      "$.data[].recipeId": {
+        "int": 39
+      },
+      "$.data[].recipeName": {
+        "str": 39
+      },
+      "$.data[].saleItemRecipeId": {
+        "int": 39
+      },
+      "$.data[].saleItemStockCode": {
+        "str": 39
+      },
+      "$.data[].saleItemStockDescription": {
+        "str": 39
+      },
+      "$.message": {
+        "dict": 1
+      },
+      "$.message.Info": {
+        "str": 1
+      },
+      "$.message.IsSuccess": {
+        "bool": 1
+      },
+      "$.message.IsWarning": {
+        "bool": 1
+      },
+      "$.message.ReturnId": {
+        "int": 1
+      },
+      "$.message.Status": {
+        "str": 1
+      },
+      "$.totalCount": {
+        "int": 1
+      }
+    },
+    "array_lengths": {
+      "$.data": [
+        39
+      ]
+    },
+    "source_totalCount": 639
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-21 20:16:08.206575+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 0,
+    "csv_missing": {
+      "": 0,
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0,
+      "Sale Type": 0,
+      "Sale Number": 0,
+      "Order Type": 0,
+      "Total Tax": 0,
+      "Total Revenue": 0,
+      "Total Cost": 0,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-22 20:16:04.51784+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 0,
+    "csv_missing": {
+      "": 0,
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0,
+      "Sale Type": 0,
+      "Sale Number": 0,
+      "Order Type": 0,
+      "Total Tax": 0,
+      "Total Revenue": 0,
+      "Total Cost": 0,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-23 20:15:39.424802+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 0,
+    "csv_missing": {
+      "": 0,
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0,
+      "Sale Type": 0,
+      "Sale Number": 0,
+      "Order Type": 0,
+      "Total Tax": 0,
+      "Total Revenue": 0,
+      "Total Cost": 0,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-24 20:15:44.001502+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 0,
+    "csv_missing": {
+      "": 0,
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0,
+      "Sale Type": 0,
+      "Sale Number": 0,
+      "Order Type": 0,
+      "Total Tax": 0,
+      "Total Revenue": 0,
+      "Total Cost": 0,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-25 20:15:48.14511+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 12,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 12,
+      "Total Cost": 12,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 2
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-09-26",
+        "2026-09-26"
+      ],
+      "Reconciliation End Date": [
+        "2026-09-26",
+        "2026-09-26"
+      ],
+      "Reconciliation Start Date": [
+        "2026-09-25",
+        "2026-09-25"
+      ],
+      "Sale Opened Date": [
+        "2026-09-25",
+        "2026-09-26"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-25 20:15:50.045167+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 12,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 12,
+      "Total Cost": 12,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 2
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-09-26",
+        "2026-09-26"
+      ],
+      "Reconciliation End Date": [
+        "2026-09-26",
+        "2026-09-26"
+      ],
+      "Reconciliation Start Date": [
+        "2026-09-25",
+        "2026-09-25"
+      ],
+      "Sale Opened Date": [
+        "2026-09-25",
+        "2026-09-26"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-26 20:16:03.304447+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 13,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 13,
+      "Total Cost": 13,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 2
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-09-27",
+        "2026-09-27"
+      ],
+      "Reconciliation End Date": [
+        "2026-09-27",
+        "2026-09-27"
+      ],
+      "Reconciliation Start Date": [
+        "2026-09-12",
+        "2026-09-12"
+      ],
+      "Sale Opened Date": [
+        "2026-09-26",
+        "2026-09-27"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-26 20:16:04.98038+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 13,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 13,
+      "Total Cost": 13,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 2
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-09-27",
+        "2026-09-27"
+      ],
+      "Reconciliation End Date": [
+        "2026-09-27",
+        "2026-09-27"
+      ],
+      "Reconciliation Start Date": [
+        "2026-09-12",
+        "2026-09-12"
+      ],
+      "Sale Opened Date": [
+        "2026-09-26",
+        "2026-09-27"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-27 20:47:51.749325+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 0,
+    "csv_missing": {
+      "": 0,
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0,
+      "Sale Type": 0,
+      "Sale Number": 0,
+      "Order Type": 0,
+      "Total Tax": 0,
+      "Total Revenue": 0,
+      "Total Cost": 0,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-28 20:12:36.82972+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 0,
+    "csv_missing": {
+      "": 0,
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0,
+      "Sale Type": 0,
+      "Sale Number": 0,
+      "Order Type": 0,
+      "Total Tax": 0,
+      "Total Revenue": 0,
+      "Total Cost": 0,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-09-29 20:11:54.346298+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 0,
+    "csv_missing": {
+      "": 0,
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0,
+      "Sale Type": 0,
+      "Sale Number": 0,
+      "Order Type": 0,
+      "Total Tax": 0,
+      "Total Revenue": 0,
+      "Total Cost": 0,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-02 20:12:12.784233+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 12,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 12,
+      "Total Cost": 12,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 3
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-03",
+        "2026-10-03"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-03",
+        "2026-10-03"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-02",
+        "2026-10-02"
+      ],
+      "Sale Opened Date": [
+        "2026-10-01",
+        "2026-10-03"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-02 20:12:14.546314+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 12,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 12,
+      "Total Cost": 12,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 3
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-03",
+        "2026-10-03"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-03",
+        "2026-10-03"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-02",
+        "2026-10-02"
+      ],
+      "Sale Opened Date": [
+        "2026-10-01",
+        "2026-10-03"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-03 19:10:03.611905+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 23,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 2,
+      "Reconciliation End Date": 2,
+      "Reconciliation Start Date": 2,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 23,
+      "Total Cost": 23,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 2
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-04",
+        "2026-10-04"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-04",
+        "2026-10-04"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-03",
+        "2026-10-03"
+      ],
+      "Sale Opened Date": [
+        "2026-10-03",
+        "2026-10-04"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-03 19:10:04.955497+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 23,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 2,
+      "Reconciliation End Date": 2,
+      "Reconciliation Start Date": 2,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 23,
+      "Total Cost": 23,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 2
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-04",
+        "2026-10-04"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-04",
+        "2026-10-04"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-03",
+        "2026-10-03"
+      ],
+      "Sale Opened Date": [
+        "2026-10-03",
+        "2026-10-04"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-04 19:43:26.311102+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 2,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 2,
+      "Total Cost": 2,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-04",
+        "2026-10-04"
+      ],
+      "Sale Opened Date": [
+        "2026-10-03",
+        "2026-10-03"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-04 19:43:27.870793+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 2,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 2,
+      "Total Cost": 2,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-04",
+        "2026-10-04"
+      ],
+      "Sale Opened Date": [
+        "2026-10-03",
+        "2026-10-03"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-05 19:10:27.096561+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 0,
+    "csv_missing": {
+      "": 0,
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0,
+      "Sale Type": 0,
+      "Sale Number": 0,
+      "Order Type": 0,
+      "Total Tax": 0,
+      "Total Revenue": 0,
+      "Total Cost": 0,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 0,
+      "Reconciliation End Date": 0,
+      "Reconciliation Start Date": 0,
+      "Sale Opened Date": 0
+    },
+    "iso_date_ranges": {}
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-06 07:51:52.802981+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 17
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        17
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Sale Opened Date",
+      "Sale Type",
+      "Sale Number",
+      "Order Type",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 373,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Sale Opened Date": 1,
+      "Sale Type": 1,
+      "Sale Number": 1,
+      "Order Type": 1,
+      "Total Tax": 0,
+      "Total Revenue": 373,
+      "Total Cost": 373,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 2,
+      "Sale Opened Date": 2
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-04",
+        "2026-10-05"
+      ],
+      "Sale Opened Date": [
+        "2026-10-03",
+        "2026-10-05"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-06 07:54:12.742567+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 13
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        13
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 3,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Total Tax": 0,
+      "Total Revenue": 3,
+      "Total Cost": 3,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 2
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-04",
+        "2026-10-05"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-06 07:54:14.507601+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 13
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        13
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 3,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Total Tax": 0,
+      "Total Revenue": 3,
+      "Total Cost": 3,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 2
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-05",
+        "2026-10-05"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-04",
+        "2026-10-05"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-06 19:10:33.303408+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 13
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        13
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 2,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Total Tax": 0,
+      "Total Revenue": 2,
+      "Total Cost": 2,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-06",
+        "2026-10-06"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-06",
+        "2026-10-06"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-06",
+        "2026-10-06"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-07 19:09:35.58834+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 13
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        13
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 2,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Total Tax": 0,
+      "Total Revenue": 2,
+      "Total Cost": 2,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-07",
+        "2026-10-07"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-07",
+        "2026-10-07"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-07",
+        "2026-10-07"
+      ]
+    }
+  },
+  {
+    "fetcher_identity": "lightspeed-insights",
+    "fetched_at": "2026-10-08 19:09:34.403845+00",
+    "content_type": "application/json",
+    "fields": {
+      "$": {
+        "dict": 1
+      },
+      "$.attachment": {
+        "dict": 1
+      },
+      "$.attachment.data": {
+        "str": 1
+      },
+      "$.attachment.extension": {
+        "str": 1
+      },
+      "$.attachment.mimetype": {
+        "str": 1
+      },
+      "$.data": {
+        "NoneType": 1
+      },
+      "$.form_params": {
+        "dict": 1
+      },
+      "$.scheduled_plan": {
+        "dict": 1
+      },
+      "$.scheduled_plan.ai_dashboard_summary": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.async_callback_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.download_url": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.filters_differ_from_look": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.analysis_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.client_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.column_limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.dynamic_fields": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.expanded_share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.fields": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.fields[]": {
+        "str": 13
+      },
+      "$.scheduled_plan.query.fill_fields": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_config": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filter_expression": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.filters": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.filters.revenue.sale_date": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.has_table_calculations": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.id": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.limit": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.model": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.pivots": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.query_timezone": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.quick_calcs": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.row_total": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.share_url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.slug": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.sorts": {
+        "list": 1
+      },
+      "$.scheduled_plan.query.sorts[]": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.subtotals": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query.total": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.url": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.view": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config": {
+        "dict": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_nulls": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.conditional_formatting_include_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.defaults_version": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.enable_conditional_formatting": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.header_text_alignment": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_row_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.hide_totals": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.limit_displayed_rows": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.rows_font_size": {
+        "int": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_row_numbers": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.show_view_names": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.size_to_fit": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.table_theme": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.vis_config.transpose": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.truncate_text": {
+        "bool": 1
+      },
+      "$.scheduled_plan.query.vis_config.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.query.visible_ui_sections": {
+        "NoneType": 1
+      },
+      "$.scheduled_plan.query_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.scheduled_plan_id": {
+        "str": 1
+      },
+      "$.scheduled_plan.title": {
+        "str": 1
+      },
+      "$.scheduled_plan.type": {
+        "str": 1
+      },
+      "$.scheduled_plan.url": {
+        "str": 1
+      },
+      "$.type": {
+        "str": 1
+      }
+    },
+    "array_lengths": {
+      "$.scheduled_plan.query.fields": [
+        13
+      ],
+      "$.scheduled_plan.query.sorts": [
+        1
+      ],
+      "$.scheduled_plan.query.quick_calcs": [
+        0
+      ]
+    },
+    "csv_headers": [
+      "",
+      "Reconciliation Date",
+      "Reconciliation End Date",
+      "Reconciliation Start Date",
+      "Total Tax",
+      "Total Revenue",
+      "Total Cost",
+      "Sales",
+      "Cost Inc Tax",
+      "Cost Ex Tax",
+      "Total Inc Tax",
+      "Total Adjustment Inc Tax",
+      "Total Adjustment Tax",
+      "Total Adjustment Ex Tax"
+    ],
+    "csv_rows": 2,
+    "csv_missing": {
+      "": 1,
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1,
+      "Total Tax": 0,
+      "Total Revenue": 2,
+      "Total Cost": 2,
+      "Sales": 0,
+      "Cost Inc Tax": 0,
+      "Cost Ex Tax": 0,
+      "Total Inc Tax": 0,
+      "Total Adjustment Inc Tax": 0,
+      "Total Adjustment Tax": 0,
+      "Total Adjustment Ex Tax": 0
+    },
+    "csv_distinct_counts": {
+      "Reconciliation Date": 1,
+      "Reconciliation End Date": 1,
+      "Reconciliation Start Date": 1
+    },
+    "iso_date_ranges": {
+      "Reconciliation Date": [
+        "2026-10-08",
+        "2026-10-08"
+      ],
+      "Reconciliation End Date": [
+        "2026-10-08",
+        "2026-10-08"
+      ],
+      "Reconciliation Start Date": [
+        "2026-10-08",
+        "2026-10-08"
+      ]
+    }
+  }
+]

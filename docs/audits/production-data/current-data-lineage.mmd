@@ -1,0 +1,42 @@
+flowchart LR
+    LS["Lightspeed Looker webhook: 24 reports"] --> LRaw["Raw JSON envelope / embedded CSV"]
+    LRaw --> LD["Parser retains date and money only"] --> CDS["Canonical daily sales: 8 LS + 187 CTB current"]
+    LRaw -. "Some historical Sale Numbers; latest aggregate only" .-> LostLS["No structured transactions, lines, payment or hour"]
+    CTB["CTB AJAX web pull"] --> Rev["Revenue pages: latest 374 rows"] --> CRaw["Raw ledger; revenue and product same fetcher"]
+    CRaw --> Agg["Department/date sum"] --> CDS
+    CTB --> PS["Per-day product request: latest 12951 rows"] --> CRaw
+    CRaw --> POnly["Normalised name / quantity / amount only"] --> CPS["Canonical product-days: 13185"]
+    PS -. "Stock codes, cost, tax, discounts remain raw" .-> RawCost["8704 nonzero food-cost observations; 502 codes"]
+    CTB --> AjaxInv["Invoice AJAX: 30 raw pages, IDs retained raw"]
+    CTB --> Links["Recipe links: 20 raw pages / 639 latest links"]
+    RawCost -. "502 of 502 codes join" .-> Links
+    CTB --> RecipeFail["GetAllRecipes: non-JSON; five PARTIAL runs"]
+    RecipeFail -. "Stops remaining calls" .-> NoInput["No recipes, stock, suppliers, counts, wastage, orders, reference payloads"]
+    CSV["CTB CSV SFTP/manual: 14 raw payloads"] --> RawCSV["Raw CSV"] --> ParseCSV["Group invoice number / ordinal lines"]
+    ParseCSV --> CI["Canonical invoices: 1167 current"]
+    ParseCSV --> CIL["Canonical invoice lines: 6156 current"]
+    PDF["CTB SFTP PDFs: 2654 raw records"] --> RawPDF["Raw PDF"] --> Extract["PDF/OCR/optional LLM extraction"]
+    Extract --> Enrich["Match filename/number/code/name"] --> CIL
+    RawPDF -. "No PDF raw FK on enriched fields" .-> LineageGap["CSV evidence reused; field lineage missing"]
+    CDS --> Resolve["Rule / override / single-source resolution"] --> RDS["Resolved daily sales: 187 dates"]
+    CPS --> RPS["Resolved product-days: 13185"]
+    CIL --> RIP["Resolved inventory: 164 purchase sums; stock/waste null"]
+    RDS --> Metrics["26 compiled semantic metrics"]
+    RPS --> Metrics
+    RIP --> Metrics
+    Metrics --> Dashboard["Dashboards / fixed Ask Goldy's tools"]
+    CDS --> SourceAPI["Per-source Sales API"] --> BadChart["Sales chart sums competing sources: 8 mismatching dates"]
+    CI --> Kitchen["Kitchen supplier / invoice / line graph"]
+    CIL --> Kitchen
+    RawCSV --> Explorer["Data Explorer: registry browsing only"]
+    CRaw --> Explorer
+    AjaxInv --> Explorer
+    Links --> Explorer
+    CIL --> Explorer
+    RDS --> Explorer
+    Enrich --> Flags["916 invoice flags; no audited read API"]
+    OT["OpenTable CSV path: no delivery"] -.-> EmptyR["Empty reservation canonical/resolved"]
+    Deputy["Deputy raw-only webhook: no delivery or parser"] -.-> EmptyL["Empty labour/shift canonical/resolved"]
+    LS --> Success["Push run SUCCESS before parsing"]
+    CSV --> Success
+    PDF --> Success
