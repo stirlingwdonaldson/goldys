@@ -1,9 +1,10 @@
 import { fetchApi } from "./client";
 import type { CurrentUser, HealthResponse } from "./types";
+import { currentUserSchema } from "./auth-schema";
 
-/** Fetch the signed-in staff profile. Throws `ApiError(NOT_PERMITTED)` when unauthenticated. */
-export async function getCurrentUser(): Promise<CurrentUser> {
-  return fetchApi<CurrentUser>("/api/me");
+/** Fetch the session profile; authentication, permission and integrity failures stay distinct. */
+export async function getCurrentUser(options?: { signal?: AbortSignal }): Promise<CurrentUser> {
+  return fetchApi<CurrentUser>("/api/me", { signal: options?.signal }, { schema: currentUserSchema });
 }
 
 /** Fetch the backend health status. */
@@ -28,7 +29,7 @@ export async function signup(input: SignupInput): Promise<CurrentUser> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
-  });
+  }, { schema: currentUserSchema });
 }
 
 /** Log in with email + password. The backend uses form login, so POST form-encoded. */
@@ -38,7 +39,7 @@ export async function login(input: LoginInput): Promise<CurrentUser> {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
-  });
+  }, { schema: currentUserSchema });
 }
 
 export async function logout(): Promise<void> {
