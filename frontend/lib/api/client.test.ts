@@ -3,7 +3,7 @@ import { fetchApi } from "./client";
 import { ApiError } from "./errors";
 import { http, HttpResponse } from "msw";
 import { z } from "zod";
-import { server, useApiServer } from "@/tests/api-server";
+import { server, setupApiServer } from "@/tests/api-server";
 import { liveApi } from "./live";
 
 describe("API request construction", () => {
@@ -86,7 +86,7 @@ describe("API request construction", () => {
 });
 
 describe("API response boundary", () => {
-  useApiServer();
+  setupApiServer();
   const endpoint = "http://localhost:3000/api/fixture";
   const correlation = { "X-Correlation-ID": "req-header" };
 

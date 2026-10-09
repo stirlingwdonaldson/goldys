@@ -2,13 +2,13 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { server, useApiServer } from "@/tests/api-server";
+import { server, setupApiServer } from "@/tests/api-server";
 import { CurrentUserProvider } from "./current-user-provider";
 import { UserMenu } from "./user-menu";
 
 const { toast } = vi.hoisted(() => ({ toast: vi.fn() }));
 vi.mock("@/components/feedback/toast", () => ({ useToast: () => ({ toast }) }));
-useApiServer();
+setupApiServer();
 beforeEach(() => {
   toast.mockReset();
   vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));

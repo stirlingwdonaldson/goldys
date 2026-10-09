@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { isApiError, login } from "@/lib/api";
+import { login } from "@/lib/api";
+import { AuthFeedback } from "@/components/auth/auth-feedback";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,9 +19,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [correlationId, setCorrelationId] = useState<string | undefined>();
   const busy = useRef(false);
 
   async function onSubmit(event: React.FormEvent) {
@@ -28,15 +28,13 @@ export default function LoginPage() {
     if (busy.current) return;
     busy.current = true;
     setError(null);
-    setCorrelationId(undefined);
     setSubmitting(true);
     try {
       await login({ email, password });
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(isApiError(err) ? err.message : "Something went wrong. Try again.");
-      setCorrelationId(isApiError(err) ? err.correlationId : undefined);
+      setError(err);
     } finally {
       busy.current = false;
       setSubmitting(false);
@@ -70,8 +68,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-            {correlationId ? <p className="break-words text-xs text-muted-foreground">Reference: {correlationId}</p> : null}
+            <AuthFeedback error={error} />
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Signing in…" : "Sign in"}
             </Button>

@@ -37,9 +37,15 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
   const generation = useRef(0);
   const active = useRef<AbortController | null>(null);
 
-  const refresh = useCallback(() => {
+  const cancelActive = useCallback(() => {
     const current = ++generation.current;
     active.current?.abort();
+    active.current = null;
+    return current;
+  }, []);
+
+  const refresh = useCallback(() => {
+    const current = cancelActive();
     const controller = new AbortController();
     active.current = controller;
     // A prior identity must not grant presentation privileges during verification.
@@ -63,24 +69,21 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
         const signedOut = err.status === 401 || err.code === "AUTH_REQUIRED";
         setStatus(signedOut ? "unauthenticated" : "error");
       });
-  }, []);
+  }, [cancelActive]);
 
   const clear = useCallback(() => {
-    ++generation.current;
-    active.current?.abort();
-    active.current = null;
+    cancelActive();
     setUser(null);
     setError(null);
     setStatus("unauthenticated");
-  }, []);
+  }, [cancelActive]);
 
   useEffect(() => {
     refresh();
     return () => {
-      ++generation.current;
-      active.current?.abort();
+      cancelActive();
     };
-  }, [refresh]);
+  }, [refresh, cancelActive]);
 
   const value = useMemo(
     () => ({ user, status, error, refresh, clear }),

@@ -1,12 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
-import { server, useApiServer } from "@/tests/api-server";
+import { server, setupApiServer } from "@/tests/api-server";
 import LoginPage from "./page";
 
 const { push, refresh } = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
-useApiServer();
+setupApiServer();
 beforeEach(() => { push.mockReset(); refresh.mockReset(); });
 const url = "http://localhost:3000/api/auth/login";
 const profile = { displayName: "Fixture", department: "GENERAL", seniority: "JUNIOR" };

@@ -1,9 +1,9 @@
 import { expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
-import { server, useApiServer } from "@/tests/api-server";
+import { server, setupApiServer } from "@/tests/api-server";
 import { getCurrentUser, login, logout, signup } from "./index";
 
-useApiServer();
+setupApiServer();
 const origin = "http://localhost:3000";
 const profile = { displayName: "Fixture staff", department: "GENERAL", seniority: "JUNIOR" };
 const input = { email: "fixture+staff@example.invalid", password: "fixture-&-日本語" };

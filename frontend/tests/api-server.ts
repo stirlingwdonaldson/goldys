@@ -4,7 +4,7 @@ import { setupServer } from "msw/node";
 export const server = setupServer();
 
 /** Opt-in HTTP tests, with browser-relative URL resolution for Node's fetch. */
-export function useApiServer(): void {
+export function setupApiServer(): void {
   let interceptedFetch: typeof fetch;
   beforeAll(() => {
     server.listen({ onUnhandledFrame: "error" });

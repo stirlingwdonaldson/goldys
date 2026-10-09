@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { LogIn, LogOut } from "lucide-react";
-import { logout } from "@/lib/api";
+import { logout, type CurrentUser } from "@/lib/api";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +19,26 @@ function initials(name: string): string {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+}
+
+function SignedInUser({ user, signingOut, onSignOut }: { user: CurrentUser; signingOut: boolean; onSignOut: () => void }) {
+  return (
+    <div className="space-y-1 px-2 py-1.5">
+      <div className="flex items-center gap-2">
+        <Avatar className="h-8 w-8 rounded-lg">
+          <AvatarFallback className="rounded-lg">{initials(user.displayName)}</AvatarFallback>
+        </Avatar>
+        <div className="grid flex-1 text-left text-sm leading-tight">
+          <span className="truncate font-semibold">{user.displayName}</span>
+          <span className="truncate text-xs text-muted-foreground">{user.department} &middot; {user.seniority}</span>
+        </div>
+      </div>
+      <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onSignOut} disabled={signingOut}>
+        <LogOut className="mr-2 h-4 w-4" />
+        {signingOut ? "Signing out…" : "Sign out"}
+      </Button>
+    </div>
+  );
 }
 
 export function UserMenu() {
@@ -67,31 +87,7 @@ export function UserMenu() {
   }
 
   if (status === "authenticated" && user) {
-    return (
-      <div className="space-y-1 px-2 py-1.5">
-        <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 rounded-lg">
-            <AvatarFallback className="rounded-lg">{initials(user.displayName)}</AvatarFallback>
-          </Avatar>
-          <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-semibold">{user.displayName}</span>
-            <span className="truncate text-xs text-muted-foreground">
-              {user.department} &middot; {user.seniority}
-            </span>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start"
-          onClick={handleSignOut}
-          disabled={signingOut}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          {signingOut ? "Signing out…" : "Sign out"}
-        </Button>
-      </div>
-    );
+    return <SignedInUser user={user} signingOut={signingOut} onSignOut={handleSignOut} />;
   }
 
   return (

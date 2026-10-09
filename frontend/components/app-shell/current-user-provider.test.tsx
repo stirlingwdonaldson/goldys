@@ -1,10 +1,10 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
-import { server, useApiServer } from "@/tests/api-server";
+import { server, setupApiServer } from "@/tests/api-server";
 import { CurrentUserProvider, useCurrentUser } from "./current-user-provider";
 
-useApiServer();
+setupApiServer();
 const me = "http://localhost:3000/api/me";
 const owner = { displayName: "Fixture owner", department: "MANAGEMENT", seniority: "OWNER" };
 

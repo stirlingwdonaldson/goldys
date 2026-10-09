@@ -1,10 +1,10 @@
 // @vitest-environment node
 import { expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
-import { server, useApiServer } from "@/tests/api-server";
+import { server, setupApiServer } from "@/tests/api-server";
 import { liveApi } from "./live";
 
-useApiServer();
+setupApiServer();
 it.each([200, 204])("uploads native multipart bytes and accepts empty %i", async status => {
   let uploaded = "";
   server.use(http.post("http://localhost:3000/api/connectors/opentable/upload", async ({ request }) => {

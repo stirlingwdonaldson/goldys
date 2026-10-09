@@ -13,15 +13,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { AuthFeedback } from "@/components/auth/auth-feedback";
+import { AccountCreated } from "./account-created";
 
 export default function SignupPage() {
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [correlationId, setCorrelationId] = useState<string | undefined>();
   const [accountCreated, setAccountCreated] = useState(false);
   const busy = useRef(false);
 
@@ -30,27 +31,23 @@ export default function SignupPage() {
     if (busy.current || accountCreated) return;
     busy.current = true;
     setError(null);
-    setCorrelationId(undefined);
     setSubmitting(true);
-    let created = false;
     try {
       await signup({ email, displayName, password });
-      created = true;
       setAccountCreated(true);
       // Auto-login with the same credentials, then land in the app.
       await login({ email, password });
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      const uncertain = !created && isApiError(err) && err.code === "NETWORK_ERROR";
-      setError(uncertain ? "Couldn't confirm account creation. If you already created an account, sign in."
-        : isApiError(err) ? err.message : "Something went wrong. Try again.");
-      setCorrelationId(isApiError(err) ? err.correlationId : undefined);
+      setError(err);
     } finally {
       busy.current = false;
       setSubmitting(false);
     }
   }
+
+  const uncertainCreation = !accountCreated && isApiError(error) && error.code === "NETWORK_ERROR";
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
@@ -63,12 +60,7 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent>
           {accountCreated ? (
-            <div className="space-y-4">
-              <p role="status">{submitting ? "Signing in…" : "Account created. Sign in to continue."}</p>
-              {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
-              {correlationId ? <p className="break-words text-xs text-muted-foreground">Reference: {correlationId}</p> : null}
-              {!submitting ? <Link href="/login" className="underline">Sign in</Link> : null}
-            </div>
+            <AccountCreated submitting={submitting} error={error} />
           ) : <form onSubmit={onSubmit} className="space-y-4">
             <Input
               aria-label="Full name"
@@ -97,8 +89,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-            {correlationId ? <p className="break-words text-xs text-muted-foreground">Reference: {correlationId}</p> : null}
+            <AuthFeedback error={error} message={uncertainCreation ? "Couldn't confirm account creation. If you already created an account, sign in." : undefined} />
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Creating account…" : "Sign up"}
             </Button>
