@@ -30,6 +30,8 @@ public class IngestionService {
   private final RawPayloadService payloads;
   private final IngestionRunRepository runRepository;
   private final IngestionFailureRepository failureRepository;
+  private final RawRecordRepository rawRecords;
+  private final IngestionStageRepository stages;
   private final ConnectorRunner connectorRunner;
   private final Map<String, SourceConnector> connectors;
 
@@ -38,12 +40,16 @@ public class IngestionService {
       RawPayloadService payloads,
       IngestionRunRepository runRepository,
       IngestionFailureRepository failureRepository,
+      RawRecordRepository rawRecords,
+      IngestionStageRepository stages,
       ConnectorRunner connectorRunner,
       List<SourceConnector> connectors) {
     this.runs = runs;
     this.payloads = payloads;
     this.runRepository = runRepository;
     this.failureRepository = failureRepository;
+    this.rawRecords = rawRecords;
+    this.stages = stages;
     this.connectorRunner = connectorRunner;
     this.connectors =
         connectors.stream()
@@ -136,6 +142,22 @@ public class IngestionService {
     StringWriter sw = new StringWriter();
     t.printStackTrace(new PrintWriter(sw));
     return sw.toString();
+  }
+
+  /** Record a dataset-stage outcome for the run that owns {@code rawId}. */
+  public void recordStage(UUID rawId, IngestionStageKind stage, IngestionStageOutcome outcome) {
+    RawRecord record =
+        rawRecords
+            .findById(rawId)
+            .orElseThrow(() -> new IllegalArgumentException("Unknown raw record " + rawId));
+    stages.save(
+        IngestionStage.create(
+            record.ingestionRunId(),
+            record.sourceSystem(),
+            record.fetcherIdentity(),
+            stage,
+            outcome,
+            CLOCK.instant()));
   }
 
   /** The latest run for each source. One query, indexed, regardless of ledger size. */

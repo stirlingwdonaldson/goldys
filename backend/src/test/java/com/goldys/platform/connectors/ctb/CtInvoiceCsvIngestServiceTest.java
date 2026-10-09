@@ -13,6 +13,8 @@ import com.goldys.platform.canonical.CanonicalInvoiceLineIngest;
 import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
 import com.goldys.platform.ingestion.IngestionService;
+import com.goldys.platform.ingestion.IngestionStageKind;
+import com.goldys.platform.ingestion.IngestionStageOutcome;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -104,6 +106,24 @@ class CtInvoiceCsvIngestServiceTest {
 
     verify(flags)
         .flag(eq(InvoiceIngestFlagType.MISSING_PDF), eq("INV-1"), isNull(), isNull(), any());
+  }
+
+  @Test
+  void recordsParsedAndCanonicalizedStagesOnSuccess() {
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(UUID.randomUUID());
+    byte[] csv =
+        ("Invoice,Supplier,Date,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
+                + "INV-1,Bruno's,2026-09-20,STK-7,Beer,1 EACH,120.00\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    service().ingest(csv);
+
+    verify(ingestion)
+        .recordStage(any(), eq(IngestionStageKind.PARSED), eq(IngestionStageOutcome.SUCCESS));
+    verify(ingestion)
+        .recordStage(
+            any(), eq(IngestionStageKind.CANONICALIZED), eq(IngestionStageOutcome.SUCCESS));
   }
 
   @Test
