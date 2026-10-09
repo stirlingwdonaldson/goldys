@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { flattenSeries } from "./flatten";
 import { formatValue } from "./format";
-import { CHART_TOOLTIP_PROPS, SERIES_COLORS, compactAxis, formatXTick } from "./chart-style";
+import { CHART_TOOLTIP_PROPS, SERIES_COLORS, compactAxis, formatXTick, AXIS_TICK } from "./chart-style";
 import type { TimeSeriesWidget } from "./types";
 import { WidgetShell } from "./widget-shell";
 
@@ -30,9 +30,9 @@ export function TimeSeriesWidgetView({ widget }: { widget: TimeSeriesWidget }) {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 8, left: -8, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-            <XAxis dataKey="x" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} minTickGap={16} tickFormatter={formatXTick} />
+            <XAxis dataKey="x" tick={AXIS_TICK} tickLine={false} axisLine={false} minTickGap={16} tickFormatter={formatXTick} />
             <YAxis
-              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+              tick={AXIS_TICK}
               tickLine={false}
               axisLine={false}
               width={52}

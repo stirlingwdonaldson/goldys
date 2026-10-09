@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { difference, parseAmount } from "./source-values";
-import { filterExceptions } from "./exceptions-table";
+import { filterExceptions } from "./exceptions-list";
 import type { ReconciliationException } from "@/lib/api";
 
 describe("parseAmount", () => {

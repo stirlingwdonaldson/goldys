@@ -41,4 +41,25 @@ const RadioGroupItem = React.forwardRef<
 })
 RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
 
-export { RadioGroup, RadioGroupItem }
+/**
+ * Goldy's: a selectable card wrapping a radio, for choices that need more than a
+ * one-line label (e.g. choosing which source's value is authoritative).
+ */
+const RadioCard = React.forwardRef<
+  HTMLLabelElement,
+  React.LabelHTMLAttributes<HTMLLabelElement> & { selected?: boolean; disabled?: boolean }
+>(({ className, selected, disabled, ...props }, ref) => (
+  <label
+    ref={ref}
+    className={cn(
+      "flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm transition-colors hover:bg-muted/40",
+      selected && "border-primary ring-1 ring-primary",
+      disabled && "cursor-not-allowed opacity-70 hover:bg-transparent",
+      className
+    )}
+    {...props}
+  />
+))
+RadioCard.displayName = "RadioCard"
+
+export { RadioGroup, RadioGroupItem, RadioCard }

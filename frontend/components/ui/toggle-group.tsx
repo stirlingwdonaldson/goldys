@@ -17,11 +17,19 @@ const ToggleGroupContext = React.createContext<
 const ToggleGroup = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root> &
-    VariantProps<typeof toggleVariants>
->(({ className, variant, size, children, ...props }, ref) => (
+    VariantProps<typeof toggleVariants> & {
+      /** Goldy's: join items into one segmented control (shared borders, outer corners only). */
+      attached?: boolean
+    }
+>(({ className, variant, size, attached = false, children, ...props }, ref) => (
   <ToggleGroupPrimitive.Root
     ref={ref}
-    className={cn("flex items-center justify-center gap-1", className)}
+    className={cn(
+      "flex items-center justify-center gap-1",
+      attached &&
+        "gap-0 [&>*+*]:-ml-px [&>*:first-child]:rounded-l-lg [&>*:last-child]:rounded-r-lg [&>*]:rounded-none",
+      className
+    )}
     {...props}
   >
     <ToggleGroupContext.Provider value={{ variant, size }}>

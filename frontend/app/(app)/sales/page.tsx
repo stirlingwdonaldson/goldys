@@ -2,25 +2,17 @@
 
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Workflow } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
-import { sourceLabel } from "@/lib/rule-logic";
 import { DataTable } from "@/components/data-table/data-table";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Button } from "@/components/ui/button";
+import { currencyColumn, dateColumn, sourceColumn, traceColumn } from "@/components/data-table/columns";
 import { ProvenanceSheet, type ProvenanceTarget } from "@/components/trust/provenance-sheet";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
 import type { DailySales } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
-import { SourceLabel } from "@/components/sources/source-tile";
-import { formatCurrency, formatDay } from "@/lib/format";
-
-function money(v: number | string): string {
-  const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) ? formatCurrency(n) : "—";
-}
+import { Section } from "@/components/layout/section";
+import { toNumber } from "@/lib/format";
 
 function polylinePoints(values: number[]): string {
   const max = Math.max(1, ...values);
@@ -29,57 +21,14 @@ function polylinePoints(values: number[]): string {
     .join(" ");
 }
 
-function toNumber(v: number | string): number {
-  return typeof v === "number" ? v : Number(v);
-}
-
-function salesColumns(onTrace: (date: string) => void): ColumnDef<DailySales>[] {
-  const moneyColumn = (key: "totalSales" | "gst" | "net", title: string): ColumnDef<DailySales> => ({
-    id: key,
-    accessorFn: (r) => toNumber(r[key]),
-    header: ({ column }) => <DataTableColumnHeader column={column} title={title} />,
-    cell: ({ row }) => <span className="tabular-nums">{money(row.original[key])}</span>,
-    meta: { title, align: "right" },
-  });
+function salesColumns(onTrace: (row: DailySales) => void): ColumnDef<DailySales>[] {
   return [
-    {
-      accessorKey: "date",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
-      // Sorts on the ISO date; displays "Sun 5 Oct".
-      cell: ({ row }) => <span className="whitespace-nowrap">{formatDay(row.original.date)}</span>,
-      meta: { title: "Date" },
-      enableHiding: false,
-    },
-    {
-      // Filter and sort on the label the user sees, not the source-system code.
-      id: "source",
-      accessorFn: (r) => sourceLabel(r.source),
-      header: "Source",
-      cell: ({ row }) => <SourceLabel source={row.original.source} />,
-      meta: { title: "Source" },
-    },
-    moneyColumn("totalSales", "Total sales"),
-    moneyColumn("gst", "GST"),
-    moneyColumn("net", "Net"),
-    {
-      id: "trace",
-      header: () => <span className="sr-only">Trace</span>,
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7"
-          aria-label={`Trace sales for ${row.original.date}`}
-          onClick={() => onTrace(row.original.date)}
-        >
-          <Workflow className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-          Trace
-        </Button>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-      meta: { align: "right" },
-    },
+    dateColumn<DailySales>("date"),
+    sourceColumn<DailySales>((r) => r.source),
+    currencyColumn<DailySales>("totalSales", "Total sales", (r) => r.totalSales),
+    currencyColumn<DailySales>("gst", "GST", (r) => r.gst),
+    currencyColumn<DailySales>("net", "Net", (r) => r.net),
+    traceColumn<DailySales>((r) => `sales for ${r.date}`, onTrace),
   ];
 }
 
@@ -87,7 +36,7 @@ export default function SalesPage() {
   const sales = useApiData((api) => api.listDailySales());
   const [trace, setTrace] = useState<ProvenanceTarget | null>(null);
   const columns = useMemo(
-    () => salesColumns((date) => setTrace({ metricId: "sales.gross", metricLabel: "Gross sales", date })),
+    () => salesColumns((r) => setTrace({ metricId: "sales.gross", metricLabel: "Gross sales", date: r.date })),
     [],
   );
 
@@ -106,8 +55,8 @@ export default function SalesPage() {
   // Trend: total per day, summed across sources, oldest first.
   const byDate = new Map<string, number>();
   for (const r of rows) {
-    const n = typeof r.totalSales === "number" ? r.totalSales : Number(r.totalSales);
-    if (Number.isFinite(n)) byDate.set(r.date, (byDate.get(r.date) ?? 0) + n);
+    const n = toNumber(r.totalSales);
+    if (n != null) byDate.set(r.date, (byDate.get(r.date) ?? 0) + n);
   }
   const points = [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   const values = points.map(([, v]) => v);
@@ -116,9 +65,8 @@ export default function SalesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="Sales" description="Daily sales totals across your sources." />
 
-      <section className="rounded-xl border p-5">
-        <h2 className="text-sm font-semibold">Daily sales</h2>
-        <div role="img" aria-label="Daily sales trend" className="mt-3 h-48">
+      <Section title="Daily sales" card>
+        <div role="img" aria-label="Daily sales trend" className="h-48">
           {values.length > 0 ? (
             <svg
               viewBox="0 0 100 100"
@@ -138,7 +86,7 @@ export default function SalesPage() {
             <p className="text-sm text-muted-foreground">No sales data yet.</p>
           )}
         </div>
-      </section>
+      </Section>
 
       {rows.length === 0 ? (
         <EmptyState
@@ -146,8 +94,7 @@ export default function SalesPage() {
           description="Daily sales will appear here once sources ingest."
         />
       ) : (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold">Daily totals by source</h2>
+        <Section title="Daily totals by source">
           <DataTable
             columns={columns}
             data={rows}
@@ -156,7 +103,7 @@ export default function SalesPage() {
             initialSorting={[{ id: "date", desc: true }]}
             getRowId={(r) => `${r.date}-${r.source}`}
           />
-        </section>
+        </Section>
       )}
 
       <ProvenanceSheet target={trace} onClose={() => setTrace(null)} />

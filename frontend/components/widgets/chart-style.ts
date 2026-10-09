@@ -1,6 +1,18 @@
+import { formatShortDay } from "@/lib/format";
 import type { CSSProperties } from "react";
 
-/** Series colours: green (good) first, then source hues; red is kept for "bad" series. */
+/**
+ * Bar series where the second series is the "bad" counterpart of the first
+ * (clean vs failed runs): green, then red, then source hues.
+ */
+export const STATUS_SERIES_COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+];
+
+/** Line/area series: green (good) first, then source hues; red is kept for "bad" series. */
 export const SERIES_COLORS = [
   "hsl(var(--chart-1))",
   "hsl(var(--chart-3))",
@@ -33,12 +45,7 @@ export function compactAxis(value: number, format?: string | null): string {
 }
 
 /** ISO dates on the x axis read as "4 Oct"; anything else passes through. */
-export function formatXTick(value: unknown): string {
-  const s = String(value);
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (!m) return s;
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString("en-AU", {
-    day: "numeric",
-    month: "short",
-  });
-}
+export const formatXTick = formatShortDay;
+
+/** Axis tick text, shared by every chart. */
+export const AXIS_TICK = { fontSize: 11, fill: "hsl(var(--muted-foreground))" };

@@ -2,14 +2,9 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { formatRecentTime } from "@/lib/format";
+import { StatusDot } from "@/components/ui/status-dot";
 import { isFailing, useShellStatus } from "./shell-status";
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  const time = d.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" });
-  if (d.toDateString() === new Date().toDateString()) return time;
-  return `${d.toLocaleDateString("en-AU", { day: "numeric", month: "short" })}, ${time}`;
-}
 
 /**
  * "Data as of 6:15 am · All sources healthy" in every page header, so nobody
@@ -29,7 +24,7 @@ export function FreshnessChip() {
     .filter((t): t is string => t != null)
     .sort()
     .at(-1);
-  const asOf = latest ? `Data as of ${formatTime(latest)}` : "No runs yet";
+  const asOf = latest ? `Data as of ${formatRecentTime(latest)}` : "No runs yet";
   const health = failing ? `${healthy} of ${connectors.length} sources healthy` : "All sources healthy";
   const short = failing ? `${healthy}/${connectors.length} healthy` : "Healthy";
 
@@ -40,13 +35,7 @@ export function FreshnessChip() {
       aria-label={`${asOf}. ${health}. Open Data health.`}
       className="inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border pl-2.5 pr-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "size-2 shrink-0 rounded-full",
-          failing ? "bg-destructive ring-[3px] ring-destructive-soft" : "bg-status-success ring-[3px] ring-status-success-soft",
-        )}
-      />
+      <StatusDot tone={failing ? "failed" : "success"} />
       <span className="hidden xl:inline">{asOf}</span>
       <span aria-hidden="true" className="hidden xl:inline">
         ·

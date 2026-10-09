@@ -117,6 +117,18 @@ const config: Config = {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      // Goldy's type steps beyond Tailwind's scale (docs/design/ui-direction.md).
+      fontSize: {
+        "2xs": ["0.65625rem", { lineHeight: "1rem" }], // 10.5px: key hints, source monograms
+        ui: ["0.8125rem", { lineHeight: "1.25rem" }], // 13px: labels, compact controls
+        nav: ["0.84375rem", { lineHeight: "1.25rem" }], // 13.5px: sidebar items
+        kpi: ["1.6875rem", { lineHeight: "1.15", letterSpacing: "-0.02em", fontWeight: "600" }], // 27px figures
+      },
+      boxShadow: {
+        // The raised inset panel and right-hand sheets.
+        panel: "0 1px 2px rgba(23,23,26,0.04), 0 4px 16px rgba(23,23,26,0.04)",
+        sheet: "-12px 0 32px rgba(23,23,26,0.08)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

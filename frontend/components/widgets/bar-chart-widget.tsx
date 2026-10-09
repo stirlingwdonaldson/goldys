@@ -12,10 +12,8 @@ import {
 import { flattenSeries } from "./flatten";
 import type { BarChartWidget } from "./types";
 import { WidgetShell } from "./widget-shell";
-import { CHART_TOOLTIP_PROPS, formatXTick } from "./chart-style";
+import { CHART_TOOLTIP_PROPS, formatXTick, AXIS_TICK, STATUS_SERIES_COLORS } from "./chart-style";
 
-// Green first (good), red second (bad), e.g. clean vs failed runs.
-const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
 export function BarChartWidgetView({ widget }: { widget: BarChartWidget }) {
   const data = flattenSeries(widget.series);
@@ -32,8 +30,8 @@ export function BarChartWidgetView({ widget }: { widget: BarChartWidget }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-            <XAxis dataKey="x" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} minTickGap={16} tickFormatter={formatXTick} />
-            <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} width={40} />
+            <XAxis dataKey="x" tick={AXIS_TICK} tickLine={false} axisLine={false} minTickGap={16} tickFormatter={formatXTick} />
+            <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} width={40} />
             <Tooltip {...CHART_TOOLTIP_PROPS} labelFormatter={formatXTick} cursor={{ fill: "hsl(var(--muted))" }} />
             {widget.series.map((s, i) => (
               <Bar
@@ -41,7 +39,7 @@ export function BarChartWidgetView({ widget }: { widget: BarChartWidget }) {
                 dataKey={s.key}
                 name={s.label}
                 stackId={widget.stacked ? "a" : undefined}
-                fill={COLORS[i % COLORS.length]}
+                fill={STATUS_SERIES_COLORS[i % STATUS_SERIES_COLORS.length]}
                 maxBarSize={22}
                 radius={!widget.stacked || i === widget.series.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
               />

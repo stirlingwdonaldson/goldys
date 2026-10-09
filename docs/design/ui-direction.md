@@ -80,18 +80,35 @@ doesn't fit, collapse it:
 
 ## Shared building blocks
 
+Use these before writing new markup. If a pattern appears twice, it belongs
+here rather than in a page file.
+
+**Styling rules.** Colours, radii, shadows and type steps come from tokens:
+`globals.css` variables and the Tailwind theme (`text-2xs`, `text-ui`,
+`text-nav`, `text-kpi`, `shadow-panel`, `shadow-sheet`). Don't use arbitrary
+values like `text-[13px]` or raw palette colours like `amber-700`.
+
 | Need | Use |
 |---|---|
+| Formatting numbers, money, dates | `lib/format.ts`: `formatCurrency`, `formatNumber`, `formatPercent`, `formatHours`, `formatDay`, `formatDateTime`, `formatRecentTime`, `formatAgo`, `humanizeKey`, `toNumber`. Missing values render "—", never 0 |
+| Naming or colouring a source | `lib/sources.ts` (`sourceIdentity`), rendered with `SourceTile` / `SourceLabel` |
 | Page title row | `components/layout/page-header.tsx` (`title`, `description`, `status`, `actions`) |
+| Titled block within a page | `components/layout/section.tsx` (`card` for charts and graphs) |
+| Any card surface | `components/ui/card.tsx` (`Card`: flat, `rounded-xl`) |
 | Where am I | Header `Breadcrumb` from `lib/nav.ts` (sidebar, breadcrumb and ⌘K share one nav model) |
 | Is data current | `FreshnessChip` in the header, plus sidebar count and failure dot (`ShellStatusProvider`) |
 | Jump anywhere | ⌘K `CommandPaletteProvider`. Ask Goldy's moved to ⌘J |
-| KPI | `StatCard` with `delta` (coloured by good/bad, not direction), `spark`, `help` (HoverCard definition from `docs/metrics/catalog.md`) and `footer` |
-| Feedback | `useToast()`, now backed by Sonner (`components/feedback/toast.tsx`) |
-| Sub-views | `Tabs` (segmented) and `ToggleGroup`, never hand-rolled buttons |
-| Errors | `ErrorState` (retry plus copy reference) and `Alert` with cause, impact and fix |
+| A single figure | `components/data-display/stat-card.tsx` (`StatCard` with optional `delta`, `spark`, `help`, `footer`) |
+| Status | `Badge` soft variants; `StatusDot` for dense chrome; `IconTile` (tones match the statuses) behind icons |
+| Owner-only surfaces | `components/states/owner-only.tsx` (`OwnerOnlyTile`) |
+| Empty, loading, failed, not permitted | `EmptyState`, `LoadingState`, `ErrorState` (whole screen), `InlineError` (one section), `PermissionDenied`, `AwaitingData` |
+| Feedback | `useToast()`, backed by Sonner (`components/feedback/toast.tsx`) |
+| Sub-views and filters | `Tabs` (segmented) and `ToggleGroup` (`attached` for a joined control), never hand-rolled buttons |
+| Choosing between options with detail | `RadioCard` in `components/ui/radio-group.tsx` |
+| Keyboard hints | `components/ui/kbd.tsx` (`Kbd`) |
 | Irreversible actions | Confirm in a `Dialog` that names the consequence |
-| Lists of records | `components/data-table/data-table.tsx` (TanStack). Format dates with `formatDay`, money with `formatCurrency`, sources with `SourceLabel` in cell renderers |
+| Lists of records | `components/data-table/data-table.tsx` (TanStack) with the column factories in `components/data-table/columns.tsx`: `dateColumn`, `sourceColumn`, `currencyColumn`, `numberColumn`, `traceColumn` |
+| Charts | `components/widgets/chart-style.ts`: `SERIES_COLORS` / `STATUS_SERIES_COLORS`, `AXIS_TICK`, `CHART_TOOLTIP_PROPS`, `compactAxis`, `formatXTick` |
 | Lineage and flow | `components/flow/FlowCanvas`. Node tones reuse the status tokens (`warn` is `--status-conflict`) |
 
 ## Heuristic rules of thumb

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CircleCheck, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconTile } from "@/components/ui/icon-tile";
 import { cn } from "@/lib/utils";
 
 interface NeedsDecisionBandProps {
@@ -25,14 +26,13 @@ export function NeedsDecisionBand({ openCount, href = "/reconciliation" }: Needs
       )}
     >
       <div className="flex items-center gap-3">
-        <span
-          className={cn(
-            "flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-background",
-            hasConflicts ? "text-status-conflict" : "text-status-success",
-          )}
+        <IconTile
+          size="md"
+          tone="surface"
+          className={hasConflicts ? "text-status-conflict" : "text-status-success"}
         >
-          <Icon className="size-[18px]" aria-hidden="true" />
-        </span>
+          <Icon />
+        </IconTile>
         <div>
           <p className="text-sm font-semibold">
             {hasConflicts

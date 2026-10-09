@@ -1,7 +1,8 @@
-import { CalendarDays, Lock, Percent, Scale, TrendingUp, Trophy, Utensils } from "lucide-react";
+import { CalendarDays, Percent, Scale, TrendingUp, Trophy, Utensils } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AwaitingData } from "@/components/states/awaiting-data";
-import { StatCard, type StatDelta } from "@/components/dashboard/stat-card";
+import { OwnerOnlyTile } from "@/components/states/owner-only";
+import { StatCard, type StatDelta } from "@/components/data-display/stat-card";
 import { formatCurrency, formatDay, toNumber } from "@/lib/format";
 import { isOwner } from "@/lib/roles";
 import type { SalesTrendPoint } from "@/lib/api";
@@ -93,7 +94,7 @@ export function BusinessKpiGrid({ seniority, latestSales, salesTrend = [] }: Bus
           icon={Percent}
         />
       ) : (
-        <LockedTile />
+        <OwnerOnlyTile label="Labour cost %" />
       )}
       <AwaitingData
         label="Covers today"
@@ -113,23 +114,6 @@ export function BusinessKpiGrid({ seniority, latestSales, salesTrend = [] }: Bus
         reason="Inventory not yet connected."
         icon={Utensils}
       />
-    </div>
-  );
-}
-
-function LockedTile() {
-  return (
-    <div className="flex flex-col gap-3 rounded-xl border border-dashed bg-muted/40 p-4">
-      <div className="flex items-center gap-2.5 text-sm font-medium">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-muted">
-          <Lock className="size-4 text-muted-foreground" aria-hidden="true" />
-        </span>
-        <span>Labour cost %</span>
-      </div>
-      <p className="text-sm text-muted-foreground">Owner only.</p>
-      <p className="mt-auto text-xs text-muted-foreground/80">
-        Wage and labour-cost figures are restricted.
-      </p>
     </div>
   );
 }

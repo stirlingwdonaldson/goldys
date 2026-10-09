@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Card } from "@/components/ui/card";
 
 /** The shared card chrome for every widget: title + optional description + body. */
 export function WidgetShell({
@@ -13,7 +14,7 @@ export function WidgetShell({
   actions?: ReactNode;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border bg-card p-5">
+    <Card className="min-w-0 p-5">
       <div className="flex items-start gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold">{title}</p>
@@ -22,6 +23,6 @@ export function WidgetShell({
         {actions ? <div className="ml-auto flex items-center gap-1.5">{actions}</div> : null}
       </div>
       <div className="mt-4">{children}</div>
-    </div>
+    </Card>
   );
 }

@@ -3,12 +3,7 @@
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import type { TimeSeriesWidget } from "@/components/widgets/types";
 import type { SalesTrendPoint } from "@/lib/api";
-
-function toNumber(v: number | string | null): number | null {
-  if (v == null) return null;
-  const n = typeof v === "number" ? v : Number(v);
-  return Number.isFinite(n) ? n : null;
-}
+import { toNumber } from "@/lib/format";
 
 /** Resolved daily sales, rendered through the shared widget runtime. */
 export function SalesTrend({ points }: { points: SalesTrendPoint[] }) {

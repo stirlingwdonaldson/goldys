@@ -10,11 +10,16 @@ import { useToast } from "@/components/feedback/toast";
 import { useShellStatus } from "@/components/app-shell/shell-status";
 import { PageHeader } from "@/components/layout/page-header";
 import { SourceTile } from "@/components/sources/source-tile";
-import { formatAgo } from "@/components/trust/trust-indicator";
+import { sourceIdentity } from "@/lib/sources";
+import { formatAgo, formatDateTime } from "@/lib/format";
+import { InlineError } from "@/components/states/inline-error";
+import { Section } from "@/components/layout/section";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { ConnectorStatusBadge } from "@/components/connectors/connector-status-badge";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { StatCard } from "@/components/data-display/stat-card";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { PipelineMap } from "@/components/pipeline/pipeline-map";
 import { Button } from "@/components/ui/button";
@@ -23,10 +28,6 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
-
-function SectionError({ message }: { message: string }) {
-  return <p className="rounded-xl bg-destructive-soft p-4 text-sm text-destructive">{message}</p>;
-}
 
 export default function DataHealthPage() {
   const api = useApi();
@@ -47,12 +48,12 @@ export default function DataHealthPage() {
       shell.refresh();
       toast(
         result.status === "failed"
-          ? { title: `${source} run failed`, description: "See the card for what went wrong.", tone: "error" }
-          : { title: `${source} ran`, description: result.status === "no_new_data" ? "No new data since the last run." : "New data is in.", tone: "success" },
+          ? { title: `${sourceIdentity(source).label} run failed`, description: "See the card for what went wrong.", tone: "error" }
+          : { title: `${sourceIdentity(source).label} ran`, description: result.status === "no_new_data" ? "No new data since the last run." : "New data is in.", tone: "success" },
       );
     } catch (e) {
       toast({
-        title: `Couldn't run ${source}`,
+        title: `Couldn't run ${sourceIdentity(source).label}`,
         description: isApiError(e) ? e.message : "Something went wrong starting the connector. Try again in a minute.",
         tone: "error",
       });
@@ -152,7 +153,7 @@ export default function DataHealthPage() {
         {summary.loading ? (
           <Skeleton className="h-28 w-full rounded-xl" />
         ) : summary.error ? (
-          <SectionError message="Couldn't load the ingestion summary. Refresh the page to try again." />
+          <InlineError>Couldn&apos;t load the ingestion summary. Refresh the page to try again.</InlineError>
         ) : (
           <>
             <StatCard
@@ -181,38 +182,25 @@ export default function DataHealthPage() {
         )}
       </section>
 
-      <section className="flex flex-col gap-3 rounded-xl border p-5">
-        <div>
-          <h2 className="text-sm font-semibold">How data flows</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Each source lands in the raw ledger, becomes canonical entities, then resolves into the
-            figures your screens show. Select a step to open it.
-          </p>
-        </div>
+      <Section
+        title="How data flows"
+        description="Each source lands in the raw ledger, becomes canonical entities, then resolves into the figures your screens show. Select a step to open it."
+        card
+      >
         <PipelineMap connectors={connectors.data} />
-      </section>
+      </Section>
 
       <section className="flex flex-col gap-3">
         {activity.loading ? (
           <Skeleton className="h-40 w-full rounded-xl" />
         ) : activity.error ? (
-          <SectionError message="Couldn't load run activity. Refresh the page to try again." />
+          <InlineError>Couldn&apos;t load run activity. Refresh the page to try again.</InlineError>
         ) : (
           <ActivityChart title="Run activity · last 14 days" points={activity.data ?? []} />
         )}
       </section>
     </div>
   );
-}
-
-function formatRunTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-AU", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 /**
@@ -237,6 +225,8 @@ function ConnectorCard({
 }) {
   const failed = c.status === "failed";
   const isUpload = c.source.toLowerCase() === "opentable";
+  // Sources arrive as codes ("LIGHTSPEED"); people read the registry's display name.
+  const name = sourceIdentity(c.source).label;
   const action = isUpload ? (
     <Button variant="outline" size="sm" onClick={onUpload} disabled={uploading}>
       <Upload aria-hidden="true" />
@@ -252,14 +242,15 @@ function ConnectorCard({
   );
 
   return (
-    <article
-      className={`flex flex-col gap-4 rounded-xl border p-4 ${failed ? "border-destructive/30" : ""}`}
-      aria-label={c.source}
+    <Card
+      role="group"
+      className={cn("flex flex-col gap-4 p-4", failed && "border-destructive/30")}
+      aria-label={name}
     >
       <div className="flex items-center gap-3">
         <SourceTile source={c.source} size="lg" />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{c.source}</p>
+          <p className="truncate text-sm font-semibold">{name}</p>
           <p className="truncate text-xs text-muted-foreground">{c.connectorName}</p>
         </div>
         <div className="ml-auto">
@@ -271,10 +262,10 @@ function ConnectorCard({
         <Alert variant="destructive" className="border-0 bg-destructive-soft">
           <AlertTriangle aria-hidden="true" />
           <AlertTitle className="text-foreground">
-            {c.failure.type} at {formatRunTime(c.failure.at)}
+            {c.failure.type} at {formatDateTime(c.failure.at)}
           </AlertTitle>
           <AlertDescription className="text-muted-foreground">
-            {c.failure.message ?? "The source didn't say why."} Figures from {c.source} after this run
+            {c.failure.message ?? "The source didn't say why."} Figures from {name} after this run
             are missing until it succeeds. Check the connection, then run it again.
           </AlertDescription>
         </Alert>
@@ -283,7 +274,7 @@ function ConnectorCard({
           <AlertTriangle aria-hidden="true" />
           <AlertTitle className="text-foreground">The latest run failed</AlertTitle>
           <AlertDescription className="text-muted-foreground">
-            Figures from {c.source} may be out of date.{" "}
+            Figures from {name} may be out of date.{" "}
             <Link href="/logs" className="font-medium text-foreground underline underline-offset-2">
               Check the logs
             </Link>{" "}
@@ -297,7 +288,7 @@ function ConnectorCard({
           <dt className="text-muted-foreground">Last run</dt>
           <dd className="mt-0.5 text-sm font-medium">
             {c.lastRunAt ? (
-              <span title={formatRunTime(c.lastRunAt)}>{formatAgo(c.lastRunAt)}</span>
+              <span title={formatDateTime(c.lastRunAt)}>{formatAgo(c.lastRunAt)}</span>
             ) : (
               "Never"
             )}
@@ -310,6 +301,6 @@ function ConnectorCard({
       </dl>
 
       <div className="mt-auto flex items-center gap-2">{action}</div>
-    </article>
+    </Card>
   );
 }

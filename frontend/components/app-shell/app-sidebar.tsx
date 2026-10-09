@@ -20,6 +20,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { IconTile } from "@/components/ui/icon-tile";
+import { Kbd } from "@/components/ui/kbd";
+import { StatusDot } from "@/components/ui/status-dot";
 import { NAV_GROUPS, SETTINGS_ITEM, isActive, type NavItem } from "@/lib/nav";
 import { isFailing, useShellStatus } from "./shell-status";
 import { useCommandPalette } from "./command-palette";
@@ -91,7 +94,7 @@ export function AppSidebar() {
     if (href === "/data-health" && failing > 0) {
       return (
         <SidebarMenuBadge aria-label={`${failing} source${failing === 1 ? "" : "s"} failing`}>
-          <span className="size-2 rounded-full bg-destructive" />
+          <StatusDot tone="failed" halo={false} />
         </SidebarMenuBadge>
       );
     }
@@ -105,9 +108,9 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="hover:bg-transparent">
               <Link href="/dashboard" aria-label="Goldy's Data Platform, Overview">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-[10px] bg-brand text-brand-foreground">
-                  <span className="text-[15px] font-bold">G</span>
-                </div>
+                <IconTile tone="brand" className="text-base font-bold">
+                  G
+                </IconTile>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="truncate text-sm font-semibold text-foreground">Goldy&apos;s</span>
                   <span className="truncate text-xs text-muted-foreground">Data platform</span>
@@ -132,7 +135,7 @@ export function AppSidebar() {
         >
           <Search className="size-4" aria-hidden="true" />
           <span className="truncate">Search…</span>
-          <kbd className="ml-auto rounded border bg-sidebar px-1.5 font-mono text-[10.5px]">⌘K</kbd>
+          <Kbd className="ml-auto bg-sidebar">⌘K</Kbd>
         </button>
       </SidebarHeader>
 

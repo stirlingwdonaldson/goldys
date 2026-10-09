@@ -2,21 +2,20 @@
 
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CalendarDays, Workflow } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
-import { sourceLabel } from "@/lib/rule-logic";
 import type { DailyCovers, ReservationSummary } from "@/lib/api";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { AwaitingData } from "@/components/states/awaiting-data";
 import { PageHeader } from "@/components/layout/page-header";
-import { SourceLabel } from "@/components/sources/source-tile";
-import { formatDay } from "@/lib/format";
+import { Section } from "@/components/layout/section";
+import { StatCard } from "@/components/data-display/stat-card";
+import { formatNumber, formatPercent } from "@/lib/format";
 import { EmptyState } from "@/components/states/empty-state";
 import { DataTable } from "@/components/data-table/data-table";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { dateColumn, numberColumn, sourceColumn, traceColumn } from "@/components/data-table/columns";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ProvenanceSheet, type ProvenanceTarget } from "@/components/trust/provenance-sheet";
 
 /** The venue's "today" as YYYY-MM-DD, using the browser's local calendar date. */
@@ -31,53 +30,11 @@ function last30Days(): { from: string; to: string } {
   return { from: from.toLocaleDateString("en-CA"), to: to.toLocaleDateString("en-CA") };
 }
 
-function whole(v: number): string {
-  return v.toLocaleString();
-}
-
-function pct(v: number | null): string {
-  return v == null ? "—" : `${(v * 100).toFixed(1)}%`;
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border p-4">
-      <p className="text-[13px] text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-    </div>
-  );
-}
-
-function coversColumns(onTrace: (date: string) => void): ColumnDef<DailyCovers>[] {
+function coversColumns(onTrace: (row: DailyCovers) => void): ColumnDef<DailyCovers>[] {
   return [
-    {
-      accessorKey: "date",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
-      // Sorts on the ISO date; displays "Sun 5 Oct".
-      cell: ({ row }) => <span className="whitespace-nowrap">{formatDay(row.original.date)}</span>,
-      meta: { title: "Date" },
-      enableHiding: false,
-    },
-    {
-      accessorKey: "covers",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Covers" />,
-      cell: ({ row }) => <span className="tabular-nums">{whole(row.original.covers)}</span>,
-      meta: { title: "Covers", align: "right" },
-    },
-    {
-      accessorKey: "authoritativeSource",
-      header: "Source",
-      cell: ({ row }) => (
-        row.original.authoritativeSource ? (
-          <SourceLabel source={row.original.authoritativeSource}>
-            <span className="text-muted-foreground">{sourceLabel(row.original.authoritativeSource)}</span>
-          </SourceLabel>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )
-      ),
-      meta: { title: "Source" },
-    },
+    dateColumn<DailyCovers>("date"),
+    numberColumn<DailyCovers>("covers", "Covers", (r) => r.covers),
+    sourceColumn<DailyCovers>((r) => r.authoritativeSource, { id: "authoritativeSource" }),
     {
       accessorKey: "hasConflict",
       header: "Sources",
@@ -89,42 +46,21 @@ function coversColumns(onTrace: (date: string) => void): ColumnDef<DailyCovers>[
         ),
       meta: { title: "Sources" },
     },
-    {
-      id: "trace",
-      header: () => <span className="sr-only">Trace</span>,
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7"
-          aria-label={`Trace covers for ${row.original.date}`}
-          onClick={() => onTrace(row.original.date)}
-        >
-          <Workflow className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-          Trace
-        </Button>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-      meta: { align: "right" },
-    },
+    traceColumn<DailyCovers>((r) => `covers for ${r.date}`, onTrace),
   ];
 }
 
 function SummaryStats({ s }: { s: ReservationSummary }) {
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-      <Stat label="Bookings" value={whole(s.bookings)} />
-      <Stat label="Covers" value={whole(s.covers)} />
-      <Stat label="No-shows" value={whole(s.noShows)} />
-      <Stat
-        label="Avg party size"
-        value={s.avgPartySize == null ? "—" : s.avgPartySize.toFixed(2)}
-      />
-      <Stat label="Walk-ins" value={whole(s.walkIns)} />
-      <Stat label="Cancelled" value={whole(s.cancelled)} />
-      <Stat label="No-show rate" value={pct(s.noShowRate)} />
-      <Stat label="Booking→cover" value={pct(s.bookingToCoverConversion)} />
+      <StatCard label="Bookings" value={formatNumber(s.bookings)} />
+      <StatCard label="Covers" value={formatNumber(s.covers)} />
+      <StatCard label="No-shows" value={formatNumber(s.noShows)} />
+      <StatCard label="Avg party size" value={formatNumber(s.avgPartySize, 2)} />
+      <StatCard label="Walk-ins" value={formatNumber(s.walkIns)} />
+      <StatCard label="Cancelled" value={formatNumber(s.cancelled)} />
+      <StatCard label="No-show rate" value={formatPercent(s.noShowRate)} />
+      <StatCard label="Booking→cover" value={formatPercent(s.bookingToCoverConversion)} />
     </div>
   );
 }
@@ -136,8 +72,8 @@ export default function ReservationsPage() {
   const [trace, setTrace] = useState<ProvenanceTarget | null>(null);
   const columns = useMemo(
     () =>
-      coversColumns((date) =>
-        setTrace({ metricId: "reservations.covers", metricLabel: "Covers", date }),
+      coversColumns((r) =>
+        setTrace({ metricId: "reservations.covers", metricLabel: "Covers", date: r.date }),
       ),
     [],
   );
@@ -168,8 +104,7 @@ export default function ReservationsPage() {
         />
       )}
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold">Covers, last 30 days</h2>
+      <Section title="Covers, last 30 days">
         {covers.loading ? <LoadingState rows={4} /> : null}
         {covers.error ? (
           <ErrorState
@@ -192,7 +127,7 @@ export default function ReservationsPage() {
             getRowId={(r) => r.date}
           />
         ) : null}
-      </section>
+      </Section>
 
       <ProvenanceSheet target={trace} onClose={() => setTrace(null)} />
     </div>

@@ -8,13 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioCard, RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { DisagreementExplanation } from "@/components/reconciliation/disagreement-explanation";
-import { SourceLabel, sourceStyle } from "@/components/sources/source-tile";
+import { SourceLabel } from "@/components/sources/source-tile";
+import { sourceIdentity } from "@/lib/sources";
 import { needsDecision } from "@/lib/reconciliation-logic";
 import { matchingRule } from "@/lib/rule-logic";
 import { cn } from "@/lib/utils";
@@ -177,23 +178,15 @@ function FieldDecision({
               const id = `${idBase}-${s.source}`;
               const disabled = s.value == null;
               return (
-                <Label
-                  key={s.source}
-                  htmlFor={id}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-3 rounded-xl border p-3 font-normal transition-colors",
-                    source === s.source && "border-primary ring-1 ring-primary",
-                    disabled && "cursor-not-allowed opacity-70",
-                  )}
-                >
+                <RadioCard key={s.source} htmlFor={id} selected={source === s.source} disabled={disabled}>
                   <RadioGroupItem
                     id={id}
                     value={s.source}
                     disabled={disabled}
-                    aria-label={`${sourceStyle(s.source).label}: ${s.value ?? "no data"}`}
+                    aria-label={`${sourceIdentity(s.source).label}: ${s.value ?? "no data"}`}
                   />
                   <SourceLabel source={s.source} className="text-sm">
-                    <span className="font-medium">{sourceStyle(s.source).label}</span>
+                    <span className="font-medium">{sourceIdentity(s.source).label}</span>
                   </SourceLabel>
                   <span
                     className={cn(
@@ -201,9 +194,9 @@ function FieldDecision({
                       disabled && "text-sm font-normal italic text-muted-foreground",
                     )}
                   >
-                    {s.value ?? `No data from ${s.source}`}
+                    {s.value ?? `No data from ${sourceIdentity(s.source).label}`}
                   </span>
-                </Label>
+                </RadioCard>
               );
             })}
           </RadioGroup>
@@ -232,7 +225,7 @@ function FieldDecision({
               {saving
                 ? "Saving…"
                 : source
-                  ? `Use ${sourceStyle(source).label} value`
+                  ? `Use ${sourceIdentity(source).label} value`
                   : "Choose a source"}
             </Button>
           </SheetFooter>

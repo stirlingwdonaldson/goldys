@@ -18,7 +18,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { ReconciliationDrillIn } from "@/components/reconciliation/drill-in";
-import { ExceptionsList, type StatusFilter } from "@/components/reconciliation/exceptions-table";
+import { ExceptionsList, type StatusFilter } from "@/components/reconciliation/exceptions-list";
 import { ReconciliationAudit } from "@/components/reconciliation/reconciliation-audit";
 import type { ReconciliationException } from "@/lib/api";
 
@@ -177,10 +177,10 @@ function ReconciliationContent() {
           type="single"
           size="sm"
           variant="outline"
+          attached
           value={status}
           onValueChange={(v) => v && setParams({ status: v === "all" ? null : v })}
           aria-label="Filter by status"
-          className="gap-0 [&>*]:rounded-none [&>*:first-child]:rounded-l-lg [&>*:last-child]:rounded-r-lg [&>*+*]:-ml-px"
         >
           <ToggleGroupItem value="all">All {counts.all}</ToggleGroupItem>
           <ToggleGroupItem value="conflict">Conflicts {counts.conflict}</ToggleGroupItem>

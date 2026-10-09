@@ -17,7 +17,7 @@ const toggleVariants = cva(
       },
       size: {
         default: "h-9 px-3 min-w-9",
-        sm: "h-8 px-2.5 min-w-8 text-[13px]",
+        sm: "h-8 px-2.5 min-w-8 text-ui",
         lg: "h-11 px-5 min-w-11",
       },
     },

@@ -5,7 +5,8 @@ import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Pagination } from "@/components/reconciliation/pagination";
 import { SourceLabel } from "@/components/sources/source-tile";
-import { formatCurrency, formatDay } from "@/lib/format";
+import { formatCurrency, formatDay, formatNumber, humanizeKey } from "@/lib/format";
+import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 import type { ExceptionStatus, ReconciliationException } from "@/lib/api";
 import { difference, parseAmount } from "./source-values";
@@ -25,16 +26,6 @@ interface ExceptionsListProps {
   keyboardEnabled: boolean;
 }
 
-function isoDay(s: string): string {
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? formatDay(s) : s;
-}
-
-/** "gross_sales" → "Gross sales". */
-function humanize(field: string): string {
-  const words = field.replace(/[_-]+/g, " ").trim();
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
 /** Counts (quantity sold, covers) are not money, so only other numeric fields get "$". */
 function isMoneyField(field: string): boolean {
   return !/quantity|qty|count|covers/i.test(field);
@@ -44,7 +35,7 @@ function formatValue(kind: "daily" | "product", field: string, value: string | n
   if (value == null) return "No data";
   const n = kind === "daily" ? parseAmount(value) : null;
   if (n == null) return value;
-  return isMoneyField(field) ? formatCurrency(n) : n.toLocaleString("en-AU");
+  return isMoneyField(field) ? formatCurrency(n) : formatNumber(n, 2);
 }
 
 export function StatusBadge({ status, missingSource }: { status: ExceptionStatus; missingSource?: string }) {
@@ -68,7 +59,7 @@ export function filterExceptions(
   return exceptions.filter((e) => {
     if (status !== "all" && e.status !== status) return false;
     if (!q) return true;
-    const haystack = [e.recordId, e.id, e.entity, e.field, isoDay(e.recordId), isoDay(e.id.split(":")[0])]
+    const haystack = [e.recordId, e.id, e.entity, e.field, formatDay(e.recordId), formatDay(e.id.split(":")[0])]
       .join(" ")
       .toLowerCase();
     return haystack.includes(q);
@@ -151,7 +142,7 @@ export function ExceptionsList({
               const gap = difference(ex.sources);
               const missing = ex.sources.find((s) => s.value == null)?.source;
               const date = kind === "product" ? ex.id.split(":")[0] : ex.recordId;
-              const label = humanize(ex.field);
+              const label = humanizeKey(ex.field);
               const selected = selectedId === ex.recordId || selectedId === ex.id;
               return (
                 <li key={ex.id} className="border-t first:border-t-0">
@@ -162,7 +153,7 @@ export function ExceptionsList({
                     }}
                     onClick={() => onReview(ex)}
                     onFocus={() => setActive(i)}
-                    aria-label={`Review ${kind === "product" ? ex.recordId : ""} ${isoDay(date)} ${ex.field}`.replace(/\s+/g, " ").trim()}
+                    aria-label={`Review ${kind === "product" ? ex.recordId : ""} ${formatDay(date)} ${ex.field}`.replace(/\s+/g, " ").trim()}
                     className={cn(
                       // Wide: one line of [record | values | status]. Narrow: values drop to their own
                       // row under the record instead of wrapping mid-cell.
@@ -173,10 +164,10 @@ export function ExceptionsList({
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold">
-                        {kind === "product" ? ex.recordId : isoDay(date)}
+                        {kind === "product" ? ex.recordId : formatDay(date)}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
-                        {kind === "product" ? `${isoDay(date)} · ${label}` : label}
+                        {kind === "product" ? `${formatDay(date)} · ${label}` : label}
                       </span>
                     </span>
                     <span className="col-span-2 row-start-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 lg:col-span-1 lg:row-start-auto">
@@ -194,7 +185,7 @@ export function ExceptionsList({
                       ))}
                       {gap != null ? (
                         <Badge variant="neutral" className="tabular-nums">
-                          Δ {kind === "daily" && isMoneyField(ex.field) ? formatCurrency(gap) : gap.toLocaleString("en-AU")}
+                          Δ {kind === "daily" && isMoneyField(ex.field) ? formatCurrency(gap) : formatNumber(gap, 2)}
                         </Badge>
                       ) : null}
                     </span>
@@ -223,8 +214,4 @@ export function ExceptionsList({
       </p>
     </div>
   );
-}
-
-function Kbd({ children }: { children: React.ReactNode }) {
-  return <kbd className="rounded border bg-muted px-1.5 font-mono text-[10.5px]">{children}</kbd>;
 }

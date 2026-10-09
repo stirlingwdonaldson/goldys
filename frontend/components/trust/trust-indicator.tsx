@@ -1,4 +1,5 @@
 import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { formatAgo } from "@/lib/format";
 import type { FreshnessState, MissingDataStatus, TrustState, TrustSummary } from "@/lib/api/types";
 
 /** Venue-friendly labels for each trust state (mirrors the trust vocabulary in the design spec). */
@@ -40,21 +41,6 @@ const FRESHNESS_LABEL: Record<Exclude<FreshnessState, "FRESH">, string> = {
   UNKNOWN: "no data",
 };
 
-/** A compact "7 min ago" style relative time for an ISO-8601 instant. */
-export function formatAgo(iso: string, now: Date = new Date()): string {
-  const then = new Date(iso).getTime();
-  const minutes = Math.max(0, Math.floor((now.getTime() - then) / 60_000));
-  if (minutes < 1) return "just now";
-  if (minutes === 1) return "1 min ago";
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours === 1) return "1 hour ago";
-  if (hours < 24) return `${hours} hours ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "1 day ago";
-  return `${days} days ago`;
-}
-
 function freshnessText(trust: TrustSummary): string {
   if (trust.freshness === "FRESH") {
     const at = trust.lastIngestionAt ?? trust.resolvedAt;
@@ -87,3 +73,6 @@ export function TrustIndicator({ trust, value = null, status = null }: TrustIndi
     </span>
   );
 }
+
+// Re-exported for existing callers; the implementation lives with the other formatters.
+export { formatAgo };
