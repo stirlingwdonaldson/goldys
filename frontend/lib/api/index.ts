@@ -65,7 +65,9 @@ export type {
   HealthResponse,
   InventoryLineBreakdown,
   InventorySummary,
+  InvoiceGraphNode,
   LabourSummary,
+  LineGraphNode,
   LatestSales,
   OverrideResult,
   Provenance,
@@ -85,6 +87,7 @@ export type {
   SaveResolutionRuleInput,
   SourceValue,
   SupplierCogs,
+  SupplierGraphNode,
   TopSeller,
   UomUnitCost,
 } from "./types";

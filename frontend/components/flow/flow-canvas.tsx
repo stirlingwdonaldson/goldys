@@ -16,15 +16,36 @@ import {
 } from "@xyflow/react";
 import { layoutColumns } from "./layout";
 import { StepNodeView } from "./step-node";
-import type { ColumnGraph, StepNode } from "./types";
+import type { ColumnGraph, StepNode, StepNodeData } from "./types";
 
 const nodeTypes: NodeTypes = { step: StepNodeView };
+
+/**
+ * Decides what a node click does: a node with a `drill` id and an `onDrill` handler drills in;
+ * otherwise a node with an `href` navigates. Extracted so the precedence is unit-testable without
+ * rendering ReactFlow.
+ */
+export function resolveNodeClick(
+  data: StepNodeData,
+  onDrill: ((id: string) => void) | undefined,
+  navigate: (href: string) => void,
+): void {
+  if (onDrill && data.drill) {
+    onDrill(data.drill);
+    return;
+  }
+  if (data.href) {
+    navigate(data.href);
+  }
+}
 
 interface FlowCanvasProps {
   graph: ColumnGraph;
   /** Accessible name for the canvas region; the graph itself is decorative to screen readers. */
   ariaLabel: string;
   height?: number;
+  /** When set, clicking a node with `data.drill` calls this instead of navigating. */
+  onDrill?: (id: string) => void;
 }
 
 /**
@@ -40,7 +61,7 @@ export function FlowCanvas(props: FlowCanvasProps) {
   );
 }
 
-function FlowCanvasInner({ graph, ariaLabel, height = 360 }: FlowCanvasProps) {
+function FlowCanvasInner({ graph, ariaLabel, height = 360, onDrill }: FlowCanvasProps) {
   const router = useRouter();
   const laid = useMemo(() => layoutColumns(graph), [graph]);
   const [nodes, setNodes, onNodesChange] = useNodesState<StepNode>(laid.nodes);
@@ -66,8 +87,8 @@ function FlowCanvasInner({ graph, ariaLabel, height = 360 }: FlowCanvasProps) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={(_, node) => {
-          const href = (node as StepNode).data.href;
-          if (href) router.push(href);
+          const data = (node as StepNode).data;
+          resolveNodeClick(data, onDrill, (href) => router.push(href));
         }}
         nodesConnectable={false}
         edgesFocusable={false}

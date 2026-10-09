@@ -19,6 +19,8 @@ export interface StepNodeData extends Record<string, unknown> {
   tone: FlowTone;
   /** Where clicking the node goes. Omit for a non-navigable node. */
   href?: string;
+  /** An opaque id the consumer handles via `FlowCanvas` `onDrill`. Takes precedence over `href`. */
+  drill?: string;
   /** Hide the incoming/outgoing handle for nodes at the start/end of a graph. */
   hasInput?: boolean;
   hasOutput?: boolean;
