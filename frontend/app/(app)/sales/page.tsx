@@ -12,14 +12,7 @@ import { EmptyState } from "@/components/states/empty-state";
 import type { DailySales } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
-import { toNumber } from "@/lib/format";
-
-function polylinePoints(values: number[]): string {
-  const max = Math.max(1, ...values);
-  return values
-    .map((v, i) => `${(i / Math.max(1, values.length - 1)) * 100},${100 - (v / max) * 100}`)
-    .join(" ");
-}
+import { SalesTrend } from "@/components/dashboard/sales-trend";
 
 function salesColumns(onTrace: (row: DailySales) => void): ColumnDef<DailySales>[] {
   return [
@@ -33,60 +26,38 @@ function salesColumns(onTrace: (row: DailySales) => void): ColumnDef<DailySales>
 }
 
 export default function SalesPage() {
+  // The trend must render the reconciled/resolved daily totals, never a client-side
+  // sum of competing per-source rows (audit finding F01). The per-source table below
+  // stays for source comparison.
   const sales = useApiData((api) => api.listDailySales());
+  const trend = useApiData((api) => api.getSalesTrend());
   const [trace, setTrace] = useState<ProvenanceTarget | null>(null);
   const columns = useMemo(
     () => salesColumns((r) => setTrace({ metricId: "sales.gross", metricLabel: "Gross sales", date: r.date })),
     [],
   );
 
-  if (sales.loading) return <LoadingState rows={5} />;
-  if (sales.error) {
+  if (sales.loading || trend.loading) return <LoadingState rows={5} />;
+  const error = sales.error ?? trend.error;
+  if (error) {
     return (
       <ErrorState
         title="Couldn't load sales"
-        message={sales.error.message}
-        onRetry={sales.reload}
+        message={error.message}
+        onRetry={() => {
+          sales.reload();
+          trend.reload();
+        }}
       />
     );
   }
   const rows = sales.data ?? [];
 
-  // Trend: total per day, summed across sources, oldest first.
-  const byDate = new Map<string, number>();
-  for (const r of rows) {
-    const n = toNumber(r.totalSales);
-    if (n != null) byDate.set(r.date, (byDate.get(r.date) ?? 0) + n);
-  }
-  const points = [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  const values = points.map(([, v]) => v);
-
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Sales" description="Daily sales totals across your sources." />
 
-      <Section title="Daily sales" card>
-        <div role="img" aria-label="Daily sales trend" className="h-48">
-          {values.length > 0 ? (
-            <svg
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              className="h-full w-full"
-              aria-hidden="true"
-            >
-              <polyline
-                points={polylinePoints(values)}
-                fill="none"
-                stroke="hsl(var(--chart-1))"
-                strokeWidth="2"
-                vectorEffect="non-scaling-stroke"
-              />
-            </svg>
-          ) : (
-            <p className="text-sm text-muted-foreground">No sales data yet.</p>
-          )}
-        </div>
-      </Section>
+      <SalesTrend points={trend.data ?? []} />
 
       {rows.length === 0 ? (
         <EmptyState
