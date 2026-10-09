@@ -14,7 +14,15 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { AuthFeedback } from "@/components/auth/auth-feedback";
-import { AccountCreated } from "./account-created";
+import { SignupRecovery } from "./signup-recovery";
+
+function uncertainCreation(error: unknown): boolean {
+  if (!isApiError(error)) return false;
+  if (error.code === "NETWORK_ERROR") return true;
+  // Followed redirects also expose a final 2xx; they do not confirm account creation.
+  return error.status !== undefined && error.status >= 200 && error.status < 300 &&
+    error.code !== "AUTH_REQUIRED" && error.code !== "UNEXPECTED_REDIRECT";
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -23,31 +31,33 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<unknown>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [accountCreated, setAccountCreated] = useState(false);
+  const [creationOutcome, setCreationOutcome] = useState<"editing" | "created" | "uncertain">("editing");
   const busy = useRef(false);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (busy.current || accountCreated) return;
+    if (busy.current || creationOutcome !== "editing") return;
     busy.current = true;
     setError(null);
     setSubmitting(true);
+    let created = false;
     try {
       await signup({ email, displayName, password });
-      setAccountCreated(true);
+      created = true;
+      setCreationOutcome("created");
       // Auto-login with the same credentials, then land in the app.
       await login({ email, password });
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
       setError(err);
+      if (!created && uncertainCreation(err)) setCreationOutcome("uncertain");
     } finally {
       busy.current = false;
       setSubmitting(false);
     }
   }
 
-  const uncertainCreation = !accountCreated && isApiError(error) && error.code === "NETWORK_ERROR";
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
@@ -59,8 +69,8 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {accountCreated ? (
-            <AccountCreated submitting={submitting} error={error} />
+          {creationOutcome !== "editing" ? (
+            <SignupRecovery outcome={creationOutcome} submitting={submitting} error={error} />
           ) : <form onSubmit={onSubmit} className="space-y-4">
             <Input
               aria-label="Full name"
@@ -89,12 +99,12 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <AuthFeedback error={error} message={uncertainCreation ? "Couldn't confirm account creation. If you already created an account, sign in." : undefined} />
+            <AuthFeedback error={error} />
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Creating account…" : "Sign up"}
             </Button>
           </form>}
-          {!accountCreated ? <p className="mt-4 text-center text-sm text-muted-foreground">
+          {creationOutcome === "editing" ? <p className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login" className="underline">
               Sign in

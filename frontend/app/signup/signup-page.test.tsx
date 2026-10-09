@@ -72,3 +72,39 @@ it("explains uncertain signup without automatic retry", async () => {
   expect(calls).toBe(1);
   expect(push).not.toHaveBeenCalled();
 });
+
+it.each(["incomplete", "malformed", "body-read"])("offers recovery without another create action after committed 201 with %s response", async failure => {
+  let created = 0;
+  let logins = 0;
+  server.use(http.post(signupUrl, () => {
+    created++;
+    const headers = { "X-Correlation-ID": "req-created", "Content-Type": "application/json" };
+    return failure === "malformed" ? new HttpResponse("{", { status: 201, headers })
+      : HttpResponse.json(failure === "incomplete" ? { displayName: "Fixture" } : profile, { status: 201, headers });
+  }), http.post(loginUrl, () => { logins++; return HttpResponse.json(profile); }));
+  if (failure === "body-read") {
+    const text = Response.prototype.text;
+    vi.spyOn(Response.prototype, "text").mockImplementation(function (this: Response) {
+      return this.status === 201 ? Promise.reject(new TypeError("fixture body failure")) : text.call(this);
+    });
+  }
+  fireEvent.submit(fill());
+  expect(await screen.findByText("Account creation could not be confirmed. Sign in before trying again.")).toBeInTheDocument();
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+  expect(screen.getByText(/req-created/)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+  expect(screen.queryByRole("button", { name: "Sign up" })).not.toBeInTheDocument();
+  expect(created).toBe(1);
+  expect(logins).toBe(0);
+  expect(push).not.toHaveBeenCalled();
+});
+
+it("keeps confirmed creation when auto-login returns malformed success", async () => {
+  server.use(http.post(signupUrl, () => HttpResponse.json(profile, { status: 201 })),
+    http.post(loginUrl, () => HttpResponse.json({ seniority: "OWNER" })));
+  fireEvent.submit(fill());
+  expect(await screen.findByText("Account created. Sign in to continue.")).toBeInTheDocument();
+  expect(screen.getByRole("alert")).toHaveTextContent("The server returned invalid data.");
+  expect(screen.queryByRole("button", { name: "Sign up" })).not.toBeInTheDocument();
+  expect(push).not.toHaveBeenCalled();
+});
