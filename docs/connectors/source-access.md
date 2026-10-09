@@ -11,7 +11,7 @@ read-only: the platform never writes back to a source system (per
 
 | Source | Access | Auth | Path the platform uses today |
 |---|---|---|---|
-| Lightspeed (O-Series / Kounta) | Back office is server-rendered (no usable public API on this plan); Lightspeed Insights (Looker) can email/webhook scheduled reports | Email + password form (back office) | Scheduled Insights reports pushed to `POST /api/ingest/lightspeed`, `/lightspeed-products`, `/lightspeed-zreport` (token-gated webhooks). The back-office CSV scrape below is the documented fallback |
+| Lightspeed (O-Series / Kounta) | Back office is server-rendered (no usable public API on this plan); Lightspeed Insights (Looker) can email/webhook scheduled reports | Email + password form (back office) | Scheduled Insights reports pushed to `POST /api/ingest/lightspeed`, `/lightspeed-products`, `/lightspeed-zreport`, `/lightspeed-payments`, `/lightspeed-deleted-sales` (token-gated webhooks). The back-office CSV scrape below is the documented fallback |
 | Cooking the Books (CTB) | Authenticated internal AJAX endpoints (ASP.NET MVC + ExtJS; no public API) | `POST /Account/Login` → session cookie | `CtbConnector` pull (daily 4am + "run now"), Custom Invoice Export CSV + invoice PDFs via the SFTP drop (`CtbSftpPull`), or CSV upload to `POST /api/ingest/ctb-invoices` |
 | OpenTable | GuestCenter only; partner-gated API | Email + password form | Manual GuestCenter CSV export posted to `POST /api/ingest/opentable`. See [`opentable.md`](opentable.md) |
 | Deputy | Self-serve OAuth REST API + webhooks | OAuth client (owner-registered) | Webhook to `POST /api/ingest/deputy`, raw-ledger only until the payload schema is confirmed |
