@@ -3,21 +3,24 @@ import { findNav, NAV_GROUPS } from "./nav";
 
 describe("findNav", () => {
   it("names pages the same way as the sidebar, with their section", () => {
-    expect(findNav("/dashboard")).toMatchObject({ group: "Business", item: { title: "Overview" } });
-    expect(findNav("/reconciliation")).toMatchObject({ group: "Data", item: { title: "Reconciliation" } });
+    expect(findNav("/dashboard")).toMatchObject({ group: "Workspace", item: { title: "Home" } });
+    expect(findNav("/my-work")).toMatchObject({ group: "Workspace", item: { title: "My work" } });
+    expect(findNav("/reconciliation")).toMatchObject({ group: "Workspace", item: { title: "Reconciliation" } });
+    expect(findNav("/data-health")).toMatchObject({ group: "Administration", item: { title: "Data health" } });
+    expect(findNav("/flow-lab")).toMatchObject({ group: "Intelligence", item: { title: "Flow lab" } });
   });
-  it("resolves the Sales detail page to the Business group", () => {
+  it("resolves the Sales detail page to the Performance group", () => {
     expect(findNav("/sales-detail")).toMatchObject({
-      group: "Business",
+      group: "Performance",
       item: { title: "Sales detail", href: "/sales-detail" },
     });
   });
-  it("lists Sales detail directly after Sales in the Business group", () => {
-    const titles = NAV_GROUPS.find((g) => g.label === "Business")?.items.map((i) => i.title) ?? [];
+  it("lists Sales detail directly after Sales in the Performance group", () => {
+    const titles = NAV_GROUPS.find((g) => g.label === "Performance")?.items.map((i) => i.title) ?? [];
     expect(titles.indexOf("Sales detail")).toBe(titles.indexOf("Sales") + 1);
   });
   it("does not prefix-match a different page", () => {
-    // "/dashboards" must not resolve to Overview ("/dashboard").
+    // "/dashboards" must not resolve to Home ("/dashboard").
     expect(findNav("/dashboards")?.item.title).toBe("Custom dashboards");
   });
   it("returns null for unknown paths", () => {

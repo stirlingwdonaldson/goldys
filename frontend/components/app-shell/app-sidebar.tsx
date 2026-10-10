@@ -107,7 +107,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="hover:bg-transparent">
-              <Link href="/dashboard" aria-label="Goldy's Data Platform, Overview">
+              <Link href="/dashboard" aria-label="Goldy's Data Platform, Home">
                 <IconTile tone="brand" className="text-base font-bold">
                   G
                 </IconTile>
@@ -141,11 +141,11 @@ export function AppSidebar() {
 
       <SidebarContent>
         {NAV_GROUPS.map((group) =>
-          group.comingSoon ? (
+          group.collapsible ? (
             <Collapsible
               key={group.label}
               className="group/collapsible"
-              defaultOpen={group.items.some((i) => isActive(pathname, i.href))}
+              defaultOpen={group.items.some((i) => isActive(pathname, i.href) || badgeFor(i.href) !== null)}
             >
               <SidebarGroup>
                 <SidebarGroupLabel asChild>
@@ -158,7 +158,7 @@ export function AppSidebar() {
                   <SidebarGroupContent>
                     <SidebarMenu>
                       {group.items.map((item) => (
-                        <NavLink key={item.href} item={item} pathname={pathname} />
+                        <NavLink key={item.href} item={item} pathname={pathname} badge={badgeFor(item.href)} />
                       ))}
                     </SidebarMenu>
                   </SidebarGroupContent>
