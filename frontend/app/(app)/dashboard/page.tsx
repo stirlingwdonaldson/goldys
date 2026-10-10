@@ -6,7 +6,11 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
-import { NeedsDecisionBand } from "@/components/dashboard/needs-decision-band";
+import { AttentionPanel } from "@/components/dashboard/attention-panel";
+import { FocusShortcuts } from "@/components/dashboard/focus-shortcuts";
+import { FocusSwitcher } from "@/components/my-work/work-list";
+import { useFocus, useWorkQueue } from "@/components/my-work/use-work-queue";
+import { filterByFocus } from "@/lib/work-queue";
 import { BusinessKpiGrid } from "@/components/dashboard/business-kpi-grid";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { TopSellers } from "@/components/dashboard/top-sellers";
@@ -17,6 +21,8 @@ export default function DashboardPage() {
   // One bootstrap request replaces the previous five independent fetches.
   const { data, loading, error, reload } = useApiData((api) => api.getDashboardBootstrap());
   const { user } = useCurrentUser();
+  const queue = useWorkQueue();
+  const [focus, setFocus] = useFocus();
 
   if (loading) return <LoadingState rows={2} />;
   if (error) {
@@ -41,9 +47,19 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Overview" description="Your numbers, verified across every source." />
+      <PageHeader
+        title="Home"
+        description="Your numbers, verified across every source."
+        actions={<FocusSwitcher value={focus} onChange={setFocus} />}
+      />
 
-      <NeedsDecisionBand openCount={data.summary.openConflicts} />
+      <AttentionPanel
+        items={queue.data ? filterByFocus(queue.data.items, focus) : null}
+        loading={queue.loading}
+        openConflicts={data.summary.openConflicts}
+      />
+
+      <FocusShortcuts focus={focus} />
 
       <BusinessKpiGrid
         seniority={user?.seniority}
