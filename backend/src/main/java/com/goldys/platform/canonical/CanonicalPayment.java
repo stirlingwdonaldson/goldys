@@ -196,8 +196,24 @@ class CanonicalPayment extends BitemporalEntity {
     return saleNumber;
   }
 
+  String paymentTypeCode() {
+    return paymentTypeCode;
+  }
+
   String paymentTypeName() {
     return paymentTypeName;
+  }
+
+  String paymentSourceType() {
+    return paymentSourceType;
+  }
+
+  String lspayPaymentMode() {
+    return lspayPaymentMode;
+  }
+
+  String clearingAccount() {
+    return clearingAccount;
   }
 
   BigDecimal amount() {
@@ -208,7 +224,47 @@ class CanonicalPayment extends BitemporalEntity {
     return tip;
   }
 
+  BigDecimal tendered() {
+    return tendered;
+  }
+
+  BigDecimal surcharge() {
+    return surcharge;
+  }
+
   int paymentCount() {
     return paymentCount;
+  }
+
+  int tipCount() {
+    return tipCount;
+  }
+
+  String reconciled() {
+    return reconciled;
+  }
+
+  String registerCode() {
+    return registerCode;
+  }
+
+  String registerName() {
+    return registerName;
+  }
+
+  String staffName() {
+    return staffName;
+  }
+
+  String staffCode() {
+    return staffCode;
+  }
+
+  String siteId() {
+    return siteId;
+  }
+
+  String customerName() {
+    return customerName;
   }
 }
