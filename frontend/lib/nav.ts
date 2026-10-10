@@ -8,6 +8,7 @@ import {
   Home,
   LayoutGrid,
   MessagesSquare,
+  ReceiptText,
   Scale,
   ScrollText,
   Settings,
@@ -42,6 +43,12 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { title: "Overview", href: "/dashboard", icon: Home, keywords: ["dashboard", "home", "kpi"] },
       { title: "Sales", href: "/sales", icon: TrendingUp, keywords: ["revenue", "takings"] },
+      {
+        title: "Sales detail",
+        href: "/sales-detail",
+        icon: ReceiptText,
+        keywords: ["payments", "voids", "deleted orders", "sale items", "line items", "tenders"],
+      },
       { title: "Staff & labour", href: "/staff", icon: Users, keywords: ["roster", "wages", "deputy"] },
       { title: "Reservations", href: "/reservations", icon: CalendarDays, keywords: ["covers", "bookings", "opentable"] },
       { title: "Kitchen", href: "/kitchen", icon: ChefHat, keywords: ["food cost", "stock", "invoices", "suppliers"] },
