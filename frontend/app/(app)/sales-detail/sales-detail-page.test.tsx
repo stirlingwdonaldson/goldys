@@ -10,9 +10,13 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => mockParams.current,
 }));
 
-// The real tab fetches through the Api context; this page test only covers the shell.
+// The real tabs fetch through the Api context; this page test only covers the shell.
 vi.mock("@/components/sales-detail/payments-tab", () => ({
   PaymentsTab: () => <div data-testid="payments-tab" />,
+}));
+
+vi.mock("@/components/sales-detail/deleted-orders-tab", () => ({
+  DeletedOrdersTab: () => <div data-testid="deleted-orders-tab" />,
 }));
 
 beforeEach(() => {
@@ -31,14 +35,14 @@ describe("SalesDetailPage", () => {
   it("opens on the Payments tab by default", () => {
     render(<SalesDetailPage />);
     expect(screen.getByTestId("payments-tab")).toBeInTheDocument();
-    expect(screen.queryByText("No deleted orders yet")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("deleted-orders-tab")).not.toBeInTheDocument();
   });
 
-  it("switches the visible stub when another tab is selected", () => {
+  it("switches the visible tab when another tab is selected", () => {
     render(<SalesDetailPage />);
     // Radix Tabs activate on mouse-down, not click.
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Deleted orders" }), { button: 0 });
-    expect(screen.getByText("No deleted orders yet")).toBeInTheDocument();
+    expect(screen.getByTestId("deleted-orders-tab")).toBeInTheDocument();
     expect(screen.queryByTestId("payments-tab")).not.toBeInTheDocument();
   });
 

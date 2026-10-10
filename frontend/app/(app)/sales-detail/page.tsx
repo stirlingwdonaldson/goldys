@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/states/empty-state";
 import { DateRangeFilter, defaultRange } from "@/components/sales-detail/date-range-filter";
 import { PaymentsTab } from "@/components/sales-detail/payments-tab";
+import { DeletedOrdersTab } from "@/components/sales-detail/deleted-orders-tab";
 
 const TABS = [
   { value: "payments", label: "Payments" },
@@ -61,22 +62,13 @@ function SalesDetail() {
       </Tabs>
 
       {tab === "payments" ? <PaymentsTab from={range.from} to={range.to} /> : null}
-      {tab === "deleted-orders" ? <DeletedOrdersTab /> : null}
+      {tab === "deleted-orders" ? <DeletedOrdersTab from={range.from} to={range.to} /> : null}
       {tab === "sale-items" ? <SaleItemsTab /> : null}
     </div>
   );
 }
 
-// Placeholder stubs. Tasks 9–10 replace these with the real tab components.
-function DeletedOrdersTab() {
-  return (
-    <EmptyState
-      title="No deleted orders yet"
-      description="Voided and deleted sales for the selected dates will appear here."
-    />
-  );
-}
-
+// Placeholder stub. Task 10 replaces this with the real tab component.
 function SaleItemsTab() {
   return (
     <EmptyState
