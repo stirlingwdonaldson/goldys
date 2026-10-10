@@ -24,6 +24,8 @@ export interface StepNodeData extends Record<string, unknown> {
   /** Hide the incoming/outgoing handle for nodes at the start/end of a graph. */
   hasInput?: boolean;
   hasOutput?: boolean;
+  /** Set by a top-to-bottom layout: handles sit on the top and bottom edges. */
+  vertical?: boolean;
   /** Emphasise this node (e.g. the resolved value a provenance graph explains). */
   emphasis?: boolean;
 }

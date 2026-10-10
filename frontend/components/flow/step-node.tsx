@@ -60,14 +60,14 @@ function StepNodeComponent({ data, selected }: NodeProps<StepNode>) {
       className={cn(
         "relative flex items-center gap-3 rounded-lg border bg-card px-3 text-card-foreground shadow-sm transition-shadow",
         BORDER_CLASS[data.tone],
-        data.href && "cursor-pointer hover:shadow-md",
+        (data.href || data.drill) && "cursor-pointer hover:shadow-md",
         data.emphasis && "border-2 border-foreground",
         selected && "ring-2 ring-ring ring-offset-2 ring-offset-background",
       )}
       style={{ width: NODE_WIDTH, height: NODE_HEIGHT }}
     >
       {data.hasInput ? (
-        <Handle type="target" position={Position.Left} isConnectable={false} className={handleClass} />
+        <Handle type="target" position={data.vertical ? Position.Top : Position.Left} isConnectable={false} className={handleClass} />
       ) : null}
       <div
         className={cn(
@@ -100,7 +100,7 @@ function StepNodeComponent({ data, selected }: NodeProps<StepNode>) {
       </div>
       <CornerBadge tone={data.tone} />
       {data.hasOutput ? (
-        <Handle type="source" position={Position.Right} isConnectable={false} className={handleClass} />
+        <Handle type="source" position={data.vertical ? Position.Bottom : Position.Right} isConnectable={false} className={handleClass} />
       ) : null}
     </div>
   );

@@ -6,6 +6,7 @@ import {
   ChefHat,
   Database,
   Home,
+  Inbox,
   LayoutGrid,
   MessagesSquare,
   ReceiptText,
@@ -15,6 +16,7 @@ import {
   ShieldCheck,
   TrendingUp,
   Users,
+  Workflow,
 } from "lucide-react";
 
 /**
@@ -35,13 +37,36 @@ export interface NavGroup {
   items: NavItem[];
   /** Placeholder surfaces with no data yet; rendered collapsed (heuristic 8). */
   comingSoon?: boolean;
+  /** Rendered as an expandable group, closed unless it holds the current page. */
+  collapsible?: boolean;
 }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Business",
+    label: "Workspace",
     items: [
-      { title: "Overview", href: "/dashboard", icon: Home, keywords: ["dashboard", "home", "kpi"] },
+      { title: "Home", href: "/dashboard", icon: Home, keywords: ["dashboard", "overview", "kpi"] },
+      {
+        title: "My work",
+        href: "/my-work",
+        icon: Inbox,
+        keywords: ["inbox", "tasks", "alerts", "attention", "to do", "queue"],
+      },
+      { title: "Reconciliation", href: "/reconciliation", icon: Scale, keywords: ["conflicts", "exceptions", "overrides", "decisions"] },
+      { title: "Conversations", href: "/conversations", icon: MessagesSquare, keywords: ["ask", "chat", "threads"] },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { title: "Reservations", href: "/reservations", icon: CalendarDays, keywords: ["covers", "bookings", "opentable", "venue"] },
+      { title: "Kitchen", href: "/kitchen", icon: ChefHat, keywords: ["food cost", "stock", "invoices", "suppliers"] },
+      { title: "Staff & labour", href: "/staff", icon: Users, keywords: ["roster", "wages", "deputy"] },
+    ],
+  },
+  {
+    label: "Performance",
+    items: [
       { title: "Sales", href: "/sales", icon: TrendingUp, keywords: ["revenue", "takings"] },
       {
         title: "Sales detail",
@@ -49,17 +74,26 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: ReceiptText,
         keywords: ["payments", "voids", "deleted orders", "sale items", "line items", "tenders"],
       },
-      { title: "Staff & labour", href: "/staff", icon: Users, keywords: ["roster", "wages", "deputy"] },
-      { title: "Reservations", href: "/reservations", icon: CalendarDays, keywords: ["covers", "bookings", "opentable"] },
-      { title: "Kitchen", href: "/kitchen", icon: ChefHat, keywords: ["food cost", "stock", "invoices", "suppliers"] },
       { title: "Custom dashboards", href: "/dashboards", icon: LayoutGrid, keywords: ["widgets", "reports"] },
-      { title: "Conversations", href: "/conversations", icon: MessagesSquare, keywords: ["ask", "chat", "threads"] },
     ],
   },
   {
-    label: "Data",
+    label: "Intelligence",
     items: [
-      { title: "Reconciliation", href: "/reconciliation", icon: Scale, keywords: ["conflicts", "exceptions", "overrides"] },
+      {
+        title: "Flow lab",
+        href: "/flow-lab",
+        icon: Workflow,
+        keywords: ["diagrams", "automations", "lineage", "dependencies", "react flow", "workflow"],
+      },
+    ],
+  },
+  {
+    // Technical surfaces: most managers only need these when something is wrong, so the
+    // group starts collapsed unless it holds the current page or a failing source.
+    label: "Administration",
+    collapsible: true,
+    items: [
       { title: "Resolution rules", href: "/resolution-rules", icon: ShieldCheck, keywords: ["source priority"] },
       { title: "Data health", href: "/data-health", icon: Activity, keywords: ["connectors", "sync", "ingestion"] },
       { title: "Data explorer", href: "/data", icon: Database, keywords: ["tables", "raw"] },
@@ -69,6 +103,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Coming soon",
     comingSoon: true,
+    collapsible: true,
     items: [
       { title: "Recipes", href: "/recipes", icon: BookOpen, keywords: ["costing"] },
     ],
