@@ -78,11 +78,19 @@ class ResolvedDeletedSaleDay {
     return totalTax;
   }
 
+  String resolutionType() {
+    return resolutionType;
+  }
+
   String authoritativeSource() {
     return authoritativeSource;
   }
 
   boolean hasConflict() {
     return hasConflict;
+  }
+
+  Instant resolvedAt() {
+    return resolvedAt;
   }
 }

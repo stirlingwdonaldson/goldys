@@ -33,10 +33,23 @@ class DataExplorerQueryImplTest {
   private final ResolvedLabourDayRepository labour = mock(ResolvedLabourDayRepository.class);
   private final ResolvedInventoryDayRepository inventory =
       mock(ResolvedInventoryDayRepository.class);
+  private final ResolvedPaymentDayRepository payments = mock(ResolvedPaymentDayRepository.class);
+  private final ResolvedDeletedSaleDayRepository deletedSales =
+      mock(ResolvedDeletedSaleDayRepository.class);
+  private final ResolvedSaleItemDayRepository saleItems = mock(ResolvedSaleItemDayRepository.class);
 
   private final DataExplorerQueryImpl impl =
       new DataExplorerQueryImpl(
-          raw, canonical, dailySales, productSales, reservations, labour, inventory);
+          raw,
+          canonical,
+          dailySales,
+          productSales,
+          reservations,
+          labour,
+          inventory,
+          payments,
+          deletedSales,
+          saleItems);
 
   @Test
   void canonicalEntitiesDelegatesToTheFacade() {
@@ -48,15 +61,18 @@ class DataExplorerQueryImplTest {
   }
 
   @Test
-  void resolvedDomainsEnumeratesFive() {
-    assertThat(impl.resolvedDomains()).hasSize(5);
+  void resolvedDomainsEnumeratesEight() {
+    assertThat(impl.resolvedDomains()).hasSize(8);
     assertThat(impl.resolvedDomains().stream().map(EntityDescriptor::id))
         .containsExactly(
             "resolved_daily_sales",
             "resolved_product_sales",
             "resolved_reservation_day",
             "resolved_labour_day",
-            "resolved_inventory_day");
+            "resolved_inventory_day",
+            "resolved_payment_day",
+            "resolved_deleted_sale_day",
+            "resolved_sale_item_day");
   }
 
   @Test
