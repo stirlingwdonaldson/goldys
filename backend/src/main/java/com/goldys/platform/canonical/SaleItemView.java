@@ -8,4 +8,4 @@ import java.time.LocalDate;
  * package.
  */
 public record SaleItemView(
-    LocalDate tradingDate, String categoryName, Integer quantitySold, BigDecimal amount) {}
+    LocalDate tradingDate, String categoryName, BigDecimal quantitySold, BigDecimal amount) {}

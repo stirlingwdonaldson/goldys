@@ -1,5 +1,7 @@
 package com.goldys.platform.connectors.lightspeed;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.canonical.CanonicalDeletedSaleIngest;
@@ -22,7 +24,12 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LightspeedDeletedSaleIngestService {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final ObjectMapper MAPPER =
+      new ObjectMapper(
+          JsonFactory.builder()
+              .streamReadConstraints(
+                  StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build())
+              .build());
 
   private final IngestionService ingestion;
   private final CanonicalDeletedSaleIngest canonical;

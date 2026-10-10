@@ -40,7 +40,7 @@ class CanonicalVersionIntegrationTest {
         null,
         null,
         null,
-        qty,
+        BigDecimal.valueOf(qty),
         amount,
         null,
         null,
@@ -80,14 +80,14 @@ class CanonicalVersionIntegrationTest {
     var first = service.recordAt(input("sale-correction", 1, money("18.00"), raw1), T1);
     var second = service.recordAt(input("sale-correction", 2, money("36.00"), raw2), T2);
 
-    assertThat(repository.findKnownAt(first.logicalEntityId(), "LIGHTSPEED", T1.plusSeconds(1)))
-        .get()
-        .extracting(CanonicalSaleItem::quantitySold)
-        .isEqualTo(1);
-    assertThat(repository.findCurrent(first.logicalEntityId(), "LIGHTSPEED"))
-        .get()
-        .extracting(CanonicalSaleItem::quantitySold)
-        .isEqualTo(2);
+    assertThat(
+            repository
+                .findKnownAt(first.logicalEntityId(), "LIGHTSPEED", T1.plusSeconds(1))
+                .get()
+                .quantitySold())
+        .isEqualByComparingTo("1");
+    assertThat(repository.findCurrent(first.logicalEntityId(), "LIGHTSPEED").get().quantitySold())
+        .isEqualByComparingTo("2");
     assertThat(second.logicalEntityId()).isEqualTo(first.logicalEntityId());
   }
 

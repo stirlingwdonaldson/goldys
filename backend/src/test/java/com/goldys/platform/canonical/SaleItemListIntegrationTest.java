@@ -71,7 +71,7 @@ class SaleItemListIntegrationTest {
     assertThat(r.productNumber()).isEqualTo("PROD-1");
     assertThat(r.sku()).isEqualTo("SKU-1");
     assertThat(r.categoryName()).isEqualTo("BEV");
-    assertThat(r.quantitySold()).isEqualTo(2);
+    assertThat(r.quantitySold()).isEqualByComparingTo("2");
     assertThat(r.amount()).isEqualByComparingTo("100.00");
     assertThat(r.soldPriceIncTax()).isEqualByComparingTo("50.00");
     assertThat(r.totalTax()).isEqualByComparingTo("4.55");
@@ -94,7 +94,7 @@ class SaleItemListIntegrationTest {
         "PROD-1",
         "SKU-1",
         category,
-        2,
+        new BigDecimal("2"),
         new BigDecimal(amount),
         new BigDecimal("50.00"),
         new BigDecimal("4.55"),

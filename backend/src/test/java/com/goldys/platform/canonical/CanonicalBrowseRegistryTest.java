@@ -211,7 +211,7 @@ class CanonicalBrowseRegistryTest {
             "PROD-1",
             "SKU-1",
             "Burgers",
-            2,
+            new BigDecimal("2"),
             new BigDecimal("15.00"),
             new BigDecimal("7.50"),
             new BigDecimal("1.36"),

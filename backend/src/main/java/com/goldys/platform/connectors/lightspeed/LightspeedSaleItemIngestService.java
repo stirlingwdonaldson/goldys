@@ -1,5 +1,7 @@
 package com.goldys.platform.connectors.lightspeed;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.canonical.CanonicalSaleItemIngest;
@@ -25,7 +27,12 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LightspeedSaleItemIngestService {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final ObjectMapper MAPPER =
+      new ObjectMapper(
+          JsonFactory.builder()
+              .streamReadConstraints(
+                  StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build())
+              .build());
 
   private final IngestionService ingestion;
   private final CanonicalSaleItemIngest canonical;
@@ -113,9 +120,5 @@ public class LightspeedSaleItemIngestService {
 
   private static BigDecimal nz(BigDecimal v) {
     return v == null ? BigDecimal.ZERO : v;
-  }
-
-  private static int nz(Integer v) {
-    return v == null ? 0 : v;
   }
 }

@@ -52,7 +52,7 @@ public class LightspeedSaleItemCsvParser {
               text(r, columns, "Products Product Number"),
               text(r, columns, "Products SKU"),
               text(r, columns, "Products POS Category Name"),
-              integer(r, columns, "Sales Data Product Quantity"),
+              decimal(r, columns, "Sales Data Product Quantity"),
               money(r, columns, "Sales Data Total Inc Tax"),
               money(r, columns, "Advanced Dimensions Sold Price Inc Tax"),
               money(r, columns, "Sales Data Total Tax"),
@@ -117,16 +117,18 @@ public class LightspeedSaleItemCsvParser {
     }
   }
 
-  private static Integer integer(CSVRecord r, Map<String, Integer> columns, String name) {
+  private static BigDecimal decimal(CSVRecord r, Map<String, Integer> columns, String name) {
     String value = text(r, columns, name);
     if (value == null || value.isBlank()) {
       return null;
     }
     try {
-      return Integer.parseInt(value.trim());
+      return new BigDecimal(value.replace(",", "").trim());
     } catch (NumberFormatException e) {
       throw new ConnectorFetchException(
-          "CONNECTOR_SCHEMA_MISMATCH", "Bad count '" + value + "' in Lightspeed sale-items CSV", e);
+          "CONNECTOR_SCHEMA_MISMATCH",
+          "Bad quantity '" + value + "' in Lightspeed sale-items CSV",
+          e);
     }
   }
 

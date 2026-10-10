@@ -47,7 +47,7 @@ class LightspeedSaleItemIngestServiceTest {
         "P-100",
         "SKU100",
         "Food",
-        1,
+        BigDecimal.ONE,
         new BigDecimal("22.00"),
         new BigDecimal("22.00"),
         new BigDecimal("2.00"),
@@ -111,5 +111,21 @@ class LightspeedSaleItemIngestServiceTest {
     verify(ingestion)
         .recordStage(eq(rawId), eq(IngestionStageKind.PARSED), eq(IngestionStageOutcome.FAILED));
     verify(ingestion, never()).recordStage(any(), eq(IngestionStageKind.CANONICALIZED), any());
+  }
+
+  @Test
+  void extractsAttachmentDataBeyondDefaultJacksonStringLimit() {
+    UUID rawId = UUID.randomUUID();
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any())).thenReturn(rawId);
+    when(parser.parse(any())).thenReturn(List.of());
+
+    // The real "all data, ever" reports carry attachment.data well over Jackson's default 20MB
+    // string cap; without the raised StreamReadConstraints this is reported as "Non-JSON".
+    String large = "x".repeat(21 * 1024 * 1024);
+    byte[] big = ("{\"attachment\":{\"data\":\"" + large + "\"}}").getBytes(StandardCharsets.UTF_8);
+
+    service().ingest(big);
+
+    verify(parser).parse(any());
   }
 }

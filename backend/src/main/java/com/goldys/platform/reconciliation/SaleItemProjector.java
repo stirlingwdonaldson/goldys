@@ -92,9 +92,7 @@ public class SaleItemProjector {
     BigDecimal amount = BigDecimal.ZERO;
 
     void add(SaleItemView v) {
-      quantity =
-          quantity.add(
-              v.quantitySold() == null ? BigDecimal.ZERO : BigDecimal.valueOf(v.quantitySold()));
+      quantity = quantity.add(v.quantitySold() == null ? BigDecimal.ZERO : v.quantitySold());
       amount = amount.add(v.amount() == null ? BigDecimal.ZERO : v.amount());
     }
   }

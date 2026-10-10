@@ -36,8 +36,8 @@ class CanonicalSaleItem extends BitemporalEntity {
   @Column(name = "category_name", updatable = false)
   private String categoryName;
 
-  @Column(name = "quantity_sold", updatable = false)
-  private Integer quantitySold;
+  @Column(name = "quantity_sold", updatable = false, precision = 20, scale = 6)
+  private BigDecimal quantitySold;
 
   @Column(name = "amount", updatable = false, precision = 38, scale = 2)
   private BigDecimal amount;
@@ -114,7 +114,7 @@ class CanonicalSaleItem extends BitemporalEntity {
         && Objects.equals(productNumber, input.productNumber())
         && Objects.equals(sku, input.sku())
         && Objects.equals(categoryName, input.categoryName())
-        && Objects.equals(quantitySold, input.quantitySold())
+        && sameAmount(quantitySold, input.quantitySold())
         && sameAmount(amount, input.amount())
         && sameAmount(soldPriceIncTax, input.soldPriceIncTax())
         && sameAmount(totalTax, input.totalTax())
@@ -157,7 +157,7 @@ class CanonicalSaleItem extends BitemporalEntity {
     return categoryName;
   }
 
-  Integer quantitySold() {
+  BigDecimal quantitySold() {
     return quantitySold;
   }
 
