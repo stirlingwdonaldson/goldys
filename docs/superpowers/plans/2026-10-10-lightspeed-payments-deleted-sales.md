@@ -48,9 +48,21 @@ Same as Phase 1 for `CanonicalDeletedSale`, `lightspeed-deleted-sales`.
 
 ## Deferred (explicitly out of scope for now)
 
-- Override service, metrics catalogue entries, Ask Goldy's tool — until a
-  concrete question needs them.
-- `salelines` line-item domain (incomplete source).
+- Override services (manual correction) — deferred by decision; the day×type /
+  day×category resolved grain makes a date-level override semantically awkward.
+- Ask Goldy's reporting tools — not needed; the existing `GET_METRIC` /
+  `RANK_DIMENSION` / `COMPARE_METRIC_PERIODS` tools cover catalogue metrics, so
+  registering the metrics is sufficient.
+
+## Status (2026-10-10)
+
+Phases 1–4 done and committed on `feature/lightspeed-payments-deleted-sales`:
+ingest (payments / deleted-sales / sale-items), resolved projections + semantic
+queries + REST endpoints, permissions, architecture boundaries, and metric
+catalogue entries (`payments.amount`, `payments.tip`, `deleted_sales.amount`,
+`sale_items.amount`, `sale_items.quantity`). Full `./gradlew test spotlessCheck`
+green. The `salelines` line-item source turned out to be complete once the
+`product_salelines.product_id` join is removed (see the design spec §9).
 
 ## Open decisions carried into implementation
 
