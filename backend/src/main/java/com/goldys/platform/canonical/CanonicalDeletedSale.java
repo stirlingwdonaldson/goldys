@@ -146,4 +146,12 @@ class CanonicalDeletedSale extends BitemporalEntity {
   String saleNumber() {
     return saleNumber;
   }
+
+  BigDecimal totalIncTax() {
+    return totalIncTax;
+  }
+
+  BigDecimal totalTax() {
+    return totalTax;
+  }
 }

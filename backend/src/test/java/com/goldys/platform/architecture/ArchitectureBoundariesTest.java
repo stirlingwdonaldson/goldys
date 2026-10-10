@@ -5,10 +5,13 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameEn
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.goldys.platform.semantic.DeletedSaleMetricsQuery;
 import com.goldys.platform.semantic.InventoryMetricsQuery;
 import com.goldys.platform.semantic.InvoiceLineMetricsQuery;
 import com.goldys.platform.semantic.LabourMetricsQuery;
+import com.goldys.platform.semantic.PaymentMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
+import com.goldys.platform.semantic.SaleItemMetricsQuery;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -226,6 +229,33 @@ class ArchitectureBoundariesTest {
       classes()
           .that()
           .implement(InvoiceLineMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  /** The payment semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule paymentMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(PaymentMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  /** The deleted-sale semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule deletedSaleMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(DeletedSaleMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  /** The sale-item semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule saleItemMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(SaleItemMetricsQuery.class)
           .should()
           .resideInAPackage("..reconciliation..");
 

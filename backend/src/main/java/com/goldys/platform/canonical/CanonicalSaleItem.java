@@ -141,6 +141,10 @@ class CanonicalSaleItem extends BitemporalEntity {
     return itemName;
   }
 
+  String categoryName() {
+    return categoryName;
+  }
+
   Integer quantitySold() {
     return quantitySold;
   }

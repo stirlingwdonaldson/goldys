@@ -196,7 +196,19 @@ class CanonicalPayment extends BitemporalEntity {
     return saleNumber;
   }
 
+  String paymentTypeName() {
+    return paymentTypeName;
+  }
+
   BigDecimal amount() {
     return amount;
+  }
+
+  BigDecimal tip() {
+    return tip;
+  }
+
+  int paymentCount() {
+    return paymentCount;
   }
 }
