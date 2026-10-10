@@ -71,10 +71,10 @@ function deletedOrderColumns(
     textColumn<DeletedSaleRow>("note", "Note"),
     textColumn<DeletedSaleRow>("staffName", "Staff"),
     textColumn<DeletedSaleRow>("deletedByStaffName", "Deleted by"),
-    // The deleted-sale fact carries both the opening and the deleting register; the
-    // single "Register" column shows where the order was opened, matching the
-    // register column on the payments and sale-items tabs.
-    textColumn<DeletedSaleRow>("openedRegisterName", "Register"),
+    // The deleted-sale fact carries both the opening and the deleting register. This
+    // tab audits deletions, so the "Deleted register" column pairs with "Deleted by"
+    // and shows where the order was deleted, not where it was opened.
+    textColumn<DeletedSaleRow>("deletedRegisterName", "Deleted register"),
     textColumn<DeletedSaleRow>("tableNumber", "Table"),
     currencyColumn<DeletedSaleRow>("totalIncTax", "Total inc tax", (r) => r.totalIncTax),
     currencyColumn<DeletedSaleRow>("totalExTax", "Total ex tax", (r) => r.totalExTax),

@@ -16,7 +16,7 @@ const ROWS: DeletedSaleRow[] = [
     totalTax: 10.91,
     totalCost: 40.0,
     openedRegisterName: "Main Bar",
-    deletedRegisterName: "Main Bar",
+    deletedRegisterName: "Front Bar",
     staffName: "Stirling Donaldson",
     deletedByStaffName: "Stirling Donaldson",
     tableNumber: "8",
@@ -73,7 +73,11 @@ describe("DeletedOrdersTab", () => {
     // The resolved trend chart is titled from the builder.
     expect(screen.getByText("Deleted orders per day")).toBeInTheDocument();
     expect(screen.getByText("SALE-998")).toBeInTheDocument();
-    expect(screen.getByText("Main Bar")).toBeInTheDocument();
+    // The "Deleted register" column shows where the order was deleted, paired with
+    // "Deleted by" — never the opening register (SALE-999 opened at "Main Bar").
+    expect(screen.getByText("Deleted register")).toBeInTheDocument();
+    expect(screen.getByText("Front Bar")).toBeInTheDocument();
+    expect(screen.queryByText("Main Bar")).not.toBeInTheDocument();
     // The same staff member is both the sale's staff and the deleter, so both columns show it.
     expect(screen.getAllByText("Stirling Donaldson")).toHaveLength(2);
 
