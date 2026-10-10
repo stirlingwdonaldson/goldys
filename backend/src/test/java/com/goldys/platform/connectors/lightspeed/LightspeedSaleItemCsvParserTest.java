@@ -25,7 +25,7 @@ class LightspeedSaleItemCsvParserTest {
     assertThat(first.receiptLineId()).isEqualTo("LI-1");
     assertThat(first.saleDate()).isEqualTo(LocalDate.parse("2026-09-19"));
     assertThat(first.itemName()).isEqualTo("Burger");
-    assertThat(first.quantity()).isEqualTo(1);
+    assertThat(first.quantity()).isEqualByComparingTo("1");
     assertThat(first.amount()).isEqualByComparingTo("22.00");
     assertThat(first.soldPriceIncTax()).isEqualByComparingTo("22.00");
     assertThat(first.totalTax()).isEqualByComparingTo("2.00");
@@ -46,5 +46,17 @@ class LightspeedSaleItemCsvParserTest {
             () -> new LightspeedSaleItemCsvParser().parse(csv.getBytes(StandardCharsets.UTF_8)))
         .isInstanceOf(ConnectorFetchException.class)
         .hasMessageContaining("Sales Data Sale Closed Date");
+  }
+
+  @Test
+  void parsesFractionalQuantity() {
+    String csv =
+        "Sales Data Receipt Line ID,Sales Data Sale Closed Date,Sales Data Product Quantity\n"
+            + "LI-1,2026-09-19,0.5\n";
+
+    List<LightspeedSaleItem> items =
+        new LightspeedSaleItemCsvParser().parse(csv.getBytes(StandardCharsets.UTF_8));
+
+    assertThat(items.get(0).quantity()).isEqualByComparingTo("0.5");
   }
 }

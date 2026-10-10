@@ -12,7 +12,7 @@ public record SaleItemRow(
     String productNumber,
     String sku,
     String categoryName,
-    Integer quantitySold,
+    BigDecimal quantitySold,
     BigDecimal amount,
     BigDecimal soldPriceIncTax,
     BigDecimal totalTax,

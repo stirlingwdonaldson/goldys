@@ -284,7 +284,7 @@ public class CanonicalBrowseQuery {
       c.put("item_name", i.itemName());
     }
     if (i.quantitySold() != null) {
-      c.put("quantity_sold", String.valueOf(i.quantitySold()));
+      c.put("quantity_sold", i.quantitySold().toPlainString());
     }
     if (i.amount() != null) {
       c.put("amount", i.amount().toPlainString());

@@ -12,7 +12,7 @@ public record LightspeedSaleItem(
     String productNumber,
     String sku,
     String categoryName,
-    Integer quantity,
+    BigDecimal quantity,
     BigDecimal amount,
     BigDecimal soldPriceIncTax,
     BigDecimal totalTax,
