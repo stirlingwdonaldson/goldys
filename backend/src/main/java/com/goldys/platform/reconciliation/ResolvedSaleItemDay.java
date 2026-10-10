@@ -82,12 +82,20 @@ class ResolvedSaleItemDay {
     return amount;
   }
 
+  String resolutionType() {
+    return resolutionType;
+  }
+
   String authoritativeSource() {
     return authoritativeSource;
   }
 
   boolean hasConflict() {
     return hasConflict;
+  }
+
+  Instant resolvedAt() {
+    return resolvedAt;
   }
 
   static class Id implements Serializable {

@@ -49,6 +49,15 @@ import type {
   SavedWidget,
   TopSeller,
   TrustSummary,
+  PaymentRow,
+  DeletedSaleRow,
+  SaleItemRow,
+  PaymentMix,
+  DeletedSaleDay,
+  SaleItemMix,
+  PaymentFilter,
+  DeletedSaleFilter,
+  SaleItemFilter,
 } from "./types";
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -398,6 +407,240 @@ const demoResolvedRows: Record<string, GenericRow[]> = {
     },
   ],
 };
+
+// Sales-detail demo fixtures: a few payments across two dates and three types, two deleted
+// orders, and a few sale line items across two categories, so the /sales-detail screen renders
+// without a backend. The list methods filter these the way the live endpoints do.
+const demoPayments: PaymentRow[] = [
+  {
+    tradingDate: "2026-10-04",
+    saleNumber: "SALE-1001",
+    paymentTypeName: "Tyro",
+    paymentTypeCode: "4",
+    paymentSourceType: "EFTPOS",
+    lspayPaymentMode: "Tyro",
+    clearingAccount: "Westpac 123",
+    amount: 45.5,
+    tip: 2.0,
+    tendered: 47.5,
+    surcharge: 0,
+    paymentCount: 1,
+    tipCount: 1,
+    reconciled: "Yes",
+    registerCode: "REG-1",
+    registerName: "Main Bar",
+    staffName: "Stirling Donaldson",
+    staffCode: "S-1",
+    siteId: "SITE-1",
+    customerName: null,
+  },
+  {
+    tradingDate: "2026-10-04",
+    saleNumber: "SALE-1001",
+    paymentTypeName: "Cash",
+    paymentTypeCode: "0",
+    paymentSourceType: "CASH",
+    lspayPaymentMode: null,
+    clearingAccount: "Till",
+    amount: 12.0,
+    tip: 0,
+    tendered: 20.0,
+    surcharge: 0,
+    paymentCount: 1,
+    tipCount: 0,
+    reconciled: "Yes",
+    registerCode: "REG-1",
+    registerName: "Main Bar",
+    staffName: "Stirling Donaldson",
+    staffCode: "S-1",
+    siteId: "SITE-1",
+    customerName: null,
+  },
+  {
+    tradingDate: "2026-10-05",
+    saleNumber: "SALE-1002",
+    paymentTypeName: "Tyro",
+    paymentTypeCode: "4",
+    paymentSourceType: "EFTPOS",
+    lspayPaymentMode: "Tyro",
+    clearingAccount: "Westpac 123",
+    amount: 78.9,
+    tip: 3.5,
+    tendered: 82.4,
+    surcharge: 0,
+    paymentCount: 1,
+    tipCount: 1,
+    reconciled: "Yes",
+    registerCode: "REG-2",
+    registerName: "Bistro",
+    staffName: "Alex Smith",
+    staffCode: "S-2",
+    siteId: "SITE-1",
+    customerName: "Table 12",
+  },
+  {
+    tradingDate: "2026-10-05",
+    saleNumber: "SALE-1002",
+    paymentTypeName: "Visa",
+    paymentTypeCode: "VISA",
+    paymentSourceType: "EFTPOS",
+    lspayPaymentMode: null,
+    clearingAccount: "Westpac 123",
+    amount: 30.0,
+    tip: 0,
+    tendered: 30.0,
+    surcharge: 0.45,
+    paymentCount: 1,
+    tipCount: 0,
+    reconciled: "Yes",
+    registerCode: "REG-2",
+    registerName: "Bistro",
+    staffName: "Alex Smith",
+    staffCode: "S-2",
+    siteId: "SITE-1",
+    customerName: "Table 12",
+  },
+];
+
+const demoDeletedSales: DeletedSaleRow[] = [
+  {
+    tradingDate: "2026-10-04",
+    saleNumber: "SALE-999",
+    orderType: "Dine-in",
+    note: "Voided — wrong table",
+    totalIncTax: 120.0,
+    totalExTax: 109.09,
+    totalTax: 10.91,
+    totalCost: 40.0,
+    openedRegisterName: "Main Bar",
+    deletedRegisterName: "Main Bar",
+    staffName: "Stirling Donaldson",
+    deletedByStaffName: "Stirling Donaldson",
+    tableNumber: "8",
+    siteId: "SITE-1",
+    customerName: null,
+  },
+  {
+    tradingDate: "2026-10-05",
+    saleNumber: "SALE-998",
+    orderType: "Takeaway",
+    note: null,
+    totalIncTax: 65.5,
+    totalExTax: 59.55,
+    totalTax: 5.95,
+    totalCost: null,
+    openedRegisterName: "Bistro",
+    deletedRegisterName: "Bistro",
+    staffName: "Alex Smith",
+    deletedByStaffName: "Alex Smith",
+    tableNumber: null,
+    siteId: "SITE-1",
+    customerName: "Walk-up",
+  },
+];
+
+const demoSaleItems: SaleItemRow[] = [
+  {
+    tradingDate: "2026-10-04",
+    saleNumber: "SALE-1001",
+    receiptLineId: "LINE-1",
+    itemName: "pint carlton draught",
+    productNumber: "P-100",
+    sku: "SKU-100",
+    categoryName: "Beer",
+    quantitySold: 2,
+    amount: 24.0,
+    soldPriceIncTax: 12.0,
+    totalTax: 2.18,
+    costIncTax: 6.4,
+    orderType: "Dine-in",
+    saleType: "Sale",
+    staffName: "Stirling Donaldson",
+    registerName: "Main Bar",
+    tableNumber: "8",
+  },
+  {
+    tradingDate: "2026-10-04",
+    saleNumber: "SALE-1001",
+    receiptLineId: "LINE-2",
+    itemName: "house red",
+    productNumber: "P-101",
+    sku: "SKU-101",
+    categoryName: "Beer",
+    quantitySold: 1,
+    amount: 11.0,
+    soldPriceIncTax: 11.0,
+    totalTax: 1.0,
+    costIncTax: 4.0,
+    orderType: "Dine-in",
+    saleType: "Sale",
+    staffName: "Stirling Donaldson",
+    registerName: "Main Bar",
+    tableNumber: "8",
+  },
+  {
+    tradingDate: "2026-10-05",
+    saleNumber: "SALE-1002",
+    receiptLineId: "LINE-3",
+    itemName: "chicken schnitzel",
+    productNumber: "P-200",
+    sku: "SKU-200",
+    categoryName: "Food",
+    quantitySold: 1,
+    amount: 26.5,
+    soldPriceIncTax: 26.5,
+    totalTax: 2.41,
+    costIncTax: 9.8,
+    orderType: "Dine-in",
+    saleType: "Sale",
+    staffName: "Alex Smith",
+    registerName: "Bistro",
+    tableNumber: "12",
+  },
+  {
+    tradingDate: "2026-10-05",
+    saleNumber: "SALE-1002",
+    receiptLineId: "LINE-4",
+    itemName: "parma",
+    productNumber: "P-201",
+    sku: "SKU-201",
+    categoryName: "Food",
+    quantitySold: 1,
+    amount: 28.0,
+    soldPriceIncTax: 28.0,
+    totalTax: 2.55,
+    costIncTax: 11.2,
+    orderType: "Dine-in",
+    saleType: "Sale",
+    staffName: "Alex Smith",
+    registerName: "Bistro",
+    tableNumber: "12",
+  },
+];
+
+const demoPaymentMix: PaymentMix[] = [
+  { tradingDate: "2026-10-04", paymentTypeName: "Tyro", amount: 45.5, tip: 2.0, count: 1, hasConflict: false },
+  { tradingDate: "2026-10-04", paymentTypeName: "Cash", amount: 12.0, tip: 0, count: 1, hasConflict: false },
+  { tradingDate: "2026-10-05", paymentTypeName: "Tyro", amount: 78.9, tip: 3.5, count: 1, hasConflict: false },
+  { tradingDate: "2026-10-05", paymentTypeName: "Visa", amount: 30.0, tip: 0, count: 1, hasConflict: false },
+];
+
+const demoDeletedSaleTotals: DeletedSaleDay[] = [
+  { tradingDate: "2026-10-04", count: 1, totalIncTax: 120.0, totalTax: 10.91, hasConflict: false },
+  { tradingDate: "2026-10-05", count: 1, totalIncTax: 65.5, totalTax: 5.95, hasConflict: false },
+];
+
+const demoSaleItemMix: SaleItemMix[] = [
+  { tradingDate: "2026-10-04", categoryName: "Beer", quantity: 3, amount: 35.0, hasConflict: false },
+  { tradingDate: "2026-10-05", categoryName: "Food", quantity: 2, amount: 54.5, hasConflict: false },
+];
+
+/** Inclusive ISO-date range check (string comparison is safe for YYYY-MM-DD). */
+function inDateRange(date: string, from?: string, to?: string): boolean {
+  if (from && date < from) return false;
+  if (to && date > to) return false;
+  return true;
+}
 
 export const demoApi: Api = {
   async getDashboardBootstrap(): Promise<DashboardBootstrap> {
@@ -1056,6 +1299,65 @@ export const demoApi: Api = {
     await delay(300);
     const items = demoResolvedRows[domain] ?? [];
     return { items, total: items.length, page, size };
+  },
+
+  async listPayments(
+    filter: PaymentFilter,
+    page: number,
+    size: number,
+  ): Promise<DataPage<PaymentRow>> {
+    await delay(300);
+    const items = demoPayments.filter(
+      (p) =>
+        inDateRange(p.tradingDate, filter.from, filter.to) &&
+        (!filter.paymentType || p.paymentTypeName === filter.paymentType) &&
+        (!filter.saleNumber || p.saleNumber === filter.saleNumber),
+    );
+    return { items, total: items.length, page, size };
+  },
+
+  async listDeletedSales(
+    filter: DeletedSaleFilter,
+    page: number,
+    size: number,
+  ): Promise<DataPage<DeletedSaleRow>> {
+    await delay(300);
+    const items = demoDeletedSales.filter(
+      (d) =>
+        inDateRange(d.tradingDate, filter.from, filter.to) &&
+        (!filter.saleNumber || d.saleNumber === filter.saleNumber),
+    );
+    return { items, total: items.length, page, size };
+  },
+
+  async listSaleItems(
+    filter: SaleItemFilter,
+    page: number,
+    size: number,
+  ): Promise<DataPage<SaleItemRow>> {
+    await delay(300);
+    const items = demoSaleItems.filter(
+      (s) =>
+        inDateRange(s.tradingDate, filter.from, filter.to) &&
+        (!filter.category || s.categoryName === filter.category) &&
+        (!filter.saleNumber || s.saleNumber === filter.saleNumber),
+    );
+    return { items, total: items.length, page, size };
+  },
+
+  async getPaymentMix(from: string, to: string): Promise<PaymentMix[]> {
+    await delay(300);
+    return demoPaymentMix.filter((m) => inDateRange(m.tradingDate, from, to));
+  },
+
+  async getDeletedSaleTotals(from: string, to: string): Promise<DeletedSaleDay[]> {
+    await delay(300);
+    return demoDeletedSaleTotals.filter((d) => inDateRange(d.tradingDate, from, to));
+  },
+
+  async getSaleItemMix(from: string, to: string): Promise<SaleItemMix[]> {
+    await delay(300);
+    return demoSaleItemMix.filter((m) => inDateRange(m.tradingDate, from, to));
   },
 };
 

@@ -32,6 +32,8 @@ public class CanonicalBrowseQuery {
   private final CanonicalWastageRepository wastage;
   private final CanonicalSaleItemRepository saleItems;
   private final CanonicalShiftRepository shifts;
+  private final CanonicalPaymentRepository payments;
+  private final CanonicalDeletedSaleRepository deletedSales;
 
   public CanonicalBrowseQuery(
       CanonicalDailySalesRepository dailySales,
@@ -43,7 +45,9 @@ public class CanonicalBrowseQuery {
       CanonicalStockCountRepository stockCounts,
       CanonicalWastageRepository wastage,
       CanonicalSaleItemRepository saleItems,
-      CanonicalShiftRepository shifts) {
+      CanonicalShiftRepository shifts,
+      CanonicalPaymentRepository payments,
+      CanonicalDeletedSaleRepository deletedSales) {
     this.dailySales = dailySales;
     this.productSales = productSales;
     this.reservations = reservations;
@@ -54,6 +58,8 @@ public class CanonicalBrowseQuery {
     this.wastage = wastage;
     this.saleItems = saleItems;
     this.shifts = shifts;
+    this.payments = payments;
+    this.deletedSales = deletedSales;
   }
 
   public List<EntityDescriptor> entities() {
@@ -66,7 +72,9 @@ public class CanonicalBrowseQuery {
         new EntityDescriptor("labour_entry", "Labour entries", false),
         new EntityDescriptor("stock_count", "Stock counts", false),
         new EntityDescriptor("wastage", "Wastage", false),
-        new EntityDescriptor("sale_item", "Sale items", true),
+        new EntityDescriptor("sale_item", "Sale items", false),
+        new EntityDescriptor("payment", "Payments", false),
+        new EntityDescriptor("deleted_sale", "Deleted orders", false),
         new EntityDescriptor("shift", "Shifts", true));
   }
 
@@ -93,6 +101,10 @@ public class CanonicalBrowseQuery {
           page(wastage.findAll(pr), page, safeSize, CanonicalBrowseQuery::wastageColumns);
       case "sale_item" ->
           page(saleItems.findAll(pr), page, safeSize, CanonicalBrowseQuery::saleItemColumns);
+      case "payment" ->
+          page(payments.findAll(pr), page, safeSize, CanonicalBrowseQuery::paymentColumns);
+      case "deleted_sale" ->
+          page(deletedSales.findAll(pr), page, safeSize, CanonicalBrowseQuery::deletedSaleColumns);
       case "shift" -> page(shifts.findAll(pr), page, safeSize, CanonicalBrowseQuery::shiftColumns);
       default ->
           throw new java.util.NoSuchElementException("Unknown canonical entity: " + entityId);
@@ -266,7 +278,7 @@ public class CanonicalBrowseQuery {
     return c;
   }
 
-  private static Map<String, String> saleItemColumns(CanonicalSaleItem i) {
+  static Map<String, String> saleItemColumns(CanonicalSaleItem i) {
     Map<String, String> c = new LinkedHashMap<>();
     if (i.itemName() != null) {
       c.put("item_name", i.itemName());
@@ -277,6 +289,64 @@ public class CanonicalBrowseQuery {
     if (i.amount() != null) {
       c.put("amount", i.amount().toPlainString());
     }
+    if (i.saleNumber() != null) {
+      c.put("sale_number", i.saleNumber());
+    }
+    if (i.categoryName() != null) {
+      c.put("category_name", i.categoryName());
+    }
+    if (i.productNumber() != null) {
+      c.put("product_number", i.productNumber());
+    }
+    if (i.sku() != null) {
+      c.put("sku", i.sku());
+    }
+    if (i.soldPriceIncTax() != null) {
+      c.put("sold_price_inc_tax", i.soldPriceIncTax().toPlainString());
+    }
+    if (i.totalTax() != null) {
+      c.put("total_tax", i.totalTax().toPlainString());
+    }
+    if (i.costIncTax() != null) {
+      c.put("cost_inc_tax", i.costIncTax().toPlainString());
+    }
+    if (i.orderType() != null) {
+      c.put("order_type", i.orderType());
+    }
+    if (i.saleType() != null) {
+      c.put("sale_type", i.saleType());
+    }
+    if (i.staffName() != null) {
+      c.put("staff_name", i.staffName());
+    }
+    if (i.registerName() != null) {
+      c.put("register_name", i.registerName());
+    }
+    if (i.tableNumber() != null) {
+      c.put("table_number", i.tableNumber());
+    }
+    return c;
+  }
+
+  static Map<String, String> paymentColumns(CanonicalPayment p) {
+    Map<String, String> c = new LinkedHashMap<>();
+    c.put("trading_date", p.tradingDate().toString());
+    c.put("sale_number", p.saleNumber());
+    if (p.paymentTypeName() != null) {
+      c.put("payment_type_name", p.paymentTypeName());
+    }
+    c.put("amount", p.amount().toPlainString());
+    c.put("tip", p.tip().toPlainString());
+    c.put("payment_count", String.valueOf(p.paymentCount()));
+    return c;
+  }
+
+  static Map<String, String> deletedSaleColumns(CanonicalDeletedSale d) {
+    Map<String, String> c = new LinkedHashMap<>();
+    c.put("trading_date", d.tradingDate().toString());
+    c.put("sale_number", d.saleNumber());
+    c.put("total_inc_tax", d.totalIncTax().toPlainString());
+    c.put("total_tax", d.totalTax().toPlainString());
     return c;
   }
 

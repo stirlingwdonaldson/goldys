@@ -147,11 +147,55 @@ class CanonicalDeletedSale extends BitemporalEntity {
     return saleNumber;
   }
 
+  String orderType() {
+    return orderType;
+  }
+
+  String note() {
+    return note;
+  }
+
   BigDecimal totalIncTax() {
     return totalIncTax;
   }
 
+  BigDecimal totalExTax() {
+    return totalExTax;
+  }
+
   BigDecimal totalTax() {
     return totalTax;
+  }
+
+  BigDecimal totalCost() {
+    return totalCost;
+  }
+
+  String openedRegisterName() {
+    return openedRegisterName;
+  }
+
+  String deletedRegisterName() {
+    return deletedRegisterName;
+  }
+
+  String staffName() {
+    return staffName;
+  }
+
+  String deletedByStaffName() {
+    return deletedByStaffName;
+  }
+
+  String tableNumber() {
+    return tableNumber;
+  }
+
+  String siteId() {
+    return siteId;
+  }
+
+  String customerName() {
+    return customerName;
   }
 }

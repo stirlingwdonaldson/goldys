@@ -1,6 +1,38 @@
 import { describe, it, expect } from "vitest";
 import { demoApi } from "./demo";
 
+describe("demoApi sales-detail lists", () => {
+  it("filters payments by payment type", async () => {
+    const page = await demoApi.listPayments({ paymentType: "Tyro" }, 0, 20);
+    expect(page.items.length).toBeGreaterThan(0);
+    for (const row of page.items) {
+      expect(row.paymentTypeName).toBe("Tyro");
+    }
+  });
+
+  it("filters payments by sale number", async () => {
+    const page = await demoApi.listPayments({ saleNumber: "SALE-1001" }, 0, 20);
+    expect(page.items.length).toBeGreaterThan(0);
+    for (const row of page.items) {
+      expect(row.saleNumber).toBe("SALE-1001");
+    }
+  });
+
+  it("filters sale items by category", async () => {
+    const page = await demoApi.listSaleItems({ category: "Food" }, 0, 20);
+    expect(page.items.length).toBeGreaterThan(0);
+    for (const row of page.items) {
+      expect(row.categoryName).toBe("Food");
+    }
+  });
+
+  it("returns at least two distinct payment types in the mix", async () => {
+    const mix = await demoApi.getPaymentMix("2026-10-01", "2026-10-05");
+    const types = new Set(mix.map((m) => m.paymentTypeName));
+    expect(types.size).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe("demoApi resolution rules", () => {
   it("applies a changed entity type, field key, and source priority when editing a rule", async () => {
     await demoApi.saveResolutionRule({

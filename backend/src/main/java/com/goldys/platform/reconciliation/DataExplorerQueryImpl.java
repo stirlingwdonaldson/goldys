@@ -36,6 +36,9 @@ public class DataExplorerQueryImpl implements DataExplorerQuery {
   private final ResolvedReservationDayRepository reservations;
   private final ResolvedLabourDayRepository labour;
   private final ResolvedInventoryDayRepository inventory;
+  private final ResolvedPaymentDayRepository payments;
+  private final ResolvedDeletedSaleDayRepository deletedSales;
+  private final ResolvedSaleItemDayRepository saleItems;
 
   public DataExplorerQueryImpl(
       RawRecordBrowseQuery raw,
@@ -44,7 +47,10 @@ public class DataExplorerQueryImpl implements DataExplorerQuery {
       ResolvedProductSalesRepository productSales,
       ResolvedReservationDayRepository reservations,
       ResolvedLabourDayRepository labour,
-      ResolvedInventoryDayRepository inventory) {
+      ResolvedInventoryDayRepository inventory,
+      ResolvedPaymentDayRepository payments,
+      ResolvedDeletedSaleDayRepository deletedSales,
+      ResolvedSaleItemDayRepository saleItems) {
     this.raw = raw;
     this.canonical = canonical;
     this.dailySales = dailySales;
@@ -52,6 +58,9 @@ public class DataExplorerQueryImpl implements DataExplorerQuery {
     this.reservations = reservations;
     this.labour = labour;
     this.inventory = inventory;
+    this.payments = payments;
+    this.deletedSales = deletedSales;
+    this.saleItems = saleItems;
   }
 
   @Override
@@ -81,7 +90,10 @@ public class DataExplorerQueryImpl implements DataExplorerQuery {
         new EntityDescriptor("resolved_product_sales", "Product sales", false),
         new EntityDescriptor("resolved_reservation_day", "Reservation day", false),
         new EntityDescriptor("resolved_labour_day", "Labour day", false),
-        new EntityDescriptor("resolved_inventory_day", "Inventory day", false));
+        new EntityDescriptor("resolved_inventory_day", "Inventory day", false),
+        new EntityDescriptor("resolved_payment_day", "Payments", false),
+        new EntityDescriptor("resolved_deleted_sale_day", "Deleted orders", false),
+        new EntityDescriptor("resolved_sale_item_day", "Sale items", false));
   }
 
   @Override
@@ -100,6 +112,12 @@ public class DataExplorerQueryImpl implements DataExplorerQuery {
           page(labour.findAll(pr), page, safeSize, DataExplorerQueryImpl::labourRow);
       case "resolved_inventory_day" ->
           page(inventory.findAll(pr), page, safeSize, DataExplorerQueryImpl::inventoryRow);
+      case "resolved_payment_day" ->
+          page(payments.findAll(pr), page, safeSize, DataExplorerQueryImpl::paymentRow);
+      case "resolved_deleted_sale_day" ->
+          page(deletedSales.findAll(pr), page, safeSize, DataExplorerQueryImpl::deletedSaleRow);
+      case "resolved_sale_item_day" ->
+          page(saleItems.findAll(pr), page, safeSize, DataExplorerQueryImpl::saleItemRow);
       default -> throw new java.util.NoSuchElementException("Unknown resolved domain: " + domainId);
     };
   }
@@ -202,5 +220,48 @@ public class DataExplorerQueryImpl implements DataExplorerQuery {
     }
     resolvedCommon(c, r.resolutionType(), r.authoritativeSource(), r.hasConflict(), r.resolvedAt());
     return row(r.tradingDate().toString(), c);
+  }
+
+  static GenericRow paymentRow(ResolvedPaymentDay r) {
+    Map<String, String> c = new LinkedHashMap<>();
+    c.put("trading_date", r.tradingDate().toString());
+    c.put("payment_type_name", r.paymentTypeName());
+    if (r.amount() != null) {
+      c.put("amount", r.amount().toPlainString());
+    }
+    if (r.tip() != null) {
+      c.put("tip", r.tip().toPlainString());
+    }
+    c.put("payment_count", String.valueOf(r.paymentCount()));
+    resolvedCommon(c, r.resolutionType(), r.authoritativeSource(), r.hasConflict(), r.resolvedAt());
+    return row(r.tradingDate() + "|" + r.paymentTypeName(), c);
+  }
+
+  static GenericRow deletedSaleRow(ResolvedDeletedSaleDay r) {
+    Map<String, String> c = new LinkedHashMap<>();
+    c.put("trading_date", r.tradingDate().toString());
+    c.put("deleted_count", String.valueOf(r.deletedCount()));
+    if (r.totalIncTax() != null) {
+      c.put("total_inc_tax", r.totalIncTax().toPlainString());
+    }
+    if (r.totalTax() != null) {
+      c.put("total_tax", r.totalTax().toPlainString());
+    }
+    resolvedCommon(c, r.resolutionType(), r.authoritativeSource(), r.hasConflict(), r.resolvedAt());
+    return row(r.tradingDate().toString(), c);
+  }
+
+  static GenericRow saleItemRow(ResolvedSaleItemDay r) {
+    Map<String, String> c = new LinkedHashMap<>();
+    c.put("trading_date", r.tradingDate().toString());
+    c.put("category_name", r.categoryName());
+    if (r.quantity() != null) {
+      c.put("quantity", r.quantity().toPlainString());
+    }
+    if (r.amount() != null) {
+      c.put("amount", r.amount().toPlainString());
+    }
+    resolvedCommon(c, r.resolutionType(), r.authoritativeSource(), r.hasConflict(), r.resolvedAt());
+    return row(r.tradingDate() + "|" + r.categoryName(), c);
   }
 }
