@@ -14,7 +14,7 @@ import {
   useNodesState,
   type NodeTypes,
 } from "@xyflow/react";
-import { layoutColumns } from "./layout";
+import { layoutColumns, type FlowDirection } from "./layout";
 import { StepNodeView } from "./step-node";
 import type { ColumnGraph, StepNode, StepNodeData } from "./types";
 
@@ -46,6 +46,10 @@ interface FlowCanvasProps {
   height?: number;
   /** When set, clicking a node with `data.drill` calls this instead of navigating. */
   onDrill?: (id: string) => void;
+  /** Horizontal space between stages; tighter for wide graphs so they stay readable when fitted. */
+  columnGap?: number;
+  /** Left-to-right (default) or top-to-bottom. */
+  direction?: FlowDirection;
 }
 
 /**
@@ -61,9 +65,9 @@ export function FlowCanvas(props: FlowCanvasProps) {
   );
 }
 
-function FlowCanvasInner({ graph, ariaLabel, height = 360, onDrill }: FlowCanvasProps) {
+function FlowCanvasInner({ graph, ariaLabel, height = 360, onDrill, columnGap, direction }: FlowCanvasProps) {
   const router = useRouter();
-  const laid = useMemo(() => layoutColumns(graph), [graph]);
+  const laid = useMemo(() => layoutColumns(graph, { columnGap, direction }), [graph, columnGap, direction]);
   const [nodes, setNodes, onNodesChange] = useNodesState<StepNode>(laid.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(laid.edges);
 
