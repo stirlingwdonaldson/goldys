@@ -442,6 +442,122 @@ export interface ConversationThreadView {
   messages: ConversationMessage[];
 }
 
+/** One current payment tender, for the Payments list endpoint (mirrors `semantic.PaymentRow`). */
+export interface PaymentRow {
+  tradingDate: string;
+  saleNumber: string;
+  paymentTypeName: string | null;
+  paymentTypeCode: string | null;
+  paymentSourceType: string | null;
+  lspayPaymentMode: string | null;
+  clearingAccount: string | null;
+  amount: number | string;
+  tip: number | string;
+  tendered: number | string;
+  surcharge: number | string;
+  paymentCount: number;
+  tipCount: number;
+  reconciled: string;
+  registerCode: string | null;
+  registerName: string | null;
+  staffName: string | null;
+  staffCode: string | null;
+  siteId: string | null;
+  customerName: string | null;
+}
+
+/** One current deleted order, for the Deleted-sales list endpoint (mirrors `semantic.DeletedSaleRow`). */
+export interface DeletedSaleRow {
+  tradingDate: string;
+  saleNumber: string;
+  orderType: string | null;
+  note: string | null;
+  totalIncTax: number | string;
+  totalExTax: number | string;
+  totalTax: number | string;
+  totalCost: number | string | null;
+  openedRegisterName: string | null;
+  deletedRegisterName: string | null;
+  staffName: string | null;
+  deletedByStaffName: string | null;
+  tableNumber: string | null;
+  siteId: string | null;
+  customerName: string | null;
+}
+
+/** One current sale line item, for the Sale-items list endpoint (mirrors `semantic.SaleItemRow`). */
+export interface SaleItemRow {
+  tradingDate: string;
+  saleNumber: string | null;
+  /** The Lightspeed receipt-line id (the backend's `source_record_ref`). */
+  receiptLineId: string;
+  itemName: string | null;
+  productNumber: string | null;
+  sku: string | null;
+  categoryName: string | null;
+  quantitySold: number | null;
+  amount: number | string | null;
+  soldPriceIncTax: number | string | null;
+  totalTax: number | string | null;
+  costIncTax: number | string | null;
+  orderType: string | null;
+  saleType: string | null;
+  staffName: string | null;
+  registerName: string | null;
+  tableNumber: string | null;
+}
+
+/** One date/payment-type's resolved payment mix (mirrors `semantic.PaymentMix`). */
+export interface PaymentMix {
+  tradingDate: string;
+  paymentTypeName: string;
+  amount: number | string;
+  tip: number | string;
+  count: number;
+  hasConflict: boolean;
+}
+
+/** One date's resolved deleted-sale totals (mirrors `semantic.DeletedSaleDay`). */
+export interface DeletedSaleDay {
+  tradingDate: string;
+  count: number;
+  totalIncTax: number | string;
+  totalTax: number | string;
+  hasConflict: boolean;
+}
+
+/** One date/category's resolved sale-item mix (mirrors `semantic.SaleItemMix`). */
+export interface SaleItemMix {
+  tradingDate: string;
+  categoryName: string;
+  quantity: number | string;
+  amount: number | string;
+  hasConflict: boolean;
+}
+
+/** Optional filter for the Payments list (from/to are inclusive ISO dates). */
+export interface PaymentFilter {
+  from?: string;
+  to?: string;
+  paymentType?: string;
+  saleNumber?: string;
+}
+
+/** Optional filter for the Deleted-sales list (from/to are inclusive ISO dates). */
+export interface DeletedSaleFilter {
+  from?: string;
+  to?: string;
+  saleNumber?: string;
+}
+
+/** Optional filter for the Sale-items list (from/to are inclusive ISO dates). */
+export interface SaleItemFilter {
+  from?: string;
+  to?: string;
+  category?: string;
+  saleNumber?: string;
+}
+
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
 export interface Api {
   getDashboardBootstrap(): Promise<DashboardBootstrap>;
@@ -508,6 +624,16 @@ export interface Api {
   listCanonicalRows(entity: string, page: number, size: number): Promise<DataPage<GenericRow>>;
   listResolvedDomains(): Promise<EntityDescriptor[]>;
   listResolvedRows(domain: string, page: number, size: number): Promise<DataPage<GenericRow>>;
+  listPayments(filter: PaymentFilter, page: number, size: number): Promise<DataPage<PaymentRow>>;
+  listDeletedSales(
+    filter: DeletedSaleFilter,
+    page: number,
+    size: number,
+  ): Promise<DataPage<DeletedSaleRow>>;
+  listSaleItems(filter: SaleItemFilter, page: number, size: number): Promise<DataPage<SaleItemRow>>;
+  getPaymentMix(from: string, to: string): Promise<PaymentMix[]>;
+  getDeletedSaleTotals(from: string, to: string): Promise<DeletedSaleDay[]>;
+  getSaleItemMix(from: string, to: string): Promise<SaleItemMix[]>;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */

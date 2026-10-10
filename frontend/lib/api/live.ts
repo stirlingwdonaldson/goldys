@@ -172,4 +172,39 @@ export const liveApi: Api = {
     fetchApi<import("./types").DataPage<import("./types").GenericRow>>(
       `/api/data/resolved/${domain}?page=${page}&size=${size}`,
     ),
+  listPayments: (filter: import("./types").PaymentFilter, page: number, size: number) => {
+    const q = new URLSearchParams({ page: String(page), size: String(size) });
+    if (filter.from) q.set("from", filter.from);
+    if (filter.to) q.set("to", filter.to);
+    if (filter.paymentType) q.set("paymentType", filter.paymentType);
+    if (filter.saleNumber) q.set("saleNumber", filter.saleNumber);
+    return fetchApi<import("./types").DataPage<import("./types").PaymentRow>>(
+      `/api/payments?${q.toString()}`,
+    );
+  },
+  listDeletedSales: (filter: import("./types").DeletedSaleFilter, page: number, size: number) => {
+    const q = new URLSearchParams({ page: String(page), size: String(size) });
+    if (filter.from) q.set("from", filter.from);
+    if (filter.to) q.set("to", filter.to);
+    if (filter.saleNumber) q.set("saleNumber", filter.saleNumber);
+    return fetchApi<import("./types").DataPage<import("./types").DeletedSaleRow>>(
+      `/api/deleted-sales?${q.toString()}`,
+    );
+  },
+  listSaleItems: (filter: import("./types").SaleItemFilter, page: number, size: number) => {
+    const q = new URLSearchParams({ page: String(page), size: String(size) });
+    if (filter.from) q.set("from", filter.from);
+    if (filter.to) q.set("to", filter.to);
+    if (filter.category) q.set("category", filter.category);
+    if (filter.saleNumber) q.set("saleNumber", filter.saleNumber);
+    return fetchApi<import("./types").DataPage<import("./types").SaleItemRow>>(
+      `/api/sale-items?${q.toString()}`,
+    );
+  },
+  getPaymentMix: (from: string, to: string) =>
+    fetchApi<import("./types").PaymentMix[]>(`/api/payments/mix?from=${from}&to=${to}`),
+  getDeletedSaleTotals: (from: string, to: string) =>
+    fetchApi<import("./types").DeletedSaleDay[]>(`/api/deleted-sales/totals?from=${from}&to=${to}`),
+  getSaleItemMix: (from: string, to: string) =>
+    fetchApi<import("./types").SaleItemMix[]>(`/api/sale-items/mix?from=${from}&to=${to}`),
 };
