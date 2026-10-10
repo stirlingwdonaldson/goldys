@@ -1,5 +1,6 @@
 package com.goldys.platform.api;
 
+import com.goldys.platform.connectors.lightspeed.LightspeedAllSalesIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedDeletedSaleIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedPaymentIngestService;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/ingest")
 public class LightspeedIngestController {
+  private final LightspeedAllSalesIngestService allSalesIngestService;
   private final LightspeedIngestService ingestService;
   private final LightspeedPaymentIngestService paymentIngestService;
   private final LightspeedDeletedSaleIngestService deletedSaleIngestService;
@@ -39,6 +41,7 @@ public class LightspeedIngestController {
   private final String webhookToken;
 
   public LightspeedIngestController(
+      LightspeedAllSalesIngestService allSalesIngestService,
       LightspeedIngestService ingestService,
       LightspeedPaymentIngestService paymentIngestService,
       LightspeedDeletedSaleIngestService deletedSaleIngestService,
@@ -46,6 +49,7 @@ public class LightspeedIngestController {
       LightspeedProductIngestService productIngestService,
       LightspeedZReportIngestService zReportIngestService,
       @Value("${lightspeed.webhook-token:}") String webhookToken) {
+    this.allSalesIngestService = allSalesIngestService;
     this.ingestService = ingestService;
     this.paymentIngestService = paymentIngestService;
     this.deletedSaleIngestService = deletedSaleIngestService;
@@ -132,6 +136,19 @@ public class LightspeedIngestController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     saleItemIngestService.ingest(body);
+    return ResponseEntity.accepted().build();
+  }
+
+  @PostMapping("/lightspeed-all-sales")
+  ResponseEntity<Void> lightspeedAllSales(
+      @RequestBody byte[] body,
+      @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+      @RequestParam(value = "token", required = false) String queryToken) {
+    String provided = StringUtils.hasText(token) ? token : queryToken;
+    if (!tokenValid(provided)) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    allSalesIngestService.ingest(body);
     return ResponseEntity.accepted().build();
   }
 

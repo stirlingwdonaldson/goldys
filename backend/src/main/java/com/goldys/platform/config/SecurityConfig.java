@@ -38,6 +38,7 @@ public class SecurityConfig {
             auth.requestMatchers(
                     AntPathRequestMatcher.antMatcher("/api/health"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-all-sales"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-payments"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-deleted-sales"),
@@ -66,6 +67,7 @@ public class SecurityConfig {
         csrf ->
             csrf.ignoringRequestMatchers(
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
+                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-all-sales"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-payments"),
                     AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-deleted-sales"),
