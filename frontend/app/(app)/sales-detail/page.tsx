@@ -5,10 +5,10 @@ import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { LoadingState } from "@/components/states/loading-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EmptyState } from "@/components/states/empty-state";
 import { DateRangeFilter, defaultRange } from "@/components/sales-detail/date-range-filter";
 import { PaymentsTab } from "@/components/sales-detail/payments-tab";
 import { DeletedOrdersTab } from "@/components/sales-detail/deleted-orders-tab";
+import { SaleItemsTab } from "@/components/sales-detail/sale-items-tab";
 
 const TABS = [
   { value: "payments", label: "Payments" },
@@ -63,17 +63,7 @@ function SalesDetail() {
 
       {tab === "payments" ? <PaymentsTab from={range.from} to={range.to} /> : null}
       {tab === "deleted-orders" ? <DeletedOrdersTab from={range.from} to={range.to} /> : null}
-      {tab === "sale-items" ? <SaleItemsTab /> : null}
+      {tab === "sale-items" ? <SaleItemsTab from={range.from} to={range.to} /> : null}
     </div>
-  );
-}
-
-// Placeholder stub. Task 10 replaces this with the real tab component.
-function SaleItemsTab() {
-  return (
-    <EmptyState
-      title="No sale items yet"
-      description="Line-item detail for the selected dates will appear here."
-    />
   );
 }

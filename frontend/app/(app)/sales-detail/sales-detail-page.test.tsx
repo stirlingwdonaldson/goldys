@@ -19,6 +19,10 @@ vi.mock("@/components/sales-detail/deleted-orders-tab", () => ({
   DeletedOrdersTab: () => <div data-testid="deleted-orders-tab" />,
 }));
 
+vi.mock("@/components/sales-detail/sale-items-tab", () => ({
+  SaleItemsTab: () => <div data-testid="sale-items-tab" />,
+}));
+
 beforeEach(() => {
   mockParams.current = new URLSearchParams();
 });
@@ -49,7 +53,7 @@ describe("SalesDetailPage", () => {
   it("deep-links the active tab from the ?tab= search param", () => {
     mockParams.current = new URLSearchParams("tab=sale-items");
     render(<SalesDetailPage />);
-    expect(screen.getByText("No sale items yet")).toBeInTheDocument();
+    expect(screen.getByTestId("sale-items-tab")).toBeInTheDocument();
     expect(screen.queryByTestId("payments-tab")).not.toBeInTheDocument();
   });
 
