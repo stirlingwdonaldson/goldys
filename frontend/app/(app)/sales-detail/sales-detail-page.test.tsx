@@ -23,6 +23,16 @@ vi.mock("@/components/sales-detail/sale-items-tab", () => ({
   SaleItemsTab: () => <div data-testid="sale-items-tab" />,
 }));
 
+// The lineage/relationship views fetch through the Api context and render React Flow;
+// this page test only covers the shell, so they stand in as inert leaves.
+vi.mock("@/components/sales-detail/lineage-graph-view", () => ({
+  LineageGraphView: () => <div data-testid="lineage-graph" />,
+}));
+
+vi.mock("@/components/sales-detail/relationship-graph-view", () => ({
+  RelationshipGraphView: () => <div data-testid="relationship-graph" />,
+}));
+
 beforeEach(() => {
   mockParams.current = new URLSearchParams();
 });
@@ -67,5 +77,12 @@ describe("SalesDetailPage", () => {
     const spanDays =
       (Date.parse(`${to.value}T00:00:00Z`) - Date.parse(`${from.value}T00:00:00Z`)) / 86_400_000;
     expect(spanDays).toBe(29);
+  });
+
+  it("shows the data lineage section and hides the relationship graph until a sale is drilled", () => {
+    render(<SalesDetailPage />);
+    expect(screen.getByRole("heading", { name: "Data lineage" })).toBeInTheDocument();
+    expect(screen.getByTestId("lineage-graph")).toBeInTheDocument();
+    expect(screen.queryByTestId("relationship-graph")).not.toBeInTheDocument();
   });
 });
