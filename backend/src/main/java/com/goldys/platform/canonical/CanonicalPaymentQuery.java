@@ -29,7 +29,7 @@ public class CanonicalPaymentQuery {
 
   /** Current payments whose trading date falls in {@code dates}. */
   public List<PaymentView> currentPaymentsForDates(Collection<LocalDate> dates) {
-    return currentPayments().stream().filter(v -> dates.contains(v.tradingDate())).toList();
+    return repository.findCurrentByTradingDateIn(dates).stream().map(this::toView).toList();
   }
 
   /**
