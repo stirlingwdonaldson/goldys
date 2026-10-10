@@ -124,10 +124,22 @@ describe("buildRelationshipGraph", () => {
     expect(g.columns[1].some((n) => n.id === "deleted")).toBe(false);
   });
 
-  it("returns an empty graph when there are no payments or items", () => {
+  it("returns an empty graph when there are no payments, items, or deleted order", () => {
     const g = buildRelationshipGraph("SALE-1", [], [], null);
     expect(g.columns).toEqual([]);
     expect(g.edges).toEqual([]);
+  });
+
+  it("renders the hub and a deleted-order node for a voided-only sale", () => {
+    const g = buildRelationshipGraph("SALE-1", [], [], deletedOrder("Voided – duplicate", 120));
+    expect(g.columns).toHaveLength(2);
+    expect(g.columns[0]).toHaveLength(1);
+    expect(g.columns[0][0].data.title).toBe("Sale SALE-1");
+    expect(g.columns[1]).toHaveLength(1);
+    expect(g.columns[1][0].id).toBe("deleted");
+    expect(g.columns[1][0].data.title).toBe("Deleted order");
+    expect(g.columns[1][0].data.tone).toBe("fail");
+    expect(g.edges).toEqual([{ source: "sale", target: "deleted" }]);
   });
 
   it("formats payment and item subtitles with currency", () => {

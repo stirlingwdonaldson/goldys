@@ -6,7 +6,9 @@ import { formatCurrency } from "@/lib/format";
 /**
  * The single sale as a hub-and-spokes graph: the sale in the first column, its payment
  * tenders, line items, and (when the sale was voided) its deleted order in the second.
- * An empty sale (no payments and no items) yields an empty graph.
+ * The graph is empty only when there is nothing at all to show — a voided-only sale (a
+ * deleted order with no surviving tenders or items) still renders the hub and its deleted
+ * order.
  */
 export function buildRelationshipGraph(
   saleNumber: string,
@@ -14,7 +16,7 @@ export function buildRelationshipGraph(
   items: SaleItemRow[],
   deletedOrder: DeletedSaleRow | null,
 ): ColumnGraph {
-  if (payments.length === 0 && items.length === 0) {
+  if (payments.length === 0 && items.length === 0 && deletedOrder == null) {
     return { columns: [], edges: [] };
   }
 
