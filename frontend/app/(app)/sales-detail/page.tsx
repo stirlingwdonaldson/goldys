@@ -90,7 +90,9 @@ function SalesDetail() {
       {tab === "payments" ? (
         <PaymentsTab from={range.from} to={range.to} onViewSale={setSelectedSale} />
       ) : null}
-      {tab === "deleted-orders" ? <DeletedOrdersTab from={range.from} to={range.to} /> : null}
+      {tab === "deleted-orders" ? (
+        <DeletedOrdersTab from={range.from} to={range.to} onViewSale={setSelectedSale} />
+      ) : null}
       {tab === "sale-items" ? (
         <SaleItemsTab from={range.from} to={range.to} onViewSale={setSelectedSale} />
       ) : null}
