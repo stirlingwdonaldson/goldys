@@ -29,7 +29,7 @@ public class CanonicalSaleItemQuery {
 
   /** Current sale items whose trading date falls in {@code dates}. */
   public List<SaleItemView> currentSaleItemsForDates(Collection<LocalDate> dates) {
-    return currentSaleItems().stream().filter(v -> dates.contains(v.tradingDate())).toList();
+    return repository.findCurrentByTradingDateIn(dates).stream().map(this::toView).toList();
   }
 
   /**

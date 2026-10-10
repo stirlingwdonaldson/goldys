@@ -29,7 +29,7 @@ public class CanonicalDeletedSaleQuery {
 
   /** Current deleted sales whose trading date falls in {@code dates}. */
   public List<DeletedSaleView> currentDeletedSalesForDates(Collection<LocalDate> dates) {
-    return currentDeletedSales().stream().filter(v -> dates.contains(v.tradingDate())).toList();
+    return repository.findCurrentByTradingDateIn(dates).stream().map(this::toView).toList();
   }
 
   /**

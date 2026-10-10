@@ -2,6 +2,7 @@ package com.goldys.platform.canonical;
 
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,10 @@ interface CanonicalDeletedSaleRepository extends BitemporalRepository<CanonicalD
 
   @Query("select d from CanonicalDeletedSale d where d.supersededAt is null")
   List<CanonicalDeletedSale> findAllCurrent();
+
+  @Query(
+      "select d from CanonicalDeletedSale d where d.supersededAt is null and d.tradingDate in :dates")
+  List<CanonicalDeletedSale> findCurrentByTradingDateIn(Collection<LocalDate> dates);
 
   @Query(
       """

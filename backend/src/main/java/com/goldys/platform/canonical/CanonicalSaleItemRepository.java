@@ -3,6 +3,7 @@ package com.goldys.platform.canonical;
 import jakarta.persistence.LockModeType;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,6 +24,10 @@ interface CanonicalSaleItemRepository extends BitemporalRepository<CanonicalSale
 
   @Query("select s from CanonicalSaleItem s where s.supersededAt is null")
   List<CanonicalSaleItem> findAllCurrent();
+
+  @Query(
+      "select s from CanonicalSaleItem s where s.supersededAt is null and s.tradingDate in :dates")
+  List<CanonicalSaleItem> findCurrentByTradingDateIn(Collection<LocalDate> dates);
 
   @Query(
       "select s from CanonicalSaleItem s where s.logicalEntityId = :logicalId "

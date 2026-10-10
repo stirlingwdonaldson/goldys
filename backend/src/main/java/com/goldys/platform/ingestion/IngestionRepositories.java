@@ -1,9 +1,12 @@
 package com.goldys.platform.ingestion;
 
+import com.goldys.platform.semantic.RawRecordSummary;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -67,6 +70,32 @@ interface RawRecordRepository
   List<RawRecord> findByIngestionRunId(UUID ingestionRunId);
 
   List<RawRecord> findBySourceSystem(String sourceSystem);
+
+  /**
+   * Paged metadata list, deliberately selecting the summary columns only. Never loads {@code
+   * payload_bytes}: some source payloads are hundreds of MB, and fetching them into a list query
+   * OOMs both the JDBC result set and the JVM heap.
+   */
+  @Query(
+      """
+      select new com.goldys.platform.semantic.RawRecordSummary(
+          r.id, r.sourceSystem, r.fetcherIdentity, str(r.fetchMethod), r.contentType,
+          r.characterEncoding, r.fetchedAt, r.payloadByteLength, r.payloadSha256)
+      from RawRecord r
+      where (:source is null or r.sourceSystem = :source)
+        and (:fetcher is null or r.fetcherIdentity = :fetcher)
+        and (:method is null or r.fetchMethod = :method)
+        and r.fetchedAt >= :from
+        and r.fetchedAt <= :to
+      order by r.fetchedAt desc
+      """)
+  Page<RawRecordSummary> findSummaries(
+      @Param("source") String source,
+      @Param("fetcher") String fetcher,
+      @Param("method") FetchMethod method,
+      @Param("from") Instant from,
+      @Param("to") Instant to,
+      Pageable pageable);
 }
 
 interface IngestionStageRepository extends JpaRepository<IngestionStage, UUID> {
