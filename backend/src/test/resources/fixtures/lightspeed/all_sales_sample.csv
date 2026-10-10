@@ -1,0 +1,8 @@
+Reconciliation Reconciliation Date,Sales Data Sale Closed Date,Sales Data Order Type,Sales Data Note,Sales Data Total Inc Tax,Sales Data Total Tax,Sales Data Total Adjustment Inc Tax,Sales Data Total Adjustment Tax
+2026-09-20,2026-09-20,Dine in,,93.00,8.45,0.00,0.00
+2026-09-20,2026-09-20,Delivery,"Name: John Smith
+Mobile: +61400000000
+Pickup option: ASAP (for hot food only within opening hours)",$23.50,$2.14,0.00,0.00
+2026-09-21,2026-09-21,Dine in,,75.00,6.82,-1.46,-0.13
+,2020-12-07,Pickup,,$10.00,$0.91,0.00,0.00
+,,,,,,,
