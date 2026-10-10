@@ -1,7 +1,10 @@
 package com.goldys.platform.api;
 
+import com.goldys.platform.connectors.lightspeed.LightspeedDeletedSaleIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
+import com.goldys.platform.connectors.lightspeed.LightspeedPaymentIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
+import com.goldys.platform.connectors.lightspeed.LightspeedSaleItemIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedZReportIngestService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -28,16 +31,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/ingest")
 public class LightspeedIngestController {
   private final LightspeedIngestService ingestService;
+  private final LightspeedPaymentIngestService paymentIngestService;
+  private final LightspeedDeletedSaleIngestService deletedSaleIngestService;
+  private final LightspeedSaleItemIngestService saleItemIngestService;
   private final LightspeedProductIngestService productIngestService;
   private final LightspeedZReportIngestService zReportIngestService;
   private final String webhookToken;
 
   public LightspeedIngestController(
       LightspeedIngestService ingestService,
+      LightspeedPaymentIngestService paymentIngestService,
+      LightspeedDeletedSaleIngestService deletedSaleIngestService,
+      LightspeedSaleItemIngestService saleItemIngestService,
       LightspeedProductIngestService productIngestService,
       LightspeedZReportIngestService zReportIngestService,
       @Value("${lightspeed.webhook-token:}") String webhookToken) {
     this.ingestService = ingestService;
+    this.paymentIngestService = paymentIngestService;
+    this.deletedSaleIngestService = deletedSaleIngestService;
+    this.saleItemIngestService = saleItemIngestService;
     this.productIngestService = productIngestService;
     this.zReportIngestService = zReportIngestService;
     this.webhookToken = webhookToken;
@@ -81,6 +93,45 @@ public class LightspeedIngestController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     zReportIngestService.ingest(body);
+    return ResponseEntity.accepted().build();
+  }
+
+  @PostMapping("/lightspeed-payments")
+  ResponseEntity<Void> lightspeedPayments(
+      @RequestBody byte[] body,
+      @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+      @RequestParam(value = "token", required = false) String queryToken) {
+    String provided = StringUtils.hasText(token) ? token : queryToken;
+    if (!tokenValid(provided)) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    paymentIngestService.ingest(body);
+    return ResponseEntity.accepted().build();
+  }
+
+  @PostMapping("/lightspeed-deleted-sales")
+  ResponseEntity<Void> lightspeedDeletedSales(
+      @RequestBody byte[] body,
+      @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+      @RequestParam(value = "token", required = false) String queryToken) {
+    String provided = StringUtils.hasText(token) ? token : queryToken;
+    if (!tokenValid(provided)) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    deletedSaleIngestService.ingest(body);
+    return ResponseEntity.accepted().build();
+  }
+
+  @PostMapping("/lightspeed-sale-items")
+  ResponseEntity<Void> lightspeedSaleItems(
+      @RequestBody byte[] body,
+      @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+      @RequestParam(value = "token", required = false) String queryToken) {
+    String provided = StringUtils.hasText(token) ? token : queryToken;
+    if (!tokenValid(provided)) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    saleItemIngestService.ingest(body);
     return ResponseEntity.accepted().build();
   }
 

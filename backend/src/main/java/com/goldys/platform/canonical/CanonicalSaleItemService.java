@@ -1,38 +1,45 @@
 package com.goldys.platform.canonical;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Records canonical sale items, locking the current source fact so concurrent corrections cannot
- * leave two current versions.
- *
- * <p>An unchanged retry returns the existing row rather than appending a new version; a changed
- * fact closes the current row and inserts a successor that shares its logical identity.
+ * Records canonical sale line items, locking the current source fact so concurrent corrections
+ * cannot leave two current versions. The logical identity is the deterministic UUID of the receipt
+ * line id, which Lightspeed exposes and is stable across report re-deliveries.
  */
 @Service
 class CanonicalSaleItemService {
   private static final Clock CLOCK = Clock.systemUTC();
 
   private final CanonicalSaleItemRepository repository;
+  private final ApplicationEventPublisher publisher;
 
-  CanonicalSaleItemService(CanonicalSaleItemRepository repository) {
+  CanonicalSaleItemService(
+      CanonicalSaleItemRepository repository, ApplicationEventPublisher publisher) {
     this.repository = repository;
+    this.publisher = publisher;
   }
 
   @Transactional
   CanonicalSaleItem record(SaleItemInput input) {
-    return recordAt(input, CLOCK.instant());
+    CanonicalSaleItem saved = recordAt(input, CLOCK.instant());
+    publisher.publishEvent(new SaleItemRecorded(input.tradingDate()));
+    return saved;
   }
 
   @Transactional
   CanonicalSaleItem recordAt(SaleItemInput input, Instant recordedAt) {
+    String ref = input.receiptLineId();
+    UUID logicalId = UUID.nameUUIDFromBytes(("sale-item:" + ref).getBytes(StandardCharsets.UTF_8));
     Optional<CanonicalSaleItem> current =
-        repository.lockCurrentSourceFact(input.sourceSystem(), input.sourceRecordRef());
+        repository.lockCurrentSourceFact(input.sourceSystem(), ref);
 
     if (current.isPresent()) {
       CanonicalSaleItem existing = current.get();
@@ -47,27 +54,21 @@ class CanonicalSaleItemService {
           CanonicalSaleItem.create(
               existing.logicalEntityId(),
               input.sourceSystem(),
-              input.sourceRecordRef(),
+              ref,
               input.rawRecordId(),
               recordedAt,
               recordedAt,
-              input.itemName(),
-              input.quantitySold(),
-              input.amount()));
+              input));
     }
 
-    // A new source fact starts with a provisional logical identity; the matching plan may link it
-    // to an existing entity before reconciliation begins.
     return repository.save(
         CanonicalSaleItem.create(
-            UUID.randomUUID(),
+            logicalId,
             input.sourceSystem(),
-            input.sourceRecordRef(),
+            ref,
             input.rawRecordId(),
             recordedAt,
             recordedAt,
-            input.itemName(),
-            input.quantitySold(),
-            input.amount()));
+            input));
   }
 }

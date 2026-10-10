@@ -1,0 +1,4 @@
+Sales Data Receipt Line ID,Sales Data Sale Closed Date,Products POS Category Name,Products Product Name,Products Product Number,Products SKU,Saleline Payments Sale Number,Sales Data Product Quantity,Sales Data Total Inc Tax,Advanced Dimensions Sold Price Inc Tax,Sales Data Total Tax,Sales Data Cost Inc Tax,Sales Data Order Type,Sales Data Sale Type,Staff Sale Closed Staff Name,Register Closed Register Name,Tables Table Number
+LI-1,2026-09-19,Food,Burger,P-100,SKU100,SP-100 0919000001,1,22.00,22.00,2.00,5.00,Dine in,Sale,Example Staff,Goldy's Main Bar,12
+LI-2,2026-09-19,Drinks,Guinness,P-200,SKU200,SP-100 0919000001,2,24.00,12.00,2.18,4.50,Dine in,Sale,Example Staff,Goldy's Main Bar,12
+LI-3,2026-09-20,Drinks,House Wine,P-300,,SP-101 0920000002,1,10.91,10.91,0.99,,Takeaway,Refund,Other Staff,BAR.2,

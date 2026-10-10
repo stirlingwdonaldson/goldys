@@ -4,7 +4,7 @@ How the platform decides that two source records describe the same real-world en
 identity is assigned when no source shares a common ID. This is the design artifact the
 Reconciliation Engine assumes exists before any comparison logic is written (PRD Requirement 7).
 
-All six current canonical entity types are **single-source** today: each has one authoritative
+All current canonical entity types are **single-source** today: each has one authoritative
 source, so there is no cross-source matching to perform. The document still pins, per entity, its
 logical identity, source identity, matching strategy, confidence, and the manual-resolution path —
 so a second source can be added later without re-deriving these decisions.
@@ -80,6 +80,34 @@ so a second source can be added later without re-deriving these decisions.
 
 - **Source:** `CTB` (wastage export — **not yet ingested**).
 - **Logical identity / matching:** deferred with the source, as above.
+
+## Payment (`canonical_payment`)
+
+- **Source:** `LIGHTSPEED` (Insights "all-payments" scheduled-report webhook, `fetch_method=FILE_EXPORT`, `fetcher_identity=lightspeed-payments`).
+- **Logical identity:** `UUID.nameUUIDFromBytes("payment:" + sourceRecordRef)`.
+- **Source identity:** `(source_system = LIGHTSPEED, source_record_ref = sale_number + "|" + payment_type_code + "|" + register_code + "|" + trading_date)`. Composite because Lightspeed exposes no payment id and a single sale can be split across several tenders (same `sale_number`, different `payment_type_code`/register). Provisional — prefer a payment id if Lightspeed ever exposes one.
+- **Matching strategy:** deterministic single source; no cross-source matching.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not yet wired.
+
+## Deleted sale (`canonical_deleted_sale`)
+
+- **Source:** `LIGHTSPEED` (Insights "all-deleted-orders" scheduled-report webhook, `fetch_method=FILE_EXPORT`, `fetcher_identity=lightspeed-deleted-sales`).
+- **Logical identity:** `UUID.nameUUIDFromBytes("deleted-sale:" + saleNumber)`.
+- **Source identity:** `(source_system = LIGHTSPEED, source_record_ref = sale number)` — the sale number is unique in the deleted-orders report.
+- **Matching strategy:** deterministic single source; no cross-source matching.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not yet wired.
+
+## Sale item (`canonical_sale_item`)
+
+- **Source:** `LIGHTSPEED` (Insights "sales-details" scheduled-report webhook, `fetch_method=FILE_EXPORT`, `fetcher_identity=lightspeed-sale-items`).
+- **Logical identity:** `UUID.nameUUIDFromBytes("sale-item:" + receiptLineId)`.
+- **Source identity:** `(source_system = LIGHTSPEED, source_record_ref = receipt line id)` — `salelines.id` is unique.
+- **Matching strategy:** deterministic single source; no cross-source matching.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not yet wired.
+- **Important:** the report must be scheduled **without** the `Product Salelines → Product ID` field; that join silently drops ~92% of rows (see the 2026-10-10 design spec).
 
 ## Unmatched / missing data
 

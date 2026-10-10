@@ -22,6 +22,11 @@ data is unresolved ("display + note": a figure always shows when any resolved da
 | `inventory.stock_on_hand` | Closing stock | Resolved stock-on-hand | stockOnHand | AUD | resolved_inventory_day | — | day | inventory.cost | latest value |
 | `product.sales_amount` | Product sales amount | Resolved product amount | amount | AUD | resolved_product_sales | product | day, week, month | reconciliation.sales | sum |
 | `product.sales_quantity` | Product sales quantity | Resolved product quantity | quantitySold | units | resolved_product_sales | product | day, week, month | reconciliation.sales | sum |
+| `payments.amount` | Payments taken | Resolved payment amount across all tenders | amount | AUD | resolved_payment_day | — | day, week, month | payments.metrics | sum |
+| `payments.tip` | Tips | Resolved tip amount across all tenders | tip | AUD | resolved_payment_day | — | day, week, month | payments.metrics | sum |
+| `deleted_sales.amount` | Deleted sales | Resolved deleted-order amount incl. GST | totalIncTax | AUD | resolved_deleted_sale_day | — | day, week, month | deleted-sales.metrics | sum |
+| `sale_items.amount` | Items sold amount | Resolved line-item amount incl. GST | amount | AUD | resolved_sale_item_day | — | day, week, month | sale-items.metrics | sum |
+| `sale_items.quantity` | Items sold quantity | Resolved line-item quantity | quantity | units | resolved_sale_item_day | — | day, week, month | sale-items.metrics | sum |
 | `reservations.no_show_rate` | No-show rate | no_shows ÷ bookings | no_shows ÷ bookings | % | derived | — | day, week, month | reservations.metrics | null when bookings = 0 |
 | `reservations.booking_to_cover_conversion` | Booking-to-cover conversion | attended ÷ bookings | attended ÷ bookings | % | derived | — | day, week, month | reservations.metrics | null when bookings = 0 |
 | `reservations.avg_party_size` | Average party size | covers ÷ attended | covers ÷ attended | ratio | derived | — | day, week, month | reservations.metrics | null when attended = 0 |
@@ -56,6 +61,10 @@ post-reconciliation value: `sales.gross` / `sales.net` *are* the reconciled figu
   day/week/month; `inventory.stock_on_hand` is day-only (latest value).
 - `product.sales_amount`, `product.sales_quantity` — `resolved_product_sales`, dimension
   `product`, day/week/month.
+- `payments.amount`, `payments.tip` — `resolved_payment_day`, no dimensions, day/week/month.
+- `deleted_sales.amount` — `resolved_deleted_sale_day`, no dimensions, day/week/month.
+- `sale_items.amount`, `sale_items.quantity` — `resolved_sale_item_day`, no dimensions,
+  day/week/month.
 
 ### Derived metrics (spec §3.2)
 

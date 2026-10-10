@@ -30,7 +30,12 @@ public enum MetricId {
   LABOUR_FOH_PERCENT("labour.foh_percent"),
   LABOUR_BOH_PERCENT("labour.boh_percent"),
   INVENTORY_FOOD_COST_PERCENT("inventory.food_cost_percent"),
-  PRODUCT_TOP_SELLERS("product.top_sellers");
+  PRODUCT_TOP_SELLERS("product.top_sellers"),
+  PAYMENTS_AMOUNT("payments.amount"),
+  PAYMENTS_TIP("payments.tip"),
+  DELETED_SALES_AMOUNT("deleted_sales.amount"),
+  SALE_ITEMS_AMOUNT("sale_items.amount"),
+  SALE_ITEMS_QUANTITY("sale_items.quantity");
 
   private final String value;
 

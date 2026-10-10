@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -30,7 +31,26 @@ class CanonicalVersionIntegrationTest {
   @Autowired JdbcTemplate jdbc;
 
   private static SaleItemInput input(String ref, int qty, BigDecimal amount, UUID raw) {
-    return new SaleItemInput("LIGHTSPEED", ref, "Burger", qty, amount, raw);
+    return new SaleItemInput(
+        "LIGHTSPEED",
+        ref,
+        LocalDate.parse("2026-09-19"),
+        null,
+        "Burger",
+        null,
+        null,
+        null,
+        qty,
+        amount,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        raw);
   }
 
   private static BigDecimal money(String value) {

@@ -3,8 +3,11 @@ package com.goldys.platform.api;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.goldys.platform.connectors.lightspeed.LightspeedDeletedSaleIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
+import com.goldys.platform.connectors.lightspeed.LightspeedPaymentIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
+import com.goldys.platform.connectors.lightspeed.LightspeedSaleItemIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedZReportIngestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,9 @@ class LightspeedIngestControllerTest {
   @Autowired MockMvc mvc;
 
   @MockitoBean LightspeedIngestService ingestService;
+  @MockitoBean LightspeedPaymentIngestService paymentIngestService;
+  @MockitoBean LightspeedDeletedSaleIngestService deletedSaleIngestService;
+  @MockitoBean LightspeedSaleItemIngestService saleItemIngestService;
   @MockitoBean LightspeedProductIngestService productIngestService;
   @MockitoBean LightspeedZReportIngestService zReportIngestService;
 
@@ -73,6 +79,60 @@ class LightspeedIngestControllerTest {
   void zReportMissingTokenIsRejected() throws Exception {
     mvc.perform(
             post("/api/ingest/lightspeed-zreport")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void paymentsQueryParamTokenIsAccepted() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-payments?token=test-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isAccepted());
+  }
+
+  @Test
+  void paymentsMissingTokenIsRejected() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-payments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void deletedSalesQueryParamTokenIsAccepted() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-deleted-sales?token=test-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isAccepted());
+  }
+
+  @Test
+  void deletedSalesMissingTokenIsRejected() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-deleted-sales")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void saleItemsQueryParamTokenIsAccepted() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-sale-items?token=test-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isAccepted());
+  }
+
+  @Test
+  void saleItemsMissingTokenIsRejected() throws Exception {
+    mvc.perform(
+            post("/api/ingest/lightspeed-sale-items")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
         .andExpect(status().isUnauthorized());
