@@ -17,8 +17,8 @@ class CanonicalSchemaTest {
   private static final String INSERT_SALE =
       "insert into canonical_sale_item "
           + "(id, logical_entity_id, source_system, source_record_ref, raw_record_id, "
-          + "valid_from, recorded_at, item_name, quantity_sold, amount) "
-          + "values (?, ?, ?, ?, ?, now(), now(), 'Burger', 1, 18.00)";
+          + "valid_from, recorded_at, trading_date, item_name, quantity_sold, amount) "
+          + "values (?, ?, ?, ?, ?, now(), now(), '2026-09-20', 'Burger', 1, 18.00)";
 
   @Autowired JdbcTemplate jdbc;
 
