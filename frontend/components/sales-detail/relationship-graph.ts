@@ -1,4 +1,4 @@
-import { CreditCard, Package, Receipt, Trash2 } from "lucide-react";
+import { CreditCard, Ellipsis, Package, Receipt, Trash2 } from "lucide-react";
 import type { ColumnGraph, FlowTone, StepNodeData } from "@/components/flow/types";
 import type { DeletedSaleRow, PaymentRow, SaleItemRow } from "@/lib/api/types";
 import { formatCurrency } from "@/lib/format";
@@ -15,8 +15,16 @@ export function buildRelationshipGraph(
   payments: PaymentRow[],
   items: SaleItemRow[],
   deletedOrder: DeletedSaleRow | null,
+  truncatedPayments = 0,
+  truncatedItems = 0,
 ): ColumnGraph {
-  if (payments.length === 0 && items.length === 0 && deletedOrder == null) {
+  const hasChildren =
+    payments.length > 0 ||
+    items.length > 0 ||
+    deletedOrder != null ||
+    truncatedPayments > 0 ||
+    truncatedItems > 0;
+  if (!hasChildren) {
     return { columns: [], edges: [] };
   }
 
@@ -68,6 +76,30 @@ export function buildRelationshipGraph(
         subtitle: deletedOrder.note ?? formatCurrency(deletedOrder.totalIncTax),
         icon: Trash2,
         tone: "fail" as FlowTone,
+      },
+    });
+  }
+
+  // The list endpoints cap at a fixed page size; when a sale has more tenders or line
+  // items than fit, signal the truncation with a trailing, non-drillable indicator node
+  // so the graph never silently reads as complete.
+  if (truncatedPayments > 0) {
+    children.push({
+      id: "truncated-payments",
+      data: {
+        title: `+${truncatedPayments} more tenders`,
+        icon: Ellipsis,
+        tone: "neutral",
+      },
+    });
+  }
+  if (truncatedItems > 0) {
+    children.push({
+      id: "truncated-items",
+      data: {
+        title: `+${truncatedItems} more line items`,
+        icon: Ellipsis,
+        tone: "neutral",
       },
     });
   }

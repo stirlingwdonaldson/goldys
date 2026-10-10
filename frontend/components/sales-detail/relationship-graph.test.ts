@@ -156,4 +156,46 @@ describe("buildRelationshipGraph", () => {
     expect(it!.data.title).toBe("Burger");
     expect(it!.data.subtitle).toBe("2 × $18.50");
   });
+
+  it("appends non-drillable indicator nodes when tenders or line items are truncated", () => {
+    const g = buildRelationshipGraph(
+      "SALE-1",
+      [payment("Cash", 40)],
+      [item("Burger", 1, 18.5)],
+      null,
+      12, // 12 more tenders beyond the fetched page
+      3, // 3 more line items beyond the fetched page
+    );
+
+    const payIndicator = g.columns[1].find((n) => n.id === "truncated-payments");
+    expect(payIndicator).toBeDefined();
+    expect(payIndicator!.data.title).toBe("+12 more tenders");
+    expect(payIndicator!.data.tone).toBe("neutral");
+    // Non-drillable: no href and no drill id.
+    expect(payIndicator!.data.href).toBeUndefined();
+    expect(payIndicator!.data.drill).toBeUndefined();
+
+    const itemIndicator = g.columns[1].find((n) => n.id === "truncated-items");
+    expect(itemIndicator).toBeDefined();
+    expect(itemIndicator!.data.title).toBe("+3 more line items");
+    expect(itemIndicator!.data.tone).toBe("neutral");
+    expect(itemIndicator!.data.drill).toBeUndefined();
+
+    // The indicators hang off the hub like every other child.
+    const childIds = g.columns[1].map((n) => n.id);
+    expect(g.edges).toEqual(
+      childIds.map((id) => ({ source: "sale", target: id })),
+    );
+  });
+
+  it("omits the indicator nodes when nothing was truncated", () => {
+    const g = buildRelationshipGraph(
+      "SALE-1",
+      [payment("Cash", 40)],
+      [item("Burger", 1, 18.5)],
+      null,
+    );
+    expect(g.columns[1].some((n) => n.id === "truncated-payments")).toBe(false);
+    expect(g.columns[1].some((n) => n.id === "truncated-items")).toBe(false);
+  });
 });

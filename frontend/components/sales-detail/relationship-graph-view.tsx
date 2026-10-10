@@ -12,6 +12,9 @@ import { buildRelationshipGraph } from "./relationship-graph";
 /** The start of the Lightspeed data; the wide range is cheap thanks to the `sale_number` index. */
 export const DATA_EPOCH = "2020-11-23";
 
+/** The list endpoints' page-size cap; fetched whole so a large sale isn't silently truncated. */
+const FETCH_SIZE = 200;
+
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -20,20 +23,24 @@ interface RelationshipData {
   payments: PaymentRow[];
   items: SaleItemRow[];
   deletedOrder: DeletedSaleRow | null;
+  truncatedPayments: number;
+  truncatedItems: number;
 }
 
 /** Loads one sale's tenders, line items, and (if voided) its deleted order. */
 async function loadRelationship(api: Api, saleNumber: string): Promise<RelationshipData> {
   const to = todayIso();
   const [payments, items, deletedSales] = await Promise.all([
-    api.listPayments({ saleNumber, from: DATA_EPOCH, to }, 0, 50),
-    api.listSaleItems({ saleNumber, from: DATA_EPOCH, to }, 0, 50),
-    api.listDeletedSales({ saleNumber, from: DATA_EPOCH, to }, 0, 50),
+    api.listPayments({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE),
+    api.listSaleItems({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE),
+    api.listDeletedSales({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE),
   ]);
   return {
     payments: payments.items,
     items: items.items,
     deletedOrder: deletedSales.items[0] ?? null,
+    truncatedPayments: Math.max(0, payments.total - payments.items.length),
+    truncatedItems: Math.max(0, items.total - items.items.length),
   };
 }
 
@@ -56,6 +63,8 @@ export function RelationshipGraphView({ saleNumber, apiOverride }: RelationshipG
         data.data?.payments ?? [],
         data.data?.items ?? [],
         data.data?.deletedOrder ?? null,
+        data.data?.truncatedPayments ?? 0,
+        data.data?.truncatedItems ?? 0,
       ),
     [saleNumber, data.data],
   );
