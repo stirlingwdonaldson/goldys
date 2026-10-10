@@ -4,15 +4,11 @@ import com.goldys.platform.semantic.DataPage;
 import com.goldys.platform.semantic.RawFilter;
 import com.goldys.platform.semantic.RawRecordDetail;
 import com.goldys.platform.semantic.RawRecordSummary;
-import jakarta.persistence.criteria.Predicate;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 /**
@@ -23,6 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class RawRecordBrowseQuery {
   private static final int MAX_PAGE_SIZE = 200;
+  private static final Instant FROM_MIN = Instant.parse("1970-01-01T00:00:00Z");
+  private static final Instant TO_MAX = Instant.parse("2999-12-31T23:59:59Z");
   private final RawRecordRepository records;
 
   public RawRecordBrowseQuery(RawRecordRepository records) {
@@ -32,14 +30,15 @@ public class RawRecordBrowseQuery {
   public DataPage<RawRecordSummary> list(RawFilter filter, int page, int size) {
     int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
     var result =
-        records.findAll(
-            spec(filter),
+        records.findSummaries(
+            filter.sourceSystem(),
+            filter.fetcherIdentity(),
+            fetchMethod(filter),
+            filter.from() == null ? FROM_MIN : filter.from(),
+            filter.to() == null ? TO_MAX : filter.to(),
             PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, "fetchedAt")));
     return new DataPage<>(
-        result.getContent().stream().map(RawRecordBrowseQuery::toSummary).toList(),
-        result.getTotalElements(),
-        page,
-        safeSize);
+        result.getContent(), result.getTotalElements(), Math.max(page, 0), safeSize);
   }
 
   public RawRecordDetail byId(UUID id) {
@@ -86,30 +85,6 @@ public class RawRecordBrowseQuery {
         r.fetchedAt(),
         r.payloadByteLength(),
         r.payloadSha256());
-  }
-
-  private static Specification<RawRecord> spec(RawFilter filter) {
-    return (root, query, cb) -> {
-      List<Predicate> predicates = new ArrayList<>();
-      if (filter.sourceSystem() != null) {
-        predicates.add(cb.equal(root.get("sourceSystem"), filter.sourceSystem()));
-      }
-      if (filter.fetcherIdentity() != null) {
-        predicates.add(cb.equal(root.get("fetcherIdentity"), filter.fetcherIdentity()));
-      }
-      FetchMethod method = fetchMethod(filter);
-      if (method != null) {
-        predicates.add(cb.equal(root.get("fetchMethod"), method));
-      }
-      if (filter.from() != null) {
-        predicates.add(
-            cb.greaterThanOrEqualTo(root.get("fetchedAt").as(Instant.class), filter.from()));
-      }
-      if (filter.to() != null) {
-        predicates.add(cb.lessThanOrEqualTo(root.get("fetchedAt").as(Instant.class), filter.to()));
-      }
-      return cb.and(predicates.toArray(new Predicate[0]));
-    };
   }
 
   private static FetchMethod fetchMethod(RawFilter filter) {

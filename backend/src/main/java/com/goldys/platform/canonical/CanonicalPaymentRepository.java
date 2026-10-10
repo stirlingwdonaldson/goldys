@@ -2,6 +2,7 @@ package com.goldys.platform.canonical;
 
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,10 @@ interface CanonicalPaymentRepository extends BitemporalRepository<CanonicalPayme
 
   @Query("select p from CanonicalPayment p where p.supersededAt is null")
   List<CanonicalPayment> findAllCurrent();
+
+  @Query(
+      "select p from CanonicalPayment p where p.supersededAt is null and p.tradingDate in :dates")
+  List<CanonicalPayment> findCurrentByTradingDateIn(Collection<LocalDate> dates);
 
   @Query(
       """
