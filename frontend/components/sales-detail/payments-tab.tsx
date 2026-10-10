@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table/data-table";
@@ -112,6 +112,12 @@ export function PaymentsTab({ from, to, onViewSale, apiOverride }: PaymentsTabPr
     [from, to, paymentType, page],
     apiOverride,
   );
+
+  // A new date range starts a new result set; without this the old page index would
+  // point past the new total and show an empty table.
+  useEffect(() => {
+    setPage(0);
+  }, [from, to]);
 
   // The dropdown offers exactly the tender types present in the resolved mix.
   const paymentTypes = useMemo(() => {

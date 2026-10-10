@@ -130,6 +130,41 @@ describe("PaymentsTab", () => {
     expect(onViewSale).toHaveBeenCalledWith("SALE-1001");
   });
 
+  it("resets the page when the date range changes", async () => {
+    const listPayments = vi.fn(
+      async (_filter: { paymentType?: string }, page: number) => {
+        const items = Array.from({ length: 60 }, (_, i) => ({
+          ...ROWS[0],
+          saleNumber: `SALE-${i}`,
+        }));
+        return { items, total: items.length, page, size: 50 };
+      },
+    );
+    const api = { getPaymentMix: async () => MIX, listPayments } as unknown as Api;
+
+    const { rerender } = render(
+      <DemoModeProvider>
+        <PaymentsTab from="2026-10-01" to="2026-10-05" apiOverride={api} />
+      </DemoModeProvider>,
+    );
+
+    await screen.findByText("SALE-0");
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await waitFor(() =>
+      expect(listPayments).toHaveBeenLastCalledWith(expect.anything(), 1, expect.anything()),
+    );
+
+    // A new range must return to the first page rather than keep the stale page index.
+    rerender(
+      <DemoModeProvider>
+        <PaymentsTab from="2026-11-01" to="2026-11-05" apiOverride={api} />
+      </DemoModeProvider>,
+    );
+    await waitFor(() =>
+      expect(listPayments).toHaveBeenLastCalledWith(expect.anything(), 0, expect.anything()),
+    );
+  });
+
   it("shows the permission-denied state for a NOT_PERMITTED failure", async () => {
     render(
       <DemoModeProvider>
