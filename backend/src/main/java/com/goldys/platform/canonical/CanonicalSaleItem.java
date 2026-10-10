@@ -137,8 +137,20 @@ class CanonicalSaleItem extends BitemporalEntity {
     return tradingDate;
   }
 
+  String saleNumber() {
+    return saleNumber;
+  }
+
   String itemName() {
     return itemName;
+  }
+
+  String productNumber() {
+    return productNumber;
+  }
+
+  String sku() {
+    return sku;
   }
 
   String categoryName() {
@@ -151,5 +163,37 @@ class CanonicalSaleItem extends BitemporalEntity {
 
   BigDecimal amount() {
     return amount;
+  }
+
+  BigDecimal soldPriceIncTax() {
+    return soldPriceIncTax;
+  }
+
+  BigDecimal totalTax() {
+    return totalTax;
+  }
+
+  BigDecimal costIncTax() {
+    return costIncTax;
+  }
+
+  String orderType() {
+    return orderType;
+  }
+
+  String saleType() {
+    return saleType;
+  }
+
+  String staffName() {
+    return staffName;
+  }
+
+  String registerName() {
+    return registerName;
+  }
+
+  String tableNumber() {
+    return tableNumber;
   }
 }

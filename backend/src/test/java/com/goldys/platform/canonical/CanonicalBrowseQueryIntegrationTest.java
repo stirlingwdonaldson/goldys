@@ -31,10 +31,12 @@ class CanonicalBrowseQueryIntegrationTest {
   }
 
   @Test
-  void entitiesListsTenWithShiftAndSaleItemAsPlaceholders() {
-    assertThat(browse.entities()).hasSize(10);
+  void entitiesListsTwelveWithShiftAsPlaceholder() {
+    assertThat(browse.entities()).hasSize(12);
     assertThat(placeholder(browse.entities(), "shift")).isTrue();
-    assertThat(placeholder(browse.entities(), "sale_item")).isTrue();
+    assertThat(placeholder(browse.entities(), "sale_item")).isFalse();
+    assertThat(placeholder(browse.entities(), "payment")).isFalse();
+    assertThat(placeholder(browse.entities(), "deleted_sale")).isFalse();
     assertThat(placeholder(browse.entities(), "invoice")).isFalse();
   }
 
