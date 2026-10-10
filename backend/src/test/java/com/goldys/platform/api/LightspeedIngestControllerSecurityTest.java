@@ -8,6 +8,7 @@ import com.goldys.platform.connectors.lightspeed.LightspeedDeletedSaleIngestServ
 import com.goldys.platform.connectors.lightspeed.LightspeedIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedPaymentIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
+import com.goldys.platform.connectors.lightspeed.LightspeedSaleItemIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedZReportIngestService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ class LightspeedIngestControllerSecurityTest {
   @MockitoBean LightspeedIngestService ingestService;
   @MockitoBean LightspeedPaymentIngestService paymentIngestService;
   @MockitoBean LightspeedDeletedSaleIngestService deletedSaleIngestService;
+  @MockitoBean LightspeedSaleItemIngestService saleItemIngestService;
   @MockitoBean LightspeedProductIngestService productIngestService;
   @MockitoBean LightspeedZReportIngestService zReportIngestService;
 
@@ -61,5 +63,10 @@ class LightspeedIngestControllerSecurityTest {
   void bodylessDeletedSalesWebhookPostIsRejectedNotRedirected() throws Exception {
     mvc.perform(post("/api/ingest/lightspeed-deleted-sales"))
         .andExpect(status().is4xxClientError());
+  }
+
+  @Test
+  void bodylessSaleItemsWebhookPostIsRejectedNotRedirected() throws Exception {
+    mvc.perform(post("/api/ingest/lightspeed-sale-items")).andExpect(status().is4xxClientError());
   }
 }

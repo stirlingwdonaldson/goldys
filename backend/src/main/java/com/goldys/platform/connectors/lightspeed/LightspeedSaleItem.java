@@ -1,20 +1,18 @@
-package com.goldys.platform.canonical;
+package com.goldys.platform.connectors.lightspeed;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.UUID;
 
-/** The normalized candidate for one sale line item, independent of any JPA entity. */
-public record SaleItemInput(
-    String sourceSystem,
+/** One receipt-line row from the Lightspeed Insights "sales-details" scheduled CSV. */
+public record LightspeedSaleItem(
     String receiptLineId,
-    LocalDate tradingDate,
+    LocalDate saleDate,
     String saleNumber,
     String itemName,
     String productNumber,
     String sku,
     String categoryName,
-    Integer quantitySold,
+    Integer quantity,
     BigDecimal amount,
     BigDecimal soldPriceIncTax,
     BigDecimal totalTax,
@@ -23,5 +21,4 @@ public record SaleItemInput(
     String saleType,
     String staffName,
     String registerName,
-    String tableNumber,
-    UUID rawRecordId) {}
+    String tableNumber) {}

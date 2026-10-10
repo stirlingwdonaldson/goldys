@@ -206,3 +206,50 @@ question exists.
 3. Payment `source_type` numeric codes need a name mapping (0=Cash, 1=Manual,
    4=Tyro, 70000=Lightspeed Payments, 1000583=Mr Yum, 1000132=me&u) — store the
    code + the human name, or normalize on ingest?
+
+## 9. Sale items (line items) — added after the data was confirmed complete
+
+Originally deferred because the "sales-details" report looked ~90% incomplete.
+The gap was traced to a single field: **`Product Salelines → Product ID`
+(`product_salelines.product_id`)**. Joining to that link table silently drops
+~92% of rows (1,832,655 → 138,360). Every other field — payments, adjustments,
+reconciliation, product, customer, staff, register — returns the full line
+count. Scheduling the report **without** that one field yields the complete
+~1.83M receipt lines.
+
+### Field mapping (17 columns captured, keyed by display name)
+
+| Display name | Technical field | Canonical field |
+|---|---|---|
+| Sales Data Receipt Line ID | `salelines.id` | **source_record_ref** |
+| Sales Data Sale Closed Date | `salelines.sale_date` | **tradingDate** |
+| Saleline Payments Sale Number | `saleline_payments.sale_number` | saleNumber |
+| Products Product Name | `product.product_name` | itemName |
+| Products Product Number | `product.product_no` | productNumber |
+| Products SKU | `product.sku` | sku |
+| Products POS Category Name | `category.category_name` | categoryName |
+| Sales Data Product Quantity | `salelines.quantity` | quantitySold |
+| Sales Data Total Inc Tax | `salelines.total_inc_tax` | amount (line total) |
+| Advanced Dimensions Sold Price Inc Tax | `salelines.sold_price_inc_tax` | soldPriceIncTax |
+| Sales Data Total Tax | `salelines.total_tax` | totalTax |
+| Sales Data Cost Inc Tax | `salelines.cost_inc_tax` | costIncTax |
+| Sales Data Order Type | `salelines.order_type_addon_type` | orderType |
+| Sales Data Sale Type | `salelines.sale_type` | saleType |
+| Staff Sale Closed Staff Name | `salelines.sale_closed_staff_name` | staffName |
+| Register Closed Register Name | `register_sale_closed.closed_register_name` | registerName |
+| Tables Table Number | `salelines.table_number` | tableNumber |
+
+### Entity + identity
+
+Extends the existing (previously unused) `canonical_sale_item` scaffold
+(V35 adds the line-detail columns). `source_record_ref = receiptLineId`
+(unique); `logicalEntityId = UUID.nameUUIDFromBytes("sale-item:" +
+receiptLineId)`.
+
+### Delivery chunking
+
+The full report is ~1–2 GB (1.83M lines × 116 columns) and does not deliver in
+one webhook. Ingest in date-range chunks (yearly, or half-yearly for the
+busiest years). Lightspeed's "is in the range" filter excludes the end day, so
+add one day to the desired end date. Data range: 2020-11-23 → present.
+

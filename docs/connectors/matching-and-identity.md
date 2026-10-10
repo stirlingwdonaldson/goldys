@@ -99,6 +99,16 @@ so a second source can be added later without re-deriving these decisions.
 - **Confidence:** n/a (single source).
 - **Manual resolution path:** not yet wired.
 
+## Sale item (`canonical_sale_item`)
+
+- **Source:** `LIGHTSPEED` (Insights "sales-details" scheduled-report webhook, `fetch_method=FILE_EXPORT`, `fetcher_identity=lightspeed-sale-items`).
+- **Logical identity:** `UUID.nameUUIDFromBytes("sale-item:" + receiptLineId)`.
+- **Source identity:** `(source_system = LIGHTSPEED, source_record_ref = receipt line id)` — `salelines.id` is unique.
+- **Matching strategy:** deterministic single source; no cross-source matching.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not yet wired.
+- **Important:** the report must be scheduled **without** the `Product Salelines → Product ID` field; that join silently drops ~92% of rows (see the 2026-10-10 design spec).
+
 ## Unmatched / missing data
 
 Where a second source is absent or has no record for an entity, the resolved layer surfaces
