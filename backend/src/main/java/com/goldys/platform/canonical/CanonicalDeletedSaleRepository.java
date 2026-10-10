@@ -25,7 +25,7 @@ interface CanonicalDeletedSaleRepository extends BitemporalRepository<CanonicalD
       where d.supersededAt is null
         and d.tradingDate >= :from and d.tradingDate <= :to
         and (:saleNumber is null or d.saleNumber = :saleNumber)
-      order by d.tradingDate desc
+      order by d.tradingDate desc, d.saleNumber asc
       """)
   Page<CanonicalDeletedSale> findCurrent(
       LocalDate from, LocalDate to, String saleNumber, Pageable pageable);

@@ -36,16 +36,18 @@ class DeletedSaleListIntegrationTest {
     // SALE-1 deleted on DAY_1, later corrected to a higher total (superseded).
     ingest.record(deletedSale(DAY_1, "SALE-1", "80.00"));
     ingest.record(deletedSale(DAY_1, "SALE-1", "100.00"));
+    // SALE-3 deleted the same DAY_1, so same-date ordering (ascending saleNumber) is pinned.
+    ingest.record(deletedSale(DAY_1, "SALE-3", "25.00"));
     // SALE-2 deleted one day later.
     ingest.record(deletedSale(DAY_2, "SALE-2", "40.00"));
 
     DataPage<DeletedSaleRow> all = query.page(null, DAY_1, DAY_2, 0, 50);
 
-    assertThat(all.total()).isEqualTo(2);
-    assertThat(all.items()).hasSize(2);
+    assertThat(all.total()).isEqualTo(3);
+    assertThat(all.items()).hasSize(3);
     assertThat(all.items())
         .extracting(DeletedSaleRow::saleNumber)
-        .containsExactly("SALE-2", "SALE-1");
+        .containsExactly("SALE-2", "SALE-1", "SALE-3");
 
     DataPage<DeletedSaleRow> sale1 = query.page("SALE-1", DAY_1, DAY_2, 0, 50);
     assertThat(sale1.total()).isEqualTo(1);
