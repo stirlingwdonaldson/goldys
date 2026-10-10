@@ -15,10 +15,11 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import { layoutColumns, type FlowDirection } from "./layout";
+import { ColumnHeading } from "./column-heading";
 import { StepNodeView } from "./step-node";
-import type { ColumnGraph, StepNode, StepNodeData } from "./types";
+import type { ColumnGraph, FlowNode, StepNode, StepNodeData } from "./types";
 
-const nodeTypes: NodeTypes = { step: StepNodeView };
+const nodeTypes: NodeTypes = { step: StepNodeView, columnHeading: ColumnHeading };
 
 /**
  * Decides what a node click does: a node with a `drill` id and an `onDrill` handler drills in;
@@ -68,7 +69,7 @@ export function FlowCanvas(props: FlowCanvasProps) {
 function FlowCanvasInner({ graph, ariaLabel, height = 360, onDrill, columnGap, direction }: FlowCanvasProps) {
   const router = useRouter();
   const laid = useMemo(() => layoutColumns(graph, { columnGap, direction }), [graph, columnGap, direction]);
-  const [nodes, setNodes, onNodesChange] = useNodesState<StepNode>(laid.nodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(laid.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(laid.edges);
 
   // Re-seed when the data behind the graph changes (e.g. after a reload); drag positions reset.
@@ -91,6 +92,7 @@ function FlowCanvasInner({ graph, ariaLabel, height = 360, onDrill, columnGap, d
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={(_, node) => {
+          if (node.type !== "step") return;
           const data = (node as StepNode).data;
           resolveNodeClick(data, onDrill, (href) => router.push(href));
         }}

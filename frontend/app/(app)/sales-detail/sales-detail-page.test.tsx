@@ -33,6 +33,10 @@ vi.mock("@/components/sales-detail/relationship-graph-view", () => ({
   RelationshipGraphView: () => <div data-testid="relationship-graph" />,
 }));
 
+vi.mock("@/components/sales-detail/settlement-flow-view", () => ({
+  SettlementFlowView: () => <div data-testid="settlement-flow" />,
+}));
+
 beforeEach(() => {
   mockParams.current = new URLSearchParams();
 });
@@ -84,5 +88,11 @@ describe("SalesDetailPage", () => {
     expect(screen.getByRole("heading", { name: "Data lineage" })).toBeInTheDocument();
     expect(screen.getByTestId("lineage-graph")).toBeInTheDocument();
     expect(screen.queryByTestId("relationship-graph")).not.toBeInTheDocument();
+  });
+
+  it("shows the settlement section above the tabs", () => {
+    render(<SalesDetailPage />);
+    expect(screen.getByRole("heading", { name: "Settlement" })).toBeInTheDocument();
+    expect(screen.getByTestId("settlement-flow")).toBeInTheDocument();
   });
 });
