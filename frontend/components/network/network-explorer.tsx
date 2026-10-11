@@ -27,6 +27,8 @@ interface NetworkExplorerProps {
   initialLocal?: boolean;
   /** Extra content for the focus panel, e.g. an impact summary or "pairs best with". */
   focusPanelExtra?: (node: NetworkNode, graph: NetworkGraph) => ReactNode;
+  /** Ids to keep lit on the canvas while a node is focused, beyond its direct neighbours. */
+  highlightFor?: (node: NetworkNode) => string[];
   height?: number;
 }
 
@@ -44,6 +46,7 @@ export function NetworkExplorer({
   initialFocusId,
   initialLocal = false,
   focusPanelExtra,
+  highlightFor,
   height,
 }: NetworkExplorerProps) {
   const isMobile = useIsMobile();
@@ -60,6 +63,10 @@ export function NetworkExplorer({
   const shown = useMemo(
     () => (local && focused ? neighbourhood(filtered, focused.id, depth) : filtered),
     [local, focused, filtered, depth],
+  );
+  const highlightIds = useMemo(
+    () => (focused && highlightFor ? new Set(highlightFor(focused)) : undefined),
+    [focused, highlightFor],
   );
 
   const toggleKind = (kind: NetworkKind) =>
@@ -157,6 +164,7 @@ export function NetworkExplorer({
             focusId={focused?.id}
             onFocus={setFocusId}
             colourFor={colourFor}
+            highlightIds={highlightIds}
           />
         )}
         <Card className="flex max-h-[30rem] flex-col gap-3 overflow-y-auto p-3">

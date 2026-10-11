@@ -29,7 +29,7 @@ const TOKENS = {
   missing: "--status-missing",
   info: "--status-info",
 } as const;
-type Palette = Record<keyof typeof TOKENS, string>;
+type Palette = Record<keyof typeof TOKENS, string> & { font: string };
 
 function readPalette(): Palette {
   const style = getComputedStyle(document.documentElement);
@@ -37,7 +37,9 @@ function readPalette(): Palette {
     const value = style.getPropertyValue(variable).trim();
     return [key, value ? `hsl(${value})` : "#888"];
   });
-  return Object.fromEntries(entries) as Palette;
+  // A canvas `font` can't use var(...); an invalid value is silently ignored, so resolve it here.
+  const font = getComputedStyle(document.body).fontFamily || "sans-serif";
+  return { ...(Object.fromEntries(entries) as Record<keyof typeof TOKENS, string>), font };
 }
 
 /** The ring colour for a tone; `ok` and `neutral` draw no ring so only problems stand out. */
@@ -69,7 +71,12 @@ interface NetworkCanvasProps {
   onFocus?: (id: string | undefined) => void;
   /** Fill colour per node, e.g. by category or kind. */
   colourFor: (node: NetworkNode) => string;
+  /** Extra nodes to keep lit while a node is focused, e.g. everything downstream of it. */
+  highlightIds?: ReadonlySet<string>;
 }
+
+/** Nodes at least this big (sources, domains, dashboards) are labelled at any zoom. */
+const ALWAYS_LABEL_SIZE = 4;
 
 /**
  * An Obsidian-style force-directed graph: nodes settle under physics, hovering a node keeps it and
@@ -84,6 +91,7 @@ export function NetworkCanvas({
   focusId,
   onFocus,
   colourFor,
+  highlightIds,
 }: NetworkCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<ForceGraphMethods<SimNode, SimLink> | undefined>(undefined);
@@ -124,8 +132,18 @@ export function NetworkCanvas({
   const active = hoverId ?? focusId ?? null;
   const lit = useMemo(() => {
     if (!active) return null;
-    return new Set([active, ...(neighbours.get(active) ?? [])]);
-  }, [active, neighbours]);
+    const ids = new Set([active, ...(neighbours.get(active) ?? [])]);
+    // The extra highlight belongs to the focused node; hovering elsewhere shows that node alone.
+    if (active === focusId) for (const id of highlightIds ?? []) ids.add(id);
+    return ids;
+  }, [active, focusId, neighbours, highlightIds]);
+
+  // Refit whenever the data changes (e.g. switching to a local graph). onEngineStop alone isn't
+  // enough: the library doesn't always report a stop after new data, which left local graphs tiny.
+  useEffect(() => {
+    const timer = window.setTimeout(() => fit(graphRef.current), 700);
+    return () => window.clearTimeout(timer);
+  }, [data, width]);
 
   const endpointId = (end: SimLink["source"]) =>
     typeof end === "object" && end !== null ? String(end.id) : String(end);
@@ -179,10 +197,16 @@ export function NetworkCanvas({
                 ctx.strokeStyle = n.id === focusId ? palette.foreground : ring!;
                 ctx.stroke();
               }
-              const showLabel = scale > 1.6 || n.id === hoverId || n.id === focusId || (lit?.has(String(n.id)) ?? false);
+              const showLabel =
+                scale > 1.6 ||
+                n.size >= ALWAYS_LABEL_SIZE ||
+                n.id === hoverId ||
+                n.id === focusId ||
+                (lit?.has(String(n.id)) ?? false);
               if (showLabel && !dimmed) {
-                const fontSize = Math.max(10 / scale, 2.5);
-                ctx.font = `${fontSize}px var(--font-geist-sans, sans-serif)`;
+                // Constant on-screen size at any zoom.
+                const fontSize = 11 / scale;
+                ctx.font = `${fontSize}px ${palette.font}`;
                 ctx.textAlign = "center";
                 ctx.textBaseline = "top";
                 ctx.fillStyle = palette.foreground;
@@ -205,13 +229,25 @@ export function NetworkCanvas({
                 if (n.x != null && n.y != null) positions[String(n.id)] = { x: n.x, y: n.y };
               }
               writePositions(graphKey, graph, positions);
-              graphRef.current?.zoomToFit(300, 24);
+              fit(graphRef.current);
             }}
           />
         )}
       </div>
     </div>
   );
+}
+
+/** Largest zoom a fit may reach, so a three-node local graph doesn't fill the canvas. */
+const MAX_FIT_ZOOM = 3;
+
+/** Zoom to show every node, but never past {@link MAX_FIT_ZOOM} (`zoomToFit` ignores `maxZoom`). */
+function fit(graph: ForceGraphMethods<SimNode, SimLink> | undefined): void {
+  if (!graph) return;
+  graph.zoomToFit(400, 40);
+  window.setTimeout(() => {
+    if (graph.zoom() > MAX_FIT_ZOOM) graph.zoom(MAX_FIT_ZOOM, 200);
+  }, 450);
 }
 
 /** `hsl(h s% l%)` → `hsl(h s% l% / a)`; other colour strings pass through unchanged. */
