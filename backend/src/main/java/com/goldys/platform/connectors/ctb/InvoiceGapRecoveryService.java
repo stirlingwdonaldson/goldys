@@ -86,7 +86,14 @@ public class InvoiceGapRecoveryService {
         // The export already reconciles; there is no gap to recover.
       }
       case PDF_COMPLETE_CSV_SHORT ->
-          recordGapLines(invoiceNumber, pdf, pdfRawRecordId, pdfLines, unmatchedIndexes);
+          recordGapLines(
+              invoiceNumber,
+              pdfFilename,
+              pdf,
+              pdfRawRecordId,
+              pdfLines,
+              unmatchedIndexes,
+              header.subtract(csvSum));
       case UNRESOLVED, NO_HEADER ->
           flags.flag(
               InvoiceIngestFlagType.INVOICE_EXPORT_INCOMPLETE,
@@ -103,11 +110,43 @@ public class InvoiceGapRecoveryService {
 
   private void recordGapLines(
       String invoiceNumber,
+      String pdfFilename,
       byte[] pdf,
       UUID pdfRawRecordId,
       List<PdfExtractedLine> pdfLines,
-      Set<Integer> unmatchedIndexes) {
+      Set<Integer> unmatchedIndexes,
+      BigDecimal gap) {
+    // The PDF-only lines must account for the CSV shortfall (header − csvSum) without pushing the
+    // invoice total past the header. When their sum would exceed gap beyond TOLERANCE, creating
+    // them would over-state COGS, so flag and create nothing.
+    BigDecimal unmatchedSum =
+        unmatchedIndexes.stream()
+            .map(pdfLines::get)
+            .map(PdfExtractedLine::amountExTax)
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    if (unmatchedSum.subtract(gap).compareTo(TOLERANCE) > 0) {
+      flags.flag(
+          InvoiceIngestFlagType.INVOICE_EXPORT_INCOMPLETE,
+          invoiceNumber,
+          pdfFilename,
+          null,
+          "pdf-only lines sum " + unmatchedSum + " exceeds the " + gap + " shortfall");
+      return;
+    }
+
     LocalDate invoiceDate = resolveInvoiceDate(invoiceNumber);
+    if (invoiceDate == null) {
+      // invoice_date is NOT NULL on the canonical line; never record a line without a date.
+      flags.flag(
+          InvoiceIngestFlagType.INVOICE_EXPORT_INCOMPLETE,
+          invoiceNumber,
+          pdfFilename,
+          null,
+          "cannot resolve invoice date");
+      return;
+    }
+
     String pdfSha256 = sha256Hex(pdf);
     for (int index : unmatchedIndexes) {
       PdfExtractedLine line = pdfLines.get(index);

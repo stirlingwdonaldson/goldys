@@ -156,6 +156,52 @@ class InvoiceGapRecoveryServiceTest {
     verifyNoInteractions(lineIngest);
   }
 
+  @Test
+  void doesNotOverCreateLinesThatExceedTheHeader() {
+    // header 100, csv 40, a single unmatched 100 line: the PDF sum (100) reconciles, but the
+    // unmatched line (100) over-accounts for the 60 shortfall, so nothing may be created.
+    header("100.00");
+    when(inventoryQuery.currentLineTotalForInvoice("INV-7200")).thenReturn(new BigDecimal("40.00"));
+    PdfExtractedLine line =
+        new PdfExtractedLine(
+            "CODE", "desc", BigDecimal.ONE, "KG", null, null, null, new BigDecimal("100.00"));
+
+    service().recover("INV-7200", "a.pdf", pdf, rawId, List.of(line), Set.of(0));
+
+    verify(flags)
+        .flag(
+            eq(InvoiceIngestFlagType.INVOICE_EXPORT_INCOMPLETE),
+            eq("INV-7200"),
+            eq("a.pdf"),
+            eq(null),
+            anyString());
+    verifyNoInteractions(lineIngest);
+  }
+
+  @Test
+  void flagsButCreatesNothingWhenInvoiceDateCannotBeResolved() {
+    header("100.00");
+    when(inventoryQuery.currentLineTotalForInvoice("INV-7200")).thenReturn(new BigDecimal("40.00"));
+    when(invoiceQuery.currentInvoices()).thenReturn(List.of());
+    PdfExtractedLine recovered =
+        new PdfExtractedLine(
+            "CODE", "desc", BigDecimal.ONE, "KG", null, null, null, new BigDecimal("60.00"));
+    PdfExtractedLine alreadyInCsv =
+        new PdfExtractedLine(
+            "CODE2", "desc2", BigDecimal.ONE, "KG", null, null, null, new BigDecimal("40.00"));
+
+    service().recover("INV-7200", "a.pdf", pdf, rawId, List.of(recovered, alreadyInCsv), Set.of(0));
+
+    verify(flags)
+        .flag(
+            eq(InvoiceIngestFlagType.INVOICE_EXPORT_INCOMPLETE),
+            eq("INV-7200"),
+            eq("a.pdf"),
+            eq(null),
+            anyString());
+    verifyNoInteractions(lineIngest);
+  }
+
   private static String sha256(byte[] bytes) {
     try {
       return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
