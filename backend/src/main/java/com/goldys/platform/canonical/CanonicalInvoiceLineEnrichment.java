@@ -106,7 +106,8 @@ public class CanonicalInvoiceLineEnrichment {
             uom,
             unitQuantity,
             packSize,
-            wetAmount));
+            wetAmount,
+            l.origin()));
     return EnrichmentResult.ENRICHED;
   }
 

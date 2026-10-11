@@ -67,7 +67,8 @@ class CanonicalInvoiceLineService {
             input.uom(),
             input.unitQuantity(),
             input.packSize(),
-            input.wetAmount()));
+            input.wetAmount(),
+            input.origin()));
   }
 
   private static UUID logicalIdFor(String invoiceNumber, String sourceRecordRef) {

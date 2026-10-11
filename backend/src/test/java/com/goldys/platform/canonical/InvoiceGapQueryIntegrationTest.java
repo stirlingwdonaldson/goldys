@@ -64,7 +64,8 @@ class InvoiceGapQueryIntegrationTest {
             null,
             null,
             null,
-            rawRecord()));
+            rawRecord(),
+            "CSV"));
     lineIngest.record(
         new InvoiceLineInput(
             "CTB",
@@ -81,7 +82,8 @@ class InvoiceGapQueryIntegrationTest {
             null,
             null,
             null,
-            rawRecord()));
+            rawRecord(),
+            "CSV"));
 
     assertThat(invoiceQuery.amountExTaxForInvoiceNumber("INV-7001"))
         .contains(new BigDecimal("100.0000"));

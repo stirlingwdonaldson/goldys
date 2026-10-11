@@ -104,7 +104,8 @@ public class CtInvoiceCsvIngestService {
                   null, // unitQuantity — PDF enrichment
                   null, // packSize — PDF enrichment
                   null, // wetAmount — PDF enrichment
-                  rawId));
+                  rawId,
+                  "CSV"));
         }
       }
     } catch (RuntimeException e) {

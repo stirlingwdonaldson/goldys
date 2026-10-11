@@ -58,7 +58,8 @@ class CanonicalInvoiceIntegrationTest {
             null,
             null,
             null,
-            before.rawRecordId());
+            before.rawRecordId(),
+            "CSV");
 
     CanonicalInvoiceLine corrected = lineService.record(after);
 
@@ -87,7 +88,8 @@ class CanonicalInvoiceIntegrationTest {
             null,
             null,
             null,
-            rawRecord());
+            rawRecord(),
+            "CSV");
     lineService.record(line);
 
     assertThat(
@@ -133,7 +135,8 @@ class CanonicalInvoiceIntegrationTest {
         null,
         null,
         null,
-        rawRecord());
+        rawRecord(),
+        "CSV");
   }
 
   private UUID rawRecord() {
