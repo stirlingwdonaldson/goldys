@@ -11,9 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Applies PDF enrichment to a canonical line: finds the current line and supersedes it with the
  * PDF's uom/unit_quantity/pack_size/wet_amount, keeping the CSV's quantity/unit_cost/line_total
- * (CSV is authoritative). Matching is on {@code (invoice_number, stock_code)} first, falling back
- * to {@code (invoice_number, normalized description)} when the stock code is absent or unmatched
- * (spec §7).
+ * (CSV is authoritative). The PDF line is mapped to one of the invoice's current lines by {@link
+ * InvoiceLineMatcher}, which tolerates the code/description drift the CTB export and its PDFs
+ * exhibit (synthetic {@code PDF_<hex>} codes, variant codes, noisy descriptions) and refuses to
+ * guess when more than one line wins (spec §7).
  *
  * <p><b>Explicitly per-line transactional:</b> each {@link #enrich} call is its own transaction.
  * This is deliberate rather than a single whole-PDF transaction — it keeps the (potentially slow,
@@ -43,22 +44,40 @@ public class CanonicalInvoiceLineEnrichment {
       BigDecimal unitQuantity,
       BigDecimal packSize,
       BigDecimal wetAmount) {
-    List<CanonicalInvoiceLine> matches =
-        stockCode == null || stockCode.isBlank()
-            ? List.of()
-            : repository.lockCurrentByInvoiceNumberAndStockCode(invoiceNumber, stockCode);
-    if (matches.isEmpty() && description != null && !description.isBlank()) {
-      matches =
-          repository.lockCurrentByInvoiceNumberAndProductNameKey(
-              invoiceNumber, ProductNameKey.normalize(description));
-    }
-    if (matches.isEmpty()) {
-      return EnrichmentResult.NO_MATCH; // no CSV line (pdf-only line)
-    }
-    if (matches.size() > 1) {
-      return EnrichmentResult.AMBIGUOUS; // duplicate code/description; skip rather than guess
-    }
-    CanonicalInvoiceLine l = matches.get(0);
+    List<CanonicalInvoiceLine> lines = repository.lockCurrentByInvoiceNumber(invoiceNumber);
+    InvoiceLineMatcher.Selection selection =
+        InvoiceLineMatcher.select(stockCode, description, candidates(lines));
+    return switch (selection.result()) {
+      case AMBIGUOUS -> EnrichmentResult.AMBIGUOUS; // several lines win; skip rather than guess
+      case NO_MATCH -> EnrichmentResult.NO_MATCH; // no CSV line (pdf-only line)
+      case MATCH ->
+          enrichLine(lines.get(selection.index()), uom, unitQuantity, packSize, wetAmount);
+    };
+  }
+
+  /**
+   * True when the invoice has a current line the given PDF line maps to. Used to retire flags once
+   * a replay with a better matcher resolves them.
+   */
+  @Transactional(readOnly = true)
+  public boolean hasMatch(String invoiceNumber, String stockCode, String description) {
+    List<CanonicalInvoiceLine> lines = repository.findCurrentByInvoiceNumber(invoiceNumber);
+    return InvoiceLineMatcher.select(stockCode, description, candidates(lines)).result()
+        == InvoiceLineMatcher.Result.MATCH;
+  }
+
+  private static List<InvoiceLineMatcher.Candidate> candidates(List<CanonicalInvoiceLine> lines) {
+    return lines.stream()
+        .map(l -> new InvoiceLineMatcher.Candidate(l.stockCode(), l.productNameKey()))
+        .toList();
+  }
+
+  private EnrichmentResult enrichLine(
+      CanonicalInvoiceLine l,
+      String uom,
+      BigDecimal unitQuantity,
+      BigDecimal packSize,
+      BigDecimal wetAmount) {
     if (Objects.equals(l.uom(), uom)
         && sameAmount(l.unitQuantity(), unitQuantity)
         && sameAmount(l.packSize(), packSize)

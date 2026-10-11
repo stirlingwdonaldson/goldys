@@ -115,6 +115,39 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
   }
 
   @Test
+  void enrichesWhenCsvStockCodeIsACtbSyntheticPdfPlaceholder() {
+    // Real production case (invoice 4184820): CTB wrote a synthetic code and a noisy description
+    // for a line whose PDF code/description are clean. Exact matching missed it; the matcher must
+    // not, and must still copy only the PDF fields.
+    lineService.record(
+        new InvoiceLineInput(
+            "CTB",
+            "INV-9006:1",
+            "INV-9006",
+            LocalDate.of(2026, 10, 10),
+            "limes tray set price 4 kg price",
+            "PDF_13ACDAD38B042B",
+            new BigDecimal("1"),
+            new BigDecimal("40.00"),
+            new BigDecimal("40.00"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            rawRecord()));
+
+    enrichment.enrich("INV-9006", "LIMES", "LIMES TRAY", "TRAY", null, null, null);
+
+    assertThat(
+            jdbc.queryForObject(
+                "select uom || '|' || line_total from canonical_invoice_line "
+                    + "where invoice_number = 'INV-9006' and superseded_at is null",
+                String.class))
+        .isEqualTo("TRAY|40.0000");
+  }
+
+  @Test
   void reEnrichingWithSameFieldsDoesNotAppendAVersion() {
     lineService.record(
         new InvoiceLineInput(
