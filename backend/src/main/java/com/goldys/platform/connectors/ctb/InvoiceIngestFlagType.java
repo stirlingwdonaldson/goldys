@@ -22,5 +22,7 @@ public enum InvoiceIngestFlagType {
   /** A CSV row's PDF filename is absent from the drop. */
   MISSING_PDF,
   /** More than one PDF maps to one invoice, or the invoice identity is indeterminate. */
-  AMBIGUOUS_PDF
+  AMBIGUOUS_PDF,
+  /** The CSV export omitted lines the PDF carried, so gap recovery materialised PDF lines. */
+  INVOICE_EXPORT_INCOMPLETE
 }
