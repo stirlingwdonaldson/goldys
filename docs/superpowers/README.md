@@ -42,6 +42,7 @@ Many specs still carry their original `Status: Draft` or `In review` header. The
 | 10-08 | Invoice PDF enrichment | [spec](specs/2026-10-08-pdf-enrichment-design.md) | [plan](plans/2026-10-08-pdf-enrichment.md) | Implemented (V29–V31) |
 | 10-08 | Provenance and trust | [spec](specs/2026-10-08-provenance-trust-design.md) | [plan](plans/2026-10-08-provenance-trust.md) | Implemented |
 | 10-09 | Invoice node graph | [spec](specs/2026-10-09-invoice-node-graph-design.md) | [plan](plans/2026-10-09-invoice-node-graph.md) | Implemented |
+| 10-11 | CTB invoice gap recovery | [spec](specs/2026-10-11-ctb-invoice-gap-recovery-design.md) | — | Design — not implemented |
 
 Some older records reference paths that have since moved. File paths inside them
 have been updated to the current layout (`docs/operations/`, `docs/design/`,
