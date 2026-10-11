@@ -168,6 +168,34 @@ export interface InventoryLineBreakdown {
   cogsBySupplier: SupplierCogs[];
 }
 
+/** One node of a network graph (mirrors `semantic.NetworkNodeDto`). */
+export interface NetworkNodeDto {
+  id: string;
+  /** `source`, `domain`, `metric`, `derived-metric`, `dashboard`, `permission` or `product`. */
+  kind: string;
+  label: string;
+  subtitle: string | null;
+  /** `ok`, `warn`, `fail`, `missing`, `info` or `neutral`. */
+  tone: string;
+  size: number;
+  group: string | null;
+  href: string | null;
+}
+
+/** One undirected edge of a network graph (mirrors `semantic.NetworkEdgeDto`). */
+export interface NetworkEdgeDto {
+  source: string;
+  target: string;
+  weight: number;
+  label: string | null;
+}
+
+/** The platform map (`GET /api/platform-map`, mirrors `semantic.NetworkGraphDto`). */
+export interface NetworkGraphDto {
+  nodes: NetworkNodeDto[];
+  edges: NetworkEdgeDto[];
+}
+
 /** One supplier in the invoice node graph (mirrors `semantic.SupplierGraphNode`). */
 export interface SupplierGraphNode {
   name: string;
@@ -592,6 +620,8 @@ export interface Api {
   ): Promise<InvoiceGraphNode[]>;
   getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]>;
   listInvoiceFlags(): Promise<InvoiceIngestFlag[]>;
+  /** Sources → domains → metrics → dashboards; requires `connectors` READ. */
+  getPlatformMap(): Promise<NetworkGraphDto>;
   getLabourSummary(from: string, to: string): Promise<LabourSummary>;
   listDailyCovers(from: string, to: string): Promise<DailyCovers[]>;
   getProvenance(metricId: string, date: string): Promise<Provenance>;

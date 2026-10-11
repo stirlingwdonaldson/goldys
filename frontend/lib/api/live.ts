@@ -100,6 +100,7 @@ export const liveApi: Api = {
   getInvoiceGraphInvoices,
   getInvoiceGraphLines,
   listInvoiceFlags: () => fetchApi<import("./types").InvoiceIngestFlag[]>("/api/inventory/flags"),
+  getPlatformMap: () => fetchApi<import("./types").NetworkGraphDto>("/api/platform-map"),
   getTopSellers: () => fetchApi<import("./types").TopSeller[]>("/api/dashboard/top-sellers"),
   getSalesTrend: () =>
     fetchApi<import("./types").SalesTrendPoint[]>("/api/dashboard/sales-trend"),
