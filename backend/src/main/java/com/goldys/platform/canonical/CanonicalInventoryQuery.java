@@ -1,8 +1,10 @@
 package com.goldys.platform.canonical;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
@@ -20,6 +22,21 @@ public class CanonicalInventoryQuery {
   /** All current invoice lines, mapped to views. */
   public List<InvoiceLineView> currentInvoiceLines() {
     return lineRepository.findAllCurrent().stream().map(CanonicalInventoryQuery::toView).toList();
+  }
+
+  /**
+   * The sum of the current {@code lineTotal} for one invoice's lines, or {@link BigDecimal#ZERO}
+   * when the invoice has no current lines. Used by the reconciliation path to compare CSV line sums
+   * against header totals.
+   */
+  public BigDecimal currentLineTotalForInvoice(String invoiceNumber) {
+    if (invoiceNumber == null) {
+      return BigDecimal.ZERO;
+    }
+    return lineRepository.findCurrentByInvoiceNumber(invoiceNumber).stream()
+        .map(CanonicalInvoiceLine::lineTotal)
+        .filter(Objects::nonNull)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
   /** Current invoice lines whose invoice date falls in {@code dates}. */

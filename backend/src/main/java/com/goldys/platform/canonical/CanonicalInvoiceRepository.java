@@ -1,6 +1,7 @@
 package com.goldys.platform.canonical;
 
 import jakarta.persistence.LockModeType;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Lock;
@@ -22,6 +23,11 @@ interface CanonicalInvoiceRepository extends BitemporalRepository<CanonicalInvoi
       "select i.pdfFilename from CanonicalInvoice i "
           + "where i.invoiceNumber = :invoiceNumber and i.supersededAt is null")
   List<String> currentPdfFilenamesByInvoiceNumber(String invoiceNumber);
+
+  @Query(
+      "select i.amountExTax from CanonicalInvoice i "
+          + "where i.invoiceNumber = :invoiceNumber and i.supersededAt is null")
+  List<BigDecimal> currentAmountsExTaxByInvoiceNumber(String invoiceNumber);
 
   @Query("select i from CanonicalInvoice i where i.supersededAt is null")
   List<CanonicalInvoice> findAllCurrent();
