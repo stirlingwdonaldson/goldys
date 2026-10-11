@@ -32,6 +32,13 @@ public class LiquorWetInvoicePdfExtractor extends LinearizedColumnPdfExtractor {
       return null;
     }
     return new PdfExtractedLine(
-        cells[1].trim(), cells[2].trim(), quantity, cells[3].trim(), null, null, number(cells[5]));
+        cells[1].trim(),
+        cells[2].trim(),
+        quantity,
+        cells[3].trim(),
+        null,
+        null,
+        number(cells[5]),
+        null);
   }
 }

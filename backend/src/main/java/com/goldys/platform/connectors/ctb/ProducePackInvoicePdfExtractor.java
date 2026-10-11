@@ -28,6 +28,13 @@ public class ProducePackInvoicePdfExtractor extends LinearizedColumnPdfExtractor
       return null;
     }
     return new PdfExtractedLine(
-        cells[1].trim(), cells[2].trim(), quantity, cells[3].trim(), null, number(cells[4]), null);
+        cells[1].trim(),
+        cells[2].trim(),
+        quantity,
+        cells[3].trim(),
+        null,
+        number(cells[4]),
+        null,
+        null);
   }
 }

@@ -43,7 +43,8 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
           + "Return ONLY a single JSON object matching this exact schema, no prose, no markdown:\n"
           + "{\"invoiceNumber\": string|null, \"lines\": [{\"stockCode\": string|null, "
           + "\"description\": string|null, \"quantity\": number|null, \"uom\": string|null, "
-          + "\"unitQuantity\": number|null, \"packSize\": number|null, \"wetAmount\": number|null}]}\n"
+          + "\"unitQuantity\": number|null, \"packSize\": number|null, \"wetAmount\": number|null, "
+          + "\"amountExTax\": number|null}]}\n"
           + "Rules:\n"
           + "- invoiceNumber: the invoice number printed on the invoice, or null if absent.\n"
           + "- stockCode: the supplier's stock/code column value, or null if absent.\n"
@@ -53,6 +54,7 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
           + "- unitQuantity: the per-pack unit count (e.g. 48 in '48 EACH'), or null.\n"
           + "- packSize: the pack/carton size (e.g. 4 in '4 CTN'), or null.\n"
           + "- wetAmount: the Wine Equalisation Tax amount for the line (liquor only), or null.\n"
+          + "- amountExTax: the line total excluding tax, or null if the text does not state it.\n"
           + "Never invent a value. When a field is not present in the text, emit null for it.";
 
   private final ObjectProvider<ChatModel> chatModel;

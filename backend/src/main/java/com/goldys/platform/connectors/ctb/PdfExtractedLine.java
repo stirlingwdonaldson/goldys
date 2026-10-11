@@ -10,4 +10,5 @@ public record PdfExtractedLine(
     String uom,
     BigDecimal unitQuantity,
     BigDecimal packSize,
-    BigDecimal wetAmount) {}
+    BigDecimal wetAmount,
+    BigDecimal amountExTax) {}

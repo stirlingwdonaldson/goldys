@@ -36,7 +36,7 @@ class InvoicePdfEnrichmentServiceTest {
         .thenReturn(
             new PdfExtractedInvoice(
                 "PDF-OWN-NUMBER",
-                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null))));
+                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null))));
     when(invoiceQuery.invoiceNumberForPdfFilename("bruno-1.pdf")).thenReturn(Optional.of("INV-1"));
     when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
@@ -54,7 +54,7 @@ class InvoicePdfEnrichmentServiceTest {
         .thenReturn(
             new PdfExtractedInvoice(
                 "PDF-OWN-NUMBER",
-                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null))));
+                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null))));
     when(invoiceQuery.invoiceNumberForPdfFilename("unknown.pdf")).thenReturn(Optional.empty());
     when(enrichment.enrich(
             eq("PDF-OWN-NUMBER"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
@@ -92,7 +92,7 @@ class InvoicePdfEnrichmentServiceTest {
         .thenReturn(
             new PdfExtractedInvoice(
                 "INV-1",
-                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null))));
+                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null))));
     when(invoiceQuery.currentPdfFilenameForInvoiceNumber("INV-1"))
         .thenReturn(Optional.of("stored.pdf"));
     when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
@@ -116,7 +116,7 @@ class InvoicePdfEnrichmentServiceTest {
         .thenReturn(
             new PdfExtractedInvoice(
                 "INV-1",
-                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null))));
+                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null))));
     when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
     when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.NO_MATCH);
