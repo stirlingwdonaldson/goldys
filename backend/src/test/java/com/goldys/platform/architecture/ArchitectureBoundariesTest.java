@@ -285,4 +285,30 @@ class ArchitectureBoundariesTest {
           .should()
           .dependOnClassesThat(
               resideInAPackage("..dashboard..").and(simpleNameEndingWith("Repository")));
+
+  /**
+   * The platform map is composed from catalogue metadata, config and connector health; it never
+   * reads canonical facts or reconciliation internals.
+   */
+  @ArchTest
+  static final ArchRule platformMapDoesNotReadCanonicalOrReconciliation =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.application.PlatformMapService")
+          .or()
+          .haveFullyQualifiedName("com.goldys.platform.api.PlatformMapController")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..canonical..", "..reconciliation..");
+
+  /** The network graph wire records are semantic contracts, shared by every graph endpoint. */
+  @ArchTest
+  static final ArchRule networkGraphRecordsLiveInSemantic =
+      classes()
+          .that()
+          .haveSimpleNameStartingWith("Network")
+          .and()
+          .haveSimpleNameEndingWith("Dto")
+          .should()
+          .resideInAPackage("..semantic..");
 }

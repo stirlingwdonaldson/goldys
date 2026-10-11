@@ -59,6 +59,7 @@ import type {
   DeletedSaleFilter,
   SaleItemFilter,
 } from "./types";
+import { demoPlatformMap } from "./demo-platform-map";
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -1019,6 +1020,11 @@ export const demoApi: Api = {
         pdfFilename: "inv-1091.pdf",
       },
     ];
+  },
+
+  async getPlatformMap() {
+    await delay(300);
+    return demoPlatformMap();
   },
 
   async listInvoiceFlags(): Promise<InvoiceIngestFlag[]> {

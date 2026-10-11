@@ -7,6 +7,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import Link from "next/link";
+import { PlatformMapView } from "@/components/platform-map/platform-map-view";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProvenanceView } from "./provenance-view";
 
 export interface ProvenanceTarget {
@@ -39,9 +42,27 @@ export function ProvenanceSheet({
                 What each source reported, how the difference was settled, and the figure we show.
               </SheetDescription>
             </SheetHeader>
-            <div className="mt-6">
-              <ProvenanceView {...target} />
-            </div>
+            <Tabs defaultValue="sources" className="mt-6">
+              <TabsList>
+                <TabsTrigger value="sources">Sources</TabsTrigger>
+                <TabsTrigger value="related">Related</TabsTrigger>
+              </TabsList>
+              <TabsContent value="sources" className="mt-4">
+                <ProvenanceView {...target} />
+              </TabsContent>
+              <TabsContent value="related" className="mt-4 flex flex-col gap-3">
+                <p className="text-xs text-muted-foreground">
+                  What this metric is built from and what depends on it.{" "}
+                  <Link
+                    href={`/data-health?metric=${encodeURIComponent(target.metricId)}#dependencies`}
+                    className="font-medium text-foreground underline underline-offset-2"
+                  >
+                    See the full map
+                  </Link>
+                </p>
+                <PlatformMapView initialFocusId={`metric:${target.metricId}`} initialLocal height={360} />
+              </TabsContent>
+            </Tabs>
           </>
         ) : null}
       </SheetContent>

@@ -177,6 +177,16 @@ from earlier drafts still hold:
   states — never infer lineage the backend doesn't report. The canvas is
   read-only, scroll-wheel zoom is off so the page still scrolls, and a node's
   `href` makes it a link.
+- **Relationships — force-directed networks.** When the point is *what is
+  related to what* (what depends on a source, which products sell together),
+  use `components/network/NetworkExplorer` (`react-force-graph-2d`), not a
+  column graph. Build a pure `NetworkGraph` (unit-testable) and pass it in; the
+  explorer adds search, kind filters, a local graph with a depth slider and a
+  focus panel. Fill colour shows the node's *kind* (chart tokens); status shows
+  only as a ring in the same tone vocabulary as flow graphs. The canvas is
+  `aria-hidden` and always paired with `NetworkList`, which is the only view on
+  a phone. Cap what the backend sends (top-N, per-node edge limits): a graph
+  everyone can read beats a complete hairball.
 
 ## 7. Open items
 

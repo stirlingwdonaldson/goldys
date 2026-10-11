@@ -123,6 +123,12 @@ app:
         - DEPUTY
       resolved_inventory_day:
         - CTB
+      resolved_payment_day:
+        - LIGHTSPEED
+      resolved_deleted_sale_day:
+        - LIGHTSPEED
+      resolved_sale_item_day:
+        - LIGHTSPEED
   # Scheduled pull for the CTB connector (the only pull connector on a schedule).
   # "Run now" stays available regardless. Cron is evaluated in Australia/Melbourne.
   scheduling:
