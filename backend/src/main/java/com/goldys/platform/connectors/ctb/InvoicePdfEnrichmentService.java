@@ -4,6 +4,9 @@ import com.goldys.platform.canonical.CanonicalInvoiceLineEnrichment;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.canonical.EnrichmentResult;
 import com.goldys.platform.ingestion.port.DocumentTextExtractor;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /**
@@ -20,21 +23,24 @@ public class InvoicePdfEnrichmentService {
   private final CanonicalInvoiceLineEnrichment enrichment;
   private final CanonicalInvoiceQuery invoiceQuery;
   private final InvoiceIngestFlagService flags;
+  private final InvoiceGapRecoveryService gapRecovery;
 
   public InvoicePdfEnrichmentService(
       DocumentTextExtractor extractor,
       InvoicePdfExtractor parser,
       CanonicalInvoiceLineEnrichment enrichment,
       CanonicalInvoiceQuery invoiceQuery,
-      InvoiceIngestFlagService flags) {
+      InvoiceIngestFlagService flags,
+      InvoiceGapRecoveryService gapRecovery) {
     this.extractor = extractor;
     this.parser = parser;
     this.enrichment = enrichment;
     this.invoiceQuery = invoiceQuery;
     this.flags = flags;
+    this.gapRecovery = gapRecovery;
   }
 
-  public void enrich(byte[] pdf, String pdfFilename) {
+  public void enrich(byte[] pdf, String pdfFilename, UUID pdfRawRecordId) {
     String text = extractor.extractText(pdf, "application/pdf");
     PdfExtractedInvoice parsed = parser.extract(text);
     String invoiceNumber =
@@ -54,7 +60,9 @@ public class InvoicePdfEnrichmentService {
           (text == null || text.isBlank()) ? "no extractable text" : "no lines parsed");
       return;
     }
-    for (PdfExtractedLine line : parsed.lines()) {
+    Set<Integer> unmatchedIndexes = new HashSet<>();
+    for (int i = 0; i < parsed.lines().size(); i++) {
+      PdfExtractedLine line = parsed.lines().get(i);
       EnrichmentResult result =
           enrichment.enrich(
               invoiceNumber,
@@ -65,6 +73,7 @@ public class InvoicePdfEnrichmentService {
               line.packSize(),
               line.wetAmount());
       if (result == EnrichmentResult.NO_MATCH) {
+        unmatchedIndexes.add(i);
         flags.flag(
             InvoiceIngestFlagType.PDF_ONLY_LINE,
             invoiceNumber,
@@ -73,5 +82,9 @@ public class InvoicePdfEnrichmentService {
             line.description());
       }
     }
+    // Gap recovery runs for every enriched PDF (matched or not): the reconciliation is over the
+    // full PDF line sum, so a CSV-short invoice is caught even when some of its lines matched.
+    gapRecovery.recover(
+        invoiceNumber, flagFilename, pdf, pdfRawRecordId, parsed.lines(), unmatchedIndexes);
   }
 }
