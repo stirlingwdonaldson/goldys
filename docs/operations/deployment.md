@@ -153,7 +153,10 @@ restrict `${SFTP_PORT}` to it in the host firewall; otherwise rely on a strong
 CSVs are canonicalized (header + lines → COGS) and are authoritative. PDFs are stored
 raw, then `InvoicePdfEnrichmentService` extracts their line detail and enriches the
 matching CSV lines (joined by the CSV's `pdf_filename`); anomalies are raised as
-invoice ingest flags rather than dropped.
+invoice ingest flags rather than dropped. Gap recovery runs as part of that PDF
+enrichment: when the header total reconciles with the PDF line sum but not the CSV
+line sum, the missing lines are recorded as `origin='PDF'` canonical lines so COGS is
+complete (see `docs/connectors/matching-and-identity.md`).
 
 ## Upgrading
 
@@ -168,7 +171,9 @@ Flyway applies any new migrations on backend start.
 ## Invoice PDF replay (one-off)
 
 When the invoice PDF↔CSV line matcher changes, re-enrich the already-stored PDFs so historical
-lines pick up the fix and the `PDF_ONLY_LINE` flags it resolves are retired:
+lines pick up the fix and the `PDF_ONLY_LINE` flags it resolves are retired. The same replay
+re-runs gap recovery over the stored PDFs (idempotently — the gap-line identity is content-stable,
+so a re-run re-records the same fact and creates no new version):
 
 ```bash
 # set APP_CTB_INVOICE_REENRICH=true in .env.prod, then

@@ -57,14 +57,32 @@ so a second source can be added later without re-deriving these decisions.
   PDF delivered over SFTP.
 - **Logical identity:** `UUID.nameUUIDFromBytes("invoice-line:" + invoiceNumber + ":" +
   sourceRecordRef)`.
-- **Source identity:** `(source_system = CTB, source_record_ref = invoice number + ":" + line seq)`.
+- **Source identity:** two `source_record_ref` shapes, both keyed `(source_system = CTB)`:
+  - CSV-sourced line: `invoice number + ":" + line seq`.
+  - PDF-derived gap line (see below): `invoice number + ":pdf:" + sha256(pdf) + ":" + line seq`.
+- **Origin:** `canonical_invoice_line.origin` is `"CSV"` for export-sourced lines and `"PDF"` for
+  PDF-derived gap lines; `null` is a legacy CSV row (ingested before the column existed) and is
+  treated as CSV for matching and convergence.
 - **Matching strategy:** invoice metadata ↔ lines join on `invoice_number` (exact). PDFs never
-  create lines on their own: `InvoicePdfEnrichmentService` resolves a PDF to its invoice through
-  the CSV's persisted `pdf_filename` (falling back to the invoice number in the PDF text only when
-  the filename does not resolve), then maps each parsed PDF line to one of that invoice's current
-  CSV lines via `InvoiceLineMatcher` and enriches it (stock code, unit of measure, unit quantity,
-  pack size, WET amount). Lines carry a denormalized `invoice_date` so COGS can be bucketed by date
-  from lines alone.
+  create lines on their own except through gap recovery: `InvoicePdfEnrichmentService` resolves a
+  PDF to its invoice through the CSV's persisted `pdf_filename` (falling back to the invoice number
+  in the PDF text only when the filename does not resolve), then maps each parsed PDF line to one of
+  that invoice's current CSV lines via `InvoiceLineMatcher` and enriches it (stock code, unit of
+  measure, unit quantity, pack size, WET amount). Lines carry a denormalized `invoice_date` so COGS
+  can be bucketed by date from lines alone.
+- **Gap recovery (PDF-derived lines):** when the header ex-tax total reconciles with the PDF line
+  sum but not the CSV line sum (a short export), `InvoiceGapRecoveryService` records the CSV's
+  missing PDF lines as canonical `origin='PDF'` lines so COGS is complete. The gap-line identity is
+  `source_record_ref = "{invoiceNumber}:pdf:{pdfSha256}:{lineSeq}"`, anchored to the PDF raw record
+  (`raw_record_id`) and content-stable, so a re-run over the same PDF re-records the same fact and
+  the canonical layer no-ops on `sameFact`. The shared reconciliation tolerance is `0.02` (ex-tax,
+  2 cents): a line sum within that of the header counts as reconciling. Gap lines are created only
+  when the PDF reconciles and the CSV does not, and the created sum never exceeds the header
+  shortfall (`header − csvSum`); otherwise `INVOICE_EXPORT_INCOMPLETE` is flagged and nothing is
+  created.
+- **Convergence:** once the CTB CSV later includes the lines it omitted, the CSV's now-complete
+  lines supersede the PDF-derived gap lines (bitemporally closed, never deleted), so only the CSV
+  lines remain current.
 - **PDF↔line key (tiered, scoped to one invoice):** the CTB export and its PDFs key the same line
   differently, so the matcher tries progressively looser keys — (1) normalized stock code, where
   CTB's synthetic `PDF_<hex>` placeholder counts as "no code"; (2) a unique code variant (one
@@ -79,10 +97,13 @@ so a second source can be added later without re-deriving these decisions.
   PDFs raise `InvoiceIngestFlag` rows instead of being dropped.
 - **Anomaly lifecycle:** `invoice_ingest_flag` is append-only. A flag carries a nullable
   `resolved_at`; the read API returns **open** flags by default (`?status=all` includes resolved).
-  When the matcher improves, a one-off replay (`app.ctb-invoice-reenrich=true`, then unset —
+  `PDF_ONLY_LINE` marks a parsed PDF line the matcher could not unambiguously assign; when the
+  matcher improves, a one-off replay (`app.ctb-invoice-reenrich=true`, then unset —
   `CtbInvoicePdfReenrichRunner`) re-enriches the stored raw PDFs and sets `resolved_at` on the
   `PDF_ONLY_LINE` flags that now resolve, so the work queue reflects reality without deleting the
-  historical anomaly record.
+  historical anomaly record. `INVOICE_EXPORT_INCOMPLETE` marks an invoice whose CSV line sum does
+  not reconcile with the header and whose PDF could not close the gap (missing header, unresolved
+  PDF sum, or PDF-only lines that would over-state the shortfall).
 - **Manual resolution path:** `InventoryOverrideService.save(...)` sets an override for a
   `trading_date`, replacing the computed purchases (COGS).
 
