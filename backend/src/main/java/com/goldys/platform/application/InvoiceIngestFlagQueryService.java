@@ -28,8 +28,14 @@ public class InvoiceIngestFlagQueryService {
     this.permissions = permissions;
   }
 
+  /** Open (unresolved) flags — the default view, so resolved anomalies leave the work queue. */
   public List<InvoiceIngestFlagView> flags(UserRole role) {
+    return flags(role, false);
+  }
+
+  /** Flags for the read API; {@code includeResolved} also returns anomalies already reconciled. */
+  public List<InvoiceIngestFlagView> flags(UserRole role, boolean includeResolved) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return flags.listFlags();
+    return includeResolved ? flags.listFlags() : flags.listOpenFlags();
   }
 }

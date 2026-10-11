@@ -165,6 +165,22 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 
 Flyway applies any new migrations on backend start.
 
+## Invoice PDF replay (one-off)
+
+When the invoice PDF↔CSV line matcher changes, re-enrich the already-stored PDFs so historical
+lines pick up the fix and the `PDF_ONLY_LINE` flags it resolves are retired:
+
+```bash
+# set APP_CTB_INVOICE_REENRICH=true in .env.prod, then
+export SENTRY_RELEASE=$(git rev-parse --short HEAD)
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build backend
+# UNSET APP_CTB_INVOICE_REENRICH again so it does not re-run on every restart
+```
+
+It runs once at startup before the inventory projection rebuild; re-runs are idempotent. Flags are
+never deleted — a resolved one keeps its row and is excluded from the default `GET
+/api/inventory/flags` view (`?status=all` includes resolved).
+
 ## Rollback
 
 ```bash

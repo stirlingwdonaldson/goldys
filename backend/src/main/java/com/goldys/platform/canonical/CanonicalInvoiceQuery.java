@@ -3,6 +3,7 @@ package com.goldys.platform.canonical;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,20 @@ public class CanonicalInvoiceQuery {
       return Optional.empty();
     }
     return repository.currentInvoiceNumberByPdfFilename(pdfFilename);
+  }
+
+  /**
+   * The current PDF filename recorded for an invoice, or empty when unknown. Used by the replay
+   * path to keep flag identities stable when the PDF's own raw record no longer carries its
+   * filename.
+   */
+  public Optional<String> currentPdfFilenameForInvoiceNumber(String invoiceNumber) {
+    if (invoiceNumber == null) {
+      return Optional.empty();
+    }
+    return repository.currentPdfFilenamesByInvoiceNumber(invoiceNumber).stream()
+        .filter(Objects::nonNull)
+        .findFirst();
   }
 
   /** The current supplier name for every current invoice, keyed by invoice number. */

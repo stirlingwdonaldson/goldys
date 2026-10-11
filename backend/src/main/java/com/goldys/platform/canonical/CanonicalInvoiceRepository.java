@@ -18,6 +18,11 @@ interface CanonicalInvoiceRepository extends BitemporalRepository<CanonicalInvoi
           + "where i.pdfFilename = :pdfFilename and i.supersededAt is null")
   Optional<String> currentInvoiceNumberByPdfFilename(String pdfFilename);
 
+  @Query(
+      "select i.pdfFilename from CanonicalInvoice i "
+          + "where i.invoiceNumber = :invoiceNumber and i.supersededAt is null")
+  List<String> currentPdfFilenamesByInvoiceNumber(String invoiceNumber);
+
   @Query("select i from CanonicalInvoice i where i.supersededAt is null")
   List<CanonicalInvoice> findAllCurrent();
 }

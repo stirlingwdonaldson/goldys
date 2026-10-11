@@ -1,6 +1,7 @@
 package com.goldys.platform.api;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -107,7 +108,7 @@ class InventoryControllerTest {
   @Test
   void flagsReturnsRecordedIngestionFlags() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(flags.flags(any()))
+    when(flags.flags(any(), eq(false)))
         .thenReturn(
             List.of(
                 new InvoiceIngestFlagView(
@@ -122,6 +123,15 @@ class InventoryControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].flagType").value("MISSING_PDF"))
         .andExpect(jsonPath("$[0].invoiceNumber").value("INV-1042"));
+  }
+
+  @Test
+  void flagsStatusAllIncludesResolved() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(flags.flags(any(), eq(true))).thenReturn(List.of());
+
+    mvc.perform(get("/api/inventory/flags").param("status", "all").with(authenticated(owner())))
+        .andExpect(status().isOk());
   }
 
   private static AccountUserDetails owner() {
