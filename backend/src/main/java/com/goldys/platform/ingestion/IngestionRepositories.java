@@ -71,6 +71,8 @@ interface RawRecordRepository
 
   List<RawRecord> findBySourceSystem(String sourceSystem);
 
+  List<RawRecord> findBySourceSystemAndContentType(String sourceSystem, String contentType);
+
   /**
    * Paged metadata list, deliberately selecting the summary columns only. Never loads {@code
    * payload_bytes}: some source payloads are hundreds of MB, and fetching them into a list query

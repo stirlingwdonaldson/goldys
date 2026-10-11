@@ -41,6 +41,10 @@ class InvoiceIngestFlag {
   @Column(name = "occurred_at", nullable = false, updatable = false)
   private Instant occurredAt;
 
+  /** When a later matcher/replay resolved this flag; null while it is still open. */
+  @Column(name = "resolved_at")
+  private Instant resolvedAt;
+
   protected InvoiceIngestFlag() {}
 
   private InvoiceIngestFlag(
@@ -70,6 +74,10 @@ class InvoiceIngestFlag {
         flagType, invoiceNumber, pdfFilename, stockCode, detail, occurredAt);
   }
 
+  UUID id() {
+    return id;
+  }
+
   InvoiceIngestFlagType flagType() {
     return flagType;
   }
@@ -92,5 +100,12 @@ class InvoiceIngestFlag {
 
   Instant occurredAt() {
     return occurredAt;
+  }
+
+  /** Marks this flag resolved once; a no-op if it already was (idempotent replay). */
+  void resolve(Instant at) {
+    if (resolvedAt == null) {
+      this.resolvedAt = Objects.requireNonNull(at, "resolvedAt");
+    }
   }
 }

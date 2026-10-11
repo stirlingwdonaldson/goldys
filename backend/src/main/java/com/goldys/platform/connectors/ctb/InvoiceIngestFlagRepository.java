@@ -11,6 +11,12 @@ interface InvoiceIngestFlagRepository extends JpaRepository<InvoiceIngestFlag, U
   /** All flags, most recent first, for the read API. */
   List<InvoiceIngestFlag> findAllByOrderByOccurredAtDesc();
 
+  /** Flags still awaiting resolution, most recent first. */
+  List<InvoiceIngestFlag> findByResolvedAtIsNullOrderByOccurredAtDesc();
+
+  /** Open flags of one type, for the replay reconciliation pass. */
+  List<InvoiceIngestFlag> findByFlagTypeAndResolvedAtIsNull(InvoiceIngestFlagType flagType);
+
   /**
    * True when an equivalent flag already exists, so a re-pull does not pile up duplicates. Each
    * nullable identity column is matched with explicit {@code IS NULL} handling — a derived {@code

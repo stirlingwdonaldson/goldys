@@ -39,11 +39,17 @@ public class InvoicePdfEnrichmentService {
     PdfExtractedInvoice parsed = parser.extract(text);
     String invoiceNumber =
         invoiceQuery.invoiceNumberForPdfFilename(pdfFilename).orElse(parsed.invoiceNumber());
+    // A replayed PDF has no filename on its raw record; fall back to the invoice's stored
+    // pdf_filename so flag identities stay stable across the live and replay paths.
+    String flagFilename =
+        pdfFilename != null
+            ? pdfFilename
+            : invoiceQuery.currentPdfFilenameForInvoiceNumber(invoiceNumber).orElse(null);
     if (parsed.lines().isEmpty()) {
       flags.flag(
           InvoiceIngestFlagType.PDF_UNPARSEABLE,
           invoiceNumber,
-          pdfFilename,
+          flagFilename,
           null,
           (text == null || text.isBlank()) ? "no extractable text" : "no lines parsed");
       return;
@@ -62,7 +68,7 @@ public class InvoicePdfEnrichmentService {
         flags.flag(
             InvoiceIngestFlagType.PDF_ONLY_LINE,
             invoiceNumber,
-            pdfFilename,
+            flagFilename,
             line.stockCode(),
             line.description());
       }

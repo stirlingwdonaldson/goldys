@@ -84,6 +84,32 @@ class InvoicePdfEnrichmentServiceTest {
   }
 
   @Test
+  void fallsBackToTheStoredInvoiceFilenameForFlagIdentityWhenReplayedWithoutOne() {
+    // During a replay the raw PDF record has no filename, so the flag must reuse the invoice's
+    // stored pdf_filename or a resolved flag would be re-created under a different identity.
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text"))
+        .thenReturn(
+            new PdfExtractedInvoice(
+                "INV-1",
+                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null))));
+    when(invoiceQuery.currentPdfFilenameForInvoiceNumber("INV-1"))
+        .thenReturn(Optional.of("stored.pdf"));
+    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+        .thenReturn(EnrichmentResult.NO_MATCH);
+
+    service().enrich(new byte[] {1}, null);
+
+    verify(flags)
+        .flag(
+            eq(InvoiceIngestFlagType.PDF_ONLY_LINE),
+            eq("INV-1"),
+            eq("stored.pdf"),
+            eq("CODE"),
+            eq("desc"));
+  }
+
+  @Test
   void flagsPdfOnlyLineWhenNoCsvLineMatches() {
     when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
     when(parser.extract("text"))
