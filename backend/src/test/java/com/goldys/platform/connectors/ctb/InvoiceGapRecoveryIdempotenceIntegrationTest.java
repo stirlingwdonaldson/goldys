@@ -25,10 +25,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Gap recovery is idempotent: re-running {@link InvoiceGapRecoveryService#recover} over the same
- * invoice, PDF bytes and parsed lines re-records the same gap-line identity, so the canonical layer
- * no-ops on {@code sameFact}. A second identical record neither supersedes the first (no version
- * churn) nor changes the invoice's current line total.
+ * Gap recovery is idempotent. On the first call the header (100) reconciles with the PDF sum but
+ * the CSV line sum (40) is short, so one {@code origin='PDF'} gap line is recorded. On the second
+ * call, {@code recover} recomputes the CSV line sum as the current line total — which now includes
+ * that PDF gap line, making it 100 and matching the header — so {@code classify} returns {@code
+ * CSV_COMPLETE} and it returns before reaching {@code lineIngest.record}. No second line is
+ * attempted, so the invoice's current line total is unchanged.
  */
 @SpringBootTest
 @Import(PostgresContainerConfiguration.class)
@@ -122,7 +124,8 @@ class InvoiceGapRecoveryIdempotenceIntegrationTest {
         Set.of(0));
 
     // Exactly one current PDF-origin line for that identity, and no historical version: the second
-    // recover re-recorded the same fact, so sameFact held and no supersede+reinsert happened.
+    // recover saw the invoice as CSV-complete (the first PDF gap line makes the current line total
+    // match the header) and returned before recording, so no second line was ever attempted.
     assertThat(
             jdbc.queryForObject(
                 "select count(*) from canonical_invoice_line "

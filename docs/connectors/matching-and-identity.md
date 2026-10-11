@@ -74,12 +74,13 @@ so a second source can be added later without re-deriving these decisions.
   sum but not the CSV line sum (a short export), `InvoiceGapRecoveryService` records the CSV's
   missing PDF lines as canonical `origin='PDF'` lines so COGS is complete. The gap-line identity is
   `source_record_ref = "{invoiceNumber}:pdf:{pdfSha256}:{lineSeq}"`, anchored to the PDF raw record
-  (`raw_record_id`) and content-stable, so a re-run over the same PDF re-records the same fact and
-  the canonical layer no-ops on `sameFact`. The shared reconciliation tolerance is `0.02` (ex-tax,
+  (`raw_record_id`). A re-run over the same PDF is a no-op: the re-computed line sum now includes
+  the gap line already recorded, so the invoice reconciles as CSV-complete and nothing new is
+  created. The shared reconciliation tolerance is `0.02` (ex-tax,
   2 cents): a line sum within that of the header counts as reconciling. Gap lines are created only
-  when the PDF reconciles and the CSV does not, and the created sum never exceeds the header
-  shortfall (`header − csvSum`); otherwise `INVOICE_EXPORT_INCOMPLETE` is flagged and nothing is
-  created.
+  when the PDF reconciles and the CSV does not, and the created sum does not exceed the header
+  shortfall (`header − csvSum`) beyond the tolerance; otherwise `INVOICE_EXPORT_INCOMPLETE` is
+  flagged and nothing is created.
 - **Convergence:** once the CTB CSV later includes the lines it omitted, the CSV's now-complete
   lines supersede the PDF-derived gap lines (bitemporally closed, never deleted), so only the CSV
   lines remain current.
@@ -103,7 +104,7 @@ so a second source can be added later without re-deriving these decisions.
   `PDF_ONLY_LINE` flags that now resolve, so the work queue reflects reality without deleting the
   historical anomaly record. `INVOICE_EXPORT_INCOMPLETE` marks an invoice whose CSV line sum does
   not reconcile with the header and whose PDF could not close the gap (missing header, unresolved
-  PDF sum, or PDF-only lines that would over-state the shortfall).
+  PDF sum, PDF-only lines that would over-state the shortfall, or no resolvable invoice date).
 - **Manual resolution path:** `InventoryOverrideService.save(...)` sets an override for a
   `trading_date`, replacing the computed purchases (COGS).
 
