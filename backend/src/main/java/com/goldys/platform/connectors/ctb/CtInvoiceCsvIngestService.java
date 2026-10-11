@@ -1,7 +1,11 @@
 package com.goldys.platform.connectors.ctb;
 
+import com.goldys.platform.canonical.CanonicalInventoryQuery;
 import com.goldys.platform.canonical.CanonicalInvoiceIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceLineIngest;
+import com.goldys.platform.canonical.CanonicalInvoiceQuery;
+import com.goldys.platform.canonical.InvoiceExportReconciler;
+import com.goldys.platform.canonical.InvoiceExportReconciler.Outcome;
 import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
 import com.goldys.platform.canonical.ProductNameKey;
@@ -22,23 +26,36 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class CtInvoiceCsvIngestService {
+  /**
+   * Ex-tax reconciliation tolerance (2 cents). Must stay in step with the recovery tolerance in
+   * {@link InvoiceGapRecoveryService}: convergence reuses the same "does the CSV line sum reconcile
+   * with the header" test, so a drift between the two would converge on a different signal.
+   */
+  private static final BigDecimal TOLERANCE = new BigDecimal("0.02");
+
   private final IngestionService ingestion;
   private final CtInvoiceCsvParser parser;
   private final CanonicalInvoiceIngest canonical;
   private final CanonicalInvoiceLineIngest lineCanonical;
   private final InvoiceIngestFlagService flags;
+  private final CanonicalInvoiceQuery invoiceQuery;
+  private final CanonicalInventoryQuery inventoryQuery;
 
   public CtInvoiceCsvIngestService(
       IngestionService ingestion,
       CtInvoiceCsvParser parser,
       CanonicalInvoiceIngest canonical,
       CanonicalInvoiceLineIngest lineCanonical,
-      InvoiceIngestFlagService flags) {
+      InvoiceIngestFlagService flags,
+      CanonicalInvoiceQuery invoiceQuery,
+      CanonicalInventoryQuery inventoryQuery) {
     this.ingestion = ingestion;
     this.parser = parser;
     this.canonical = canonical;
     this.lineCanonical = lineCanonical;
     this.flags = flags;
+    this.invoiceQuery = invoiceQuery;
+    this.inventoryQuery = inventoryQuery;
   }
 
   public void ingest(byte[] csv) {
@@ -107,6 +124,8 @@ public class CtInvoiceCsvIngestService {
                   rawId,
                   "CSV"));
         }
+
+        convergePdfLinesIfCsvComplete(invoice.invoiceNumber());
       }
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
@@ -121,6 +140,26 @@ public class CtInvoiceCsvIngestService {
   /** The invoice's PDF filename (first-seen), or null when the CSV references none. */
   private static String firstPdfFilename(CtInvoice invoice) {
     return invoice.pdfFilenames().isEmpty() ? null : invoice.pdfFilenames().get(0);
+  }
+
+  /**
+   * Convergence: once the CSV now includes an invoice's previously-missing lines, the PDF-derived
+   * lines gap recovery recorded for that invoice are superseded so they stop contributing (no
+   * double count). The check runs after the header and lines are recorded, so the new CSV lines are
+   * visible to the queries in the same ingest call. A missing header short-circuits (nothing to
+   * reconcile against), and the PDF sum is passed as {@code ZERO} — convergence only needs the
+   * CSV-complete signal, so the PDF branch of the classification is inert.
+   */
+  private void convergePdfLinesIfCsvComplete(String invoiceNumber) {
+    BigDecimal header = invoiceQuery.amountExTaxForInvoiceNumber(invoiceNumber).orElse(null);
+    if (header == null) {
+      return;
+    }
+    BigDecimal csvSum = inventoryQuery.currentLineTotalForInvoice(invoiceNumber);
+    Outcome outcome = InvoiceExportReconciler.classify(header, csvSum, BigDecimal.ZERO, TOLERANCE);
+    if (outcome == Outcome.CSV_COMPLETE) {
+      lineCanonical.supersedePdfOriginLines(invoiceNumber);
+    }
   }
 
   /**

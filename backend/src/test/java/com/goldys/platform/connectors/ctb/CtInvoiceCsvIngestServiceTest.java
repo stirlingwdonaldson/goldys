@@ -8,8 +8,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.goldys.platform.canonical.CanonicalInventoryQuery;
 import com.goldys.platform.canonical.CanonicalInvoiceIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceLineIngest;
+import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
 import com.goldys.platform.ingestion.IngestionService;
@@ -17,6 +19,7 @@ import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,10 +34,18 @@ class CtInvoiceCsvIngestServiceTest {
   @Mock CanonicalInvoiceIngest canonical;
   @Mock CanonicalInvoiceLineIngest lineCanonical;
   @Mock InvoiceIngestFlagService flags;
+  @Mock CanonicalInvoiceQuery invoiceQuery;
+  @Mock CanonicalInventoryQuery inventoryQuery;
 
   private CtInvoiceCsvIngestService service() {
     return new CtInvoiceCsvIngestService(
-        ingestion, new CtInvoiceCsvParser(), canonical, lineCanonical, flags);
+        ingestion,
+        new CtInvoiceCsvParser(),
+        canonical,
+        lineCanonical,
+        flags,
+        invoiceQuery,
+        inventoryQuery);
   }
 
   @Test
@@ -140,5 +151,23 @@ class CtInvoiceCsvIngestServiceTest {
 
     verify(flags)
         .flag(eq(InvoiceIngestFlagType.AMBIGUOUS_PDF), eq("INV-1"), isNull(), isNull(), any());
+  }
+
+  @Test
+  void supersedesPdfLinesWhenTheCsvNowReconciles() {
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(UUID.randomUUID());
+    when(invoiceQuery.amountExTaxForInvoiceNumber("INV-1"))
+        .thenReturn(Optional.of(new BigDecimal("130.00")));
+    when(inventoryQuery.currentLineTotalForInvoice("INV-1")).thenReturn(new BigDecimal("130.00"));
+    byte[] csv =
+        ("Invoice,Supplier,Date,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
+                + "INV-1,Bruno's,2026-09-20,STK-7,Beer,1 EACH,120.00\n"
+                + "INV-1,Bruno's,2026-09-20,STK-8,Chips,2 EACH,10.00\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    service().ingest(csv);
+
+    verify(lineCanonical).supersedePdfOriginLines("INV-1");
   }
 }

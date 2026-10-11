@@ -14,4 +14,12 @@ public class CanonicalInvoiceLineIngest {
   public void record(InvoiceLineInput input) {
     service.record(input);
   }
+
+  /**
+   * Closes the current PDF-derived lines of one invoice (supersede, never delete), so the CSV's
+   * now-complete lines are the sole contributors. Returns the number of lines closed.
+   */
+  public int supersedePdfOriginLines(String invoiceNumber) {
+    return service.supersedePdfOriginLines(invoiceNumber);
+  }
 }

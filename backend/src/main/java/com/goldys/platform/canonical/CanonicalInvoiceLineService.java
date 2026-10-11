@@ -3,6 +3,7 @@ package com.goldys.platform.canonical;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
@@ -74,5 +75,23 @@ class CanonicalInvoiceLineService {
   private static UUID logicalIdFor(String invoiceNumber, String sourceRecordRef) {
     return UUID.nameUUIDFromBytes(
         ("invoice-line:" + invoiceNumber + ":" + sourceRecordRef).getBytes(StandardCharsets.UTF_8));
+  }
+
+  /**
+   * Closes every current PDF-derived line of one invoice (bitemporal supersede, never delete) and
+   * publishes a re-projection event per affected date, so the resolved COGS for those dates no
+   * longer counts the PDF gap lines. Returns the number of lines closed.
+   */
+  @Transactional
+  int supersedePdfOriginLines(String invoiceNumber) {
+    Instant now = CLOCK.instant();
+    List<CanonicalInvoiceLine> pdfLines =
+        repository.findCurrentPdfOriginByInvoiceNumber(invoiceNumber);
+    for (CanonicalInvoiceLine line : pdfLines) {
+      line.supersede(now);
+      repository.saveAndFlush(line);
+      publisher.publishEvent(new InvoiceLineRecorded(line.invoiceDate()));
+    }
+    return pdfLines.size();
   }
 }
