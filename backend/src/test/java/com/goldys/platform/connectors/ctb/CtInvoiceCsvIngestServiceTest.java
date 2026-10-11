@@ -159,7 +159,8 @@ class CtInvoiceCsvIngestServiceTest {
         .thenReturn(UUID.randomUUID());
     when(invoiceQuery.amountExTaxForInvoiceNumber("INV-1"))
         .thenReturn(Optional.of(new BigDecimal("130.00")));
-    when(inventoryQuery.currentLineTotalForInvoice("INV-1")).thenReturn(new BigDecimal("130.00"));
+    when(inventoryQuery.currentCsvLineTotalForInvoice("INV-1"))
+        .thenReturn(new BigDecimal("130.00"));
     byte[] csv =
         ("Invoice,Supplier,Date,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
                 + "INV-1,Bruno's,2026-09-20,STK-7,Beer,1 EACH,120.00\n"

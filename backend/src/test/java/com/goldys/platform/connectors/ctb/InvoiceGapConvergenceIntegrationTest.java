@@ -2,10 +2,14 @@ package com.goldys.platform.connectors.ctb;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.goldys.platform.canonical.CanonicalInventoryQuery;
+import com.goldys.platform.canonical.CanonicalInvoiceIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceLineIngest;
+import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,11 +29,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 class InvoiceGapConvergenceIntegrationTest {
 
   @Autowired JdbcTemplate jdbc;
+  @Autowired CanonicalInvoiceIngest invoiceIngest;
   @Autowired CanonicalInvoiceLineIngest lineIngest;
+  @Autowired CanonicalInventoryQuery inventoryQuery;
+  @Autowired CtInvoiceCsvIngestService csvIngest;
 
   @BeforeEach
   void clean() {
     jdbc.update("truncate table canonical_invoice_line");
+    jdbc.update("truncate table canonical_invoice");
+    jdbc.update("truncate table invoice_ingest_flag");
   }
 
   @Test
@@ -66,6 +75,48 @@ class InvoiceGapConvergenceIntegrationTest {
     lineIngest.record(line("INV-7301", LocalDate.of(2026, 10, 1), "60.00", "CSV", "INV-7301:1"));
 
     assertThat(lineIngest.supersedePdfOriginLines("INV-7301")).isZero();
+  }
+
+  @Test
+  void csvIngestSupersedesPdfLinesWhenTheCsvBecomesComplete() {
+    LocalDate invoiceDate = LocalDate.of(2026, 10, 1);
+    // Pre-convergence state (after gap recovery): header 100, one CSV line 40, one PDF gap line 60.
+    invoiceIngest.record(
+        new InvoiceInput(
+            "CTB",
+            "INV-7302",
+            "Bruno's",
+            invoiceDate,
+            null,
+            new BigDecimal("100.00"),
+            null,
+            null,
+            null,
+            new BigDecimal("100.00"),
+            null,
+            null,
+            null,
+            null,
+            rawRecord()));
+    lineIngest.record(line("INV-7302", invoiceDate, "40.00", "CSV", "INV-7302:1"));
+    lineIngest.record(line("INV-7302", invoiceDate, "60.00", "PDF", "INV-7302:pdf:1"));
+
+    // The fixed CSV now carries both lines (40 + 60 = 100) and the header total 100.
+    byte[] csv =
+        ("Invoice,Supplier,Date,StockCode,StockDescription,LineQuantity,LineTotalExTax,InvoiceTotalExTax\n"
+                + "INV-7302,Bruno's,2026-10-01,STK-7,Beer,1 EACH,40.00,100.00\n"
+                + "INV-7302,Bruno's,2026-10-01,STK-8,Chips,1 EACH,60.00,100.00\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    csvIngest.ingest(csv);
+
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from canonical_invoice_line "
+                    + "where invoice_number='INV-7302' and origin='PDF' and superseded_at is not null",
+                Integer.class))
+        .isEqualTo(1);
+    assertThat(inventoryQuery.currentLineTotalForInvoice("INV-7302")).isEqualByComparingTo("100");
   }
 
   private InvoiceLineInput line(

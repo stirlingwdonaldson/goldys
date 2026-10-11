@@ -155,7 +155,11 @@ public class CtInvoiceCsvIngestService {
     if (header == null) {
       return;
     }
-    BigDecimal csvSum = inventoryQuery.currentLineTotalForInvoice(invoiceNumber);
+    // Compare the CSV-only line total, not the all-lines total: the PDF gap lines are still
+    // current at this point, and summing them too would over-count the CSV shortfall (both a false
+    // negative — the fixed CSV never looks complete — and a false positive — a still-short CSV plus
+    // its gap lines sums to the header and would wrongly supersede the still-needed PDF lines).
+    BigDecimal csvSum = inventoryQuery.currentCsvLineTotalForInvoice(invoiceNumber);
     Outcome outcome = InvoiceExportReconciler.classify(header, csvSum, BigDecimal.ZERO, TOLERANCE);
     if (outcome == Outcome.CSV_COMPLETE) {
       lineCanonical.supersedePdfOriginLines(invoiceNumber);
