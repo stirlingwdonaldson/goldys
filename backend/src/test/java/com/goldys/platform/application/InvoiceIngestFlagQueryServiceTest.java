@@ -32,18 +32,30 @@ class InvoiceIngestFlagQueryServiceTest {
     return new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
   }
 
+  private static InvoiceIngestFlagView view() {
+    return new InvoiceIngestFlagView(
+        "MISSING_PDF", "INV-1", null, null, "no PDF filename in CSV", Instant.EPOCH);
+  }
+
   @Test
-  void delegatesFlagsAfterAuthorizing() {
-    when(flags.listFlags())
-        .thenReturn(
-            List.of(
-                new InvoiceIngestFlagView(
-                    "MISSING_PDF", "INV-1", null, null, "no PDF filename in CSV", Instant.EPOCH)));
+  void delegatesOpenFlagsAfterAuthorizing() {
+    when(flags.listOpenFlags()).thenReturn(List.of(view()));
 
     List<InvoiceIngestFlagView> result = service.flags(role());
 
     assertThat(result).hasSize(1);
     verify(permissions).require(role(), new ResourceKey("inventory.cost"), PermissionAction.READ);
+    verify(flags).listOpenFlags();
+  }
+
+  @Test
+  void includeResolvedReturnsEveryFlag() {
+    when(flags.listFlags()).thenReturn(List.of(view()));
+
+    List<InvoiceIngestFlagView> result = service.flags(role(), true);
+
+    assertThat(result).hasSize(1);
+    verify(flags).listFlags();
   }
 
   @Test
@@ -51,6 +63,6 @@ class InvoiceIngestFlagQueryServiceTest {
     doThrow(new RuntimeException("denied")).when(permissions).require(any(), any(), any());
 
     assertThatThrownBy(() -> service.flags(role())).isInstanceOf(RuntimeException.class);
-    verify(flags, never()).listFlags();
+    verify(flags, never()).listOpenFlags();
   }
 }

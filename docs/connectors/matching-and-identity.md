@@ -61,12 +61,28 @@ so a second source can be added later without re-deriving these decisions.
 - **Matching strategy:** invoice metadata ↔ lines join on `invoice_number` (exact). PDFs never
   create lines on their own: `InvoicePdfEnrichmentService` resolves a PDF to its invoice through
   the CSV's persisted `pdf_filename` (falling back to the invoice number in the PDF text only when
-  the filename does not resolve), then enriches the existing CSV lines (stock code, unit of measure, unit
-  quantity, pack size, WET amount). Lines carry a denormalized `invoice_date` so COGS can be bucketed by date from lines
-  alone.
-- **Confidence:** high for the invoice-number and filename joins (exact). PDF text extraction is
+  the filename does not resolve), then maps each parsed PDF line to one of that invoice's current
+  CSV lines via `InvoiceLineMatcher` and enriches it (stock code, unit of measure, unit quantity,
+  pack size, WET amount). Lines carry a denormalized `invoice_date` so COGS can be bucketed by date
+  from lines alone.
+- **PDF↔line key (tiered, scoped to one invoice):** the CTB export and its PDFs key the same line
+  differently, so the matcher tries progressively looser keys — (1) normalized stock code, where
+  CTB's synthetic `PDF_<hex>` placeholder counts as "no code"; (2) a unique code variant (one
+  normalized code is a prefix of the other, e.g. `HAMB008` vs `HAMB008A1c`); (3) exact normalized
+  description; (4) whole-token containment, accepted for a single shared token only when the extra
+  tokens are packaging noise (`... SET PRICE 4 KG PRICE`, `... ORDER BY BOX`); (5) a majority of
+  shared significant tokens. **Ambiguity is skipped, not guessed:** if more than one line wins a
+  tier, the line is left un-enriched and `PDF_ONLY_LINE` is recorded.
+- **Confidence:** high for the invoice-number and filename joins (exact); line matching is
+  tolerant-but-conservative (tiers above, unique-winner only). PDF text extraction is
   per-supplier-layout (`*InvoicePdfExtractor`, with an LLM fallback); unmatched or inconsistent
   PDFs raise `InvoiceIngestFlag` rows instead of being dropped.
+- **Anomaly lifecycle:** `invoice_ingest_flag` is append-only. A flag carries a nullable
+  `resolved_at`; the read API returns **open** flags by default (`?status=all` includes resolved).
+  When the matcher improves, a one-off replay (`app.ctb-invoice-reenrich=true`, then unset —
+  `CtbInvoicePdfReenrichRunner`) re-enriches the stored raw PDFs and sets `resolved_at` on the
+  `PDF_ONLY_LINE` flags that now resolve, so the work queue reflects reality without deleting the
+  historical anomaly record.
 - **Manual resolution path:** `InventoryOverrideService.save(...)` sets an override for a
   `trading_date`, replacing the computed purchases (COGS).
 
