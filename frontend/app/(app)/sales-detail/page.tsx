@@ -13,7 +13,7 @@ import { DeletedOrdersTab } from "@/components/sales-detail/deleted-orders-tab";
 import { SaleItemsTab } from "@/components/sales-detail/sale-items-tab";
 import { lineageDomainForTab } from "@/components/sales-detail/lineage-graph";
 import { LineageGraphView } from "@/components/sales-detail/lineage-graph-view";
-import { RelationshipGraphView } from "@/components/sales-detail/relationship-graph-view";
+import { SaleSummaryView } from "@/components/sales-detail/sale-summary-view";
 
 const TABS = [
   { value: "payments", label: "Payments" },
@@ -46,7 +46,7 @@ function SalesDetail() {
   const [tab, setTab] = useState<Tab>(isTab(tabParam) ? tabParam : "payments");
   // Hoisted so all three tabs read one window once Tasks 8–10 fill them in.
   const [range, setRange] = useState(defaultRange);
-  // The sale drilled into from a Payments or Sale items row; null hides the relationship graph.
+  // The sale drilled into from a Payments or Sale items row; null hides the sale summary.
   const [selectedSale, setSelectedSale] = useState<string | null>(null);
 
   // The lineage graph's metric node drills to a tab id; switching is local, as with the tab bar.
@@ -76,14 +76,14 @@ function SalesDetail() {
       {selectedSale ? (
         <Section
           title={`Sale ${selectedSale}`}
-          description="Payments and line items behind this sale."
+          description="What was rung up, how it was paid, and whether the two agree."
           actions={
             <Button variant="outline" size="sm" onClick={() => setSelectedSale(null)}>
               Close
             </Button>
           }
         >
-          <RelationshipGraphView saleNumber={selectedSale} />
+          <SaleSummaryView saleNumber={selectedSale} />
         </Section>
       ) : null}
 
