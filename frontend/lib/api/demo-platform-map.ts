@@ -78,13 +78,13 @@ export function demoPlatformMap(): NetworkGraphDto {
     nodes.push(node(`domain:${domain}`, "domain", label, domain, 5));
   }
   for (const [id, name, formula, domain, permission] of BASE) {
-    nodes.push(node(`metric:${id}`, "metric", name, formula, 3, "neutral", `/data-health?metric=${id}`));
+    nodes.push(node(`metric:${id}`, "metric", name, formula, 3));
     edges.push(edge(`domain:${domain}`, `metric:${id}`, 1, "reads"));
     edges.push(edge(`metric:${id}`, `permission:${permission}`, 1, "requires"));
     permissions.add(permission);
   }
   for (const [id, name, formula, inputs, permission] of DERIVED) {
-    nodes.push(node(`metric:${id}`, "derived-metric", name, formula, 3, "neutral", `/data-health?metric=${id}`));
+    nodes.push(node(`metric:${id}`, "derived-metric", name, formula, 3));
     for (const input of inputs) edges.push(edge(`metric:${id}`, `metric:${input}`, 1, "computed from"));
     edges.push(edge(`metric:${id}`, `permission:${permission}`, 1, "requires"));
     permissions.add(permission);

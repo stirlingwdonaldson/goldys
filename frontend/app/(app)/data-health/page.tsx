@@ -22,6 +22,7 @@ import { ConnectorStatusBadge } from "@/components/connectors/connector-status-b
 import { StatCard } from "@/components/data-display/stat-card";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { PipelineMap } from "@/components/pipeline/pipeline-map";
+import { DependenciesSection } from "@/components/platform-map/dependencies-section";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/states/empty-state";
@@ -189,6 +190,8 @@ export default function DataHealthPage() {
       >
         <PipelineMap connectors={connectors.data} />
       </Section>
+
+      <DependenciesSection />
 
       <section className="flex flex-col gap-3">
         {activity.loading ? (

@@ -144,8 +144,7 @@ public class PlatformMapService {
               "neutral",
               3,
               kind,
-              // The Data health screen opens the metric's provenance from this parameter.
-              "/data-health?metric=" + id.value()));
+              null));
 
       if (derived) {
         catalog.constituents(id).stream()
