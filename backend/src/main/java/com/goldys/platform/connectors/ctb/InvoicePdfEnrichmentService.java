@@ -7,6 +7,7 @@ import com.goldys.platform.ingestion.port.DocumentTextExtractor;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -24,6 +25,7 @@ public class InvoicePdfEnrichmentService {
   private final CanonicalInvoiceQuery invoiceQuery;
   private final InvoiceIngestFlagService flags;
   private final InvoiceGapRecoveryService gapRecovery;
+  private final boolean gapRecoveryEnabled;
 
   public InvoicePdfEnrichmentService(
       DocumentTextExtractor extractor,
@@ -31,13 +33,15 @@ public class InvoicePdfEnrichmentService {
       CanonicalInvoiceLineEnrichment enrichment,
       CanonicalInvoiceQuery invoiceQuery,
       InvoiceIngestFlagService flags,
-      InvoiceGapRecoveryService gapRecovery) {
+      InvoiceGapRecoveryService gapRecovery,
+      @Value("${app.ctb-invoice-gap-recovery:false}") boolean gapRecoveryEnabled) {
     this.extractor = extractor;
     this.parser = parser;
     this.enrichment = enrichment;
     this.invoiceQuery = invoiceQuery;
     this.flags = flags;
     this.gapRecovery = gapRecovery;
+    this.gapRecoveryEnabled = gapRecoveryEnabled;
   }
 
   public void enrich(byte[] pdf, String pdfFilename, UUID pdfRawRecordId) {
@@ -83,8 +87,12 @@ public class InvoicePdfEnrichmentService {
       }
     }
     // Gap recovery runs for every enriched PDF (matched or not): the reconciliation is over the
-    // full PDF line sum, so a CSV-short invoice is caught even when some of its lines matched.
-    gapRecovery.recover(
-        invoiceNumber, flagFilename, pdf, pdfRawRecordId, parsed.lines(), unmatchedIndexes);
+    // full PDF line sum, so a CSV-short invoice is caught even when some of its lines matched. It
+    // is off by default (app.ctb-invoice-gap-recovery=false) and must be enabled per deploy before
+    // any PDF-derived lines are created.
+    if (gapRecoveryEnabled) {
+      gapRecovery.recover(
+          invoiceNumber, flagFilename, pdf, pdfRawRecordId, parsed.lines(), unmatchedIndexes);
+    }
   }
 }

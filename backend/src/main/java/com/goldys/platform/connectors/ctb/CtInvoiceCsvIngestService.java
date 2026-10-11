@@ -4,8 +4,6 @@ import com.goldys.platform.canonical.CanonicalInventoryQuery;
 import com.goldys.platform.canonical.CanonicalInvoiceIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceLineIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
-import com.goldys.platform.canonical.InvoiceExportReconciler;
-import com.goldys.platform.canonical.InvoiceExportReconciler.Outcome;
 import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
 import com.goldys.platform.canonical.ProductNameKey;
@@ -125,7 +123,7 @@ public class CtInvoiceCsvIngestService {
                   "CSV"));
         }
 
-        convergePdfLinesIfCsvComplete(invoice.invoiceNumber());
+        convergePdfLinesAfterCsvIngest(invoice.invoiceNumber());
       }
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
@@ -143,26 +141,48 @@ public class CtInvoiceCsvIngestService {
   }
 
   /**
-   * Convergence: once the CSV now includes an invoice's previously-missing lines, the PDF-derived
-   * lines gap recovery recorded for that invoice are superseded so they stop contributing (no
-   * double count). The check runs after the header and lines are recorded, so the new CSV lines are
-   * visible to the queries in the same ingest call. A missing header short-circuits (nothing to
-   * reconcile against), and the PDF sum is passed as {@code ZERO} — convergence only needs the
-   * CSV-complete signal, so the PDF branch of the classification is inert.
+   * Convergence: once the CSV is (re)ingested, the PDF-derived lines gap recovery recorded for the
+   * invoice are pruned so they stop over-counting COGS. The check runs after the header and lines
+   * are recorded, so the new CSV lines are visible to the queries in the same ingest call.
+   *
+   * <p>Two outcomes, decided by the CSV's remaining shortfall ({@code header − CSV-only line
+   * total}):
+   *
+   * <ul>
+   *   <li>The CSV now covers the header within tolerance → supersede <em>all</em> current
+   *       PDF-origin lines (the complete case).
+   *   <li>The CSV is only partly fixed → keep PDF lines in a deterministic order up to the
+   *       remaining shortfall and supersede the excess, flagging {@code INVOICE_EXPORT_INCOMPLETE}
+   *       with a partial-catch-up detail. Without this, the still-stale PDF gap lines would keep
+   *       their full amount and the invoice total would over-state COGS.
+   * </ul>
+   *
+   * A missing header short-circuits (nothing to reconcile against). The CSV-only line total is
+   * used, not the all-lines total: the PDF gap lines are still current at this point, and summing
+   * them too would both mask a still-short CSV and wrongly keep stale PDF lines.
    */
-  private void convergePdfLinesIfCsvComplete(String invoiceNumber) {
+  private void convergePdfLinesAfterCsvIngest(String invoiceNumber) {
     BigDecimal header = invoiceQuery.amountExTaxForInvoiceNumber(invoiceNumber).orElse(null);
     if (header == null) {
       return;
     }
-    // Compare the CSV-only line total, not the all-lines total: the PDF gap lines are still
-    // current at this point, and summing them too would over-count the CSV shortfall (both a false
-    // negative — the fixed CSV never looks complete — and a false positive — a still-short CSV plus
-    // its gap lines sums to the header and would wrongly supersede the still-needed PDF lines).
     BigDecimal csvSum = inventoryQuery.currentCsvLineTotalForInvoice(invoiceNumber);
-    Outcome outcome = InvoiceExportReconciler.classify(header, csvSum, BigDecimal.ZERO, TOLERANCE);
-    if (outcome == Outcome.CSV_COMPLETE) {
+    BigDecimal remaining = header.subtract(csvSum);
+    if (remaining.compareTo(TOLERANCE) <= 0) {
       lineCanonical.supersedePdfOriginLines(invoiceNumber);
+      return;
+    }
+    int pruned = lineCanonical.prunePdfOriginLines(invoiceNumber, remaining, TOLERANCE);
+    if (pruned > 0) {
+      flags.flag(
+          InvoiceIngestFlagType.INVOICE_EXPORT_INCOMPLETE,
+          invoiceNumber,
+          null,
+          null,
+          "partial CSV catch-up: pruned "
+              + pruned
+              + " PDF-derived line(s); CSV still short by "
+              + remaining);
     }
   }
 

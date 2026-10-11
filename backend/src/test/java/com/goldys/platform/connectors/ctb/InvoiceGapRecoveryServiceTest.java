@@ -56,7 +56,8 @@ class InvoiceGapRecoveryServiceTest {
   @Test
   void createsPdfLinesWhenPdfReconcilesAndCsvIsShort() {
     header("100.00");
-    when(inventoryQuery.currentLineTotalForInvoice("INV-7200")).thenReturn(new BigDecimal("40.00"));
+    when(inventoryQuery.currentCsvLineTotalForInvoice("INV-7200"))
+        .thenReturn(new BigDecimal("40.00"));
     invoiceWithDate();
     PdfExtractedLine recovered =
         new PdfExtractedLine(
@@ -82,7 +83,7 @@ class InvoiceGapRecoveryServiceTest {
   @Test
   void doesNothingWhenCsvAlreadyReconciles() {
     header("100.00");
-    when(inventoryQuery.currentLineTotalForInvoice("INV-7200"))
+    when(inventoryQuery.currentCsvLineTotalForInvoice("INV-7200"))
         .thenReturn(new BigDecimal("100.00"));
     PdfExtractedLine line =
         new PdfExtractedLine(
@@ -97,7 +98,8 @@ class InvoiceGapRecoveryServiceTest {
   @Test
   void flagsButCreatesNothingWhenNeitherReconciles() {
     header("100.00");
-    when(inventoryQuery.currentLineTotalForInvoice("INV-7200")).thenReturn(new BigDecimal("40.00"));
+    when(inventoryQuery.currentCsvLineTotalForInvoice("INV-7200"))
+        .thenReturn(new BigDecimal("40.00"));
     PdfExtractedLine line =
         new PdfExtractedLine(
             "CODE", "desc", BigDecimal.ONE, "KG", null, null, null, new BigDecimal("50.00"));
@@ -117,7 +119,8 @@ class InvoiceGapRecoveryServiceTest {
   @Test
   void skipsPdfLinesWithoutAnAmount() {
     header("100.00");
-    when(inventoryQuery.currentLineTotalForInvoice("INV-7200")).thenReturn(new BigDecimal("40.00"));
+    when(inventoryQuery.currentCsvLineTotalForInvoice("INV-7200"))
+        .thenReturn(new BigDecimal("40.00"));
     invoiceWithDate();
     // The matched 40.00 line keeps the PDF sum at 100.00 while the null-amount line is unmatched.
     PdfExtractedLine recovered =
@@ -161,7 +164,8 @@ class InvoiceGapRecoveryServiceTest {
     // header 100, csv 40, a single unmatched 100 line: the PDF sum (100) reconciles, but the
     // unmatched line (100) over-accounts for the 60 shortfall, so nothing may be created.
     header("100.00");
-    when(inventoryQuery.currentLineTotalForInvoice("INV-7200")).thenReturn(new BigDecimal("40.00"));
+    when(inventoryQuery.currentCsvLineTotalForInvoice("INV-7200"))
+        .thenReturn(new BigDecimal("40.00"));
     PdfExtractedLine line =
         new PdfExtractedLine(
             "CODE", "desc", BigDecimal.ONE, "KG", null, null, null, new BigDecimal("100.00"));
@@ -181,7 +185,8 @@ class InvoiceGapRecoveryServiceTest {
   @Test
   void flagsButCreatesNothingWhenInvoiceDateCannotBeResolved() {
     header("100.00");
-    when(inventoryQuery.currentLineTotalForInvoice("INV-7200")).thenReturn(new BigDecimal("40.00"));
+    when(inventoryQuery.currentCsvLineTotalForInvoice("INV-7200"))
+        .thenReturn(new BigDecimal("40.00"));
     when(invoiceQuery.currentInvoices()).thenReturn(List.of());
     PdfExtractedLine recovered =
         new PdfExtractedLine(

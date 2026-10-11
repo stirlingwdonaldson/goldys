@@ -73,7 +73,11 @@ public class InvoiceGapRecoveryService {
       return;
     }
 
-    BigDecimal csvSum = inventoryQuery.currentLineTotalForInvoice(invoiceNumber);
+    // The CSV-only line total (origin null or 'CSV'), not the all-lines total: recovery and the
+    // convergence check in CtInvoiceCsvIngestService must agree on the same "is the CSV short"
+    // definition. Using the all-lines total would count the PDF gap lines recovery itself records,
+    // so a re-run would look CSV-complete and skip re-materialising (or, worse, misclassify).
+    BigDecimal csvSum = inventoryQuery.currentCsvLineTotalForInvoice(invoiceNumber);
     BigDecimal pdfSum =
         pdfLines.stream()
             .map(PdfExtractedLine::amountExTax)

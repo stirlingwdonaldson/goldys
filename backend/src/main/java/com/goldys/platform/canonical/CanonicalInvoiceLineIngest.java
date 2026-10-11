@@ -1,5 +1,6 @@
 package com.goldys.platform.canonical;
 
+import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 
 /** Public write facade for canonical invoice line items, so connectors can record parsed facts. */
@@ -21,5 +22,15 @@ public class CanonicalInvoiceLineIngest {
    */
   public int supersedePdfOriginLines(String invoiceNumber) {
     return service.supersedePdfOriginLines(invoiceNumber);
+  }
+
+  /**
+   * Prunes the current PDF-derived lines of one invoice down to {@code allowedSum} (the CSV's
+   * remaining shortfall), keeping lines in a deterministic order and superseding the excess.
+   * Returns the number of lines closed. Used when the CSV export is only partly fixed.
+   */
+  public int prunePdfOriginLines(
+      String invoiceNumber, BigDecimal allowedSum, BigDecimal tolerance) {
+    return service.prunePdfOriginLines(invoiceNumber, allowedSum, tolerance);
   }
 }

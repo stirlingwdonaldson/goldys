@@ -158,6 +158,12 @@ enrichment: when the header total reconciles with the PDF line sum but not the C
 line sum, the missing lines are recorded as `origin='PDF'` canonical lines so COGS is
 complete (see `docs/connectors/matching-and-identity.md`).
 
+Gap recovery is **off by default** (`app.ctb-invoice-gap-recovery=false`). It must be
+enabled per deploy — `APP_CTB_INVOICE_GAP_RECOVERY=true` in `.env.prod` — before any
+PDF-derived lines are created; leave it unset to keep the pipeline read-only over the
+CSV lines. Verify on read-only production data before enabling, then decide the
+default (enable → verify → default, mirroring `APP_CTB_INVOICE_REENRICH`).
+
 ## Upgrading
 
 ```bash

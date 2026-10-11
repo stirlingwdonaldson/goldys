@@ -31,8 +31,12 @@ class InvoicePdfEnrichmentServiceTest {
   private final InvoiceGapRecoveryService gapRecovery = mock(InvoiceGapRecoveryService.class);
 
   private InvoicePdfEnrichmentService service() {
+    return service(true);
+  }
+
+  private InvoicePdfEnrichmentService service(boolean gapRecoveryEnabled) {
     return new InvoicePdfEnrichmentService(
-        extractor, parser, enrichment, invoiceQuery, flags, gapRecovery);
+        extractor, parser, enrichment, invoiceQuery, flags, gapRecovery, gapRecoveryEnabled);
   }
 
   @Test
@@ -126,6 +130,23 @@ class InvoicePdfEnrichmentServiceTest {
             eq("desc"));
     verify(gapRecovery)
         .recover(eq("INV-1"), eq("stored.pdf"), eq(pdf), eq(PDF_RAW_ID), eq(lines), eq(Set.of(0)));
+  }
+
+  @Test
+  void skipsGapRecoveryWhenTheFeatureFlagIsOff() {
+    byte[] pdf = new byte[] {1};
+    List<PdfExtractedLine> lines =
+        List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null));
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("INV-1", lines));
+    when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
+    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+        .thenReturn(EnrichmentResult.ENRICHED);
+
+    service(false).enrich(pdf, "a.pdf", PDF_RAW_ID);
+
+    verify(enrichment).enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any());
+    verify(gapRecovery, never()).recover(any(), any(), any(), any(), any(), any());
   }
 
   @Test

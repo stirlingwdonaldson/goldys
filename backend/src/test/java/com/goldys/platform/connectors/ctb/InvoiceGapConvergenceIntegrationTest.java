@@ -119,6 +119,64 @@ class InvoiceGapConvergenceIntegrationTest {
     assertThat(inventoryQuery.currentLineTotalForInvoice("INV-7302")).isEqualByComparingTo("100");
   }
 
+  @Test
+  void partialCsvCatchUpPrunesOnlyTheExcessPdfLines() {
+    LocalDate invoiceDate = LocalDate.of(2026, 10, 1);
+    // Header 100; CSV initially 40; gap recovery recorded two PDF gap lines (30 + 30 = 60).
+    invoiceIngest.record(
+        new InvoiceInput(
+            "CTB",
+            "INV-7303",
+            "Bruno's",
+            invoiceDate,
+            null,
+            new BigDecimal("100.00"),
+            null,
+            null,
+            null,
+            new BigDecimal("100.00"),
+            null,
+            null,
+            null,
+            null,
+            rawRecord()));
+    lineIngest.record(line("INV-7303", invoiceDate, "40.00", "CSV", "INV-7303:1"));
+    lineIngest.record(line("INV-7303", invoiceDate, "30.00", "PDF", "INV-7303:pdf:a"));
+    lineIngest.record(line("INV-7303", invoiceDate, "30.00", "PDF", "INV-7303:pdf:b"));
+
+    // The CSV is only partly fixed: now 70 (still short of 100 by 30). Without pruning, the two
+    // stale PDF gap lines would keep their full 60 and over-state COGS (70 + 60 = 130).
+    byte[] csv =
+        ("Invoice,Supplier,Date,StockCode,StockDescription,LineQuantity,LineTotalExTax,InvoiceTotalExTax\n"
+                + "INV-7303,Bruno's,2026-10-01,STK-7,Beer,1 EACH,70.00,100.00\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    csvIngest.ingest(csv);
+
+    // One PDF line (30) survives to cover the remaining 30 shortfall; the other is pruned, so the
+    // current total is ~100 (not 130).
+    assertThat(inventoryQuery.currentLineTotalForInvoice("INV-7303")).isEqualByComparingTo("100");
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from canonical_invoice_line "
+                    + "where invoice_number='INV-7303' and origin='PDF' and superseded_at is null",
+                Integer.class))
+        .isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from canonical_invoice_line "
+                    + "where invoice_number='INV-7303' and origin='PDF' and superseded_at is not null",
+                Integer.class))
+        .isEqualTo(1);
+    // A partial catch-up flag records the prune.
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from invoice_ingest_flag "
+                    + "where flag_type='INVOICE_EXPORT_INCOMPLETE' and invoice_number='INV-7303'",
+                Integer.class))
+        .isEqualTo(1);
+  }
+
   private InvoiceLineInput line(
       String invoiceNumber, LocalDate date, String total, String origin, String ref) {
     return new InvoiceLineInput(

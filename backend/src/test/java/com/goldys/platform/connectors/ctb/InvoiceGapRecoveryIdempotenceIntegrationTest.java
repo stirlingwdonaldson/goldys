@@ -26,11 +26,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Gap recovery is idempotent. On the first call the header (100) reconciles with the PDF sum but
- * the CSV line sum (40) is short, so one {@code origin='PDF'} gap line is recorded. On the second
- * call, {@code recover} recomputes the CSV line sum as the current line total — which now includes
- * that PDF gap line, making it 100 and matching the header — so {@code classify} returns {@code
- * CSV_COMPLETE} and it returns before reaching {@code lineIngest.record}. No second line is
- * attempted, so the invoice's current line total is unchanged.
+ * the CSV-only line sum (40) is short, so one {@code origin='PDF'} gap line is recorded. On the
+ * second call, {@code recover} recomputes the CSV-only line sum — which deliberately excludes the
+ * PDF gap line it recorded, so it is still 40 — and re-classifies the invoice as
+ * PDF-complete/CSV-short. It proceeds to record the same gap-line identity; the canonical layer's
+ * {@code sameFact} sees an identical fact (same {@code source_record_ref}) and returns without
+ * creating a new version. No second line is created, so the invoice's current line total is
+ * unchanged.
  */
 @SpringBootTest
 @Import(PostgresContainerConfiguration.class)
@@ -124,8 +126,8 @@ class InvoiceGapRecoveryIdempotenceIntegrationTest {
         Set.of(0));
 
     // Exactly one current PDF-origin line for that identity, and no historical version: the second
-    // recover saw the invoice as CSV-complete (the first PDF gap line makes the current line total
-    // match the header) and returned before recording, so no second line was ever attempted.
+    // recover re-records the identical fact (same source_record_ref), which the canonical layer's
+    // sameFact treats as a no-op rather than creating a second version.
     assertThat(
             jdbc.queryForObject(
                 "select count(*) from canonical_invoice_line "
@@ -147,6 +149,10 @@ class InvoiceGapRecoveryIdempotenceIntegrationTest {
         .isEqualTo(1);
     // The invoice's current line total is unchanged (CSV 40 + PDF gap 60 = 100).
     assertThat(inventoryQuery.currentLineTotalForInvoice("INV-7401")).isEqualByComparingTo("100");
+    // Recovery compares the CSV-only line total, not the all-lines total: had it summed all lines,
+    // the first gap line would have made the second call look CSV-complete and skip recording
+    // entirely. The CSV-only total staying at 40 confirms the intended mechanism (sameFact no-op).
+    assertThat(inventoryQuery.currentCsvLineTotalForInvoice("INV-7401")).isEqualByComparingTo("40");
   }
 
   private UUID rawRecord() {
