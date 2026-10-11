@@ -61,6 +61,9 @@ Use-case services that a controller delegates to; each owns a coherent read mode
 - `DataExplorerService` — raw / canonical / resolved browsing for the Data explorer.
 - `TrustService` / `DataQualityService` — provenance drill-down, trust and freshness state.
 - `InvoiceGraphService` — supplier → invoice → line graph for the Kitchen screen.
+- `PlatformMapService` — the Data health dependency map (sources → domains → metrics → dashboards,
+  plus permission resources) as a `NetworkGraphDto`; composed from the catalogue, `app.freshness`
+  config, connector health and the caller's visible dashboards. Gated on `connectors` READ as a whole.
 
 `ResolutionRuleController` is intentionally unchanged: it is already a thin adapter over
 `ResolutionRuleService` (which owns rule validation, WRITE authorization, and projection recompute)

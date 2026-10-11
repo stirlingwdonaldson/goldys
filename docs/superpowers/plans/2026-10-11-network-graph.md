@@ -526,3 +526,24 @@ CREATE TABLE resolved_product_pair_day (
   `reconciliation`/`canonical`/`connectors`, no new permission seeds, no `^` on
   `react-force-graph-2d`, demo implementations for both Api methods.
 - [ ] One PR per phase. Phase A can merge on its own.
+
+---
+
+## Addendum — Phase A as built (2026-10-11)
+
+Where the implementation departed from the tasks above, and why:
+
+- **Config prefix.** The freshness config is `app.freshness`, not `goldys.freshness`.
+- **Completeness guard (Task 3)** is a plain unit test (`PlatformMapCompletenessTest`) that binds
+  `application.yml` with Spring's `Binder`, not a Testcontainers integration test, so it runs
+  without Docker. It failed on the three Lightspeed-only domains as predicted; fixed in its own
+  commit.
+- **Determinism (Task 2).** `react-force-graph-2d` doesn't expose d3's `randomSource`, so layouts
+  are made reproducible with seeded (or cached) starting positions instead.
+- **Metric nodes have no `href`.** `/data-health?metric=` now focuses the map itself, so a link from
+  inside the map would only reopen the same view. The provenance sheet's Related tab links there.
+- **Canvas fixes found in the browser:** refit after data changes, cap fit zoom at 3×, resolve the
+  canvas font family (a `var(...)` font is silently ignored), always label larger nodes, and light a
+  focused node's whole impact set (`highlightFor`).
+- **Task 0 not run.** The session had no access to the production database, so Phase B has not
+  started.
