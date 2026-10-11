@@ -34,6 +34,8 @@ and the code wins on "what exists". Fix the stale doc rather than working around
 - [connectors/line-item-matching.md](connectors/line-item-matching.md): Lightspeed ↔ CTB
   product matching, measured on a real week.
 - [connectors/opentable.md](connectors/opentable.md): GuestCenter export and CSV columns.
+- [connectors/ctb-invoice-export-gaps.md](connectors/ctb-invoice-export-gaps.md): evidence that
+  CTB's invoice export omits lines the supplier PDFs carry (escalation pack).
 
 ### Decisions
 
