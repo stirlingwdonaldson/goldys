@@ -45,4 +45,16 @@ class WebhookTokenRedactionConfigTest {
   void nullQueryStringStaysNull() {
     assertNull(WebhookTokenRedactionConfig.stripQueryParam(null, "token"));
   }
+
+  @Test
+  void scrubTokenHandlesBareQueryStringWithoutQuestionMark() {
+    assertEquals("a=1&c=3", WebhookTokenRedactionConfig.scrubToken("a=1&token=SECRET&c=3"));
+  }
+
+  @Test
+  void scrubTokenLeavesStringWithoutTokenUntouched() {
+    assertEquals(
+        "https://host/api/dashboard?from=2026-09-01",
+        WebhookTokenRedactionConfig.scrubToken("https://host/api/dashboard?from=2026-09-01"));
+  }
 }
