@@ -12,6 +12,8 @@ public enum InvoiceIngestFlagType {
   SCANNED_PDF,
   /** A PDF's text could not be reduced to any usable line items. */
   PDF_UNPARSEABLE,
+  /** The LLM fallback was attempted but its call threw or its output could not be parsed. */
+  LLM_EXTRACTION_FAILED,
   /** A parsed PDF line has no matching CSV line (not canonicalized). */
   PDF_ONLY_LINE,
   /**
@@ -21,7 +23,11 @@ public enum InvoiceIngestFlagType {
   PDF_CSV_MISMATCH,
   /** A CSV row's PDF filename is absent from the drop. */
   MISSING_PDF,
-  /** More than one PDF maps to one invoice, or the invoice identity is indeterminate. */
+  /**
+   * More than one PDF maps to one invoice, or the invoice identity is indeterminate: a dropped PDF
+   * whose filename and printed invoice number both fail to resolve to an invoice in the CTB export
+   * (raised once per PDF, not per line).
+   */
   AMBIGUOUS_PDF,
   /**
    * The CSV export omitted lines the PDF carried and gap recovery could not materialise them (no

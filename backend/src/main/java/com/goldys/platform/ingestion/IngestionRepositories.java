@@ -73,6 +73,8 @@ interface RawRecordRepository
 
   List<RawRecord> findBySourceSystemAndContentType(String sourceSystem, String contentType);
 
+  List<RawRecord> findBySourceSystemAndFetcherIdentity(String sourceSystem, String fetcherIdentity);
+
   /**
    * Raw-record ids of one fetcher identity, deliberately excluding {@code payload_bytes}: replay
    * backfills fetch the bytes one record at a time via {@code findById}, so a dataset of hundreds

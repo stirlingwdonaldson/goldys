@@ -24,6 +24,56 @@ class CtbDetailBackfillConnectorTest {
   }
 
   @Test
+  void detailPayloadsCarryTheirParentIdAsSourceRecordRef() {
+    CtbClient client = mock(CtbClient.class);
+    when(client.searchStocktakes(anyInt(), anyInt()))
+        .thenReturn(
+            page("{\"data\":[{\"stocktakeId\":38},{\"stocktakeId\":39}],\"totalCount\":2}", 2));
+    when(client.searchWastageRecords(anyInt(), anyInt()))
+        .thenReturn(page("{\"data\":[{\"wastageRecordId\":60}],\"totalCount\":1}", 1));
+    when(client.getAllRecipes())
+        .thenReturn(page("{\"data\":[{\"recipeId\":627},{\"recipeId\":628}],\"totalCount\":2}", 2));
+    when(client.getStocktakeDetail(anyInt(), anyInt(), anyInt()))
+        .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
+    when(client.getWastageRecordDetail(anyInt()))
+        .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
+    when(client.getIngredientsIncludingSubRecipeIngredients(anyInt()))
+        .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
+    when(client.getSelectedRecipeFullRecords(anyString()))
+        .thenReturn(page("{\"data\":[{}],\"totalCount\":2}", 2));
+
+    CtbDetailBackfillConnector connector = new CtbDetailBackfillConnector(client, "e", "p");
+    List<FetchedPayload> written = new ArrayList<>();
+    connector.fetch(
+        null,
+        p -> {
+          written.add(p);
+          return UUID.randomUUID();
+        });
+
+    assertThat(
+            written.stream()
+                .filter(p -> p.fetcherIdentity().equals("ctb-stocktake-detail"))
+                .map(FetchedPayload::sourceRecordRef))
+        .containsExactlyInAnyOrder("stocktake:38", "stocktake:39");
+    assertThat(
+            written.stream()
+                .filter(p -> p.fetcherIdentity().equals("ctb-wastage-detail"))
+                .map(FetchedPayload::sourceRecordRef))
+        .containsExactly("wastage:60");
+    assertThat(
+            written.stream()
+                .filter(p -> p.fetcherIdentity().equals("ctb-recipe-ingredients"))
+                .map(FetchedPayload::sourceRecordRef))
+        .containsExactlyInAnyOrder("recipe:627", "recipe:628");
+    assertThat(
+            written.stream()
+                .filter(p -> p.fetcherIdentity().equals("ctb-recipe-cost"))
+                .map(FetchedPayload::sourceRecordRef))
+        .containsExactly((String) null);
+  }
+
+  @Test
   void oneRawWritePerDetailIdWithCorrectIdentity() {
     CtbClient client = mock(CtbClient.class);
     when(client.searchStocktakes(anyInt(), anyInt()))

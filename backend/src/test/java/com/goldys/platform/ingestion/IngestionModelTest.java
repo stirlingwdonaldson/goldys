@@ -71,7 +71,8 @@ class IngestionModelTest {
             DIGEST,
             null,
             "fixture",
-            Instant.now());
+            Instant.now(),
+            null);
 
     input[0] = 9;
     byte[] output = record.payloadBytes();
@@ -95,7 +96,8 @@ class IngestionModelTest {
                     "A".repeat(64),
                     null,
                     "fixture",
-                    Instant.now()))
+                    Instant.now(),
+                    null))
         .isInstanceOf(IllegalArgumentException.class);
   }
 }

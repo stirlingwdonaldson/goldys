@@ -2,6 +2,7 @@ package com.goldys.platform.reporting;
 
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.semantic.ConnectorHealth;
 import com.goldys.platform.semantic.ConnectorHealthQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
@@ -35,16 +36,19 @@ public class GetReconciliationStatusTool implements ReportingTool {
   private final SalesMetricsQuery sales;
   private final ProductMetricsQuery product;
   private final ConnectorHealthQuery connectors;
+  private final VenueClock venueClock;
 
   public GetReconciliationStatusTool(
       MetricQueryService metrics,
       SalesMetricsQuery sales,
       ProductMetricsQuery product,
-      ConnectorHealthQuery connectors) {
+      ConnectorHealthQuery connectors,
+      VenueClock venueClock) {
     this.metrics = metrics;
     this.sales = sales;
     this.product = product;
     this.connectors = connectors;
+    this.venueClock = venueClock;
   }
 
   @Override
@@ -86,7 +90,7 @@ public class GetReconciliationStatusTool implements ReportingTool {
     rows.add(statusRow("Product", product.openConflicts() + " open conflicts"));
 
     // Unresolved periods, per domain, counted from each representative metric's missingPeriods.
-    LocalDate today = LocalDate.now();
+    LocalDate today = venueClock.today();
     TimeRange range = new TimeRange(today.minusDays(28), today, Calendar.CALENDAR);
     rows.add(statusRow("Sales", unresolvedDays(MetricId.SALES_GROSS, range) + " unresolved days"));
     rows.add(

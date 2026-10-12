@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import org.springframework.stereotype.Component;
 
 /** Executes derived metrics as plain functions over base-metric results. */
@@ -111,60 +112,75 @@ public class DerivedMetricExecutor implements MetricExecutor {
     return byDay;
   }
 
-  /** numerator ÷ denominator, computed per bucket at the requested grain (ratio of bucket sums). */
+  /**
+   * numerator ÷ denominator, computed per bucket at the requested grain. Both operands are summed
+   * over the <em>same</em> set of days — the days on which both have a resolved value — so a week
+   * with seven days of sales but one day of covers no longer yields a spend-per-cover ~7× too high.
+   * A bucket with no shared coverage is a null point ({@code UNRESOLVED} when at least one operand
+   * had data, {@code NOT_RECEIVED} otherwise); a bucket with partial coverage still returns its
+   * value but carries a notice naming the excluded days.
+   */
   private TimeSeriesResult ratio(MetricQuery query, MetricId numId, MetricId denId) {
-    LocalDate from = query.range().from();
-    LocalDate to = query.range().to();
-    GrainAggregator.Bucket num =
-        GrainAggregator.sum(daySeries(query, numId), from, to, query.grain());
-    GrainAggregator.Bucket den =
-        GrainAggregator.sum(daySeries(query, denId), from, to, query.grain());
+    List<Aligned> aligned =
+        align(
+            daySeries(query, numId),
+            daySeries(query, denId),
+            query.range().from(),
+            query.range().to(),
+            query.grain());
     List<MetricPoint> points = new ArrayList<>();
     List<String> notices = new ArrayList<>();
-    for (int i = 0; i < num.points().size(); i++) {
-      MetricPoint np = num.points().get(i);
-      MetricPoint dp = den.points().get(i);
-      BigDecimal v =
-          (np.value() == null || dp.value() == null || dp.value().signum() == 0)
-              ? null
-              : np.value().divide(dp.value(), SCALE, RoundingMode.HALF_UP);
-      points.add(
-          v == null
-              ? new MetricPoint(np.bucketStart(), null, MissingDataStatus.UNRESOLVED)
-              : new MetricPoint(np.bucketStart(), v));
-      if (v == null) {
-        notices.add("denominator or input unresolved for " + np.bucketStart());
+    for (Aligned a : aligned) {
+      if (a.commonDays == 0) {
+        points.add(
+            new MetricPoint(
+                a.start,
+                null,
+                a.anyData ? MissingDataStatus.UNRESOLVED : MissingDataStatus.NOT_RECEIVED));
+        notices.add("no shared coverage for " + a.start);
+      } else if (a.denominator.signum() == 0) {
+        points.add(new MetricPoint(a.start, null, MissingDataStatus.UNRESOLVED));
+        notices.add("zero denominator for " + a.start);
+      } else {
+        points.add(
+            new MetricPoint(
+                a.start, a.numerator.divide(a.denominator, SCALE, RoundingMode.HALF_UP)));
+        partialCoverageNotice(notices, a);
       }
     }
     return new TimeSeriesResult(
         query.metric(), List.of(new MetricSeries(null, points)), notices, provenance(query));
   }
 
-  /** a − b, per bucket at the requested grain. */
+  /** a − b, per bucket at the requested grain, over the days where both operands resolve. */
   private TimeSeriesResult difference(MetricQuery query, MetricId aId, MetricId bId) {
-    LocalDate from = query.range().from();
-    LocalDate to = query.range().to();
-    GrainAggregator.Bucket a = GrainAggregator.sum(daySeries(query, aId), from, to, query.grain());
-    GrainAggregator.Bucket b = GrainAggregator.sum(daySeries(query, bId), from, to, query.grain());
+    List<Aligned> aligned =
+        align(
+            daySeries(query, aId),
+            daySeries(query, bId),
+            query.range().from(),
+            query.range().to(),
+            query.grain());
     List<MetricPoint> points = new ArrayList<>();
     List<String> notices = new ArrayList<>();
-    for (int i = 0; i < a.points().size(); i++) {
-      BigDecimal av = a.points().get(i).value();
-      BigDecimal bv = b.points().get(i).value();
-      BigDecimal v = (av == null || bv == null) ? null : av.subtract(bv);
-      points.add(
-          v == null
-              ? new MetricPoint(a.points().get(i).bucketStart(), null, MissingDataStatus.UNRESOLVED)
-              : new MetricPoint(a.points().get(i).bucketStart(), v));
-      if (v == null) {
-        notices.add("input unresolved for " + a.points().get(i).bucketStart());
+    for (Aligned a : aligned) {
+      if (a.commonDays == 0) {
+        points.add(
+            new MetricPoint(
+                a.start,
+                null,
+                a.anyData ? MissingDataStatus.UNRESOLVED : MissingDataStatus.NOT_RECEIVED));
+        notices.add("no shared coverage for " + a.start);
+      } else {
+        points.add(new MetricPoint(a.start, a.numerator.subtract(a.denominator)));
+        partialCoverageNotice(notices, a);
       }
     }
     return new TimeSeriesResult(
         query.metric(), List.of(new MetricSeries(null, points)), notices, provenance(query));
   }
 
-  /** department actual cost ÷ gross sales, per bucket at the requested grain. */
+  /** department actual cost ÷ gross sales, per bucket at the requested grain, over shared days. */
   private TimeSeriesResult departmentPercent(MetricQuery query, String department) {
     LocalDate from = query.range().from();
     LocalDate to = query.range().to();
@@ -181,29 +197,84 @@ public class DerivedMetricExecutor implements MetricExecutor {
         deptCost.merge(m.date(), m.actualCost(), BigDecimal::add);
       }
     }
-    GrainAggregator.Bucket dept = GrainAggregator.sum(deptCost, from, to, query.grain());
-    GrainAggregator.Bucket gross =
-        GrainAggregator.sum(daySeries(query, MetricId.SALES_GROSS), from, to, query.grain());
+    List<Aligned> aligned =
+        align(deptCost, daySeries(query, MetricId.SALES_GROSS), from, to, query.grain());
     List<MetricPoint> points = new ArrayList<>();
     List<String> notices = new ArrayList<>();
-    for (int i = 0; i < dept.points().size(); i++) {
-      BigDecimal dv = dept.points().get(i).value();
-      BigDecimal gv = gross.points().get(i).value();
-      BigDecimal v =
-          (dv == null || gv == null || gv.signum() == 0)
-              ? null
-              : dv.divide(gv, SCALE, RoundingMode.HALF_UP);
-      points.add(
-          v == null
-              ? new MetricPoint(
-                  dept.points().get(i).bucketStart(), null, MissingDataStatus.UNRESOLVED)
-              : new MetricPoint(dept.points().get(i).bucketStart(), v));
-      if (v == null) {
-        notices.add("unresolved cost or zero gross for " + dept.points().get(i).bucketStart());
+    for (Aligned a : aligned) {
+      if (a.commonDays == 0) {
+        points.add(
+            new MetricPoint(
+                a.start,
+                null,
+                a.anyData ? MissingDataStatus.UNRESOLVED : MissingDataStatus.NOT_RECEIVED));
+        notices.add("no shared coverage for " + a.start);
+      } else if (a.denominator.signum() == 0) {
+        points.add(new MetricPoint(a.start, null, MissingDataStatus.UNRESOLVED));
+        notices.add("zero gross sales for " + a.start);
+      } else {
+        points.add(
+            new MetricPoint(
+                a.start, a.numerator.divide(a.denominator, SCALE, RoundingMode.HALF_UP)));
+        partialCoverageNotice(notices, a);
       }
     }
     return new TimeSeriesResult(
         query.metric(), List.of(new MetricSeries(null, points)), notices, provenance(query));
+  }
+
+  private static void partialCoverageNotice(List<String> notices, Aligned a) {
+    if (!a.excludedDays.isEmpty()) {
+      notices.add("partial coverage for " + a.start + ": excluded days " + a.excludedDays);
+    }
+  }
+
+  /**
+   * Buckets two per-day operand maps at the requested grain, summing each operand over the days on
+   * which <em>both</em> have a resolved value. Days outside that shared set (one operand missing or
+   * unresolved) are recorded as excluded so the caller can flag partial coverage instead of
+   * silently presenting a ratio computed over mismatched day sets.
+   */
+  private static List<Aligned> align(
+      Map<LocalDate, BigDecimal> numerator,
+      Map<LocalDate, BigDecimal> denominator,
+      LocalDate from,
+      LocalDate to,
+      TimeGrain grain) {
+    TreeMap<LocalDate, Aligned> buckets = new TreeMap<>();
+    for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
+      Aligned a = buckets.computeIfAbsent(GrainAggregator.bucketStart(d, grain), Aligned::new);
+      BigDecimal n = numerator.get(d);
+      BigDecimal de = denominator.get(d);
+      boolean nResolved = n != null;
+      boolean dResolved = de != null;
+      if (nResolved && dResolved) {
+        a.numerator = a.numerator.add(n);
+        a.denominator = a.denominator.add(de);
+        a.commonDays++;
+        a.anyData = true;
+      } else {
+        a.excludedDays.add(d);
+        if (nResolved || dResolved) {
+          a.anyData = true;
+        }
+      }
+    }
+    return List.copyOf(buckets.values());
+  }
+
+  /** One grain bucket's two operands summed over their shared (both-resolved) days. */
+  private static final class Aligned {
+    final LocalDate start;
+    BigDecimal numerator = BigDecimal.ZERO;
+    BigDecimal denominator = BigDecimal.ZERO;
+    int commonDays;
+    boolean anyData;
+    final List<LocalDate> excludedDays = new ArrayList<>();
+
+    Aligned(LocalDate start) {
+      this.start = start;
+    }
   }
 
   private RankedListResult topSellers(MetricQuery query) {

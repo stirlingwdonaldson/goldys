@@ -60,6 +60,9 @@ class RawRecord {
   @Column(name = "fetched_at", nullable = false, updatable = false)
   private Instant fetchedAt;
 
+  @Column(name = "source_record_ref", updatable = false, length = 512)
+  private String sourceRecordRef;
+
   protected RawRecord() {}
 
   private RawRecord(
@@ -71,7 +74,8 @@ class RawRecord {
       String payloadSha256,
       String characterEncoding,
       String fetcherIdentity,
-      Instant fetchedAt) {
+      Instant fetchedAt,
+      String sourceRecordRef) {
     this.id = UUID.randomUUID();
     this.ingestionRunId = Objects.requireNonNull(ingestionRunId, "ingestionRunId");
     this.sourceSystem = Objects.requireNonNull(sourceSystem, "sourceSystem");
@@ -83,6 +87,7 @@ class RawRecord {
     this.characterEncoding = characterEncoding;
     this.fetcherIdentity = Objects.requireNonNull(fetcherIdentity, "fetcherIdentity");
     this.fetchedAt = Objects.requireNonNull(fetchedAt, "fetchedAt");
+    this.sourceRecordRef = sourceRecordRef;
   }
 
   static RawRecord create(
@@ -94,7 +99,8 @@ class RawRecord {
       String payloadSha256,
       String characterEncoding,
       String fetcherIdentity,
-      Instant fetchedAt) {
+      Instant fetchedAt,
+      String sourceRecordRef) {
     return new RawRecord(
         ingestionRunId,
         sourceSystem,
@@ -104,7 +110,8 @@ class RawRecord {
         payloadSha256,
         characterEncoding,
         fetcherIdentity,
-        fetchedAt);
+        fetchedAt,
+        sourceRecordRef);
   }
 
   private static String requireLowerCaseSha256(String digest) {
@@ -157,5 +164,9 @@ class RawRecord {
 
   Instant fetchedAt() {
     return fetchedAt;
+  }
+
+  String sourceRecordRef() {
+    return sourceRecordRef;
   }
 }

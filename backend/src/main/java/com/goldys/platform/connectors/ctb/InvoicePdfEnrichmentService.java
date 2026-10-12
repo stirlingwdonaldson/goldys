@@ -7,6 +7,8 @@ import com.goldys.platform.ingestion.port.DocumentTextExtractor;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class InvoicePdfEnrichmentService {
+  private static final Logger log = LoggerFactory.getLogger(InvoicePdfEnrichmentService.class);
+
   private final DocumentTextExtractor extractor;
   private final InvoicePdfExtractor parser;
   private final CanonicalInvoiceLineEnrichment enrichment;
@@ -55,6 +59,15 @@ public class InvoicePdfEnrichmentService {
         pdfFilename != null
             ? pdfFilename
             : invoiceQuery.currentPdfFilenameForInvoiceNumber(invoiceNumber).orElse(null);
+    if (parsed.extractionError() != null) {
+      flags.flag(
+          InvoiceIngestFlagType.LLM_EXTRACTION_FAILED,
+          invoiceNumber,
+          flagFilename,
+          null,
+          parsed.extractionError());
+      return;
+    }
     if (parsed.lines().isEmpty()) {
       flags.flag(
           InvoiceIngestFlagType.PDF_UNPARSEABLE,
@@ -62,6 +75,10 @@ public class InvoicePdfEnrichmentService {
           flagFilename,
           null,
           (text == null || text.isBlank()) ? "no extractable text" : "no lines parsed");
+      return;
+    }
+    if (!invoiceQuery.isKnownInvoice(invoiceNumber)) {
+      flagUnresolvedInvoice(parsed.invoiceNumber(), pdfFilename);
       return;
     }
     Set<Integer> unmatchedIndexes = new HashSet<>();
@@ -78,6 +95,10 @@ public class InvoicePdfEnrichmentService {
               line.wetAmount());
       if (result == EnrichmentResult.NO_MATCH) {
         unmatchedIndexes.add(i);
+      }
+      // AMBIGUOUS (several CSV lines tie) is flagged too, so a skipped line is never silent. It is
+      // not passed to gap recovery: the CSV most likely does carry the line, just not uniquely.
+      if (result == EnrichmentResult.NO_MATCH || result == EnrichmentResult.AMBIGUOUS) {
         flags.flag(
             InvoiceIngestFlagType.PDF_ONLY_LINE,
             invoiceNumber,
@@ -94,5 +115,34 @@ public class InvoicePdfEnrichmentService {
       gapRecovery.recover(
           invoiceNumber, flagFilename, pdf, pdfRawRecordId, parsed.lines(), unmatchedIndexes);
     }
+  }
+
+  /**
+   * The PDF resolves to no invoice the CTB export knows (neither its filename nor its own invoice
+   * number match). Matching its lines would flag every one of them as missing from the CSV, which
+   * is what produced per-line flags under labels like "Tax Invoice No". Instead:
+   *
+   * <ul>
+   *   <li>Live drop (filename known): one {@code AMBIGUOUS_PDF} flag for the whole PDF.
+   *   <li>Replay (no filename): nothing is flagged. The raw PDF no longer carries its filename, so
+   *       an unresolved text number here usually means the parser misread a PDF the live path had
+   *       already joined by filename; a flag would be a false alarm.
+   * </ul>
+   */
+  private void flagUnresolvedInvoice(String parsedInvoiceNumber, String pdfFilename) {
+    if (pdfFilename == null) {
+      log.info(
+          "Replayed invoice PDF did not resolve to a known invoice (parsed number: {}); skipped",
+          parsedInvoiceNumber);
+      return;
+    }
+    flags.flag(
+        InvoiceIngestFlagType.AMBIGUOUS_PDF,
+        parsedInvoiceNumber,
+        pdfFilename,
+        null,
+        "PDF not linked to any invoice in the CTB export (PDF invoice number: "
+            + (parsedInvoiceNumber == null ? "unreadable" : parsedInvoiceNumber)
+            + ")");
   }
 }

@@ -12,11 +12,16 @@ import static org.mockito.Mockito.when;
 
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
+import com.goldys.platform.canonical.SaleRecipeLinkIngest;
+import com.goldys.platform.canonical.SaleRecipeLinkInput;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 class CtbConnectorTest {
 
@@ -134,8 +139,38 @@ class CtbConnectorTest {
         .hasMessageContaining("ctb-stocks");
   }
 
+  @Test
+  void pageCapTruncationIsReportedRatherThanSilent() {
+    // totalCount far beyond MAX_PAGES * PAGE_SIZE, so the paging loop hits the cap with more to
+    // pull.
+    CtbClient client = emptyClient();
+    when(client.searchInvoices(anyInt(), anyInt()))
+        .thenReturn(new CtbClient.CtbPage("{\"data\":[]}", 60000));
+
+    CtbConnector connector = connector(client, emptyRevenueParser(), emptySaleItemParser());
+
+    assertThatThrownBy(() -> connector.fetch(null, payload -> UUID.randomUUID()))
+        .isInstanceOf(ConnectorFetchException.class)
+        .extracting(e -> ((ConnectorFetchException) e).failureType())
+        .isEqualTo("CONNECTOR_TRUNCATED");
+  }
+
   private static CtbConnector connector(
       CtbClient client, CtbRevenueParser revenueParser, CtbSaleItemParser saleItemParser) {
+    return connector(
+        client,
+        revenueParser,
+        saleItemParser,
+        mock(CtbSaleRecipeLinkParser.class),
+        mock(SaleRecipeLinkIngest.class));
+  }
+
+  private static CtbConnector connector(
+      CtbClient client,
+      CtbRevenueParser revenueParser,
+      CtbSaleItemParser saleItemParser,
+      CtbSaleRecipeLinkParser saleRecipeLinkParser,
+      SaleRecipeLinkIngest saleRecipeLinkIngest) {
     return new CtbConnector(
         client,
         "e",
@@ -143,7 +178,42 @@ class CtbConnectorTest {
         revenueParser,
         mock(CanonicalDailySalesIngest.class),
         saleItemParser,
-        mock(CanonicalProductSalesIngest.class));
+        mock(CanonicalProductSalesIngest.class),
+        saleRecipeLinkParser,
+        saleRecipeLinkIngest,
+        VenueClock.system(ZoneId.of("Australia/Melbourne")));
+  }
+
+  @Test
+  void saleRecipeLinksAreCanonicalized() {
+    CtbClient client = emptyClient();
+    String json =
+        "{\"data\":[{\"saleItemRecipeId\":9001,\"saleItemStockCode\":\"STOCK-1\","
+            + "\"saleItemStockDescription\":\"Kids Fish\",\"recipeId\":627,\"recipeName\":\"Kids Fish\","
+            + "\"recipeFolderName\":\"Food\",\"isRecipeActive\":true},"
+            + "{\"saleItemRecipeId\":9002,\"saleItemStockCode\":\"STOCK-2\","
+            + "\"saleItemStockDescription\":\"Parma\",\"recipeId\":628,\"recipeName\":\"Parma\","
+            + "\"recipeFolderName\":\"Mains\",\"isRecipeActive\":true}]}";
+    when(client.searchDistinctSaleItemsForLinking(anyInt(), anyInt()))
+        .thenReturn(new CtbClient.CtbPage(json, 2));
+
+    SaleRecipeLinkIngest ingest = mock(SaleRecipeLinkIngest.class);
+    CtbConnector connector =
+        connector(
+            client,
+            emptyRevenueParser(),
+            emptySaleItemParser(),
+            new CtbSaleRecipeLinkParser(),
+            ingest);
+
+    connector.fetch(null, payload -> UUID.randomUUID());
+
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<List<SaleRecipeLinkInput>> captor = ArgumentCaptor.forClass((Class) List.class);
+    verify(ingest).recordAll(captor.capture());
+    assertThat(captor.getValue())
+        .extracting(SaleRecipeLinkInput::recipeId)
+        .containsExactly(627, 628);
   }
 
   private static CtbRevenueParser emptyRevenueParser() {

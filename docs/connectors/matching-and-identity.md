@@ -92,6 +92,13 @@ so a second source can be added later without re-deriving these decisions.
   tokens are packaging noise (`... SET PRICE 4 KG PRICE`, `... ORDER BY BOX`); (5) a majority of
   shared significant tokens. **Ambiguity is skipped, not guessed:** if more than one line wins a
   tier, the line is left un-enriched and `PDF_ONLY_LINE` is recorded.
+- **Before matching:** `HybridInvoicePdfExtractor` sanitizes the extractor output
+  (`InvoicePdfSanitizer`). A parsed invoice number with no digit (a header label such as
+  `Tax Invoice No`) becomes null, so the filename join decides. Annotation rows (no stock code, no
+  amount, and a parenthesised or `COMMENT`/`NOTE` description, or no quantity and no unit) are
+  dropped: they are delivery notes, not purchases. If the PDF still resolves to no invoice the
+  export knows (no current header and no current lines), its lines are not matched: a live drop
+  raises one `AMBIGUOUS_PDF` flag for the PDF, and a replay (no filename) raises nothing.
 - **Confidence:** high for the invoice-number and filename joins (exact); line matching is
   tolerant-but-conservative (tiers above, unique-winner only). PDF text extraction is
   per-supplier-layout (`*InvoicePdfExtractor`, with an LLM fallback); unmatched or inconsistent
@@ -102,7 +109,8 @@ so a second source can be added later without re-deriving these decisions.
   matcher improves, a one-off replay (`app.ctb-invoice-reenrich=true`, then unset —
   `CtbInvoicePdfReenrichRunner`) re-enriches the stored raw PDFs and sets `resolved_at` on the
   `PDF_ONLY_LINE` flags that now resolve, so the work queue reflects reality without deleting the
-  historical anomaly record. `INVOICE_EXPORT_INCOMPLETE` marks an invoice whose CSV line sum does
+  historical anomaly record. The same pass also retires `PDF_ONLY_LINE` flags that are annotation
+  text or that name an invoice number the export does not know; neither could ever match. `INVOICE_EXPORT_INCOMPLETE` marks an invoice whose CSV line sum does
   not reconcile with the header and whose PDF could not close the gap (missing header, unresolved
   PDF sum, PDF-only lines that would over-state the shortfall, or no resolvable invoice date).
 - **Manual resolution path:** `InventoryOverrideService.save(...)` sets an override for a

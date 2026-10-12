@@ -18,7 +18,7 @@ public class CanonicalReservationQuery {
 
   public CanonicalReservationQuery(
       CanonicalReservationRepository repository,
-      @Value("${opentable.timezone:Australia/Sydney}") String zone) {
+      @Value("${opentable.timezone:Australia/Melbourne}") String zone) {
     this.repository = repository;
     this.zone = ZoneId.of(zone);
   }

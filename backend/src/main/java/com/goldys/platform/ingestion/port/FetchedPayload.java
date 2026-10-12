@@ -15,7 +15,8 @@ public record FetchedPayload(
     String contentType,
     byte[] bytes,
     String characterEncoding,
-    String fetcherIdentity) {
+    String fetcherIdentity,
+    String sourceRecordRef) {
 
   public FetchedPayload {
     Objects.requireNonNull(fetchMethod, "fetchMethod");

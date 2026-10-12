@@ -35,6 +35,11 @@ interface CanonicalInvoiceRepository extends BitemporalRepository<CanonicalInvoi
           + "order by i.recordedAt desc")
   List<BigDecimal> currentAmountsExTaxByInvoiceNumber(String invoiceNumber);
 
+  @Query(
+      "select count(i) from CanonicalInvoice i "
+          + "where i.invoiceNumber = :invoiceNumber and i.supersededAt is null")
+  long countCurrentByInvoiceNumber(String invoiceNumber);
+
   /**
    * All current invoices, newest-recorded first. The ordering makes the facade's first-match
    * lookups (e.g. the invoice-date resolution used by gap recovery) deterministic.

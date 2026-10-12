@@ -73,7 +73,11 @@ class LlmInvoicePdfExtractorTest {
   void returnsEmptyWhenNoModelIsAvailable() {
     LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(null), MAPPER);
 
-    assertThat(extractor.extract("text").lines()).isEmpty();
+    PdfExtractedInvoice out = extractor.extract("text");
+
+    assertThat(out.lines()).isEmpty();
+    // No model is not a failure: environments without an AI key must not fill the flag list.
+    assertThat(out.extractionError()).isNull();
   }
 
   @Test
@@ -84,7 +88,10 @@ class LlmInvoicePdfExtractorTest {
             new ChatResponse(List.of(new Generation(new AssistantMessage("I can't do that.")))));
     LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
 
-    assertThat(extractor.extract("text").lines()).isEmpty();
+    PdfExtractedInvoice out = extractor.extract("text");
+
+    assertThat(out.lines()).isEmpty();
+    assertThat(out.extractionError()).isNotNull();
   }
 
   @Test
@@ -100,6 +107,8 @@ class LlmInvoicePdfExtractorTest {
 
     assertThat(out.invoiceNumber()).isEqualTo("INV-9");
     assertThat(out.lines()).isEmpty();
+    // Parseable JSON that omits lines is "no lines", not an LLM failure.
+    assertThat(out.extractionError()).isNull();
   }
 
   @Test
@@ -113,16 +122,22 @@ class LlmInvoicePdfExtractorTest {
                         new AssistantMessage("{\"invoiceNumber\":null,\"lines\":null}")))));
     LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
 
-    assertThat(extractor.extract("text").lines()).isEmpty();
+    PdfExtractedInvoice out = extractor.extract("text");
+
+    assertThat(out.lines()).isEmpty();
+    assertThat(out.extractionError()).isNull();
   }
 
   @Test
-  void returnsEmptyWhenTheModelCallFails() {
+  void returnsEmptyWithErrorWhenTheModelCallFails() {
     ChatModel model = mock(ChatModel.class);
     when(model.call(any(Prompt.class))).thenThrow(new RuntimeException("boom"));
     LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
 
-    assertThat(extractor.extract("text").lines()).isEmpty();
+    PdfExtractedInvoice out = extractor.extract("text");
+
+    assertThat(out.lines()).isEmpty();
+    assertThat(out.extractionError()).contains("boom");
   }
 
   private static ObjectProvider<ChatModel> providerReturning(ChatModel model) {

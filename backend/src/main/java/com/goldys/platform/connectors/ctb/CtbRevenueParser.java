@@ -2,11 +2,11 @@ package com.goldys.platform.connectors.ctb;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -20,10 +20,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class CtbRevenueParser {
   private static final ObjectMapper MAPPER = new ObjectMapper();
-  private static final ZoneId VENUE_ZONE = ZoneId.of("Australia/Melbourne");
+
+  private final VenueClock venueClock;
 
   private static final long TICKS_PER_SECOND = 10_000_000L;
   private static final long EPOCH_TICKS = 621_355_968_000_000_000L; // 0001-01-01 -> 1970-01-01
+
+  public CtbRevenueParser(VenueClock venueClock) {
+    this.venueClock = venueClock;
+  }
 
   public List<CtbRevenue> parse(byte[] json) {
     JsonNode root;
@@ -52,9 +57,9 @@ public class CtbRevenueParser {
     return out;
   }
 
-  private static LocalDate toLocalDate(long ticks) {
+  private LocalDate toLocalDate(long ticks) {
     Instant instant = Instant.ofEpochSecond((ticks - EPOCH_TICKS) / TICKS_PER_SECOND);
-    return instant.atZone(VENUE_ZONE).toLocalDate();
+    return instant.atZone(venueClock.zone()).toLocalDate();
   }
 
   private static BigDecimal decimal(JsonNode n) {

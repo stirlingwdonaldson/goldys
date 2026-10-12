@@ -13,12 +13,13 @@ import org.junit.jupiter.api.Test;
 
 class CtbScheduledPullTest {
   private static final String CRON = "0 0 4 * * *";
+  private static final String ZONE = "Australia/Melbourne";
 
   @Test
   @SuppressWarnings("unchecked")
   void delegatesToRunConnectorForCtb() {
     IngestionService ingestion = mock(IngestionService.class);
-    CtbScheduledPull pull = new CtbScheduledPull(ingestion, CRON);
+    CtbScheduledPull pull = new CtbScheduledPull(ingestion, CRON, ZONE);
 
     pull.pullCtb();
 
@@ -32,7 +33,7 @@ class CtbScheduledPullTest {
     doThrow(new IllegalStateException("boom"))
         .when(ingestion)
         .runConnector(eq("CTB"), any(Consumer.class));
-    CtbScheduledPull pull = new CtbScheduledPull(ingestion, CRON);
+    CtbScheduledPull pull = new CtbScheduledPull(ingestion, CRON, ZONE);
 
     pull.pullCtb(); // must not throw — a connector failure is already ledgered by the runner
   }
@@ -49,7 +50,7 @@ class CtbScheduledPullTest {
 
   @Test
   void convertsSpringCronToSentryCrontabInVenueTime() {
-    MonitorConfig config = CtbScheduledPull.monitorConfig(CRON);
+    MonitorConfig config = CtbScheduledPull.monitorConfig(CRON, ZONE);
 
     assertThat(config.getSchedule().getValue()).isEqualTo("0 4 * * *");
     assertThat(config.getTimezone()).isEqualTo("Australia/Melbourne");

@@ -25,6 +25,15 @@ explicitly if needed:
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/goldys ./gradlew bootRun
 ```
 
+## Time zone
+
+Business dates — "today" for dashboards/tools, the CTB scheduled cron, reservation
+trading dates, and the CTB statement/watermark windows — are evaluated in a single
+venue time zone, `app.venue.timezone` (default `Australia/Melbourne`). Override it
+with `APP_VENUE_TIMEZONE` in `.env.prod` if the venue moves. `opentable.timezone`
+defaults to the venue zone but stays separately overridable (`OPENTABLE_TIMEZONE`)
+for back-compat.
+
 ## Production
 
 ```bash

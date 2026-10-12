@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 
 class IngestionServiceStageTest {
 
@@ -29,7 +31,8 @@ class IngestionServiceStageTest {
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             StandardCharsets.UTF_8.name(),
             "ctb-invoices",
-            Instant.EPOCH);
+            Instant.EPOCH,
+            null);
 
     RawRecordRepository rawRecords = mock(RawRecordRepository.class);
     when(rawRecords.findById(rawId)).thenReturn(Optional.of(record));
@@ -44,7 +47,9 @@ class IngestionServiceStageTest {
             rawRecords,
             stages,
             mock(ConnectorRunner.class),
-            List.of());
+            List.of(),
+            mock(PlatformTransactionManager.class),
+            mock(JdbcTemplate.class));
 
     service.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.SUCCESS);
 

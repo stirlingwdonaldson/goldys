@@ -2,6 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# git (and CA certs) are needed to install TimesFM, which requirements.txt pins as a
+# git+https:// dependency — pip shells out to `git clone`, which isn't in the slim base image.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install CPU-only torch first, from PyTorch's CPU wheel index, so the multi-GB CUDA
 # build is never pulled. Installing it before `requirements.txt` means the `torch` line
 # there resolves to the already-present CPU wheel instead of downloading from PyPI.

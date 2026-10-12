@@ -5,6 +5,9 @@ import com.goldys.platform.canonical.CanonicalProductSalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.ProductSalesInput;
+import com.goldys.platform.canonical.SaleRecipeLinkIngest;
+import com.goldys.platform.canonical.SaleRecipeLinkInput;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.FetchedPayload;
@@ -14,7 +17,9 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiFunction;
@@ -44,6 +49,9 @@ public class CtbConnector implements SourceConnector {
   private final CanonicalDailySalesIngest canonical;
   private final CtbSaleItemParser saleItemParser;
   private final CanonicalProductSalesIngest productSales;
+  private final CtbSaleRecipeLinkParser saleRecipeLinkParser;
+  private final SaleRecipeLinkIngest saleRecipeLinkIngest;
+  private final VenueClock venueClock;
 
   public CtbConnector(
       CtbClient client,
@@ -52,7 +60,10 @@ public class CtbConnector implements SourceConnector {
       CtbRevenueParser parser,
       CanonicalDailySalesIngest canonical,
       CtbSaleItemParser saleItemParser,
-      CanonicalProductSalesIngest productSales) {
+      CanonicalProductSalesIngest productSales,
+      CtbSaleRecipeLinkParser saleRecipeLinkParser,
+      SaleRecipeLinkIngest saleRecipeLinkIngest,
+      VenueClock venueClock) {
     this.client = client;
     this.email = email;
     this.password = password;
@@ -60,6 +71,9 @@ public class CtbConnector implements SourceConnector {
     this.canonical = canonical;
     this.saleItemParser = saleItemParser;
     this.productSales = productSales;
+    this.saleRecipeLinkParser = saleRecipeLinkParser;
+    this.saleRecipeLinkIngest = saleRecipeLinkIngest;
+    this.venueClock = venueClock;
   }
 
   @Override
@@ -90,10 +104,7 @@ public class CtbConnector implements SourceConnector {
         "ctb-invoices-ajax",
         failures,
         () -> pullRaw("ctb-invoices-ajax", client::searchInvoices, sink));
-    pull(
-        "ctb-sale-recipe-links",
-        failures,
-        () -> pullRaw("ctb-sale-recipe-links", client::searchDistinctSaleItemsForLinking, sink));
+    pull("ctb-sale-recipe-links", failures, () -> pullSaleRecipeLinks(sink));
     pull("ctb-recipes", failures, () -> pullSingle("ctb-recipes", client::getAllRecipes, sink));
     pull("ctb-stocks", failures, () -> pullRaw("ctb-stocks", client::searchStocks, sink));
     pull(
@@ -180,6 +191,8 @@ public class CtbConnector implements SourceConnector {
       start += PAGE_SIZE;
     }
 
+    throwIfTruncated("daily-sales", pages, start, total);
+
     for (Map.Entry<LocalDate, Totals> entry : byDate.entrySet()) {
       Totals t = entry.getValue();
       canonical.record(
@@ -232,9 +245,31 @@ public class CtbConnector implements SourceConnector {
       start += PAGE_SIZE;
     }
 
+    throwIfTruncated("sale-items for " + day, pages, start, total);
+
     for (ProductSalesInput input : byProduct.values()) {
       productSales.record(input);
     }
+  }
+
+  /** Page the sale-item→recipe links, writing each page raw and recording canonical links once. */
+  private void pullSaleRecipeLinks(IngestionSink sink) {
+    List<SaleRecipeLinkInput> all = new ArrayList<>();
+    int start = 0;
+    int pages = 0;
+    int total = -1;
+    while (pages < MAX_PAGES) {
+      CtbClient.CtbPage page = client.searchDistinctSaleItemsForLinking(start, PAGE_SIZE);
+      UUID rawId = writeRaw(page.json(), "ctb-sale-recipe-links", sink);
+      all.addAll(saleRecipeLinkParser.parse(page.json().getBytes(StandardCharsets.UTF_8), rawId));
+      total = page.totalCount();
+      pages++;
+      if (start + PAGE_SIZE >= total) {
+        break;
+      }
+      start += PAGE_SIZE;
+    }
+    saleRecipeLinkIngest.recordAll(all);
   }
 
   /**
@@ -242,7 +277,7 @@ public class CtbConnector implements SourceConnector {
    * the full list in one response and ignores {@code start}/{@code limit}, so it must not be paged.
    */
   private void pullStatements(IngestionSink sink) {
-    LocalDate end = LocalDate.now();
+    LocalDate end = venueClock.today();
     LocalDate start = end.minusMonths(12);
     pullSingle(
         "ctb-statements", () -> client.getStatements(start.toString(), end.toString()), sink);
@@ -275,12 +310,28 @@ public class CtbConnector implements SourceConnector {
       }
       start += PAGE_SIZE;
     }
+
+    throwIfTruncated(fetcherIdentity, pages, start, total);
   }
 
   /** Pull a single-response endpoint (reference data, {@code GetAll*}). */
   private void pullSingle(
       String fetcherIdentity, Supplier<CtbClient.CtbPage> pageFn, IngestionSink sink) {
     writeRaw(pageFn.get().json(), fetcherIdentity, sink);
+  }
+
+  /**
+   * Throws a classified failure when a paging loop stopped because it hit {@link #MAX_PAGES} while
+   * the source's {@code totalCount} still reports more rows — a silent truncation that would
+   * otherwise look like a complete pull. The pages already persisted stay in the ledger, and the
+   * caller's per-dataset {@code pull(...)} collection closes the run {@code PARTIAL}.
+   */
+  private static void throwIfTruncated(String dataset, int pages, int start, int total) {
+    if (pages >= MAX_PAGES && start + PAGE_SIZE < total) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_TRUNCATED",
+          dataset + " truncated after " + MAX_PAGES + " pages (" + total + " rows reported)");
+    }
   }
 
   /** Store one raw page byte-faithfully and return its ledger id. */
@@ -292,10 +343,11 @@ public class CtbConnector implements SourceConnector {
             "application/json",
             bytes,
             StandardCharsets.UTF_8.name(),
-            fetcherIdentity));
+            fetcherIdentity,
+            null));
   }
 
-  private static LocalDate watermarkDate(String watermark) {
+  private LocalDate watermarkDate(String watermark) {
     if (watermark != null && !watermark.isBlank()) {
       try {
         return LocalDate.parse(watermark);
@@ -303,7 +355,7 @@ public class CtbConnector implements SourceConnector {
         // not a date — fall through to today
       }
     }
-    return LocalDate.now();
+    return venueClock.today();
   }
 
   private static final class Totals {

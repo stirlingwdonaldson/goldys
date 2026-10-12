@@ -13,6 +13,7 @@ import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.DashboardTemplateCatalog;
 import com.goldys.platform.dashboard.DashboardWidgetValidator;
@@ -33,6 +34,7 @@ import com.goldys.platform.semantic.catalog.MetricQueryService;
 import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -68,7 +70,7 @@ class DashboardSharingTest {
           revisions,
           shares,
           metricQueryService,
-          new DashboardTemplateCatalog());
+          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))));
 
   private final AtomicReference<SavedDashboard> lastSaved = new AtomicReference<>();
 

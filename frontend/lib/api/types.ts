@@ -232,6 +232,20 @@ export interface LatestSales {
   authoritativeSource: string | null;
 }
 
+/** Per-dish costing: CTB recipe cost vs Lightspeed price/cost (mirrors backend `RecipeCosting`). */
+export interface RecipeCosting {
+  recipeId: number;
+  name: string | null;
+  folder: string | null;
+  portionSize: string | null;
+  costPerPortion: number | null;
+  actualCost: number | null;
+  costGap: number | null;
+  menuPrice: number | null;
+  margin: number | null;
+  gpPercent: number | null;
+}
+
 /** One invoice-ingestion anomaly, read-only (mirrors the backend `InvoiceIngestFlagView`). */
 export interface InvoiceIngestFlag {
   flagType: string;
@@ -737,6 +751,7 @@ export interface Api {
   listForecastRuns(): Promise<ForecastRun[]>;
   getForecastRun(id: string): Promise<ForecastRun>;
   getForecastComparison(id: string): Promise<ForecastComparison>;
+  getRecipes(): Promise<RecipeCosting[]>;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */

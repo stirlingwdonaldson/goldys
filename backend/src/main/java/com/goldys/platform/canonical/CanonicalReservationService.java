@@ -27,7 +27,7 @@ class CanonicalReservationService {
   CanonicalReservationService(
       CanonicalReservationRepository repository,
       ApplicationEventPublisher publisher,
-      @Value("${opentable.timezone:Australia/Sydney}") String zone) {
+      @Value("${opentable.timezone:Australia/Melbourne}") String zone) {
     this.repository = repository;
     this.publisher = publisher;
     this.zone = ZoneId.of(zone);

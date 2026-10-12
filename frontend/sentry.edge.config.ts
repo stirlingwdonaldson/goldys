@@ -1,7 +1,12 @@
 // Edge-runtime Sentry. Nothing runs on the edge runtime today; kept so a future middleware is
 // covered without remembering to add this. Loaded from instrumentation.ts.
 import * as Sentry from "@sentry/nextjs";
-import { dataCollection, beforeSend } from "./lib/sentry-options";
+import {
+  dataCollection,
+  beforeSend,
+  beforeSendTransaction,
+  beforeBreadcrumb,
+} from "./lib/sentry-options";
 
 const dsn = process.env.SENTRY_DSN;
 
@@ -12,5 +17,7 @@ Sentry.init({
   release: process.env.SENTRY_RELEASE || undefined,
   dataCollection,
   beforeSend,
+  beforeSendTransaction,
+  beforeBreadcrumb,
   tracesSampleRate: 1.0,
 });

@@ -36,7 +36,8 @@ class RawPayloadService {
       String contentType,
       byte[] payloadBytes,
       String characterEncoding,
-      String fetcherIdentity) {
+      String fetcherIdentity,
+      String sourceRecordRef) {
     Objects.requireNonNull(payloadBytes, "payloadBytes");
     IngestionRun run =
         runs.findById(ingestionRunId)
@@ -57,7 +58,8 @@ class RawPayloadService {
             sha256Hex(storedBytes),
             characterEncoding,
             fetcherIdentity,
-            CLOCK.instant());
+            CLOCK.instant(),
+            sourceRecordRef);
 
     UUID recordId = rawRecords.save(record).id();
     runs.save(run);
