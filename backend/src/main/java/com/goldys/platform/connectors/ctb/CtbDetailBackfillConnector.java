@@ -185,7 +185,7 @@ public class CtbDetailBackfillConnector implements SourceConnector {
     int total = -1;
     while (pages < MAX_PAGES) {
       CtbClient.CtbPage page = client.getStocktakeDetail(stocktakeId, start, DETAIL_PAGE_SIZE);
-      writeRaw(page.json(), "ctb-stocktake-detail", sink);
+      writeRaw(page.json(), "ctb-stocktake-detail", "stocktake:" + stocktakeId, sink);
       total = page.totalCount();
       pages++;
       if (start + DETAIL_PAGE_SIZE >= total) {
@@ -196,19 +196,27 @@ public class CtbDetailBackfillConnector implements SourceConnector {
   }
 
   private void pullWastageDetail(int wastageRecordId, IngestionSink sink) {
-    writeRaw(client.getWastageRecordDetail(wastageRecordId).json(), "ctb-wastage-detail", sink);
+    writeRaw(
+        client.getWastageRecordDetail(wastageRecordId).json(),
+        "ctb-wastage-detail",
+        "wastage:" + wastageRecordId,
+        sink);
   }
 
   private void pullRecipeIngredients(int recipeId, IngestionSink sink) {
     writeRaw(
         client.getIngredientsIncludingSubRecipeIngredients(recipeId).json(),
         "ctb-recipe-ingredients",
+        "recipe:" + recipeId,
         sink);
   }
 
   private void pullRecipeCost(List<Integer> recipeIds, IngestionSink sink) {
     writeRaw(
-        client.getSelectedRecipeFullRecords(jsonArray(recipeIds)).json(), "ctb-recipe-cost", sink);
+        client.getSelectedRecipeFullRecords(jsonArray(recipeIds)).json(),
+        "ctb-recipe-cost",
+        null,
+        sink);
   }
 
   private static List<Integer> readIds(String json, String field) {
@@ -235,14 +243,16 @@ public class CtbDetailBackfillConnector implements SourceConnector {
     }
   }
 
-  private static void writeRaw(String json, String fetcherIdentity, IngestionSink sink) {
+  private static void writeRaw(
+      String json, String fetcherIdentity, String sourceRecordRef, IngestionSink sink) {
     sink.accept(
         new FetchedPayload(
             FetchMethod.API,
             "application/json",
             json.getBytes(StandardCharsets.UTF_8),
             StandardCharsets.UTF_8.name(),
-            fetcherIdentity));
+            fetcherIdentity,
+            sourceRecordRef));
   }
 
   /** Small inter-request delay so the ~810-request one-off pass stays polite to CTB. */

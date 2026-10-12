@@ -79,7 +79,8 @@ class ConnectorRunner {
                   payload.contentType(),
                   payload.bytes(),
                   payload.characterEncoding(),
-                  payload.fetcherIdentity());
+                  payload.fetcherIdentity(),
+                  payload.sourceRecordRef());
           metrics.payloadIngested(connector.sourceSystem());
           return rawId;
         };

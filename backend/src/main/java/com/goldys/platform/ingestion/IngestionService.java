@@ -128,7 +128,8 @@ public class IngestionService {
               contentType,
               bytes,
               characterEncoding,
-              fetcherIdentity);
+              fetcherIdentity,
+              null);
       runs.complete(runId, null, CLOCK.instant());
       return rawId;
     } catch (RuntimeException e) {
