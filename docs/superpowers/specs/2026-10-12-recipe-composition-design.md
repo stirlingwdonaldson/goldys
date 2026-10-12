@@ -74,7 +74,7 @@ theoretical-vs-actual cost gap per dish.
 
 ## Design
 
-### 1. Migration (`V44__recipe_composition.sql`)
+### 1. Migration (`V47__recipe_composition.sql`)
 
 Three tables, mirroring `V22__inventory.sql` / `V20__reservation_read_model.sql`.
 
@@ -177,7 +177,7 @@ so a flag-gated one-off replay runner (mirroring `CtbDetailBackfillRunner`) repl
   Goldy's answers "what's my margin per dish?". The tool injects `RecipeMetricsQuery` (semantic),
   reads `costing()`, and renders a table widget directly; `toMetricQueries` returns empty (recipe
   master data is not a time-series metric, so the widget is not re-runnable from a saved dashboard).
-- Migration `V45__seed_recipe_permissions.sql` seeds `recipes.cost` for `ALL × OWNER` only
+- Migration `V48__seed_recipe_permissions.sql` seeds `recipes.cost` for `ALL × OWNER` only
   (BOH/FOH grants wait on the field-to-role matrix). Reserve `recipes.ingredients` for the later
   ingredient slice.
 - Extend `ArchitectureBoundariesTest` with the `recipe*` package rules (controller not canonical;

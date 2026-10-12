@@ -36,13 +36,13 @@ The five input classes the spec implies but no single task's happy-path test wou
 ### Task 1: Flyway migrations
 
 **Files:**
-- Create: `backend/src/main/resources/db/migration/V44__recipe_composition.sql`
-- Create: `backend/src/main/resources/db/migration/V45__seed_recipe_permissions.sql`
+- Create: `backend/src/main/resources/db/migration/V47__recipe_composition.sql`
+- Create: `backend/src/main/resources/db/migration/V48__seed_recipe_permissions.sql`
 
 **Interfaces:**
 - Produces: `canonical_recipe_cost`, `canonical_sale_recipe_link`, `resolved_recipe` tables; `recipes.cost` permission row. Every later task reads these.
 
-- [ ] **Step 1: Write `V44__recipe_composition.sql`**
+- [ ] **Step 1: Write `V47__recipe_composition.sql`**
 
 Three tables mirroring `V22__inventory.sql` (columns exactly as the spec §1):
 
@@ -52,7 +52,7 @@ Three tables mirroring `V22__inventory.sql` (columns exactly as the spec §1):
 
 `resolved_recipe` — `recipe_id integer PRIMARY KEY`, `recipe_name varchar(512)`, `recipe_folder_name varchar(512)`, `cost_per_portion numeric(14,4)`, `cost_per_portion_incl_labour numeric(14,4)`, `total_cost numeric(14,4)`, `portion_size varchar(255)`, `portion_size_value numeric(14,4)`, `menu_price numeric(14,4)`, `actual_cost numeric(14,4)`, `resolution_type text NOT NULL`, `authoritative_source text NOT NULL`, `resolved_at timestamptz NOT NULL`.
 
-- [ ] **Step 2: Write `V45__seed_recipe_permissions.sql`**
+- [ ] **Step 2: Write `V48__seed_recipe_permissions.sql`**
 
 ```sql
 -- Seed owner access to recipes.cost, matching the V6/V13/V23 convention (ALL x OWNER).
@@ -68,7 +68,7 @@ Expected: build succeeds. The migration is exercised end-to-end by the Task 6 in
 - [ ] **Step 4: Commit**
 
 ```bash
-git add backend/src/main/resources/db/migration/V44__recipe_composition.sql backend/src/main/resources/db/migration/V45__seed_recipe_permissions.sql
+git add backend/src/main/resources/db/migration/V47__recipe_composition.sql backend/src/main/resources/db/migration/V48__seed_recipe_permissions.sql
 git commit -m "feat(recipe): Flyway migrations for recipe composition + recipes.cost permission"
 ```
 
