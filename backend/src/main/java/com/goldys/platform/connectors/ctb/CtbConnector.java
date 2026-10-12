@@ -184,6 +184,8 @@ public class CtbConnector implements SourceConnector {
       start += PAGE_SIZE;
     }
 
+    throwIfTruncated("daily-sales", pages, start, total);
+
     for (Map.Entry<LocalDate, Totals> entry : byDate.entrySet()) {
       Totals t = entry.getValue();
       canonical.record(
@@ -236,6 +238,8 @@ public class CtbConnector implements SourceConnector {
       start += PAGE_SIZE;
     }
 
+    throwIfTruncated("sale-items for " + day, pages, start, total);
+
     for (ProductSalesInput input : byProduct.values()) {
       productSales.record(input);
     }
@@ -279,12 +283,28 @@ public class CtbConnector implements SourceConnector {
       }
       start += PAGE_SIZE;
     }
+
+    throwIfTruncated(fetcherIdentity, pages, start, total);
   }
 
   /** Pull a single-response endpoint (reference data, {@code GetAll*}). */
   private void pullSingle(
       String fetcherIdentity, Supplier<CtbClient.CtbPage> pageFn, IngestionSink sink) {
     writeRaw(pageFn.get().json(), fetcherIdentity, sink);
+  }
+
+  /**
+   * Throws a classified failure when a paging loop stopped because it hit {@link #MAX_PAGES} while
+   * the source's {@code totalCount} still reports more rows — a silent truncation that would
+   * otherwise look like a complete pull. The pages already persisted stay in the ledger, and the
+   * caller's per-dataset {@code pull(...)} collection closes the run {@code PARTIAL}.
+   */
+  private static void throwIfTruncated(String dataset, int pages, int start, int total) {
+    if (pages >= MAX_PAGES && start + PAGE_SIZE < total) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_TRUNCATED",
+          dataset + " truncated after " + MAX_PAGES + " pages (" + total + " rows reported)");
+    }
   }
 
   /** Store one raw page byte-faithfully and return its ledger id. */

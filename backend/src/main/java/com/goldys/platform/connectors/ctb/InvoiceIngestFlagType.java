@@ -12,6 +12,8 @@ public enum InvoiceIngestFlagType {
   SCANNED_PDF,
   /** A PDF's text could not be reduced to any usable line items. */
   PDF_UNPARSEABLE,
+  /** The LLM fallback was attempted but its call threw or its output could not be parsed. */
+  LLM_EXTRACTION_FAILED,
   /** A parsed PDF line has no matching CSV line (not canonicalized). */
   PDF_ONLY_LINE,
   /**

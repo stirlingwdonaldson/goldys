@@ -106,6 +106,25 @@ class InvoicePdfEnrichmentServiceTest {
   }
 
   @Test
+  void flagsLlmExtractionFailureDistinctlyFromUnparseable() {
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("some text");
+    when(parser.extract("some text"))
+        .thenReturn(new PdfExtractedInvoice(null, List.of(), "LLM call failed: boom"));
+    when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
+
+    service().enrich(new byte[] {1}, "a.pdf", PDF_RAW_ID);
+
+    verify(flags)
+        .flag(
+            eq(InvoiceIngestFlagType.LLM_EXTRACTION_FAILED),
+            eq("INV-1"),
+            eq("a.pdf"),
+            eq(null),
+            eq("LLM call failed: boom"));
+    verify(gapRecovery, never()).recover(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
   void fallsBackToTheStoredInvoiceFilenameForFlagIdentityWhenReplayedWithoutOne() {
     // During a replay the raw PDF record has no filename, so the flag must reuse the invoice's
     // stored pdf_filename or a resolved flag would be re-created under a different identity.

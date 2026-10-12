@@ -23,9 +23,11 @@ import org.springframework.stereotype.Component;
  *
  * <p>The model is injected as an {@link ObjectProvider} because it is absent when {@code
  * spring.ai.model.chat=none} (the default). With no model available the extractor returns an empty
- * invoice — a caller that reaches the LLM and gets nothing back treats that as "unparseable", never
- * as a hallucinated success. The JSON contract is fixed and the temperature is forced to 0 so the
- * fallback is as deterministic as a probabilistic model can be.
+ * invoice (no error); a model that throws, or whose output cannot be parsed as the JSON contract,
+ * is returned with a non-null {@link PdfExtractedInvoice#extractionError()} so the caller flags it
+ * as {@link InvoiceIngestFlagType#LLM_EXTRACTION_FAILED} rather than mistaking a failure for a
+ * genuine "no lines". The JSON contract is fixed and the temperature is forced to 0 so the fallback
+ * is as deterministic as a probabilistic model can be.
  */
 @Component
 public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
@@ -69,6 +71,10 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
   public PdfExtractedInvoice extract(String text) {
     ChatModel model = chatModel.getIfAvailable();
     if (model == null) {
+      // No model configured: not a failure — the deterministic templates already ran and the LLM
+      // fallback is simply unavailable. Return an empty invoice with no error so the caller treats
+      // it as "no lines parsed" (PDF_UNPARSEABLE), not as an LLM failure, and environments without
+      // an AI key don't fill the flag list.
       return new PdfExtractedInvoice(null, List.of());
     }
     try {
@@ -80,14 +86,14 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
       String content = response.getResult().getOutput().getText();
       return parse(content);
     } catch (RuntimeException e) {
-      log.warn("LLM invoice extraction failed; returning empty result", e);
-      return new PdfExtractedInvoice(null, List.of());
+      log.warn("LLM invoice extraction failed", e);
+      return new PdfExtractedInvoice(null, List.of(), "LLM call failed: " + e.getMessage());
     }
   }
 
   private PdfExtractedInvoice parse(String content) {
     if (content == null || content.isBlank()) {
-      return new PdfExtractedInvoice(null, List.of());
+      return new PdfExtractedInvoice(null, List.of(), "LLM returned no output text");
     }
     String json = content;
     // Tolerate a model that wraps the JSON in a ```json … ``` fence or prepends a stray sentence.
@@ -106,7 +112,7 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
       return invoice;
     } catch (Exception e) {
       log.warn("Could not parse LLM invoice output as JSON contract", e);
-      return new PdfExtractedInvoice(null, List.of());
+      return new PdfExtractedInvoice(null, List.of(), "LLM output was not parseable JSON");
     }
   }
 

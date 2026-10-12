@@ -55,6 +55,15 @@ public class InvoicePdfEnrichmentService {
         pdfFilename != null
             ? pdfFilename
             : invoiceQuery.currentPdfFilenameForInvoiceNumber(invoiceNumber).orElse(null);
+    if (parsed.extractionError() != null) {
+      flags.flag(
+          InvoiceIngestFlagType.LLM_EXTRACTION_FAILED,
+          invoiceNumber,
+          flagFilename,
+          null,
+          parsed.extractionError());
+      return;
+    }
     if (parsed.lines().isEmpty()) {
       flags.flag(
           InvoiceIngestFlagType.PDF_UNPARSEABLE,
