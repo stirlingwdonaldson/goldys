@@ -5,6 +5,7 @@ import com.goldys.platform.connectors.ctb.CtbDetailBackfillConnector;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -32,6 +33,9 @@ public class CtbDetailBackfillRunner implements ApplicationRunner {
   private final ConnectorRunner connectorRunner;
   private final Supplier<CtbDetailBackfillConnector> connectorFactory;
 
+  // @Autowired: this class has two constructors (the package-private one is a test seam), so Spring
+  // needs the annotation to know which one to use for bean creation.
+  @Autowired
   public CtbDetailBackfillRunner(
       ConnectorRunner connectorRunner,
       @Value("${ctb.base-url:https://web.cookingthebooks.com.au}") String baseUrl,
