@@ -19,6 +19,9 @@ class Predictor(Protocol):
     def warm(self) -> bool:
         """Whether the model is loaded and ready to serve predictions."""
 
+    def warmup(self) -> None:
+        """Pre-load the model (downloading weights on first call) without predicting."""
+
     def predict(
         self,
         dates: list[str],
@@ -57,6 +60,10 @@ class TimesFmPredictor:
     @property
     def warm(self) -> bool:
         return self._forecaster is not None
+
+    def warmup(self) -> None:
+        """Pre-load the model so the first forecast isn't stalled by the weight download."""
+        self._load()
 
     def _load(self):
         if self._forecaster is None:

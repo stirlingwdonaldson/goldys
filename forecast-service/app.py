@@ -12,6 +12,9 @@ for a fake in tests.
 from __future__ import annotations
 
 import math
+import os
+import threading
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field, model_validator
@@ -23,7 +26,21 @@ MODEL_VERSION = "timesfm-3.0"
 # Swapped for a FakePredictor in tests.
 predictor: Predictor = TimesFmPredictor()
 
-app = FastAPI(title="TimesFM inference service", version=MODEL_VERSION)
+def _prewarm_enabled() -> bool:
+    return os.environ.get("TIMESFM_PREWARM", "false").strip().lower() in ("1", "true", "yes", "on")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Pre-download/load the model in a background thread so /health responds immediately
+    # and the first forecast isn't stalled by the (multi-hundred-MB) weight download.
+    # The cache volume persists the download across restarts.
+    if _prewarm_enabled():
+        threading.Thread(target=predictor.warmup, name="timesfm-prewarm", daemon=True).start()
+    yield
+
+
+app = FastAPI(title="TimesFM inference service", version=MODEL_VERSION, lifespan=lifespan)
 
 
 class ForecastRequest(BaseModel):

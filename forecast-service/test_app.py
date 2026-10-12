@@ -33,6 +33,10 @@ class FakePredictor:
 
     def __init__(self):
         self.last_call = None
+        self.warmup_calls = 0
+
+    def warmup(self):
+        self.warmup_calls += 1
 
     def predict(self, dates, target, covariates, horizon, freq, quantiles):
         self.last_call = (dates, target, covariates, horizon, freq, quantiles)
@@ -97,3 +101,16 @@ def test_nan_serializes_as_null():
     assert response.status_code == 200
     body = response.json()
     assert body["quantiles"]["0.1"] == [None, None]
+
+
+def test_prewarm_enabled_parses_env(monkeypatch):
+    for value in ("true", "1", "yes", "on", "TRUE", " True "):
+        monkeypatch.setenv("TIMESFM_PREWARM", value)
+        assert app_module._prewarm_enabled() is True
+
+    for value in ("false", "0", "no", "off", ""):
+        monkeypatch.setenv("TIMESFM_PREWARM", value)
+        assert app_module._prewarm_enabled() is False
+
+    monkeypatch.delenv("TIMESFM_PREWARM", raising=False)
+    assert app_module._prewarm_enabled() is False
