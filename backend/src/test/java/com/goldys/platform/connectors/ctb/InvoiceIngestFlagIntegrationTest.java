@@ -45,9 +45,11 @@ class InvoiceIngestFlagIntegrationTest {
   }
 
   @Test
-  void treatsNullAndNonNullIdentityValuesAsDistinct() {
-    flags.flag(InvoiceIngestFlagType.PDF_ONLY_LINE, "INV-2", null, "CODE-A", "desc");
-    flags.flag(InvoiceIngestFlagType.PDF_ONLY_LINE, "INV-2", null, "CODE-B", "desc");
+  void treatsNullAndNonNullDetailAsDistinct() {
+    // Two flags identical except detail: null vs non-null are distinct identities (the explicit
+    // IS NULL handling in the dedup query must not collapse them).
+    flags.flag(InvoiceIngestFlagType.PDF_ONLY_LINE, "INV-2", null, "CODE", null);
+    flags.flag(InvoiceIngestFlagType.PDF_ONLY_LINE, "INV-2", null, "CODE", "desc");
 
     assertThat(jdbc.queryForObject("select count(*) from invoice_ingest_flag", Integer.class))
         .isEqualTo(2);

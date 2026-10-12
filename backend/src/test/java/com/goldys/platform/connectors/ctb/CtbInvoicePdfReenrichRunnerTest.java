@@ -69,6 +69,7 @@ class CtbInvoicePdfReenrichRunnerTest {
 
     verify(flags).resolve(resolved);
     verify(flags, never()).resolve(genuine);
+    verify(flags).retireDuplicatePdfOnlyLineFlags();
   }
 
   @Test

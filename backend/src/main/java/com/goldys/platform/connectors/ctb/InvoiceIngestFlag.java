@@ -13,8 +13,10 @@ import java.util.UUID;
 /**
  * A single invoice-ingestion anomaly, recorded append-only so a missing or unparseable PDF is a
  * queryable fact rather than a silent gap (spec §8). Identity fields ({@code invoiceNumber}, {@code
- * pdfFilename}, {@code stockCode}) are nullable and their combination — together with the flag type
- * — is what the writer deduplicates on, so a re-pull does not pile up duplicate rows.
+ * pdfFilename}, {@code detail}) are nullable and their combination — together with the flag type —
+ * is what the writer deduplicates on, so a re-pull does not pile up duplicate rows. {@code
+ * stockCode} is a display/matching attribute, deliberately excluded from the identity because the
+ * extractor's code is unstable across runs.
  */
 @Entity
 @Table(name = "invoice_ingest_flag")
