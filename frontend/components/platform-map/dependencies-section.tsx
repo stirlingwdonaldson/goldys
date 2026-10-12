@@ -18,7 +18,7 @@ export function DependenciesSection() {
       card
     >
       <div id="dependencies">
-        <Suspense fallback={<Skeleton className="h-[480px] w-full" />}>
+        <Suspense fallback={<Skeleton className="h-[560px] w-full" />}>
           <FocusedMap />
         </Suspense>
       </div>

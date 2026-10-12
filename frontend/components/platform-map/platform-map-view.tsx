@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
 import { NetworkExplorer } from "@/components/network/network-explorer";
-import type { NetworkKind, NetworkNode } from "@/components/network/types";
-import { useCssColours } from "@/components/network/use-css-colours";
+import type { NetworkGroupSet, NetworkKind, NetworkNode } from "@/components/network/types";
 import { InlineError } from "@/components/states/inline-error";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,16 +19,32 @@ export const PLATFORM_KINDS: { kind: NetworkKind; label: string }[] = [
   { kind: "permission", label: "Permissions" },
 ];
 
-/** Fill per kind, from the chart palette; status shows as the node's ring, not its fill. */
-const KIND_COLOUR_VARS = {
-  source: "--chart-5",
-  domain: "--chart-4",
-  metric: "--chart-1",
-  "derived-metric": "--chart-3",
-  dashboard: "--brand",
-  permission: "--muted-foreground",
-  product: "--muted-foreground",
-} satisfies Record<NetworkKind, string>;
+/**
+ * Colour groups. "Health" is the default: only problems get colour and everything healthy stays
+ * grey, so a failing source and its blast radius stand out. "Kind" tells node types apart.
+ */
+export const PLATFORM_GROUP_SETS: NetworkGroupSet[] = [
+  {
+    id: "health",
+    label: "Health",
+    groups: [
+      { id: "fail", label: "Failing", colourVar: "--destructive", matches: (n) => n.tone === "fail" },
+      { id: "missing", label: "No data", colourVar: "--status-missing", matches: (n) => n.tone === "missing" },
+      { id: "warn", label: "Stale", colourVar: "--status-conflict", matches: (n) => n.tone === "warn" },
+    ],
+  },
+  {
+    id: "kind",
+    label: "Kind",
+    groups: [
+      { id: "source", label: "Sources", colourVar: "--chart-5", matches: (n) => n.kind === "source" },
+      { id: "domain", label: "Domains", colourVar: "--chart-4", matches: (n) => n.kind === "domain" },
+      { id: "metric", label: "Metrics", colourVar: "--chart-1", matches: (n) => n.kind === "metric" },
+      { id: "derived", label: "Derived metrics", colourVar: "--chart-3", matches: (n) => n.kind === "derived-metric" },
+      { id: "dashboard", label: "Dashboards", colourVar: "--brand", matches: (n) => n.kind === "dashboard" },
+    ],
+  },
+];
 
 interface PlatformMapViewProps {
   /** e.g. `metric:sales.gross`, from the URL or the provenance sheet. */
@@ -37,6 +52,8 @@ interface PlatformMapViewProps {
   /** Open as the focused node's local graph rather than the whole map. */
   initialLocal?: boolean;
   height?: number;
+  /** Collapse the settings card to its icon (e.g. inside the provenance sheet). */
+  compact?: boolean;
 }
 
 /**
@@ -44,13 +61,11 @@ interface PlatformMapViewProps {
  * node coloured by the health of the sources upstream of it. Focusing a failing node says what it
  * affects.
  */
-export function PlatformMapView({ initialFocusId, initialLocal, height }: PlatformMapViewProps) {
+export function PlatformMapView({ initialFocusId, initialLocal, height, compact }: PlatformMapViewProps) {
   const result = useApiData((api) => api.getPlatformMap());
-  const colours = useCssColours(KIND_COLOUR_VARS);
   const map = useMemo(() => (result.data ? buildPlatformMap(result.data) : null), [result.data]);
-  const highlightFor = useCallback((node: NetworkNode) => map?.impact.get(node.id) ?? [], [map]);
 
-  if (result.loading) return <Skeleton className="h-[480px] w-full" />;
+  if (result.loading) return <Skeleton className="w-full" style={{ height: height ?? 560 }} />;
   if (result.error) {
     if (result.error.code === "NOT_PERMITTED") return <PermissionDenied subject="the platform map" />;
     return <InlineError>Couldn&apos;t load the platform map. {result.error.message}</InlineError>;
@@ -64,12 +79,12 @@ export function PlatformMapView({ initialFocusId, initialLocal, height }: Platfo
       ariaLabel="Platform dependency map"
       kinds={PLATFORM_KINDS}
       hiddenByDefault={["permission"]}
-      colourFor={(node) => colours[node.kind] ?? "#8a8a8a"}
+      groupSets={PLATFORM_GROUP_SETS}
+      defaultSettingsOpen={!compact}
       initialFocusId={initialFocusId}
       initialLocal={initialLocal}
       height={height}
       focusPanelExtra={(node) => <ImpactPanel node={node} map={map} />}
-      highlightFor={highlightFor}
     />
   );
 }
