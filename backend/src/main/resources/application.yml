@@ -136,6 +136,13 @@ app:
       enabled: true
       cron: "0 0 4 * * *"
 
+# Self-hosted TimesFM inference service (bound by forecasting.TimesFmProperties).
+# Disabled by default; set FORECASTING_TIMESFM_ENABLED=true to turn forecasting on.
+forecasting:
+  timesfm:
+    enabled: ${FORECASTING_TIMESFM_ENABLED:false}
+    base-url: ${FORECASTING_TIMESFM_BASE_URL:http://localhost:8001}
+
 # Cooking the Books SFTP drop — the Custom Invoice Export lands here and is polled by the
 # SFTP pull. Disabled by default; set ctb.sftp.enabled=true and provide host/user/password
 # (CTB_SFTP_HOST/USER/PASSWORD) to turn it on. Cron is Australia/Melbourne.
