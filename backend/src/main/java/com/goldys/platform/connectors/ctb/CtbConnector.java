@@ -292,7 +292,8 @@ public class CtbConnector implements SourceConnector {
             "application/json",
             bytes,
             StandardCharsets.UTF_8.name(),
-            fetcherIdentity));
+            fetcherIdentity,
+            null));
   }
 
   private static LocalDate watermarkDate(String watermark) {

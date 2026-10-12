@@ -38,7 +38,8 @@ class IngestionServicesTest {
             "application/octet-stream",
             bytes,
             null,
-            "fixture");
+            "fixture",
+            null);
     bytes[0] = 0;
 
     RawRecord saved = rawRecords.findById(recordId).orElseThrow();
@@ -55,7 +56,14 @@ class IngestionServicesTest {
 
     UUID recordId =
         payloads.persist(
-            runId, "LIGHTSPEED", FetchMethod.SCRAPE, "text/html", notUtf8, "UTF-8", "fixture");
+            runId,
+            "LIGHTSPEED",
+            FetchMethod.SCRAPE,
+            "text/html",
+            notUtf8,
+            "UTF-8",
+            "fixture",
+            null);
 
     assertThat(rawRecords.findById(recordId).orElseThrow().payloadBytes()).isEqualTo(notUtf8);
   }
@@ -72,7 +80,8 @@ class IngestionServicesTest {
             "text/plain",
             "abc".getBytes(StandardCharsets.UTF_8),
             "UTF-8",
-            "fixture");
+            "fixture",
+            null);
 
     assertThat(rawRecords.findById(recordId).orElseThrow().payloadSha256()).isEqualTo(ABC_SHA_256);
   }
@@ -95,7 +104,14 @@ class IngestionServicesTest {
   void payloadsPlusAFailureCompleteAsPartial() {
     UUID runId = runs.start("LIGHTSPEED", "lightspeed-backoffice", null, Instant.now());
     payloads.persist(
-        runId, "LIGHTSPEED", FetchMethod.SCRAPE, "text/html", new byte[] {1}, "UTF-8", "fixture");
+        runId,
+        "LIGHTSPEED",
+        FetchMethod.SCRAPE,
+        "text/html",
+        new byte[] {1},
+        "UTF-8",
+        "fixture",
+        null);
 
     runs.recordFailure(runId, "SCHEMA_MISMATCH", "second page changed", null, Instant.now());
     runs.complete(runId, "page-2", Instant.now());
@@ -119,7 +135,14 @@ class IngestionServicesTest {
     UUID runId = runs.start("CTB", "ctb-export", null, Instant.now());
     runs.recordFetched(runId);
     payloads.persist(
-        runId, "CTB", FetchMethod.FILE_EXPORT, "text/csv", new byte[] {1, 2}, "UTF-8", "fixture");
+        runId,
+        "CTB",
+        FetchMethod.FILE_EXPORT,
+        "text/csv",
+        new byte[] {1, 2},
+        "UTF-8",
+        "fixture",
+        null);
 
     runs.complete(runId, "2026-09-19", Instant.now());
 
@@ -144,7 +167,8 @@ class IngestionServicesTest {
                     "text/csv",
                     new byte[] {1},
                     "UTF-8",
-                    "fixture"))
+                    "fixture",
+                    null))
         .isInstanceOf(IllegalStateException.class);
   }
 
@@ -153,7 +177,14 @@ class IngestionServicesTest {
     UUID runId = runs.start("CTB", "ctb-export", null, Instant.now());
     runs.recordFetched(runId);
     payloads.persist(
-        runId, "CTB", FetchMethod.FILE_EXPORT, "text/csv", new byte[] {1}, "UTF-8", "fixture");
+        runId,
+        "CTB",
+        FetchMethod.FILE_EXPORT,
+        "text/csv",
+        new byte[] {1},
+        "UTF-8",
+        "fixture",
+        null);
 
     runs.complete(runId, null, Instant.now());
 
@@ -168,7 +199,14 @@ class IngestionServicesTest {
   void recoverDanglingRunsMarksInterruptedRunsAndLeavesCompletedRunsAlone() {
     UUID danglingId = runs.start("CTB", "ctb-export", null, Instant.now());
     payloads.persist(
-        danglingId, "CTB", FetchMethod.FILE_EXPORT, "text/csv", new byte[] {1}, "UTF-8", "fixture");
+        danglingId,
+        "CTB",
+        FetchMethod.FILE_EXPORT,
+        "text/csv",
+        new byte[] {1},
+        "UTF-8",
+        "fixture",
+        null);
 
     UUID finishedId = runs.start("DEPUTY", "deputy-api", null, Instant.now());
     runs.complete(finishedId, null, Instant.now());

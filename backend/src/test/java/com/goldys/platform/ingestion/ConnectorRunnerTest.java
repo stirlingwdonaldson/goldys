@@ -27,7 +27,7 @@ class ConnectorRunnerTest {
 
   private static FetchedPayload page(String html) {
     return new FetchedPayload(
-        FetchMethod.SCRAPE, "text/html", html.getBytes(UTF_8), "UTF-8", "fixture");
+        FetchMethod.SCRAPE, "text/html", html.getBytes(UTF_8), "UTF-8", "fixture", null);
   }
 
   @Test
@@ -163,7 +163,7 @@ class ConnectorRunnerTest {
   void fetchedPayloadCopiesItsBytes() {
     byte[] bytes = {1, 2, 3};
     FetchedPayload payload =
-        new FetchedPayload(FetchMethod.API, "application/json", bytes, "UTF-8", "fixture");
+        new FetchedPayload(FetchMethod.API, "application/json", bytes, "UTF-8", "fixture", null);
 
     bytes[0] = 9;
     payload.bytes()[1] = 9;
