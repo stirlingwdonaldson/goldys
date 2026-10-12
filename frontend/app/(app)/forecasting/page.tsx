@@ -31,6 +31,7 @@ import { useApi } from "@/lib/demo-mode";
 import { useApiData } from "@/lib/use-api-data";
 import { formatDateTime, formatDay, formatNumber, formatPercent } from "@/lib/format";
 import { AXIS_TICK, CHART_TOOLTIP_PROPS, compactAxis, formatXTick } from "@/components/widgets/chart-style";
+import { toChartPoints } from "./forecast-chart";
 import type {
   ForecastComparison,
   ForecastMetric,
@@ -56,9 +57,10 @@ function oneYearAgoISO(): string {
 
 /** The forecast series: a median line inside a p10–p90 shaded band. */
 function ForecastChart({ series }: { series: ForecastSeriesPoint[] }) {
+  const data = toChartPoints(series);
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={series} margin={{ top: 4, right: 8, left: -8, bottom: 0 }}>
+      <LineChart data={data} margin={{ top: 4, right: 8, left: -8, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
         <XAxis
           dataKey="date"
@@ -76,16 +78,18 @@ function ForecastChart({ series }: { series: ForecastSeriesPoint[] }) {
           tickFormatter={(v: number) => compactAxis(v)}
         />
         <Tooltip {...CHART_TOOLTIP_PROPS} labelFormatter={formatXTick} formatter={(v: number) => formatNumber(v)} />
-        {/* Two stacked areas draw a band between p10 and p90: the first is invisible,
-            the second stacks on top so its fill covers exactly p10→p90. */}
-        <Area type="monotone" dataKey="p10" stackId="band" stroke="none" fill="transparent" />
+        {/* The band is drawn as a transparent p10 baseline plus the band width stacked on it
+            (p10 + (p90 − p10) = p90), so the fill spans exactly p10→p90. Recharts stacks are
+            cumulative; stacking a raw p90 area would cover p10→p10+p90. */}
+        <Area type="monotone" dataKey="p10" stackId="band" stroke="none" fill="transparent" tooltipType="none" />
         <Area
           type="monotone"
-          dataKey="p90"
+          dataKey="range"
           stackId="band"
           stroke="none"
           fill="hsl(var(--chart-1))"
           fillOpacity={0.15}
+          tooltipType="none"
         />
         <Line
           type="monotone"
