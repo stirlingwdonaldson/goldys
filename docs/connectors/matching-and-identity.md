@@ -110,14 +110,22 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Stock count (`canonical_stock_count`)
 
-- **Source:** `CTB` (stocktake export — **not yet ingested**).
-- **Logical identity / matching:** to be finalized when the ingestion source is confirmed. Model is
+- **Source:** `CTB` (stocktake detail — **ingested raw** via `ctb-stocktake-detail`, under the
+  one-off `ctb-detail-backfill` run).
+- **Logical identity / matching:** to be finalized when the canonical source is confirmed. Model is
   in place; identity is deferred with the source.
 
 ## Wastage (`canonical_wastage`)
 
-- **Source:** `CTB` (wastage export — **not yet ingested**).
+- **Source:** `CTB` (wastage detail — **ingested raw** via `ctb-wastage-detail`, under the one-off
+  `ctb-detail-backfill` run).
 - **Logical identity / matching:** deferred with the source, as above.
+
+## Recipe composition (no canonical entity yet)
+
+- **Source:** `CTB` (recipe ingredients `ctb-recipe-ingredients` + batched derived cost
+  `ctb-recipe-cost`, under the one-off `ctb-detail-backfill` run). Raw-only; the canonical
+  recipe-composition domain is a later slice (D) and its identity is not yet defined.
 
 ## Payment (`canonical_payment`)
 

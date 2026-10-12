@@ -14,6 +14,7 @@ import { SaleItemsTab } from "@/components/sales-detail/sale-items-tab";
 import { lineageDomainForTab } from "@/components/sales-detail/lineage-graph";
 import { LineageGraphView } from "@/components/sales-detail/lineage-graph-view";
 import { RelationshipGraphView } from "@/components/sales-detail/relationship-graph-view";
+import { SettlementFlowView } from "@/components/sales-detail/settlement-flow-view";
 
 const TABS = [
   { value: "payments", label: "Payments" },
@@ -62,6 +63,13 @@ function SalesDetail() {
       />
 
       <DateRangeFilter from={range.from} to={range.to} onChange={setRange} />
+
+      <Section
+        title="Settlement"
+        description="How items rung become tenders and settle into payments, and what didn't match."
+      >
+        <SettlementFlowView from={range.from} to={range.to} />
+      </Section>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList aria-label="Sales detail section">

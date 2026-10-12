@@ -80,6 +80,60 @@ class CtbConnectorTest {
         .isEqualTo("CONNECTOR_PERMISSION_DENIED");
   }
 
+  @Test
+  void aFailingDatasetDoesNotAbortTheRest() {
+    // The production failure: recipes returns a non-JSON (HTML) body. Before isolation this aborted
+    // the whole fetch, so stocks/suppliers/stocktakes/wastage/orders/statements/reference never
+    // ran.
+    CtbClient client = emptyClient();
+    when(client.getAllRecipes())
+        .thenThrow(
+            new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON CTB response"));
+
+    CtbConnector connector = connector(client, emptyRevenueParser(), emptySaleItemParser());
+    List<String> identities = new ArrayList<>();
+
+    assertThatThrownBy(
+            () ->
+                connector.fetch(
+                    null,
+                    payload -> {
+                      identities.add(payload.fetcherIdentity());
+                      return UUID.randomUUID();
+                    }))
+        .isInstanceOf(ConnectorFetchException.class)
+        .extracting(e -> ((ConnectorFetchException) e).failureType())
+        .isEqualTo("CONNECTOR_SCHEMA_MISMATCH");
+
+    // Datasets after the failing recipes pull are still attempted and written.
+    assertThat(identities)
+        .contains(
+            "ctb-stocks",
+            "ctb-suppliers",
+            "ctb-stocktakes",
+            "ctb-wastage",
+            "ctb-stock-orders",
+            "ctb-statements",
+            "ctb-reference-data");
+  }
+
+  @Test
+  void multipleDatasetFailuresAreSummarised() {
+    CtbClient client = emptyClient();
+    when(client.getAllRecipes())
+        .thenThrow(
+            new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON CTB response"));
+    when(client.searchStocks(anyInt(), anyInt()))
+        .thenThrow(new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB Stock/SearchStocks"));
+
+    CtbConnector connector = connector(client, emptyRevenueParser(), emptySaleItemParser());
+
+    assertThatThrownBy(() -> connector.fetch(null, payload -> UUID.randomUUID()))
+        .isInstanceOf(ConnectorFetchException.class)
+        .hasMessageContaining("ctb-recipes")
+        .hasMessageContaining("ctb-stocks");
+  }
+
   private static CtbConnector connector(
       CtbClient client, CtbRevenueParser revenueParser, CtbSaleItemParser saleItemParser) {
     return new CtbConnector(

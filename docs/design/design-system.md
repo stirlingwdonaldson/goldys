@@ -179,14 +179,22 @@ from earlier drafts still hold:
   `href` makes it a link.
 - **Relationships — force-directed networks.** When the point is *what is
   related to what* (what depends on a source, which products sell together),
-  use `components/network/NetworkExplorer` (`react-force-graph-2d`), not a
-  column graph. Build a pure `NetworkGraph` (unit-testable) and pass it in; the
-  explorer adds search, kind filters, a local graph with a depth slider and a
-  focus panel. Fill colour shows the node's *kind* (chart tokens); status shows
-  only as a ring in the same tone vocabulary as flow graphs. The canvas is
-  `aria-hidden` and always paired with `NetworkList`, which is the only view on
-  a phone. Cap what the backend sends (top-N, per-node edge limits): a graph
-  everyone can read beats a complete hairball.
+  use `components/network/NetworkExplorer` (Sigma.js + ForceAtlas2), styled
+  after Obsidian's graph view: the canvas is the whole surface; nodes are small
+  flat dots sized by their connections, grey unless a colour group matches;
+  links are hairlines; labels appear with zoom through Sigma's label grid, so
+  they never overprint. Faint colours are opaque mixes toward the card
+  background, not transparency (thin translucent WebGL lines vanish). Hovering or selecting a node keeps
+  it and its directly linked nodes at full strength, labelled below, draws its
+  links in the accent (`--chart-3`) and fades everything further away; no
+  outline or label box. Settings float in a
+  collapsible top-right card (Filters, Groups, Display, Forces) and the focused
+  node's details in a bottom-left card. Colour groups (`NetworkGroupSet`) follow
+  the status rule: by default only problems get colour, healthy stays grey.
+  Build a pure `NetworkGraph` (unit-testable) and pass it in. The canvas is
+  `aria-hidden`; the same nodes are always in the DOM as `NetworkList`, which is
+  the only view on a phone. Cap what the backend sends (top-N, per-node edge
+  limits): a graph everyone can read beats a complete hairball.
 
 ## 7. Open items
 

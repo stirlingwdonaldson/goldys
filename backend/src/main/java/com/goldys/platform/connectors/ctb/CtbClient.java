@@ -47,7 +47,7 @@ public class CtbClient {
     // Establish the ASP.NET session first: the login POST alone does not set the session
     // cookie, but a GET to a session-backed page (this one 302s to /Default/Login) does.
     get("/Default/Home2");
-    String body = post("/Account/Login", form("userEmail", email, "userPassword", password));
+    String body = post("/Account/Login", form("userEmail", email, "userPassword", password)).body();
     if (!isSuccess(body)) {
       throw new ConnectorFetchException("CONNECTOR_AUTH_FAILED", "CTB login failed");
     }
@@ -180,6 +180,55 @@ public class CtbClient {
             form("keyword", "", "startDate", startDate, "endDate", endDate)));
   }
 
+  /**
+   * One page of a stocktake's counted lines plus the total count. Paged with {@code start}/{@code
+   * limit}.
+   */
+  public CtbPage getStocktakeDetail(int stocktakeId, int start, int limit) {
+    return page(
+        "Stocktake/GetStocktakeDetailByStocktakeId",
+        post(
+            "/Stocktake/GetStocktakeDetailByStocktakeId",
+            form(
+                "stocktakeId",
+                String.valueOf(stocktakeId),
+                "start",
+                String.valueOf(start),
+                "limit",
+                String.valueOf(limit))));
+  }
+
+  /** The per-item lines of one wastage record. Single response. */
+  public CtbPage getWastageRecordDetail(int wastageRecordId) {
+    return page(
+        "WastageRecord/GetWastageRecordDetailByWastageRecordId",
+        post(
+            "/WastageRecord/GetWastageRecordDetailByWastageRecordId",
+            form("wastageRecordId", String.valueOf(wastageRecordId))));
+  }
+
+  /** The ingredient lines of one recipe (incl. sub-recipe ingredients). Single response. */
+  public CtbPage getIngredientsIncludingSubRecipeIngredients(int recipeId) {
+    return page(
+        "RecipeBook/GetIngredientsIncludingSubRecipeIngredients",
+        post(
+            "/RecipeBook/GetIngredientsIncludingSubRecipeIngredients",
+            form("recipeId", String.valueOf(recipeId))));
+  }
+
+  /**
+   * CTB's derived per-recipe cost, batched. {@code recipeIdsJson} is a JSON array (e.g. {@code
+   * [627,628]}); {@code recipeFolderIds} must be {@code []} — without it the action returns a
+   * server-error envelope.
+   */
+  public CtbPage getSelectedRecipeFullRecords(String recipeIdsJson) {
+    return page(
+        "RecipeBook/GetSelectedRecipeFullRecords",
+        post(
+            "/RecipeBook/GetSelectedRecipeFullRecords",
+            form("recipeIds", recipeIdsJson, "recipeFolderIds", "[]")));
+  }
+
   /** Business departments (Food/Beverage). Reference data. */
   public CtbPage getAllDepartments() {
     return page(
@@ -224,19 +273,42 @@ public class CtbClient {
    * response is checked on the raw body first (it may be JSON with HTML in {@code Info}, or a bare
    * HTML denial page), then the envelope's success flag, then the {@code totalCount} fallback.
    */
-  private CtbPage page(String action, String body) {
+  private CtbPage page(String action, Response response) {
+    String body = response.body();
     if (isPermissionDenied(body)) {
       throw new ConnectorFetchException(
           "CONNECTOR_PERMISSION_DENIED", "CTB permission denied: " + action);
     }
-    JsonNode json = parse(body);
+    JsonNode json = parse(action, response);
     if (!isSuccess(json)) {
       log.warn("CTB {} failed; response: {}", action, body);
       throw new ConnectorFetchException(
-          "CONNECTOR_FETCH_FAILED", "CTB " + action + " failed: " + truncate(body, 500));
+          "CONNECTOR_FETCH_FAILED",
+          "CTB " + action + " failed (HTTP " + response.status() + "): " + truncate(body, 500));
     }
     int total = json.path("totalCount").asInt(json.path("data").size());
     return new CtbPage(body, total);
+  }
+
+  /**
+   * Build the operator-facing detail for a non-JSON response. A non-JSON body is normally an HTML
+   * login/redirect page or a server-error page, so the status, content-type and a bounded prefix
+   * are the evidence needed to identify it without a re-run. Bounded (and matching the {@code
+   * truncate} used for an explicit {@code IsSuccess:false}) so the message stays operator-sized;
+   * the JSON agent's cause (a {@code JsonParseException}) is attached by the caller.
+   */
+  static String nonJsonDetail(String action, int status, String contentType, String body) {
+    int length = body == null ? 0 : body.length();
+    return "Non-JSON CTB response from "
+        + action
+        + " (HTTP "
+        + status
+        + ", "
+        + contentType
+        + ", "
+        + length
+        + " chars): "
+        + truncate(body, 300);
   }
 
   private static String truncate(String s, int max) {
@@ -262,23 +334,47 @@ public class CtbClient {
     }
   }
 
-  private String post(String path, String form) {
+  private Response post(String path, String form) {
+    // IIS/ASP.NET answers a POST with no Content-Length with HTTP 411 "Length Required" and an HTML
+    // error page. Java's HttpClient does not send Content-Length for an empty body (Python/urllib
+    // and browsers do), so the empty-body GetAll* endpoints (recipes, suppliers, reference data)
+    // failed to parse as JSON. Always send a non-empty form; the extra `keyword` is ignored by the
+    // GetAll* actions.
+    String body = requestBody(form);
     HttpRequest request =
         HttpRequest.newBuilder(URI.create(baseUrl + path))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .header("X-Requested-With", "XMLHttpRequest")
             .header("Accept", "application/json, text/javascript, */*")
             .header("Referer", baseUrl + "/Default/Home2")
-            .POST(HttpRequest.BodyPublishers.ofString(form))
+            .POST(HttpRequest.BodyPublishers.ofString(body))
             .build();
     try {
-      return http.send(request, HttpResponse.BodyHandlers.ofString()).body();
+      HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+      return new Response(
+          response.body(),
+          response.statusCode(),
+          response.headers().firstValue("content-type").orElse(""));
     } catch (IOException e) {
       throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB request failed: " + path, e);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "Interrupted: " + path, e);
     }
+  }
+
+  /**
+   * One HTTP exchange: the raw body plus the status and content-type needed to explain a failure.
+   */
+  record Response(String body, int status, String contentType) {}
+
+  /**
+   * IIS/ASP.NET returns HTTP 411 for a POST with no body/Content-Length, and Java's HttpClient does
+   * not send Content-Length for an empty body. Substitute a non-empty form so every request carries
+   * a body; the {@code GetAll*} actions ignore the extra {@code keyword} parameter.
+   */
+  static String requestBody(String form) {
+    return form == null || form.isEmpty() ? "keyword=" : form;
   }
 
   /** The standard paged-list form: {@code keyword=&start=N&limit=M} (matches CTB's ExtJS grids). */
@@ -295,6 +391,17 @@ public class CtbClient {
       sb.append(URLEncoder.encode(kv[i + 1], StandardCharsets.UTF_8));
     }
     return sb.toString();
+  }
+
+  private static JsonNode parse(String action, Response response) {
+    try {
+      return MAPPER.readTree(response.body());
+    } catch (IOException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH",
+          nonJsonDetail(action, response.status(), response.contentType(), response.body()),
+          e);
+    }
   }
 
   private static JsonNode parse(String body) {

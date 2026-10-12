@@ -60,7 +60,7 @@ export function ProvenanceSheet({
                     See the full map
                   </Link>
                 </p>
-                <PlatformMapView initialFocusId={`metric:${target.metricId}`} initialLocal height={360} />
+                <PlatformMapView initialFocusId={`metric:${target.metricId}`} initialLocal height={420} compact />
               </TabsContent>
             </Tabs>
           </>

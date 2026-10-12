@@ -33,8 +33,20 @@ export interface StepNodeData extends Record<string, unknown> {
 export type StepNode = Node<StepNodeData, "step">;
 export type FlowEdge = Edge<{ tone?: FlowTone }>;
 
+/** A column heading: a quiet, non-interactive label drawn above one column of nodes. */
+export interface ColumnHeadingData extends Record<string, unknown> {
+  title: string;
+}
+
+export type ColumnHeadingNode = Node<ColumnHeadingData, "columnHeading">;
+
+/** Any node the shared canvas can render. */
+export type FlowNode = StepNode | ColumnHeadingNode;
+
 /** Logical graph before layout: nodes grouped into left-to-right columns. */
 export interface ColumnGraph {
   columns: { id: string; data: StepNodeData }[][];
-  edges: { source: string; target: string; label?: string; tone?: FlowTone }[];
+  edges: { source: string; target: string; label?: string; tone?: FlowTone; value?: number }[];
+  /** Optional heading shown above each column; entries align by index, `undefined` = no heading. */
+  columnTitles?: (string | undefined)[];
 }

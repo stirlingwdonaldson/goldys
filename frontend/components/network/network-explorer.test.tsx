@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NetworkExplorer } from "./network-explorer";
 import { NetworkList } from "./network-list";
-import type { NetworkGraph, NetworkKind } from "./types";
+import type { NetworkGraph, NetworkGroupSet, NetworkKind } from "./types";
 
 // The canvas needs a real 2D context; the list beside it carries the same data.
 vi.mock("./network-canvas", () => ({
@@ -35,6 +35,19 @@ const kinds: { kind: NetworkKind; label: string }[] = [
   { kind: "permission", label: "Permissions" },
 ];
 
+const groupSets: NetworkGroupSet[] = [
+  {
+    id: "health",
+    label: "Health",
+    groups: [{ id: "fail", label: "Failing", colourVar: "--destructive", matches: (n) => n.tone === "fail" }],
+  },
+  {
+    id: "kind",
+    label: "Kind",
+    groups: [{ id: "metric", label: "Metrics", colourVar: "--chart-1", matches: (n) => n.kind === "metric" }],
+  },
+];
+
 function renderExplorer(props: Partial<Parameters<typeof NetworkExplorer>[0]> = {}) {
   return render(
     <NetworkExplorer
@@ -42,7 +55,7 @@ function renderExplorer(props: Partial<Parameters<typeof NetworkExplorer>[0]> = 
       graphKey="test"
       ariaLabel="Test graph"
       kinds={kinds}
-      colourFor={() => "#999"}
+      groupSets={groupSets}
       {...props}
     />,
   );
@@ -64,7 +77,7 @@ describe("NetworkExplorer", () => {
   it("hides a kind when its toggle is turned off", () => {
     renderExplorer();
     expect(screen.getByText("reconciliation.sales")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Permissions/, pressed: true }));
+    fireEvent.click(screen.getByRole("switch", { name: "Permissions" }));
     expect(screen.queryByText("reconciliation.sales")).not.toBeInTheDocument();
     expect(screen.getByTestId("canvas")).toHaveTextContent("4 nodes");
   });
@@ -91,12 +104,31 @@ describe("NetworkExplorer", () => {
     renderExplorer({ initialFocusId: "source:CTB" });
     fireEvent.click(screen.getByLabelText("Local graph"));
     expect(screen.getByTestId("canvas")).toHaveTextContent("2 nodes");
-    fireEvent.change(screen.getByLabelText("Local graph depth"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("Depth"), { target: { value: "2" } });
     expect(screen.getByTestId("canvas")).toHaveTextContent("3 nodes");
   });
 
   it("asks for a selection when local mode has no focus", () => {
     renderExplorer({ initialLocal: true });
     expect(screen.getByText("Select a node to see its local graph.")).toBeInTheDocument();
+  });
+
+  it("hides nodes with no links when Orphans is off", () => {
+    const withOrphan: NetworkGraph = {
+      ...graph,
+      nodes: [...graph.nodes, { id: "metric:lonely", kind: "metric", label: "Lonely", tone: "neutral", size: 3 }],
+    };
+    renderExplorer({ graph: withOrphan });
+    expect(screen.getByTestId("canvas")).toHaveTextContent("6 nodes");
+    fireEvent.click(screen.getByRole("switch", { name: "Orphans" }));
+    expect(screen.getByTestId("canvas")).toHaveTextContent("5 nodes");
+  });
+
+  it("switches colour groups and counts each group's nodes", () => {
+    renderExplorer();
+    const groups = screen.getByRole("radiogroup", { name: "Colour by" }).parentElement!;
+    expect(within(groups).getByText("Failing").nextSibling).toHaveTextContent("3");
+    fireEvent.click(screen.getByRole("radio", { name: "Kind" }));
+    expect(within(groups).getByText("Metrics").nextSibling).toHaveTextContent("2");
   });
 });
