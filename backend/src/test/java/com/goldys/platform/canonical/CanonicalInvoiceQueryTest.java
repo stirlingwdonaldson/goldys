@@ -12,7 +12,20 @@ import org.junit.jupiter.api.Test;
 class CanonicalInvoiceQueryTest {
 
   private final CanonicalInvoiceRepository repository = mock(CanonicalInvoiceRepository.class);
-  private final CanonicalInvoiceQuery query = new CanonicalInvoiceQuery(repository);
+  private final CanonicalInvoiceLineRepository lineRepository =
+      mock(CanonicalInvoiceLineRepository.class);
+  private final CanonicalInvoiceQuery query = new CanonicalInvoiceQuery(repository, lineRepository);
+
+  @Test
+  void anInvoiceIsKnownWhenItHasAHeaderOrAnyCurrentLine() {
+    when(repository.countCurrentByInvoiceNumber("HEADER")).thenReturn(1L);
+    when(lineRepository.countCurrentByInvoiceNumber("LINES-ONLY")).thenReturn(3L);
+
+    assertThat(query.isKnownInvoice("HEADER")).isTrue();
+    assertThat(query.isKnownInvoice("LINES-ONLY")).isTrue();
+    assertThat(query.isKnownInvoice("Tax Invoice No")).isFalse();
+    assertThat(query.isKnownInvoice(null)).isFalse();
+  }
 
   @Test
   void mapsCurrentInvoicesToMetadataViews() {

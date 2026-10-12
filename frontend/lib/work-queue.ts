@@ -190,6 +190,7 @@ const FLAG_LABEL: Record<string, string> = {
   PDF_ONLY_LINE: "Invoice line only on the PDF",
   CSV_ONLY_LINE: "Invoice line only in the export",
   MISSING_PDF: "Invoice PDF missing",
+  AMBIGUOUS_PDF: "Invoice PDF not linked to one invoice",
 };
 
 function invoiceItems(input: WorkQueueInput): WorkItem[] {

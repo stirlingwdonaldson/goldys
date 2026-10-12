@@ -78,4 +78,27 @@ class HybridInvoicePdfExtractorTest {
     assertThat(out.lines()).hasSize(1);
     verify(llm, org.mockito.Mockito.never()).extract(org.mockito.ArgumentMatchers.any());
   }
+
+  @Test
+  void dropsAHeaderLabelReturnedAsTheInvoiceNumberAndAnnotationRows() {
+    DeterministicPdfExtractor deterministic = mock(DeterministicPdfExtractor.class);
+    when(deterministic.extract("text")).thenReturn(new PdfExtractedInvoice(null, List.of()));
+    LlmInvoicePdfExtractor llm = mock(LlmInvoicePdfExtractor.class);
+    when(llm.extract("text"))
+        .thenReturn(
+            new PdfExtractedInvoice(
+                "Tax Invoice No",
+                List.of(
+                    new PdfExtractedLine(
+                        "XLFRY", "Fryer clean", new BigDecimal("1"), null, null, null, null, null),
+                    new PdfExtractedLine(null, "COMMENT", null, null, null, null, null, null),
+                    new PdfExtractedLine(
+                        null, "(2 BOXES)", new BigDecimal("2"), null, null, null, null, null))));
+
+    PdfExtractedInvoice out =
+        new HybridInvoicePdfExtractor(List.of(deterministic), llm).extract("text");
+
+    assertThat(out.invoiceNumber()).isNull();
+    assertThat(out.lines()).extracting(PdfExtractedLine::stockCode).containsExactly("XLFRY");
+  }
 }

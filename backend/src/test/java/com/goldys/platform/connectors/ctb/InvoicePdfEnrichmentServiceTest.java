@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class InvoicePdfEnrichmentServiceTest {
@@ -29,6 +30,11 @@ class InvoicePdfEnrichmentServiceTest {
   private final CanonicalInvoiceQuery invoiceQuery = mock(CanonicalInvoiceQuery.class);
   private final InvoiceIngestFlagService flags = mock(InvoiceIngestFlagService.class);
   private final InvoiceGapRecoveryService gapRecovery = mock(InvoiceGapRecoveryService.class);
+
+  @BeforeEach
+  void everyInvoiceIsKnownUnlessATestSaysOtherwise() {
+    when(invoiceQuery.isKnownInvoice(any())).thenReturn(true);
+  }
 
   private InvoicePdfEnrichmentService service() {
     return service(true);
@@ -214,5 +220,72 @@ class InvoicePdfEnrichmentServiceTest {
 
     verify(gapRecovery)
         .recover(eq("INV-1"), eq("a.pdf"), eq(pdf), eq(PDF_RAW_ID), eq(lines), eq(Set.of(0, 2)));
+  }
+
+  @Test
+  void flagsAnUnresolvedLivePdfOnceInsteadOfEveryLine() {
+    byte[] pdf = new byte[] {1};
+    List<PdfExtractedLine> lines =
+        List.of(
+            new PdfExtractedLine("A", "d1", null, "KG", null, null, null, null),
+            new PdfExtractedLine("B", "d2", null, "KG", null, null, null, null));
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("053202347", lines));
+    when(invoiceQuery.invoiceNumberForPdfFilename("orphan.pdf")).thenReturn(Optional.empty());
+    when(invoiceQuery.isKnownInvoice("053202347")).thenReturn(false);
+
+    service().enrich(pdf, "orphan.pdf", PDF_RAW_ID);
+
+    verify(flags)
+        .flag(
+            eq(InvoiceIngestFlagType.AMBIGUOUS_PDF),
+            eq("053202347"),
+            eq("orphan.pdf"),
+            eq(null),
+            anyString());
+    verify(flags, never())
+        .flag(eq(InvoiceIngestFlagType.PDF_ONLY_LINE), any(), any(), any(), any());
+    verify(enrichment, never()).enrich(any(), any(), any(), any(), any(), any(), any());
+    verify(gapRecovery, never()).recover(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void anUnresolvedReplayedPdfRaisesNoFlag() {
+    // Replay has no filename, so an unresolved text number most likely means the parser misread a
+    // PDF the live path already joined by filename. Flagging it would be a false alarm.
+    List<PdfExtractedLine> lines =
+        List.of(new PdfExtractedLine("A", "d1", null, "KG", null, null, null, null));
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text")).thenReturn(new PdfExtractedInvoice(null, lines));
+    when(invoiceQuery.isKnownInvoice(null)).thenReturn(false);
+
+    service().enrich(new byte[] {1}, null, PDF_RAW_ID);
+
+    verify(flags, never()).flag(any(), any(), any(), any(), any());
+    verify(enrichment, never()).enrich(any(), any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void flagsAnAmbiguousLineButDoesNotTreatItAsMissingFromTheCsv() {
+    byte[] pdf = new byte[] {1};
+    List<PdfExtractedLine> lines =
+        List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null));
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("INV-1", lines));
+    when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
+    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+        .thenReturn(EnrichmentResult.AMBIGUOUS);
+
+    service().enrich(pdf, "a.pdf", PDF_RAW_ID);
+
+    verify(flags)
+        .flag(
+            eq(InvoiceIngestFlagType.PDF_ONLY_LINE),
+            eq("INV-1"),
+            eq("a.pdf"),
+            eq("CODE"),
+            eq("desc"));
+    verify(gapRecovery)
+        .recover(eq("INV-1"), eq("a.pdf"), eq(pdf), eq(PDF_RAW_ID), eq(lines), eq(Set.of()));
   }
 }
