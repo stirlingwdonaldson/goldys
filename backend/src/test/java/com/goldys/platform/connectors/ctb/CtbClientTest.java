@@ -54,4 +54,35 @@ class CtbClientTest {
     assertThat(CtbClient.isPermissionDenied(null)).isFalse();
     assertThat(CtbClient.isPermissionDenied("")).isFalse();
   }
+
+  @Test
+  void nonJsonDetailCarriesTheStatusTypeAndABoundedPrefix() {
+    String detail =
+        CtbClient.nonJsonDetail(
+            "RecipeBook/GetAllRecipes",
+            302,
+            "text/html; charset=utf-8",
+            "<html><head><title>Object moved</title></head></html>");
+
+    assertThat(detail).contains("RecipeBook/GetAllRecipes");
+    assertThat(detail).contains("HTTP 302");
+    assertThat(detail).contains("text/html");
+    assertThat(detail).contains("<html>");
+  }
+
+  @Test
+  void nonJsonDetailIsBoundedForALargeBody() {
+    String detail = CtbClient.nonJsonDetail("X", 500, "text/html", "a".repeat(10_000));
+    assertThat(detail.length()).isLessThan(400);
+  }
+
+  @Test
+  void emptyRequestBodyIsReplacedSoIisDoesNotReturn411() {
+    // Java's HttpClient sends no Content-Length for an empty body; IIS replies 411 "Length
+    // Required" with an HTML page. Every request must carry a non-empty form.
+    assertThat(CtbClient.requestBody("")).isEqualTo("keyword=");
+    assertThat(CtbClient.requestBody(null)).isEqualTo("keyword=");
+    assertThat(CtbClient.requestBody("keyword=&start=0&limit=200"))
+        .isEqualTo("keyword=&start=0&limit=200");
+  }
 }

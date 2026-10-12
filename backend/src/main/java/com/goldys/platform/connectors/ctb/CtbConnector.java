@@ -6,6 +6,7 @@ import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.ProductSalesInput;
 import com.goldys.platform.ingestion.FetchMethod;
+import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.FetchedPayload;
 import com.goldys.platform.ingestion.port.IngestionSink;
 import com.goldys.platform.ingestion.port.SourceConnector;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Pulls CTB daily revenue and per-product sale items through the authenticated AJAX endpoints,
@@ -30,6 +33,7 @@ import java.util.function.Supplier;
  * double-source note and the deferred canonical types.
  */
 public class CtbConnector implements SourceConnector {
+  private static final Logger log = LoggerFactory.getLogger(CtbConnector.class);
   private static final int PAGE_SIZE = 200;
   private static final int MAX_PAGES = 250;
 
@@ -72,20 +76,79 @@ public class CtbConnector implements SourceConnector {
   public void fetch(String watermark, IngestionSink sink) {
     client.login(email, password);
 
-    pullRevenue(watermark, sink);
-    pullSaleItems(watermark, sink);
+    // Each dataset is attempted independently: one endpoint failing (for example a non-JSON
+    // "recipes" response) must not silently drop every dataset that would have been pulled after
+    // it. Failures are collected and rethrown at the end, so the run still closes PARTIAL/FAILED
+    // and a missing dataset is never mistaken for "no new data".
+    Map<String, ConnectorFetchException> failures = new LinkedHashMap<>();
+
+    pull("daily-sales", failures, () -> pullRevenue(watermark, sink));
+    pull("sale-items", failures, () -> pullSaleItems(watermark, sink));
 
     // Inventory / purchasing / food-cost endpoints — raw ledger only, per fetcher identity.
-    pullRaw("ctb-invoices-ajax", client::searchInvoices, sink);
-    pullRaw("ctb-sale-recipe-links", client::searchDistinctSaleItemsForLinking, sink);
-    pullSingle("ctb-recipes", client::getAllRecipes, sink);
-    pullRaw("ctb-stocks", client::searchStocks, sink);
-    pullSingle("ctb-suppliers", client::getAllSuppliers, sink);
-    pullRaw("ctb-stocktakes", client::searchStocktakes, sink);
-    pullRaw("ctb-wastage", client::searchWastageRecords, sink);
-    pullRaw("ctb-stock-orders", client::searchStockOrders, sink);
-    pullStatements(sink);
-    pullReferenceData(sink);
+    pull(
+        "ctb-invoices-ajax",
+        failures,
+        () -> pullRaw("ctb-invoices-ajax", client::searchInvoices, sink));
+    pull(
+        "ctb-sale-recipe-links",
+        failures,
+        () -> pullRaw("ctb-sale-recipe-links", client::searchDistinctSaleItemsForLinking, sink));
+    pull("ctb-recipes", failures, () -> pullSingle("ctb-recipes", client::getAllRecipes, sink));
+    pull("ctb-stocks", failures, () -> pullRaw("ctb-stocks", client::searchStocks, sink));
+    pull(
+        "ctb-suppliers",
+        failures,
+        () -> pullSingle("ctb-suppliers", client::getAllSuppliers, sink));
+    pull(
+        "ctb-stocktakes",
+        failures,
+        () -> pullRaw("ctb-stocktakes", client::searchStocktakes, sink));
+    pull("ctb-wastage", failures, () -> pullRaw("ctb-wastage", client::searchWastageRecords, sink));
+    pull(
+        "ctb-stock-orders",
+        failures,
+        () -> pullRaw("ctb-stock-orders", client::searchStockOrders, sink));
+    pull("ctb-statements", failures, () -> pullStatements(sink));
+    pull("ctb-reference-data", failures, () -> pullReferenceData(sink));
+
+    if (!failures.isEmpty()) {
+      throw aggregate(failures);
+    }
+  }
+
+  /** Attempt one dataset, recording a classified failure instead of aborting the whole pull. */
+  private static void pull(
+      String dataset, Map<String, ConnectorFetchException> failures, Runnable attempt) {
+    try {
+      attempt.run();
+    } catch (ConnectorFetchException e) {
+      log.warn("CTB dataset {} failed: {}: {}", dataset, e.failureType(), e.getMessage());
+      failures.put(dataset, e);
+    }
+  }
+
+  /**
+   * A single failed dataset is rethrown verbatim so its failure type and stack stay intact; several
+   * are summarised (with each dataset's own detail) so the run records what is missing rather than
+   * only the first, and the captured response evidence is not lost.
+   */
+  private static ConnectorFetchException aggregate(Map<String, ConnectorFetchException> failures) {
+    if (failures.size() == 1) {
+      return failures.values().iterator().next();
+    }
+    String firstType = failures.values().iterator().next().failureType();
+    StringBuilder detail = new StringBuilder("CTB datasets failed:");
+    for (Map.Entry<String, ConnectorFetchException> entry : failures.entrySet()) {
+      detail
+          .append("\n- ")
+          .append(entry.getKey())
+          .append(": ")
+          .append(entry.getValue().failureType())
+          .append(": ")
+          .append(entry.getValue().getMessage());
+    }
+    return new ConnectorFetchException(firstType, detail.toString());
   }
 
   private void pullRevenue(String watermark, IngestionSink sink) {
