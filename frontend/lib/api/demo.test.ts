@@ -195,3 +195,86 @@ describe("demoApi platform map", () => {
     }
   });
 });
+
+describe("demoApi forecasting", () => {
+  it("lists forecastable metrics with the picker fields", async () => {
+    const metrics = await demoApi.listForecastMetrics();
+    expect(metrics.length).toBeGreaterThan(0);
+    for (const m of metrics) {
+      expect(m.metric).toBeTruthy();
+      expect(m.name).toBeTruthy();
+      expect(m.unit).toBeTruthy();
+      expect(m.sourceDomain).toBeTruthy();
+      expect(m.requiredPermission).toBeTruthy();
+    }
+    const foodCost = metrics.find((m) => m.metric === "inventory.food_cost_percent");
+    expect(foodCost?.sourceDomain).toBe("derived");
+  });
+
+  it("creates a succeeded run that echoes the request and is immediately retrievable", async () => {
+    const run = await demoApi.createForecastRun({
+      target: "sales.gross",
+      covariates: ["reservations.covers"],
+      historyFrom: "2026-09-26",
+      horizonDays: 7,
+    });
+    expect(run.id).toBe("fc-1");
+    expect(run.status).toBe("SUCCEEDED");
+    expect(run.targetMetric).toBe("sales.gross");
+    expect(run.covariates).toEqual(["reservations.covers"]);
+    expect(run.horizonDays).toBe(7);
+    expect(run.errorMessage).toBeNull();
+    expect(run.modelVersion).toBeTruthy();
+    expect(run.series).not.toBeNull();
+    expect(run.series!.length).toBe(7);
+    for (const p of run.series!) {
+      expect(p.p10!).toBeLessThanOrEqual(p.median!);
+      expect(p.median!).toBeLessThanOrEqual(p.p90!);
+      expect(p.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+
+    // The run-flow poll loop must see SUCCEEDED straight away, not a queued run.
+    const reloaded = await demoApi.getForecastRun(run.id);
+    expect(reloaded.status).toBe("SUCCEEDED");
+    expect(reloaded.series).not.toBeNull();
+    expect(reloaded.series!.length).toBe(7);
+  });
+
+  it("lists two runs, newest first, including a succeeded one", async () => {
+    const runs = await demoApi.listForecastRuns();
+    expect(runs.length).toBe(2);
+    expect(runs[0].id).toBe("fc-2");
+    expect(runs[0].status).toBe("SUCCEEDED");
+    expect(runs[1].status).toBe("QUEUED");
+  });
+
+  it("returns a succeeded run with an ordered median/p10/p90 series", async () => {
+    const run = await demoApi.getForecastRun("fc-2");
+    expect(run.status).toBe("SUCCEEDED");
+    expect(run.series).not.toBeNull();
+    expect(run.series!.length).toBeGreaterThan(0);
+    for (const p of run.series!) {
+      expect(p.p10!).toBeLessThanOrEqual(p.median!);
+      expect(p.median!).toBeLessThanOrEqual(p.p90!);
+      expect(p.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
+
+  it("returns a comparison with a small MAPE/MAE and actuals on past dates", async () => {
+    const comparison = await demoApi.getForecastComparison("fc-2");
+    expect(comparison.runId).toBe("fc-2");
+    expect(comparison.mape).not.toBeNull();
+    expect(comparison.mae).not.toBeNull();
+    expect(comparison.mape!).toBeLessThan(0.1);
+    expect(comparison.points.length).toBeGreaterThan(0);
+    for (const p of comparison.points) {
+      expect(p.predictedMedian).toBeTypeOf("number");
+    }
+    const past = comparison.points.filter((p) => p.actual !== null);
+    expect(past.length).toBeGreaterThan(0);
+  });
+
+  it("rejects an unknown run id", async () => {
+    await expect(demoApi.getForecastRun("nope")).rejects.toThrow();
+  });
+});

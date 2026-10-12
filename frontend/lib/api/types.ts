@@ -586,6 +586,74 @@ export interface SaleItemFilter {
   saleNumber?: string;
 }
 
+/** Lifecycle of a TimesFM forecast run (mirrors the backend `ForecastRunStatus`). */
+export type ForecastRunStatus = "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+
+/** One forecastable metric's catalogue metadata (mirrors `application.ForecastMetricDto`). */
+export interface ForecastMetric {
+  metric: string;
+  name: string;
+  unit: string;
+  sourceDomain: string;
+  requiredPermission: string;
+}
+
+/** One forecasted day: the median plus the p10/p90 deciles (mirrors `ForecastSeriesPointDto`). */
+export interface ForecastSeriesPoint {
+  /** Forecast date, YYYY-MM-DD. */
+  date: string;
+  /** A decile is `null` when the model had no estimate for it (NaN serialised as JSON null). */
+  median: number | null;
+  p10: number | null;
+  p90: number | null;
+}
+
+/**
+ * The public shape of a forecast run (mirrors `application.ForecastRunDto`). `series` is
+ * populated only once the run has `SUCCEEDED`; until then it is `null`.
+ */
+export interface ForecastRun {
+  id: string;
+  status: ForecastRunStatus;
+  targetMetric: string;
+  covariates: string[];
+  /** YYYY-MM-DD. */
+  historyFrom: string;
+  /** YYYY-MM-DD. */
+  historyTo: string;
+  horizonDays: number;
+  /** ISO-8601 instant. */
+  createdAt: string;
+  series: ForecastSeriesPoint[] | null;
+  errorMessage: string | null;
+  modelVersion: string | null;
+}
+
+/** Body for `POST /api/forecasting/runs` (mirrors `application.CreateForecastRequest`). */
+export interface CreateForecastInput {
+  target: string;
+  covariates: string[];
+  /** YYYY-MM-DD. */
+  historyFrom: string;
+  horizonDays: number;
+}
+
+/** One forecast date compared against its resolved actual (mirrors `ForecastComparisonPointDto`). */
+export interface ForecastComparisonPoint {
+  /** YYYY-MM-DD. */
+  date: string;
+  predictedMedian: number;
+  actual: number | null;
+}
+
+/** Forecast-versus-actual for a succeeded run (mirrors `application.ForecastComparisonDto`). */
+export interface ForecastComparison {
+  runId: string;
+  mape: number | null;
+  mae: number | null;
+  points: ForecastComparisonPoint[];
+}
+
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
 export interface Api {
   getDashboardBootstrap(): Promise<DashboardBootstrap>;
@@ -664,6 +732,11 @@ export interface Api {
   getPaymentMix(from: string, to: string): Promise<PaymentMix[]>;
   getDeletedSaleTotals(from: string, to: string): Promise<DeletedSaleDay[]>;
   getSaleItemMix(from: string, to: string): Promise<SaleItemMix[]>;
+  listForecastMetrics(): Promise<ForecastMetric[]>;
+  createForecastRun(input: CreateForecastInput): Promise<ForecastRun>;
+  listForecastRuns(): Promise<ForecastRun[]>;
+  getForecastRun(id: string): Promise<ForecastRun>;
+  getForecastComparison(id: string): Promise<ForecastComparison>;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */
