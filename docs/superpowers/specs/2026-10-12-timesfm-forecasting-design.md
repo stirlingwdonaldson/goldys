@@ -26,7 +26,8 @@ Three concrete needs, in order:
    the resolved values that later arrived (MAPE/MAE + per-date table).
 
 Out of scope for v1 (see §13): exposing forecasting to Ask Goldy's, export, future-known covariates
-(forward bookings/rosters), and dimensioned metrics (labour by department, product by SKU).
+(forward bookings/rosters), and per-dimension *separate* series (labour split by department, product
+split by SKU — v1 forecasts each metric's summed total).
 
 ## 2. Decisions
 
@@ -38,7 +39,7 @@ Out of scope for v1 (see §13): exposing forecasting to Ask Goldy's, export, fut
 | D | Run lifecycle | **Async runs + persisted series.** Creating a forecast writes a `forecast_run` row (`QUEUED → RUNNING → SUCCEEDED/FAILED`); the Java backend calls the Python service, stores the returned quantile series, and the page polls until done. Chosen because 330M params on CPU takes seconds-to-tens-of-seconds, and compare-to-actuals needs the series persisted. |
 | E | Data source | Read the **resolved metric catalogue** through `MetricQueryService` (the same path dashboards and Ask Goldy's tools use). No new read path, no reading canonical/raw. |
 | F | Inputs (covariates) | **Past-only covariates** drawn from the resolved catalogue, aligned to the target's daily dates. No future-known covariates in v1 (the forward data isn't in the resolved layer). |
-| G | Forecastable set (v1) | Metrics whose `DAY`-grain query resolves to **one summed series** (no required dimension split). Labour-by-department and product-by-SKU are excluded (need dimension-value selection) and deferred to §13. The metrics endpoint computes the set, so the UI never offers an unforecastable metric. |
+| G | Forecastable set (v1) | Every catalogue metric whose result is a **time series** — which is all of them except `product.top_sellers` (a ranked list). Each metric forecasts as its **summed daily total**: the executors already sum across any dimension (labour = all departments, product sales = all SKUs, reservations = all periods). Per-dimension *separate* series (labour split by department, product by SKU) need a dimension filter the current query interface does not expose, so they are deferred to §13. The metrics endpoint computes the set, so the UI never offers an unforecastable metric. |
 | H | Quantiles | Store all nine deciles TimesFM 3.0 returns (`0.1 … 0.9`); render the median plus a `0.1–0.9` band. |
 | I | Persistence | One new `forecast_run` table; the series is stored as JSONB on the row (compare-to-actuals loads the whole series anyway, so no separate point table). |
 | J | Authorization | New `forecasting` resource, seeded `ALL × OWNER` (READ + WRITE). Creating a run also re-checks each selected metric's `requiredPermission` READ, exactly as dashboard render does. |
@@ -111,7 +112,7 @@ once at startup and stays warm.
 CREATE TABLE forecast_run (
   id                uuid PRIMARY KEY,
   created_at        timestamptz NOT NULL,
-  created_by        uuid REFERENCES user_account(id),
+  created_by        varchar(255) NOT NULL,   -- caller email, matching saved_dashboard.created_by
   target_metric     text NOT NULL,          -- MetricId, e.g. 'sales.gross'
   target_dimension  text,                   -- null in v1
   covariates        jsonb NOT NULL,         -- [{ "metric": "reservations.covers", "dimensionValue": null }, …]
@@ -232,8 +233,9 @@ Demo fixtures return a plausible forecast for a couple of metrics so the page is
 
 ## 13. Later (not in this spec)
 
-- **Dimensioned metrics** (labour by department, product by SKU, reservations by service period):
-  needs a dimension-values query and selection UI; the model already supports multi-series input.
+- **Per-dimension series** (labour by department, product by SKU, reservations by service period):
+  needs a dimension filter that yields one series per dimension value; the current `MetricQueryService`
+  executors always sum to a single total. The model already supports multi-series input.
 - **Future-known covariates** (forward bookings, rostered shifts, planned closures): needs forward
   data in the resolved layer first.
 - **Ask Goldy's forecasting tool**: a bounded, enum-validated tool per
