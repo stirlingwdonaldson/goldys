@@ -104,6 +104,7 @@ Three tables, mirroring `V22__inventory.sql` / `V20__reservation_read_model.sql`
 - `recipe_id integer PRIMARY KEY`, `recipe_name varchar(512)`, `recipe_folder_name varchar(512)`,
   `cost_per_portion numeric(14,4)`, `cost_per_portion_incl_labour numeric(14,4)`,
   `total_cost numeric(14,4)`, `portion_size varchar(255)`, `portion_size_value numeric(14,4)`,
+  `menu_price numeric(14,4)`, `actual_cost numeric(14,4)`,
   `resolution_type text NOT NULL`, `authoritative_source text NOT NULL`,
   `resolved_at timestamptz NOT NULL`.
 
@@ -136,45 +137,46 @@ so a flag-gated one-off replay runner (mirroring `CtbDetailBackfillRunner`) repl
 - `ResolvedRecipe` + `ResolvedRecipeRepository` (disposable).
 - `RecipeProjector` (`recomputeAll`/`recompute`) + `RecipeProjectionListener` (on write events),
   mirroring `ReservationProjector`/`InventoryProjector`. `resolved_recipe` = latest current
-  `canonical_recipe_cost` joined to the active `canonical_sale_recipe_link` (folder), single-source
+  `canonical_recipe_cost` joined to the active `canonical_sale_recipe_link` (folder). The projector
+  also enriches each recipe with its Lightspeed price and actual cost: it aggregates
+  `canonical_sale_item` by `ProductNameKey.normalize(item_name)` → the most common
+  `sold_price_inc_tax` (→ `menu_price`) and `cost_inc_tax` (→ `actual_cost`), then maps each recipe
+  to its menu item via `canonical_sale_recipe_link.sale_item_stock_description` (same key, `"New "`
+  alias). Doing the cross-source join here keeps the read path resolved-only. Single-source
   (`resolution_type='SINGLE_SOURCE'`, `authoritative_source='CTB'`). Register in
   `StartupProjectionSeeder`.
 
 ### 4. Semantic query
 
-- `RecipeMetricsQuery` (leaf interface) — `List<RecipeSummary> recipes()`,
-  `RecipeSummary(recipeId, name, folder, costPerPortion, costPerPortionInclLabour, totalCost,
-  portionSize, portionSizeValue)`. Implemented by `ResolvedRecipeQuery` in `reconciliation`.
+- `RecipeMetricsQuery` (leaf interface) — `List<RecipeSummary> recipes()` and
+  `List<RecipeCosting> costing()`. `RecipeSummary(recipeId, name, folder, costPerPortion,
+  costPerPortionInclLabour, totalCost, portionSize, portionSizeValue, menuPrice, actualCost)`;
+  `RecipeCosting` adds the derived `margin` (`menuPrice − costPerPortion`), `gpPercent`
+  (`margin / menuPrice`), and `costGap` (`actualCost − costPerPortion`), computed in the semantic
+  layer (all inputs are single-domain resolved facts after projector enrichment). Implemented by
+  `ResolvedRecipeQuery` in `reconciliation`.
 
 ### 5. Application service + margin
 
-- `RecipeReportingService` (application) — authorizes `recipes.cost` READ, composes margin and
-  cost gap.
+- `RecipeReportingService` (application) — authorizes `recipes.cost` READ and returns
+  `List<RecipeCosting>` from `RecipeMetricsQuery.costing()`. No request-time cross-domain join: the
+  price/cost enrichment lives in the projector, and the margin/cost-gap derivation in the semantic
+  layer.
 - **Price/cost source (decision):** Lightspeed *actual* sold price and *actual* item cost, joined by
-  normalized name:
-
-  1. aggregate `canonical_sale_item` by `ProductNameKey.normalize(item_name)` → the most common
-     `sold_price_inc_tax` and `cost_inc_tax` (the mode, not the mean — avoids skew from
-     voids/discounts);
-  2. map each recipe to its menu items via `canonical_sale_recipe_link.sale_item_stock_description`
-     (normalized the same way, with the `"New "` alias);
-  3. `margin = menuPrice − costPerPortion`, `gpPercent = margin / menuPrice`;
-  4. `costGap = actualCost − costPerPortion` — the theoretical-vs-actual food-cost gap at
-     per-portion grain (a positive gap means the dish actually costs more than the recipe says).
-
-- The per-portion grain assumes one sold item equals one recipe portion (the standard venue
-  assumption); recorded as an approximation in the report, not silently asserted.
+  normalized name (`ProductNameKey.normalize` + `"New "` alias), using the **mode** (not the mean —
+  avoids skew from voids/discounts). Stored as `menu_price` / `actual_cost` on `resolved_recipe`.
 - A recipe with no matched price/cost renders `null` margin/cost-gap with a "no price" notice
-  (never a fabricated zero).
-- Returns `RecipeCostingReport` (list of `RecipeCostingRow(recipeId, name, folder, costPerPortion,
-  actualCost, costGap, menuPrice, margin, gpPercent)`).
+  (never a fabricated zero). The per-portion grain assumes one sold item equals one recipe portion
+  (the standard venue assumption); recorded as an approximation, not silently asserted.
 
 ### 6. API, tool, permissions
 
 - `RecipeController` — `GET /api/recipes` (the costing report). Thin adapter; reads only the
   application service.
 - `GetRecipeCostingTool` (`ToolId.GET_RECIPE_COSTING`, resource `recipes.cost`) + `ToolInput` — Ask
-  Goldy's answers "what's my margin per dish?".
+  Goldy's answers "what's my margin per dish?". The tool injects `RecipeMetricsQuery` (semantic),
+  reads `costing()`, and renders a table widget directly; `toMetricQueries` returns empty (recipe
+  master data is not a time-series metric, so the widget is not re-runnable from a saved dashboard).
 - Migration `V45__seed_recipe_permissions.sql` seeds `recipes.cost` for `ALL × OWNER` only
   (BOH/FOH grants wait on the field-to-role matrix). Reserve `recipes.ingredients` for the later
   ingredient slice.
