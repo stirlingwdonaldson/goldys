@@ -2,6 +2,8 @@ package com.goldys.platform.connectors.ctb;
 
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.DocumentTextExtractor;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -38,7 +40,14 @@ public class OcrDocumentTextExtractor implements DocumentTextExtractor {
 
   private static final Logger log = LoggerFactory.getLogger(OcrDocumentTextExtractor.class);
   private static final MimeType PNG = new MimeType("image", "png");
-  private static final float DPI = 200;
+  private static final float DPI = 150;
+
+  /**
+   * Longest edge, in pixels, of the page image sent to the vision model. The model downscales large
+   * images anyway, and an oversized base64 payload trips Jackson's 20 MB string limit inside Spring
+   * AI's request serialization, so large pages are capped here rather than failing OCR outright.
+   */
+  private static final int MAX_DIMENSION = 2000;
 
   private final ObjectProvider<ChatModel> chatModel;
 
@@ -61,7 +70,7 @@ public class OcrDocumentTextExtractor implements DocumentTextExtractor {
       PDFRenderer renderer = new PDFRenderer(pdf);
       for (int page = 0; page < pdf.getNumberOfPages(); page++) {
         BufferedImage image = renderer.renderImageWithDPI(page, DPI);
-        String pageText = transcribe(model, toPng(image));
+        String pageText = transcribe(model, toPng(resizeToFit(image, MAX_DIMENSION)));
         if (pageText != null && !pageText.isBlank()) {
           text.append(pageText).append('\n');
         }
@@ -94,6 +103,28 @@ public class OcrDocumentTextExtractor implements DocumentTextExtractor {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     ImageIO.write(image, "png", out);
     return out.toByteArray();
+  }
+
+  /** Scales {@code image} down so its longest edge is at most {@code maxDim}, preserving ratio. */
+  private static BufferedImage resizeToFit(BufferedImage image, int maxDim) {
+    int longest = Math.max(image.getWidth(), image.getHeight());
+    if (longest <= maxDim) {
+      return image;
+    }
+    double scale = (double) maxDim / longest;
+    int width = Math.max(1, (int) Math.round(image.getWidth() * scale));
+    int height = Math.max(1, (int) Math.round(image.getHeight() * scale));
+    BufferedImage resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    Graphics2D g = resized.createGraphics();
+    try {
+      g.setRenderingHint(
+          RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+      g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+      g.drawImage(image, 0, 0, width, height, null);
+    } finally {
+      g.dispose();
+    }
+    return resized;
   }
 
   private static ChatOptions temperatureZero() {
