@@ -23,6 +23,11 @@ interface CanonicalInvoiceLineRepository extends BitemporalRepository<CanonicalI
           + "and l.supersededAt is null")
   List<CanonicalInvoiceLine> lockCurrentByInvoiceNumber(String invoiceNumber);
 
+  @Query(
+      "select count(l) from CanonicalInvoiceLine l where l.invoiceNumber = :invoiceNumber "
+          + "and l.supersededAt is null")
+  long countCurrentByInvoiceNumber(String invoiceNumber);
+
   /** The current lines of one invoice, unlocked (used to test whether a line matches at all). */
   @Query(
       "select l from CanonicalInvoiceLine l where l.invoiceNumber = :invoiceNumber "

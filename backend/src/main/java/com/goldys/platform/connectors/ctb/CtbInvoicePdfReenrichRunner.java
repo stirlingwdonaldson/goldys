@@ -1,6 +1,7 @@
 package com.goldys.platform.connectors.ctb;
 
 import com.goldys.platform.canonical.CanonicalInvoiceLineEnrichment;
+import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.connectors.ctb.InvoiceIngestFlagService.OpenFlag;
 import com.goldys.platform.ingestion.RawLedgerQuery;
 import org.slf4j.Logger;
@@ -23,6 +24,12 @@ import org.springframework.stereotype.Component;
  * re-enrichment writes no new version when the fields already match, and {@code resolve} is a no-op
  * for an already-resolved flag. A single unreadable PDF is logged and skipped rather than aborting
  * the pass.
+ *
+ * <p>Besides flags the matcher now resolves, the pass also retires two kinds of false alarm the
+ * extractor now filters out: annotation rows ({@code "(2 BOXES)"}, {@code "COMMENT"}) and lines
+ * flagged against an invoice number the CTB export does not know (e.g. a header label like {@code
+ * "Tax Invoice No"} read as the number). Neither could ever be matched, so they never belonged in
+ * the work queue.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -34,16 +41,19 @@ public class CtbInvoicePdfReenrichRunner implements ApplicationRunner {
   private final InvoicePdfEnrichmentService pdfEnrichment;
   private final CanonicalInvoiceLineEnrichment lineEnrichment;
   private final InvoiceIngestFlagService flags;
+  private final CanonicalInvoiceQuery invoiceQuery;
 
   public CtbInvoicePdfReenrichRunner(
       RawLedgerQuery rawLedger,
       InvoicePdfEnrichmentService pdfEnrichment,
       CanonicalInvoiceLineEnrichment lineEnrichment,
-      InvoiceIngestFlagService flags) {
+      InvoiceIngestFlagService flags,
+      CanonicalInvoiceQuery invoiceQuery) {
     this.rawLedger = rawLedger;
     this.pdfEnrichment = pdfEnrichment;
     this.lineEnrichment = lineEnrichment;
     this.flags = flags;
+    this.invoiceQuery = invoiceQuery;
   }
 
   @Override
@@ -68,13 +78,27 @@ public class CtbInvoicePdfReenrichRunner implements ApplicationRunner {
   }
 
   private void retireResolvedFlags() {
-    int resolved = 0;
+    int matched = 0;
+    int annotations = 0;
+    int unknownInvoice = 0;
     for (OpenFlag flag : flags.openPdfOnlyLineFlags()) {
-      if (lineEnrichment.hasMatch(flag.invoiceNumber(), flag.stockCode(), flag.detail())) {
+      if (InvoicePdfSanitizer.isAnnotationText(flag.stockCode(), flag.detail())) {
         flags.resolve(flag.id());
-        resolved++;
+        annotations++;
+      } else if (!invoiceQuery.isKnownInvoice(flag.invoiceNumber())) {
+        flags.resolve(flag.id());
+        unknownInvoice++;
+      } else if (lineEnrichment.hasMatch(flag.invoiceNumber(), flag.stockCode(), flag.detail())) {
+        flags.resolve(flag.id());
+        matched++;
       }
     }
-    log.info("CTB invoice PDF replay resolved {} previously flagged lines", resolved);
+    log.info(
+        "CTB invoice PDF replay resolved {} flagged lines: {} now matched, {} annotations, "
+            + "{} against an invoice number the CTB export does not know",
+        matched + annotations + unknownInvoice,
+        matched,
+        annotations,
+        unknownInvoice);
   }
 }

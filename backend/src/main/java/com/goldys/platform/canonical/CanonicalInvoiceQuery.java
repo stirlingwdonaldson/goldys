@@ -17,9 +17,25 @@ import org.springframework.stereotype.Service;
 @Service
 public class CanonicalInvoiceQuery {
   private final CanonicalInvoiceRepository repository;
+  private final CanonicalInvoiceLineRepository lineRepository;
 
-  public CanonicalInvoiceQuery(CanonicalInvoiceRepository repository) {
+  public CanonicalInvoiceQuery(
+      CanonicalInvoiceRepository repository, CanonicalInvoiceLineRepository lineRepository) {
     this.repository = repository;
+    this.lineRepository = lineRepository;
+  }
+
+  /**
+   * True when the CTB export knows this invoice number: it has a current header row or at least one
+   * current line. Lines alone count because some invoices arrive with lines but no header metadata;
+   * PDF matching is against lines, so those are still matchable.
+   */
+  public boolean isKnownInvoice(String invoiceNumber) {
+    if (invoiceNumber == null) {
+      return false;
+    }
+    return repository.countCurrentByInvoiceNumber(invoiceNumber) > 0
+        || lineRepository.countCurrentByInvoiceNumber(invoiceNumber) > 0;
   }
 
   /** The current (non-superseded) invoice number for a PDF filename, or empty when unknown. */

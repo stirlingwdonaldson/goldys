@@ -28,9 +28,20 @@ public class HybridInvoicePdfExtractor implements InvoicePdfExtractor {
     for (DeterministicPdfExtractor template : deterministic) {
       PdfExtractedInvoice out = template.extract(text);
       if (!out.lines().isEmpty()) {
-        return out;
+        return sanitize(out);
       }
     }
-    return llm.extract(text);
+    return sanitize(llm.extract(text));
+  }
+
+  /**
+   * Applies {@link InvoicePdfSanitizer} to whichever extractor won: a label returned as the invoice
+   * number becomes {@code null} (so the caller falls back to the filename join instead of matching
+   * against a non-existent invoice), and annotation rows are dropped before they can be flagged.
+   */
+  private static PdfExtractedInvoice sanitize(PdfExtractedInvoice out) {
+    List<PdfExtractedLine> lines =
+        out.lines().stream().filter(line -> !InvoicePdfSanitizer.isAnnotation(line)).toList();
+    return new PdfExtractedInvoice(InvoicePdfSanitizer.invoiceNumber(out.invoiceNumber()), lines);
   }
 }
