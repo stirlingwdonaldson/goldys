@@ -64,7 +64,8 @@ class InventoryProjectorIntegrationTest {
             null,
             null,
             null,
-            rawRecord()));
+            rawRecord(),
+            "CSV"));
   }
 
   private UUID rawRecord() {

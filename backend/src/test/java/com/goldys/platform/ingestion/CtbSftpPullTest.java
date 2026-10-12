@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.goldys.platform.connectors.ctb.CtInvoiceCsvIngestService;
 import com.goldys.platform.connectors.ctb.InvoicePdfEnrichmentService;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -29,11 +30,21 @@ class CtbSftpPullTest {
     when(drop.list()).thenReturn(List.of(csv, pdf));
     when(drop.download("in/inv.csv")).thenReturn(new byte[] {1});
     when(drop.download("in/bruno.pdf")).thenReturn(new byte[] {2});
+    UUID pdfRawId = UUID.randomUUID();
+    when(ingestion.ingestPush(
+            eq("CTB"),
+            eq("ctb-invoice-pdf"),
+            eq(FetchMethod.FILE_EXPORT),
+            eq("application/pdf"),
+            any(byte[].class),
+            isNull(),
+            eq("ctb-sftp")))
+        .thenReturn(pdfRawId);
 
     new CtbSftpPull(drop, ingestion, csvIngest, pdfEnrichment).pull();
 
     verify(csvIngest).ingest(any(byte[].class));
-    verify(pdfEnrichment).enrich(any(byte[].class), eq("bruno.pdf"));
+    verify(pdfEnrichment).enrich(any(byte[].class), eq("bruno.pdf"), eq(pdfRawId));
     verify(ingestion)
         .ingestPush(
             eq("CTB"),

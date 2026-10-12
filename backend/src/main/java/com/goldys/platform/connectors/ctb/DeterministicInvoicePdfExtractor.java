@@ -33,6 +33,6 @@ public class DeterministicInvoicePdfExtractor extends LinearizedColumnPdfExtract
       return null; // a non-numeric row ends the table
     }
     return new PdfExtractedLine(
-        cells[1].trim(), cells[2].trim(), quantity, cells[3].trim(), null, null, null);
+        cells[1].trim(), cells[2].trim(), quantity, cells[3].trim(), null, null, null, null);
   }
 }

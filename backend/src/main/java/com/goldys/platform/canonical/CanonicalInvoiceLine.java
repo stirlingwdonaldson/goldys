@@ -58,6 +58,12 @@ class CanonicalInvoiceLine extends BitemporalEntity {
   @Column(name = "wet_amount", updatable = false, precision = 14, scale = 4)
   private BigDecimal wetAmount;
 
+  /**
+   * {@code "CSV"} for export-sourced lines, {@code "PDF"} for PDF-derived; null = legacy CSV row.
+   */
+  @Column(name = "origin", updatable = false, length = 16)
+  private String origin;
+
   protected CanonicalInvoiceLine() {}
 
   private CanonicalInvoiceLine(
@@ -78,7 +84,8 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       String uom,
       BigDecimal unitQuantity,
       BigDecimal packSize,
-      BigDecimal wetAmount) {
+      BigDecimal wetAmount,
+      String origin) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.invoiceNumber = invoiceNumber;
     this.invoiceDate = invoiceDate;
@@ -92,6 +99,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
     this.unitQuantity = unitQuantity;
     this.packSize = packSize;
     this.wetAmount = wetAmount;
+    this.origin = origin;
   }
 
   static CanonicalInvoiceLine create(
@@ -112,7 +120,8 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       String uom,
       BigDecimal unitQuantity,
       BigDecimal packSize,
-      BigDecimal wetAmount) {
+      BigDecimal wetAmount,
+      String origin) {
     return new CanonicalInvoiceLine(
         logicalEntityId,
         sourceSystem,
@@ -131,7 +140,8 @@ class CanonicalInvoiceLine extends BitemporalEntity {
         uom,
         unitQuantity,
         packSize,
-        wetAmount);
+        wetAmount,
+        origin);
   }
 
   boolean sameFact(InvoiceLineInput input) {
@@ -198,5 +208,9 @@ class CanonicalInvoiceLine extends BitemporalEntity {
 
   BigDecimal wetAmount() {
     return wetAmount;
+  }
+
+  String origin() {
+    return origin;
   }
 }

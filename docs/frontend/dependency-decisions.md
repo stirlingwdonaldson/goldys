@@ -18,6 +18,7 @@ from the existing Bun lock/install, not suggested upgrades. Restore with Bun 1.4
 | OpenAPI generator | Defer | No current Springdoc dependency/export found. Evaluate a reproducible backend-derived spec before choosing generator/tooling. |
 | Axios/alternative transport | Reject for this migration | Native fetch already serves JSON, cookies, CSRF and SSE; no measured replacement benefit. |
 | Grid-layout/graph-layout libraries | Defer | Existing grid/keyboard controls and React Flow work. Drag/resize is not an approved new product requirement. |
+| `react-force-graph-2d` | Added 2026-10-11 for relationship networks (`components/network/`) | React Flow places DOM nodes in fixed columns and has no force layout; a canvas d3-force graph handles hundreds of nodes with live physics. `sigma.js` (WebGL) rejected as unneeded below ~5k nodes. Pinned exactly; loaded only via `next/dynamic` with `ssr: false`. Spec: `docs/superpowers/specs/2026-10-11-network-graph-design.md`. |
 | Redux/Zustand/competing UI framework | Reject for this migration | No demonstrated need for broad global state or second design system. |
 
 PR 1 installs exact Zod 4.6.5 and MSW 3.0.2. MSW requires Node >=22.12.0; CI now pins local

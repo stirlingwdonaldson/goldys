@@ -19,6 +19,13 @@ public class RawLedgerQuery {
         .toList();
   }
 
+  /** Stored payloads of one source and content type (e.g. CTB invoice PDFs), for replay. */
+  public List<RawPayload> rawPayloadsForSource(String sourceSystem, String contentType) {
+    return rawRecords.findBySourceSystemAndContentType(sourceSystem, contentType).stream()
+        .map(r -> new RawPayload(r.id(), r.payloadBytes()))
+        .toList();
+  }
+
   /** A stored raw payload: its record id and a defensive copy of its bytes. */
   public record RawPayload(UUID id, byte[] bytes) {}
 }

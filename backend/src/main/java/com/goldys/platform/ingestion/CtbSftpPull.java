@@ -3,6 +3,7 @@ package com.goldys.platform.ingestion;
 import com.goldys.platform.connectors.ctb.CtInvoiceCsvIngestService;
 import com.goldys.platform.connectors.ctb.InvoicePdfEnrichmentService;
 import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -63,15 +64,16 @@ public class CtbSftpPull {
       if (file.filename().toLowerCase().endsWith(".csv")) {
         csvIngest.ingest(bytes);
       } else {
-        ingestion.ingestPush(
-            "CTB",
-            "ctb-invoice-pdf",
-            FetchMethod.FILE_EXPORT,
-            "application/pdf",
-            bytes,
-            null,
-            "ctb-sftp");
-        pdfEnrichment.enrich(bytes, file.filename());
+        UUID rawId =
+            ingestion.ingestPush(
+                "CTB",
+                "ctb-invoice-pdf",
+                FetchMethod.FILE_EXPORT,
+                "application/pdf",
+                bytes,
+                null,
+                "ctb-sftp");
+        pdfEnrichment.enrich(bytes, file.filename(), rawId);
       }
       log.info("SFTP drop processed {}", file.filename());
       drop.markProcessed(file.path());

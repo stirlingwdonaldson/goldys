@@ -153,7 +153,16 @@ restrict `${SFTP_PORT}` to it in the host firewall; otherwise rely on a strong
 CSVs are canonicalized (header + lines → COGS) and are authoritative. PDFs are stored
 raw, then `InvoicePdfEnrichmentService` extracts their line detail and enriches the
 matching CSV lines (joined by the CSV's `pdf_filename`); anomalies are raised as
-invoice ingest flags rather than dropped.
+invoice ingest flags rather than dropped. Gap recovery runs as part of that PDF
+enrichment: when the header total reconciles with the PDF line sum but not the CSV
+line sum, the missing lines are recorded as `origin='PDF'` canonical lines so COGS is
+complete (see `docs/connectors/matching-and-identity.md`).
+
+Gap recovery is **off by default** (`app.ctb-invoice-gap-recovery=false`). It must be
+enabled per deploy — `APP_CTB_INVOICE_GAP_RECOVERY=true` in `.env.prod` — before any
+PDF-derived lines are created; leave it unset to keep the pipeline read-only over the
+CSV lines. Verify on read-only production data before enabling, then decide the
+default (enable → verify → default, mirroring `APP_CTB_INVOICE_REENRICH`).
 
 ## Upgrading
 
@@ -164,6 +173,24 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 ```
 
 Flyway applies any new migrations on backend start.
+
+## Invoice PDF replay (one-off)
+
+When the invoice PDF↔CSV line matcher changes, re-enrich the already-stored PDFs so historical
+lines pick up the fix and the `PDF_ONLY_LINE` flags it resolves are retired. The same replay
+re-runs gap recovery over the stored PDFs (idempotently — the gap-line identity is content-stable,
+so a re-run re-records the same fact and creates no new version):
+
+```bash
+# set APP_CTB_INVOICE_REENRICH=true in .env.prod, then
+export SENTRY_RELEASE=$(git rev-parse --short HEAD)
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build backend
+# UNSET APP_CTB_INVOICE_REENRICH again so it does not re-run on every restart
+```
+
+It runs once at startup before the inventory projection rebuild; re-runs are idempotent. Flags are
+never deleted — a resolved one keeps its row and is excluded from the default `GET
+/api/inventory/flags` view (`?status=all` includes resolved).
 
 ## Rollback
 

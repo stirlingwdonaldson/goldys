@@ -179,3 +179,19 @@ describe("demoApi dashboards v2", () => {
     expect(restored.title).toBe("Versioned");
   });
 });
+
+describe("demoApi platform map", () => {
+  it("shows failing, stale and never-run sources and only links known nodes", async () => {
+    const map = await demoApi.getPlatformMap();
+    const tones = Object.fromEntries(
+      map.nodes.filter((n) => n.kind === "source").map((n) => [n.id, n.tone]),
+    );
+    expect(tones).toMatchObject({ "source:CTB": "fail", "source:OPENTABLE": "warn", "source:DEPUTY": "missing" });
+    const ids = new Set(map.nodes.map((n) => n.id));
+    expect(ids.size).toBe(map.nodes.length);
+    for (const e of map.edges) {
+      expect(ids.has(e.source), e.source).toBe(true);
+      expect(ids.has(e.target), e.target).toBe(true);
+    }
+  });
+});

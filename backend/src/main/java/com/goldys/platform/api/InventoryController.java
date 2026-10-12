@@ -79,7 +79,10 @@ public class InventoryController {
   }
 
   @GetMapping("/flags")
-  List<InvoiceIngestFlagView> flags(@AuthenticationPrincipal AccountUserDetails user) {
-    return flags.flags(currentUser.roleOf(user));
+  List<InvoiceIngestFlagView> flags(
+      @RequestParam(value = "status", required = false, defaultValue = "open") String status,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    boolean includeResolved = "all".equalsIgnoreCase(status) || "resolved".equalsIgnoreCase(status);
+    return flags.flags(currentUser.roleOf(user), includeResolved);
   }
 }

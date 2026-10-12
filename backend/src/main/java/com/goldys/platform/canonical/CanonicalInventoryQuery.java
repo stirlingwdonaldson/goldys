@@ -1,8 +1,10 @@
 package com.goldys.platform.canonical;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 /**
@@ -20,6 +22,37 @@ public class CanonicalInventoryQuery {
   /** All current invoice lines, mapped to views. */
   public List<InvoiceLineView> currentInvoiceLines() {
     return lineRepository.findAllCurrent().stream().map(CanonicalInventoryQuery::toView).toList();
+  }
+
+  /**
+   * The sum of the current {@code lineTotal} for one invoice's lines, or {@link BigDecimal#ZERO}
+   * when the invoice has no current lines. Used by the reconciliation path to compare CSV line sums
+   * against header totals.
+   */
+  public BigDecimal currentLineTotalForInvoice(String invoiceNumber) {
+    if (invoiceNumber == null) {
+      return BigDecimal.ZERO;
+    }
+    return lineRepository.findCurrentByInvoiceNumber(invoiceNumber).stream()
+        .map(CanonicalInvoiceLine::lineTotal)
+        .filter(Objects::nonNull)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+  }
+
+  /**
+   * The sum of the current {@code lineTotal} for one invoice's CSV-sourced lines only (origin null
+   * or {@code 'CSV'}, i.e. not {@code 'PDF'}), or {@link BigDecimal#ZERO} when there are none. Used
+   * by the convergence check to compare the CSV-only total against the header total without the
+   * still-current PDF gap lines, which would otherwise over-count the CSV shortfall.
+   */
+  public BigDecimal currentCsvLineTotalForInvoice(String invoiceNumber) {
+    if (invoiceNumber == null) {
+      return BigDecimal.ZERO;
+    }
+    return lineRepository.findCurrentCsvByInvoiceNumber(invoiceNumber).stream()
+        .map(CanonicalInvoiceLine::lineTotal)
+        .filter(Objects::nonNull)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
   /** Current invoice lines whose invoice date falls in {@code dates}. */
