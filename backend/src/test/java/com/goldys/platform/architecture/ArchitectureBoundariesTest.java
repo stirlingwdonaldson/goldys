@@ -314,8 +314,9 @@ class ArchitectureBoundariesTest {
 
   /**
    * The forecasting domain is a leaf: it composes the semantic catalogue and auth with its own JPA
-   * persistence, and never reaches the reconciliation/canonical/ingestion internals or the API /
-   * application delivery layers.
+   * persistence, and reaches nothing else in the platform — not the reconciliation/canonical/
+   * ingestion internals, the API / application delivery layers, nor the dashboard/reporting/
+   * connectors/widget/config/metrics packages.
    */
   @ArchTest
   static final ArchRule forecastingIsALeaf =
@@ -325,7 +326,17 @@ class ArchitectureBoundariesTest {
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
-              "..reconciliation..", "..canonical..", "..ingestion..", "..api..", "..application..");
+              "..reconciliation..",
+              "..canonical..",
+              "..ingestion..",
+              "..api..",
+              "..application..",
+              "..dashboard..",
+              "..reporting..",
+              "..connectors..",
+              "..widget..",
+              "..config..",
+              "..metrics..");
 
   /** The forecasting application service is the single bridge into the forecasting domain. */
   @ArchTest
