@@ -33,7 +33,7 @@ class CtbInvoicePdfReenrichRunnerTest {
 
   private CtbInvoicePdfReenrichRunner runner() {
     return new CtbInvoicePdfReenrichRunner(
-        rawLedger, pdfEnrichment, lineEnrichment, flags, invoiceQuery);
+        rawLedger, pdfEnrichment, lineEnrichment, flags, invoiceQuery, 2);
   }
 
   @Test

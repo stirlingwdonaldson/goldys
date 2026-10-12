@@ -1,6 +1,8 @@
 package com.goldys.platform.connectors.ctb;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +15,8 @@ import org.springframework.stereotype.Component;
 @Component
 @Primary
 public class HybridInvoicePdfExtractor implements InvoicePdfExtractor {
+
+  private static final Logger log = LoggerFactory.getLogger(HybridInvoicePdfExtractor.class);
 
   private final List<DeterministicPdfExtractor> deterministic;
   private final LlmInvoicePdfExtractor llm;
@@ -31,7 +35,13 @@ public class HybridInvoicePdfExtractor implements InvoicePdfExtractor {
         return sanitize(out);
       }
     }
-    return sanitize(llm.extract(text));
+    // No per-supplier template produced lines; the LLM is the expensive fallback, so call it out.
+    long started = System.currentTimeMillis();
+    PdfExtractedInvoice out = llm.extract(text);
+    log.info(
+        "No deterministic invoice template matched; LLM fallback took {} ms",
+        System.currentTimeMillis() - started);
+    return sanitize(out);
   }
 
   /**
