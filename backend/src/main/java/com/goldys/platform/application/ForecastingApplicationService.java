@@ -125,13 +125,29 @@ public class ForecastingApplicationService {
     ForecastRun run = loadRun(id);
     requireMetricRead(role, run.targetMetric());
 
-    List<ForecastDay> days = run.series();
-    if (days.isEmpty()) {
-      return new ForecastComparisonDto(run.id(), null, null, List.of());
+    LocalDate today = LocalDate.now(clock);
+
+    // Partition the forecast into past dates (comparable against resolved actuals) and future
+    // dates (today or later, no actual yet). Future points are carried through with actual = null.
+    List<ForecastDay> past = new ArrayList<>();
+    List<ForecastComparisonPointDto> futurePoints = new ArrayList<>();
+    for (ForecastDay day : run.series()) {
+      BigDecimal predicted = day.quantiles().get("0.5");
+      if (day.date().isBefore(today)) {
+        past.add(day);
+      } else {
+        futurePoints.add(new ForecastComparisonPointDto(day.date(), predicted, null));
+      }
     }
 
-    LocalDate today = LocalDate.now(clock);
-    LocalDate firstForecastDate = days.get(0).date();
+    // A freshly-succeeded run forecasts only dates at or after today: nothing to compare, and the
+    // actuals range would be empty (to < from), so never build a TimeRange for it.
+    if (past.isEmpty()) {
+      return new ForecastComparisonDto(run.id(), null, null, futurePoints);
+    }
+
+    // At least one past date guarantees the actuals range is well-formed (to >= from).
+    LocalDate firstForecastDate = past.get(0).date();
     MetricId target = MetricId.fromValue(run.targetMetric());
     MetricResult result =
         queries.query(
@@ -143,14 +159,14 @@ public class ForecastingApplicationService {
                 null));
     Map<LocalDate, BigDecimal> actualByDate = actualsByDate(singleSeries(result));
 
-    List<ForecastComparisonPointDto> points = new ArrayList<>(days.size());
     BigDecimal maeSum = BigDecimal.ZERO;
     int maeCount = 0;
     BigDecimal mapeSum = BigDecimal.ZERO;
     int mapeCount = 0;
-    for (ForecastDay day : days) {
+    List<ForecastComparisonPointDto> points = new ArrayList<>(past.size() + futurePoints.size());
+    for (ForecastDay day : past) {
       BigDecimal predicted = day.quantiles().get("0.5");
-      BigDecimal actual = day.date().isBefore(today) ? actualByDate.get(day.date()) : null;
+      BigDecimal actual = actualByDate.get(day.date());
       points.add(new ForecastComparisonPointDto(day.date(), predicted, actual));
       if (actual != null) {
         BigDecimal error = actual.subtract(predicted).abs();
@@ -162,6 +178,8 @@ public class ForecastingApplicationService {
         }
       }
     }
+    // Past dates first (chronological), then the future dates with actual = null.
+    points.addAll(futurePoints);
 
     Double mae =
         maeCount == 0

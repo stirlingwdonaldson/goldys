@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -156,6 +157,21 @@ class ForecastingApplicationServiceTest {
     assertThat(comparison.points().get(3).actual()).isNull();
   }
 
+  @Test
+  void comparisonReturnsNullForFutureOnlyRun() {
+    ForecastRun run = futureOnlyRun();
+    when(runs.findById(run.id())).thenReturn(Optional.of(run));
+
+    ForecastComparisonDto comparison = service().comparison(role(), run.id());
+
+    assertThat(comparison.mape()).isNull();
+    assertThat(comparison.mae()).isNull();
+    assertThat(comparison.points()).hasSize(2);
+    assertThat(comparison.points()).allSatisfy(p -> assertThat(p.actual()).isNull());
+    // No actuals range is ever built for an all-future forecast.
+    verify(queries, never()).query(any());
+  }
+
   private static ForecastRun queuedRun(String target, List<String> covariates) {
     return ForecastRun.create(target, covariates, SEP_01, LocalDate.of(2026, 10, 9), 4, EMAIL, NOW);
   }
@@ -173,6 +189,17 @@ class ForecastingApplicationServiceTest {
             new ForecastDay(LocalDate.of(2026, 10, 11), Map.of("0.5", new BigDecimal("110"))),
             new ForecastDay(LocalDate.of(2026, 10, 12), Map.of("0.5", new BigDecimal("120"))),
             new ForecastDay(LocalDate.of(2026, 10, 13), Map.of("0.5", new BigDecimal("130")))),
+        "timesfm-3.0",
+        10L);
+    return run;
+  }
+
+  private static ForecastRun futureOnlyRun() {
+    ForecastRun run = queuedRun("sales.gross", List.of());
+    run.markSucceeded(
+        List.of(
+            new ForecastDay(LocalDate.of(2026, 10, 13), Map.of("0.5", new BigDecimal("130"))),
+            new ForecastDay(LocalDate.of(2026, 10, 14), Map.of("0.5", new BigDecimal("140")))),
         "timesfm-3.0",
         10L);
     return run;
