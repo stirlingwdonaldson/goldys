@@ -43,6 +43,21 @@ public class RawLedgerQuery {
         .toList();
   }
 
+  /**
+   * Stored payloads of one source and fetcher identity, with each record's {@code
+   * source_record_ref} (e.g. {@code "recipe:617"} for the per-recipe ingredient payloads), for
+   * replay that must key on the record's identity rather than bytes alone.
+   */
+  public List<RawPayloadWithRef> rawPayloadsForFetcherWithRef(
+      String sourceSystem, String fetcherIdentity) {
+    return rawRecords.findBySourceSystemAndFetcherIdentity(sourceSystem, fetcherIdentity).stream()
+        .map(r -> new RawPayloadWithRef(r.id(), r.payloadBytes(), r.sourceRecordRef()))
+        .toList();
+  }
+
   /** A stored raw payload: its record id and a defensive copy of its bytes. */
   public record RawPayload(UUID id, byte[] bytes) {}
+
+  /** A stored raw payload plus its source-record reference. */
+  public record RawPayloadWithRef(UUID id, byte[] bytes, String sourceRecordRef) {}
 }
