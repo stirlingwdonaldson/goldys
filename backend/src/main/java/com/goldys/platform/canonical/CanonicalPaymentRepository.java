@@ -25,6 +25,11 @@ interface CanonicalPaymentRepository extends BitemporalRepository<CanonicalPayme
   List<CanonicalPayment> findCurrentByTradingDateIn(Collection<LocalDate> dates);
 
   @Query(
+      "select p from CanonicalPayment p where p.supersededAt is null "
+          + "and p.tradingDate >= :from and p.tradingDate <= :to")
+  List<CanonicalPayment> findCurrentByTradingDateBetween(LocalDate from, LocalDate to);
+
+  @Query(
       """
       select p from CanonicalPayment p
       where p.supersededAt is null

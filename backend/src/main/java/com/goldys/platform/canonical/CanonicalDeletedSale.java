@@ -122,10 +122,10 @@ class CanonicalDeletedSale extends BitemporalEntity {
         && Objects.equals(saleNumber, input.saleNumber())
         && Objects.equals(orderType, input.orderType())
         && Objects.equals(note, input.note())
-        && Objects.equals(totalIncTax, input.totalIncTax())
-        && Objects.equals(totalExTax, input.totalExTax())
-        && Objects.equals(totalTax, input.totalTax())
-        && Objects.equals(totalCost, input.totalCost())
+        && sameAmount(totalIncTax, input.totalIncTax())
+        && sameAmount(totalExTax, input.totalExTax())
+        && sameAmount(totalTax, input.totalTax())
+        && sameAmount(totalCost, input.totalCost())
         && Objects.equals(openedRegisterCode, input.openedRegisterCode())
         && Objects.equals(openedRegisterName, input.openedRegisterName())
         && Objects.equals(deletedRegisterCode, input.deletedRegisterCode())
@@ -137,6 +137,13 @@ class CanonicalDeletedSale extends BitemporalEntity {
         && Objects.equals(tableNumber, input.tableNumber())
         && Objects.equals(siteId, input.siteId())
         && Objects.equals(customerName, input.customerName());
+  }
+
+  private static boolean sameAmount(BigDecimal a, BigDecimal b) {
+    if (a == null || b == null) {
+      return a == b;
+    }
+    return a.compareTo(b) == 0;
   }
 
   LocalDate tradingDate() {
