@@ -68,5 +68,19 @@
     "role": "owner",
     "expectedTools": [],
     "causal": false
+  },
+  {
+    "category": "recipe-ingredients",
+    "question": "What ingredients are in the Cheeseburger?",
+    "role": "owner",
+    "expectedTools": ["get_recipe_ingredients"],
+    "causal": false
+  },
+  {
+    "category": "recipe-ingredients",
+    "question": "What's the cost per portion and margin on the Cheeseburger?",
+    "role": "owner",
+    "expectedTools": ["get_recipe_costing"],
+    "causal": false
   }
 ]

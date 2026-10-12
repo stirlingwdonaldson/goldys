@@ -246,6 +246,27 @@ export interface RecipeCosting {
   gpPercent: number | null;
 }
 
+/**
+ * One recipe's resolved ingredient line (mirrors backend `RecipeIngredient`). `lineRecipeName` is
+ * the recipe the line belongs to (the parent for main lines, a sub-recipe for sub-recipe lines).
+ * Quantity and cost are null when CTB sent nothing parseable — never a fabricated zero.
+ */
+export interface RecipeIngredient {
+  parentRecipeId: number;
+  lineRecipeId: number | null;
+  lineRecipeName: string | null;
+  isSubRecipe: boolean | null;
+  recipeDetailId: number;
+  stockId: number | null;
+  stockCode: string | null;
+  stockDescription: string | null;
+  portionWeight: number | null;
+  unitOfMeasurement: string | null;
+  costPerQty: number | null;
+  costPerUnit: number | null;
+  supplierName: string | null;
+}
+
 /** One invoice-ingestion anomaly, read-only (mirrors the backend `InvoiceIngestFlagView`). */
 export interface InvoiceIngestFlag {
   flagType: string;
@@ -752,6 +773,7 @@ export interface Api {
   getForecastRun(id: string): Promise<ForecastRun>;
   getForecastComparison(id: string): Promise<ForecastComparison>;
   getRecipes(): Promise<RecipeCosting[]>;
+  getRecipeIngredients(recipeId: number): Promise<RecipeIngredient[]>;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */

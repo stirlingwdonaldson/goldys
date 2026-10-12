@@ -35,6 +35,7 @@ the code is held to.
 | `RANK_DIMENSION` | A catalogue metric ranked by an allowed dimension |
 | `GET_RECONCILIATION_STATUS` | Open conflicts and resolution state |
 | `CREATE_DASHBOARD_DRAFT` | Proposes a dashboard document for the user to save |
+| `GET_RECIPE_INGREDIENTS` | One recipe's ingredient lines (qty/unit, cost, supplier, sub-recipe) |
 
 Adding a tool means adding a `ToolId` value, a `ReportingTool` implementation with a bounded
 `ToolInput` record, and a case in the conversational eval fixtures

@@ -129,11 +129,39 @@ so a second source can be added later without re-deriving these decisions.
   `ctb-detail-backfill` run).
 - **Logical identity / matching:** deferred with the source, as above.
 
-## Recipe composition (no canonical entity yet)
+## Recipe composition
 
-- **Source:** `CTB` (recipe ingredients `ctb-recipe-ingredients` + batched derived cost
-  `ctb-recipe-cost`, under the one-off `ctb-detail-backfill` run). Raw-only; the canonical
-  recipe-composition domain is a later slice (D) and its identity is not yet defined.
+- **Source:** `CTB` (recipe cost `ctb-recipe-cost` + sale↔recipe links `ctb-sale-recipe-links`,
+  canonicalized by the recipe-composition slice D; plus recipe ingredients `ctb-recipe-ingredients`,
+  canonicalized by the recipe-ingredients slice). Recipe-level cost and ingredient lines are
+  single-source (CTB) — no cross-source reconciliation.
+- See "Recipe ingredient line" below for the line identity.
+
+## Recipe ingredient line (`canonical_recipe_ingredient`)
+
+- **Source:** `CTB` (`ctb-recipe-ingredients`, ingested under the one-off `ctb-detail-backfill` run
+  and replayed into canonical by the flag-gated `RecipeIngredientCanonicalizationRunner`).
+- **Logical identity:** `UUID.nameUUIDFromBytes("recipe-ingredient:" + parentRecipeId + ":" +
+  recipeDetailId + ":" + stockId)`. `recipeDetailId` is CTB's OWNER-scoped line id (not globally
+  unique), so the parent recipe must anchor the identity; `stockId` disambiguates lines that share a
+  detail id and is `null` (stringified `"null"`) when CTB sent no stock reference (a sentinel id or
+  a broken link).
+- **Source identity:** `(source_system = CTB, source_record_ref =
+  "recipe-ingredient:{parent}:{detail}:{stock}")`, with a partial unique index
+  `WHERE superseded_at IS NULL`.
+- **Duplicate-line quirk:** the source repeats some lines verbatim (recipe 617 "Pickle Brine" emits
+  the same `recipeDetailId` *and* `stockId` four times). The parser collapses exact-duplicate lines,
+  and the current-fact uniqueness lives on `(source_system, source_record_ref)` — there is
+  deliberately **no** unique index on `(parent_recipe_id, recipe_detail_id)` alone.
+- **Parent vs line recipe:** `parent_recipe_id` is the recipe the payload was fetched for (from the
+  raw record's `source_record_ref = "recipe:{id}"`); `line_recipe_id`/`line_recipe_name` are the
+  recipe the line itself belongs to (the parent for main lines, a sub-recipe for `is_sub_recipe =
+  true` lines).
+- **Matching strategy:** deterministic single source; no cross-source matching. Sub-recipe lines
+  carry the sub-recipe's own quantities — there is no parent usage quantity, so sub-recipe cost
+  roll-up is out of scope for this slice.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not wired (read-only master data).
 
 ## Payment (`canonical_payment`)
 
