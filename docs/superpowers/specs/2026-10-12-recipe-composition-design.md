@@ -224,10 +224,11 @@ Per `adding-a-domain.md` §4, adapted to a single-source domain:
 
 ## Decisions & dependencies
 
-- **`portion_size` is stored faithfully as `varchar(255)` plus a nullable parsed
-  `portion_size_value numeric(14,4)`** — higher fidelity (the raw value survives whether it is a
-  count, a weight, or a UOM string) and extensible (a later slice can add UOM columns without a
-  backfill).
+- **`portion_size` is assumed NOT always numeric** — CTB may return a count, a weight, or free-text
+  yield ("1 serve"). It is stored faithfully as `varchar(255)` plus a nullable parsed
+  `portion_size_value numeric(14,4)` (parsed only when the text is a plain number, otherwise
+  `null`), so a non-numeric yield survives byte-faithfully and never fails ingestion, projection or
+  the read model.
 - **Cost gap is in scope:** the report surfaces both gross margin (vs sold price) and the
   theoretical-vs-actual cost gap (CTB `cost_per_portion` vs Lightspeed `cost_inc_tax` per portion).
 - **The `ctb-detail-backfill` completion is an external dependency**, owned by another agent. This

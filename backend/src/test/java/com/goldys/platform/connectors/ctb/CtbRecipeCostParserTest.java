@@ -61,6 +61,17 @@ class CtbRecipeCostParserTest {
   }
 
   @Test
+  void portionSizeDecimalYieldsParsedValue() {
+    byte[] json =
+        "{\"data\":[{\"recipeId\":1,\"recipeName\":\"Parma\",\"portionSize\":\"2.5\"}]}"
+            .getBytes(StandardCharsets.UTF_8);
+
+    RecipeCostInput r = parser.parse(json, RAW).get(0);
+
+    assertThat(r.portionSizeValue()).isEqualByComparingTo("2.5000");
+  }
+
+  @Test
   void stripsNullEscapes() {
     String nul = "\\u" + "0000";
     byte[] json =
