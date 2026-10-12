@@ -54,3 +54,22 @@ export interface NetworkGraph {
   nodes: NetworkNode[];
   edges: NetworkEdge[];
 }
+
+/**
+ * A colour group, as in Obsidian: nodes matching it take its colour; the first matching group
+ * wins and unmatched nodes stay grey. `colourVar` is a design-token CSS variable, e.g.
+ * `--destructive`.
+ */
+export interface NetworkGroup {
+  id: string;
+  label: string;
+  colourVar: string;
+  matches: (node: NetworkNode) => boolean;
+}
+
+/** One way of colouring a graph ("Health", "Kind"); the viewer picks between sets. */
+export interface NetworkGroupSet {
+  id: string;
+  label: string;
+  groups: NetworkGroup[];
+}

@@ -41,7 +41,7 @@ describe("PlatformMapView", () => {
 
     expect(await screen.findByRole("button", { name: "Clear focus" })).toBeInTheDocument();
     expect(screen.getByLabelText("Local graph")).toBeChecked();
-    expect(screen.getByText("Gross sales")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Gross sales details" })).toBeInTheDocument();
   });
 
   it("shows a locked state when the caller lacks connectors access", async () => {

@@ -1,10 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type ForceGraphComponent from "react-force-graph-2d";
 import type { ForceGraphMethods, LinkObject, NodeObject } from "react-force-graph-2d";
 import type { FlowTone } from "@/components/flow/types";
+import { d3Forces, labelAlpha, nodeRadius, type DisplaySettings, type ForceSettings } from "./graph-settings";
 import { initialPositions, readPositions, writePositions, type Positions } from "./layout-cache";
 import type { NetworkGraph, NetworkNode } from "./types";
 
@@ -17,84 +18,93 @@ const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
 type SimNode = NodeObject<NetworkNode>;
 type LinkData = { weight: number; label?: string; tone?: FlowTone };
 type SimLink = LinkObject<NetworkNode, LinkData>;
+type Graph = ForceGraphMethods<SimNode, SimLink>;
 
-/** CSS custom properties the canvas paints with, read once at mount (the app has one theme). */
+/** Design tokens the canvas paints with, resolved at mount (canvas can't read `var(...)`). */
 const TOKENS = {
   foreground: "--foreground",
   muted: "--muted-foreground",
-  background: "--background",
-  ok: "--status-success",
-  warn: "--status-conflict",
-  fail: "--destructive",
-  missing: "--status-missing",
-  info: "--status-info",
+  accent: "--chart-3",
 } as const;
 type Palette = Record<keyof typeof TOKENS, string> & { font: string };
 
 function readPalette(): Palette {
   const style = getComputedStyle(document.documentElement);
-  const entries = Object.entries(TOKENS).map(([key, variable]) => {
-    const value = style.getPropertyValue(variable).trim();
-    return [key, value ? `hsl(${value})` : "#888"];
-  });
+  const colours = Object.fromEntries(
+    Object.entries(TOKENS).map(([key, variable]) => {
+      const value = style.getPropertyValue(variable).trim();
+      return [key, value ? `hsl(${value})` : "#888"];
+    }),
+  ) as Record<keyof typeof TOKENS, string>;
   // A canvas `font` can't use var(...); an invalid value is silently ignored, so resolve it here.
   const font = getComputedStyle(document.body).fontFamily || "sans-serif";
-  return { ...(Object.fromEntries(entries) as Record<keyof typeof TOKENS, string>), font };
+  return { ...colours, font };
 }
 
-/** The ring colour for a tone; `ok` and `neutral` draw no ring so only problems stand out. */
-function ringColour(tone: FlowTone, palette: Palette): string | null {
-  switch (tone) {
-    case "warn":
-      return palette.warn;
-    case "fail":
-      return palette.fail;
-    case "missing":
-      return palette.missing;
-    case "info":
-      return palette.info;
-    default:
-      return null;
-  }
+/** `hsl(h s% l%)` → `hsl(h s% l% / a)`; other colour strings pass through unchanged. */
+function withAlpha(colour: string, alpha: number): string {
+  return colour.startsWith("hsl(") && !colour.includes("/")
+    ? colour.replace(/\)$/, ` / ${alpha})`)
+    : colour;
 }
 
-export const nodeRadius = (size: number) => 3 + size * 1.4;
+/** Largest zoom a fit may reach, so a small graph doesn't fill the canvas with giant dots. */
+const MAX_FIT_ZOOM = 2;
 
-interface NetworkCanvasProps {
+/** Zoom to show every node, but never past {@link MAX_FIT_ZOOM} (`zoomToFit` ignores `maxZoom`). */
+function fit(graph: Graph | undefined): void {
+  if (!graph) return;
+  graph.zoomToFit(400, 48);
+  window.setTimeout(() => {
+    if (graph.zoom() > MAX_FIT_ZOOM) graph.zoom(MAX_FIT_ZOOM, 200);
+  }, 450);
+}
+
+const endpointId = (end: SimLink["source"]) =>
+  typeof end === "object" && end !== null ? String(end.id) : String(end);
+
+export interface NetworkCanvasProps {
   graph: NetworkGraph;
   /** Names the cached layout, e.g. "platform-map". */
   graphKey: string;
-  /** Accessible name for the region; the canvas itself is hidden from screen readers. */
   ariaLabel: string;
-  height?: number;
+  height: number;
   focusId?: string;
   onFocus?: (id: string | undefined) => void;
-  /** Fill colour per node, e.g. by category or kind. */
-  colourFor: (node: NetworkNode) => string;
-  /** Extra nodes to keep lit while a node is focused, e.g. everything downstream of it. */
+  /** Fill colour from the active colour group, or undefined for the default grey. */
+  colourFor: (node: NetworkNode) => string | undefined;
+  /** Extra nodes kept lit while a node is focused, e.g. everything downstream of it. */
   highlightIds?: ReadonlySet<string>;
+  /** Nodes to emphasise when nothing is hovered or focused, e.g. search matches. */
+  emphasisIds?: ReadonlySet<string>;
+  display: DisplaySettings;
+  forces: ForceSettings;
+  /** Bumped by the "Animate" button: scatter the nodes and let them settle again. */
+  animateTick?: number;
 }
 
-/** Nodes at least this big (sources, domains, dashboards) are labelled at any zoom. */
-const ALWAYS_LABEL_SIZE = 4;
-
 /**
- * An Obsidian-style force-directed graph: nodes settle under physics, hovering a node keeps it and
- * its neighbours lit and dims the rest, clicking focuses it. Wheel zoom is off until the canvas is
- * clicked so the page still scrolls past it (as `FlowCanvas` does).
+ * An Obsidian-style force-directed graph on one plain canvas: small flat dots sized by their
+ * connections, hairline links, and labels that fade in as you zoom. Hovering a node paints it and
+ * its links in the accent colour and fades everything else. Wheel zoom is off until the canvas is
+ * clicked so the page still scrolls past it.
  */
 export function NetworkCanvas({
   graph,
   graphKey,
   ariaLabel,
-  height = 480,
+  height,
   focusId,
   onFocus,
   colourFor,
   highlightIds,
+  emphasisIds,
+  display,
+  forces,
+  animateTick = 0,
 }: NetworkCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const graphRef = useRef<ForceGraphMethods<SimNode, SimLink> | undefined>(undefined);
+  const graphRef = useRef<Graph | undefined>(undefined);
   const [width, setWidth] = useState(0);
   const [palette, setPalette] = useState<Palette | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
@@ -130,31 +140,71 @@ export function NetworkCanvas({
   }, [graph]);
 
   const active = hoverId ?? focusId ?? null;
+  // Which nodes stay at full strength; null means "all of them".
   const lit = useMemo(() => {
-    if (!active) return null;
-    const ids = new Set([active, ...(neighbours.get(active) ?? [])]);
-    // The extra highlight belongs to the focused node; hovering elsewhere shows that node alone.
-    if (active === focusId) for (const id of highlightIds ?? []) ids.add(id);
-    return ids;
-  }, [active, focusId, neighbours, highlightIds]);
+    if (active) {
+      const ids = new Set([active, ...(neighbours.get(active) ?? [])]);
+      // The extra highlight belongs to the focused node; hovering elsewhere shows that node alone.
+      if (active === focusId) for (const id of highlightIds ?? []) ids.add(id);
+      return ids;
+    }
+    return emphasisIds && emphasisIds.size > 0 ? emphasisIds : null;
+  }, [active, focusId, neighbours, highlightIds, emphasisIds]);
+
+  const applyForces = useCallback(() => {
+    const g = graphRef.current;
+    if (!g) return false;
+    const f = d3Forces(forces);
+    (g.d3Force("charge") as unknown as { strength?: (s: number) => void })?.strength?.(f.charge);
+    const link = g.d3Force("link") as unknown as
+      | { distance?: (d: number) => unknown; strength?: (s: number) => unknown }
+      | undefined;
+    link?.distance?.(f.linkDistance);
+    link?.strength?.(f.linkStrength);
+    (g.d3Force("center") as unknown as { strength?: (s: number) => void })?.strength?.(f.centerStrength);
+    return true;
+  }, [forces]);
+
+  // Forces apply on change (reheating so the graph visibly responds) and once the canvas exists.
+  const forcesApplied = useRef(false);
+  useEffect(() => {
+    if (applyForces() && forcesApplied.current) graphRef.current?.d3ReheatSimulation();
+    forcesApplied.current = graphRef.current !== undefined;
+  }, [applyForces]);
 
   // Refit whenever the data changes (e.g. switching to a local graph). onEngineStop alone isn't
-  // enough: the library doesn't always report a stop after new data, which left local graphs tiny.
+  // enough: the library doesn't always report a stop after new data.
   useEffect(() => {
     const timer = window.setTimeout(() => fit(graphRef.current), 700);
     return () => window.clearTimeout(timer);
   }, [data, width]);
 
-  const endpointId = (end: SimLink["source"]) =>
-    typeof end === "object" && end !== null ? String(end.id) : String(end);
+  // "Animate": scatter the nodes on a wide disc and let the simulation pull them back together.
+  useEffect(() => {
+    if (animateTick === 0) return;
+    const spread = 25 * Math.sqrt(Math.max(1, data.nodes.length));
+    data.nodes.forEach((n, i) => {
+      const angle = i * 2.399963; // golden angle: an even spiral, no randomness
+      const radius = spread * Math.sqrt((i + 0.5) / data.nodes.length);
+      n.x = radius * Math.cos(angle);
+      n.y = radius * Math.sin(angle);
+      n.vx = 0;
+      n.vy = 0;
+    });
+    graphRef.current?.d3ReheatSimulation();
+    const timer = window.setTimeout(() => fit(graphRef.current), 1500);
+    return () => window.clearTimeout(timer);
+  }, [animateTick, data]);
+
+  const degree = (id: string) => neighbours.get(id)?.size ?? 0;
+  const radius = (n: SimNode) => nodeRadius(degree(String(n.id)), n.size, display.nodeSize);
 
   return (
     <div
       ref={containerRef}
       role="region"
       aria-label={ariaLabel}
-      className="overflow-hidden rounded-lg border bg-muted/30"
-      style={{ height }}
+      className="absolute inset-0"
       onClick={() => setWheelZoom(true)}
       onMouseLeave={() => {
         setWheelZoom(false);
@@ -170,59 +220,68 @@ export function NetworkCanvas({
             height={height}
             backgroundColor="rgba(0,0,0,0)"
             warmupTicks={60}
-            cooldownTicks={200}
-            minZoom={0.2}
-            maxZoom={6}
+            cooldownTicks={300}
+            minZoom={0.15}
+            maxZoom={8}
             enableZoomInteraction={wheelZoom}
-            nodeLabel={(n: SimNode) => (n.subtitle ? `${n.label} · ${n.subtitle}` : n.label)}
-            linkLabel={(l: SimLink) => l.label ?? ""}
-            linkColor={(l: SimLink) => {
-              const touchesLit =
-                !lit || (lit.has(endpointId(l.source)) && lit.has(endpointId(l.target)));
-              const base = l.tone ? (ringColour(l.tone, palette) ?? palette.muted) : palette.muted;
-              return touchesLit ? withAlpha(base, 0.55) : withAlpha(base, 0.08);
+            nodeLabel={() => ""}
+            linkCanvasObjectMode={() => "replace"}
+            linkCanvasObject={(l: SimLink, ctx, scale) => {
+              const source = l.source as SimNode;
+              const target = l.target as SimNode;
+              if (source?.x == null || target?.x == null) return;
+              const touchesActive =
+                active !== null && (endpointId(l.source) === active || endpointId(l.target) === active);
+              const isLit = lit === null || (lit.has(endpointId(l.source)) && lit.has(endpointId(l.target)));
+              ctx.beginPath();
+              ctx.moveTo(source.x, source.y ?? 0);
+              ctx.lineTo(target.x, target.y ?? 0);
+              ctx.strokeStyle = touchesActive
+                ? withAlpha(palette.accent, 0.85)
+                : withAlpha(palette.muted, isLit ? 0.28 : 0.05);
+              // Screen pixels, whatever the zoom.
+              ctx.lineWidth = (display.linkThickness * (touchesActive ? 1.4 : 0.6 + 0.6 * l.weight)) / scale;
+              ctx.stroke();
             }}
-            linkWidth={(l: SimLink) => 0.6 + 2.4 * l.weight}
             nodeCanvasObject={(n: SimNode, ctx, scale) => {
-              const dimmed = lit !== null && !lit.has(String(n.id));
-              const r = nodeRadius(n.size);
-              ctx.globalAlpha = dimmed ? 0.15 : 1;
+              const id = String(n.id);
+              const isActive = id === active;
+              const dimmed = lit !== null && !lit.has(id);
+              const r = radius(n);
+              ctx.globalAlpha = dimmed ? 0.12 : 1;
               ctx.beginPath();
               ctx.arc(n.x ?? 0, n.y ?? 0, r, 0, 2 * Math.PI);
-              ctx.fillStyle = colourFor(n);
+              ctx.fillStyle = isActive ? palette.accent : (colourFor(n) ?? withAlpha(palette.muted, 0.75));
               ctx.fill();
-              const ring = ringColour(n.tone, palette);
-              if (ring || n.id === focusId) {
-                ctx.lineWidth = n.id === focusId ? 2.5 / scale + 1 : 1.5;
-                ctx.strokeStyle = n.id === focusId ? palette.foreground : ring!;
-                ctx.stroke();
-              }
-              const showLabel =
-                scale > 1.6 ||
-                n.size >= ALWAYS_LABEL_SIZE ||
-                n.id === hoverId ||
-                n.id === focusId ||
-                (lit?.has(String(n.id)) ?? false);
-              if (showLabel && !dimmed) {
-                // Constant on-screen size at any zoom.
-                const fontSize = 11 / scale;
-                ctx.font = `${fontSize}px ${palette.font}`;
+
+              // Labels fade in with zoom; the active node and its lit neighbours always show theirs.
+              const alpha = dimmed
+                ? 0
+                : active !== null && lit?.has(id)
+                  ? 1
+                  : labelAlpha(scale, display.textFade);
+              if (alpha > 0.02) {
+                ctx.globalAlpha = alpha;
+                ctx.font = `${isActive ? 500 : 400} ${12 / scale}px ${palette.font}`;
                 ctx.textAlign = "center";
                 ctx.textBaseline = "top";
-                ctx.fillStyle = palette.foreground;
-                ctx.fillText(n.label, n.x ?? 0, (n.y ?? 0) + r + 1.5);
+                ctx.fillStyle = isActive ? palette.foreground : palette.muted;
+                ctx.fillText(n.label, n.x ?? 0, (n.y ?? 0) + r + 3 / scale);
               }
               ctx.globalAlpha = 1;
             }}
             nodePointerAreaPaint={(n: SimNode, colour, ctx) => {
               ctx.fillStyle = colour;
               ctx.beginPath();
-              ctx.arc(n.x ?? 0, n.y ?? 0, nodeRadius(n.size) + 2, 0, 2 * Math.PI);
+              ctx.arc(n.x ?? 0, n.y ?? 0, radius(n) + 2, 0, 2 * Math.PI);
               ctx.fill();
             }}
             onNodeHover={(n: SimNode | null) => setHoverId(n ? String(n.id) : null)}
             onNodeClick={(n: SimNode) => onFocus?.(String(n.id) === focusId ? undefined : String(n.id))}
             onBackgroundClick={() => onFocus?.(undefined)}
+            onEngineTick={() => {
+              if (!forcesApplied.current && applyForces()) forcesApplied.current = true;
+            }}
             onEngineStop={() => {
               const positions: Positions = {};
               for (const n of data.nodes) {
@@ -236,23 +295,4 @@ export function NetworkCanvas({
       </div>
     </div>
   );
-}
-
-/** Largest zoom a fit may reach, so a three-node local graph doesn't fill the canvas. */
-const MAX_FIT_ZOOM = 3;
-
-/** Zoom to show every node, but never past {@link MAX_FIT_ZOOM} (`zoomToFit` ignores `maxZoom`). */
-function fit(graph: ForceGraphMethods<SimNode, SimLink> | undefined): void {
-  if (!graph) return;
-  graph.zoomToFit(400, 40);
-  window.setTimeout(() => {
-    if (graph.zoom() > MAX_FIT_ZOOM) graph.zoom(MAX_FIT_ZOOM, 200);
-  }, 450);
-}
-
-/** `hsl(h s% l%)` → `hsl(h s% l% / a)`; other colour strings pass through unchanged. */
-function withAlpha(colour: string, alpha: number): string {
-  return colour.startsWith("hsl(") && !colour.includes("/")
-    ? colour.replace(/\)$/, ` / ${alpha})`)
-    : colour;
 }
