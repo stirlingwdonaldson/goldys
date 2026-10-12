@@ -18,10 +18,17 @@ indexes, and PostgreSQL triggers.
 ## Backend (`backend/`)
 
 ```bash
+./gradlew fastTest         # unit tests only - no Docker, fast inner loop
 ./gradlew test             # unit + PostgreSQL integration tests
 ./gradlew spotlessCheck    # google-java-format check
 ./gradlew build            # full build
 ```
+
+`fastTest` skips every suite that starts a PostgreSQL Testcontainer or boots a Spring
+context; the full `test` suite is ~2 minutes, so use `fastTest` while iterating and
+reserve `test`/`build` for the pre-commit gate. `gradle.properties` enables the build
+and configuration caches, so repeating a task with unchanged inputs is a near-instant
+no-op.
 
 Testcontainers pins docker-java to API 1.40 by default (see `build.gradle`), which
 keeps the client compatible with Docker 29+; override with `-Dapi.version=<version>`
