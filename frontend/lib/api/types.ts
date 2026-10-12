@@ -237,6 +237,7 @@ export interface RecipeCosting {
   recipeId: number;
   name: string | null;
   folder: string | null;
+  portionSize: string | null;
   costPerPortion: number | null;
   actualCost: number | null;
   costGap: number | null;

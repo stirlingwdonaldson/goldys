@@ -45,6 +45,12 @@ export default function RecipesPage() {
         header: "Folder",
         cell: ({ row }) => row.original.folder ?? "—",
       },
+      {
+        id: "yield",
+        accessorFn: (r) => r.portionSize ?? "",
+        header: "Yield",
+        cell: ({ row }) => row.original.portionSize ?? "—",
+      },
       currencyColumn("costPerPortion", "Cost/portion", (r) => r.costPerPortion),
       currencyColumn("actualCost", "Actual cost", (r) => r.actualCost),
       currencyColumn("costGap", "Cost gap", (r) => r.costGap),

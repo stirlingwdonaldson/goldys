@@ -30,6 +30,7 @@ class GetRecipeCostingToolTest {
         .containsExactly(
             "recipe",
             "folder",
+            "yield",
             "cost_per_portion",
             "actual_cost",
             "cost_gap",
@@ -39,6 +40,7 @@ class GetRecipeCostingToolTest {
     assertThat(widget.rows()).hasSize(1);
     Map<String, Object> row = widget.rows().get(0);
     assertThat(row.get("recipe")).isEqualTo("Parma");
+    assertThat(row.get("yield")).isEqualTo("4");
     assertThat(row.get("margin")).isEqualTo(new BigDecimal("12.50"));
   }
 
@@ -66,6 +68,7 @@ class GetRecipeCostingToolTest {
         1,
         "Parma",
         "Mains",
+        "4",
         new BigDecimal("6.00"),
         new BigDecimal("7.20"),
         new BigDecimal("1.20"),

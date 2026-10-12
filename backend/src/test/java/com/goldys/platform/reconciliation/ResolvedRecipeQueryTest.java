@@ -80,8 +80,29 @@ class ResolvedRecipeQueryTest {
     assertThat(c.costGap()).isNull();
   }
 
+  @Test
+  void costingCarriesYield() {
+    when(repository.findAllByOrderByRecipeNameAsc())
+        .thenReturn(List.of(recipe(1, "Parma", "Mains", "6.00", "18.50", "7.20", "1 serve")));
+
+    RecipeCosting c = query.costing().get(0);
+
+    assertThat(c.portionSize()).isEqualTo("1 serve");
+  }
+
   private static ResolvedRecipe recipe(
       int id, String name, String folder, String cost, String price, String actualCost) {
+    return recipe(id, name, folder, cost, price, actualCost, null);
+  }
+
+  private static ResolvedRecipe recipe(
+      int id,
+      String name,
+      String folder,
+      String cost,
+      String price,
+      String actualCost,
+      String portionSize) {
     return new ResolvedRecipe(
         id,
         name,
@@ -89,7 +110,7 @@ class ResolvedRecipeQueryTest {
         cost == null ? null : new BigDecimal(cost),
         null,
         null,
-        null,
+        portionSize,
         null,
         price == null ? null : new BigDecimal(price),
         actualCost == null ? null : new BigDecimal(actualCost),

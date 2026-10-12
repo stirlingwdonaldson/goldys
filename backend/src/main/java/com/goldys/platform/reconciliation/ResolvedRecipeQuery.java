@@ -56,6 +56,7 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
         r.recipeId(),
         r.recipeName(),
         r.recipeFolderName(),
+        r.portionSize(),
         r.costPerPortion(),
         r.actualCost(),
         subtract(r.actualCost(), cost),

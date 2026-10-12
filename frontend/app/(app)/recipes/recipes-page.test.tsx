@@ -21,6 +21,7 @@ describe("RecipesPage", () => {
         recipeId: 1,
         name: "Parma",
         folder: "Mains",
+        portionSize: "1 serve",
         costPerPortion: 6.0,
         actualCost: 7.2,
         costGap: 1.2,
@@ -32,6 +33,7 @@ describe("RecipesPage", () => {
     render(<RecipesPage />);
     expect(screen.getByText("Parma")).toBeInTheDocument();
     expect(screen.getByText("Mains")).toBeInTheDocument();
+    expect(screen.getByText("1 serve")).toBeInTheDocument();
     expect(screen.getByText("Recipe costing")).toBeInTheDocument();
   });
 

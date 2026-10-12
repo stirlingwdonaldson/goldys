@@ -63,6 +63,7 @@ public class GetRecipeCostingTool implements ReportingTool {
         List.of(
             new Column("recipe", "Recipe", null),
             new Column("folder", "Folder", null),
+            new Column("yield", "Yield", null),
             new Column("cost_per_portion", "Cost/portion", "currency"),
             new Column("actual_cost", "Actual cost", "currency"),
             new Column("cost_gap", "Cost gap", "currency"),
@@ -76,6 +77,7 @@ public class GetRecipeCostingTool implements ReportingTool {
                   Map<String, Object> row = new LinkedHashMap<>();
                   row.put("recipe", r.name());
                   row.put("folder", r.folder());
+                  row.put("yield", r.portionSize());
                   row.put("cost_per_portion", r.costPerPortion());
                   row.put("actual_cost", r.actualCost());
                   row.put("cost_gap", r.costGap());

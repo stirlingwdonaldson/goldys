@@ -46,6 +46,7 @@ class RecipeControllerTest {
                     1,
                     "Parma",
                     "Mains",
+                    "4",
                     new BigDecimal("6.00"),
                     new BigDecimal("7.20"),
                     new BigDecimal("1.20"),
