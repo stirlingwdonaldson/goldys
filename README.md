@@ -40,6 +40,7 @@ scope and acceptance criteria in [`docs/prd.md`](docs/prd.md).
 | Semantic layer | Metric catalogue ([`docs/metrics/catalog.md`](docs/metrics/catalog.md)) with base and derived metrics, provenance and trust/freshness state |
 | Ask Goldy's | Spring AI chat over a fixed, enum-validated tool set; per-metric authorization; persisted threads; renders typed widget specs |
 | Dashboards | Overview dashboard plus saved custom dashboards (templates, sharing, revisions), re-rendered live |
+| Forecasting | TimesFM 3.0 zero-shot forecasting: pick a target metric + covariate inputs (sources shown), async persisted runs, compare-to-actuals; needs the self-hosted `timesfm` inference service |
 | Frontend | Sales, Staff & labour, Reservations, Kitchen, Reconciliation, Resolution rules, Data health, Data explorer, Logs, Conversations, Custom dashboards, Settings |
 | Auth | Email + password accounts; table-driven `(department, seniority, resource)` permissions |
 | Ops | Docker Compose deploy at `platform.swd.sh`, Sentry (self-hosted), Micrometer/Prometheus |

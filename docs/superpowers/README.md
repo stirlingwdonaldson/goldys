@@ -44,6 +44,7 @@ Many specs still carry their original `Status: Draft` or `In review` header. The
 | 10-09 | Invoice node graph | [spec](specs/2026-10-09-invoice-node-graph-design.md) | [plan](plans/2026-10-09-invoice-node-graph.md) | Implemented |
 | 10-11 | CTB invoice gap recovery | [spec](specs/2026-10-11-ctb-invoice-gap-recovery-design.md) | — | Design — not implemented |
 | 10-11 | Network graph (platform map, menu affinity) | [spec](specs/2026-10-11-network-graph-design.md) | [plan](plans/2026-10-11-network-graph.md) | Phase A implemented (platform map); Phase B gated on a production basket-size check |
+| 10-12 | TimesFM forecasting | [spec](specs/2026-10-12-timesfm-forecasting-design.md) | [plan](plans/2026-10-12-timesfm-forecasting.md) | In progress |
 
 Some older records reference paths that have since moved. File paths inside them
 have been updated to the current layout (`docs/operations/`, `docs/design/`,
