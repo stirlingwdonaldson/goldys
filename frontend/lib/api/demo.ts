@@ -38,6 +38,7 @@ import type {
   MetricQuery,
   OverrideResult,
   ProductOverrideInput,
+  RecipeCosting,
   RecomputeStatus,
   ReconciliationException,
   ReconciliationRecord,
@@ -1500,6 +1501,16 @@ export const demoApi: Api = {
     return id === demoForecastComparison.runId
       ? demoForecastComparison
       : { runId: id, mape: null, mae: null, points: [] };
+  },
+
+  async getRecipes(): Promise<RecipeCosting[]> {
+    await delay(300);
+    return [
+      { recipeId: 1, name: "Parma", folder: "Mains", costPerPortion: 6.0, actualCost: 7.2, costGap: 1.2, menuPrice: 18.5, margin: 12.5, gpPercent: 0.6757 },
+      { recipeId: 2, name: "Kids Fish & Chippies", folder: "Kids", costPerPortion: 4.1, actualCost: 4.5, costGap: 0.4, menuPrice: 12.0, margin: 7.9, gpPercent: 0.6583 },
+      { recipeId: 3, name: "Cheeseburger", folder: "Mains", costPerPortion: 5.4, actualCost: 5.9, costGap: 0.5, menuPrice: 19.0, margin: 13.6, gpPercent: 0.7158 },
+      { recipeId: 4, name: "Sticky Date Pudding", folder: "Dessert", costPerPortion: 1.9, actualCost: 2.1, costGap: 0.2, menuPrice: 11.0, margin: 9.1, gpPercent: 0.8273 },
+    ];
   },
 };
 
