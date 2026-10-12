@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -428,5 +429,92 @@ class DerivedMetricExecutorTest {
       LocalDate date, long bookings, long attended, long covers, long noShows) {
     return new ReservationSummary(
         date, bookings, attended, covers, 0, noShows, 0, null, null, null);
+  }
+
+  @Test
+  void spendPerCoverUsesOnlySharedDaysWithinWeekBucket() {
+    LocalDate monday = SEP_13.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+    LocalDate sunday = monday.plusDays(6);
+    List<DailySalesMetric> gross = new ArrayList<>();
+    for (LocalDate d = monday; !d.isAfter(sunday); d = d.plusDays(1)) {
+      gross.add(new DailySalesMetric(d, new BigDecimal("1000.00"), null, null, "agreed", false));
+    }
+    when(sales.dailySales(monday, sunday)).thenReturn(gross);
+    // Covers resolve on Monday only: a naive sum would divide 7000 by 100.
+    when(reservations.dailySummaries(monday, sunday))
+        .thenReturn(List.of(summary(monday, 100, 90, 100, 10)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+                        new TimeRange(monday, sunday, Calendar.CALENDAR),
+                        TimeGrain.WEEK,
+                        Set.of(),
+                        null));
+
+    MetricPoint p = ts.series().get(0).points().get(0);
+    assertThat(p.value()).isEqualByComparingTo("10.0000");
+    assertThat(ts.notices()).anyMatch(n -> n.contains("excluded days"));
+  }
+
+  @Test
+  void spendPerCoverFullWeekCoverageIsUnchanged() {
+    LocalDate monday = SEP_13.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+    LocalDate sunday = monday.plusDays(6);
+    List<DailySalesMetric> gross = new ArrayList<>();
+    List<ReservationSummary> summaries = new ArrayList<>();
+    for (LocalDate d = monday; !d.isAfter(sunday); d = d.plusDays(1)) {
+      gross.add(new DailySalesMetric(d, new BigDecimal("1000.00"), null, null, "agreed", false));
+      summaries.add(summary(d, 100, 90, 100, 10));
+    }
+    when(sales.dailySales(monday, sunday)).thenReturn(gross);
+    when(reservations.dailySummaries(monday, sunday)).thenReturn(summaries);
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+                        new TimeRange(monday, sunday, Calendar.CALENDAR),
+                        TimeGrain.WEEK,
+                        Set.of(),
+                        null));
+
+    MetricPoint p = ts.series().get(0).points().get(0);
+    assertThat(p.value()).isEqualByComparingTo("10.0000"); // 7000 / 700
+    assertThat(ts.notices()).isEmpty();
+  }
+
+  @Test
+  void spendPerCoverIsUnresolvedWhenOperandsHaveNoSharedDays() {
+    LocalDate monday = SEP_13.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+    LocalDate tuesday = monday.plusDays(1);
+    when(sales.dailySales(monday, tuesday))
+        .thenReturn(
+            List.of(
+                new DailySalesMetric(
+                    monday, new BigDecimal("5000.00"), null, null, "agreed", false)));
+    when(reservations.dailySummaries(monday, tuesday))
+        .thenReturn(List.of(summary(tuesday, 100, 90, 100, 10)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+                        new TimeRange(monday, tuesday, Calendar.CALENDAR),
+                        TimeGrain.WEEK,
+                        Set.of(),
+                        null));
+
+    MetricPoint p = ts.series().get(0).points().get(0);
+    assertThat(p.value()).isNull();
+    assertThat(p.status()).isEqualTo(MissingDataStatus.UNRESOLVED);
+    assertThat(ts.notices()).isNotEmpty();
   }
 }
