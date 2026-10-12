@@ -8,7 +8,9 @@ import com.goldys.platform.ingestion.port.FetchedPayload;
 import com.goldys.platform.ingestion.port.IngestionSink;
 import com.goldys.platform.ingestion.port.SourceConnector;
 import com.goldys.platform.support.PostgresContainerConfiguration;
+import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +20,7 @@ import org.springframework.context.annotation.Import;
 @Import(PostgresContainerConfiguration.class)
 class ConnectorRunnerTest {
   @Autowired ConnectorRunner runner;
+  @Autowired IngestionRunService runService;
   @Autowired IngestionRunRepository runs;
   @Autowired RawRecordRepository rawRecords;
   @Autowired IngestionFailureRepository failures;
@@ -100,6 +103,60 @@ class ConnectorRunnerTest {
               assertThat(failure.detail()).contains("IllegalStateException");
               assertThat(failure.detail()).doesNotContain("super-secret-value");
             });
+  }
+
+  @Test
+  void runClosedWhileFetchingRecordsNoSpuriousUnexpectedFailure() throws InterruptedException {
+    CountDownLatch firstPayloadPersisted = new CountDownLatch(1);
+    CountDownLatch releaseSecondPayload = new CountDownLatch(1);
+    CountDownLatch secondAttemptFinished = new CountDownLatch(1);
+
+    SourceConnector connector =
+        new SourceConnector() {
+          @Override
+          public String sourceSystem() {
+            return "CTB";
+          }
+
+          @Override
+          public String connectorName() {
+            return "ctb-revenue";
+          }
+
+          @Override
+          public void fetch(String watermark, IngestionSink sink) {
+            sink.accept(page("<table>first</table>"));
+            firstPayloadPersisted.countDown();
+            try {
+              releaseSecondPayload.await();
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+              return;
+            }
+            try {
+              sink.accept(page("<table>second</table>"));
+            } finally {
+              secondAttemptFinished.countDown();
+            }
+          }
+        };
+
+    UUID runId = runner.run(connector, null);
+
+    // Simulate startup recovery closing the run while the fetch is still in flight.
+    firstPayloadPersisted.await();
+    runService.recordFailure(
+        runId, "RUN_INTERRUPTED", "interrupted by application restart", null, Instant.now());
+    runService.complete(runId, null, Instant.now());
+
+    releaseSecondPayload.countDown();
+    secondAttemptFinished.await();
+
+    assertThat(awaitTerminal(runId)).isEqualTo(IngestionStatus.PARTIAL);
+    // The lifecycle race must not be recorded as a spurious UNEXPECTED connector failure.
+    assertThat(failures.findByIngestionRunIdOrderByOccurredAtAsc(runId))
+        .extracting(IngestionFailure::failureType)
+        .containsExactly("RUN_INTERRUPTED");
   }
 
   @Test

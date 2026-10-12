@@ -58,6 +58,11 @@ class IngestionRunService {
   @Transactional
   IngestionStatus complete(UUID ingestionRunId, String outputWatermark, Instant completedAt) {
     IngestionRun run = require(ingestionRunId);
+    // Idempotent: startup recovery can close a run while its asynchronous fetch is still finishing
+    // on another instance. The second close must not throw or re-derive the terminal status.
+    if (run.status() != IngestionStatus.RUNNING) {
+      return run.status();
+    }
     long failureCount = failures.countByIngestionRunId(ingestionRunId);
 
     IngestionStatus status;

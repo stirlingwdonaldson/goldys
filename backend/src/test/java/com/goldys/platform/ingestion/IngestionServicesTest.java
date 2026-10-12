@@ -149,6 +149,22 @@ class IngestionServicesTest {
   }
 
   @Test
+  void completeIsIdempotent() {
+    UUID runId = runs.start("CTB", "ctb-export", null, Instant.now());
+    runs.recordFetched(runId);
+    payloads.persist(
+        runId, "CTB", FetchMethod.FILE_EXPORT, "text/csv", new byte[] {1}, "UTF-8", "fixture");
+
+    runs.complete(runId, null, Instant.now());
+
+    // A second close (e.g. startup recovery racing a still-finishing fetch) must not throw and must
+    // not re-derive the terminal status.
+    assertThat(runs.complete(runId, null, Instant.now())).isEqualTo(IngestionStatus.SUCCESS);
+    assertThat(runRepository.findById(runId).orElseThrow().status())
+        .isEqualTo(IngestionStatus.SUCCESS);
+  }
+
+  @Test
   void recoverDanglingRunsMarksInterruptedRunsAndLeavesCompletedRunsAlone() {
     UUID danglingId = runs.start("CTB", "ctb-export", null, Instant.now());
     payloads.persist(

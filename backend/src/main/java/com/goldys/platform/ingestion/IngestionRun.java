@@ -96,7 +96,7 @@ class IngestionRun {
 
   private void requireRunning() {
     if (status != IngestionStatus.RUNNING) {
-      throw new IllegalStateException("Ingestion run " + id + " is already " + status);
+      throw new RunAlreadyCompletedException("Ingestion run " + id + " is already " + status);
     }
   }
 
