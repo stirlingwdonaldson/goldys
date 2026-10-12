@@ -223,4 +223,5 @@ export const liveApi: Api = {
   getForecastRun: (id: string) => fetchApi<ForecastRun>(`/api/forecasting/runs/${id}`),
   getForecastComparison: (id: string) =>
     fetchApi<ForecastComparison>(`/api/forecasting/runs/${id}/comparison`),
+  getRecipes: () => fetchApi<import("./types").RecipeCosting[]>("/api/recipes"),
 };

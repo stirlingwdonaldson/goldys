@@ -411,7 +411,8 @@ class ConversationalEvalTest {
             ToolId.RANK_DIMENSION,
             ToolId.GET_TOP_PRODUCTS,
             ToolId.CREATE_DASHBOARD_DRAFT,
-            ToolId.GET_RECONCILIATION_STATUS);
+            ToolId.GET_RECONCILIATION_STATUS,
+            ToolId.GET_RECIPE_COSTING);
 
     for (ToolId id : ToolId.values()) {
       assertThat(id.name()).doesNotContain("SQL", "EXECUTE", "RAW", "QUERY");

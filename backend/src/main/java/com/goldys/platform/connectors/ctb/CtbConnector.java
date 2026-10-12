@@ -5,6 +5,8 @@ import com.goldys.platform.canonical.CanonicalProductSalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.ProductSalesInput;
+import com.goldys.platform.canonical.SaleRecipeLinkIngest;
+import com.goldys.platform.canonical.SaleRecipeLinkInput;
 import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
@@ -15,7 +17,9 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiFunction;
@@ -45,6 +49,8 @@ public class CtbConnector implements SourceConnector {
   private final CanonicalDailySalesIngest canonical;
   private final CtbSaleItemParser saleItemParser;
   private final CanonicalProductSalesIngest productSales;
+  private final CtbSaleRecipeLinkParser saleRecipeLinkParser;
+  private final SaleRecipeLinkIngest saleRecipeLinkIngest;
   private final VenueClock venueClock;
 
   public CtbConnector(
@@ -55,6 +61,8 @@ public class CtbConnector implements SourceConnector {
       CanonicalDailySalesIngest canonical,
       CtbSaleItemParser saleItemParser,
       CanonicalProductSalesIngest productSales,
+      CtbSaleRecipeLinkParser saleRecipeLinkParser,
+      SaleRecipeLinkIngest saleRecipeLinkIngest,
       VenueClock venueClock) {
     this.client = client;
     this.email = email;
@@ -63,6 +71,8 @@ public class CtbConnector implements SourceConnector {
     this.canonical = canonical;
     this.saleItemParser = saleItemParser;
     this.productSales = productSales;
+    this.saleRecipeLinkParser = saleRecipeLinkParser;
+    this.saleRecipeLinkIngest = saleRecipeLinkIngest;
     this.venueClock = venueClock;
   }
 
@@ -94,10 +104,7 @@ public class CtbConnector implements SourceConnector {
         "ctb-invoices-ajax",
         failures,
         () -> pullRaw("ctb-invoices-ajax", client::searchInvoices, sink));
-    pull(
-        "ctb-sale-recipe-links",
-        failures,
-        () -> pullRaw("ctb-sale-recipe-links", client::searchDistinctSaleItemsForLinking, sink));
+    pull("ctb-sale-recipe-links", failures, () -> pullSaleRecipeLinks(sink));
     pull("ctb-recipes", failures, () -> pullSingle("ctb-recipes", client::getAllRecipes, sink));
     pull("ctb-stocks", failures, () -> pullRaw("ctb-stocks", client::searchStocks, sink));
     pull(
@@ -243,6 +250,26 @@ public class CtbConnector implements SourceConnector {
     for (ProductSalesInput input : byProduct.values()) {
       productSales.record(input);
     }
+  }
+
+  /** Page the sale-item→recipe links, writing each page raw and recording canonical links once. */
+  private void pullSaleRecipeLinks(IngestionSink sink) {
+    List<SaleRecipeLinkInput> all = new ArrayList<>();
+    int start = 0;
+    int pages = 0;
+    int total = -1;
+    while (pages < MAX_PAGES) {
+      CtbClient.CtbPage page = client.searchDistinctSaleItemsForLinking(start, PAGE_SIZE);
+      UUID rawId = writeRaw(page.json(), "ctb-sale-recipe-links", sink);
+      all.addAll(saleRecipeLinkParser.parse(page.json().getBytes(StandardCharsets.UTF_8), rawId));
+      total = page.totalCount();
+      pages++;
+      if (start + PAGE_SIZE >= total) {
+        break;
+      }
+      start += PAGE_SIZE;
+    }
+    saleRecipeLinkIngest.recordAll(all);
   }
 
   /**

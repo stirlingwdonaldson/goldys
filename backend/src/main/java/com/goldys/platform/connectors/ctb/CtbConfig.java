@@ -2,6 +2,7 @@ package com.goldys.platform.connectors.ctb;
 
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
+import com.goldys.platform.canonical.SaleRecipeLinkIngest;
 import com.goldys.platform.config.VenueClock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,8 @@ public class CtbConfig {
       CanonicalDailySalesIngest canonical,
       CtbSaleItemParser saleItemParser,
       CanonicalProductSalesIngest productSales,
+      CtbSaleRecipeLinkParser saleRecipeLinkParser,
+      SaleRecipeLinkIngest saleRecipeLinkIngest,
       VenueClock venueClock) {
     return new CtbConnector(
         new CtbClient(baseUrl),
@@ -28,6 +31,8 @@ public class CtbConfig {
         canonical,
         saleItemParser,
         productSales,
+        saleRecipeLinkParser,
+        saleRecipeLinkIngest,
         venueClock);
   }
 }
