@@ -74,6 +74,15 @@ interface RawRecordRepository
   List<RawRecord> findBySourceSystemAndContentType(String sourceSystem, String contentType);
 
   /**
+   * Raw-record ids of one fetcher identity, deliberately excluding {@code payload_bytes}: replay
+   * backfills fetch the bytes one record at a time via {@code findById}, so a dataset of hundreds
+   * of MB is never materialised as one list.
+   */
+  @Query(
+      "select r.id from RawRecord r where r.fetcherIdentity = :fetcherIdentity order by r.fetchedAt")
+  List<UUID> findIdsByFetcherIdentity(@Param("fetcherIdentity") String fetcherIdentity);
+
+  /**
    * Paged metadata list, deliberately selecting the summary columns only. Never loads {@code
    * payload_bytes}: some source payloads are hundreds of MB, and fetching them into a list query
    * OOMs both the JDBC result set and the JVM heap.
