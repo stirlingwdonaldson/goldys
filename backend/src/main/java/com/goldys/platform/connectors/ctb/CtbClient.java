@@ -180,6 +180,55 @@ public class CtbClient {
             form("keyword", "", "startDate", startDate, "endDate", endDate)));
   }
 
+  /**
+   * One page of a stocktake's counted lines plus the total count. Paged with {@code start}/{@code
+   * limit}.
+   */
+  public CtbPage getStocktakeDetail(int stocktakeId, int start, int limit) {
+    return page(
+        "Stocktake/GetStocktakeDetailByStocktakeId",
+        post(
+            "/Stocktake/GetStocktakeDetailByStocktakeId",
+            form(
+                "stocktakeId",
+                String.valueOf(stocktakeId),
+                "start",
+                String.valueOf(start),
+                "limit",
+                String.valueOf(limit))));
+  }
+
+  /** The per-item lines of one wastage record. Single response. */
+  public CtbPage getWastageRecordDetail(int wastageRecordId) {
+    return page(
+        "WastageRecord/GetWastageRecordDetailByWastageRecordId",
+        post(
+            "/WastageRecord/GetWastageRecordDetailByWastageRecordId",
+            form("wastageRecordId", String.valueOf(wastageRecordId))));
+  }
+
+  /** The ingredient lines of one recipe (incl. sub-recipe ingredients). Single response. */
+  public CtbPage getIngredientsIncludingSubRecipeIngredients(int recipeId) {
+    return page(
+        "RecipeBook/GetIngredientsIncludingSubRecipeIngredients",
+        post(
+            "/RecipeBook/GetIngredientsIncludingSubRecipeIngredients",
+            form("recipeId", String.valueOf(recipeId))));
+  }
+
+  /**
+   * CTB's derived per-recipe cost, batched. {@code recipeIdsJson} is a JSON array (e.g. {@code
+   * [627,628]}); {@code recipeFolderIds} must be {@code []} — without it the action returns a
+   * server-error envelope.
+   */
+  public CtbPage getSelectedRecipeFullRecords(String recipeIdsJson) {
+    return page(
+        "RecipeBook/GetSelectedRecipeFullRecords",
+        post(
+            "/RecipeBook/GetSelectedRecipeFullRecords",
+            form("recipeIds", recipeIdsJson, "recipeFolderIds", "[]")));
+  }
+
   /** Business departments (Food/Beverage). Reference data. */
   public CtbPage getAllDepartments() {
     return page(
