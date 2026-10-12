@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
 import { NetworkExplorer } from "@/components/network/network-explorer";
 import type { NetworkGroupSet, NetworkKind, NetworkNode } from "@/components/network/types";
@@ -64,7 +64,6 @@ interface PlatformMapViewProps {
 export function PlatformMapView({ initialFocusId, initialLocal, height, compact }: PlatformMapViewProps) {
   const result = useApiData((api) => api.getPlatformMap());
   const map = useMemo(() => (result.data ? buildPlatformMap(result.data) : null), [result.data]);
-  const highlightFor = useCallback((node: NetworkNode) => map?.impact.get(node.id) ?? [], [map]);
 
   if (result.loading) return <Skeleton className="w-full" style={{ height: height ?? 560 }} />;
   if (result.error) {
@@ -86,7 +85,6 @@ export function PlatformMapView({ initialFocusId, initialLocal, height, compact 
       initialLocal={initialLocal}
       height={height}
       focusPanelExtra={(node) => <ImpactPanel node={node} map={map} />}
-      highlightFor={highlightFor}
     />
   );
 }

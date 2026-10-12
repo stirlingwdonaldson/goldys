@@ -48,6 +48,23 @@ function readTokens() {
 }
 type Tokens = ReturnType<typeof readTokens>;
 
+/**
+ * Draws a node's label centred below it, Obsidian style. Used for hover too, so hovering adds no
+ * box or outline: the hovered node's label is simply forced on.
+ */
+function drawLabelBelow(
+  context: CanvasRenderingContext2D,
+  data: { x: number; y: number; size: number; label?: string | null },
+  settings: { labelSize: number; labelFont: string; labelWeight: string; labelColor: { color?: string } },
+) {
+  if (!data.label) return;
+  context.font = `${settings.labelWeight} ${settings.labelSize}px ${settings.labelFont}`;
+  context.fillStyle = settings.labelColor.color ?? "#555";
+  context.textAlign = "center";
+  context.textBaseline = "top";
+  context.fillText(data.label, data.x, data.y + data.size + 3);
+}
+
 /** Iterations to settle a fresh layout. ForceAtlas2 is deterministic from fixed starting points. */
 const SETTLE_ITERATIONS = 400;
 
@@ -122,6 +139,8 @@ export default function SigmaGraph(props: NetworkCanvasProps) {
         labelDensity: 0.9,
         labelGridCellSize: 90,
         labelRenderedSizeThreshold: labelThreshold(props.display.textFade),
+        defaultDrawNodeLabel: drawLabelBelow,
+        defaultDrawNodeHover: () => {},
         stagePadding: 48,
         minCameraRatio: 0.08,
         maxCameraRatio: 4,
@@ -134,7 +153,7 @@ export default function SigmaGraph(props: NetworkCanvasProps) {
 }
 
 function Controller(props: NetworkCanvasProps & { model: NetworkGraphModel; tokens: Tokens }) {
-  const { model, tokens, focusId, onFocus, colourFor, highlightIds, emphasisIds, display, forces, animateTick = 0 } = props;
+  const { model, tokens, focusId, onFocus, colourFor, emphasisIds, display, forces, animateTick = 0 } = props;
   const sigma = useSigma<NodeAttributes, EdgeAttributes>();
   const setSettings = useSetSettings<NodeAttributes, EdgeAttributes>();
   const registerEvents = useRegisterEvents<NodeAttributes, EdgeAttributes>();
@@ -143,22 +162,18 @@ function Controller(props: NetworkCanvasProps & { model: NetworkGraphModel; toke
   const dragging = useRef<string | null>(null);
 
   const active = hoverId ?? focusId ?? null;
+  // Full strength for the active node and anything directly linked to it; everything further away
+  // fades. With nothing active, search matches (if any) stay full strength.
   const lit = useMemo(() => {
-    if (active && model.hasNode(active)) {
-      const ids = new Set([active, ...model.neighbors(active)]);
-      // The extra highlight belongs to the focused node; hovering elsewhere shows that node alone.
-      if (active === focusId) for (const id of highlightIds ?? []) ids.add(id);
-      return ids;
-    }
+    if (active && model.hasNode(active)) return new Set([active, ...model.neighbors(active)]);
     return emphasisIds && emphasisIds.size > 0 ? emphasisIds : null;
-  }, [active, focusId, model, highlightIds, emphasisIds]);
+  }, [active, model, emphasisIds]);
 
   // Colour, size and highlight are reducers over the graph, so display changes never rebuild it.
   // Faint and faded colours are opaque mixes toward the card background (see mixColour).
   useEffect(() => {
     const bg = tokens.background;
     const grey = mixColour(tokens.muted, bg, 0.35);
-    const accent = toRgba(tokens.accent);
     const edgeQuiet = mixColour(tokens.muted, bg, 0.72);
     const edgeLit = mixColour(tokens.muted, bg, 0.5);
     const edgeFaded = mixColour(tokens.muted, bg, 0.93);
@@ -170,16 +185,8 @@ function Controller(props: NetworkCanvasProps & { model: NetworkGraphModel; toke
         const colour = colourFor(a.node);
         const fill = colour ? toRgba(colour) : grey;
         const base = { ...a, size: a.baseSize * display.nodeSize, color: fill };
-        if (id === active) {
-          return { ...base, color: accent, highlighted: true, forceLabel: true, zIndex: 3 };
-        }
         if (lit === null) return base;
-        // Labels are forced only next to the active node; the wider highlight (e.g. a blast radius)
-        // goes through Sigma's label grid so long chains of labels don't overprint each other.
-        if (lit.has(id)) {
-          const adjacent = active !== null && model.hasNode(active) && model.areNeighbors(active, id);
-          return { ...base, forceLabel: adjacent, zIndex: 2 };
-        }
+        if (lit.has(id)) return { ...base, forceLabel: active !== null, zIndex: id === active ? 3 : 2 };
         return { ...base, color: mixColour(fill, bg, 0.85), label: "", zIndex: 0 };
       },
       edgeReducer: (id, a) => {

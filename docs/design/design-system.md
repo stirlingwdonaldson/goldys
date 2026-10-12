@@ -184,8 +184,10 @@ from earlier drafts still hold:
   flat dots sized by their connections, grey unless a colour group matches;
   links are hairlines; labels appear with zoom through Sigma's label grid, so
   they never overprint. Faint colours are opaque mixes toward the card
-  background, not transparency (thin translucent WebGL lines vanish). Hovering paints a node and its
-  links in the accent (`--chart-3`) and fades the rest. Settings float in a
+  background, not transparency (thin translucent WebGL lines vanish). Hovering or selecting a node keeps
+  it and its directly linked nodes at full strength, labelled below, draws its
+  links in the accent (`--chart-3`) and fades everything further away; no
+  outline or label box. Settings float in a
   collapsible top-right card (Filters, Groups, Display, Forces) and the focused
   node's details in a bottom-left card. Colour groups (`NetworkGroupSet`) follow
   the status rule: by default only problems get colour, healthy stays grey.

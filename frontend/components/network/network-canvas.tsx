@@ -17,8 +17,6 @@ export interface NetworkCanvasProps {
   onFocus?: (id: string | undefined) => void;
   /** Fill colour from the active colour group, or undefined for the default grey. */
   colourFor: (node: NetworkNode) => string | undefined;
-  /** Extra nodes kept lit while a node is focused, e.g. everything downstream of it. */
-  highlightIds?: ReadonlySet<string>;
   /** Nodes to emphasise when nothing is hovered or focused, e.g. search matches. */
   emphasisIds?: ReadonlySet<string>;
   display: DisplaySettings;

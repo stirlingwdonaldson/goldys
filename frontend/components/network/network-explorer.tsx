@@ -35,8 +35,6 @@ interface NetworkExplorerProps {
   initialLocal?: boolean;
   /** Extra content for the focus card, e.g. an impact summary or "pairs best with". */
   focusPanelExtra?: (node: NetworkNode, graph: NetworkGraph) => ReactNode;
-  /** Ids to keep lit while a node is focused, beyond its direct neighbours. */
-  highlightFor?: (node: NetworkNode) => string[];
   height?: number;
   /** Start with the settings card open (on a full page) or collapsed (in a sheet). */
   defaultSettingsOpen?: boolean;
@@ -58,7 +56,6 @@ export function NetworkExplorer({
   initialFocusId,
   initialLocal = false,
   focusPanelExtra,
-  highlightFor,
   height = 560,
   defaultSettingsOpen = true,
 }: NetworkExplorerProps) {
@@ -105,10 +102,6 @@ export function NetworkExplorer({
   const shown = useMemo(
     () => (local && focused ? neighbourhood(filtered, focused.id, depth) : filtered),
     [local, focused, filtered, depth],
-  );
-  const highlightIds = useMemo(
-    () => (focused && highlightFor ? new Set(highlightFor(focused)) : undefined),
-    [focused, highlightFor],
   );
   const matches = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -165,7 +158,6 @@ export function NetworkExplorer({
         focusId={focused?.id}
         onFocus={setFocusId}
         colourFor={colourFor}
-        highlightIds={highlightIds}
         emphasisIds={matches}
         display={settings.display}
         forces={settings.forces}
