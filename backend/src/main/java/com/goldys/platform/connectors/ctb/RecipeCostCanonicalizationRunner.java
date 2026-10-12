@@ -3,6 +3,8 @@ package com.goldys.platform.connectors.ctb;
 import com.goldys.platform.canonical.RecipeCostIngest;
 import com.goldys.platform.canonical.RecipeCostInput;
 import com.goldys.platform.ingestion.RawLedgerQuery;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -38,14 +40,13 @@ public class RecipeCostCanonicalizationRunner implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) {
-    int replayed = 0;
+    List<RecipeCostInput> all = new ArrayList<>();
     for (RawLedgerQuery.RawPayload payload :
         rawLedger.rawPayloadsForFetcher("CTB", "ctb-recipe-cost")) {
-      for (RecipeCostInput input : parser.parse(payload.bytes(), payload.id())) {
-        ingest.record(input);
-        replayed++;
-      }
+      all.addAll(parser.parse(payload.bytes(), payload.id()));
     }
-    log.info("CTB recipe-cost canonicalization replayed {} recipes", replayed);
+    // One batch record → one projection rebuild, not one per recipe.
+    ingest.recordAll(all);
+    log.info("CTB recipe-cost canonicalization replayed {} recipes", all.size());
   }
 }

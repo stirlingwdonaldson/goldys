@@ -2,6 +2,8 @@ package com.goldys.platform.canonical;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -10,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -108,5 +111,16 @@ class CanonicalRecipeCostServiceTest {
 
     assertThat(saved.logicalEntityId())
         .isEqualTo(UUID.nameUUIDFromBytes("recipe:1".getBytes(StandardCharsets.UTF_8)));
+  }
+
+  @Test
+  void recordAllPublishesOneEvent() {
+    when(repository.lockCurrentRecipeCost(anyString(), eq("CTB"))).thenReturn(Optional.empty());
+    when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    service.recordAll(List.of(input(new BigDecimal("6.00")), input(new BigDecimal("7.00"))));
+
+    verify(repository, times(2)).save(any());
+    verify(publisher, times(1)).publishEvent(any(RecipeCostRecorded.class));
   }
 }

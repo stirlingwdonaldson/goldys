@@ -6,4 +6,8 @@ package com.goldys.platform.canonical;
  * Lightspeed sale price.
  */
 public record SaleRecipeLinkView(
-    int recipeId, String recipeName, String recipeFolderName, String saleItemStockDescription) {}
+    int recipeId,
+    String recipeName,
+    String recipeFolderName,
+    String saleItemStockDescription,
+    Boolean isRecipeActive) {}

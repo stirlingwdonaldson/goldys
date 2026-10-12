@@ -109,6 +109,23 @@ class RecipeProjectorTest {
     verify(resolved, times(2)).deleteAllInBatch();
   }
 
+  @Test
+  void inactiveLinkYieldsNullPriceAndFolder() {
+    when(recipeCosts.currentRecipeCosts()).thenReturn(List.of(cost(1, "Parma", "6.00")));
+    when(links.currentLinks()).thenReturn(List.of(link(1, "Parma", "Mains", "Parma", false)));
+    when(saleItems.currentSaleItemPrices())
+        .thenReturn(
+            List.of(
+                new SaleItemPriceView("Parma", new BigDecimal("18.50"), new BigDecimal("6.00"))));
+
+    projector.recomputeAll();
+
+    ResolvedRecipe r = captured().get(0);
+    assertThat(r.recipeFolderName()).isNull();
+    assertThat(r.menuPrice()).isNull();
+    assertThat(r.actualCost()).isNull();
+  }
+
   @SuppressWarnings("unchecked")
   private List<ResolvedRecipe> captured() {
     ArgumentCaptor<List<ResolvedRecipe>> captor = ArgumentCaptor.forClass((Class) List.class);
@@ -123,6 +140,11 @@ class RecipeProjectorTest {
 
   private static SaleRecipeLinkView link(
       int recipeId, String recipeName, String folder, String description) {
-    return new SaleRecipeLinkView(recipeId, recipeName, folder, description);
+    return link(recipeId, recipeName, folder, description, true);
+  }
+
+  private static SaleRecipeLinkView link(
+      int recipeId, String recipeName, String folder, String description, Boolean isRecipeActive) {
+    return new SaleRecipeLinkView(recipeId, recipeName, folder, description, isRecipeActive);
   }
 }

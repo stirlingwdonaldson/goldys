@@ -17,7 +17,9 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiFunction;
@@ -250,18 +252,16 @@ public class CtbConnector implements SourceConnector {
     }
   }
 
-  /** Page the sale-item→recipe links, writing each page raw and recording canonical links. */
+  /** Page the sale-item→recipe links, writing each page raw and recording canonical links once. */
   private void pullSaleRecipeLinks(IngestionSink sink) {
+    List<SaleRecipeLinkInput> all = new ArrayList<>();
     int start = 0;
     int pages = 0;
     int total = -1;
     while (pages < MAX_PAGES) {
       CtbClient.CtbPage page = client.searchDistinctSaleItemsForLinking(start, PAGE_SIZE);
       UUID rawId = writeRaw(page.json(), "ctb-sale-recipe-links", sink);
-      for (SaleRecipeLinkInput input :
-          saleRecipeLinkParser.parse(page.json().getBytes(StandardCharsets.UTF_8), rawId)) {
-        saleRecipeLinkIngest.record(input);
-      }
+      all.addAll(saleRecipeLinkParser.parse(page.json().getBytes(StandardCharsets.UTF_8), rawId));
       total = page.totalCount();
       pages++;
       if (start + PAGE_SIZE >= total) {
@@ -269,6 +269,7 @@ public class CtbConnector implements SourceConnector {
       }
       start += PAGE_SIZE;
     }
+    saleRecipeLinkIngest.recordAll(all);
   }
 
   /**

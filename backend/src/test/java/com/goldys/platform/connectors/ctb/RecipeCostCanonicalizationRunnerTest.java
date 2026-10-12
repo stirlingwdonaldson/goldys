@@ -2,7 +2,6 @@ package com.goldys.platform.connectors.ctb;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,10 +37,9 @@ class RecipeCostCanonicalizationRunnerTest {
 
     runner.run(null);
 
-    ArgumentCaptor<RecipeCostInput> captor = ArgumentCaptor.forClass(RecipeCostInput.class);
-    verify(ingest, times(2)).record(captor.capture());
-    assertThat(captor.getAllValues())
-        .extracting(RecipeCostInput::recipeId)
-        .containsExactly(627, 628);
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<List<RecipeCostInput>> captor = ArgumentCaptor.forClass((Class) List.class);
+    verify(ingest).recordAll(captor.capture());
+    assertThat(captor.getValue()).extracting(RecipeCostInput::recipeId).containsExactly(627, 628);
   }
 }

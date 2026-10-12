@@ -22,6 +22,10 @@ public class CanonicalSaleRecipeLinkQuery {
 
   private SaleRecipeLinkView toView(CanonicalSaleRecipeLink l) {
     return new SaleRecipeLinkView(
-        l.recipeId(), l.recipeName(), l.recipeFolderName(), l.saleItemStockDescription());
+        l.recipeId(),
+        l.recipeName(),
+        l.recipeFolderName(),
+        l.saleItemStockDescription(),
+        l.isRecipeActive());
   }
 }

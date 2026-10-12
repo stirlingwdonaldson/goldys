@@ -3,6 +3,7 @@ package com.goldys.platform.canonical;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,6 +32,20 @@ class CanonicalRecipeCostService {
     CanonicalRecipeCost saved = recordAt(input, CLOCK.instant());
     publisher.publishEvent(new RecipeCostRecorded(input.recipeId()));
     return saved;
+  }
+
+  /**
+   * Record a batch of facts in one transaction, publishing a single event so the projector rebuilds
+   * once instead of once per fact (the projector's rebuild is whole-table, not per-recipe).
+   */
+  @Transactional
+  void recordAll(List<RecipeCostInput> inputs) {
+    for (RecipeCostInput input : inputs) {
+      recordAt(input, CLOCK.instant());
+    }
+    if (!inputs.isEmpty()) {
+      publisher.publishEvent(new RecipeCostRecorded(inputs.get(0).recipeId()));
+    }
   }
 
   @Transactional

@@ -68,6 +68,18 @@ class ResolvedRecipeQueryTest {
     assertThat(c.gpPercent()).isNull();
   }
 
+  @Test
+  void costingNullWhenCostPerPortionZero() {
+    when(repository.findAllByOrderByRecipeNameAsc())
+        .thenReturn(List.of(recipe(1, "Parma", null, "0.00", "18.50", "7.20")));
+
+    RecipeCosting c = query.costing().get(0);
+
+    assertThat(c.margin()).isNull();
+    assertThat(c.gpPercent()).isNull();
+    assertThat(c.costGap()).isNull();
+  }
+
   private static ResolvedRecipe recipe(
       int id, String name, String folder, String cost, String price, String actualCost) {
     return new ResolvedRecipe(

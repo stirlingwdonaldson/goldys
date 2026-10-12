@@ -1,5 +1,6 @@
 package com.goldys.platform.canonical;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,5 +16,9 @@ public class SaleRecipeLinkIngest {
 
   public void record(SaleRecipeLinkInput input) {
     service.record(input);
+  }
+
+  public void recordAll(List<SaleRecipeLinkInput> inputs) {
+    service.recordAll(inputs);
   }
 }

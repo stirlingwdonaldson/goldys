@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -209,9 +208,10 @@ class CtbConnectorTest {
 
     connector.fetch(null, payload -> UUID.randomUUID());
 
-    ArgumentCaptor<SaleRecipeLinkInput> captor = ArgumentCaptor.forClass(SaleRecipeLinkInput.class);
-    verify(ingest, times(2)).record(captor.capture());
-    assertThat(captor.getAllValues())
+    @SuppressWarnings("unchecked")
+    ArgumentCaptor<List<SaleRecipeLinkInput>> captor = ArgumentCaptor.forClass((Class) List.class);
+    verify(ingest).recordAll(captor.capture());
+    assertThat(captor.getValue())
         .extracting(SaleRecipeLinkInput::recipeId)
         .containsExactly(627, 628);
   }

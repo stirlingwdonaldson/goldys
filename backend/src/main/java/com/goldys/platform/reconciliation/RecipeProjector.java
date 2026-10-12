@@ -51,6 +51,11 @@ public class RecipeProjector {
     Map<String, Mode> byName = priceModes();
     Map<Integer, List<SaleRecipeLinkView>> linksByRecipe = new HashMap<>();
     for (SaleRecipeLinkView link : links.currentLinks()) {
+      // Inactive links (is_recipe_active=false) mean the dish is no longer on the menu, so it
+      // contributes no folder, price or cost. A null flag is treated as active.
+      if (Boolean.FALSE.equals(link.isRecipeActive())) {
+        continue;
+      }
       linksByRecipe.computeIfAbsent(link.recipeId(), k -> new ArrayList<>()).add(link);
     }
 

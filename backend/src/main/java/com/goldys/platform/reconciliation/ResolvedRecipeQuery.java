@@ -48,14 +48,17 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
   }
 
   private static RecipeCosting toCosting(ResolvedRecipe r) {
-    BigDecimal margin = subtract(r.menuPrice(), r.costPerPortion());
+    // A zero or missing cost per portion means the dish has no theoretical cost on record, so
+    // margin, GP% and cost gap are all unknown (never a fabricated figure from a 0).
+    BigDecimal cost = blank(r.costPerPortion());
+    BigDecimal margin = subtract(r.menuPrice(), cost);
     return new RecipeCosting(
         r.recipeId(),
         r.recipeName(),
         r.recipeFolderName(),
         r.costPerPortion(),
         r.actualCost(),
-        subtract(r.actualCost(), r.costPerPortion()),
+        subtract(r.actualCost(), cost),
         r.menuPrice(),
         margin,
         divide(margin, r.menuPrice()));
@@ -70,5 +73,10 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
       return null;
     }
     return numerator.divide(denominator, SCALE, RoundingMode.HALF_UP);
+  }
+
+  /** A missing or zero value is treated as absent. */
+  private static BigDecimal blank(BigDecimal v) {
+    return v == null || v.signum() == 0 ? null : v;
   }
 }

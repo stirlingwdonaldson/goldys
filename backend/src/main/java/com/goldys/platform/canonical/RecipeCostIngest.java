@@ -1,5 +1,6 @@
 package com.goldys.platform.canonical;
 
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 /** Public write facade for canonical recipe costs, so connectors can record parsed facts. */
@@ -13,5 +14,9 @@ public class RecipeCostIngest {
 
   public void record(RecipeCostInput input) {
     service.record(input);
+  }
+
+  public void recordAll(List<RecipeCostInput> inputs) {
+    service.recordAll(inputs);
   }
 }
