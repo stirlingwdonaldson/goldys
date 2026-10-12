@@ -12,6 +12,21 @@
       }
     ]
   },
+  "permissions": {
+    "deny": [
+      "Bash(*down -v*)",
+      "Bash(*down --volumes*)",
+      "Bash(docker volume rm*)",
+      "Bash(docker volume prune*)",
+      "Bash(docker system prune*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(*rm -rf*var/lib/docker*)",
+      "Bash(*.env.prod*)",
+      "Read(./.env.prod)",
+      "Edit(./.env.prod)"
+    ]
+  },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
     "playwright@claude-plugins-official": true
