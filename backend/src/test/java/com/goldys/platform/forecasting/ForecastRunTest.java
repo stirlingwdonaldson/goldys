@@ -31,10 +31,12 @@ class ForecastRunTest {
     assertThat(run.id()).isNotNull();
     assertThat(run.status()).isEqualTo(ForecastRunStatus.QUEUED);
     assertThat(run.targetMetric()).isEqualTo("sales.gross");
+    assertThat(run.targetDimension()).isNull();
     assertThat(run.covariates()).containsExactlyElementsOf(covariates);
     assertThat(run.historyFrom()).isEqualTo(LocalDate.of(2026, 8, 1));
     assertThat(run.historyTo()).isEqualTo(LocalDate.of(2026, 10, 11));
     assertThat(run.horizonDays()).isEqualTo(30);
+    assertThat(run.grain()).isEqualTo("DAY");
     assertThat(run.createdBy()).isEqualTo(CREATED_BY);
     assertThat(run.createdAt()).isEqualTo(NOW);
     assertThat(run.series()).isEmpty();

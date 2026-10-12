@@ -35,6 +35,9 @@ public class ForecastRun {
   @Column(name = "target_metric", nullable = false)
   private String targetMetric;
 
+  @Column(name = "target_dimension", length = 64)
+  private String targetDimension;
+
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "covariates", nullable = false, columnDefinition = "jsonb")
   private List<String> covariates;
@@ -47,6 +50,9 @@ public class ForecastRun {
 
   @Column(name = "horizon_days", nullable = false)
   private int horizonDays;
+
+  @Column(name = "grain", nullable = false, length = 16)
+  private String grain;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
@@ -72,10 +78,12 @@ public class ForecastRun {
       Instant createdAt,
       String createdBy,
       String targetMetric,
+      String targetDimension,
       List<String> covariates,
       LocalDate historyFrom,
       LocalDate historyTo,
       int horizonDays,
+      String grain,
       ForecastRunStatus status,
       String errorMessage,
       String modelVersion,
@@ -85,10 +93,12 @@ public class ForecastRun {
     this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
     this.createdBy = Objects.requireNonNull(createdBy, "createdBy");
     this.targetMetric = Objects.requireNonNull(targetMetric, "targetMetric");
+    this.targetDimension = targetDimension;
     this.covariates = List.copyOf(covariates);
     this.historyFrom = Objects.requireNonNull(historyFrom, "historyFrom");
     this.historyTo = Objects.requireNonNull(historyTo, "historyTo");
     this.horizonDays = horizonDays;
+    this.grain = Objects.requireNonNull(grain, "grain");
     this.status = Objects.requireNonNull(status, "status");
     this.errorMessage = errorMessage;
     this.modelVersion = modelVersion;
@@ -109,10 +119,12 @@ public class ForecastRun {
         now,
         createdBy,
         targetMetric,
+        null,
         covariates,
         historyFrom,
         historyTo,
         horizonDays,
+        "DAY",
         ForecastRunStatus.QUEUED,
         null,
         null,
@@ -155,6 +167,10 @@ public class ForecastRun {
     return targetMetric;
   }
 
+  public String targetDimension() {
+    return targetDimension;
+  }
+
   public List<String> covariates() {
     return covariates;
   }
@@ -169,6 +185,10 @@ public class ForecastRun {
 
   public int horizonDays() {
     return horizonDays;
+  }
+
+  public String grain() {
+    return grain;
   }
 
   public ForecastRunStatus status() {
