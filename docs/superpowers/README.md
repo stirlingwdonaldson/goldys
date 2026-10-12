@@ -47,7 +47,7 @@ Many specs still carry their original `Status: Draft` or `In review` header. The
 | 10-12 | CTB recipe non-JSON: empty POST body → HTTP 411 | [spec](specs/2026-10-12-ctb-recipe-non-json-isolation-design.md) | — | Implemented and verified live |
 | 10-12 | CTB detail backfill (stocktake / wastage / recipe composition) | [spec](specs/2026-10-12-ctb-detail-backfill-design.md) | [plan](plans/2026-10-12-ctb-detail-backfill.md) | Slice A implemented (raw-ledger detail backfill, gated on `app.ctb-detail-backfill`) |
 | 10-12 | TimesFM forecasting | [spec](specs/2026-10-12-timesfm-forecasting-design.md) | [plan](plans/2026-10-12-timesfm-forecasting.md) | In progress |
-| 10-12 | Invoice identity (supplier-scoped headers, reorder-stable lines) | [spec](specs/2026-10-12-invoice-identity-design.md) | — | Design — awaiting approval |
+| 10-12 | Invoice identity (supplier-scoped headers, reorder-stable lines) | [spec](specs/2026-10-12-invoice-identity-design.md) | [plan](plans/2026-10-12-invoice-identity.md) | Planned — not implemented |
 
 Some older records reference paths that have since moved. File paths inside them
 have been updated to the current layout (`docs/operations/`, `docs/design/`,
