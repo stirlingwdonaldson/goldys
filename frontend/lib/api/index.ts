@@ -83,6 +83,7 @@ export type {
   PaymentRow,
   Provenance,
   RecipeCosting,
+  RecipeIngredient,
   RecomputeState,
   RecomputeStatus,
   ReconciliationAuditChange,

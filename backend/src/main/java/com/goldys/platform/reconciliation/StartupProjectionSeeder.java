@@ -17,6 +17,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
   private final DeletedSaleProjector deletedSaleProjector;
   private final SaleItemProjector saleItemProjector;
   private final RecipeProjector recipeProjector;
+  private final RecipeIngredientProjector recipeIngredientProjector;
 
   public StartupProjectionSeeder(
       ResolvedDailySalesRepository resolved,
@@ -28,7 +29,8 @@ public class StartupProjectionSeeder implements ApplicationRunner {
       PaymentProjector paymentProjector,
       DeletedSaleProjector deletedSaleProjector,
       SaleItemProjector saleItemProjector,
-      RecipeProjector recipeProjector) {
+      RecipeProjector recipeProjector,
+      RecipeIngredientProjector recipeIngredientProjector) {
     this.resolved = resolved;
     this.projector = projector;
     this.productProjector = productProjector;
@@ -39,6 +41,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     this.deletedSaleProjector = deletedSaleProjector;
     this.saleItemProjector = saleItemProjector;
     this.recipeProjector = recipeProjector;
+    this.recipeIngredientProjector = recipeIngredientProjector;
   }
 
   @Override
@@ -46,9 +49,9 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     if (resolved.count() == 0) {
       projector.recomputeAll();
     }
-    // Product, reservation, labour, inventory, payment, deleted-sale, sale-item and recipe
-    // projections are backfilled on every boot: "no conflicts" and "never seeded" are
-    // indistinguishable without a checkpoint table, and the rebuild is cheap at pub scale.
+    // Product, reservation, labour, inventory, payment, deleted-sale, sale-item, recipe and
+    // recipe-ingredient projections are backfilled on every boot: "no conflicts" and "never seeded"
+    // are indistinguishable without a checkpoint table, and the rebuild is cheap at pub scale.
     productProjector.recomputeAll();
     reservationProjector.recomputeAll();
     labourProjector.recomputeAll();
@@ -57,5 +60,6 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     deletedSaleProjector.recomputeAll();
     saleItemProjector.recomputeAll();
     recipeProjector.recomputeAll();
+    recipeIngredientProjector.recomputeAll();
   }
 }

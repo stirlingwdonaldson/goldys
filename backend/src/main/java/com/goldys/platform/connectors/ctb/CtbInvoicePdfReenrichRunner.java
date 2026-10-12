@@ -4,8 +4,15 @@ import com.goldys.platform.canonical.CanonicalInvoiceLineEnrichment;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.connectors.ctb.InvoiceIngestFlagService.OpenFlag;
 import com.goldys.platform.ingestion.RawLedgerQuery;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -42,18 +49,21 @@ public class CtbInvoicePdfReenrichRunner implements ApplicationRunner {
   private final CanonicalInvoiceLineEnrichment lineEnrichment;
   private final InvoiceIngestFlagService flags;
   private final CanonicalInvoiceQuery invoiceQuery;
+  private final int concurrency;
 
   public CtbInvoicePdfReenrichRunner(
       RawLedgerQuery rawLedger,
       InvoicePdfEnrichmentService pdfEnrichment,
       CanonicalInvoiceLineEnrichment lineEnrichment,
       InvoiceIngestFlagService flags,
-      CanonicalInvoiceQuery invoiceQuery) {
+      CanonicalInvoiceQuery invoiceQuery,
+      @Value("${app.ctb-invoice-replay-concurrency:8}") int concurrency) {
     this.rawLedger = rawLedger;
     this.pdfEnrichment = pdfEnrichment;
     this.lineEnrichment = lineEnrichment;
     this.flags = flags;
     this.invoiceQuery = invoiceQuery;
+    this.concurrency = concurrency;
   }
 
   @Override
@@ -63,18 +73,51 @@ public class CtbInvoicePdfReenrichRunner implements ApplicationRunner {
   }
 
   private void reEnrichStoredPdfs() {
-    int replayed = 0;
-    for (RawLedgerQuery.RawPayload pdf : rawLedger.rawPayloadsForSource("CTB", "application/pdf")) {
-      try {
-        // No filename: the raw PDF record does not retain it, so enrichment targets the invoice via
-        // the number parsed from the PDF text (and reuses the invoice's stored filename for flags).
-        pdfEnrichment.enrich(pdf.bytes(), null, pdf.id());
-        replayed++;
-      } catch (RuntimeException e) {
-        log.warn("CTB invoice PDF replay failed for raw record {}", pdf.id(), e);
+    List<RawLedgerQuery.RawPayload> pdfs = rawLedger.rawPayloadsForSource("CTB", "application/pdf");
+    long started = System.currentTimeMillis();
+    // Enrichment is per-PDF independent: each line enrichment is its own transaction (a SELECT ...
+    // FOR UPDATE on the invoice's lines), so PDFs can be processed concurrently with no shared
+    // state. A fixed pool bounds the combined PDFBox/LLM work.
+    ExecutorService pool = Executors.newFixedThreadPool(concurrency);
+    try {
+      AtomicInteger replayed = new AtomicInteger();
+      AtomicInteger failed = new AtomicInteger();
+      List<CompletableFuture<Void>> futures = new ArrayList<>(pdfs.size());
+      for (RawLedgerQuery.RawPayload pdf : pdfs) {
+        futures.add(
+            CompletableFuture.runAsync(
+                () -> {
+                  try {
+                    // No filename: the raw PDF record does not retain it, so enrichment targets the
+                    // invoice via the number parsed from the PDF text.
+                    pdfEnrichment.enrich(pdf.bytes(), null, pdf.id());
+                    int done = replayed.incrementAndGet();
+                    if (done % 100 == 0) {
+                      log.info(
+                          "CTB invoice PDF replay progress: {} of {} PDFs ({} ms elapsed)",
+                          done,
+                          pdfs.size(),
+                          System.currentTimeMillis() - started);
+                    }
+                  } catch (RuntimeException e) {
+                    failed.incrementAndGet();
+                    log.warn("CTB invoice PDF replay failed for raw record {}", pdf.id(), e);
+                  }
+                },
+                pool));
       }
+      CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+      long elapsed = System.currentTimeMillis() - started;
+      log.info(
+          "CTB invoice PDF replay re-enriched {} of {} stored PDFs ({} failed, {} ms, ~{} ms/PDF)",
+          replayed.get(),
+          pdfs.size(),
+          failed.get(),
+          elapsed,
+          elapsed / Math.max(1, replayed.get()));
+    } finally {
+      pool.shutdown();
     }
-    log.info("CTB invoice PDF replay re-enriched {} stored PDFs", replayed);
   }
 
   private void retireResolvedFlags() {

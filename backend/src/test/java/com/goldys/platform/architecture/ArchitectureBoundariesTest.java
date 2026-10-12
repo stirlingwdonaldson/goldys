@@ -10,6 +10,7 @@ import com.goldys.platform.semantic.InventoryMetricsQuery;
 import com.goldys.platform.semantic.InvoiceLineMetricsQuery;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.PaymentMetricsQuery;
+import com.goldys.platform.semantic.RecipeIngredientMetricsQuery;
 import com.goldys.platform.semantic.RecipeMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.goldys.platform.semantic.SaleItemMetricsQuery;
@@ -286,6 +287,37 @@ class ArchitectureBoundariesTest {
       classes()
           .that()
           .implement(RecipeMetricsQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  /** The recipe-ingredient controller must not read canonical source facts directly. */
+  @ArchTest
+  static final ArchRule recipeIngredientControllerDoesNotReadCanonical =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.api.RecipeIngredientController")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..canonical..");
+
+  /**
+   * The recipe-ingredient reporting tool consumes the semantic layer, not canonical/reconciliation.
+   */
+  @ArchTest
+  static final ArchRule recipeIngredientToolConsumesSemanticOnly =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.reporting.GetRecipeIngredientsTool")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..canonical..", "..reconciliation..");
+
+  /** The recipe-ingredient semantic interface is implemented only in the reconciliation package. */
+  @ArchTest
+  static final ArchRule recipeIngredientMetricsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(RecipeIngredientMetricsQuery.class)
           .should()
           .resideInAPackage("..reconciliation..");
 

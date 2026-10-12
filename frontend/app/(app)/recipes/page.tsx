@@ -1,20 +1,21 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { BookOpen } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
-import type { RecipeCosting } from "@/lib/api";
+import type { RecipeCosting, RecipeIngredient } from "@/lib/api";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { AwaitingData } from "@/components/states/awaiting-data";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { StatCard } from "@/components/data-display/stat-card";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
 import { EmptyState } from "@/components/states/empty-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { currencyColumn } from "@/components/data-table/columns";
+import { Button } from "@/components/ui/button";
 
 function gpColumn(): ColumnDef<RecipeCosting> {
   return {
@@ -28,8 +29,93 @@ function gpColumn(): ColumnDef<RecipeCosting> {
   };
 }
 
+/** Sub-recipe lines grouped by their sub-recipe name, preserving first-seen order. */
+function groupSubRecipes(lines: RecipeIngredient[]): [string, RecipeIngredient[]][] {
+  const groups = new Map<string, RecipeIngredient[]>();
+  for (const line of lines) {
+    const key = line.lineRecipeName ?? "Sub-recipe";
+    const bucket = groups.get(key) ?? [];
+    bucket.push(line);
+    groups.set(key, bucket);
+  }
+  return [...groups.entries()];
+}
+
+function IngredientLinesTable({ label, lines }: { label: string; lines: RecipeIngredient[] }) {
+  if (lines.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+            <th className="py-1.5 pr-4 font-medium">Ingredient</th>
+            <th className="py-1.5 pr-4 text-right font-medium">Qty</th>
+            <th className="py-1.5 pr-4 font-medium">Unit</th>
+            <th className="py-1.5 pr-4 text-right font-medium">Cost</th>
+            <th className="py-1.5 font-medium">Supplier</th>
+          </tr>
+        </thead>
+        <tbody>
+          {lines.map((line) => (
+            <tr key={line.recipeDetailId} className="border-b border-muted">
+              <td className="py-1.5 pr-4">{line.stockDescription ?? "—"}</td>
+              <td className="py-1.5 pr-4 text-right tabular-nums">
+                {formatNumber(line.portionWeight, 4)}
+              </td>
+              <td className="py-1.5 pr-4">{line.unitOfMeasurement ?? "—"}</td>
+              <td className="py-1.5 pr-4 text-right tabular-nums">
+                {formatCurrency(line.costPerQty)}
+              </td>
+              <td className="py-1.5">{line.supplierName ?? "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RecipeIngredientsPanel({ recipe }: { recipe: RecipeCosting }) {
+  const lines = useApiData((api) => api.getRecipeIngredients(recipe.recipeId), [recipe.recipeId]);
+
+  if (lines.loading) return <LoadingState rows={3} />;
+  if (lines.error) {
+    return (
+      <ErrorState
+        title="Couldn't load ingredients"
+        message={lines.error.message}
+        onRetry={lines.reload}
+      />
+    );
+  }
+
+  const all = lines.data ?? [];
+  if (all.length === 0) {
+    return (
+      <EmptyState
+        title="No ingredients recorded"
+        description={`${recipe.name ?? "This recipe"} has no ingredient lines in Cooking the Books yet.`}
+      />
+    );
+  }
+
+  const main = all.filter((line) => !line.isSubRecipe);
+  const sub = groupSubRecipes(all.filter((line) => line.isSubRecipe));
+
+  return (
+    <div className="flex flex-col gap-4">
+      <IngredientLinesTable label="Ingredients" lines={main} />
+      {sub.map(([name, lines]) => (
+        <IngredientLinesTable key={name} label={`Sub-recipe: ${name}`} lines={lines} />
+      ))}
+    </div>
+  );
+}
+
 export default function RecipesPage() {
   const recipes = useApiData((api) => api.getRecipes());
+  const [selected, setSelected] = useState<RecipeCosting | null>(null);
 
   const columns = useMemo<ColumnDef<RecipeCosting>[]>(
     () => [
@@ -57,6 +143,20 @@ export default function RecipesPage() {
       currencyColumn("menuPrice", "Menu price", (r) => r.menuPrice),
       currencyColumn("margin", "Margin", (r) => r.margin),
       gpColumn(),
+      {
+        id: "breakdown",
+        header: "",
+        cell: ({ row }) => (
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={`Show ingredients for ${row.original.name ?? "recipe"}`}
+            onClick={() => setSelected(row.original)}
+          >
+            Ingredients
+          </Button>
+        ),
+      },
     ],
     [],
   );
@@ -112,15 +212,14 @@ export default function RecipesPage() {
           </div>
 
           <Section title="Recipe costing">
-            {rows.length === 0 ? (
-              <EmptyState
-                title="No recipes yet"
-                description="Recipes appear here once Cooking the Books recipe data is resolved."
-              />
-            ) : (
-              <DataTable columns={columns} data={rows} getRowId={(r) => String(r.recipeId)} />
-            )}
+            <DataTable columns={columns} data={rows} getRowId={(r) => String(r.recipeId)} />
           </Section>
+
+          {selected ? (
+            <Section title={`${selected.name ?? "Recipe"} — ingredients`}>
+              <RecipeIngredientsPanel recipe={selected} />
+            </Section>
+          ) : null}
         </>
       )}
     </div>
