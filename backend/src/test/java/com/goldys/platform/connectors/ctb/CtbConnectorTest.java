@@ -215,7 +215,6 @@ class CtbConnectorTest {
         .extracting(SaleRecipeLinkInput::recipeId)
         .containsExactly(627, 628);
   }
-  }
 
   private static CtbRevenueParser emptyRevenueParser() {
     CtbRevenueParser parser = mock(CtbRevenueParser.class);
