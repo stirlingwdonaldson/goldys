@@ -12,7 +12,9 @@ import static org.mockito.Mockito.when;
 
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -143,7 +145,8 @@ class CtbConnectorTest {
         revenueParser,
         mock(CanonicalDailySalesIngest.class),
         saleItemParser,
-        mock(CanonicalProductSalesIngest.class));
+        mock(CanonicalProductSalesIngest.class),
+        VenueClock.system(ZoneId.of("Australia/Melbourne")));
   }
 
   private static CtbRevenueParser emptyRevenueParser() {

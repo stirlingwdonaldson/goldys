@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.semantic.ConnectorHealth;
 import com.goldys.platform.semantic.ConnectorHealthQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
@@ -26,6 +27,7 @@ import com.goldys.platform.widget.Column;
 import com.goldys.platform.widget.TableWidgetSpec;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,8 @@ class GetReconciliationStatusToolTest {
 
   private static final UserRole OWNER =
       new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
+
+  private static final VenueClock CLOCK = VenueClock.system(ZoneId.of("Australia/Melbourne"));
 
   private static final Instant LAST_RUN = Instant.parse("2026-10-01T00:00:00Z");
 
@@ -44,7 +48,8 @@ class GetReconciliationStatusToolTest {
             mock(MetricQueryService.class),
             mock(SalesMetricsQuery.class),
             mock(ProductMetricsQuery.class),
-            mock(ConnectorHealthQuery.class));
+            mock(ConnectorHealthQuery.class),
+            CLOCK);
 
     assertThat(tool.name()).isEqualTo("get_reconciliation_status");
     assertThat(tool.resource().value()).isEqualTo("reconciliation.status");
@@ -81,7 +86,7 @@ class GetReconciliationStatusToolTest {
             List.of(new ConnectorHealth("LIGHTSPEED", "lightspeed-products", LAST_RUN, "SUCCESS")));
 
     GetReconciliationStatusTool tool =
-        new GetReconciliationStatusTool(metrics, sales, product, connectors);
+        new GetReconciliationStatusTool(metrics, sales, product, connectors, CLOCK);
     ToolResult result = tool.execute(new GetReconciliationStatusInput(), OWNER);
 
     assertThat(result.widget()).isInstanceOf(TableWidgetSpec.class);
@@ -114,7 +119,8 @@ class GetReconciliationStatusToolTest {
             mock(MetricQueryService.class),
             mock(SalesMetricsQuery.class),
             mock(ProductMetricsQuery.class),
-            mock(ConnectorHealthQuery.class));
+            mock(ConnectorHealthQuery.class),
+            CLOCK);
 
     assertThatThrownBy(() -> tool.execute(new OtherInput(), OWNER))
         .isInstanceOf(IllegalArgumentException.class)

@@ -95,6 +95,11 @@ sentry:
     minimum-breadcrumb-level: info
 
 app:
+  venue:
+    # The single venue time zone. Business dates ("today", the CTB scheduled cron, reservation
+    # trading dates, dashboard template ranges) are evaluated here, so a pull just after midnight
+    # UTC still lands on the right trading day. Override with APP_VENUE_TIMEZONE.
+    timezone: Australia/Melbourne
   conversational:
     system-prompt: prompts/ask-goldys-system.txt
   # Per-domain freshness thresholds (bound by config.FreshnessProperties): how old a
@@ -130,7 +135,7 @@ app:
       resolved_sale_item_day:
         - LIGHTSPEED
   # Scheduled pull for the CTB connector (the only pull connector on a schedule).
-  # "Run now" stays available regardless. Cron is evaluated in Australia/Melbourne.
+  # "Run now" stays available regardless. Cron is evaluated in the venue zone (app.venue.timezone).
   scheduling:
     ctb:
       enabled: true
@@ -145,7 +150,7 @@ forecasting:
 
 # Cooking the Books SFTP drop — the Custom Invoice Export lands here and is polled by the
 # SFTP pull. Disabled by default; set ctb.sftp.enabled=true and provide host/user/password
-# (CTB_SFTP_HOST/USER/PASSWORD) to turn it on. Cron is Australia/Melbourne.
+# (CTB_SFTP_HOST/USER/PASSWORD) to turn it on. Cron is the venue zone (app.venue.timezone).
 ctb:
   sftp:
     enabled: ${CTB_SFTP_ENABLED:false}
@@ -155,3 +160,8 @@ ctb:
     user: ${CTB_SFTP_USER:}
     password: ${CTB_SFTP_PASSWORD:}
     remote-dir: ${CTB_SFTP_REMOTE_DIR:/}
+
+# OpenTable reservations are dated in the venue zone by default. Kept as its own property for
+# back-compat: an operator can override it with OPENTABLE_TIMEZONE without moving the whole venue.
+opentable:
+  timezone: ${app.venue.timezone:Australia/Melbourne}

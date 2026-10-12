@@ -19,10 +19,12 @@ import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.DashboardTemplateCatalog;
 import com.goldys.platform.dashboard.Visibility;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -47,7 +49,10 @@ class SavedDashboardControllerTest {
   @Test
   void listTemplates() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(dashboards.templates()).thenReturn(new DashboardTemplateCatalog().templates());
+    when(dashboards.templates())
+        .thenReturn(
+            new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne")))
+                .templates());
 
     mvc.perform(get("/api/dashboards/templates").with(authenticated(owner())))
         .andExpect(status().isOk())

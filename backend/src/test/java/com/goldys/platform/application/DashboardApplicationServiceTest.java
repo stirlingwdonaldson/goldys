@@ -15,6 +15,7 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.IngestionHealth;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.reconciliation.OverrideUsage;
@@ -53,7 +54,14 @@ class DashboardApplicationServiceTest {
 
   private final DashboardApplicationService service =
       new DashboardApplicationService(
-          salesMetrics, productMetrics, ingestion, overrideUsage, permissions, metrics);
+          salesMetrics,
+          productMetrics,
+          ingestion,
+          overrideUsage,
+          permissions,
+          metrics,
+          VenueClock.fixed(
+              java.time.ZoneId.of("Australia/Melbourne"), Instant.parse("2026-09-13T00:00:00Z")));
 
   @Test
   void summaryAuthorizesThenComposes() {

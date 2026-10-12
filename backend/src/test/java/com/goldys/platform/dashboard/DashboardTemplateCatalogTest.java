@@ -3,14 +3,18 @@ package com.goldys.platform.dashboard;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
+import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
 class DashboardTemplateCatalogTest {
 
+  private static final VenueClock CLOCK = VenueClock.system(ZoneId.of("Australia/Melbourne"));
+
   @Test
   void templatesAreValidDashboardDocuments() {
-    var catalog = new DashboardTemplateCatalog();
+    var catalog = new DashboardTemplateCatalog(CLOCK);
     assertThat(catalog.templates()).hasSize(9);
     for (var t : catalog.templates()) {
       assertThat(t.widgets()).isNotEmpty();
@@ -23,14 +27,14 @@ class DashboardTemplateCatalogTest {
 
   @Test
   void byIdReturnsTheNamedTemplate() {
-    var catalog = new DashboardTemplateCatalog();
+    var catalog = new DashboardTemplateCatalog(CLOCK);
     assertThat(catalog.byId("daily").name()).isEqualTo("Daily Management");
     assertThat(catalog.byId("owner").widgets()).hasSize(3);
   }
 
   @Test
   void byIdRejectsUnknownTemplate() {
-    var catalog = new DashboardTemplateCatalog();
+    var catalog = new DashboardTemplateCatalog(CLOCK);
     assertThatThrownBy(() -> catalog.byId("nope"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("nope");

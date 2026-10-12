@@ -14,6 +14,7 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.DashboardTemplateCatalog;
 import com.goldys.platform.dashboard.DashboardWidgetValidator;
@@ -44,6 +45,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -75,7 +77,7 @@ class DashboardRenderTest {
           revisions,
           shares,
           metricQueryService,
-          new DashboardTemplateCatalog());
+          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))));
 
   @Test
   void deniedMetricRendersExplicitDenialNotPartial() {

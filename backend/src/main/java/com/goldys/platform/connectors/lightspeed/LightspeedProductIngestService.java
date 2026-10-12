@@ -52,6 +52,10 @@ public class LightspeedProductIngestService {
             "lightspeed-products");
 
     // The "Sales By" report has no per-row date; attribute to the day the report arrived.
+    // Deliberately NOT the venue date (VenueClock): the report carries no date of its own, and if
+    // Lightspeed delivers it early morning for the previous trading day, UTC arrival happens to be
+    // the right day while the venue date would be one day late. Revisit this attribution rule once
+    // the report's real delivery schedule is known — audit F11.
     LocalDate tradingDate = LocalDate.now();
     List<LightspeedProductSale> rows;
     try {
