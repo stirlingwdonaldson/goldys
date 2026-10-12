@@ -32,6 +32,13 @@ public class CanonicalSaleItemQuery {
     return repository.findCurrentByTradingDateIn(dates).stream().map(this::toView).toList();
   }
 
+  /** Current sale items' name, sold price and cost — for the recipe price/cost join. */
+  public List<SaleItemPriceView> currentSaleItemPrices() {
+    return repository.findAllCurrent().stream()
+        .map(s -> new SaleItemPriceView(s.itemName(), s.soldPriceIncTax(), s.costIncTax()))
+        .toList();
+  }
+
   /**
    * Paged, filterable listing of current sale line items over the inclusive date range. Null
    * filters match anything; rows come back newest first, ordered by the unique receipt-line id

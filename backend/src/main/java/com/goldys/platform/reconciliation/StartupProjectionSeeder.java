@@ -16,6 +16,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
   private final PaymentProjector paymentProjector;
   private final DeletedSaleProjector deletedSaleProjector;
   private final SaleItemProjector saleItemProjector;
+  private final RecipeProjector recipeProjector;
 
   public StartupProjectionSeeder(
       ResolvedDailySalesRepository resolved,
@@ -26,7 +27,8 @@ public class StartupProjectionSeeder implements ApplicationRunner {
       InventoryProjector inventoryProjector,
       PaymentProjector paymentProjector,
       DeletedSaleProjector deletedSaleProjector,
-      SaleItemProjector saleItemProjector) {
+      SaleItemProjector saleItemProjector,
+      RecipeProjector recipeProjector) {
     this.resolved = resolved;
     this.projector = projector;
     this.productProjector = productProjector;
@@ -36,6 +38,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     this.paymentProjector = paymentProjector;
     this.deletedSaleProjector = deletedSaleProjector;
     this.saleItemProjector = saleItemProjector;
+    this.recipeProjector = recipeProjector;
   }
 
   @Override
@@ -43,9 +46,9 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     if (resolved.count() == 0) {
       projector.recomputeAll();
     }
-    // Product, reservation, labour, inventory, payment, deleted-sale and sale-item projections are
-    // backfilled on every boot: "no conflicts" and "never seeded" are indistinguishable without a
-    // checkpoint table, and the rebuild is cheap at pub scale.
+    // Product, reservation, labour, inventory, payment, deleted-sale, sale-item and recipe
+    // projections are backfilled on every boot: "no conflicts" and "never seeded" are
+    // indistinguishable without a checkpoint table, and the rebuild is cheap at pub scale.
     productProjector.recomputeAll();
     reservationProjector.recomputeAll();
     labourProjector.recomputeAll();
@@ -53,5 +56,6 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     paymentProjector.recomputeAll();
     deletedSaleProjector.recomputeAll();
     saleItemProjector.recomputeAll();
+    recipeProjector.recomputeAll();
   }
 }
