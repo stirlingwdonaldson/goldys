@@ -211,7 +211,7 @@ describe("demoApi forecasting", () => {
     expect(foodCost?.sourceDomain).toBe("derived");
   });
 
-  it("creates a queued run that echoes the request", async () => {
+  it("creates a succeeded run that echoes the request and is immediately retrievable", async () => {
     const run = await demoApi.createForecastRun({
       target: "sales.gross",
       covariates: ["reservations.covers"],
@@ -219,12 +219,25 @@ describe("demoApi forecasting", () => {
       horizonDays: 7,
     });
     expect(run.id).toBe("fc-1");
-    expect(run.status).toBe("QUEUED");
+    expect(run.status).toBe("SUCCEEDED");
     expect(run.targetMetric).toBe("sales.gross");
     expect(run.covariates).toEqual(["reservations.covers"]);
     expect(run.horizonDays).toBe(7);
-    expect(run.series).toBeNull();
     expect(run.errorMessage).toBeNull();
+    expect(run.modelVersion).toBeTruthy();
+    expect(run.series).not.toBeNull();
+    expect(run.series!.length).toBe(7);
+    for (const p of run.series!) {
+      expect(p.p10).toBeLessThanOrEqual(p.median);
+      expect(p.median).toBeLessThanOrEqual(p.p90);
+      expect(p.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+
+    // The run-flow poll loop must see SUCCEEDED straight away, not a queued run.
+    const reloaded = await demoApi.getForecastRun(run.id);
+    expect(reloaded.status).toBe("SUCCEEDED");
+    expect(reloaded.series).not.toBeNull();
+    expect(reloaded.series!.length).toBe(7);
   });
 
   it("lists two runs, newest first, including a succeeded one", async () => {

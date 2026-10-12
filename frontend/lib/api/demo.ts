@@ -667,6 +667,36 @@ function demoForecastSeries(historyTo: string, horizonDays: number): ForecastSer
   return points;
 }
 
+/**
+ * The deterministic SUCCEEDED run the create-forecast flow returns. The demo has no background
+ * worker to advance a queued run, so `createForecastRun` returns a finished run (with a full
+ * series) and `getForecastRun` serves it straight back — the run-flow poll loop sees SUCCEEDED
+ * immediately. No `Date.now()`/`Math.random()` so the shape is stable across reloads.
+ */
+function buildCreatedForecastRun(input: CreateForecastInput): ForecastRun {
+  const from = new Date(`${input.historyFrom}T00:00:00Z`);
+  const to = new Date(from);
+  to.setUTCDate(to.getUTCDate() + 9);
+  const historyTo = to.toISOString().slice(0, 10);
+  return {
+    id: "fc-1",
+    status: "SUCCEEDED",
+    targetMetric: input.target,
+    covariates: [...input.covariates],
+    historyFrom: input.historyFrom,
+    historyTo,
+    horizonDays: input.horizonDays,
+    createdAt: "2026-10-06T02:30:00Z",
+    series: demoForecastSeries(historyTo, input.horizonDays),
+    errorMessage: null,
+    modelVersion: "timesfm-1.0",
+  };
+}
+
+// The run materialized by the most recent `createForecastRun` call, so `getForecastRun` can
+// return the same SUCCEEDED run the create-forecast flow just handed back to the caller.
+let demoCreatedForecastRun: ForecastRun | null = null;
+
 const demoForecastRuns: ForecastRun[] = [
   {
     id: "fc-2",
@@ -1446,22 +1476,8 @@ export const demoApi: Api = {
 
   async createForecastRun(input: CreateForecastInput): Promise<ForecastRun> {
     await delay(400);
-    const from = new Date(`${input.historyFrom}T00:00:00Z`);
-    const to = new Date(from);
-    to.setUTCDate(to.getUTCDate() + 9);
-    return {
-      id: "fc-1",
-      status: "QUEUED",
-      targetMetric: input.target,
-      covariates: [...input.covariates],
-      historyFrom: input.historyFrom,
-      historyTo: to.toISOString().slice(0, 10),
-      horizonDays: input.horizonDays,
-      createdAt: new Date().toISOString(),
-      series: null,
-      errorMessage: null,
-      modelVersion: null,
-    };
+    demoCreatedForecastRun = buildCreatedForecastRun(input);
+    return demoCreatedForecastRun;
   },
 
   async listForecastRuns(): Promise<ForecastRun[]> {
@@ -1471,6 +1487,7 @@ export const demoApi: Api = {
 
   async getForecastRun(id: string): Promise<ForecastRun> {
     await delay(300);
+    if (demoCreatedForecastRun?.id === id) return demoCreatedForecastRun;
     const run = demoForecastRuns.find((r) => r.id === id);
     if (!run) throw new ApiError("VALIDATION_FAILED", `No forecast run with id ${id}.`);
     return run;
