@@ -20,4 +20,5 @@ public record InvoiceLineInput(
     BigDecimal unitQuantity,
     BigDecimal packSize,
     BigDecimal wetAmount,
-    UUID rawRecordId) {}
+    UUID rawRecordId,
+    String origin) {}

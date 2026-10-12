@@ -30,15 +30,16 @@ class CtbInvoicePdfReenrichRunnerTest {
   void reEnrichesEveryStoredPdf() {
     byte[] a = {1};
     byte[] b = {2};
+    UUID idA = UUID.randomUUID();
+    UUID idB = UUID.randomUUID();
     when(rawLedger.rawPayloadsForSource("CTB", "application/pdf"))
-        .thenReturn(
-            List.of(new RawPayload(UUID.randomUUID(), a), new RawPayload(UUID.randomUUID(), b)));
+        .thenReturn(List.of(new RawPayload(idA, a), new RawPayload(idB, b)));
     when(flags.openPdfOnlyLineFlags()).thenReturn(List.of());
 
     runner().run(null);
 
-    verify(pdfEnrichment).enrich(a, null);
-    verify(pdfEnrichment).enrich(b, null);
+    verify(pdfEnrichment).enrich(a, null, idA);
+    verify(pdfEnrichment).enrich(b, null, idB);
   }
 
   @Test
@@ -64,17 +65,17 @@ class CtbInvoicePdfReenrichRunnerTest {
   void aSingleUnreadablePdfDoesNotAbortThePass() {
     byte[] bad = {1};
     byte[] good = {2};
+    UUID idBad = UUID.randomUUID();
+    UUID idGood = UUID.randomUUID();
     when(rawLedger.rawPayloadsForSource("CTB", "application/pdf"))
-        .thenReturn(
-            List.of(
-                new RawPayload(UUID.randomUUID(), bad), new RawPayload(UUID.randomUUID(), good)));
+        .thenReturn(List.of(new RawPayload(idBad, bad), new RawPayload(idGood, good)));
     when(flags.openPdfOnlyLineFlags()).thenReturn(List.of());
-    doThrow(new RuntimeException("unparseable")).when(pdfEnrichment).enrich(bad, null);
+    doThrow(new RuntimeException("unparseable")).when(pdfEnrichment).enrich(bad, null, idBad);
 
     runner().run(null);
 
     // The unreadable PDF is skipped, but the pass continues to the next one.
-    verify(pdfEnrichment).enrich(bad, null);
-    verify(pdfEnrichment).enrich(good, null);
+    verify(pdfEnrichment).enrich(bad, null, idBad);
+    verify(pdfEnrichment).enrich(good, null, idGood);
   }
 }

@@ -44,7 +44,8 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             null,
             null,
             null,
-            rawRecord()));
+            rawRecord(),
+            "CSV"));
 
     enrichment.enrich("INV-9001", "BEEF025", null, "KG", null, null, null);
 
@@ -74,7 +75,8 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             null,
             null,
             null,
-            rawRecord()));
+            rawRecord(),
+            "CSV"));
 
     enrichment.enrich("INV-9002", "NOPE", null, "KG", null, null, null);
 
@@ -103,7 +105,8 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             null,
             null,
             null,
-            rawRecord()));
+            rawRecord(),
+            "CSV"));
 
     enrichment.enrich("INV-9005", null, "BEEF RUMP CAP", "KG", null, null, null);
 
@@ -135,7 +138,8 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             null,
             null,
             null,
-            rawRecord()));
+            rawRecord(),
+            "CSV"));
 
     enrichment.enrich("INV-9006", "LIMES", "LIMES TRAY", "TRAY", null, null, null);
 
@@ -165,7 +169,8 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             null,
             null,
             null,
-            rawRecord()));
+            rawRecord(),
+            "CSV"));
 
     enrichment.enrich("INV-9003", "BEEF025", null, "KG", null, null, null);
     enrichment.enrich("INV-9003", "BEEF025", null, "KG", null, null, null);
@@ -195,7 +200,8 @@ class CanonicalInvoiceLineEnrichmentIntegrationTest {
             null,
             null,
             null,
-            rawRecord());
+            rawRecord(),
+            "CSV");
     lineService.record(csv);
 
     enrichment.enrich("INV-9004", "BEEF025", null, "KG", null, null, null);

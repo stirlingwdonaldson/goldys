@@ -58,7 +58,7 @@ public class CtbInvoicePdfReenrichRunner implements ApplicationRunner {
       try {
         // No filename: the raw PDF record does not retain it, so enrichment targets the invoice via
         // the number parsed from the PDF text (and reuses the invoice's stored filename for flags).
-        pdfEnrichment.enrich(pdf.bytes(), null);
+        pdfEnrichment.enrich(pdf.bytes(), null, pdf.id());
         replayed++;
       } catch (RuntimeException e) {
         log.warn("CTB invoice PDF replay failed for raw record {}", pdf.id(), e);

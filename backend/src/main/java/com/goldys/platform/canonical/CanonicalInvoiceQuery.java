@@ -1,5 +1,6 @@
 package com.goldys.platform.canonical;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,19 @@ public class CanonicalInvoiceQuery {
       return Optional.empty();
     }
     return repository.currentPdfFilenamesByInvoiceNumber(invoiceNumber).stream()
+        .filter(Objects::nonNull)
+        .findFirst();
+  }
+
+  /**
+   * The current ex-tax header amount for an invoice, or empty when unknown. An invoice number can
+   * have multiple current rows in principle, so the first non-null amount wins.
+   */
+  public Optional<BigDecimal> amountExTaxForInvoiceNumber(String invoiceNumber) {
+    if (invoiceNumber == null) {
+      return Optional.empty();
+    }
+    return repository.currentAmountsExTaxByInvoiceNumber(invoiceNumber).stream()
         .filter(Objects::nonNull)
         .findFirst();
   }

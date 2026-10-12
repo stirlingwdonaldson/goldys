@@ -20,7 +20,7 @@ class HybridInvoicePdfExtractorTest {
                 "INV-1",
                 List.of(
                     new PdfExtractedLine(
-                        "A", "apples", new BigDecimal("3"), "KG", null, null, null))));
+                        "A", "apples", new BigDecimal("3"), "KG", null, null, null, null))));
     LlmInvoicePdfExtractor llm = mock(LlmInvoicePdfExtractor.class);
 
     PdfExtractedInvoice out =
@@ -48,7 +48,8 @@ class HybridInvoicePdfExtractorTest {
                         "EACH",
                         null,
                         null,
-                        new BigDecimal("1.50")))));
+                        new BigDecimal("1.50"),
+                        null))));
 
     PdfExtractedInvoice out =
         new HybridInvoicePdfExtractor(List.of(deterministic), llm).extract("text");
@@ -67,7 +68,7 @@ class HybridInvoicePdfExtractorTest {
         .thenReturn(
             new PdfExtractedInvoice(
                 "INV-2",
-                List.of(new PdfExtractedLine("C", "cheese", null, "KG", null, null, null))));
+                List.of(new PdfExtractedLine("C", "cheese", null, "KG", null, null, null, null))));
     LlmInvoicePdfExtractor llm = mock(LlmInvoicePdfExtractor.class);
 
     PdfExtractedInvoice out =

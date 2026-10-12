@@ -43,6 +43,7 @@ public class BeverageCaseInvoicePdfExtractor extends LinearizedColumnPdfExtracto
         quantity.group(2),
         number(quantity.group(3)),
         null,
+        null,
         null);
   }
 }
