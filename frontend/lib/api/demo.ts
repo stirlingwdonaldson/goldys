@@ -39,6 +39,7 @@ import type {
   OverrideResult,
   ProductOverrideInput,
   RecipeCosting,
+  RecipeIngredient,
   RecomputeStatus,
   ReconciliationException,
   ReconciliationRecord,
@@ -746,6 +747,22 @@ function inDateRange(date: string, from?: string, to?: string): boolean {
   if (to && date > to) return false;
   return true;
 }
+
+// Recipe ingredient fixtures: one recipe with a full main + sub-recipe breakdown (the demo's
+// "Cheeseburger", recipe 3) and every other recipe empty — mirroring the ~52 recipes with no
+// lines. Includes a null quantity/cost line (broken link) and null suppliers. Demo data only.
+const demoRecipeIngredients: Record<number, RecipeIngredient[]> = {
+  3: [
+    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 101, stockId: 42, stockCode: "BUN", stockDescription: "Brioche bun", portionWeight: 1, unitOfMeasurement: "each", costPerQty: 0.9, costPerUnit: 0.9, supplierName: "Bakehouse" },
+    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 102, stockId: 43, stockCode: "BEEF", stockDescription: "Beef patty", portionWeight: 180, unitOfMeasurement: "grams", costPerQty: 3.2, costPerUnit: 0.0178, supplierName: "Butcher" },
+    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 103, stockId: 44, stockCode: "CHED", stockDescription: "Cheddar", portionWeight: 40, unitOfMeasurement: "grams", costPerQty: 0.8, costPerUnit: 0.02, supplierName: null },
+    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 104, stockId: null, stockCode: null, stockDescription: "Pickle", portionWeight: null, unitOfMeasurement: null, costPerQty: null, costPerUnit: null, supplierName: null },
+    { parentRecipeId: 3, lineRecipeId: 900, lineRecipeName: "Aioli", isSubRecipe: true, recipeDetailId: 201, stockId: 7, stockCode: "GARLIC", stockDescription: "Garlic", portionWeight: 5, unitOfMeasurement: "grams", costPerQty: 0.1, costPerUnit: 0.02, supplierName: "Greengrocer" },
+    { parentRecipeId: 3, lineRecipeId: 900, lineRecipeName: "Aioli", isSubRecipe: true, recipeDetailId: 202, stockId: 8, stockCode: "EGG", stockDescription: "Egg yolk", portionWeight: 15, unitOfMeasurement: "grams", costPerQty: 0.12, costPerUnit: 0.008, supplierName: "Greengrocer" },
+    { parentRecipeId: 3, lineRecipeId: 901, lineRecipeName: "Burger Sauce", isSubRecipe: true, recipeDetailId: 301, stockId: 9, stockCode: "TOMATO", stockDescription: "Tomato sauce", portionWeight: 20, unitOfMeasurement: "grams", costPerQty: 0.15, costPerUnit: 0.0075, supplierName: null },
+    { parentRecipeId: 3, lineRecipeId: 901, lineRecipeName: "Burger Sauce", isSubRecipe: true, recipeDetailId: 302, stockId: 10, stockCode: "MAYO", stockDescription: "Mayonnaise", portionWeight: 25, unitOfMeasurement: "grams", costPerQty: 0.2, costPerUnit: 0.008, supplierName: "Wholesaler" },
+  ],
+};
 
 export const demoApi: Api = {
   async getDashboardBootstrap(): Promise<DashboardBootstrap> {
@@ -1511,6 +1528,11 @@ export const demoApi: Api = {
       { recipeId: 3, name: "Cheeseburger", folder: "Mains", portionSize: "1", costPerPortion: 5.4, actualCost: 5.9, costGap: 0.5, menuPrice: 19.0, margin: 13.6, gpPercent: 0.7158 },
       { recipeId: 4, name: "Sticky Date Pudding", folder: "Dessert", portionSize: "6", costPerPortion: 1.9, actualCost: 2.1, costGap: 0.2, menuPrice: 11.0, margin: 9.1, gpPercent: 0.8273 },
     ];
+  },
+
+  async getRecipeIngredients(recipeId: number): Promise<RecipeIngredient[]> {
+    await delay(300);
+    return demoRecipeIngredients[recipeId] ?? [];
   },
 };
 

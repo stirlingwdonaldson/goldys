@@ -138,10 +138,14 @@ Reference/master data (small, slow-changing): `BusinessDepartmentActivity/GetAll
 
 ### Line detail (raw-only backfill — `ctb-detail-backfill`)
 
-The header-only datasets above have detail endpoints, ingested to the raw ledger only by a
+The header-only datasets above have detail endpoints, ingested to the raw ledger by a
 one-off backfill connector (`ctb-detail-backfill`, gated on `app.ctb-detail-backfill=true`),
 fetcher identities `ctb-stocktake-detail`, `ctb-wastage-detail`, `ctb-recipe-ingredients`,
-`ctb-recipe-cost`. No canonical/projection yet (slices B–D of the food-cost goal).
+`ctb-recipe-cost`. Recipe cost (`ctb-recipe-cost`) is canonicalized by the recipe-composition slice
+(D); recipe ingredients (`ctb-recipe-ingredients`) are canonicalized by the recipe-ingredients
+slice, replayed from the existing raw ledger by a flag-gated runner
+(`app.recipe-ingredients-canonicalize=true`). Stocktake and wastage detail remain raw-only (slices
+B–C).
 
 | Domain | Endpoint | Params | Returns |
 |---|---|---|---|
@@ -154,6 +158,19 @@ fetcher identities `ctb-stocktake-detail`, `ctb-wastage-detail`, `ctb-recipe-ing
 without the folder ids it returns a server-error envelope. `Statement/GetStatementDetailByStatementId`
 returns a non-JSON XHTML page (both `Statement/` and `ProformaInvoice/` paths) and is not ingested:
 the underlying invoices are already covered by the CSV/PDF pipeline.
+
+Recipe-ingredient scope (v1) — two deliberate limitations, documented not dropped:
+
+- **No sub-recipe cost roll-up.** `GetIngredientsIncludingSubRecipeIngredients` returns each
+  sub-recipe's *own* quantities, with **no field for how much of the sub-recipe the parent uses**,
+  so a true ingredient-level cost (scaling sub-recipe quantities into the parent) cannot be computed
+  yet. v1 stores the composition (main + sub-recipe lines, raw qty/unit, CTB cost, supplier,
+  `is_sub_recipe`) and leaves the roll-up to a later slice. A short spike probing
+  `RecipeBook/GetJITRecipeTreeNodes` (live-only, no captured schema) may reveal a usage quantity; no
+  production writes depend on it.
+- **No ongoing/incremental freshness.** v1 backfills from the *existing* raw ledger only. The
+  one-off `ctb-detail-backfill` is not scheduled, so new/changed ingredient lines do not arrive
+  until a daily-incremental detail schedule exists (Slice-A future work).
 
 Notes:
 
