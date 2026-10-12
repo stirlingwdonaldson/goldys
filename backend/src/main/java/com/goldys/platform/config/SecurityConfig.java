@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
  * Email + password session auth. Only the health, webhook, signup and login endpoints are public.
@@ -25,6 +26,19 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @Configuration
 public class SecurityConfig {
   private final ObjectMapper objectMapper = new ObjectMapper();
+
+  /**
+   * Token-gated server-to-server ingest endpoints. Every controller under {@code /api/ingest}
+   * performs its own shared-token check (via the {@code X-Webhook-Token} header or the {@code
+   * token} query param) and fails closed when the token is unset, so the whole subtree is public
+   * and CSRF-exempt. This single matcher replaces the earlier hand-copied list, which silently
+   * dropped {@code /api/ingest/lightspeed-zreport}. A webhook added under {@code /api/ingest} is
+   * covered automatically; never rely on session auth anywhere in this subtree (see {@code
+   * IngestWebhookSecurityTest}, which fails if a mapped ingest endpoint is not reachable without a
+   * session).
+   */
+  private static final RequestMatcher INGEST_WEBHOOKS =
+      AntPathRequestMatcher.antMatcher("/api/ingest/**");
 
   @Bean
   PasswordEncoder passwordEncoder() {
@@ -37,15 +51,7 @@ public class SecurityConfig {
         auth ->
             auth.requestMatchers(
                     AntPathRequestMatcher.antMatcher("/api/health"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-all-sales"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-payments"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-deleted-sales"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-sale-items"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/opentable"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/deputy"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/ctb-invoices"),
+                    INGEST_WEBHOOKS,
                     AntPathRequestMatcher.antMatcher("/api/auth/signup"),
                     AntPathRequestMatcher.antMatcher("/api/auth/login"),
                     // Prometheus scrape + load-balancer health checks are unauthenticated.
@@ -66,15 +72,7 @@ public class SecurityConfig {
     http.csrf(
         csrf ->
             csrf.ignoringRequestMatchers(
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-all-sales"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-products"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-payments"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-deleted-sales"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/lightspeed-sale-items"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/opentable"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/deputy"),
-                    AntPathRequestMatcher.antMatcher("/api/ingest/ctb-invoices"),
+                    INGEST_WEBHOOKS,
                     AntPathRequestMatcher.antMatcher("/api/auth/signup"),
                     AntPathRequestMatcher.antMatcher("/api/auth/login"))
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
