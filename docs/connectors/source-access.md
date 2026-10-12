@@ -136,6 +136,25 @@ Reference/master data (small, slow-changing): `BusinessDepartmentActivity/GetAll
 `MeasurementConversion/GetAllMeasurementConversions` (64),
 `RecipeCategory/GetAllRecipeCategories`, `Setting/GetCompanyInformation`.
 
+### Line detail (raw-only backfill — `ctb-detail-backfill`)
+
+The header-only datasets above have detail endpoints, ingested to the raw ledger only by a
+one-off backfill connector (`ctb-detail-backfill`, gated on `app.ctb-detail-backfill=true`),
+fetcher identities `ctb-stocktake-detail`, `ctb-wastage-detail`, `ctb-recipe-ingredients`,
+`ctb-recipe-cost`. No canonical/projection yet (slices B–D of the food-cost goal).
+
+| Domain | Endpoint | Params | Returns |
+|---|---|---|---|
+| Stocktake lines | `Stocktake/GetStocktakeDetailByStocktakeId` | `stocktakeId`,`start`,`limit` | counted lines (`qtyCount`/`qtyCount1-4`, custom UOM, `stocktakeDetailCost`, `subTotal`, `stocktakeAreaName`, `stockCode`/`stockDesc`, `recipeId`, `supplierName`) — paged, one raw record per page |
+| Wastage lines | `WastageRecord/GetWastageRecordDetailByWastageRecordId` | `wastageRecordId` | per-item line (`quantity`,`cost`,`reason`,`recipeId`,`unitSize`,…) — one request per id |
+| Recipe ingredients | `RecipeBook/GetIngredientsIncludingSubRecipeIngredients` | `recipeId` | ingredient line (`costPerQty`,`costPerUnit`,`portionWeight`,`isSubRecipeIngredient`,`isBrokenLink`,…) — one request per id |
+| Recipe cost (batched) | `RecipeBook/GetSelectedRecipeFullRecords` | `recipeIds` (JSON array), `recipeFolderIds=[]` | CTB derived cost per recipe (`costPerPortion`,`costPerPortionIncludingLabour`,`totalCost`,`portionSize`) — one batched call |
+
+`GetSelectedRecipeFullRecords` requires `recipeIds` as a JSON array **and** `recipeFolderIds=[]` —
+without the folder ids it returns a server-error envelope. `Statement/GetStatementDetailByStatementId`
+returns a non-JSON XHTML page (both `Statement/` and `ProformaInvoice/` paths) and is not ingested:
+the underlying invoices are already covered by the CSV/PDF pipeline.
+
 Notes:
 
 - **Verified live 2026-10-08** (counts have grown ~2 months since the Aug sample:
