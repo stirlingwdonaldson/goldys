@@ -1,27 +1,25 @@
 /**
  * Viewer-adjustable graph settings, modelled on Obsidian's graph view: display (text fade, node
- * size, link thickness) and forces (center, repel, link strength, link distance). Pure helpers
- * live here so the canvas stays a thin renderer.
+ * size, link thickness) and forces (center, repel, link). Pure helpers live here so the renderer
+ * stays thin.
  */
 
 export interface DisplaySettings {
-  /** -1..1. Lower shows labels at lower zoom; Obsidian's "text fade threshold". */
+  /** -1..1. Lower shows labels on smaller nodes / at lower zoom; Obsidian's "text fade threshold". */
   textFade: number;
-  /** 0.5..3, multiplies every node radius. */
+  /** 0.5..3, multiplies every node size. */
   nodeSize: number;
   /** 0.25..3, multiplies every link width. */
   linkThickness: number;
 }
 
 export interface ForceSettings {
-  /** 0..1, pull towards the middle. */
+  /** 0..1, pull towards the middle (ForceAtlas2 gravity). */
   center: number;
-  /** 0..20, how hard nodes push each other apart. */
+  /** 0..20, how hard nodes push each other apart (ForceAtlas2 scaling ratio). */
   repel: number;
-  /** 0..1, how hard links pull their ends together. */
+  /** 0..1, how much heavier links pull harder (ForceAtlas2 edge weight influence). */
   link: number;
-  /** 10..200, the length links settle at (graph units). */
-  distance: number;
 }
 
 export interface GraphSettings {
@@ -31,41 +29,42 @@ export interface GraphSettings {
 
 export const DEFAULT_SETTINGS: GraphSettings = {
   display: { textFade: 0, nodeSize: 1, linkThickness: 1 },
-  forces: { center: 0.5, repel: 10, link: 0.6, distance: 40 },
+  forces: { center: 0.3, repel: 8, link: 0.5 },
 };
 
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-
 /**
- * Node radius in graph units. Like Obsidian, connections drive size (hubs read as hubs); the
- * node's own `size` adds a little so a source outweighs a metric with the same degree.
+ * Node size in screen pixels at the default zoom (Sigma's `size`). Like Obsidian, connections drive
+ * size so hubs read as hubs; the node's own `size` adds a little so a source outweighs a metric
+ * with the same degree.
  */
-export function nodeRadius(degree: number, size: number, nodeSize: number): number {
-  return nodeSize * (2.6 + 1.2 * Math.sqrt(Math.max(0, degree)) + 0.35 * size);
+export function nodeSize(degree: number, size: number, scale: number): number {
+  return scale * (3.5 + 1.6 * Math.sqrt(Math.max(0, degree)) + 0.35 * size);
 }
 
 /**
- * Label opacity at a zoom level. Labels fade in over a short zoom band whose start moves with the
- * threshold: at 0 they begin at 1.4× and are solid by 2×; -1 starts at 0.8×, +1 at 2×. The default
- * keeps labels off at a fitted zoom, where half-faded overlapping text reads as noise.
+ * Sigma draws a node's label only once the node renders at least this many pixels, and nodes grow
+ * as you zoom, so labels fade in with zoom. The slider moves the threshold between 2px (almost
+ * every label) and 14px (only big nodes, or when zoomed right in).
  */
-export function labelAlpha(zoom: number, textFade: number): number {
-  const start = 1.4 + 0.6 * textFade;
-  return clamp((zoom - start) / 0.6, 0, 1);
+export function labelThreshold(textFade: number): number {
+  return 8 + 6 * Math.max(-1, Math.min(1, textFade));
 }
 
-/** Maps the force settings onto d3-force parameters. */
-export function d3Forces(forces: ForceSettings): {
-  charge: number;
-  linkStrength: number;
-  linkDistance: number;
-  centerStrength: number;
-} {
+/**
+ * Maps the force sliders onto ForceAtlas2 settings. Strong-gravity mode with size-aware repulsion
+ * settles into a round, Obsidian-like cloud without overlapping nodes; the default linear gravity
+ * stretches tree-like graphs (the platform map) into a long thin column.
+ */
+export function fa2Settings(forces: ForceSettings) {
   return {
-    charge: -forces.repel * 6,
-    linkStrength: forces.link,
-    linkDistance: forces.distance,
-    centerStrength: forces.center,
+    gravity: 0.05 + forces.center,
+    scalingRatio: 2 + forces.repel * 2,
+    edgeWeightInfluence: forces.link * 2,
+    strongGravityMode: true,
+    adjustSizes: true,
+    linLogMode: false,
+    barnesHutOptimize: false,
+    slowDown: 2,
   };
 }
 

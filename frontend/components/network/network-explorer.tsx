@@ -311,15 +311,6 @@ export function NetworkExplorer({
             step={0.01}
             onChange={(link) => updateSettings({ ...settings, forces: { ...settings.forces, link } })}
           />
-          <SettingsSlider
-            label="Link distance"
-            value={settings.forces.distance}
-            min={10}
-            max={200}
-            step={1}
-            format={(v) => String(Math.round(v))}
-            onChange={(distance) => updateSettings({ ...settings, forces: { ...settings.forces, distance } })}
-          />
         </SettingsSection>
       </GraphSettingsPanel>
 

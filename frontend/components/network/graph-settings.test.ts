@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_SETTINGS,
-  d3Forces,
-  labelAlpha,
-  nodeRadius,
+  fa2Settings,
+  labelThreshold,
+  nodeSize,
   readSettings,
   writeSettings,
 } from "./graph-settings";
@@ -13,37 +13,33 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
-describe("nodeRadius", () => {
+describe("nodeSize", () => {
   it("grows with connections and scales with the node size setting", () => {
-    expect(nodeRadius(9, 3, 1)).toBeGreaterThan(nodeRadius(1, 3, 1));
-    expect(nodeRadius(4, 3, 2)).toBeCloseTo(nodeRadius(4, 3, 1) * 2);
+    expect(nodeSize(9, 3, 1)).toBeGreaterThan(nodeSize(1, 3, 1));
+    expect(nodeSize(4, 3, 2)).toBeCloseTo(nodeSize(4, 3, 1) * 2);
   });
 
   it("treats a negative degree as zero", () => {
-    expect(nodeRadius(-3, 0, 1)).toBe(nodeRadius(0, 0, 1));
+    expect(nodeSize(-3, 0, 1)).toBe(nodeSize(0, 0, 1));
   });
 });
 
-describe("labelAlpha", () => {
-  it("fades labels in as you zoom", () => {
-    expect(labelAlpha(1.2, 0)).toBe(0);
-    expect(labelAlpha(1.7, 0)).toBeCloseTo(0.5);
-    expect(labelAlpha(2.4, 0)).toBe(1);
-  });
-
-  it("shows labels earlier at a lower threshold", () => {
-    expect(labelAlpha(1.4, -1)).toBe(1);
-    expect(labelAlpha(1.4, 1)).toBe(0);
+describe("labelThreshold", () => {
+  it("moves between 2px and 14px with the slider, clamped", () => {
+    expect(labelThreshold(0)).toBe(8);
+    expect(labelThreshold(-1)).toBe(2);
+    expect(labelThreshold(1)).toBe(14);
+    expect(labelThreshold(5)).toBe(14);
   });
 });
 
-describe("d3Forces", () => {
-  it("turns repel into a negative charge", () => {
-    expect(d3Forces(DEFAULT_SETTINGS.forces)).toEqual({
-      charge: -60,
-      linkStrength: 0.6,
-      linkDistance: 40,
-      centerStrength: 0.5,
+describe("fa2Settings", () => {
+  it("maps the sliders onto ForceAtlas2", () => {
+    expect(fa2Settings(DEFAULT_SETTINGS.forces)).toMatchObject({
+      gravity: 0.35,
+      scalingRatio: 18,
+      edgeWeightInfluence: 1,
+      strongGravityMode: true,
     });
   });
 });

@@ -179,10 +179,12 @@ from earlier drafts still hold:
   `href` makes it a link.
 - **Relationships — force-directed networks.** When the point is *what is
   related to what* (what depends on a source, which products sell together),
-  use `components/network/NetworkExplorer` (`react-force-graph-2d`), styled
+  use `components/network/NetworkExplorer` (Sigma.js + ForceAtlas2), styled
   after Obsidian's graph view: the canvas is the whole surface; nodes are small
   flat dots sized by their connections, grey unless a colour group matches;
-  links are hairlines; labels fade in with zoom. Hovering paints a node and its
+  links are hairlines; labels appear with zoom through Sigma's label grid, so
+  they never overprint. Faint colours are opaque mixes toward the card
+  background, not transparency (thin translucent WebGL lines vanish). Hovering paints a node and its
   links in the accent (`--chart-3`) and fades the rest. Settings float in a
   collapsible top-right card (Filters, Groups, Display, Forces) and the focused
   node's details in a bottom-left card. Colour groups (`NetworkGroupSet`) follow
