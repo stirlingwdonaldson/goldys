@@ -1,0 +1,13 @@
+# TimesFM inference service runtime dependencies.
+# torch is installed separately from the CPU-only wheel index in the Dockerfile;
+# listed here so a bare `pip install -r requirements.txt` still resolves it.
+fastapi
+uvicorn[standard]
+pydantic
+numpy
+torch
+timesfm>=3.0.0
+
+# Test-only (the FastAPI TestClient needs httpx; pytest runs test_app.py).
+httpx
+pytest

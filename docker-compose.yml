@@ -29,5 +29,23 @@ services:
     volumes:
       - goldys_pg_data:/var/lib/postgresql/data
 
+  # Self-hosted TimesFM inference service (Python/FastAPI) for forecasting. The model
+  # is downloaded lazily on first warm-up into TIMESFM_CACHE_DIR, mounted as a named
+  # volume so restarts don't re-download it. Production wiring (docker-compose.prod.yml)
+  # is gated on explicit approval in Task 9.
+  timesfm:
+    build: ./forecast-service
+    ports:
+      - "8001:8001"
+    volumes:
+      - timesfm_cache:/timesfm-cache
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
 volumes:
   goldys_pg_data:
+  timesfm_cache:
