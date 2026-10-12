@@ -32,7 +32,9 @@ of it:
 
 ## Consequences
 
-- **Deploy** adds a container to the stack (plus a model-download/cache volume).
+- **Deploy** adds a container to the stack (plus a model-download/cache volume). Prod compose
+  wiring for the `timesfm` service is pending explicit approval (not yet added to
+  `docker-compose.prod.yml`).
 - **Latency** — 330M params on CPU is seconds-to-tens-of-seconds per forecast; the async
   `forecast_run` lifecycle absorbs this, and the port makes a GPU box or a lighter checkpoint a
   deploy-only change.
