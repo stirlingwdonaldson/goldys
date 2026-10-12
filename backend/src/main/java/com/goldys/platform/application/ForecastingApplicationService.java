@@ -234,6 +234,8 @@ public class ForecastingApplicationService {
 
   private ForecastSeriesPointDto toSeriesPoint(ForecastDay day) {
     Map<String, BigDecimal> quantiles = day.quantiles();
+    // A missing/NaN decile is surfaced as null (not a number) so the chart can gap the point
+    // rather than the whole run failing; the DTO's BigDecimal fields accept null.
     return new ForecastSeriesPointDto(
         day.date(), quantiles.get("0.5"), quantiles.get("0.1"), quantiles.get("0.9"));
   }

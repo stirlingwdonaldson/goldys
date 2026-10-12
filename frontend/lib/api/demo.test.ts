@@ -228,8 +228,8 @@ describe("demoApi forecasting", () => {
     expect(run.series).not.toBeNull();
     expect(run.series!.length).toBe(7);
     for (const p of run.series!) {
-      expect(p.p10).toBeLessThanOrEqual(p.median);
-      expect(p.median).toBeLessThanOrEqual(p.p90);
+      expect(p.p10!).toBeLessThanOrEqual(p.median!);
+      expect(p.median!).toBeLessThanOrEqual(p.p90!);
       expect(p.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
 
@@ -254,8 +254,8 @@ describe("demoApi forecasting", () => {
     expect(run.series).not.toBeNull();
     expect(run.series!.length).toBeGreaterThan(0);
     for (const p of run.series!) {
-      expect(p.p10).toBeLessThanOrEqual(p.median);
-      expect(p.median).toBeLessThanOrEqual(p.p90);
+      expect(p.p10!).toBeLessThanOrEqual(p.median!);
+      expect(p.median!).toBeLessThanOrEqual(p.p90!);
       expect(p.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
   });

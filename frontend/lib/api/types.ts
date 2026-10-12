@@ -602,9 +602,10 @@ export interface ForecastMetric {
 export interface ForecastSeriesPoint {
   /** Forecast date, YYYY-MM-DD. */
   date: string;
-  median: number;
-  p10: number;
-  p90: number;
+  /** A decile is `null` when the model had no estimate for it (NaN serialised as JSON null). */
+  median: number | null;
+  p10: number | null;
+  p90: number | null;
 }
 
 /**
