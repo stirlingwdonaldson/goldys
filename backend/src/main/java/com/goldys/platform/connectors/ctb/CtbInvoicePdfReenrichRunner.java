@@ -136,12 +136,14 @@ public class CtbInvoicePdfReenrichRunner implements ApplicationRunner {
         matched++;
       }
     }
+    int duplicates = flags.retireDuplicatePdfOnlyLineFlags();
     log.info(
         "CTB invoice PDF replay resolved {} flagged lines: {} now matched, {} annotations, "
-            + "{} against an invoice number the CTB export does not know",
-        matched + annotations + unknownInvoice,
+            + "{} against an invoice number the CTB export does not know, {} duplicate",
+        matched + annotations + unknownInvoice + duplicates,
         matched,
         annotations,
-        unknownInvoice);
+        unknownInvoice,
+        duplicates);
   }
 }
