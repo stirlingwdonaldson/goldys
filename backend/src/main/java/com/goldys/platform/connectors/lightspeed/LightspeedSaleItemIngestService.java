@@ -10,12 +10,15 @@ import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
+import com.goldys.platform.ingestion.RawLedgerQuery;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -27,6 +30,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LightspeedSaleItemIngestService {
+  private static final Logger log = LoggerFactory.getLogger(LightspeedSaleItemIngestService.class);
+
   private static final ObjectMapper MAPPER =
       new ObjectMapper(
           JsonFactory.builder()
@@ -60,7 +65,7 @@ public class LightspeedSaleItemIngestService {
 
     List<LightspeedSaleItem> items;
     try {
-      items = parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+      items = parseItems(body);
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
       throw e;
@@ -71,29 +76,7 @@ public class LightspeedSaleItemIngestService {
         items.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
 
     try {
-      for (LightspeedSaleItem it : items) {
-        canonical.record(
-            new SaleItemInput(
-                "LIGHTSPEED",
-                it.receiptLineId(),
-                it.saleDate(),
-                it.saleNumber(),
-                it.itemName(),
-                it.productNumber(),
-                it.sku(),
-                it.categoryName(),
-                nz(it.quantity()),
-                nz(it.amount()),
-                it.soldPriceIncTax(),
-                it.totalTax(),
-                it.costIncTax(),
-                it.orderType(),
-                it.saleType(),
-                it.staffName(),
-                it.registerName(),
-                it.tableNumber(),
-                rawId));
-      }
+      recordItems(items, rawId);
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
       throw e;
@@ -102,6 +85,51 @@ public class LightspeedSaleItemIngestService {
         rawId,
         IngestionStageKind.CANONICALIZED,
         items.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
+  }
+
+  /**
+   * Re-parse one already-persisted raw payload into canonical rows, without re-persisting it. Used
+   * to recover sale-items reports that were stored before the {@code maxStringLength} fix but never
+   * successfully canonicalized. Idempotent: a re-parsed row whose facts are unchanged is a no-op at
+   * the canonical layer. An unparseable payload (e.g. a source-side truncated report) is logged and
+   * skipped rather than aborting the pass.
+   */
+  public void backfill(RawLedgerQuery.RawPayload payload) {
+    try {
+      recordItems(parseItems(payload.bytes()), payload.id());
+    } catch (RuntimeException e) {
+      log.warn("Lightspeed sale-items replay failed for raw record {}", payload.id(), e);
+    }
+  }
+
+  private List<LightspeedSaleItem> parseItems(byte[] body) {
+    return parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+  }
+
+  private void recordItems(List<LightspeedSaleItem> items, UUID rawId) {
+    for (LightspeedSaleItem it : items) {
+      canonical.record(
+          new SaleItemInput(
+              "LIGHTSPEED",
+              it.receiptLineId(),
+              it.saleDate(),
+              it.saleNumber(),
+              it.itemName(),
+              it.productNumber(),
+              it.sku(),
+              it.categoryName(),
+              nz(it.quantity()),
+              nz(it.amount()),
+              it.soldPriceIncTax(),
+              it.totalTax(),
+              it.costIncTax(),
+              it.orderType(),
+              it.saleType(),
+              it.staffName(),
+              it.registerName(),
+              it.tableNumber(),
+              rawId));
+    }
   }
 
   private static String extractCsv(byte[] body) {

@@ -102,6 +102,7 @@ services:
       # Recipe-cost canonicalization (one-off, off by default). Runs only after the
       # ctb-detail-backfill has populated the ctb-recipe-cost raw records.
       APP_RECIPE_COST_CANONICALIZE: ${APP_RECIPE_COST_CANONICALIZE:-}
+      APP_LIGHTSPEED_SALE_ITEMS_REPLAY: ${APP_LIGHTSPEED_SALE_ITEMS_REPLAY:-}
       # Forecasting (TimesFM). The feature is off until the timesfm service is wired and
       # FORECASTING_TIMESFM_ENABLED=true is set in .env.prod.
       FORECASTING_TIMESFM_ENABLED: ${FORECASTING_TIMESFM_ENABLED:-false}

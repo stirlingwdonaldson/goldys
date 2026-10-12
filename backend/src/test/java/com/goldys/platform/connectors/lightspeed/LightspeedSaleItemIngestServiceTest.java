@@ -13,6 +13,7 @@ import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
+import com.goldys.platform.ingestion.RawLedgerQuery;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -127,5 +128,26 @@ class LightspeedSaleItemIngestServiceTest {
     service().ingest(big);
 
     verify(parser).parse(any());
+  }
+
+  @Test
+  void backfillReParsesWithoutRePersisting() {
+    UUID rawId = UUID.randomUUID();
+    when(parser.parse(any())).thenReturn(List.of(item()));
+
+    service().backfill(new RawLedgerQuery.RawPayload(rawId, body()));
+
+    verify(ingestion, never()).ingestPush(any(), any(), any(), any(), any(), any(), any());
+    verify(canonical).record(any(SaleItemInput.class));
+  }
+
+  @Test
+  void backfillSkipsAnUnparseablePayload() {
+    UUID rawId = UUID.randomUUID();
+    when(parser.parse(any())).thenThrow(new RuntimeException("truncated source payload"));
+
+    service().backfill(new RawLedgerQuery.RawPayload(rawId, body()));
+
+    verify(canonical, never()).record(any());
   }
 }

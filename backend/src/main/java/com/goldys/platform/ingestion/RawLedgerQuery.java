@@ -26,6 +26,16 @@ public class RawLedgerQuery {
         .toList();
   }
 
+  /** Raw-record ids of one fetcher identity (dataset key), for replay/backfill. */
+  public List<UUID> rawRecordIdsForFetcher(String fetcherIdentity) {
+    return rawRecords.findIdsByFetcherIdentity(fetcherIdentity);
+  }
+
+  /** The stored bytes of one raw record (a defensive copy), for replay. */
+  public byte[] payloadBytes(UUID id) {
+    return rawRecords.findById(id).map(RawRecord::payloadBytes).orElse(null);
+  }
+
   /** Stored payloads of one source and fetcher identity (e.g. the batched recipe-cost page). */
   public List<RawPayload> rawPayloadsForFetcher(String sourceSystem, String fetcherIdentity) {
     return rawRecords.findBySourceSystemAndFetcherIdentity(sourceSystem, fetcherIdentity).stream()
