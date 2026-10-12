@@ -59,6 +59,7 @@ services:
     environment:
       TIMESFM_MODEL: ${TIMESFM_MODEL:-google/timesfm-3.0-pytorch}
       TIMESFM_DEVICE: ${TIMESFM_DEVICE:-cpu}
+      TIMESFM_PREWARM: ${TIMESFM_PREWARM:-false}
     volumes:
       - timesfm_cache:/timesfm-cache
     restart: unless-stopped
