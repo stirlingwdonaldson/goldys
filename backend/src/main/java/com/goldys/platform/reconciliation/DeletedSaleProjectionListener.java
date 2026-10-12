@@ -1,14 +1,10 @@
 package com.goldys.platform.reconciliation;
 
 import com.goldys.platform.canonical.DeletedSaleRecorded;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Projects a date's resolved deleted-sale totals whenever a canonical deleted-sale fact is
@@ -17,30 +13,27 @@ import org.springframework.stereotype.Component;
  * <p>Recompute is debounced: bulk ingestion records thousands of facts in a burst, so recomputing
  * per fact is quadratic and OOMs the heap. Instead the affected dates are collected and each is
  * recomputed once, shortly after the burst settles.
+ *
+ * <p>The event is handled {@link TransactionPhase#AFTER_COMMIT} so a flush never recomputes before
+ * the writer's transaction has committed; {@code fallbackExecution} keeps a non-transactional
+ * publish working synchronously.
  */
 @Component
 public class DeletedSaleProjectionListener {
   private final DeletedSaleProjector projector;
-  private final Set<LocalDate> pendingDates = ConcurrentHashMap.newKeySet();
+  private final DebouncedProjectionFlusher flusher = new DebouncedProjectionFlusher();
 
   public DeletedSaleProjectionListener(DeletedSaleProjector projector) {
     this.projector = projector;
   }
 
-  @EventListener
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
   public void on(DeletedSaleRecorded event) {
-    pendingDates.add(event.tradingDate());
+    flusher.enqueue(event.tradingDate());
   }
 
   @Scheduled(fixedDelay = 2000)
   public void flushPendingDates() {
-    if (pendingDates.isEmpty()) {
-      return;
-    }
-    List<LocalDate> dates = new ArrayList<>(pendingDates);
-    pendingDates.clear();
-    for (LocalDate date : dates) {
-      projector.recompute(date);
-    }
+    flusher.flush(projector::recompute);
   }
 }
