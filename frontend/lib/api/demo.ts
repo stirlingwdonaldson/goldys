@@ -8,9 +8,14 @@ import type {
   ConversationMessage,
   ConversationThreadSummary,
   ConversationThreadView,
+  CreateForecastInput,
   DailySales,
   DataPage,
   EntityDescriptor,
+  ForecastComparison,
+  ForecastMetric,
+  ForecastRun,
+  ForecastSeriesPoint,
   GenericRow,
   RawRecordDetail,
   RawRecordFilter,
@@ -635,6 +640,74 @@ const demoSaleItemMix: SaleItemMix[] = [
   { tradingDate: "2026-10-04", categoryName: "Beer", quantity: 3, amount: 35.0, hasConflict: false },
   { tradingDate: "2026-10-05", categoryName: "Food", quantity: 2, amount: 54.5, hasConflict: false },
 ];
+
+// Forecasting demo fixtures: the forecastable metric picker plus a queued and a succeeded run so
+// the forecasting screen renders (list, run history, and a comparison) without a backend.
+const demoForecastMetrics: ForecastMetric[] = [
+  { metric: "sales.gross", name: "Gross sales", unit: "AUD", sourceDomain: "resolved_daily_sales", requiredPermission: "reconciliation.sales" },
+  { metric: "sales.net", name: "Net sales", unit: "AUD", sourceDomain: "resolved_daily_sales", requiredPermission: "reconciliation.sales" },
+  { metric: "reservations.covers", name: "Covers", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
+  { metric: "reservations.bookings", name: "Bookings", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
+  { metric: "labour.cost", name: "Labour cost", unit: "AUD", sourceDomain: "resolved_labour_day", requiredPermission: "labour.cost" },
+  { metric: "inventory.food_cost_percent", name: "Food cost %", unit: "%", sourceDomain: "derived", requiredPermission: "inventory.cost" },
+];
+
+/** A deterministic median/p10/p90 series: p10 < median < p90 on every day. */
+function demoForecastSeries(historyTo: string, horizonDays: number): ForecastSeriesPoint[] {
+  const points: ForecastSeriesPoint[] = [];
+  const start = new Date(`${historyTo}T00:00:00Z`);
+  for (let i = 0; i < horizonDays; i++) {
+    const day = new Date(start);
+    day.setUTCDate(day.getUTCDate() + 1 + i);
+    const date = day.toISOString().slice(0, 10);
+    const median = Math.round(9600 + 400 * Math.sin(i * 0.9) + i * 120);
+    const spread = Math.round(median * 0.06);
+    points.push({ date, median, p10: median - spread, p90: median + spread });
+  }
+  return points;
+}
+
+const demoForecastRuns: ForecastRun[] = [
+  {
+    id: "fc-2",
+    status: "SUCCEEDED",
+    targetMetric: "sales.gross",
+    covariates: ["reservations.covers"],
+    historyFrom: "2026-09-26",
+    historyTo: "2026-10-05",
+    horizonDays: 7,
+    createdAt: "2026-10-06T02:00:00Z",
+    series: demoForecastSeries("2026-10-05", 7),
+    errorMessage: null,
+    modelVersion: "timesfm-1.0",
+  },
+  {
+    id: "fc-1",
+    status: "QUEUED",
+    targetMetric: "reservations.covers",
+    covariates: [],
+    historyFrom: "2026-09-27",
+    historyTo: "2026-10-06",
+    horizonDays: 14,
+    createdAt: "2026-10-06T01:30:00Z",
+    series: null,
+    errorMessage: null,
+    modelVersion: null,
+  },
+];
+
+const demoForecastComparison: ForecastComparison = {
+  runId: "fc-2",
+  mape: 0.0412,
+  mae: 512.4,
+  points: [
+    { date: "2026-10-06", predictedMedian: 9600, actual: 9254.1 },
+    { date: "2026-10-07", predictedMedian: 9913, actual: 10260.4 },
+    { date: "2026-10-08", predictedMedian: 10152, actual: 9877.0 },
+    { date: "2026-10-09", predictedMedian: 10416, actual: null },
+    { date: "2026-10-10", predictedMedian: 10704, actual: null },
+  ],
+};
 
 /** Inclusive ISO-date range check (string comparison is safe for YYYY-MM-DD). */
 function inDateRange(date: string, from?: string, to?: string): boolean {
@@ -1364,6 +1437,52 @@ export const demoApi: Api = {
   async getSaleItemMix(from: string, to: string): Promise<SaleItemMix[]> {
     await delay(300);
     return demoSaleItemMix.filter((m) => inDateRange(m.tradingDate, from, to));
+  },
+
+  async listForecastMetrics(): Promise<ForecastMetric[]> {
+    await delay(300);
+    return demoForecastMetrics;
+  },
+
+  async createForecastRun(input: CreateForecastInput): Promise<ForecastRun> {
+    await delay(400);
+    const from = new Date(`${input.historyFrom}T00:00:00Z`);
+    const to = new Date(from);
+    to.setUTCDate(to.getUTCDate() + 9);
+    return {
+      id: "fc-1",
+      status: "QUEUED",
+      targetMetric: input.target,
+      covariates: [...input.covariates],
+      historyFrom: input.historyFrom,
+      historyTo: to.toISOString().slice(0, 10),
+      horizonDays: input.horizonDays,
+      createdAt: new Date().toISOString(),
+      series: null,
+      errorMessage: null,
+      modelVersion: null,
+    };
+  },
+
+  async listForecastRuns(): Promise<ForecastRun[]> {
+    await delay(300);
+    return demoForecastRuns;
+  },
+
+  async getForecastRun(id: string): Promise<ForecastRun> {
+    await delay(300);
+    const run = demoForecastRuns.find((r) => r.id === id);
+    if (!run) throw new ApiError("VALIDATION_FAILED", `No forecast run with id ${id}.`);
+    return run;
+  },
+
+  async getForecastComparison(id: string): Promise<ForecastComparison> {
+    await delay(300);
+    const run = demoForecastRuns.find((r) => r.id === id);
+    if (!run) throw new ApiError("VALIDATION_FAILED", `No forecast run with id ${id}.`);
+    return id === demoForecastComparison.runId
+      ? demoForecastComparison
+      : { runId: id, mape: null, mae: null, points: [] };
   },
 };
 

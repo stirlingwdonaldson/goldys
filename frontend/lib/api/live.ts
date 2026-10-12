@@ -11,12 +11,16 @@ import type {
   ConnectorStatus,
   ConversationThreadSummary,
   ConversationThreadView,
+  CreateForecastInput,
   DashboardBootstrap,
   DashboardDocument,
   DashboardRevisionSummary,
   DashboardSharing,
   DashboardSummary,
   DashboardTemplate,
+  ForecastComparison,
+  ForecastMetric,
+  ForecastRun,
   ProductOverrideInput,
   RecomputeStatus,
   ReconciliationException,
@@ -208,4 +212,15 @@ export const liveApi: Api = {
     fetchApi<import("./types").DeletedSaleDay[]>(`/api/deleted-sales/totals?from=${from}&to=${to}`),
   getSaleItemMix: (from: string, to: string) =>
     fetchApi<import("./types").SaleItemMix[]>(`/api/sale-items/mix?from=${from}&to=${to}`),
+  listForecastMetrics: () => fetchApi<ForecastMetric[]>("/api/forecasting/metrics"),
+  createForecastRun: (input: CreateForecastInput) =>
+    fetchApi<ForecastRun>("/api/forecasting/runs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  listForecastRuns: () => fetchApi<ForecastRun[]>("/api/forecasting/runs"),
+  getForecastRun: (id: string) => fetchApi<ForecastRun>(`/api/forecasting/runs/${id}`),
+  getForecastComparison: (id: string) =>
+    fetchApi<ForecastComparison>(`/api/forecasting/runs/${id}/comparison`),
 };
