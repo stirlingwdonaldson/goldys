@@ -61,9 +61,8 @@ class TimesFmHttpClientTest {
       assertThat(body.get("dates").get(1).asText()).isEqualTo("2026-10-12");
       assertThat(body.get("target").get(0).decimalValue()).isEqualByComparingTo("100.0");
       assertThat(body.get("target").get(1).decimalValue()).isEqualByComparingTo("110.0");
-      JsonNode covariate = body.get("covariates").get(0);
-      assertThat(covariate.get("name").asText()).isEqualTo("covers");
-      assertThat(covariate.get("values").get(0).decimalValue()).isEqualByComparingTo("50");
+      JsonNode covariateValues = body.get("covariates").get("covers");
+      assertThat(covariateValues.get(0).decimalValue()).isEqualByComparingTo("50");
       assertThat(body.get("horizon").asInt()).isEqualTo(2);
       assertThat(body.get("freq").asText()).isEqualTo("D");
       assertThat(body.get("quantiles").get(0).asText()).isEqualTo("0.1");
@@ -152,7 +151,7 @@ class TimesFmHttpClientTest {
       JsonNode body = MAPPER.readTree(captured.get());
       assertThat(body.get("target").get(0).decimalValue()).isEqualByComparingTo("100.0");
       assertThat(body.get("target").get(1).isNull()).isTrue();
-      JsonNode values = body.get("covariates").get(0).get("values");
+      JsonNode values = body.get("covariates").get("covers");
       assertThat(values.size()).isEqualTo(2);
       assertThat(values.get(0).isNull()).isTrue();
       assertThat(values.get(1).decimalValue()).isEqualByComparingTo("55");

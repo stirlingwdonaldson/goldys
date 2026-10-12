@@ -73,7 +73,11 @@ public class TimesFmHttpClient implements TimesFmClient {
       ObjectNode body = mapper.createObjectNode();
       body.set("dates", mapper.valueToTree(request.dates()));
       body.set("target", mapper.valueToTree(request.target()));
-      body.set("covariates", mapper.valueToTree(request.covariates()));
+      ObjectNode covariates = mapper.createObjectNode();
+      for (TimesFmRequest.Covariate covariate : request.covariates()) {
+        covariates.set(covariate.name(), mapper.valueToTree(covariate.values()));
+      }
+      body.set("covariates", covariates);
       body.put("horizon", request.horizonDays());
       body.put("freq", "D");
       body.set("quantiles", mapper.valueToTree(request.quantiles()));
