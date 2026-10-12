@@ -311,4 +311,42 @@ class ArchitectureBoundariesTest {
           .haveSimpleNameEndingWith("Dto")
           .should()
           .resideInAPackage("..semantic..");
+
+  /**
+   * The forecasting domain is a leaf: it composes the semantic catalogue and auth with its own JPA
+   * persistence, and never reaches the reconciliation/canonical/ingestion internals or the API /
+   * application delivery layers.
+   */
+  @ArchTest
+  static final ArchRule forecastingIsALeaf =
+      noClasses()
+          .that()
+          .resideInAPackage("..forecasting..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "..reconciliation..", "..canonical..", "..ingestion..", "..api..", "..application..");
+
+  /** The forecasting application service is the single bridge into the forecasting domain. */
+  @ArchTest
+  static final ArchRule forecastingApplicationServiceBridgesForecasting =
+      classes()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.application.ForecastingApplicationService")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..forecasting..");
+
+  /** The forecasting controller must not read canonical source facts or the raw ledger directly. */
+  @ArchTest
+  static final ArchRule forecastingControllerDoesNotReadCanonical =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.api.ForecastingController")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..canonical..")
+          .orShould()
+          .dependOnClassesThat()
+          .haveFullyQualifiedName("com.goldys.platform.ingestion.RawLedgerQuery");
 }
