@@ -173,10 +173,10 @@ class CanonicalPayment extends BitemporalEntity {
         && Objects.equals(paymentSourceType, input.paymentSourceType())
         && Objects.equals(lspayPaymentMode, input.lspayPaymentMode())
         && Objects.equals(clearingAccount, input.clearingAccount())
-        && Objects.equals(amount, input.amount())
-        && Objects.equals(tip, input.tip())
-        && Objects.equals(tendered, input.tendered())
-        && Objects.equals(surcharge, input.surcharge())
+        && sameAmount(amount, input.amount())
+        && sameAmount(tip, input.tip())
+        && sameAmount(tendered, input.tendered())
+        && sameAmount(surcharge, input.surcharge())
         && paymentCount == input.paymentCount()
         && tipCount == input.tipCount()
         && Objects.equals(reconciled, input.reconciled())
@@ -186,6 +186,13 @@ class CanonicalPayment extends BitemporalEntity {
         && Objects.equals(staffCode, input.staffCode())
         && Objects.equals(siteId, input.siteId())
         && Objects.equals(customerName, input.customerName());
+  }
+
+  private static boolean sameAmount(BigDecimal a, BigDecimal b) {
+    if (a == null || b == null) {
+      return a == b;
+    }
+    return a.compareTo(b) == 0;
   }
 
   LocalDate tradingDate() {
