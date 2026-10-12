@@ -2,9 +2,14 @@ package com.goldys.platform.canonical;
 
 import com.goldys.platform.semantic.DataPage;
 import com.goldys.platform.semantic.PaymentRow;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +35,43 @@ public class CanonicalPaymentQuery {
   /** Current payments whose trading date falls in {@code dates}. */
   public List<PaymentView> currentPaymentsForDates(Collection<LocalDate> dates) {
     return repository.findCurrentByTradingDateIn(dates).stream().map(this::toView).toList();
+  }
+
+  /**
+   * Sum of current payment amounts per trading date over an inclusive range, with a representative
+   * raw-record id for provenance. Used to derive daily-sales totals for a window the Lightspeed
+   * daily report did not cover (e.g. Q1 2026).
+   */
+  public List<PaymentDailyTotal> dailyTotals(LocalDate from, LocalDate to) {
+    Map<LocalDate, MutableDailyTotal> byDate = new LinkedHashMap<>();
+    for (CanonicalPayment p : repository.findCurrentByTradingDateBetween(from, to)) {
+      byDate
+          .computeIfAbsent(p.tradingDate(), d -> new MutableDailyTotal(p.rawRecordId()))
+          .add(p.amount());
+    }
+    return byDate.entrySet().stream()
+        .map(e -> new PaymentDailyTotal(e.getKey(), e.getValue().total, e.getValue().rawRecordId))
+        .sorted(Comparator.comparing(PaymentDailyTotal::tradingDate))
+        .toList();
+  }
+
+  /** A trading date's summed payment amount plus a representative raw record for provenance. */
+  public record PaymentDailyTotal(
+      LocalDate tradingDate, BigDecimal totalAmount, UUID rawRecordId) {}
+
+  private static final class MutableDailyTotal {
+    final UUID rawRecordId;
+    BigDecimal total = BigDecimal.ZERO;
+
+    MutableDailyTotal(UUID rawRecordId) {
+      this.rawRecordId = rawRecordId;
+    }
+
+    void add(BigDecimal amount) {
+      if (amount != null) {
+        total = total.add(amount);
+      }
+    }
   }
 
   /**
