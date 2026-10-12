@@ -8,7 +8,8 @@ numpy
 torch
 # TimesFM 3.0 is installed from the google-research git repo (provides the `timesfm3` module
 # and the `TimesFM3Forecaster` API); the PyPI `timesfm` package only ships the old 1.x API.
-git+https://github.com/google-research/timesfm.git
+# Pinned to the v3.0.2 commit so a future upstream change can't silently drift the API.
+git+https://github.com/google-research/timesfm.git@8cb0628371af142e16b8c232cc9fbf667ffb12f9
 
 # Test-only (the FastAPI TestClient needs httpx; pytest runs test_app.py).
 httpx

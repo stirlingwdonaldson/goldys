@@ -50,6 +50,26 @@ services:
 
     restart: unless-stopped
 
+  # Self-hosted TimesFM inference service for forecasting. Internal-only (no published
+  # port): the backend reaches it over the compose network. The model is downloaded on
+  # first warm-up into the cache volume so a redeploy never re-downloads it.
+  timesfm:
+    build:
+      context: ./forecast-service
+    environment:
+      TIMESFM_MODEL: ${TIMESFM_MODEL:-google/timesfm-3.0-pytorch}
+      TIMESFM_DEVICE: ${TIMESFM_DEVICE:-cpu}
+    volumes:
+      - timesfm_cache:/timesfm-cache
+    restart: unless-stopped
+    healthcheck:
+      # python:3.11-slim has no curl; check /health over urllib.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   backend:
     build:
       context: ./backend
@@ -77,6 +97,10 @@ services:
       APP_LIGHTSPEED_BACKFILL: ${APP_LIGHTSPEED_BACKFILL:-}
       APP_CTB_INVOICE_REENRICH: ${APP_CTB_INVOICE_REENRICH:-}
       APP_CTB_INVOICE_GAP_RECOVERY: ${APP_CTB_INVOICE_GAP_RECOVERY:-}
+      # Forecasting (TimesFM). The feature is off until the timesfm service is wired and
+      # FORECASTING_TIMESFM_ENABLED=true is set in .env.prod.
+      FORECASTING_TIMESFM_ENABLED: ${FORECASTING_TIMESFM_ENABLED:-false}
+      FORECASTING_TIMESFM_BASE_URL: ${FORECASTING_TIMESFM_BASE_URL:-http://timesfm:8001}
       # Sentry (ops-sentry). Unset DSN = SDK off. SENTRY_RELEASE is the deployed git SHA.
       SENTRY_DSN: ${SENTRY_BACKEND_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
@@ -125,6 +149,7 @@ volumes:
   goldys_pg_data:
   goldys_sftp_data:
   goldys_sftp_hostkeys:
+  timesfm_cache:
 
 secrets:
   # Sentry org auth token for source map upload during the frontend image build. Read from the
