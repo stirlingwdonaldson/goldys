@@ -75,7 +75,8 @@ Backend (from `backend/`):
   parse the build script on a JDK 25-only machine. Don't "fix" it down to 8.x.
 - `./gradlew test` runs the suite. Integration tests (`*IntegrationTest`) use real
   PostgreSQL 16 via Testcontainers, so Docker must be reachable. Never substitute an
-  in-memory database.
+  in-memory database. For a Docker-free fast lane while iterating, use
+  `./gradlew fastTest` (see "Fast inner loop vs. full gate" below).
 - `./gradlew spotlessApply` formats Java (google-java-format 1.28.0). Both agents run
   it automatically on edited files (opencode via its formatter config, Claude Code via
   a hook); CI runs `spotlessCheck`.
@@ -89,9 +90,23 @@ Frontend (from `frontend/`, Bun only, no npm/yarn lockfiles):
 - Don't run `build` and `typecheck` concurrently in one checkout; they race on
   `.next/types`.
 
-Before finishing a task, run the checks for what you touched:
+### Fast inner loop vs. full gate
+
+The full gates are slow (backend `test` ≈2 min; frontend `build` ≈80 s), so don't run
+them on every edit — running them repeatedly is the main tax on an agentic loop. While
+iterating, run the fast lane for the side you touched:
+
+- Backend: `./gradlew fastTest` (unit tests only — no Docker, ~15 s vs ~2 min), or a
+  targeted run such as `./gradlew test --tests 'com.goldys.platform.<package>.*'`.
+- Frontend: `bunx vitest run path/to/file.test.tsx`, or `bun run test:watch`.
+
+Gradle's build and configuration caches are enabled, so repeating `./gradlew test`
+with no source change is a no-op (under 2 s); only an actual change re-runs the full
+suite.
+
+Before finishing a task, run the full gate for what you touched:
 `./gradlew test spotlessCheck` and/or
-`bun run typecheck && bun run lint && bun run test`.
+`bun run typecheck && bun run lint && bun run test && bun run build`.
 
 Local stack: `docker compose up -d` starts Postgres 16 on host port **5433**. See
 `docs/operations/testing.md` and `docs/operations/deployment.md`.
