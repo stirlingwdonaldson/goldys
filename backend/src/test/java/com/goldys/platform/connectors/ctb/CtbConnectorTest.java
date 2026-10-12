@@ -7,11 +7,14 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
+import com.goldys.platform.canonical.SaleRecipeLinkIngest;
+import com.goldys.platform.canonical.SaleRecipeLinkInput;
 import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.time.ZoneId;
@@ -19,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 class CtbConnectorTest {
 
@@ -154,6 +158,20 @@ class CtbConnectorTest {
 
   private static CtbConnector connector(
       CtbClient client, CtbRevenueParser revenueParser, CtbSaleItemParser saleItemParser) {
+    return connector(
+        client,
+        revenueParser,
+        saleItemParser,
+        mock(CtbSaleRecipeLinkParser.class),
+        mock(SaleRecipeLinkIngest.class));
+  }
+
+  private static CtbConnector connector(
+      CtbClient client,
+      CtbRevenueParser revenueParser,
+      CtbSaleItemParser saleItemParser,
+      CtbSaleRecipeLinkParser saleRecipeLinkParser,
+      SaleRecipeLinkIngest saleRecipeLinkIngest) {
     return new CtbConnector(
         client,
         "e",
@@ -162,7 +180,41 @@ class CtbConnectorTest {
         mock(CanonicalDailySalesIngest.class),
         saleItemParser,
         mock(CanonicalProductSalesIngest.class),
+        saleRecipeLinkParser,
+        saleRecipeLinkIngest,
         VenueClock.system(ZoneId.of("Australia/Melbourne")));
+  }
+
+  @Test
+  void saleRecipeLinksAreCanonicalized() {
+    CtbClient client = emptyClient();
+    String json =
+        "{\"data\":[{\"saleItemRecipeId\":9001,\"saleItemStockCode\":\"STOCK-1\","
+            + "\"saleItemStockDescription\":\"Kids Fish\",\"recipeId\":627,\"recipeName\":\"Kids Fish\","
+            + "\"recipeFolderName\":\"Food\",\"isRecipeActive\":true},"
+            + "{\"saleItemRecipeId\":9002,\"saleItemStockCode\":\"STOCK-2\","
+            + "\"saleItemStockDescription\":\"Parma\",\"recipeId\":628,\"recipeName\":\"Parma\","
+            + "\"recipeFolderName\":\"Mains\",\"isRecipeActive\":true}]}";
+    when(client.searchDistinctSaleItemsForLinking(anyInt(), anyInt()))
+        .thenReturn(new CtbClient.CtbPage(json, 2));
+
+    SaleRecipeLinkIngest ingest = mock(SaleRecipeLinkIngest.class);
+    CtbConnector connector =
+        connector(
+            client,
+            emptyRevenueParser(),
+            emptySaleItemParser(),
+            new CtbSaleRecipeLinkParser(),
+            ingest);
+
+    connector.fetch(null, payload -> UUID.randomUUID());
+
+    ArgumentCaptor<SaleRecipeLinkInput> captor = ArgumentCaptor.forClass(SaleRecipeLinkInput.class);
+    verify(ingest, times(2)).record(captor.capture());
+    assertThat(captor.getAllValues())
+        .extracting(SaleRecipeLinkInput::recipeId)
+        .containsExactly(627, 628);
+  }
   }
 
   private static CtbRevenueParser emptyRevenueParser() {

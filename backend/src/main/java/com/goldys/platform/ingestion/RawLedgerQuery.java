@@ -26,6 +26,13 @@ public class RawLedgerQuery {
         .toList();
   }
 
+  /** Stored payloads of one source and fetcher identity (e.g. the batched recipe-cost page). */
+  public List<RawPayload> rawPayloadsForFetcher(String sourceSystem, String fetcherIdentity) {
+    return rawRecords.findBySourceSystemAndFetcherIdentity(sourceSystem, fetcherIdentity).stream()
+        .map(r -> new RawPayload(r.id(), r.payloadBytes()))
+        .toList();
+  }
+
   /** A stored raw payload: its record id and a defensive copy of its bytes. */
   public record RawPayload(UUID id, byte[] bytes) {}
 }
