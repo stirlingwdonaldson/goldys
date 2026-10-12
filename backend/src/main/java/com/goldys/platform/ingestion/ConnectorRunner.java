@@ -91,6 +91,12 @@ class ConnectorRunner {
       runs.recordFailure(runId, e.failureType(), e.getMessage(), stackTraceOf(e), CLOCK.instant());
       IngestionFailureReporter.reportClassified(
           runId, connector.sourceSystem(), e.failureType(), e.getMessage(), e);
+    } catch (RunAlreadyCompletedException e) {
+      // The run was closed while the fetch was still in flight (e.g. startup recovery on a freshly
+      // started instance). This is a lifecycle race, not a connector fault: the ledger already
+      // records the reason (RUN_INTERRUPTED), so recording a spurious UNEXPECTED failure would only
+      // send the operator off to re-check a connection that was never the problem.
+      log.warn("Run {} was closed while fetching from {}", runId, connector.sourceSystem());
     } catch (RuntimeException e) {
       // An unclassified fault may carry anything in its message - a URL with a token, a fragment
       // of payload. The stack trace is stored deliberately (accepted tradeoff: the operator who
