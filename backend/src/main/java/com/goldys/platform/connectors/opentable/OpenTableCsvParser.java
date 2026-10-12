@@ -30,7 +30,7 @@ public class OpenTableCsvParser {
 
   private final ZoneId zone;
 
-  public OpenTableCsvParser(@Value("${opentable.timezone:Australia/Sydney}") String zone) {
+  public OpenTableCsvParser(@Value("${opentable.timezone:Australia/Melbourne}") String zone) {
     this.zone = ZoneId.of(zone);
   }
 

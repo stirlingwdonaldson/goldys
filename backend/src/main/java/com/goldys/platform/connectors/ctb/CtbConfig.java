@@ -2,6 +2,7 @@ package com.goldys.platform.connectors.ctb;
 
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
+import com.goldys.platform.config.VenueClock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,8 +18,16 @@ public class CtbConfig {
       CtbRevenueParser parser,
       CanonicalDailySalesIngest canonical,
       CtbSaleItemParser saleItemParser,
-      CanonicalProductSalesIngest productSales) {
+      CanonicalProductSalesIngest productSales,
+      VenueClock venueClock) {
     return new CtbConnector(
-        new CtbClient(baseUrl), email, password, parser, canonical, saleItemParser, productSales);
+        new CtbClient(baseUrl),
+        email,
+        password,
+        parser,
+        canonical,
+        saleItemParser,
+        productSales,
+        venueClock);
   }
 }

@@ -4,6 +4,7 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.IngestionHealth;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.reconciliation.OverrideUsage;
@@ -41,6 +42,7 @@ public class DashboardApplicationService {
   private final OverrideUsageService overrideUsage;
   private final PermissionService permissions;
   private final MetricQueryService metrics;
+  private final VenueClock venueClock;
 
   public DashboardApplicationService(
       SalesMetricsQuery salesMetrics,
@@ -48,13 +50,15 @@ public class DashboardApplicationService {
       IngestionService ingestion,
       OverrideUsageService overrideUsage,
       PermissionService permissions,
-      MetricQueryService metrics) {
+      MetricQueryService metrics,
+      VenueClock venueClock) {
     this.salesMetrics = salesMetrics;
     this.productMetrics = productMetrics;
     this.ingestion = ingestion;
     this.overrideUsage = overrideUsage;
     this.permissions = permissions;
     this.metrics = metrics;
+    this.venueClock = venueClock;
   }
 
   public Summary summary(UserRole role) {
@@ -106,7 +110,7 @@ public class DashboardApplicationService {
   }
 
   private List<TopSeller> topSellersInternal() {
-    LocalDate to = LocalDate.now();
+    LocalDate to = venueClock.today();
     TimeRange range = new TimeRange(to.minusDays(TOP_SELLERS_WINDOW_DAYS), to, Calendar.CALENDAR);
     RankedListResult result =
         (RankedListResult)
@@ -119,7 +123,7 @@ public class DashboardApplicationService {
   }
 
   private List<SalesTrend> salesTrendInternal() {
-    LocalDate to = LocalDate.now();
+    LocalDate to = venueClock.today();
     TimeRange range = new TimeRange(to.minusDays(TREND_DAYS), to, Calendar.CALENDAR);
     TimeSeriesResult result =
         (TimeSeriesResult)

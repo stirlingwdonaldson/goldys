@@ -39,7 +39,7 @@ public class ReservationProjector {
       CanonicalReservationQuery reservations,
       ReservationOverrideRepository overrides,
       ResolvedReservationDayRepository resolved,
-      @Value("${opentable.timezone:Australia/Sydney}") String zone,
+      @Value("${opentable.timezone:Australia/Melbourne}") String zone,
       @Value("${reservations.service-period.lunch-cutoff:15:00}") String lunchCutoff) {
     this.reservations = reservations;
     this.overrides = overrides;

@@ -36,7 +36,9 @@ public class CtbSftpPull {
     this.pdfEnrichment = pdfEnrichment;
   }
 
-  @Scheduled(cron = "${ctb.sftp.cron:0 */15 * * * *}", zone = "Australia/Melbourne")
+  @Scheduled(
+      cron = "${ctb.sftp.cron:0 */15 * * * *}",
+      zone = "${app.venue.timezone:Australia/Melbourne}")
   public void pull() {
     try {
       List<SftpDrop.SftpFile> files = drop.list();

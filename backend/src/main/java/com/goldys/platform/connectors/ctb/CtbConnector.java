@@ -5,6 +5,7 @@ import com.goldys.platform.canonical.CanonicalProductSalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.ProductSalesInput;
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.FetchedPayload;
@@ -44,6 +45,7 @@ public class CtbConnector implements SourceConnector {
   private final CanonicalDailySalesIngest canonical;
   private final CtbSaleItemParser saleItemParser;
   private final CanonicalProductSalesIngest productSales;
+  private final VenueClock venueClock;
 
   public CtbConnector(
       CtbClient client,
@@ -52,7 +54,8 @@ public class CtbConnector implements SourceConnector {
       CtbRevenueParser parser,
       CanonicalDailySalesIngest canonical,
       CtbSaleItemParser saleItemParser,
-      CanonicalProductSalesIngest productSales) {
+      CanonicalProductSalesIngest productSales,
+      VenueClock venueClock) {
     this.client = client;
     this.email = email;
     this.password = password;
@@ -60,6 +63,7 @@ public class CtbConnector implements SourceConnector {
     this.canonical = canonical;
     this.saleItemParser = saleItemParser;
     this.productSales = productSales;
+    this.venueClock = venueClock;
   }
 
   @Override
@@ -242,7 +246,7 @@ public class CtbConnector implements SourceConnector {
    * the full list in one response and ignores {@code start}/{@code limit}, so it must not be paged.
    */
   private void pullStatements(IngestionSink sink) {
-    LocalDate end = LocalDate.now();
+    LocalDate end = venueClock.today();
     LocalDate start = end.minusMonths(12);
     pullSingle(
         "ctb-statements", () -> client.getStatements(start.toString(), end.toString()), sink);
@@ -295,7 +299,7 @@ public class CtbConnector implements SourceConnector {
             fetcherIdentity));
   }
 
-  private static LocalDate watermarkDate(String watermark) {
+  private LocalDate watermarkDate(String watermark) {
     if (watermark != null && !watermark.isBlank()) {
       try {
         return LocalDate.parse(watermark);
@@ -303,7 +307,7 @@ public class CtbConnector implements SourceConnector {
         // not a date — fall through to today
       }
     }
-    return LocalDate.now();
+    return venueClock.today();
   }
 
   private static final class Totals {

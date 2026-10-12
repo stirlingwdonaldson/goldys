@@ -1,5 +1,6 @@
 package com.goldys.platform.dashboard;
 
+import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricQuery;
@@ -20,8 +21,10 @@ import org.springframework.stereotype.Component;
 public class DashboardTemplateCatalog {
 
   private final List<DashboardTemplate> templates;
+  private final VenueClock venueClock;
 
-  public DashboardTemplateCatalog() {
+  public DashboardTemplateCatalog(VenueClock venueClock) {
+    this.venueClock = venueClock;
     this.templates =
         List.of(
             t(
@@ -93,25 +96,21 @@ public class DashboardTemplateCatalog {
         .orElseThrow(() -> new IllegalArgumentException("Unknown dashboard template: " + id));
   }
 
-  private static DashboardTemplate t(
-      String id, String name, String description, SavedWidget... widgets) {
+  private DashboardTemplate t(String id, String name, String description, SavedWidget... widgets) {
     return new DashboardTemplate(id, name, description, List.of(widgets));
   }
 
-  private static SavedWidget ts(String id, MetricId metric) {
+  private SavedWidget ts(String id, MetricId metric) {
     return new SavedWidget(id, "time-series", List.of(query(metric)), new WidgetLayout(6, 2));
   }
 
-  private static SavedWidget table(String id, MetricId... metrics) {
+  private SavedWidget table(String id, MetricId... metrics) {
     return new SavedWidget(
-        id,
-        "table",
-        Arrays.stream(metrics).map(DashboardTemplateCatalog::query).toList(),
-        new WidgetLayout(12, 2));
+        id, "table", Arrays.stream(metrics).map(this::query).toList(), new WidgetLayout(12, 2));
   }
 
-  private static MetricQuery query(MetricId metric) {
-    LocalDate today = LocalDate.now();
+  private MetricQuery query(MetricId metric) {
+    LocalDate today = venueClock.today();
     return new MetricQuery(
         metric,
         new TimeRange(today.minusDays(6), today, Calendar.CALENDAR),

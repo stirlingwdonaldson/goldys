@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
  * flight, so a scheduled tick that overlaps a manual run is a no-op rather than a double fetch.
  *
  * <p>Disabled with {@code app.scheduling.ctb.enabled=false}; the cron is overridden with {@code
- * app.scheduling.ctb.cron} and is evaluated in venue time ({@code Australia/Melbourne}).
+ * app.scheduling.ctb.cron} and is evaluated in the venue time zone ({@code app.venue.timezone}).
  *
  * <p>Each tick reports to a Sentry cron monitor ({@value #MONITOR_SLUG}): IN_PROGRESS when it
  * starts, then OK or ERROR when the <em>asynchronous</em> run finishes. That is what lets Sentry
@@ -38,7 +38,6 @@ import org.springframework.stereotype.Component;
     matchIfMissing = true)
 class CtbScheduledPull {
   static final String MONITOR_SLUG = "ctb-scheduled-pull";
-  private static final String VENUE_ZONE = "Australia/Melbourne";
   private static final Logger log = LoggerFactory.getLogger(CtbScheduledPull.class);
 
   private final IngestionService ingestion;
@@ -46,12 +45,15 @@ class CtbScheduledPull {
 
   CtbScheduledPull(
       IngestionService ingestion,
-      @Value("${app.scheduling.ctb.cron:0 0 4 * * *}") String springCron) {
+      @Value("${app.scheduling.ctb.cron:0 0 4 * * *}") String springCron,
+      @Value("${app.venue.timezone:Australia/Melbourne}") String venueZone) {
     this.ingestion = ingestion;
-    this.monitorConfig = monitorConfig(springCron);
+    this.monitorConfig = monitorConfig(springCron, venueZone);
   }
 
-  @Scheduled(cron = "${app.scheduling.ctb.cron:0 0 4 * * *}", zone = VENUE_ZONE)
+  @Scheduled(
+      cron = "${app.scheduling.ctb.cron:0 0 4 * * *}",
+      zone = "${app.venue.timezone:Australia/Melbourne}")
   void pullCtb() {
     SentryId checkInId = checkIn(null, CheckInStatus.IN_PROGRESS);
     try {
@@ -93,12 +95,12 @@ class CtbScheduledPull {
    * Spring cron has a leading seconds field ({@code 0 0 4 * * *}); Sentry's crontab is the classic
    * five-field form ({@code 0 4 * * *}), so the seconds field is dropped.
    */
-  static MonitorConfig monitorConfig(String springCron) {
+  static MonitorConfig monitorConfig(String springCron, String timezone) {
     String[] fields = springCron.trim().split("\\s+");
     String crontab =
         fields.length == 6 ? String.join(" ", Arrays.copyOfRange(fields, 1, 6)) : springCron;
     MonitorConfig config = new MonitorConfig(MonitorSchedule.crontab(crontab));
-    config.setTimezone(VENUE_ZONE);
+    config.setTimezone(timezone);
     config.setCheckinMargin(10L); // minutes late before "missed"
     config.setMaxRuntime(30L); // minutes before "timed out"
     return config;
