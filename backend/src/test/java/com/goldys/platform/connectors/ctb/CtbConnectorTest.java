@@ -134,6 +134,22 @@ class CtbConnectorTest {
         .hasMessageContaining("ctb-stocks");
   }
 
+  @Test
+  void pageCapTruncationIsReportedRatherThanSilent() {
+    // totalCount far beyond MAX_PAGES * PAGE_SIZE, so the paging loop hits the cap with more to
+    // pull.
+    CtbClient client = emptyClient();
+    when(client.searchInvoices(anyInt(), anyInt()))
+        .thenReturn(new CtbClient.CtbPage("{\"data\":[]}", 60000));
+
+    CtbConnector connector = connector(client, emptyRevenueParser(), emptySaleItemParser());
+
+    assertThatThrownBy(() -> connector.fetch(null, payload -> UUID.randomUUID()))
+        .isInstanceOf(ConnectorFetchException.class)
+        .extracting(e -> ((ConnectorFetchException) e).failureType())
+        .isEqualTo("CONNECTOR_TRUNCATED");
+  }
+
   private static CtbConnector connector(
       CtbClient client, CtbRevenueParser revenueParser, CtbSaleItemParser saleItemParser) {
     return new CtbConnector(
