@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 
 class IngestionServiceHealthTest {
 
@@ -132,6 +134,8 @@ class IngestionServiceHealthTest {
         mock(RawRecordRepository.class),
         mock(IngestionStageRepository.class),
         mock(ConnectorRunner.class),
-        List.<SourceConnector>of());
+        List.<SourceConnector>of(),
+        mock(PlatformTransactionManager.class),
+        mock(JdbcTemplate.class));
   }
 }

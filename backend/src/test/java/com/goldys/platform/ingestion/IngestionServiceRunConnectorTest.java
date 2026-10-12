@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 
 class IngestionServiceRunConnectorTest {
 
@@ -65,6 +67,8 @@ class IngestionServiceRunConnectorTest {
         mock(RawRecordRepository.class),
         mock(IngestionStageRepository.class),
         runner,
-        connectors);
+        connectors,
+        mock(PlatformTransactionManager.class),
+        mock(JdbcTemplate.class));
   }
 }

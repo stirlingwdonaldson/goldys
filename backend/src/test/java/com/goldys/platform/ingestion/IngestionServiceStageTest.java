@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 
 class IngestionServiceStageTest {
 
@@ -45,7 +47,9 @@ class IngestionServiceStageTest {
             rawRecords,
             stages,
             mock(ConnectorRunner.class),
-            List.of());
+            List.of(),
+            mock(PlatformTransactionManager.class),
+            mock(JdbcTemplate.class));
 
     service.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.SUCCESS);
 

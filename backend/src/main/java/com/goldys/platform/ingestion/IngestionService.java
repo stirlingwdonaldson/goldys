@@ -3,6 +3,8 @@ package com.goldys.platform.ingestion;
 import com.goldys.platform.ingestion.port.SourceConnector;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -16,7 +18,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Public ingestion entry point. The package-private ledger services stay internal to this package;
@@ -37,6 +42,8 @@ public class IngestionService {
   private final IngestionStageRepository stages;
   private final ConnectorRunner connectorRunner;
   private final Map<String, SourceConnector> connectors;
+  private final TransactionTemplate transactionTemplate;
+  private final JdbcTemplate jdbcTemplate;
 
   public IngestionService(
       IngestionRunService runs,
@@ -46,7 +53,9 @@ public class IngestionService {
       RawRecordRepository rawRecords,
       IngestionStageRepository stages,
       ConnectorRunner connectorRunner,
-      List<SourceConnector> connectors) {
+      List<SourceConnector> connectors,
+      PlatformTransactionManager transactionManager,
+      JdbcTemplate jdbcTemplate) {
     this.runs = runs;
     this.payloads = payloads;
     this.runRepository = runRepository;
@@ -54,6 +63,8 @@ public class IngestionService {
     this.rawRecords = rawRecords;
     this.stages = stages;
     this.connectorRunner = connectorRunner;
+    this.transactionTemplate = new TransactionTemplate(transactionManager);
+    this.jdbcTemplate = jdbcTemplate;
     this.connectors =
         connectors.stream()
             .collect(
@@ -78,21 +89,41 @@ public class IngestionService {
     if (connector == null) {
       throw new IllegalArgumentException("Unknown source: " + source);
     }
-    // A pull connector can outlive a single request; refuse to stack a second run on top of one
-    // that is still in flight rather than double-fetching the same window.
     String sourceSystem = connector.sourceSystem();
-    var active = runRepository.findFirstBySourceSystemOrderByStartedAtDesc(sourceSystem);
-    if (active.isPresent() && active.get().status() == IngestionStatus.RUNNING) {
-      if (onComplete != null) {
-        onComplete.accept(null);
-      }
-      return toSummary(active.get());
-    }
-    UUID runId =
-        onComplete == null
-            ? connectorRunner.run(connector, null)
-            : connectorRunner.run(connector, null, onComplete);
-    return runSummary(runId);
+    // The check for a RUNNING run and the start of a new one must be atomic, or a cron tick and a
+    // "Run now" click can both see "no run in flight" and start two pulls. Serialize them with a
+    // Postgres advisory transaction lock keyed on the source: the lock is released when this
+    // transaction commits, and IngestionRunService.start commits its RUNNING row independently
+    // (REQUIRES_NEW), so a concurrent caller that later acquires the lock sees it and skips.
+    return transactionTemplate.execute(
+        status -> {
+          lockConnector(sourceSystem);
+          var active = runRepository.findFirstBySourceSystemOrderByStartedAtDesc(sourceSystem);
+          if (active.isPresent() && active.get().status() == IngestionStatus.RUNNING) {
+            if (onComplete != null) {
+              onComplete.accept(null);
+            }
+            return toSummary(active.get());
+          }
+          UUID runId =
+              onComplete == null
+                  ? connectorRunner.run(connector, null)
+                  : connectorRunner.run(connector, null, onComplete);
+          return runSummary(runId);
+        });
+  }
+
+  /** Takes the source's advisory transaction lock on the current transaction's connection. */
+  private void lockConnector(String sourceSystem) {
+    jdbcTemplate.execute(
+        (Connection con) -> {
+          try (PreparedStatement ps =
+              con.prepareStatement("SELECT pg_advisory_xact_lock(hashtext(?))")) {
+            ps.setString(1, "run:" + sourceSystem);
+            ps.execute();
+          }
+          return null;
+        });
   }
 
   /** True when the source has a pull {@link SourceConnector} (i.e. "Run now" applies). */

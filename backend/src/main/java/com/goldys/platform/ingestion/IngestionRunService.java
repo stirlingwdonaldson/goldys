@@ -3,6 +3,7 @@ package com.goldys.platform.ingestion;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -22,7 +23,13 @@ class IngestionRunService {
     this.failures = failures;
   }
 
-  @Transactional
+  /**
+   * {@code REQUIRES_NEW} so the {@code RUNNING} row commits immediately, independent of any
+   * enclosing transaction (in particular {@link IngestionService#runConnector}'s advisory-lock
+   * transaction): a concurrent caller that later acquires the lock must be able to see this row and
+   * skip, and the asynchronous fetch must never run before its run row is committed.
+   */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   UUID start(String sourceSystem, String connectorName, String inputWatermark, Instant startedAt) {
     return runs.save(IngestionRun.start(sourceSystem, connectorName, inputWatermark, startedAt))
         .id();
