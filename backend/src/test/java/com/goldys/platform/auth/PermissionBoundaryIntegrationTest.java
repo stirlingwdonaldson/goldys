@@ -90,4 +90,21 @@ class PermissionBoundaryIntegrationTest {
                     fohManager, new ResourceKey("recipes.cost"), PermissionAction.READ))
         .isInstanceOf(AccessDeniedException.class);
   }
+
+  @Test
+  void recipeIngredientsIsSeededForOwnerAndDeniedForManager() {
+    UserRole owner = new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
+    assertThatCode(
+            () ->
+                permissions.require(
+                    owner, new ResourceKey("recipes.ingredients"), PermissionAction.READ))
+        .doesNotThrowAnyException();
+
+    UserRole fohManager = new UserRole(new DepartmentCode("FOH"), new SeniorityCode("MANAGER"));
+    assertThatThrownBy(
+            () ->
+                permissions.require(
+                    fohManager, new ResourceKey("recipes.ingredients"), PermissionAction.READ))
+        .isInstanceOf(AccessDeniedException.class);
+  }
 }
