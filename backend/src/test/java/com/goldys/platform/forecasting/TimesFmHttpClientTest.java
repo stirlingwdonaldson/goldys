@@ -13,6 +13,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
@@ -116,6 +117,48 @@ class TimesFmHttpClientTest {
         .doesNotContain("2026-10-11")
         .doesNotContain("covers")
         .doesNotContain("100.0");
+  }
+
+  @Test
+  void nullsSerializeAsJsonNull() throws Exception {
+    AtomicReference<String> captured = new AtomicReference<>();
+    HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+    server.createContext(
+        "/forecast",
+        exchange -> {
+          captured.set(
+              new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+          byte[] response = RESPONSE_JSON.getBytes(StandardCharsets.UTF_8);
+          exchange.getResponseHeaders().set("Content-Type", "application/json");
+          exchange.sendResponseHeaders(200, response.length);
+          exchange.getResponseBody().write(response);
+          exchange.close();
+        });
+    server.start();
+    try {
+      TimesFmHttpClient client = client("http://localhost:" + server.getAddress().getPort());
+      TimesFmRequest request =
+          new TimesFmRequest(
+              List.of(LocalDate.of(2026, 10, 11), LocalDate.of(2026, 10, 12)),
+              Arrays.asList(new BigDecimal("100.0"), null),
+              List.of(
+                  new TimesFmRequest.Covariate(
+                      "covers", Arrays.asList(null, new BigDecimal("55")))),
+              2,
+              List.of("0.1", "0.5", "0.9"));
+
+      client.forecast(request);
+
+      JsonNode body = MAPPER.readTree(captured.get());
+      assertThat(body.get("target").get(0).decimalValue()).isEqualByComparingTo("100.0");
+      assertThat(body.get("target").get(1).isNull()).isTrue();
+      JsonNode values = body.get("covariates").get(0).get("values");
+      assertThat(values.size()).isEqualTo(2);
+      assertThat(values.get(0).isNull()).isTrue();
+      assertThat(values.get(1).decimalValue()).isEqualByComparingTo("55");
+    } finally {
+      server.stop(0);
+    }
   }
 
   private static TimesFmHttpClient client(String baseUrl) {
