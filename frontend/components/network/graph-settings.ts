@@ -41,7 +41,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
  * node's own `size` adds a little so a source outweighs a metric with the same degree.
  */
 export function nodeRadius(degree: number, size: number, nodeSize: number): number {
-  return nodeSize * (1.8 + 0.9 * Math.sqrt(Math.max(0, degree)) + 0.25 * size);
+  return nodeSize * (2.6 + 1.2 * Math.sqrt(Math.max(0, degree)) + 0.35 * size);
 }
 
 /**

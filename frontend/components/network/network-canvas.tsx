@@ -237,8 +237,8 @@ export function NetworkCanvas({
               ctx.moveTo(source.x, source.y ?? 0);
               ctx.lineTo(target.x, target.y ?? 0);
               ctx.strokeStyle = touchesActive
-                ? withAlpha(palette.accent, 0.85)
-                : withAlpha(palette.muted, isLit ? 0.28 : 0.05);
+                ? withAlpha(palette.accent, 0.6)
+                : withAlpha(palette.muted, isLit ? 0.14 : 0.03);
               // Screen pixels, whatever the zoom.
               ctx.lineWidth = (display.linkThickness * (touchesActive ? 1.4 : 0.6 + 0.6 * l.weight)) / scale;
               ctx.stroke();
@@ -262,7 +262,7 @@ export function NetworkCanvas({
                   : labelAlpha(scale, display.textFade);
               if (alpha > 0.02) {
                 ctx.globalAlpha = alpha;
-                ctx.font = `${isActive ? 500 : 400} ${12 / scale}px ${palette.font}`;
+                ctx.font = `${isActive ? 500 : 400} ${10.5 / scale}px ${palette.font}`;
                 ctx.textAlign = "center";
                 ctx.textBaseline = "top";
                 ctx.fillStyle = isActive ? palette.foreground : palette.muted;
