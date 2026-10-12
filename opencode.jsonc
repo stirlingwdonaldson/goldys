@@ -46,20 +46,15 @@
     }
   },
 
-  // Last matching rule wins: broad rules first, exceptions after. Deny rules still
-  // apply in auto-approve mode.
+  // Allow every non-destructive command by default; the deny rules below are the only
+  // restrictions. Last matching rule wins, and deny rules apply even in auto-approve
+  // mode — so the denies below override the broad allow.
   "permissions": [
-    { "action": "shell", "resource": "*", "effect": "ask" },
-    { "action": "shell", "resource": "git status*", "effect": "allow" },
-    { "action": "shell", "resource": "git diff*", "effect": "allow" },
-    { "action": "shell", "resource": "git log*", "effect": "allow" },
-    { "action": "shell", "resource": "git push*", "effect": "ask" },
+    { "action": "shell", "resource": "*", "effect": "allow" },
     { "action": "subagent", "resource": "*", "effect": "allow" },
 
-    // This VM also runs production (see AGENTS.md "Safety"). Production operations
-    // are for the human; these rules make the dangerous ones impossible for agents.
-    { "action": "shell", "resource": "*docker-compose.prod.yml*", "effect": "deny" },
-    { "action": "shell", "resource": "*.env.prod*", "effect": "deny" },
+    // Destructive actions — hard deny. This VM also runs production (see AGENTS.md
+    // "Safety"); these are the data-destroying commands, and no agent may run them.
     { "action": "shell", "resource": "*down -v*", "effect": "deny" },
     { "action": "shell", "resource": "*down --volumes*", "effect": "deny" },
     { "action": "shell", "resource": "docker volume rm*", "effect": "deny" },
@@ -67,6 +62,11 @@
     { "action": "shell", "resource": "docker system prune*", "effect": "deny" },
     { "action": "shell", "resource": "git push --force*", "effect": "deny" },
     { "action": "shell", "resource": "git push -f*", "effect": "deny" },
+    // Raw filesystem deletion of Docker data (bypasses the docker CLI).
+    { "action": "shell", "resource": "*rm -rf*var/lib/docker*", "effect": "deny" },
+
+    // Secrets: never read or edit the real env file, by any tool.
+    { "action": "shell", "resource": "*.env.prod*", "effect": "deny" },
     { "action": "read", "resource": "*.env.prod", "effect": "deny" },
     { "action": "edit", "resource": "*.env.prod", "effect": "deny" }
   ]
