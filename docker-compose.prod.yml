@@ -107,6 +107,8 @@ services:
       # ctb-detail-backfill has populated the ctb-recipe-ingredients raw records.
       APP_RECIPE_INGREDIENTS_CANONICALIZE: ${APP_RECIPE_INGREDIENTS_CANONICALIZE:-false}
       APP_LIGHTSPEED_SALE_ITEMS_REPLAY: ${APP_LIGHTSPEED_SALE_ITEMS_REPLAY:-false}
+      APP_LIGHTSPEED_PAYMENTS_REPLAY: ${APP_LIGHTSPEED_PAYMENTS_REPLAY:-false}
+      APP_LIGHTSPEED_DAILY_SALES_DERIVATION: ${APP_LIGHTSPEED_DAILY_SALES_DERIVATION:-false}
       # Forecasting (TimesFM). The feature is off until the timesfm service is wired and
       # FORECASTING_TIMESFM_ENABLED=true is set in .env.prod.
       FORECASTING_TIMESFM_ENABLED: ${FORECASTING_TIMESFM_ENABLED:-false}
