@@ -94,6 +94,12 @@ public class ForecastService {
       LocalDate historyFrom,
       int horizonDays,
       String email) {
+    if (targetMetric == null) {
+      throw new IllegalArgumentException("targetMetric is required");
+    }
+    if (historyFrom == null) {
+      throw new IllegalArgumentException("historyFrom is required");
+    }
     if (!properties.enabled()) {
       throw new IllegalStateException("forecasting is not enabled");
     }

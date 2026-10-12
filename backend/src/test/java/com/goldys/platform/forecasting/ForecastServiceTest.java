@@ -101,6 +101,16 @@ class ForecastServiceTest {
   }
 
   @Test
+  void submitRejectsNullTargetAndHistoryFrom() {
+    assertThatThrownBy(() -> service.submit(null, List.of(), SEP_01, 7, EMAIL))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("targetMetric");
+    assertThatThrownBy(() -> service.submit("sales.gross", List.of(), null, 7, EMAIL))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("historyFrom");
+  }
+
+  @Test
   void submitRejectsInsufficientHistory() {
     when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_GROSS, 3, SEP_01));
 
