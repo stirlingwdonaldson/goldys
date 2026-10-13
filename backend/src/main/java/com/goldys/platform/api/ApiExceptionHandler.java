@@ -7,8 +7,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * Maps application exceptions to the stable {@link ApiErrorResponse} envelope.
@@ -34,6 +37,61 @@ class ApiExceptionHandler {
         .body(
             new ApiErrorResponse(
                 "VALIDATION_FAILED", exception.getMessage(), correlationId(request), Map.of()));
+  }
+
+  /**
+   * A body that could not be deserialized (malformed JSON, an unknown enum value, or a record
+   * constructor that rejected the input, e.g. a missing {@code range}). Our own {@link
+   * IllegalArgumentException}s are surfaced verbatim; Jackson parser internals are collapsed to a
+   * generic message so we never echo request content back to the caller.
+   */
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  ResponseEntity<ApiErrorResponse> handleUnreadable(
+      HttpMessageNotReadableException exception, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            new ApiErrorResponse(
+                "VALIDATION_FAILED", readableMessage(exception), correlationId(request), Map.of()));
+  }
+
+  /** A query/path parameter that failed type conversion (e.g. {@code ?from=not-a-date}). */
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  ResponseEntity<ApiErrorResponse> handleTypeMismatch(
+      MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            new ApiErrorResponse(
+                "VALIDATION_FAILED",
+                "Invalid value for '" + exception.getName() + "'",
+                correlationId(request),
+                Map.of()));
+  }
+
+  /** A required query/path parameter that was omitted entirely. */
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  ResponseEntity<ApiErrorResponse> handleMissingParameter(
+      MissingServletRequestParameterException exception, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            new ApiErrorResponse(
+                "VALIDATION_FAILED",
+                "Missing required parameter '" + exception.getParameterName() + "'",
+                correlationId(request),
+                Map.of()));
+  }
+
+  /**
+   * Walks to the deepest cause, surfacing our own validation messages and hiding parser internals.
+   */
+  private static String readableMessage(HttpMessageNotReadableException exception) {
+    Throwable cause = exception;
+    while (cause.getCause() != null && cause.getCause() != cause) {
+      cause = cause.getCause();
+    }
+    if (cause instanceof IllegalArgumentException iae && iae.getMessage() != null) {
+      return iae.getMessage();
+    }
+    return "Malformed request body";
   }
 
   /** A feature that is present but not configured (e.g. no chat model / API key). */

@@ -31,6 +31,11 @@ interface CanonicalDailySalesRepository extends BitemporalRepository<CanonicalDa
           + "and s.supersededAt is null")
   List<CanonicalDailySales> findCurrentByDates(Collection<LocalDate> dates);
 
+  @Query(
+      "select s from CanonicalDailySales s where s.tradingDate >= :from "
+          + "and s.tradingDate <= :to and s.supersededAt is null")
+  List<CanonicalDailySales> findCurrentBetween(LocalDate from, LocalDate to);
+
   @Query("select s from CanonicalDailySales s where s.supersededAt is null")
   List<CanonicalDailySales> findAllCurrent();
 

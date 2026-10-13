@@ -6,8 +6,10 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.canonical.CanonicalDailySalesQuery;
 import com.goldys.platform.canonical.DailySalesView;
+import com.goldys.platform.semantic.DataPage;
 import com.goldys.platform.semantic.SalesMetricsQuery;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SalesReportingService {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
+  private static final int MAX_PAGE_SIZE = 200;
 
   private final SalesMetricsQuery salesMetrics;
   private final CanonicalDailySalesQuery dailySales;
@@ -34,13 +37,32 @@ public class SalesReportingService {
     this.permissions = permissions;
   }
 
-  /** Per-source daily-sales rows (newest first), for the Sales screen's reconciliation view. */
-  public List<DailySalesRow> dailySales(UserRole role) {
+  /**
+   * Per-source daily-sales rows (newest first), for the Sales screen's reconciliation view. With no
+   * bounds this is every trading date ever ingested; pass {@code from}/{@code to} to scope it and
+   * {@code page}/{@code size} to page it.
+   */
+  public DataPage<DailySalesRow> dailySales(
+      UserRole role, LocalDate from, LocalDate to, int page, int size) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return dailySales.currentDailySales().stream()
-        .sorted(Comparator.comparing(DailySalesView::tradingDate).reversed())
-        .map(SalesReportingService::toRow)
-        .toList();
+    List<DailySalesView> views =
+        (from == null && to == null)
+            ? dailySales.currentDailySales()
+            : dailySales.currentDailySalesBetween(from, to);
+    List<DailySalesRow> sorted =
+        views.stream()
+            .sorted(Comparator.comparing(DailySalesView::tradingDate).reversed())
+            .map(SalesReportingService::toRow)
+            .toList();
+
+    int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+    int safePage = Math.max(page, 0);
+    int fromIndex = safePage * safeSize;
+    List<DailySalesRow> items =
+        fromIndex >= sorted.size()
+            ? List.of()
+            : sorted.subList(fromIndex, Math.min(fromIndex + safeSize, sorted.size()));
+    return new DataPage<>(items, sorted.size(), safePage, safeSize);
   }
 
   /**

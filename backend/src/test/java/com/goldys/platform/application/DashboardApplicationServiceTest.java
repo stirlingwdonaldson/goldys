@@ -3,6 +3,7 @@ package com.goldys.platform.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -22,14 +23,13 @@ import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.SalesMetricsQuery;
+import com.goldys.platform.semantic.TopSeller;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricPoint;
 import com.goldys.platform.semantic.catalog.MetricProvenance;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
-import com.goldys.platform.semantic.catalog.MetricRankedItem;
 import com.goldys.platform.semantic.catalog.MetricSeries;
-import com.goldys.platform.semantic.catalog.RankedListResult;
 import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.semantic.catalog.TimeSeriesResult;
@@ -91,17 +91,11 @@ class DashboardApplicationServiceTest {
 
   @Test
   void topSellersMapsSemanticToResponse() {
-    when(metrics.query(any()))
+    when(productMetrics.topSellers(any(), any(), eq(5)))
         .thenReturn(
-            new RankedListResult(
-                MetricId.PRODUCT_TOP_SELLERS,
-                List.of(
-                    new MetricRankedItem(
-                        "chips", new BigDecimal("50"), new BigDecimal("10"), true)),
-                List.of(),
-                provenance(MetricId.PRODUCT_TOP_SELLERS)));
+            List.of(new TopSeller("chips", new BigDecimal("10"), new BigDecimal("50"), true)));
 
-    var sellers = service.topSellers(OWNER);
+    var sellers = service.topSellers(OWNER, null, null, null);
 
     assertThat(sellers).hasSize(1);
     assertThat(sellers.get(0).name()).isEqualTo("chips");
@@ -122,7 +116,7 @@ class DashboardApplicationServiceTest {
                 List.of(),
                 provenance(MetricId.SALES_GROSS)));
 
-    var trend = service.salesTrend(OWNER);
+    var trend = service.salesTrend(OWNER, null, null);
 
     assertThat(trend).hasSize(1);
     assertThat(trend.get(0).date()).isEqualTo("2026-09-13");
