@@ -36,7 +36,7 @@ scope and acceptance criteria in [`docs/prd.md`](docs/prd.md).
 | Raw ledger | `raw_record` with `BYTEA` payloads, SHA-256 and length, DB-enforced append-only; ingestion runs and failures are first-class (`SUCCESS`/`PARTIAL`/`FAILED`/`NO_NEW_DATA`) |
 | Canonical layer | Bitemporal entities for daily sales, product sales, reservations, labour, invoices, invoice lines, stock counts and wastage |
 | Reconciliation | Daily and product sales compared across Lightspeed and CTB; source-priority resolution rules with audit; manual overrides per domain; recomputable resolved projections |
-| Connectors | Lightspeed (Insights webhooks), CTB (scheduled AJAX pull, invoice CSV + PDF over SFTP), OpenTable (manual CSV drop), Deputy (raw-only webhook) |
+| Connectors | Lightspeed (Insights webhooks), CTB (scheduled AJAX pull, invoice CSV + PDF over SFTP), OpenTable (assisted sign-in + JSON pull, opt-in; manual CSV drop as fallback), Deputy (raw-only webhook) |
 | Semantic layer | Metric catalogue ([`docs/metrics/catalog.md`](docs/metrics/catalog.md)) with base and derived metrics, provenance and trust/freshness state |
 | Ask Goldy's | Spring AI chat over a fixed, enum-validated tool set; per-metric authorization; persisted threads; renders typed widget specs |
 | Dashboards | Overview dashboard plus saved custom dashboards (templates, sharing, revisions), re-rendered live |
@@ -45,8 +45,8 @@ scope and acceptance criteria in [`docs/prd.md`](docs/prd.md).
 | Auth | Email + password accounts; table-driven `(department, seniority, resource)` permissions |
 | Ops | Docker Compose deploy at `platform.swd.sh`, Sentry (self-hosted), Micrometer/Prometheus |
 
-Not built yet: Smart Exporter (PRD Req. 10), Automation Hub, an automated OpenTable
-pull, Deputy canonicalization, MarketMan history import, and a permission admin UI.
+Not built yet: Smart Exporter (PRD Req. 10), Automation Hub, canonical domains for OpenTable
+reviews and menu items (stored raw only), Deputy canonicalization, MarketMan history import, and a permission admin UI.
 [`docs/audits/production-data/`](docs/audits/production-data/README.md) records what
 production actually contains and the prioritised gaps.
 

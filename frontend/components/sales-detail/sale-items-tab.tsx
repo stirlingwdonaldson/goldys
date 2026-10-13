@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table/data-table";
+import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { currencyColumn, dateColumn, numberColumn } from "@/components/data-table/columns";
 import { EmptyState } from "@/components/states/empty-state";
@@ -15,8 +16,6 @@ import type { Api } from "@/lib/api";
 import type { SaleItemRow } from "@/lib/api/types";
 import { useApiData } from "@/lib/use-api-data";
 import { buildSaleItemMixWidget } from "./sale-item-mix-chart";
-
-const PAGE_SIZE = 50;
 
 interface SaleItemsTabProps {
   from: string;
@@ -84,48 +83,22 @@ function saleItemColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<S
   ];
 }
 
-/** Server-side pager over the sale-items `DataPage`, mirroring the payments tab's. */
-function Pager({ page, total, onPage }: { page: number; total: number; onPage: (p: number) => void }) {
-  const hasPrev = page > 0;
-  const hasNext = (page + 1) * PAGE_SIZE < total;
-  if (!hasPrev && !hasNext) return null;
-  return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Button variant="outline" size="sm" disabled={!hasPrev} onClick={() => onPage(page - 1)}>
-        Previous
-      </Button>
-      <span>
-        {total > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, total)}` : "0"} of{" "}
-        {total}
-      </span>
-      <Button variant="outline" size="sm" disabled={!hasNext} onClick={() => onPage(page + 1)}>
-        Next
-      </Button>
-    </div>
-  );
-}
-
 /**
  * The Sale items tab: the resolved sale-item mix over time, then the canonical line
  * items behind it. The chart reads `getSaleItemMix`; the table pages `listSaleItems`
  * server-side, always scoped by the shared date range.
  */
 export function SaleItemsTab({ from, to, onViewSale, apiOverride }: SaleItemsTabProps) {
-  const [page, setPage] = useState(0);
+  const { page, setPage, pageSize, setPageSize } = usePageState(`${from}|${to}`);
   const [category, setCategory] = useState("");
 
   const mix = useApiData((api) => api.getSaleItemMix(from, to), [from, to], apiOverride);
   const rows = useApiData(
-    (api) => api.listSaleItems({ from, to, category }, page, PAGE_SIZE),
-    [from, to, category, page],
+    (api) => api.listSaleItems({ from, to, category }, page, pageSize),
+    [from, to, category, page, pageSize],
     apiOverride,
   );
 
-  // A new date range starts a new result set; without this the old page index would
-  // point past the new total and show an empty table.
-  useEffect(() => {
-    setPage(0);
-  }, [from, to]);
 
   // The dropdown offers exactly the categories present in the resolved mix.
   const categories = useMemo(() => {
@@ -205,7 +178,15 @@ export function SaleItemsTab({ from, to, onViewSale, apiOverride }: SaleItemsTab
           />
         ) : null}
 
-        {rows.data ? <Pager page={page} total={rows.data.total} onPage={setPage} /> : null}
+        {rows.data ? (
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            total={rows.data.total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        ) : null}
       </div>
     </div>
   );

@@ -85,6 +85,26 @@ public class IngestionService {
    * not failed. A {@code null} callback behaves exactly like {@link #runConnector(String)}.
    */
   public IngestionRunSummary runConnector(String source, Consumer<IngestionStatus> onComplete) {
+    return runConnector(source, null, onComplete);
+  }
+
+  /**
+   * Runs a pull connector from a caller-chosen {@code watermark} and reports the terminal status by
+   * name ({@code SUCCESS}, {@code PARTIAL}, ...; {@code null} when an in-flight run meant no new
+   * run started). For callers outside this package, which cannot name {@link IngestionStatus}: the
+   * OpenTable assisted session uses it to pass its sync mode and follow the run to completion.
+   */
+  public IngestionRunSummary runConnectorFrom(
+      String source, String watermark, Consumer<String> onCompleteStatusName) {
+    Consumer<IngestionStatus> onComplete =
+        onCompleteStatusName == null
+            ? null
+            : status -> onCompleteStatusName.accept(status == null ? null : status.name());
+    return runConnector(source, watermark, onComplete);
+  }
+
+  private IngestionRunSummary runConnector(
+      String source, String watermark, Consumer<IngestionStatus> onComplete) {
     SourceConnector connector = connectors.get(source.trim().toUpperCase(Locale.ROOT));
     if (connector == null) {
       throw new IllegalArgumentException("Unknown source: " + source);
@@ -107,8 +127,8 @@ public class IngestionService {
           }
           UUID runId =
               onComplete == null
-                  ? connectorRunner.run(connector, null)
-                  : connectorRunner.run(connector, null, onComplete);
+                  ? connectorRunner.run(connector, watermark)
+                  : connectorRunner.run(connector, watermark, onComplete);
           return runSummary(runId);
         });
   }

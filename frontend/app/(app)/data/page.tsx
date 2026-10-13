@@ -7,19 +7,17 @@ import { useApiData } from "@/lib/use-api-data";
 import { RESOLVED_SCREENS } from "@/lib/data-layers";
 import type { DataPage, GenericRow, RawRecordSummary } from "@/lib/api/types";
 import { GenericTable } from "@/components/data-explorer/generic-table";
+import { DEFAULT_PAGE_SIZE, TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Section = "raw" | "canonical" | "resolved";
 
-const PAGE_SIZE = 50;
-
-const emptyPage = (): DataPage<GenericRow> => ({ items: [], total: 0, page: 0, size: PAGE_SIZE });
+const emptyPage = (): DataPage<GenericRow> => ({ items: [], total: 0, page: 0, size: DEFAULT_PAGE_SIZE });
 
 
 export default function DataPage() {
@@ -63,41 +61,14 @@ function DataExplorer() {
   );
 }
 
-function Pager({
-  page,
-  total,
-  onPage,
-}: {
-  page: number;
-  total: number;
-  onPage: (p: number) => void;
-}) {
-  const hasPrev = page > 0;
-  const hasNext = (page + 1) * PAGE_SIZE < total;
-  if (!hasPrev && !hasNext) return null;
-  return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Button variant="outline" size="sm" disabled={!hasPrev} onClick={() => onPage(page - 1)}>
-        Previous
-      </Button>
-      <span>
-        {total > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, total)}` : "0"} of{" "}
-        {total}
-      </span>
-      <Button variant="outline" size="sm" disabled={!hasNext} onClick={() => onPage(page + 1)}>
-        Next
-      </Button>
-    </div>
-  );
-}
-
 function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }) {
   const [source, setSource] = useState("");
   const [fetcher, setFetcher] = useState("");
   const [method, setMethod] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [page, setPage] = useState(0);
+  // Any filter change starts a new result set, so it returns to the first page.
+  const { page, setPage, pageSize, setPageSize } = usePageState([source, fetcher, method, from, to].join("|"));
   const [expandedId, setExpandedId] = useState<string | null>(initialExpandedId ?? null);
 
   const rows = useApiData(
@@ -111,9 +82,9 @@ function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }
           to: to || undefined,
         },
         page,
-        PAGE_SIZE,
+        pageSize,
       ),
-    [source, fetcher, method, from, to, page],
+    [source, fetcher, method, from, to, page, pageSize],
   );
 
   return (
@@ -201,7 +172,13 @@ function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }
       ) : null}
 
       {rows.data ? (
-        <Pager page={page} total={rows.data.total} onPage={setPage} />
+        <TablePagination
+          page={page}
+          pageSize={pageSize}
+          total={rows.data.total}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
       ) : null}
     </div>
   );
@@ -260,11 +237,11 @@ function RawPayload({ id }: { id: string }) {
 function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) {
   const entities = useApiData((api) => api.listCanonicalEntities(), []);
   const [entity, setEntity] = useState(initialEntity ?? "");
-  const [page, setPage] = useState(0);
   const selected = entity || entities.data?.[0]?.id || "";
+  const { page, setPage, pageSize, setPageSize } = usePageState(selected);
   const rows = useApiData(
-    (api) => (selected ? api.listCanonicalRows(selected, page, PAGE_SIZE) : Promise.resolve(emptyPage())),
-    [selected, page],
+    (api) => (selected ? api.listCanonicalRows(selected, page, pageSize) : Promise.resolve(emptyPage())),
+    [selected, page, pageSize],
   );
   const descriptor = entities.data?.find((e) => e.id === selected);
 
@@ -318,7 +295,15 @@ function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) 
 
       {rows.data && rows.data.items.length > 0 ? <GenericTable rows={rows.data.items} /> : null}
 
-      {rows.data ? <Pager page={page} total={rows.data.total} onPage={setPage} /> : null}
+      {rows.data ? (
+        <TablePagination
+          page={page}
+          pageSize={pageSize}
+          total={rows.data.total}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      ) : null}
     </div>
   );
 }
@@ -326,11 +311,11 @@ function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) 
 function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
   const domains = useApiData((api) => api.listResolvedDomains(), []);
   const [domain, setDomain] = useState(initialDomain ?? "");
-  const [page, setPage] = useState(0);
   const selected = domain || domains.data?.[0]?.id || "";
+  const { page, setPage, pageSize, setPageSize } = usePageState(selected);
   const rows = useApiData(
-    (api) => (selected ? api.listResolvedRows(selected, page, PAGE_SIZE) : Promise.resolve(emptyPage())),
-    [selected, page],
+    (api) => (selected ? api.listResolvedRows(selected, page, pageSize) : Promise.resolve(emptyPage())),
+    [selected, page, pageSize],
   );
   const screen = RESOLVED_SCREENS[selected]?.href;
 
@@ -387,7 +372,15 @@ function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
 
       {rows.data && rows.data.items.length > 0 ? <GenericTable rows={rows.data.items} /> : null}
 
-      {rows.data ? <Pager page={page} total={rows.data.total} onPage={setPage} /> : null}
+      {rows.data ? (
+        <TablePagination
+          page={page}
+          pageSize={pageSize}
+          total={rows.data.total}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      ) : null}
     </div>
   );
 }

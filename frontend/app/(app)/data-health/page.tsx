@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Activity, AlertTriangle, RefreshCw, Timer, Upload, Wrench } from "lucide-react";
+import { Activity, AlertTriangle, LogIn, RefreshCw, Timer, Upload, Wrench } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
 import { useApi } from "@/lib/demo-mode";
 import { isApiError, type ConnectorStatus } from "@/lib/api";
@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ConnectorStatusBadge } from "@/components/connectors/connector-status-badge";
+import { OpenTableSyncDialog } from "@/components/connectors/opentable-sync-dialog";
 import { StatCard } from "@/components/data-display/stat-card";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { PipelineMap } from "@/components/pipeline/pipeline-map";
@@ -41,18 +42,52 @@ export default function DataHealthPage() {
   const { toast } = useToast();
   const shell = useShellStatus();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [syncOpen, setSyncOpen] = useState(false);
+  const reloadConnectors = connectors.reload;
+  const refreshShell = shell.refresh;
+  const onOpenTableSynced = useCallback(() => {
+    void reloadConnectors();
+    refreshShell();
+  }, [reloadConnectors, refreshShell]);
+
+  // A pull runs asynchronously on the server: "Run now" returns while the run is still
+  // RUNNING. Poll quietly while any source reports "running" so the card stays disabled
+  // until the run actually finishes (whoever started it: this tab, another tab, or the
+  // schedule), then announce the outcome of runs started from this page.
+  const anyRunning = connectors.data?.some((c) => c.status === "running") ?? false;
+  const refreshConnectors = connectors.refresh;
+  const startedHere = useRef(new Set<string>());
+  useEffect(() => {
+    if (!anyRunning) return;
+    const id = setInterval(() => void refreshConnectors(), RUN_POLL_MS);
+    return () => clearInterval(id);
+  }, [anyRunning, refreshConnectors]);
+  useEffect(() => {
+    for (const c of connectors.data ?? []) {
+      if (c.status === "running" || !startedHere.current.has(c.source)) continue;
+      startedHere.current.delete(c.source);
+      refreshShell();
+      toast(runOutcomeToast(c));
+    }
+  }, [connectors.data, refreshShell, toast]);
 
   async function run(source: string) {
     setRunning(source);
     try {
       const result = await api.runConnector(source);
-      await connectors.reload();
-      shell.refresh();
-      toast(
-        result.status === "failed"
-          ? { title: `${sourceIdentity(source).label} run failed`, description: "See the card for what went wrong.", tone: "error" }
-          : { title: `${sourceIdentity(source).label} ran`, description: result.status === "no_new_data" ? "No new data since the last run." : "New data is in.", tone: "success" },
-      );
+      if (result.status === "running") {
+        startedHere.current.add(source);
+        toast({
+          title: `${sourceIdentity(source).label} is running`,
+          description: "This can take a few minutes. We'll let you know when it finishes.",
+          tone: "info",
+        });
+        await connectors.refresh();
+      } else {
+        await connectors.reload();
+        shell.refresh();
+        toast(runOutcomeToast(result));
+      }
     } catch (e) {
       toast({
         title: `Couldn't run ${sourceIdentity(source).label}`,
@@ -86,141 +121,176 @@ export default function DataHealthPage() {
     }
   }
 
-  if (connectors.loading) return <LoadingState rows={4} />;
-  if (connectors.error) {
-    if (connectors.error.code === "NOT_PERMITTED")
-      return <PermissionDenied subject="connector status" />;
-    return (
-      <ErrorState
-        title="Couldn't load data health"
-        message={connectors.error.message}
-        correlationId={connectors.error.correlationId}
-        onRetry={connectors.reload}
-      />
-    );
-  }
-  if (!connectors.data || connectors.data.length === 0) {
-    return (
+  // Every branch renders `<>{body}{syncDialog}</>` so the dialog keeps the same position in the
+  // tree: finishing a sync reloads the connector list (briefly showing the loading state), and the
+  // open dialog, with its result, must stay mounted through that.
+  const syncDialog = (
+    <OpenTableSyncDialog open={syncOpen} onOpenChange={setSyncOpen} onSynced={onOpenTableSynced} />
+  );
+
+  let placeholder: React.ReactNode = null;
+  if (connectors.loading) {
+    placeholder = <LoadingState rows={4} />;
+  } else if (connectors.error) {
+    placeholder =
+      connectors.error.code === "NOT_PERMITTED" ? (
+        <PermissionDenied subject="connector status" />
+      ) : (
+        <ErrorState
+          title="Couldn't load data health"
+          message={connectors.error.message}
+          correlationId={connectors.error.correlationId}
+          onRetry={connectors.reload}
+        />
+      );
+  } else if (!connectors.data || connectors.data.length === 0) {
+    placeholder = (
       <EmptyState
         title="No connector data"
         description="Run status will appear here once ingestion starts."
       />
     );
   }
+  if (placeholder !== null || !connectors.data) {
+    return (
+      <>
+        {placeholder}
+        {syncDialog}
+      </>
+    );
+  }
 
   const failing = connectors.data.filter((c) => c.status === "failed").length;
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Data health"
-        status={
-          failing > 0 ? (
-            <Badge variant="failed">
-              {failing} {failing === 1 ? "source" : "sources"} failing
-            </Badge>
+    <>
+      <div className="flex flex-col gap-6">
+        <PageHeader
+          title="Data health"
+          status={
+            failing > 0 ? (
+              <Badge variant="failed">
+                {failing} {failing === 1 ? "source" : "sources"} failing
+              </Badge>
+            ) : (
+              <Badge variant="success">All sources healthy</Badge>
+            )
+          }
+          description="When each source last delivered data, and what to do when one stops."
+        />
+
+        {/* Hidden file input for the OpenTable CSV upload, triggered from its card. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          aria-hidden="true"
+          tabIndex={-1}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            const target = uploadTarget;
+            if (file && target) uploadCsv(target, file);
+            setUploadTarget(null);
+            e.target.value = "";
+          }}
+        />
+
+        <section className="grid gap-4 lg:grid-cols-2" aria-label="Sources">
+          {connectors.data.map((c) => {
+            const target = uploadTargetFor(c.connectorName);
+            const syncable = c.source.toUpperCase() === "OPENTABLE" && !isLegacyCsvDrop(c.connectorName);
+            return (
+              <ConnectorCard
+                key={c.connectorName}
+                connector={c}
+                running={running === c.source || c.status === "running"}
+                busy={running !== null || c.status === "running"}
+                uploading={uploading === c.connectorName}
+                onRun={() => run(c.source)}
+                onUpload={
+                  target
+                    ? () => {
+                        setUploadTarget(target);
+                        fileInputRef.current?.click();
+                      }
+                    : undefined
+                }
+                onSync={syncable ? () => setSyncOpen(true) : undefined}
+              />
+            );
+          })}
+        </section>
+
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Ingestion summary">
+          {summary.loading ? (
+            <Skeleton className="h-28 w-full rounded-xl" />
+          ) : summary.error ? (
+            <InlineError>Couldn&apos;t load the ingestion summary. Refresh the page to try again.</InlineError>
           ) : (
-            <Badge variant="success">All sources healthy</Badge>
-          )
-        }
-        description="When each source last delivered data, and what to do when one stops."
-      />
+            <>
+              <StatCard
+                label="Ingestion completeness"
+                value={
+                  summary.data?.ingestionCompleteness == null
+                    ? "—"
+                    : `${summary.data.ingestionCompleteness}%`
+                }
+                hint="Share of scheduled connector runs that succeed"
+                icon={Activity}
+              />
+              <StatCard
+                label="Time to detect failure"
+                value={summary.data?.timeToDetectFailure ?? "—"}
+                hint="How quickly a failed run becomes visible"
+                icon={Timer}
+              />
+              <StatCard
+                label="Manual overrides"
+                value={summary.data?.overrideUsage ? String(summary.data.overrideUsage.count) : "—"}
+                hint={summary.data?.overrideUsage?.period ?? "How often staff resolve by hand"}
+                icon={Wrench}
+              />
+            </>
+          )}
+        </section>
 
-      {/* Hidden file input for the OpenTable CSV upload, triggered from its card. */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".csv,text/csv"
-        className="hidden"
-        aria-hidden="true"
-        tabIndex={-1}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          const target = uploadTarget;
-          if (file && target) uploadCsv(target, file);
-          setUploadTarget(null);
-          e.target.value = "";
-        }}
-      />
+        <Section
+          title="How data flows"
+          description="Each source lands in the raw ledger, becomes canonical entities, then resolves into the figures your screens show. Select a step to open it."
+          card
+        >
+          <PipelineMap connectors={connectors.data} />
+        </Section>
 
-      <section className="grid gap-4 lg:grid-cols-2" aria-label="Sources">
-        {connectors.data.map((c) => {
-          const target = uploadTargetFor(c.connectorName);
-          return (
-            <ConnectorCard
-              key={c.connectorName}
-              connector={c}
-              running={running === c.source}
-              busy={running !== null}
-              uploading={uploading === c.connectorName}
-              onRun={() => run(c.source)}
-              onUpload={
-                target
-                  ? () => {
-                      setUploadTarget(target);
-                      fileInputRef.current?.click();
-                    }
-                  : undefined
-              }
-            />
-          );
-        })}
-      </section>
+        <DependenciesSection />
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Ingestion summary">
-        {summary.loading ? (
-          <Skeleton className="h-28 w-full rounded-xl" />
-        ) : summary.error ? (
-          <InlineError>Couldn&apos;t load the ingestion summary. Refresh the page to try again.</InlineError>
-        ) : (
-          <>
-            <StatCard
-              label="Ingestion completeness"
-              value={
-                summary.data?.ingestionCompleteness == null
-                  ? "—"
-                  : `${summary.data.ingestionCompleteness}%`
-              }
-              hint="Share of scheduled connector runs that succeed"
-              icon={Activity}
-            />
-            <StatCard
-              label="Time to detect failure"
-              value={summary.data?.timeToDetectFailure ?? "—"}
-              hint="How quickly a failed run becomes visible"
-              icon={Timer}
-            />
-            <StatCard
-              label="Manual overrides"
-              value={summary.data?.overrideUsage ? String(summary.data.overrideUsage.count) : "—"}
-              hint={summary.data?.overrideUsage?.period ?? "How often staff resolve by hand"}
-              icon={Wrench}
-            />
-          </>
-        )}
-      </section>
-
-      <Section
-        title="How data flows"
-        description="Each source lands in the raw ledger, becomes canonical entities, then resolves into the figures your screens show. Select a step to open it."
-        card
-      >
-        <PipelineMap connectors={connectors.data} />
-      </Section>
-
-      <DependenciesSection />
-
-      <section className="flex flex-col gap-3">
-        {activity.loading ? (
-          <Skeleton className="h-40 w-full rounded-xl" />
-        ) : activity.error ? (
-          <InlineError>Couldn&apos;t load run activity. Refresh the page to try again.</InlineError>
-        ) : (
-          <ActivityChart title="Run activity · last 14 days" points={activity.data ?? []} />
-        )}
-      </section>
-    </div>
+        <section className="flex flex-col gap-3">
+          {activity.loading ? (
+            <Skeleton className="h-40 w-full rounded-xl" />
+          ) : activity.error ? (
+            <InlineError>Couldn&apos;t load run activity. Refresh the page to try again.</InlineError>
+          ) : (
+            <ActivityChart title="Run activity · last 14 days" points={activity.data ?? []} />
+          )}
+        </section>
+      </div>
+      {syncDialog}
+    </>
   );
+}
+
+const RUN_POLL_MS = 3000;
+
+function runOutcomeToast(c: ConnectorStatus) {
+  const label = sourceIdentity(c.source).label;
+  return c.status === "failed"
+    ? { title: `${label} run failed`, description: "See the card for what went wrong.", tone: "error" as const }
+    : {
+        title: `${label} ran`,
+        description: c.status === "no_new_data" ? "No new data since the last run." : "New data is in.",
+        tone: "success" as const,
+      };
 }
 
 /**
@@ -235,6 +305,7 @@ function ConnectorCard({
   uploading,
   onRun,
   onUpload,
+  onSync,
 }: {
   connector: ConnectorStatus;
   running: boolean;
@@ -242,17 +313,28 @@ function ConnectorCard({
   uploading: boolean;
   onRun: () => void;
   onUpload: (() => void) | undefined;
+  onSync: (() => void) | undefined;
 }) {
   const failed = c.status === "failed";
   const isUpload = onUpload !== undefined;
+  const isSync = onSync !== undefined;
   const legacy = isLegacyCsvDrop(c.connectorName);
   // Sources arrive as codes ("LIGHTSPEED"); the OpenTable datasets get distinct names.
   const name = connectorDisplayName(c.source, c.connectorName);
-  const action = isUpload ? (
-    <Button variant="outline" size="sm" onClick={onUpload} disabled={uploading}>
-      <Upload aria-hidden="true" />
-      {uploading ? "Uploading…" : "Upload CSV"}
-    </Button>
+  // OpenTable datasets: sign in through the live view to sync, or fall back to a CSV export.
+  const action = isSync ? (
+    <>
+      <Button variant={failed ? "default" : "outline"} size="sm" onClick={onSync}>
+        <LogIn aria-hidden="true" />
+        Sync OpenTable
+      </Button>
+      {isUpload && (
+        <Button variant="ghost" size="sm" onClick={onUpload} disabled={uploading}>
+          <Upload aria-hidden="true" />
+          {uploading ? "Uploading…" : "Upload CSV"}
+        </Button>
+      )}
+    </>
   ) : legacy ? (
     <span className="text-xs text-muted-foreground">Deprecated — use the exports below</span>
   ) : c.runnable ? (

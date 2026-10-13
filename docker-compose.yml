@@ -46,6 +46,21 @@ services:
       retries: 3
       start_period: 30s
 
+  # OpenTable assisted sign-in browser (docs/connectors/opentable.md). Opt-in, since it holds a
+  # real OpenTable login once used:
+  #   docker compose --profile opentable up -d opentable-browser
+  #   OPENTABLE_API_ENABLED=true OPENTABLE_CDP_HOST=127.0.0.1 ./gradlew bootRun
+  # DevTools is bound to loopback only; never change this to 0.0.0.0.
+  opentable-browser:
+    build: ./opentable-browser
+    profiles: ["opentable"]
+    shm_size: 1gb
+    ports:
+      - "127.0.0.1:9223:9223"
+    volumes:
+      - opentable_browser_profile_dev:/profile
+
 volumes:
   goldys_pg_data:
   timesfm_cache:
+  opentable_browser_profile_dev:

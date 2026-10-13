@@ -48,7 +48,9 @@ export function TimeSeriesWidgetView({ widget }: { widget: TimeSeriesWidget }) {
               return (
                 <Area
                   key={s.key}
-                  type="monotone"
+                  // Straight segments: daily figures are discrete, and a smoothed curve
+                  // implies values between days (and can overshoot) that never happened.
+                  type="linear"
                   dataKey={s.key}
                   name={s.label}
                   connectNulls={false}

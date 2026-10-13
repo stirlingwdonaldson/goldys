@@ -65,6 +65,10 @@ import type {
   PaymentFilter,
   DeletedSaleFilter,
   SaleItemFilter,
+  OpenTableInput,
+  OpenTableSessionHandlers,
+  OpenTableSessionState,
+  OpenTableSyncMode,
 } from "./types";
 import { demoPlatformMap } from "./demo-platform-map";
 
@@ -768,6 +772,42 @@ const demoRecipeIngredients: Record<number, RecipeIngredient[]> = {
   ],
 };
 
+
+/**
+ * Demo OpenTable assisted sign-in. There is no remote browser: the live view shows a placeholder
+ * frame, pressing Enter in it "signs in", and a short simulated sync follows. A 1x1 grey JPEG keeps
+ * the real image path exercised.
+ */
+const DEMO_OPENTABLE_FRAME =
+  "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=";
+let demoOpenTable: OpenTableSessionState = {
+  state: "DISCONNECTED",
+  mode: "INCREMENTAL",
+  runStatus: null,
+  detail: null,
+  at: new Date().toISOString(),
+};
+let demoOpenTableViewer: OpenTableSessionHandlers | null = null;
+
+function setDemoOpenTable(patch: Partial<OpenTableSessionState>) {
+  demoOpenTable = { ...demoOpenTable, ...patch, at: new Date().toISOString() };
+  demoOpenTableViewer?.onState(demoOpenTable);
+}
+
+function demoOpenTableSignedIn() {
+  setDemoOpenTable({ state: "SYNCING", detail: "Signed in. Syncing; you can close this page" });
+  setTimeout(() => {
+    // Update the card first: announcing DONE makes Data health reload the connector list.
+    const opentable = connectorStatuses.find((c) => c.source === "OPENTABLE");
+    if (opentable) {
+      opentable.lastRunAt = new Date().toISOString();
+      opentable.status = "success";
+      opentable.failureCount = 0;
+    }
+    setDemoOpenTable({ state: "DONE", runStatus: "SUCCESS", detail: "Reservations, reviews and menu items are up to date." });
+  }, 2500);
+}
+
 export const demoApi: Api = {
   async getDashboardBootstrap(): Promise<DashboardBootstrap> {
     await delay(400);
@@ -855,6 +895,56 @@ export const demoApi: Api = {
       connector.status = "success";
       connector.failureCount = 0;
     }
+  },
+
+  async getOpenTableSession(): Promise<OpenTableSessionState> {
+    await delay(150);
+    return demoOpenTable;
+  },
+
+  async startOpenTableSession(mode: OpenTableSyncMode): Promise<OpenTableSessionState> {
+    await delay(300);
+    if (demoOpenTable.state !== "SYNCING") {
+      setDemoOpenTable({
+        state: "LOGIN_REQUIRED",
+        mode,
+        runStatus: null,
+        detail: "Demo: press Enter in the view to simulate signing in",
+      });
+      demoOpenTableViewer?.onFrame({ jpegBase64: DEMO_OPENTABLE_FRAME, width: 1280, height: 800 });
+    }
+    return demoOpenTable;
+  },
+
+  async sendOpenTableInput(input: OpenTableInput): Promise<void> {
+    await delay(20);
+    if (demoOpenTable.state !== "LOGIN_REQUIRED") return;
+    if (input.type === "key" && input.action === "down" && input.key === "Enter") {
+      demoOpenTableSignedIn();
+    }
+  },
+
+  async endOpenTableSession(signOut: boolean): Promise<void> {
+    await delay(150);
+    void signOut;
+    if (demoOpenTable.state === "LOGIN_REQUIRED") {
+      setDemoOpenTable({ state: "DISCONNECTED", detail: null });
+    }
+    const viewer = demoOpenTableViewer;
+    demoOpenTableViewer = null;
+    viewer?.onClosed();
+  },
+
+  watchOpenTableSession(handlers: OpenTableSessionHandlers): () => void {
+    demoOpenTableViewer?.onClosed();
+    demoOpenTableViewer = handlers;
+    handlers.onState(demoOpenTable);
+    if (demoOpenTable.state === "LOGIN_REQUIRED") {
+      handlers.onFrame({ jpegBase64: DEMO_OPENTABLE_FRAME, width: 1280, height: 800 });
+    }
+    return () => {
+      if (demoOpenTableViewer === handlers) demoOpenTableViewer = null;
+    };
   },
 
   async saveOverride(input: SaveOverrideInput): Promise<{ ok: true; recordId: string; field: string }> {

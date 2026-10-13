@@ -11,6 +11,10 @@ import { useApi } from "@/lib/demo-mode";
  * Promise that resolves when the fetch settles, and cancels any in-flight request
  * it replaces. `apiOverride` lets a screen inject a specific Api (used by tests and
  * by pages that receive an `api` prop); it defaults to the demo/live singleton.
+ *
+ * `refresh` re-fetches in place: unlike `reload` it keeps the current data on screen
+ * and leaves `loading` alone, so polling doesn't flash the loading state. A failed
+ * refresh is ignored (the last good data stays up); the next poll or reload tries again.
  */
 export function useApiData<T>(
   fetcher: (api: Api) => Promise<T>,
@@ -51,6 +55,24 @@ export function useApiData<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api, ...deps]);
 
+  const refresh = useCallback(async (): Promise<void> => {
+    cancelRef.current?.();
+    let cancelled = false;
+    cancelRef.current = () => {
+      cancelled = true;
+    };
+    try {
+      const result = await fetcherRef.current(api);
+      if (!cancelled) {
+        setData(result);
+        setError(null);
+      }
+    } catch {
+      // Deliberately ignored: see the doc comment.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, ...deps]);
+
   useEffect(() => {
     reload();
     return () => {
@@ -58,5 +80,5 @@ export function useApiData<T>(
     };
   }, [reload]);
 
-  return { data, loading, error, reload };
+  return { data, loading, error, reload, refresh };
 }

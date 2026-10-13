@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { login } from "@/lib/api";
+import { nextPath } from "@/lib/auth-redirect";
 import { AuthFeedback } from "@/components/auth/auth-feedback";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +32,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login({ email, password });
-      router.push("/dashboard");
+      router.push(nextPath(window.location.search));
       router.refresh();
     } catch (err) {
       setError(err);

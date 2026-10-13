@@ -149,7 +149,7 @@ describe("PaymentsTab", () => {
     );
 
     await screen.findByText("SALE-0");
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
     await waitFor(() =>
       expect(listPayments).toHaveBeenLastCalledWith(expect.anything(), 1, expect.anything()),
     );

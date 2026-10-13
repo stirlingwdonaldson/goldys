@@ -107,4 +107,25 @@ class PermissionBoundaryIntegrationTest {
                     fohManager, new ResourceKey("recipes.ingredients"), PermissionAction.READ))
         .isInstanceOf(AccessDeniedException.class);
   }
+
+  /**
+   * The OpenTable live view is a window into the venue's OpenTable account, so it is seeded for
+   * owners only and is not implied by the broader {@code connectors} resource.
+   */
+  @Test
+  void openTableSessionIsOwnerOnly() {
+    ResourceKey session = new ResourceKey("connectors.opentable.session");
+    UserRole owner = new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
+    assertThatCode(() -> permissions.require(owner, session, PermissionAction.WRITE))
+        .doesNotThrowAnyException();
+
+    jdbc.update(
+        "insert into permission (id, department, seniority, resource, can_read, can_write) "
+            + "values (gen_random_uuid(), 'FOH', 'SUPERVISOR', 'connectors', true, true)");
+    // A dedicated role so this grant can't leak into other tests sharing the database.
+    UserRole fohSupervisor =
+        new UserRole(new DepartmentCode("FOH"), new SeniorityCode("SUPERVISOR"));
+    assertThatThrownBy(() -> permissions.require(fohSupervisor, session, PermissionAction.READ))
+        .isInstanceOf(AccessDeniedException.class);
+  }
 }

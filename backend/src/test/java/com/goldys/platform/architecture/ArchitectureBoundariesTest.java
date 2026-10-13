@@ -410,6 +410,21 @@ class ArchitectureBoundariesTest {
           .dependOnClassesThat()
           .resideInAPackage("..forecasting..");
 
+  /**
+   * The OpenTable live view is reached only through {@code OpenTableSessionApplicationService},
+   * which authorizes every call: delivery code never touches the sidecar browser or CDP directly.
+   */
+  @ArchTest
+  static final ArchRule openTableBrowserIsReachedOnlyThroughTheApplicationService =
+      noClasses()
+          .that()
+          .resideInAnyPackage("..api..", "..conversational..", "..reporting..", "..dashboard..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "com.goldys.platform.connectors.opentable.session..",
+              "com.goldys.platform.connectors.opentable.cdp..");
+
   /** The forecasting controller must not read canonical source facts or the raw ledger directly. */
   @ArchTest
   static final ArchRule forecastingControllerDoesNotReadCanonical =
