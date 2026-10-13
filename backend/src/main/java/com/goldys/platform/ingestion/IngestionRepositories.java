@@ -78,7 +78,7 @@ interface RawRecordRepository
   /**
    * Id and hash of the latest payload for one dataset window. A closed interface projection, so
    * only those two columns are selected and {@code payload_bytes} is never loaded. Backed by {@code
-   * idx_raw_record_source_fetcher_ref} (V53).
+   * idx_raw_record_source_fetcher_ref} (V58).
    */
   Optional<RawRecordDigest>
       findFirstBySourceSystemAndFetcherIdentityAndSourceRecordRefOrderByFetchedAtDesc(
