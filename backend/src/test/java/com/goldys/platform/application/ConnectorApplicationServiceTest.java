@@ -144,6 +144,30 @@ class ConnectorApplicationServiceTest {
   }
 
   @Test
+  void preservesDistinctConnectorNamesWhenSourceHasARun() {
+    // A source's latest run must not overwrite the other connectors of that source (the four
+    // OpenTable exports share source "OPENTABLE"); each tile keeps its own connector name.
+    when(ingestion.latestRunPerSource())
+        .thenReturn(
+            List.of(
+                new IngestionRunSummary(
+                    "OPENTABLE", "opentable-reservations", "SUCCESS", Instant.EPOCH, null, null)));
+    when(ingestion.isRunnable(any())).thenReturn(false);
+
+    var statuses = service.connectors(OWNER);
+
+    assertThat(statuses.stream().map(ConnectorApplicationService.ConnectorStatus::connectorName))
+        .containsExactly(
+            "lightspeed-insights",
+            "ctb-revenue",
+            "opentable-csv-drop",
+            "opentable-reservations",
+            "opentable-reviews",
+            "opentable-menu-items",
+            "deputy-api");
+  }
+
+  @Test
   void uploadOpenTableReservationsCsvDelegates() {
     byte[] bytes = {1, 2, 3};
 

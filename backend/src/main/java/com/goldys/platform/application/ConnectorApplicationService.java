@@ -78,15 +78,19 @@ public class ConnectorApplicationService {
     return KNOWN_SOURCES.stream()
         .map(
             known -> {
+              // A source may have several connectors (OpenTable's four exports share the OPENTABLE
+              // source). Preserve the KNOWN_SOURCES entry's own source + connector name as the
+              // tile's stable identity, and take only the run-status fields from the source's
+              // latest run — otherwise every OPENTABLE tile collapses to whichever export ran last.
               ConnectorStatus current = latest.getOrDefault(known.source(), known);
               return new ConnectorStatus(
-                  current.source(),
-                  current.connectorName(),
+                  known.source(),
+                  known.connectorName(),
                   current.lastRunAt(),
                   current.status(),
                   current.failureCount(),
                   current.failure(),
-                  ingestion.isRunnable(current.source()));
+                  ingestion.isRunnable(known.source()));
             })
         .toList();
   }
