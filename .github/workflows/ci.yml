@@ -8,7 +8,7 @@ on:
 jobs:
   backend:
     name: Backend (test, format, build)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
@@ -27,7 +27,7 @@ jobs:
 
   frontend:
     name: Frontend (typecheck, lint, test, build)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -51,7 +51,7 @@ jobs:
 
   docker:
     name: Docker images (build)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
