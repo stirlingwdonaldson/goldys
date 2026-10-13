@@ -313,7 +313,9 @@ export function layoutDendrogram(
 
   const flowNodes: FlowNode[] = nodes.map((n) => {
     const x = (centreX.get(n.id) ?? 0) - NODE_WIDTH / 2;
-    const y = n.isLeaf ? 0 : -(TREE_LEVEL_GAP + norm(n.height) * heightBand);
+    // Leaves sit at y=0..NODE_HEIGHT; the base offset clears that row entirely so the lowest
+    // merge (norm=0) doesn't dip into the leaf row.
+    const y = n.isLeaf ? 0 : -(NODE_HEIGHT + TREE_LEVEL_GAP + norm(n.height) * heightBand);
     const hasChildren = (children.get(n.id)?.length ?? 0) > 0;
     return {
       id: n.id,
