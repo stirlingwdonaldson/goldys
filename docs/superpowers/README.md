@@ -53,6 +53,7 @@ Many specs still carry their original `Status: Draft` or `In review` header. The
 | 10-13 | Supplier PDF templates (deterministic extraction for non-templated suppliers) | [spec](specs/2026-10-13-supplier-pdf-templates-design.md) | — | Design — awaiting approval |
 | 10-13 | OpenTable reviews, menu items & rich reservations | [spec](specs/2026-10-13-opentable-reviews-menu-reservations-design.md) | [plan](plans/2026-10-13-opentable-reviews-menu-reservations.md) | Implemented on branch (rich CSV backfill, V54/V55, `canonical_guest`) |
 | 10-13 | OpenTable JSON → rich reservation mapping (fix sparse supersession) | [spec](specs/2026-10-13-opentable-json-rich-mapping-design.md) | — | Implemented on branch |
+| 10-13 | Recipe costing gap recovery (price join, off-menu label, last-sold) | [spec](specs/2026-10-13-recipe-costing-gap-design.md) | [plan](plans/2026-10-13-recipe-costing-gap.md) | Planned — not implemented |
 
 Some older records reference paths that have since moved. File paths inside them
 have been updated to the current layout (`docs/operations/`, `docs/design/`,

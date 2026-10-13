@@ -297,6 +297,13 @@ export interface RecipeCosting {
   menuPrice: number | null;
   margin: number | null;
   gpPercent: number | null;
+  /** "ON_MENU" | "OFF_MENU" | "UNKNOWN" — the recipe's current menu status. */
+  menuState: string;
+  /** "CURRENT" | "HISTORICAL" | "NONE" — where the effective menu price came from. */
+  priceSource: string;
+  lastSoldPrice: number | null;
+  lastSoldCost: number | null;
+  lastSoldDate: string | null;
 }
 
 /**

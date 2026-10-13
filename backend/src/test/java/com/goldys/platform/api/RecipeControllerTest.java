@@ -52,7 +52,12 @@ class RecipeControllerTest {
                     new BigDecimal("1.20"),
                     new BigDecimal("18.50"),
                     new BigDecimal("12.50"),
-                    new BigDecimal("0.6757"))));
+                    new BigDecimal("0.6757"),
+                    "ON_MENU",
+                    "CURRENT",
+                    null,
+                    null,
+                    null)));
 
     mvc.perform(get("/api/recipes").with(authenticated(owner())))
         .andExpect(status().isOk())

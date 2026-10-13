@@ -14,6 +14,7 @@ import { StatCard } from "@/components/data-display/stat-card";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
 import { EmptyState } from "@/components/states/empty-state";
 import { DataTable } from "@/components/data-table/data-table";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { currencyColumn } from "@/components/data-table/columns";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +28,13 @@ function gpColumn(): ColumnDef<RecipeCosting> {
     ),
     meta: { title: "GP%", align: "right" },
   };
+}
+
+/** A menu status in venue-friendly language for the "Menu price" cell. */
+function menuStateLabel(menuState: string): string {
+  if (menuState === "OFF_MENU") return "Off menu";
+  if (menuState === "UNKNOWN") return "Not on menu";
+  return "No price matched";
 }
 
 /** Sub-recipe lines grouped by their sub-recipe name, preserving first-seen order. */
@@ -138,9 +146,49 @@ export default function RecipesPage() {
         cell: ({ row }) => row.original.portionSize ?? "—",
       },
       currencyColumn("costPerPortion", "Cost/portion", (r) => r.costPerPortion),
-      currencyColumn("actualCost", "Actual cost", (r) => r.actualCost),
+      {
+        id: "actualCost",
+        accessorFn: (r) => r.actualCost ?? r.lastSoldCost ?? 0,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Actual cost" />,
+        cell: ({ row }) => {
+          const r = row.original;
+          if (r.priceSource === "HISTORICAL") {
+            return (
+              <span className="tabular-nums text-muted-foreground">
+                {formatCurrency(r.lastSoldCost)}
+                <span> · Last sold {r.lastSoldDate}</span>
+              </span>
+            );
+          }
+          if (r.priceSource === "NONE") {
+            return <span className="text-muted-foreground">—</span>;
+          }
+          return <span className="tabular-nums">{formatCurrency(r.actualCost)}</span>;
+        },
+        meta: { title: "Actual cost", align: "right" },
+      },
       currencyColumn("costGap", "Cost gap", (r) => r.costGap),
-      currencyColumn("menuPrice", "Menu price", (r) => r.menuPrice),
+      {
+        id: "menuPrice",
+        accessorFn: (r) => r.menuPrice ?? r.lastSoldPrice ?? 0,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Menu price" />,
+        cell: ({ row }) => {
+          const r = row.original;
+          if (r.priceSource === "HISTORICAL") {
+            return (
+              <span className="tabular-nums text-muted-foreground">
+                {formatCurrency(r.lastSoldPrice)}
+                <span> · Last sold {r.lastSoldDate}</span>
+              </span>
+            );
+          }
+          if (r.priceSource === "NONE") {
+            return <span className="text-muted-foreground">{menuStateLabel(r.menuState)}</span>;
+          }
+          return <span className="tabular-nums">{formatCurrency(r.menuPrice)}</span>;
+        },
+        meta: { title: "Menu price", align: "right" },
+      },
       currencyColumn("margin", "Margin", (r) => r.margin),
       gpColumn(),
       {
@@ -213,6 +261,9 @@ export default function RecipesPage() {
 
           <Section title="Recipe costing">
             <DataTable columns={columns} data={rows} getRowId={(r) => String(r.recipeId)} />
+            <p className="text-xs text-muted-foreground">
+              Last-sold figures are historical, not current prices.
+            </p>
           </Section>
 
           {selected ? (

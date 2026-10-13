@@ -1617,10 +1617,12 @@ export const demoApi: Api = {
   async getRecipes(): Promise<RecipeCosting[]> {
     await delay(300);
     return [
-      { recipeId: 1, name: "Parma", folder: "Mains", portionSize: "1", costPerPortion: 6.0, actualCost: 7.2, costGap: 1.2, menuPrice: 18.5, margin: 12.5, gpPercent: 0.6757 },
-      { recipeId: 2, name: "Kids Fish & Chippies", folder: "Kids", portionSize: "1 serve", costPerPortion: 4.1, actualCost: 4.5, costGap: 0.4, menuPrice: 12.0, margin: 7.9, gpPercent: 0.6583 },
-      { recipeId: 3, name: "Cheeseburger", folder: "Mains", portionSize: "1", costPerPortion: 5.4, actualCost: 5.9, costGap: 0.5, menuPrice: 19.0, margin: 13.6, gpPercent: 0.7158 },
-      { recipeId: 4, name: "Sticky Date Pudding", folder: "Dessert", portionSize: "6", costPerPortion: 1.9, actualCost: 2.1, costGap: 0.2, menuPrice: 11.0, margin: 9.1, gpPercent: 0.8273 },
+      { recipeId: 1, name: "Parma", folder: "Mains", portionSize: "1", costPerPortion: 6.0, actualCost: 7.2, costGap: 1.2, menuPrice: 18.5, margin: 12.5, gpPercent: 0.6757, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 2, name: "Kids Fish & Chippies", folder: "Kids", portionSize: "1 serve", costPerPortion: 4.1, actualCost: 4.5, costGap: 0.4, menuPrice: 12.0, margin: 7.9, gpPercent: 0.6583, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 3, name: "Cheeseburger", folder: "Mains", portionSize: "1", costPerPortion: 5.4, actualCost: 5.9, costGap: 0.5, menuPrice: 19.0, margin: 13.6, gpPercent: 0.7158, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 4, name: "Sticky Date Pudding", folder: "Dessert", portionSize: "6", costPerPortion: 1.9, actualCost: 2.1, costGap: 0.2, menuPrice: 11.0, margin: 9.1, gpPercent: 0.8273, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 5, name: "Eggplant Parmigiana", folder: "Mains", portionSize: "1", costPerPortion: 4.2, actualCost: null, costGap: 0.6, menuPrice: null, margin: 12.8, gpPercent: 0.7529, menuState: "OFF_MENU", priceSource: "HISTORICAL", lastSoldPrice: 17.0, lastSoldCost: 4.8, lastSoldDate: "2026-09-14" },
+      { recipeId: 6, name: "Pickle Brine", folder: "Prep", portionSize: "1", costPerPortion: 0.8, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
     ];
   },
 
