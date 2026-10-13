@@ -25,7 +25,8 @@ scope and acceptance criteria in [`docs/prd.md`](docs/prd.md).
 - `frontend/`: Next.js 15 (App Router), React 19, TypeScript, Tailwind, shadcn/ui,
   Recharts, React Flow. Bun 1.4.2 only.
 - `docker-compose.yml`: local Postgres 16 on host port **5433**.
-- `docker-compose.prod.yml`: production stack (frontend, backend, postgres, sftp).
+- `docker-compose.prod.yml`: production stack (frontend, backend, postgres, sftp, plus the
+  `timesfm`, `opentable-browser` and `product-classify` sidecars).
 - `docs/`: architecture, requirements, connector notes, design system, runbooks,
   audits, and dated design records.
 

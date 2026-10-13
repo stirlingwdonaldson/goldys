@@ -5,6 +5,7 @@ import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.semantic.AssignmentView;
 import com.goldys.platform.semantic.CategoryNode;
+import com.goldys.platform.semantic.ClassificationRunView;
 import com.goldys.platform.semantic.DendrogramNode;
 import com.goldys.platform.semantic.ProductPoint;
 import java.util.List;
@@ -77,6 +78,12 @@ public class ProductCategoryController {
       @AuthenticationPrincipal AccountUserDetails user) {
     reporting.runClassification(currentUser.roleOf(user), body.kind());
     return ResponseEntity.accepted().build();
+  }
+
+  /** The recent classification runs, newest first, for the screen's run-status display. */
+  @GetMapping("/runs")
+  List<ClassificationRunView> runs(@AuthenticationPrincipal AccountUserDetails user) {
+    return reporting.listRuns(currentUser.roleOf(user));
   }
 
   /** Renames and/or regroups a category. A field left {@code null} is left unchanged. */

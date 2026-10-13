@@ -41,8 +41,9 @@ cp .env.example .env.prod                 # fill in POSTGRES_PASSWORD and any co
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 ```
 
-This builds and runs three containers — `frontend` (published on `${PORT:-3000}`),
-`backend`, and `postgres`. Only `frontend` is reachable from the host; it proxies
+This builds and runs the full stack — `frontend` (published on `${PORT:-3000}`),
+`backend`, `postgres`, `sftp`, and the `timesfm`, `opentable-browser` and
+`product-classify` sidecars. Only `frontend` is reachable from the host; it proxies
 `/api` to `backend` over the internal network.
 
 ## Staging / second instance (a different port)
@@ -201,6 +202,30 @@ Setup:
 
 **Session lifetime:** record when GuestCenter first forces a re-login after a sync (the absolute
 ceiling isn't visible from the browser) in `docs/connectors/opentable.md`.
+
+## Product classification service (embeddings)
+
+The `product-classify` service is a self-hosted FastAPI sidecar that embeds each product's feature
+text into a 384-dim sentence vector (`all-MiniLM-L6-v2`) and clusters them into a dendrogram
+(`GET /health`, `POST /embed`, `POST /cluster` on port **8002**, internal-only). The Java backend
+calls it behind `EmbeddingServiceHttpClient` when a classification run is submitted from the
+`/products` screen. It knows nothing about Goldy's schema or permissions.
+
+Setup:
+
+1. Deploy as usual; compose builds and starts `product-classify` alongside the backend.
+2. Wait for it to become healthy — its first start imports `sentence-transformers` and, with
+   `CLASSIFY_PREWARM=true`, pre-downloads the ~90 MB model into the `classify_model_cache` volume.
+3. Once healthy, set `CLASSIFICATION_EMBEDDING_ENABLED=true` in `.env.prod` and redeploy the
+   backend. Until the flag is on, a submitted `CLUSTER`/`FULL` run fails fast, recording the
+   message in `classification_run.error_message`.
+
+`ASSIGN`/`FULL` also need the hosted Jev (TypeSafe) classifier; that path stays off until
+`CLASSIFICATION_JEV_ENABLED=true` and `CLASSIFICATION_JEV_API_KEY` are set.
+
+**Security:** the sidecar publishes no ports and shares only the internal `default` network with
+the backend. The `classify_model_cache` volume holds only model weights, so it can be dropped or
+backed up freely.
 
 ## Upgrading
 

@@ -1,5 +1,6 @@
 package com.goldys.platform.classification;
 
+import com.goldys.platform.semantic.ClassificationRunView;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -28,6 +29,9 @@ public class ProductClassificationService {
   /** Confidence at or above which a classification is trusted enough to auto-assign. */
   static final BigDecimal ASSIGN_CONFIDENCE = new BigDecimal("0.5");
 
+  /** The cap on {@link #listRuns()}; a single venue never needs more than the recent few. */
+  static final int RUN_LIST_LIMIT = 25;
+
   private final FeatureTextExtractor featureTexts;
   private final ProductCategoryRepository categories;
   private final ProductCategoryAssignmentRepository assignments;
@@ -36,6 +40,8 @@ public class ProductClassificationService {
   private final ClassificationProjectionRepository projections;
   private final EmbeddingClient embedding;
   private final ProductClassifier classifier;
+  private final EmbeddingProperties embeddingProperties;
+  private final JevProperties jevProperties;
   private final TaskExecutor executor;
   private final Clock clock;
 
@@ -49,6 +55,8 @@ public class ProductClassificationService {
       ClassificationProjectionRepository projections,
       EmbeddingClient embedding,
       ProductClassifier classifier,
+      EmbeddingProperties embeddingProperties,
+      JevProperties jevProperties,
       @Qualifier("applicationTaskExecutor") TaskExecutor executor) {
     this(
         featureTexts,
@@ -59,6 +67,8 @@ public class ProductClassificationService {
         projections,
         embedding,
         classifier,
+        embeddingProperties,
+        jevProperties,
         executor,
         Clock.systemUTC());
   }
@@ -73,6 +83,8 @@ public class ProductClassificationService {
       ClassificationProjectionRepository projections,
       EmbeddingClient embedding,
       ProductClassifier classifier,
+      EmbeddingProperties embeddingProperties,
+      JevProperties jevProperties,
       TaskExecutor executor,
       Clock clock) {
     this.featureTexts = featureTexts;
@@ -83,6 +95,8 @@ public class ProductClassificationService {
     this.projections = projections;
     this.embedding = embedding;
     this.classifier = classifier;
+    this.embeddingProperties = embeddingProperties;
+    this.jevProperties = jevProperties;
     this.executor = executor;
     this.clock = clock;
   }
@@ -119,6 +133,7 @@ public class ProductClassificationService {
 
     Instant now = clock.instant();
     try {
+      requireEnabled(run.kind());
       int productCount =
           switch (run.kind()) {
             case CLUSTER -> cluster(run);
@@ -134,6 +149,44 @@ public class ProductClassificationService {
       run.markFailed(failureMessage(e), now);
     }
     runs.save(run);
+  }
+
+  /**
+   * Rejects a run whose services are not enabled, so a run against an un-deployed or un-warmed
+   * sidecar fails fast with an operator-facing message recorded in {@code error_message} rather
+   * than timing out deep in the HTTP clients. {@code CLUSTER}/{@code FULL} need the self-hosted
+   * embedding service; {@code ASSIGN}/{@code FULL} need the hosted Jev classifier.
+   */
+  private void requireEnabled(ClassificationRunKind kind) {
+    if ((kind == ClassificationRunKind.CLUSTER || kind == ClassificationRunKind.FULL)
+        && !embeddingProperties.enabled()) {
+      throw new EmbeddingException(
+          "Product embedding classification is disabled; set CLASSIFICATION_EMBEDDING_ENABLED=true"
+              + " after deploying and warming the product-classify service");
+    }
+    if ((kind == ClassificationRunKind.ASSIGN || kind == ClassificationRunKind.FULL)
+        && !jevProperties.enabled()) {
+      throw new JevException(
+          "Product Jev classification is disabled; set CLASSIFICATION_JEV_ENABLED=true and"
+              + " CLASSIFICATION_JEV_API_KEY");
+    }
+  }
+
+  /** The recent runs, newest first, capped at {@link #RUN_LIST_LIMIT}. */
+  public List<ClassificationRunView> listRuns() {
+    return runs.findAllByOrderByStartedAtDesc().stream()
+        .limit(RUN_LIST_LIMIT)
+        .map(
+            run ->
+                new ClassificationRunView(
+                    run.id(),
+                    run.kind().name(),
+                    run.status().name(),
+                    run.productCount(),
+                    run.startedAt(),
+                    run.finishedAt(),
+                    run.errorMessage()))
+        .toList();
   }
 
   /**

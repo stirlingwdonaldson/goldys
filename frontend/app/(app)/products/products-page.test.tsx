@@ -1,6 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
-import type { AssignmentRow, CategoryNode, DendrogramNode, ProductPoint } from "@/lib/api";
+import { render, screen, fireEvent, within, act } from "@testing-library/react";
+import type {
+  AssignmentRow,
+  CategoryNode,
+  ClassificationRun,
+  DendrogramNode,
+  ProductPoint,
+} from "@/lib/api";
 import ProductsPage from "./page";
 
 const state = vi.hoisted(() => {
@@ -9,11 +15,14 @@ const state = vi.hoisted(() => {
     assignments: null as AssignmentRow[] | null,
     points: null as ProductPoint[] | null,
     dendrogram: null as DendrogramNode[] | null,
+    runs: null as ClassificationRun[] | null,
     api: {
       renameCategory: vi.fn(async () => {}),
       createCategory: vi.fn(async () => ({ id: "cat-new", name: "New", groupName: null, productCount: 0 })),
       moveProduct: vi.fn(async () => {}),
       clearProductOverride: vi.fn(async () => {}),
+      runClassification: vi.fn(async () => {}),
+      listClassificationRuns: vi.fn(async () => store.runs ?? []),
     },
   };
   // The read side routes by invoking the fetcher, not by matching its source text. Each
@@ -26,6 +35,7 @@ const state = vi.hoisted(() => {
       getCategoryAssignments: () => store.assignments,
       getCategoryEmbeddingSpace: () => store.points,
       getCategoryDendrogram: () => store.dendrogram,
+      listClassificationRuns: () => store.runs,
     },
   });
 });
@@ -95,11 +105,22 @@ const points: ProductPoint[] = [
   { productNameKey: "house red", x: 0.71, y: 0.05, categoryId: "cat-red-wine", confidence: 0.88 },
 ];
 
+const succeededRun: ClassificationRun = {
+  id: "cls-1",
+  kind: "FULL",
+  status: "SUCCEEDED",
+  productCount: 3,
+  startedAt: "2026-10-13T00:00:00Z",
+  finishedAt: "2026-10-13T00:01:00Z",
+  errorMessage: null,
+};
+
 function seed() {
   state.taxonomy = taxonomy;
   state.assignments = assignments;
   state.points = points;
   state.dendrogram = dendrogram;
+  state.runs = [succeededRun];
 }
 
 /** The taxonomy canvas: category names also appear in the move selects, so scope to it. */
@@ -196,5 +217,62 @@ describe("ProductsPage", () => {
     fireEvent.change(screen.getByLabelText("Category name"), { target: { value: "Ales & Lagers" } });
     fireEvent.click(screen.getByRole("button", { name: "Save name" }));
     expect(state.api.renameCategory).toHaveBeenCalledWith("cat-beer", { name: "Ales & Lagers" });
+  });
+
+  it("shows a Run classification button that submits a FULL run", async () => {
+    seed();
+    render(<ProductsPage />);
+
+    const button = screen.getByRole("button", { name: "Run classification" });
+    expect(button).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    expect(state.api.runClassification).toHaveBeenCalledWith("FULL");
+  });
+
+  it("keeps the Run classification button visible in the empty state", () => {
+    state.taxonomy = [];
+    state.assignments = [];
+    state.points = [];
+    state.dendrogram = [];
+    state.runs = [];
+    render(<ProductsPage />);
+
+    expect(screen.getByRole("button", { name: "Run classification" })).toBeInTheDocument();
+    expect(screen.getByText(/No classification run has produced data yet/)).toBeInTheDocument();
+  });
+
+  it("shows the latest run status in the Pipeline tab", () => {
+    seed();
+    render(<ProductsPage />);
+
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Pipeline" }));
+
+    const status = within(screen.getByTestId("latest-run-status"));
+    expect(status.getByText("SUCCEEDED")).toBeInTheDocument();
+    expect(status.getByText(/3 products/)).toBeInTheDocument();
+  });
+
+  it("shows a failed run's error message in the Pipeline tab", () => {
+    seed();
+    state.runs = [
+      {
+        id: "cls-2",
+        kind: "FULL",
+        status: "FAILED",
+        productCount: null,
+        startedAt: "2026-10-13T00:00:00Z",
+        finishedAt: "2026-10-13T00:01:00Z",
+        errorMessage: "Product embedding classification is disabled",
+      },
+    ];
+    render(<ProductsPage />);
+
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Pipeline" }));
+
+    expect(screen.getByText("Product embedding classification is disabled")).toBeInTheDocument();
   });
 });

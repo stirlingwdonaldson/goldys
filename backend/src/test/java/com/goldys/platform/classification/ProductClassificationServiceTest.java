@@ -12,6 +12,7 @@ import com.goldys.platform.canonical.CanonicalSaleItemQuery;
 import com.goldys.platform.canonical.CanonicalSaleRecipeLinkQuery;
 import com.goldys.platform.canonical.SaleItemIdentityView;
 import com.goldys.platform.canonical.SaleRecipeLinkView;
+import com.goldys.platform.semantic.ClassificationRunView;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -102,6 +103,18 @@ class ProductClassificationServiceTest {
 
   private ProductClassificationService service(
       EmbeddingClient embedding, ProductClassifier classifier) {
+    return service(
+        embedding,
+        classifier,
+        new EmbeddingProperties(true, "http://localhost:8002"),
+        new JevProperties(true, "https://api.typesafe.ai", ""));
+  }
+
+  private ProductClassificationService service(
+      EmbeddingClient embedding,
+      ProductClassifier classifier,
+      EmbeddingProperties embeddingProperties,
+      JevProperties jevProperties) {
     return new ProductClassificationService(
         extractor,
         categories,
@@ -111,6 +124,8 @@ class ProductClassificationServiceTest {
         projections,
         embedding,
         classifier,
+        embeddingProperties,
+        jevProperties,
         executor,
         Clock.fixed(NOW, ZoneOffset.UTC));
   }
@@ -312,6 +327,76 @@ class ProductClassificationServiceTest {
     assertThat(run.errorMessage()).isEqualTo("Jev service returned HTTP 500");
     verify(assignments, never()).save(any());
     assertThat(assignmentStore.get("beef burger").status()).isEqualTo(AssignmentStatus.UNASSIGNED);
+  }
+
+  @Test
+  void disabled_embedding_fails_cluster_run_with_operator_message() {
+    ProductClassificationService svc =
+        service(
+            new FakeEmbeddingClient(),
+            new FakeClassifier(req -> null),
+            new EmbeddingProperties(false, "http://localhost:8002"),
+            new JevProperties(true, "https://api.typesafe.ai", ""));
+
+    svc.runClustering();
+    ClassificationRun run = runStore.values().iterator().next();
+    svc.execute(run.id());
+
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.FAILED);
+    assertThat(run.errorMessage()).contains("CLASSIFICATION_EMBEDDING_ENABLED=true");
+  }
+
+  @Test
+  void disabled_jev_fails_assign_run_with_operator_message() {
+    ProductClassificationService svc =
+        service(
+            new FakeEmbeddingClient(),
+            new FakeClassifier(req -> null),
+            new EmbeddingProperties(true, "http://localhost:8002"),
+            new JevProperties(false, "https://api.typesafe.ai", ""));
+
+    svc.runAssignment();
+    ClassificationRun run = runStore.values().iterator().next();
+    svc.execute(run.id());
+
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.FAILED);
+    assertThat(run.errorMessage()).contains("CLASSIFICATION_JEV_ENABLED=true");
+  }
+
+  @Test
+  void listRuns_maps_most_recent_first() {
+    ClassificationRun older =
+        ClassificationRun.create(ClassificationRunKind.CLUSTER, NOW.minusSeconds(60));
+    older.markSucceeded(3, NOW.minusSeconds(30));
+    ClassificationRun newer = ClassificationRun.create(ClassificationRunKind.FULL, NOW);
+    newer.markFailed("Jev service returned HTTP 500", NOW.plusSeconds(10));
+    when(runs.findAllByOrderByStartedAtDesc()).thenReturn(List.of(newer, older));
+
+    List<ClassificationRunView> result =
+        service(new FakeEmbeddingClient(), new FakeClassifier(req -> null)).listRuns();
+
+    assertThat(result).hasSize(2);
+    assertThat(result.get(0).kind()).isEqualTo("FULL");
+    assertThat(result.get(0).status()).isEqualTo("FAILED");
+    assertThat(result.get(0).productCount()).isNull();
+    assertThat(result.get(0).errorMessage()).isEqualTo("Jev service returned HTTP 500");
+    assertThat(result.get(1).kind()).isEqualTo("CLUSTER");
+    assertThat(result.get(1).status()).isEqualTo("SUCCEEDED");
+    assertThat(result.get(1).productCount()).isEqualTo(3);
+  }
+
+  @Test
+  void listRuns_caps_to_limit() {
+    List<ClassificationRun> many = new ArrayList<>();
+    for (int i = 0; i < ProductClassificationService.RUN_LIST_LIMIT + 5; i++) {
+      many.add(ClassificationRun.create(ClassificationRunKind.CLUSTER, NOW.plusSeconds(i)));
+    }
+    when(runs.findAllByOrderByStartedAtDesc()).thenReturn(many);
+
+    List<ClassificationRunView> result =
+        service(new FakeEmbeddingClient(), new FakeClassifier(req -> null)).listRuns();
+
+    assertThat(result).hasSize(ProductClassificationService.RUN_LIST_LIMIT);
   }
 
   /** A fake classifier that records each request it sees and delegates to a handler. */
