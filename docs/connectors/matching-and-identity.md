@@ -11,9 +11,19 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Reservation (`canonical_reservation`)
 
-- **Source:** `OPENTABLE` (GuestCenter CSV drop).
+- **Source:** `OPENTABLE`, from the assisted-session JSON pull (`opentable-api`) or the CSV drop.
 - **Logical identity:** `UUID.nameUUIDFromBytes("reservation:" + reservationId)`.
 - **Source identity:** `(source_system = OPENTABLE, source_record_ref = OpenTable Reservation ID)`.
+  From the JSON pull this is the response's `reservationId` (a 24-character hex string, e.g.
+  `6ac9ab1b204b58f759bb1af6`). Re-pulling an unchanged reservation is a no-op; any change to a
+  modelled field supersedes the current version.
+- **Status (JSON pull):** `stateCategory` maps `booked`→`BOOKED`, `seated`→`SEATED`,
+  `finished`→`COMPLETED`, `noShow`→`NO_SHOW`, `cancelled`→`CANCELLED`. A seated or finished
+  reservation whose `primarySource` is `walkin` becomes `WALK_IN`, so `ReservationProjector` keeps
+  counting walk-ins (it counts them as attended too). Unknown categories pass through upper-cased
+  and count as bookings only.
+- **Reservation time:** `visitDate` is venue-local wall time with no offset, interpreted in
+  `opentable.timezone`.
 - **Matching strategy:** deterministic single source; no cross-source matching. Covers are derived
   from OpenTable party size and are **not** reconciled against Lightspeed's `Covers` metric (a
   downstream echo of the same party size).

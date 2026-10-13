@@ -68,7 +68,7 @@ response to the sink. Reviews and menu items stay raw-only.
    - Input: `dispatch(InputEvent)` maps to `Input.dispatchMouseEvent`, `dispatchKeyEvent` or
      `insertText`.
 5. **Session service** (`OpenTableSessionService`).
-   - State machine `DISCONNECTED → LOGIN_REQUIRED → AUTHENTICATED → SYNCING → DONE | FAILED`, with
+   - State machine `DISCONNECTED → LOGIN_REQUIRED → SYNCING → DONE | FAILED`, with
      a single viewer.
    - Poll `isAuthenticated()` every 2 s while `LOGIN_REQUIRED`. On success, stop the screencast
      and call `IngestionService.runConnector("OPENTABLE", mode)`. Add that overload; the port is
@@ -88,7 +88,7 @@ response to the sink. Reviews and menu items stay raw-only.
      no timeout while viewing), `POST …/session/input`.
    - Extend `ArchitectureBoundariesTest` (new packages) and `PermissionBoundaryIntegrationTest`
      (non-owner → 403 on all four endpoints).
-   - Add a Sentry `beforeSend` scrub dropping request bodies for `/session/input`.
+   - Sentry needs no extra scrub: `max-request-body-size: none` already keeps request bodies out.
 7. **Connector** (`OpenTableApiConnector`, `OpenTableApiClient`).
    - Requests come from spec §5.4, with spacing, backoff (5 s doubling to 90 s, 10 attempts),
      401/403 → `CONNECTOR_AUTH_FAILED`, exhausted retries → `CONNECTOR_RATE_LIMITED`, and

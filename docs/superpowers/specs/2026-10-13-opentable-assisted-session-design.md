@@ -112,8 +112,8 @@ loop by design); guest contact data; removing or fixing the CSV parser; the Open
 - `isAuthenticated()` is a `GET /gateway/proxies/gcrestaurant/api/userContext` that returns 200,
   not a page-text heuristic.
 - `OpenTableSessionService` holds a small state machine:
-  `DISCONNECTED → LOGIN_REQUIRED → AUTHENTICATED → SYNCING → DONE | FAILED`. It polls
-  `isAuthenticated()` every 2 s while `LOGIN_REQUIRED`. On `AUTHENTICATED` it stops the screencast
+  `DISCONNECTED → LOGIN_REQUIRED → SYNCING → DONE | FAILED` (straight to `SYNCING` when already
+  signed in). It polls `isAuthenticated()` every 2 s while `LOGIN_REQUIRED`. On sign-in it stops the screencast
   and starts the sync run automatically, so the owner can close the tab.
 - At most one viewer at a time. The screencast stops after 10 minutes without input, and on
   `SYNCING`.
@@ -125,6 +125,7 @@ loop by design); guest contact data; removing or fixing the CSV parser; the Open
 
 | Method | Path | Purpose |
 |---|---|---|
+| `GET` | `/api/connectors/opentable/session` | Current state. 503 `NOT_CONFIGURED` when the assisted sync is disabled. |
 | `POST` | `/api/connectors/opentable/session` | Attach to the sidecar; navigate to login unless already authenticated. Body `{ "mode": "INCREMENTAL" \| "FULL" }`. Returns state. |
 | `GET` | `/api/connectors/opentable/session/stream` | SSE: `state` events and `frame` events (base64 JPEG, about 5 fps, quality 60). |
 | `POST` | `/api/connectors/opentable/session/input` | One input event (`mouse`, `wheel`, `key`, `text`). |
@@ -174,8 +175,9 @@ Re-pulling an unchanged reservation is a no-op (`sameFact`). A changed one super
 - CDP is reachable only on the internal `opentable-cdp` network. Frames and input go only to an
   authenticated OWNER, over the existing origin.
 - Keystrokes, including the OpenTable password, pass through the backend in memory only. They are
-  never logged, persisted, or included in exception messages or Sentry events. A Sentry
-  `beforeSend` scrub covers the input endpoint path.
+  never logged, persisted, or included in exception messages or Sentry events. Sentry already
+  sends no request bodies (`max-request-body-size: none`), and `InputEvent.Text` and the API's
+  `Input` record redact themselves in `toString()`.
 - The profile volume is a live credential. It is excluded from backups and wiped by
   `DELETE …?logout=true`.
 - Connectors stay one-way. The connector issues only the GETs and read-only POST queries listed
