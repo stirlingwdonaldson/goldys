@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.goldys.platform.canonical.CanonicalInvoiceLineEnrichment;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.canonical.EnrichmentResult;
+import com.goldys.platform.canonical.InvoiceNoteService;
 import com.goldys.platform.canonical.InvoicePdfLinkService;
 import com.goldys.platform.canonical.InvoicePdfLinkSource;
 import com.goldys.platform.ingestion.port.DocumentTextExtractor;
@@ -33,6 +34,7 @@ class InvoicePdfEnrichmentServiceTest {
   private final InvoiceIngestFlagService flags = mock(InvoiceIngestFlagService.class);
   private final InvoiceGapRecoveryService gapRecovery = mock(InvoiceGapRecoveryService.class);
   private final InvoicePdfLinkService pdfLinkService = mock(InvoicePdfLinkService.class);
+  private final InvoiceNoteService noteService = mock(InvoiceNoteService.class);
 
   @BeforeEach
   void everyInvoiceIsKnownUnlessATestSaysOtherwise() {
@@ -52,6 +54,7 @@ class InvoicePdfEnrichmentServiceTest {
         flags,
         gapRecovery,
         pdfLinkService,
+        noteService,
         gapRecoveryEnabled);
   }
 
@@ -133,6 +136,55 @@ class InvoicePdfEnrichmentServiceTest {
     service().enrich(pdf, "orphan.pdf", PDF_RAW_ID);
 
     verify(pdfLinkService, never()).link(any(), any(), any(), any());
+  }
+
+  @Test
+  void recordsAnnotationsAsAnInvoiceNote() {
+    byte[] pdf = new byte[] {1};
+    List<PdfExtractedLine> lines =
+        List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null));
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text"))
+        .thenReturn(new PdfExtractedInvoice("INV-1", lines, null, List.of("(2 BOXES)", "COMMENT")));
+    when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
+    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+        .thenReturn(EnrichmentResult.ENRICHED);
+
+    service().enrich(pdf, "a.pdf", PDF_RAW_ID);
+
+    verify(noteService).record("INV-1", "(2 BOXES) | COMMENT");
+  }
+
+  @Test
+  void recordsNoNoteWhenThePdfHasNoAnnotations() {
+    byte[] pdf = new byte[] {1};
+    List<PdfExtractedLine> lines =
+        List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null));
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("INV-1", lines));
+    when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
+    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+        .thenReturn(EnrichmentResult.ENRICHED);
+
+    service().enrich(pdf, "a.pdf", PDF_RAW_ID);
+
+    verify(noteService, never()).record(any(), any());
+  }
+
+  @Test
+  void doesNotRecordAnnotationsForAnUnknownInvoice() {
+    byte[] pdf = new byte[] {1};
+    List<PdfExtractedLine> lines =
+        List.of(new PdfExtractedLine("A", "d1", null, "KG", null, null, null, null));
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text"))
+        .thenReturn(new PdfExtractedInvoice("053202347", lines, null, List.of("(2 BOXES)")));
+    when(invoiceQuery.invoiceNumberForPdfFilename("orphan.pdf")).thenReturn(Optional.empty());
+    when(invoiceQuery.isKnownInvoice("053202347")).thenReturn(false);
+
+    service().enrich(pdf, "orphan.pdf", PDF_RAW_ID);
+
+    verify(noteService, never()).record(any(), any());
   }
 
   @Test

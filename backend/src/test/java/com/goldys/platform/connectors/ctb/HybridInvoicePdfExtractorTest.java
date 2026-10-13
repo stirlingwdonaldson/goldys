@@ -100,5 +100,6 @@ class HybridInvoicePdfExtractorTest {
 
     assertThat(out.invoiceNumber()).isNull();
     assertThat(out.lines()).extracting(PdfExtractedLine::stockCode).containsExactly("XLFRY");
+    assertThat(out.annotations()).containsExactly("COMMENT", "(2 BOXES)");
   }
 }

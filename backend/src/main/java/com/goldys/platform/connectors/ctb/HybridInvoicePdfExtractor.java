@@ -1,5 +1,6 @@
 package com.goldys.platform.connectors.ctb;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,11 +48,25 @@ public class HybridInvoicePdfExtractor implements InvoicePdfExtractor {
   /**
    * Applies {@link InvoicePdfSanitizer} to whichever extractor won: a label returned as the invoice
    * number becomes {@code null} (so the caller falls back to the filename join instead of matching
-   * against a non-existent invoice), and annotation rows are dropped before they can be flagged.
+   * against a non-existent invoice), and annotation rows are pulled out of the line list and kept
+   * as notes rather than silently discarded.
    */
   private static PdfExtractedInvoice sanitize(PdfExtractedInvoice out) {
-    List<PdfExtractedLine> lines =
-        out.lines().stream().filter(line -> !InvoicePdfSanitizer.isAnnotation(line)).toList();
-    return new PdfExtractedInvoice(InvoicePdfSanitizer.invoiceNumber(out.invoiceNumber()), lines);
+    List<PdfExtractedLine> lines = new ArrayList<>();
+    List<String> annotations = new ArrayList<>();
+    for (PdfExtractedLine line : out.lines()) {
+      if (InvoicePdfSanitizer.isAnnotation(line)) {
+        if (line.description() != null && !line.description().isBlank()) {
+          annotations.add(line.description().trim());
+        }
+      } else {
+        lines.add(line);
+      }
+    }
+    return new PdfExtractedInvoice(
+        InvoicePdfSanitizer.invoiceNumber(out.invoiceNumber()),
+        lines,
+        out.extractionError(),
+        annotations);
   }
 }
