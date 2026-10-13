@@ -13,10 +13,15 @@ import com.goldys.platform.ingestion.port.FetchedPayload;
 import com.goldys.platform.ingestion.port.IngestionSink;
 import com.goldys.platform.ingestion.port.SourceConnector;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +34,14 @@ import org.slf4j.LoggerFactory;
  *
  * <p>The watermark carries the sync mode: {@code FULL} pulls all history from {@code backfillFrom};
  * anything else is incremental (recent and upcoming reservations, last 120 days of reviews).
+ *
+ * <p><b>Unchanged responses are not re-stored.</b> A response whose content matches the latest
+ * stored payload for the same dataset window ({@code fetcherIdentity} + {@code sourceRecordRef}) is
+ * skipped, apart from its top-level request metadata ({@code meta-data} / {@code meta}: request ids
+ * and timestamps that differ on every call). The earlier payload remains the evidence for that
+ * content, so the ledger stays append-only and complete while repeat syncs stop duplicating it.
+ * Reservation windows are still canonicalized against the stored record (a no-op when nothing
+ * changed), so a run that died between storing and canonicalizing is completed by the next one.
  */
 public class OpenTableApiConnector implements SourceConnector {
   public static final String FULL = "FULL";
@@ -42,6 +55,12 @@ public class OpenTableApiConnector implements SourceConnector {
   private static final int INCREMENTAL_REVIEW_DAYS = 120;
   private static final int FUTURE_MONTHS = 18;
 
+  /**
+   * Top-level keys that change on every request without the data changing: {@code meta-data}
+   * (reservations: {@code ot-requestid}, {@code last_modified}) and {@code meta} (reviews, items).
+   */
+  private static final List<String> VOLATILE_KEYS = List.of("meta-data", "meta");
+
   private static final Logger log = LoggerFactory.getLogger(OpenTableApiConnector.class);
 
   private final OpenTableApiClient client;
@@ -51,6 +70,7 @@ public class OpenTableApiConnector implements SourceConnector {
   private final VenueClock venueClock;
   private final String restaurantId;
   private final LocalDate backfillFrom;
+  private final StoredPayloads stored;
 
   public OpenTableApiConnector(
       OpenTableApiClient client,
@@ -59,7 +79,8 @@ public class OpenTableApiConnector implements SourceConnector {
       ObjectMapper json,
       VenueClock venueClock,
       String restaurantId,
-      LocalDate backfillFrom) {
+      LocalDate backfillFrom,
+      StoredPayloads stored) {
     this.client = client;
     this.parser = parser;
     this.canonical = canonical;
@@ -67,6 +88,7 @@ public class OpenTableApiConnector implements SourceConnector {
     this.venueClock = venueClock;
     this.restaurantId = restaurantId;
     this.backfillFrom = backfillFrom;
+    this.stored = stored;
   }
 
   @Override
@@ -104,23 +126,29 @@ public class OpenTableApiConnector implements SourceConnector {
   // ---- reservations ---------------------------------------------------------------------------
 
   private void pullReservations(boolean full, LocalDate today, IngestionSink sink) {
-    LocalDate from = full ? backfillFrom : today.minusDays(INCREMENTAL_PAST_DAYS);
-    LocalDate to = today.plusMonths(FUTURE_MONTHS);
     // Half-month windows: the busiest month seen held ~1,250 reservations, so a half month fits in
     // one 1000-row page. Paging with offsets is deliberately avoided: GuestCenter sorts by visit
-    // time only, and offset pages over tied times skipped rows during discovery.
+    // time only, and offset pages over tied times skipped rows during discovery. Both ends snap to
+    // half-month boundaries so a window keeps the same sourceRecordRef from one sync to the next,
+    // which is what lets an unchanged window be recognised and skipped.
+    LocalDate from = halfMonthStart(full ? backfillFrom : today.minusDays(INCREMENTAL_PAST_DAYS));
+    LocalDate to = halfMonthEnd(today.plusMonths(FUTURE_MONTHS));
     LocalDate start = from;
     while (!start.isAfter(to)) {
-      LocalDate end =
-          start.getDayOfMonth() <= 15
-              ? start.withDayOfMonth(15)
-              : start.withDayOfMonth(start.lengthOfMonth());
-      if (end.isAfter(to)) {
-        end = to;
-      }
+      LocalDate end = halfMonthEnd(start);
       pullReservationWindow(start, end, sink);
       start = end.plusDays(1);
     }
+  }
+
+  static LocalDate halfMonthStart(LocalDate date) {
+    return date.getDayOfMonth() <= 15 ? date.withDayOfMonth(1) : date.withDayOfMonth(16);
+  }
+
+  static LocalDate halfMonthEnd(LocalDate date) {
+    return date.getDayOfMonth() <= 15
+        ? date.withDayOfMonth(15)
+        : date.withDayOfMonth(date.lengthOfMonth());
   }
 
   /** Stores one window, or splits it in half if it came back at the page limit. */
@@ -143,7 +171,7 @@ public class OpenTableApiConnector implements SourceConnector {
       pullReservationWindow(mid.plusDays(1), end, sink);
       return;
     }
-    UUID rawId = sink.accept(payload(body, "opentable-reservations", start + ".." + end));
+    UUID rawId = store(body, "opentable-reservations", start + ".." + end, sink);
     for (ReservationInput input : parser.parse(body, rawId)) {
       canonical.record(input);
     }
@@ -188,7 +216,7 @@ public class OpenTableApiConnector implements SourceConnector {
       if (data.isEmpty()) {
         return;
       }
-      sink.accept(payload(body, "opentable-reviews", range + "#p" + page));
+      store(body, "opentable-reviews", range + "#p" + page, sink);
       fetched += data.size();
       if (fetched >= total) {
         return;
@@ -243,7 +271,7 @@ public class OpenTableApiConnector implements SourceConnector {
         throw new ConnectorFetchException(
             "CONNECTOR_SCHEMA_MISMATCH", "OpenTable menu items response has no data.items");
       }
-      sink.accept(payload(body, "opentable-menu-items", "p" + page));
+      store(body, "opentable-menu-items", "p" + page, sink);
       if (items.size() < MENU_PAGE_SIZE) {
         return;
       }
@@ -260,10 +288,63 @@ public class OpenTableApiConnector implements SourceConnector {
                 + "/menus");
     byte[] body = response.body();
     readTree(body, "menus"); // Validate before storing: the run should fail loudly on HTML.
-    sink.accept(payload(body, "opentable-menus", "menus"));
+    store(body, "opentable-menus", "menus", sink);
   }
 
   // ---- shared ---------------------------------------------------------------------------------
+
+  /**
+   * Hands the response to the sink unless its content matches the latest stored payload for the
+   * same dataset window, in which case that payload's id is returned instead (see class docs).
+   */
+  private UUID store(byte[] body, String fetcherIdentity, String ref, IngestionSink sink) {
+    Optional<StoredPayloads.Stored> previous = stored.latest(fetcherIdentity, ref);
+    if (previous.isPresent() && sameContent(body, previous.get())) {
+      log.debug("OpenTable {} {} unchanged; not re-stored", fetcherIdentity, ref);
+      return previous.get().rawRecordId();
+    }
+    return sink.accept(payload(body, fetcherIdentity, ref));
+  }
+
+  /** Exact-hash check first (cheap); otherwise compare with request metadata stripped. */
+  private boolean sameContent(byte[] body, StoredPayloads.Stored previous) {
+    if (sha256Hex(body).equals(previous.sha256())) {
+      return true;
+    }
+    byte[] previousBytes = previous.bytes().get();
+    if (previousBytes == null) {
+      return false;
+    }
+    String current = contentDigest(body);
+    return current != null && current.equals(contentDigest(previousBytes));
+  }
+
+  /**
+   * SHA-256 of the response with its top-level request metadata removed. Field order is kept as the
+   * source sent it, which GuestCenter keeps stable. Null when the body isn't a JSON object, so an
+   * unparseable payload is never treated as a duplicate.
+   */
+  private String contentDigest(byte[] body) {
+    try {
+      JsonNode root = json.readTree(body);
+      if (!(root instanceof ObjectNode object)) {
+        return null;
+      }
+      ObjectNode content = object.deepCopy();
+      content.remove(VOLATILE_KEYS);
+      return sha256Hex(json.writeValueAsBytes(content));
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  private static String sha256Hex(byte[] bytes) {
+    try {
+      return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 is required by the Java platform", e);
+    }
+  }
 
   private static FetchedPayload payload(byte[] body, String fetcherIdentity, String ref) {
     return new FetchedPayload(
