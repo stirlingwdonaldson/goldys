@@ -828,8 +828,8 @@ const demoInvoiceSummaries: Omit<InvoiceDetail, "lines">[] = [
 
 const demoInvoiceLines: Record<string, LineGraphNode[]> = {
   "INV-1042": [
-    { productNameKey: "chicken breast", stockCode: "CB-1", quantity: 4, unitCost: 12.5, lineTotal: 50.0, uom: "CTN" },
-    { productNameKey: "beef mince", stockCode: "BM-2", quantity: 10, unitCost: 9.0, lineTotal: 90.0, uom: "KG" },
+    { productNameKey: "chicken breast", stockCode: "CB-1", quantity: 4, unitCost: 12.5, lineTotal: 50.0, uom: "CTN", lineTotalIncTax: 55.0, lineGstAmount: 5.0, lineTaxRate: 10, incGst: true },
+    { productNameKey: "beef mince", stockCode: "BM-2", quantity: 10, unitCost: 9.0, lineTotal: 90.0, uom: "KG", lineTotalIncTax: 99.0, lineGstAmount: 9.0, lineTaxRate: 10, incGst: true },
   ],
   "INV-1091": [
     { productNameKey: "house red", stockCode: "HR-1", quantity: 12, unitCost: 8.25, lineTotal: 99.0, uom: "BT" },

@@ -98,7 +98,11 @@ public class InvoiceReportingService {
                         l.quantity(),
                         l.unitCost(),
                         l.lineTotal(),
-                        l.uom()))
+                        l.uom(),
+                        l.lineTotalIncTax(),
+                        l.lineGstAmount(),
+                        l.lineTaxRate(),
+                        l.incGst()))
             .toList();
 
     return new InvoiceDetail(

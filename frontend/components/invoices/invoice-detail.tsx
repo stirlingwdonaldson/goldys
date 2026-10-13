@@ -274,7 +274,16 @@ function InvoiceLineRow({
           {change ? <PriceChangeBadge change={change} previousLabel={previousLabel} /> : null}
         </span>
       </td>
-      <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formatCurrency(line.lineTotal)}</td>
+      <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
+        {formatCurrency(line.lineTotal)}
+        {line.lineGstAmount != null || line.lineTaxRate != null || line.incGst != null ? (
+          <span className="block text-[11px] font-normal text-muted-foreground">
+            {line.incGst === true ? "incl GST" : line.incGst === false ? "ex GST" : ""}
+            {line.lineGstAmount != null ? ` · GST ${formatCurrency(line.lineGstAmount)}` : ""}
+            {line.lineTaxRate != null ? ` · ${line.lineTaxRate}%` : ""}
+          </span>
+        ) : null}
+      </td>
     </tr>
   );
 }

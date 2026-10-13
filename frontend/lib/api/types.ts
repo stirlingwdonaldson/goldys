@@ -273,6 +273,11 @@ export interface LineGraphNode {
   unitCost: number;
   lineTotal: number;
   uom: string | null;
+  /** PDF-parsed tax treatment; absent/null when the PDF didn't print it. */
+  lineTotalIncTax?: number | null;
+  lineGstAmount?: number | null;
+  lineTaxRate?: number | null;
+  incGst?: boolean | null;
 }
 
 /**

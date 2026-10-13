@@ -24,7 +24,7 @@ vi.mock("@/lib/use-api-data", () => ({
       totalAmount: 50,
       purchaseNumber: null,
       hasPdf: true,
-      lines: [{ productNameKey: "basil x bunch", stockCode: "BASIL X BUNCH", quantity: 5, unitCost: 10, lineTotal: 50, uom: null }],
+      lines: [{ productNameKey: "basil x bunch", stockCode: "BASIL X BUNCH", quantity: 5, unitCost: 10, lineTotal: 50, uom: null, lineGstAmount: 5, lineTaxRate: 10, incGst: true }],
     });
   },
 }));
@@ -35,6 +35,7 @@ describe("InvoicePage (full page)", () => {
     expect(screen.getByRole("heading", { name: "Invoice INV/1042" })).toBeInTheDocument();
     expect(screen.getByText("Oranges & Lemons")).toBeInTheDocument();
     expect(screen.getByText("Basil x bunch")).toBeInTheDocument();
+    expect(screen.getByText(/incl GST · GST \$5\.00 · 10%/)).toBeInTheDocument();
     expect(screen.getByTestId("invoice-pdf-preview")).toHaveAttribute("src", "/api/invoices/INV%2F1042/pdf");
     expect(screen.getByRole("link", { name: "Invoices" })).toHaveAttribute("href", "/invoices");
   });
