@@ -214,6 +214,10 @@ public class OpenTableSessionService {
         transition(State.DISCONNECTED);
         return;
       }
+      // The first screencast can race the login navigation the sidecar is still committing, which
+      // Chromium rejects with "Not attached to an active page". Re-arm it while we wait so the view
+      // recovers without the owner reloading.
+      startScreencastLocked();
     }
     boolean authenticated;
     try {
@@ -295,6 +299,7 @@ public class OpenTableSessionService {
             }
           });
       screencasting = true;
+      detail = null; // A retry succeeded: drop the earlier "Live view unavailable".
     } catch (CdpException e) {
       detail = "Live view unavailable";
       log.warn("Could not start the OpenTable live view: {}", e.getMessage());

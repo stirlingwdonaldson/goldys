@@ -16,6 +16,10 @@ public class FakeOpenTableBrowser implements OpenTableBrowser {
   public int navigations;
   public int signOuts;
   public Consumer<ScreencastFrame> screencast;
+
+  /** How many upcoming {@link #startScreencast} calls to fail (a start mid-navigation). */
+  public int failScreencasts;
+
   public final List<InputEvent> dispatched = new ArrayList<>();
   public final List<String> requests = new ArrayList<>();
 
@@ -45,6 +49,11 @@ public class FakeOpenTableBrowser implements OpenTableBrowser {
   @Override
   public void startScreencast(Consumer<ScreencastFrame> onFrame) {
     guard();
+    if (failScreencasts > 0) {
+      failScreencasts--;
+      // What the sidecar returns when Page.startScreencast races the login navigation.
+      throw new CdpException("Not attached to an active page");
+    }
     screencast = onFrame;
   }
 
