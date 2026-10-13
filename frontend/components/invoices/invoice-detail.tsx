@@ -89,6 +89,12 @@ export function InvoiceSummaryGrid({ invoice }: { invoice: InvoiceDetail }) {
       <div className="col-span-2 sm:col-span-1">
         <dt className="text-xs text-muted-foreground">Total</dt>
         <dd className="text-2xl font-semibold tabular-nums">{formatCurrency(invoice.totalAmount)}</dd>
+        {invoice.amountExTax != null ? (
+          <dd className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+            Ex-tax {formatCurrency(invoice.amountExTax)} · GST {formatCurrency(invoice.gstAmount)} · Freight{" "}
+            {formatCurrency(invoice.freightAmount)}
+          </dd>
+        ) : null}
       </div>
       <div>
         <dt className="text-xs text-muted-foreground">Issued</dt>
@@ -177,7 +183,7 @@ export function InvoiceLinesTable({
   const changes = previous ? priceChanges(lines, previous.lines) : new Map<string, PriceChange>();
   const previousLabel = previous ? `${formatDay(previous.invoiceDate)} (invoice ${previous.invoiceNumber})` : "";
   const flaggedCodes = new Set(flags.map((f) => f.stockCode).filter((c): c is string => c != null));
-  const totals = checkTotals(lines, invoice.totalAmount);
+  const totals = checkTotals(lines, invoice.amountExTax);
 
   return (
     <div className="flex flex-col gap-2">
@@ -218,9 +224,10 @@ export function InvoiceLinesTable({
         <p className="flex items-start gap-2 rounded-lg bg-status-conflict-soft px-3 py-2 text-xs text-status-conflict">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
           <span>
-            Lines add up to {formatCurrency(totals.linesTotal)},{" "}
+            Lines add up to {formatCurrency(totals.linesTotal)} ex-tax,{" "}
             {formatCurrency(Math.abs(totals.difference))} {totals.difference > 0 ? "less" : "more"} than the
-            invoice total. Check for freight, GST or a line that wasn&apos;t captured.
+            invoice&apos;s ex-tax total. Check for freight charged as a line, or a line that wasn&apos;t
+            captured.
           </span>
         </p>
       ) : null}

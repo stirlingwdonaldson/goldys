@@ -163,7 +163,16 @@ class InvoiceReportingServiceTest {
   private static InvoiceMetadataView invoice(
       String supplier, String number, String date, String total) {
     return new InvoiceMetadataView(
-        supplier, number, LocalDate.parse(date), null, new BigDecimal(total), null, null);
+        supplier,
+        number,
+        LocalDate.parse(date),
+        null,
+        new BigDecimal(total),
+        null,
+        null,
+        null,
+        null,
+        null);
   }
 
   private static EnrichedInvoiceLine line(String invoice, String lineTotal, String key) {

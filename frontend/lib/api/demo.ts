@@ -819,11 +819,11 @@ const demoCategoryAssignments: AssignmentRow[] = [
 // Invoice browse fixtures: realistic current headers covering the hard states — a linked PDF, one
 // with no PDF, a null due date and a null total. Lines exist for two invoices; the rest return an
 // empty line set, mirroring a header with no enriched lines. Demo data only.
-const demoInvoiceSummaries: InvoiceSummary[] = [
-  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1042", invoiceDate: "2026-09-28", dueDate: "2026-10-28", totalAmount: 1420.15, purchaseNumber: "PO-88", hasPdf: true },
-  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1091", invoiceDate: "2026-09-21", dueDate: null, totalAmount: 980.4, purchaseNumber: "PO-91", hasPdf: false },
-  { supplierName: "Oranges & Lemons", invoiceNumber: "INV-1103", invoiceDate: "2026-09-15", dueDate: "2026-10-15", totalAmount: null, purchaseNumber: null, hasPdf: true },
-  { supplierName: "Sealane Beverages", invoiceNumber: "INV-0987", invoiceDate: "2026-09-08", dueDate: "2026-10-08", totalAmount: 512.0, purchaseNumber: "PO-77", hasPdf: false },
+const demoInvoiceSummaries: Omit<InvoiceDetail, "lines">[] = [
+  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1042", invoiceDate: "2026-09-28", dueDate: "2026-10-28", totalAmount: 154.0, purchaseNumber: "PO-88", hasPdf: true, amountExTax: 140.0, gstAmount: 14.0, freightAmount: 0 },
+  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1091", invoiceDate: "2026-09-21", dueDate: null, totalAmount: 240.02, purchaseNumber: "PO-91", hasPdf: false, amountExTax: 218.2, gstAmount: 21.82, freightAmount: 0 },
+  { supplierName: "Oranges & Lemons", invoiceNumber: "INV-1103", invoiceDate: "2026-09-15", dueDate: "2026-10-15", totalAmount: null, purchaseNumber: null, hasPdf: true, amountExTax: null, gstAmount: null, freightAmount: null },
+  { supplierName: "Sealane Beverages", invoiceNumber: "INV-0987", invoiceDate: "2026-09-08", dueDate: "2026-10-08", totalAmount: 512.0, purchaseNumber: "PO-77", hasPdf: false, amountExTax: null, gstAmount: null, freightAmount: null },
 ];
 
 const demoInvoiceLines: Record<string, LineGraphNode[]> = {
