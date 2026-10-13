@@ -32,11 +32,10 @@ public class OpenTableApiConfig {
   OpenTableBrowser openTableBrowser(
       ObjectMapper json,
       @Value("${opentable.cdp-host:opentable-browser}") String host,
-      @Value("${opentable.cdp-port:9223}") int port,
-      @Value("${opentable.restaurant-id:140126}") String restaurantId) {
+      @Value("${opentable.cdp-port:9223}") int port) {
     HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     return new CdpOpenTableBrowser(
-        new CdpTargets(http, json, Duration.ofSeconds(5)), http, json, host, port, restaurantId);
+        new CdpTargets(http, json, Duration.ofSeconds(5)), http, json, host, port);
   }
 
   @Bean

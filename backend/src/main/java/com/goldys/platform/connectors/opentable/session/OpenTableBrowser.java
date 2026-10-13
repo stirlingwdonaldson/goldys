@@ -10,7 +10,7 @@ import java.util.function.Consumer;
  * only relays events a signed-in owner produced in the live view.
  */
 public interface OpenTableBrowser {
-  /** Opens the restaurant's GuestCenter home, which redirects to the login flow when signed out. */
+  /** Opens GuestCenter, which redirects to its login flow when signed out. */
   void navigateToGuestCenter();
 
   /** True when GuestCenter's user-context endpoint answers 200 for the current session. */
