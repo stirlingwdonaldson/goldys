@@ -63,6 +63,21 @@ class SaleItemListIntegrationTest {
     assertFullFieldSet(sale1.items().get(0));
   }
 
+  @Test
+  void currentSaleItemIdentitiesReturnsDistinctNameCategoryPairs() {
+    // Two sale lines share the same item name but different categories, and the first is later
+    // corrected (superseded). The identity list should collapse to the two distinct (name,
+    // category) pairs with no superseded row or duplicate line.
+    ingest.record(saleItem(DAY_1, "SALE-1", "LINE-1", "BEV", "90.00"));
+    ingest.record(saleItem(DAY_1, "SALE-1", "LINE-1", "BEV", "100.00")); // supersedes LINE-1
+    ingest.record(saleItem(DAY_1, "SALE-1", "LINE-3", "FOOD", "25.00"));
+
+    assertThat(query.currentSaleItemIdentities())
+        .containsExactlyInAnyOrder(
+            new SaleItemIdentityView("Espresso", "BEV"),
+            new SaleItemIdentityView("Espresso", "FOOD"));
+  }
+
   private void assertFullFieldSet(SaleItemRow r) {
     assertThat(r.tradingDate()).isEqualTo(DAY_1);
     assertThat(r.saleNumber()).isEqualTo("SALE-1");

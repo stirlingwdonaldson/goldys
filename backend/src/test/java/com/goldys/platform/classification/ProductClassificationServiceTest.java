@@ -74,6 +74,10 @@ class ProductClassificationServiceTest {
             });
     when(runs.findById(any()))
         .thenAnswer(inv -> Optional.ofNullable(runStore.get(inv.getArgument(0))));
+    when(runs.findByStatus(any()))
+        .thenAnswer(
+            inv ->
+                runStore.values().stream().filter(r -> r.status() == inv.getArgument(0)).toList());
 
     when(assignments.save(any()))
         .thenAnswer(
@@ -397,6 +401,18 @@ class ProductClassificationServiceTest {
         service(new FakeEmbeddingClient(), new FakeClassifier(req -> null)).listRuns();
 
     assertThat(result).hasSize(ProductClassificationService.RUN_LIST_LIMIT);
+  }
+
+  @Test
+  void failInterruptedRuns_marks_running_failed() {
+    ClassificationRun run = ClassificationRun.create(ClassificationRunKind.CLUSTER, NOW);
+    runStore.put(run.id(), run);
+
+    service(new FakeEmbeddingClient(), new FakeClassifier(req -> null)).failInterruptedRuns();
+
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.FAILED);
+    assertThat(run.errorMessage()).isEqualTo("service restarted before completion");
+    assertThat(run.finishedAt()).isEqualTo(NOW);
   }
 
   /** A fake classifier that records each request it sees and delegates to a handler. */
