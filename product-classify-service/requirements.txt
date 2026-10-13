@@ -1,0 +1,13 @@
+# Product classification service runtime dependencies.
+# sentence-transformers pulls CPU torch and its Hugging Face deps in via pip, so no
+# separate torch wheel index is needed here (unlike forecast-service).
+fastapi
+uvicorn[standard]
+pydantic
+numpy
+sentence-transformers
+scikit-learn
+
+# Test-only (the FastAPI TestClient needs httpx; pytest runs test_app.py).
+httpx
+pytest
