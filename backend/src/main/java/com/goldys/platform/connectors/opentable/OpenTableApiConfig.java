@@ -6,6 +6,7 @@ import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.connectors.opentable.cdp.CdpTargets;
 import com.goldys.platform.connectors.opentable.session.CdpOpenTableBrowser;
 import com.goldys.platform.connectors.opentable.session.OpenTableBrowser;
+import com.goldys.platform.connectors.opentable.session.OpenTableSessionScheduler;
 import com.goldys.platform.connectors.opentable.session.OpenTableSessionService;
 import com.goldys.platform.ingestion.IngestionService;
 import java.net.http.HttpClient;
@@ -13,8 +14,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -61,14 +60,9 @@ public class OpenTableApiConfig {
         LocalDate.parse(backfillFrom));
   }
 
-  @Bean(destroyMethod = "shutdownNow")
-  ScheduledExecutorService openTableSessionScheduler() {
-    return Executors.newSingleThreadScheduledExecutor(
-        r -> {
-          Thread t = new Thread(r, "opentable-session");
-          t.setDaemon(true);
-          return t;
-        });
+  @Bean(destroyMethod = "close")
+  OpenTableSessionScheduler openTableSessionScheduler() {
+    return new OpenTableSessionScheduler();
   }
 
   /**
@@ -79,7 +73,7 @@ public class OpenTableApiConfig {
   OpenTableSessionService openTableSessionService(
       OpenTableBrowser browser,
       @Lazy IngestionService ingestion,
-      ScheduledExecutorService openTableSessionScheduler,
+      OpenTableSessionScheduler openTableSessionScheduler,
       @Value("${opentable.session.poll-interval:PT2S}") Duration pollInterval,
       @Value("${opentable.session.idle-timeout:PT10M}") Duration idleTimeout) {
     return new OpenTableSessionService(
@@ -87,7 +81,7 @@ public class OpenTableApiConfig {
         (watermark, onComplete) ->
             ingestion.runConnectorFrom(
                 OpenTableReservationJsonParser.SOURCE_SYSTEM, watermark, onComplete),
-        openTableSessionScheduler,
+        openTableSessionScheduler.delegate(),
         Clock.systemUTC(),
         pollInterval,
         idleTimeout);
