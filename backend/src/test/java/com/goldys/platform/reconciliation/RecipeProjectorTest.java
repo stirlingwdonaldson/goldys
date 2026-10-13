@@ -20,6 +20,8 @@ import org.mockito.ArgumentCaptor;
 
 class RecipeProjectorTest {
 
+  private static final LocalDate d = LocalDate.of(2026, 10, 1);
+
   private final CanonicalRecipeCostQuery recipeCosts = mock(CanonicalRecipeCostQuery.class);
   private final CanonicalSaleRecipeLinkQuery links = mock(CanonicalSaleRecipeLinkQuery.class);
   private final CanonicalSaleItemQuery saleItems = mock(CanonicalSaleItemQuery.class);
@@ -147,6 +149,150 @@ class RecipeProjectorTest {
     assertThat(r.recipeFolderName()).isNull();
     assertThat(r.menuPrice()).isNull();
     assertThat(r.actualCost()).isNull();
+  }
+
+  @Test
+  void recipeNameMatchWithoutLinkSetsCurrentPriceAndUnknownState() {
+    when(recipeCosts.currentRecipeCosts()).thenReturn(List.of(cost(1, "Parma", "6.00")));
+    when(links.currentLinks()).thenReturn(List.of());
+    when(saleItems.currentSaleItemPrices())
+        .thenReturn(
+            List.of(
+                new SaleItemPriceView(
+                    "Parma", new BigDecimal("18.50"), new BigDecimal("6.00"), d)));
+
+    projector.recomputeAll();
+
+    ResolvedRecipe r = captured().get(0);
+    assertThat(r.menuPrice()).isEqualByComparingTo("18.50");
+    assertThat(r.actualCost()).isEqualByComparingTo("6.00");
+    assertThat(r.priceSource()).isEqualTo("CURRENT");
+    assertThat(r.menuState()).isEqualTo("UNKNOWN");
+    assertThat(r.lastSoldPrice()).isNull();
+  }
+
+  @Test
+  void recipeNameRecoversWhenLinkDescriptionDoesNotMatch() {
+    when(recipeCosts.currentRecipeCosts())
+        .thenReturn(List.of(cost(1, "Dolin Dry Vermouth", "6.00")));
+    when(links.currentLinks())
+        .thenReturn(List.of(link(1, "Dolin Dry Vermouth", "Mains", "Dolin Dry Vermouth - 45ml")));
+    when(saleItems.currentSaleItemPrices())
+        .thenReturn(
+            List.of(
+                new SaleItemPriceView(
+                    "Dolin Dry Vermouth", new BigDecimal("9.00"), new BigDecimal("3.00"), d)));
+
+    projector.recomputeAll();
+
+    ResolvedRecipe r = captured().get(0);
+    assertThat(r.priceSource()).isEqualTo("CURRENT");
+    assertThat(r.menuState()).isEqualTo("ON_MENU");
+    assertThat(r.menuPrice()).isEqualByComparingTo("9.00");
+    assertThat(r.lastSoldPrice()).isNull();
+  }
+
+  @Test
+  void noLinkNoNameMatchYieldsNoneAndUnknown() {
+    when(recipeCosts.currentRecipeCosts()).thenReturn(List.of(cost(1, "Pickle Brine", "6.00")));
+    when(links.currentLinks()).thenReturn(List.of());
+    when(saleItems.currentSaleItemPrices())
+        .thenReturn(
+            List.of(
+                new SaleItemPriceView(
+                    "Something Else", new BigDecimal("5.00"), new BigDecimal("2.00"), d)));
+
+    projector.recomputeAll();
+
+    ResolvedRecipe r = captured().get(0);
+    assertThat(r.priceSource()).isEqualTo("NONE");
+    assertThat(r.menuState()).isEqualTo("UNKNOWN");
+    assertThat(r.menuPrice()).isNull();
+    assertThat(r.actualCost()).isNull();
+    assertThat(r.lastSoldPrice()).isNull();
+  }
+
+  @Test
+  void inactiveLinkYieldsHistoricalPriceAndOffMenuState() {
+    when(recipeCosts.currentRecipeCosts()).thenReturn(List.of(cost(1, "Parma", "6.00")));
+    when(links.currentLinks()).thenReturn(List.of(link(1, "Parma", "Mains", "Parma", false)));
+    when(saleItems.currentSaleItemPrices())
+        .thenReturn(
+            List.of(
+                new SaleItemPriceView(
+                    "Parma", new BigDecimal("18.50"), new BigDecimal("6.00"), d)));
+
+    projector.recomputeAll();
+
+    ResolvedRecipe r = captured().get(0);
+    assertThat(r.menuPrice()).isNull();
+    assertThat(r.priceSource()).isEqualTo("HISTORICAL");
+    assertThat(r.menuState()).isEqualTo("OFF_MENU");
+    assertThat(r.lastSoldPrice()).isEqualByComparingTo("18.50");
+    assertThat(r.lastSoldCost()).isEqualByComparingTo("6.00");
+    assertThat(r.lastSoldDate()).isEqualTo(d);
+  }
+
+  @Test
+  void aliasGapStaysNoneAndOnMenu() {
+    when(recipeCosts.currentRecipeCosts()).thenReturn(List.of(cost(1, "Baba Ganoush", "6.00")));
+    when(links.currentLinks())
+        .thenReturn(List.of(link(1, "Baba Ganoush", "Mains", "Eggplant Dip")));
+    when(saleItems.currentSaleItemPrices())
+        .thenReturn(
+            List.of(
+                new SaleItemPriceView(
+                    "Something Else", new BigDecimal("5.00"), new BigDecimal("2.00"), d)));
+
+    projector.recomputeAll();
+
+    ResolvedRecipe r = captured().get(0);
+    assertThat(r.priceSource()).isEqualTo("NONE");
+    assertThat(r.menuState()).isEqualTo("ON_MENU");
+    assertThat(r.menuPrice()).isNull();
+    assertThat(r.lastSoldPrice()).isNull();
+  }
+
+  @Test
+  void activeAndInactiveLinksPreferCurrent() {
+    when(recipeCosts.currentRecipeCosts()).thenReturn(List.of(cost(1, "Parma", "6.00")));
+    when(links.currentLinks())
+        .thenReturn(
+            List.of(
+                link(1, "Parma", "Mains", "Parma", true),
+                link(1, "Parma", "Mains", "Parma", false)));
+    when(saleItems.currentSaleItemPrices())
+        .thenReturn(
+            List.of(
+                new SaleItemPriceView(
+                    "Parma", new BigDecimal("18.50"), new BigDecimal("6.00"), d)));
+
+    projector.recomputeAll();
+
+    ResolvedRecipe r = captured().get(0);
+    assertThat(r.priceSource()).isEqualTo("CURRENT");
+    assertThat(r.menuState()).isEqualTo("ON_MENU");
+    assertThat(r.menuPrice()).isEqualByComparingTo("18.50");
+    assertThat(r.lastSoldPrice()).isNull();
+  }
+
+  @Test
+  void nullTradingDateIgnoredInLastSold() {
+    when(recipeCosts.currentRecipeCosts()).thenReturn(List.of(cost(1, "Parma", "6.00")));
+    when(links.currentLinks()).thenReturn(List.of(link(1, "Parma", "Mains", "Parma", false)));
+    when(saleItems.currentSaleItemPrices())
+        .thenReturn(
+            List.of(
+                new SaleItemPriceView(
+                    "Parma", new BigDecimal("18.50"), new BigDecimal("6.00"), null),
+                new SaleItemPriceView(
+                    "Parma", new BigDecimal("20.00"), new BigDecimal("7.00"), d)));
+
+    projector.recomputeAll();
+
+    ResolvedRecipe r = captured().get(0);
+    assertThat(r.lastSoldDate()).isEqualTo(d);
+    assertThat(r.lastSoldPrice()).isEqualByComparingTo("20.00");
   }
 
   @SuppressWarnings("unchecked")
