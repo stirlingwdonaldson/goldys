@@ -71,6 +71,26 @@ services:
       retries: 3
       start_period: 30s
 
+  # Self-hosted embedding/clustering service for product categorisation. Internal-only (no
+  # published port): the backend reaches it over the compose network. The ~90 MB sentence
+  # transformer model is downloaded on first warm-up into the cache volume so a redeploy never
+  # re-downloads it.
+  product-classify:
+    build:
+      context: ./product-classify-service
+    environment:
+      CLASSIFY_PREWARM: ${CLASSIFY_PREWARM:-false}
+    volumes:
+      - classify_model_cache:/model-cache
+    restart: unless-stopped
+    healthcheck:
+      # sentence-transformers import is slow on first start; start_period covers it.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   backend:
     build:
       context: ./backend
@@ -113,6 +133,16 @@ services:
       # FORECASTING_TIMESFM_ENABLED=true is set in .env.prod.
       FORECASTING_TIMESFM_ENABLED: ${FORECASTING_TIMESFM_ENABLED:-false}
       FORECASTING_TIMESFM_BASE_URL: ${FORECASTING_TIMESFM_BASE_URL:-http://timesfm:8001}
+      # Product categorisation (self-hosted embeddings + hosted Jev classifier). Both flags are
+      # off until their services are deployed and warmed; a run submitted with them off fails fast
+      # with an operator-facing message. Set CLASSIFICATION_EMBEDDING_ENABLED=true only after the
+      # product-classify service above is healthy; the JEV pair stays unconfigured until the hosted
+      # TypeSafe classifier is enabled.
+      CLASSIFICATION_EMBEDDING_ENABLED: ${CLASSIFICATION_EMBEDDING_ENABLED:-false}
+      CLASSIFICATION_EMBEDDING_BASE_URL: ${CLASSIFICATION_EMBEDDING_BASE_URL:-http://product-classify:8002}
+      CLASSIFICATION_JEV_ENABLED: ${CLASSIFICATION_JEV_ENABLED:-false}
+      CLASSIFICATION_JEV_BASE_URL: ${CLASSIFICATION_JEV_BASE_URL:-https://api.typesafe.ai}
+      CLASSIFICATION_JEV_API_KEY: ${CLASSIFICATION_JEV_API_KEY:-}
       # Sentry (ops-sentry). Unset DSN = SDK off. SENTRY_RELEASE is the deployed git SHA.
       SENTRY_DSN: ${SENTRY_BACKEND_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
@@ -193,6 +223,7 @@ volumes:
   goldys_sftp_data:
   goldys_sftp_hostkeys:
   timesfm_cache:
+  classify_model_cache:
   opentable_browser_profile:
 
 secrets:

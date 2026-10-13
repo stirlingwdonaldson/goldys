@@ -46,6 +46,22 @@ services:
       retries: 3
       start_period: 30s
 
+  # Self-hosted embedding/clustering service for product categorisation. Mirrors `timesfm`;
+  # publishes 8002 on the host so a locally-run backend can reach it (the prod stack keeps it
+  # internal-only). The ~90 MB model downloads into the cache volume on first warm-up.
+  product-classify:
+    build: ./product-classify-service
+    ports:
+      - "8002:8002"
+    volumes:
+      - classify_model_cache:/model-cache
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   # OpenTable assisted sign-in browser (docs/connectors/opentable.md). Opt-in, since it holds a
   # real OpenTable login once used:
   #   docker compose --profile opentable up -d opentable-browser
@@ -63,4 +79,5 @@ services:
 volumes:
   goldys_pg_data:
   timesfm_cache:
+  classify_model_cache:
   opentable_browser_profile_dev:
