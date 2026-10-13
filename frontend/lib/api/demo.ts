@@ -6,6 +6,8 @@ import type {
   Api,
   AssignmentRow,
   CategoryNode,
+  ClassificationRun,
+  ClassificationRunKind,
   ConnectorStatus,
   ConversationMessage,
   ConversationThreadSummary,
@@ -814,6 +816,21 @@ const demoCategoryAssignments: AssignmentRow[] = [
   { productNameKey: "parma", categoryId: "cat-mains", categoryName: "Mains", groupName: null, confidence: 0.61, source: "CLUSTERED", status: "NEEDS_REVIEW" },
   { productNameKey: "pint carlton draught", categoryId: "cat-beer", categoryName: "Beer", groupName: null, confidence: 0.94, source: "JEV", status: "ASSIGNED" },
   { productNameKey: "garlic aioli", categoryId: null, categoryName: null, groupName: null, confidence: null, source: null, status: "UNASSIGNED" },
+];
+
+// One historical SUCCEEDED run so the page's run-status display is populated on first load. A
+// `runClassification` call prepends a RUNNING run that the next `listClassificationRuns` flips to
+// SUCCEEDED, because the demo has no background worker (mirroring the forecast-run fixtures).
+const demoClassificationRuns: ClassificationRun[] = [
+  {
+    id: "cls-1",
+    kind: "FULL",
+    status: "SUCCEEDED",
+    productCount: 5,
+    startedAt: "2026-10-06T02:00:00Z",
+    finishedAt: "2026-10-06T02:01:00Z",
+    errorMessage: null,
+  },
 ];
 
 // Invoice browse fixtures: realistic current headers covering the hard states — a linked PDF, one
@@ -1830,6 +1847,34 @@ export const demoApi: Api = {
       assignment.source = null;
       assignment.status = "UNASSIGNED";
     }
+  },
+
+  async runClassification(kind: ClassificationRunKind): Promise<void> {
+    await delay(400);
+    // No background worker: the run is RUNNING now and completes on the next list poll.
+    demoClassificationRuns.unshift({
+      id: `cls-${Date.now()}`,
+      kind,
+      status: "RUNNING",
+      productCount: null,
+      startedAt: "2026-10-13T02:00:00Z",
+      finishedAt: null,
+      errorMessage: null,
+    });
+  },
+
+  async listClassificationRuns(): Promise<ClassificationRun[]> {
+    await delay(300);
+    // Advance any RUNNING run to SUCCEEDED so the poll loop observes completion, and refresh the
+    // counts so a successful run reflects the (still-populated) demo taxonomy/assignments.
+    for (const run of demoClassificationRuns) {
+      if (run.status === "RUNNING") {
+        run.status = "SUCCEEDED";
+        run.productCount = demoCategoryAssignments.length;
+        run.finishedAt = "2026-10-13T02:01:00Z";
+      }
+    }
+    return [...demoClassificationRuns];
   },
 };
 

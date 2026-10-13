@@ -416,6 +416,29 @@ export interface UpdateCategoryInput {
   groupName?: string | null;
 }
 
+/** What a classification run does (mirrors the backend `ClassificationRunKind`). */
+export type ClassificationRunKind = "CLUSTER" | "ASSIGN" | "FULL";
+
+/** Lifecycle of a persisted classification run (mirrors `ClassificationRunStatus`). */
+export type ClassificationRunStatus = "RUNNING" | "SUCCEEDED" | "FAILED" | "PARTIAL";
+
+/**
+ * The public shape of a classification run (mirrors `semantic.ClassificationRunView`). `kind` and
+ * `status` are the enum names; `productCount`/`finishedAt` are null while a run is in flight and
+ * `errorMessage` is null unless it failed or partially completed.
+ */
+export interface ClassificationRun {
+  id: string;
+  kind: ClassificationRunKind;
+  status: ClassificationRunStatus;
+  productCount: number | null;
+  /** ISO-8601 instant. */
+  startedAt: string;
+  /** ISO-8601 instant; null while running. */
+  finishedAt: string | null;
+  errorMessage: string | null;
+}
+
 /** One invoice-ingestion anomaly, read-only (mirrors the backend `InvoiceIngestFlagView`). */
 export interface InvoiceIngestFlag {
   flagType: string;
@@ -1010,6 +1033,10 @@ export interface Api {
   renameCategory(id: string, input: UpdateCategoryInput): Promise<void>;
   moveProduct(productNameKey: string, categoryId: string): Promise<void>;
   clearProductOverride(productNameKey: string): Promise<void>;
+  /** Submits an asynchronous categorisation run; accepted (202) immediately. */
+  runClassification(kind: ClassificationRunKind): Promise<void>;
+  /** Recent classification runs, newest first. */
+  listClassificationRuns(): Promise<ClassificationRun[]>;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */

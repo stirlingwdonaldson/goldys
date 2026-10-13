@@ -308,6 +308,25 @@ describe("demoApi product categorisation", () => {
       expect(typeof p.y).toBe("number");
     }
   });
+
+  it("lists runs newest-first with a succeeded historical run", async () => {
+    const runs = await demoApi.listClassificationRuns();
+    expect(runs.length).toBeGreaterThan(0);
+    expect(runs[0].status).toBe("SUCCEEDED");
+    expect(runs[0].kind).toBe("FULL");
+    expect(runs[0].productCount).not.toBeNull();
+  });
+
+  it("submits a run and reports it succeeded on the next poll", async () => {
+    await demoApi.runClassification("FULL");
+    const runs = await demoApi.listClassificationRuns();
+
+    // Most recent first: the just-submitted run is at the head, completed by the poll.
+    expect(runs[0].kind).toBe("FULL");
+    expect(runs[0].status).toBe("SUCCEEDED");
+    expect(runs[0].productCount).not.toBeNull();
+    expect(runs[0].finishedAt).not.toBeNull();
+  });
 });
 
 describe("demoApi invoices", () => {

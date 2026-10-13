@@ -351,6 +351,18 @@ export const liveApi: Api = {
       { method: "DELETE" },
       { responseType: "void" },
     ),
+  runClassification: (kind: import("./types").ClassificationRunKind) =>
+    fetchApi<void>(
+      "/api/products/categories/runs",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind }),
+      },
+      { responseType: "void" },
+    ),
+  listClassificationRuns: () =>
+    fetchApi<import("./types").ClassificationRun[]>("/api/products/categories/runs"),
 };
 
 /**

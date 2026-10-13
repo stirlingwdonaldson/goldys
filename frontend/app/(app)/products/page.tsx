@@ -1,18 +1,21 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Box } from "lucide-react";
+import { Box, ChevronDown } from "lucide-react";
 import {
   isApiError,
   type AssignmentRow,
   type CategoryNode,
+  type ClassificationRun,
+  type ClassificationRunKind,
+  type ClassificationRunStatus,
   type DendrogramNode,
   type ProductPoint,
 } from "@/lib/api";
 import { useApi } from "@/lib/demo-mode";
 import { useApiData } from "@/lib/use-api-data";
-import { formatPercent, humanizeKey } from "@/lib/format";
+import { formatDateTime, formatPercent, humanizeKey } from "@/lib/format";
 import { AwaitingData } from "@/components/states/awaiting-data";
 import { ErrorState } from "@/components/states/error-state";
 import { InlineError } from "@/components/states/inline-error";
@@ -24,6 +27,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { TaxonomyTree } from "@/components/classification/taxonomy-tree";
 import { DendrogramView, type DendroAction, type DendroSelection } from "@/components/classification/dendrogram-view";
@@ -366,6 +375,92 @@ const STAGE_TAB: Record<PipelineStage, Tab> = {
   report: "pipeline",
 };
 
+const RUN_STATUS_VARIANT: Record<
+  ClassificationRunStatus,
+  "success" | "failed" | "info" | "conflict"
+> = {
+  RUNNING: "info",
+  SUCCEEDED: "success",
+  FAILED: "failed",
+  PARTIAL: "conflict",
+};
+
+const RUN_KIND_LABEL: Record<ClassificationRunKind, string> = {
+  FULL: "Full pipeline",
+  CLUSTER: "Cluster only",
+  ASSIGN: "Assign only",
+};
+
+/**
+ * The latest run's status and any failure reason, shown in the Pipeline tab so a run that fails
+ * in the background is not invisible (its message is recorded in `classification_run.error_message`).
+ */
+function RunStatusLine({ run }: { run: ClassificationRun | null }) {
+  if (!run) return null;
+  return (
+    <div data-testid="latest-run-status" className="flex flex-wrap items-center gap-2 text-sm">
+      <Badge variant={RUN_STATUS_VARIANT[run.status]}>{run.status}</Badge>
+      <span className="font-medium">{RUN_KIND_LABEL[run.kind]}</span>
+      {run.status === "SUCCEEDED" && run.productCount != null ? (
+        <span className="text-muted-foreground">
+          {run.productCount} products · {formatDateTime(run.finishedAt ?? run.startedAt)}
+        </span>
+      ) : null}
+      {run.status === "RUNNING" ? (
+        <span className="text-muted-foreground">Running — this can take a moment.</span>
+      ) : null}
+      {run.status === "FAILED" && run.errorMessage ? (
+        <span role="alert" className="text-destructive">
+          {run.errorMessage}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/** The run trigger: a primary FULL button plus a small menu for CLUSTER/ASSIGN. */
+function RunClassificationMenu({
+  onRun,
+  starting,
+}: {
+  onRun: (kind: ClassificationRunKind) => void;
+  starting: boolean;
+}) {
+  return (
+    <div className="flex items-center">
+      <Button
+        variant="brand"
+        className="rounded-r-none"
+        onClick={() => onRun("FULL")}
+        disabled={starting}
+      >
+        {starting ? "Starting…" : "Run classification"}
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="brand"
+            size="icon"
+            className="rounded-l-none border-l border-brand-foreground/25"
+            aria-label="More classification run options"
+            disabled={starting}
+          >
+            <ChevronDown />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => onRun("CLUSTER")}>
+            {RUN_KIND_LABEL.CLUSTER}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onRun("ASSIGN")}>
+            {RUN_KIND_LABEL.ASSIGN}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
 export default function ProductsPage() {
   // All four datasets are read once, because the pipeline flow summarises all of them and
   // every curation write re-reads them together.
@@ -373,15 +468,27 @@ export default function ProductsPage() {
   const assignments = useApiData((api) => api.getCategoryAssignments());
   const points = useApiData((api) => api.getCategoryEmbeddingSpace());
   const dendrogram = useApiData((api) => api.getCategoryDendrogram());
+  const runsQuery = useApiData((api) => api.listClassificationRuns());
 
   const [tab, setTab] = useState<Tab>("categories");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [writeError, setWriteError] = useState<string | null>(null);
+  const [runStarting, setRunStarting] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [activeRun, setActiveRun] = useState<ClassificationRun | null>(null);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const api = useApi();
 
   const reloadAll = useCallback(async () => {
     await Promise.all([taxonomy.reload(), assignments.reload(), points.reload(), dendrogram.reload()]);
   }, [taxonomy, assignments, points, dendrogram]);
+
+  // Clear any in-flight poll on unmount, mirroring the forecasting page.
+  useEffect(() => {
+    return () => {
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+    };
+  }, []);
 
   /** Every write goes through the same Api the page reads from, then the data re-reads. */
   const write = useCallback(
@@ -446,6 +553,42 @@ export default function ProductsPage() {
     [api, taxonomy.data, write],
   );
 
+  /** Polls the runs list until the just-submitted run leaves RUNNING, then refreshes the screen. */
+  const pollLatestRun = useCallback(async () => {
+    try {
+      const runs = await api.listClassificationRuns();
+      const latest = runs[0] ?? null;
+      setActiveRun(latest);
+      if (latest && latest.status === "RUNNING") {
+        pollTimer.current = setTimeout(() => void pollLatestRun(), 2000);
+      } else {
+        void runsQuery.reload();
+        if (latest && latest.status === "SUCCEEDED") {
+          await reloadAll();
+        }
+      }
+    } catch {
+      // The list stays at its last known state; a later refresh recovers it.
+    }
+  }, [api, reloadAll, runsQuery]);
+
+  const handleRun = useCallback(
+    async (kind: ClassificationRunKind) => {
+      setRunStarting(true);
+      setRunError(null);
+      setActiveRun(null);
+      try {
+        await api.runClassification(kind);
+        void pollLatestRun();
+      } catch (e) {
+        setRunError(isApiError(e) ? e.message : "Couldn't start the classification run.");
+      } finally {
+        setRunStarting(false);
+      }
+    },
+    [api, pollLatestRun],
+  );
+
   const loading = taxonomy.loading || assignments.loading || points.loading || dendrogram.loading;
   const error = taxonomy.error ?? assignments.error ?? points.error ?? dendrogram.error;
   const categories = taxonomy.data ?? [];
@@ -454,7 +597,11 @@ export default function ProductsPage() {
   const clusterNodes = dendrogram.data ?? [];
 
   const header = (
-    <PageHeader title="Products" description="Internal categorisation: how products are grouped, and what needs a decision." />
+    <PageHeader
+      title="Products"
+      description="Internal categorisation: how products are grouped, and what needs a decision."
+      actions={<RunClassificationMenu onRun={(kind) => void handleRun(kind)} starting={runStarting} />}
+    />
   );
 
   if (loading) {
@@ -478,10 +625,13 @@ export default function ProductsPage() {
   const hasAny =
     categories.length > 0 || rows.length > 0 || scatterPoints.length > 0 || clusterNodes.length > 0;
 
+  const latestRun = activeRun ?? runsQuery.data?.[0] ?? null;
+
   return (
     <div className="flex flex-col gap-6">
       {header}
       {writeError ? <InlineError>{writeError}</InlineError> : null}
+      {runError ? <InlineError>{runError}</InlineError> : null}
 
       {hasAny ? (
         <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
@@ -520,6 +670,7 @@ export default function ProductsPage() {
               title="Pipeline"
               description="products → embed → cluster → curate → assign → report. Click a stage to jump to its data."
             >
+              <RunStatusLine run={latestRun} />
               <PipelineFlow
                 categories={categories}
                 assignments={rows}
@@ -531,12 +682,15 @@ export default function ProductsPage() {
           </TabsContent>
         </Tabs>
       ) : (
-        <AwaitingData
-          label="Products"
-          description="The product taxonomy, the assignment queue and the clustering views."
-          reason="No classification run has produced data yet."
-          icon={Box}
-        />
+        <div className="flex flex-col gap-4">
+          <RunStatusLine run={latestRun} />
+          <AwaitingData
+            label="Products"
+            description="The product taxonomy, the assignment queue and the clustering views."
+            reason="No classification run has produced data yet."
+            icon={Box}
+          />
+        </div>
       )}
     </div>
   );
