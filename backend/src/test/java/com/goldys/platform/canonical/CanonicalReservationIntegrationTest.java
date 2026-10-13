@@ -63,6 +63,45 @@ class CanonicalReservationIntegrationTest {
   }
 
   @Test
+  void unchangedReuploadIsNoOpAndChangeSupersedes() {
+    UUID rawId = rawRecord("OPENTABLE");
+    ReservationInput before =
+        ReservationInput.builder()
+            .sourceSystem("OPENTABLE")
+            .reservationId("1000000098")
+            .reservationAt(Instant.parse("2026-09-23T09:30:00Z"))
+            .partySize(4)
+            .status("BOOKED")
+            .rawRecordId(rawId)
+            .waitStaff("Alice")
+            .build();
+
+    CanonicalReservation first = service.record(before);
+    CanonicalReservation reupload = service.record(before);
+    assertThat(reupload.id()).isEqualTo(first.id());
+    assertThat(repository.findCurrentByRef("1000000098")).hasSize(1);
+
+    ReservationInput changed =
+        ReservationInput.builder()
+            .sourceSystem("OPENTABLE")
+            .reservationId("1000000098")
+            .reservationAt(Instant.parse("2026-09-23T09:30:00Z"))
+            .partySize(4)
+            .status("BOOKED")
+            .rawRecordId(rawId)
+            .waitStaff("Bob")
+            .build();
+
+    CanonicalReservation superseded = service.record(changed);
+
+    assertThat(superseded.id()).isNotEqualTo(first.id());
+    assertThat(superseded.logicalEntityId()).isEqualTo(first.logicalEntityId());
+    assertThat(repository.findCurrentByRef("1000000098")).hasSize(1);
+    assertThat(repository.findCurrentByRef("1000000098").get(0).waitStaff()).isEqualTo("Bob");
+    assertThat(repository.findById(first.id()).get().supersededAt()).isNotNull();
+  }
+
+  @Test
   void differentSourcesKeepSeparateCurrentRows() {
     service.record(input("OPENTABLE", "1000000003", "2026-09-23T09:30:00Z"));
     service.record(input("MANUAL", "1000000003", "2026-09-23T09:30:00Z"));
