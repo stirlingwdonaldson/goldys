@@ -753,7 +753,8 @@ export interface Api {
   getProductRecord(date: string, product: string): Promise<ReconciliationRecord>;
   listConnectorStatuses(): Promise<ConnectorStatus[]>;
   runConnector(source: string): Promise<ConnectorStatus>;
-  uploadOpenTableCsv(file: File): Promise<void>;
+  /** Uploads a CSV drop for one connector (the OpenTable GuestCenter datasets). */
+  uploadConnectorCsv(connectorName: string, file: File): Promise<void>;
   /** Fails with NOT_CONFIGURED when the assisted sync isn't enabled on this deployment. */
   getOpenTableSession(): Promise<OpenTableSessionState>;
   startOpenTableSession(mode: OpenTableSyncMode): Promise<OpenTableSessionState>;

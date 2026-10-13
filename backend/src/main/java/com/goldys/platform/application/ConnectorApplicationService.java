@@ -5,6 +5,9 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
+import com.goldys.platform.connectors.opentable.OpenTableMenuItemsCsvIngestService;
+import com.goldys.platform.connectors.opentable.OpenTableReservationsCsvIngestService;
+import com.goldys.platform.connectors.opentable.OpenTableReviewsCsvIngestService;
 import com.goldys.platform.ingestion.CtbSftpPull;
 import com.goldys.platform.ingestion.FailureDetail;
 import com.goldys.platform.ingestion.IngestionRunSummary;
@@ -31,21 +34,37 @@ public class ConnectorApplicationService {
           new ConnectorStatus(
               "LIGHTSPEED", "lightspeed-insights", null, "never_run", 0, null, false),
           new ConnectorStatus("CTB", "ctb-revenue", null, "never_run", 0, null, false),
+          // The thin 8-column drop is deprecated in favour of the three rich exports below; it
+          // remains registered (raw-only) so its historical run status still surfaces.
           new ConnectorStatus("OPENTABLE", "opentable-csv-drop", null, "never_run", 0, null, false),
+          new ConnectorStatus(
+              "OPENTABLE", "opentable-reservations", null, "never_run", 0, null, false),
+          new ConnectorStatus("OPENTABLE", "opentable-reviews", null, "never_run", 0, null, false),
+          new ConnectorStatus(
+              "OPENTABLE", "opentable-menu-items", null, "never_run", 0, null, false),
           new ConnectorStatus("DEPUTY", "deputy-api", null, "never_run", 0, null, false));
 
   private final IngestionService ingestion;
   private final OpenTableCsvIngestService openTableCsvIngest;
+  private final OpenTableReservationsCsvIngestService openTableReservationsIngest;
+  private final OpenTableReviewsCsvIngestService openTableReviewsIngest;
+  private final OpenTableMenuItemsCsvIngestService openTableMenuItemsIngest;
   private final PermissionService permissions;
   private final ObjectProvider<CtbSftpPull> sftpPull;
 
   public ConnectorApplicationService(
       IngestionService ingestion,
       OpenTableCsvIngestService openTableCsvIngest,
+      OpenTableReservationsCsvIngestService openTableReservationsIngest,
+      OpenTableReviewsCsvIngestService openTableReviewsIngest,
+      OpenTableMenuItemsCsvIngestService openTableMenuItemsIngest,
       PermissionService permissions,
       ObjectProvider<CtbSftpPull> sftpPull) {
     this.ingestion = ingestion;
     this.openTableCsvIngest = openTableCsvIngest;
+    this.openTableReservationsIngest = openTableReservationsIngest;
+    this.openTableReviewsIngest = openTableReviewsIngest;
+    this.openTableMenuItemsIngest = openTableMenuItemsIngest;
     this.permissions = permissions;
     this.sftpPull = sftpPull;
   }
@@ -59,15 +78,19 @@ public class ConnectorApplicationService {
     return KNOWN_SOURCES.stream()
         .map(
             known -> {
+              // A source may have several connectors (OpenTable's four exports share the OPENTABLE
+              // source). Preserve the KNOWN_SOURCES entry's own source + connector name as the
+              // tile's stable identity, and take only the run-status fields from the source's
+              // latest run — otherwise every OPENTABLE tile collapses to whichever export ran last.
               ConnectorStatus current = latest.getOrDefault(known.source(), known);
               return new ConnectorStatus(
-                  current.source(),
-                  current.connectorName(),
+                  known.source(),
+                  known.connectorName(),
                   current.lastRunAt(),
                   current.status(),
                   current.failureCount(),
                   current.failure(),
-                  ingestion.isRunnable(current.source()));
+                  ingestion.isRunnable(known.source()));
             })
         .toList();
   }
@@ -81,6 +104,24 @@ public class ConnectorApplicationService {
   public void uploadOpenTableCsv(UserRole role, byte[] bytes) {
     permissions.require(role, RESOURCE, PermissionAction.WRITE);
     openTableCsvIngest.ingest(bytes);
+  }
+
+  /** Ingests the rich GuestCenter reservations export for the OpenTable source. */
+  public void uploadOpenTableReservationsCsv(UserRole role, byte[] bytes) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    openTableReservationsIngest.ingest(bytes);
+  }
+
+  /** Ingests the GuestCenter reviews export for the OpenTable source. */
+  public void uploadOpenTableReviewsCsv(UserRole role, byte[] bytes) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    openTableReviewsIngest.ingest(bytes);
+  }
+
+  /** Ingests the GuestCenter menu export for the OpenTable source. */
+  public void uploadOpenTableMenuItemsCsv(UserRole role, byte[] bytes) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    openTableMenuItemsIngest.ingest(bytes);
   }
 
   /** Triggers the CTB SFTP drop pull on demand (requires {@code ctb.sftp.enabled=true}). */

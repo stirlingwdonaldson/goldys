@@ -62,6 +62,39 @@ public class ConnectorStatusController {
     return ResponseEntity.noContent().build();
   }
 
+  /** Uploads the rich GuestCenter reservations export for the OpenTable source. */
+  @PostMapping(
+      value = "/connectors/opentable-reservations/upload",
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  ResponseEntity<Void> uploadOpenTableReservationsCsv(
+      @RequestParam("file") MultipartFile file, @AuthenticationPrincipal AccountUserDetails user) {
+    UserRole role = currentUser.roleOf(user);
+    connectors.uploadOpenTableReservationsCsv(role, readBytes(file));
+    return ResponseEntity.noContent().build();
+  }
+
+  /** Uploads the GuestCenter reviews export for the OpenTable source. */
+  @PostMapping(
+      value = "/connectors/opentable-reviews/upload",
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  ResponseEntity<Void> uploadOpenTableReviewsCsv(
+      @RequestParam("file") MultipartFile file, @AuthenticationPrincipal AccountUserDetails user) {
+    UserRole role = currentUser.roleOf(user);
+    connectors.uploadOpenTableReviewsCsv(role, readBytes(file));
+    return ResponseEntity.noContent().build();
+  }
+
+  /** Uploads the GuestCenter menu export for the OpenTable source. */
+  @PostMapping(
+      value = "/connectors/opentable-menu-items/upload",
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  ResponseEntity<Void> uploadOpenTableMenuItemsCsv(
+      @RequestParam("file") MultipartFile file, @AuthenticationPrincipal AccountUserDetails user) {
+    UserRole role = currentUser.roleOf(user);
+    connectors.uploadOpenTableMenuItemsCsv(role, readBytes(file));
+    return ResponseEntity.noContent().build();
+  }
+
   private static byte[] readBytes(MultipartFile file) {
     try {
       return file.getBytes();

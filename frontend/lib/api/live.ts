@@ -55,10 +55,10 @@ export const liveApi: Api = {
   listConnectorStatuses: () => fetchApi<ConnectorStatus[]>("/api/connectors"),
   runConnector: (source: string) =>
     fetchApi<ConnectorStatus>(`/api/connectors/${source}/run`, { method: "POST" }),
-  uploadOpenTableCsv: (file: File) => {
+  uploadConnectorCsv: (connectorName: string, file: File) => {
     const form = new FormData();
     form.append("file", file);
-    return fetchApi<void>("/api/connectors/opentable/upload", { method: "POST", body: form }, { responseType: "void" });
+    return fetchApi<void>(`/api/connectors/${connectorName}/upload`, { method: "POST", body: form }, { responseType: "void" });
   },
   getOpenTableSession: () =>
     fetchApi<OpenTableSessionState>("/api/connectors/opentable/session"),

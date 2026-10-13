@@ -15,6 +15,9 @@ import com.goldys.platform.connectors.lightspeed.LightspeedProductIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedSaleItemIngestService;
 import com.goldys.platform.connectors.lightspeed.LightspeedZReportIngestService;
 import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
+import com.goldys.platform.connectors.opentable.OpenTableMenuItemsCsvIngestService;
+import com.goldys.platform.connectors.opentable.OpenTableReservationsCsvIngestService;
+import com.goldys.platform.connectors.opentable.OpenTableReviewsCsvIngestService;
 import com.goldys.platform.ingestion.IngestionService;
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +48,9 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
       LightspeedIngestController.class,
       CtInvoiceIngestController.class,
       OpenTableCsvIngestController.class,
+      OpenTableReservationsCsvIngestController.class,
+      OpenTableReviewsCsvIngestController.class,
+      OpenTableMenuItemsCsvIngestController.class,
       DeputyIngestController.class
     })
 @Import(SecurityConfig.class)
@@ -70,6 +76,9 @@ class IngestWebhookSecurityTest {
   @MockitoBean LightspeedZReportIngestService zReportIngestService;
   @MockitoBean CtInvoiceCsvIngestService csvIngestService;
   @MockitoBean OpenTableCsvIngestService openTableCsvIngestService;
+  @MockitoBean OpenTableReservationsCsvIngestService openTableReservationsCsvIngestService;
+  @MockitoBean OpenTableReviewsCsvIngestService openTableReviewsCsvIngestService;
+  @MockitoBean OpenTableMenuItemsCsvIngestService openTableMenuItemsCsvIngestService;
   @MockitoBean IngestionService ingestionService;
 
   @Test

@@ -132,6 +132,57 @@ class ConnectorStatusControllerTest {
   }
 
   @Test
+  void uploadOpenTableReservationsReturnsNoContentAndIngests() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+
+    MockMultipartFile file =
+        new MockMultipartFile("file", "reservations.csv", "text/csv", "a,b\n1,2".getBytes());
+
+    mvc.perform(
+            multipart("/api/connectors/opentable-reservations/upload")
+                .file(file)
+                .with(authenticated(owner()))
+                .with(csrf()))
+        .andExpect(status().isNoContent());
+
+    verify(connectors).uploadOpenTableReservationsCsv(any(), any(byte[].class));
+  }
+
+  @Test
+  void uploadOpenTableReviewsReturnsNoContentAndIngests() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+
+    MockMultipartFile file =
+        new MockMultipartFile("file", "reviews.csv", "text/csv", "a,b\n1,2".getBytes());
+
+    mvc.perform(
+            multipart("/api/connectors/opentable-reviews/upload")
+                .file(file)
+                .with(authenticated(owner()))
+                .with(csrf()))
+        .andExpect(status().isNoContent());
+
+    verify(connectors).uploadOpenTableReviewsCsv(any(), any(byte[].class));
+  }
+
+  @Test
+  void uploadOpenTableMenuItemsReturnsNoContentAndIngests() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+
+    MockMultipartFile file =
+        new MockMultipartFile("file", "menu.csv", "text/csv", "a,b\n1,2".getBytes());
+
+    mvc.perform(
+            multipart("/api/connectors/opentable-menu-items/upload")
+                .file(file)
+                .with(authenticated(owner()))
+                .with(csrf()))
+        .andExpect(status().isNoContent());
+
+    verify(connectors).uploadOpenTableMenuItemsCsv(any(), any(byte[].class));
+  }
+
+  @Test
   void connectorsCarryTheFailureDetail() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(connectors.connectors(any()))

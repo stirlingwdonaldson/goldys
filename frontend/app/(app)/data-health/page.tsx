@@ -10,7 +10,7 @@ import { useToast } from "@/components/feedback/toast";
 import { useShellStatus } from "@/components/app-shell/shell-status";
 import { PageHeader } from "@/components/layout/page-header";
 import { SourceTile } from "@/components/sources/source-tile";
-import { sourceIdentity } from "@/lib/sources";
+import { connectorDisplayName, isLegacyCsvDrop, sourceIdentity, uploadTargetFor } from "@/lib/sources";
 import { formatAgo, formatDateTime } from "@/lib/format";
 import { InlineError } from "@/components/states/inline-error";
 import { Section } from "@/components/layout/section";
@@ -37,7 +37,8 @@ export default function DataHealthPage() {
   const summary = useApiData((api) => api.getDashboardSummary());
   const activity = useApiData((api) => api.getDashboardActivity());
   const [running, setRunning] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadTarget, setUploadTarget] = useState<string | null>(null);
   const { toast } = useToast();
   const shell = useShellStatus();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -98,21 +99,25 @@ export default function DataHealthPage() {
     }
   }
 
-  async function uploadCsv(file: File) {
-    setUploading(true);
+  async function uploadCsv(connectorName: string, file: File) {
+    setUploading(connectorName);
     try {
-      await api.uploadOpenTableCsv(file);
-      toast({ title: "OpenTable CSV imported", description: file.name, tone: "success" });
+      await api.uploadConnectorCsv(connectorName, file);
+      toast({
+        title: `${connectorDisplayName("OPENTABLE", connectorName)} imported`,
+        description: file.name,
+        tone: "success",
+      });
       await connectors.reload();
       shell.refresh();
     } catch (e) {
       toast({
         title: "Couldn't import that CSV",
-        description: isApiError(e) ? e.message : "Check it's the reservations export from OpenTable and try again.",
+        description: isApiError(e) ? e.message : "Check the file matches this export and try again.",
         tone: "error",
       });
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   }
 
@@ -173,7 +178,7 @@ export default function DataHealthPage() {
           }
           description="When each source last delivered data, and what to do when one stops."
         />
-  
+
         {/* Hidden file input for the OpenTable CSV upload, triggered from its card. */}
         <input
           ref={fileInputRef}
@@ -184,26 +189,39 @@ export default function DataHealthPage() {
           tabIndex={-1}
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) uploadCsv(file);
+            const target = uploadTarget;
+            if (file && target) uploadCsv(target, file);
+            setUploadTarget(null);
             e.target.value = "";
           }}
         />
-  
+
         <section className="grid gap-4 lg:grid-cols-2" aria-label="Sources">
-          {connectors.data.map((c) => (
-            <ConnectorCard
-              key={c.source}
-              connector={c}
-              running={running === c.source || c.status === "running"}
-              busy={running !== null || c.status === "running"}
-              uploading={uploading}
-              onRun={() => run(c.source)}
-              onUpload={() => fileInputRef.current?.click()}
-              onSync={() => setSyncOpen(true)}
-            />
-          ))}
+          {connectors.data.map((c) => {
+            const target = uploadTargetFor(c.connectorName);
+            const syncable = c.source.toUpperCase() === "OPENTABLE" && !isLegacyCsvDrop(c.connectorName);
+            return (
+              <ConnectorCard
+                key={c.connectorName}
+                connector={c}
+                running={running === c.source || c.status === "running"}
+                busy={running !== null || c.status === "running"}
+                uploading={uploading === c.connectorName}
+                onRun={() => run(c.source)}
+                onUpload={
+                  target
+                    ? () => {
+                        setUploadTarget(target);
+                        fileInputRef.current?.click();
+                      }
+                    : undefined
+                }
+                onSync={syncable ? () => setSyncOpen(true) : undefined}
+              />
+            );
+          })}
         </section>
-  
+
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Ingestion summary">
           {summary.loading ? (
             <Skeleton className="h-28 w-full rounded-xl" />
@@ -236,7 +254,7 @@ export default function DataHealthPage() {
             </>
           )}
         </section>
-  
+
         <Section
           title="How data flows"
           description="Each source lands in the raw ledger, becomes canonical entities, then resolves into the figures your screens show. Select a step to open it."
@@ -244,9 +262,9 @@ export default function DataHealthPage() {
         >
           <PipelineMap connectors={connectors.data} />
         </Section>
-  
+
         <DependenciesSection />
-  
+
         <section className="flex flex-col gap-3">
           {activity.loading ? (
             <Skeleton className="h-40 w-full rounded-xl" />
@@ -294,25 +312,31 @@ function ConnectorCard({
   busy: boolean;
   uploading: boolean;
   onRun: () => void;
-  onUpload: () => void;
-  onSync: () => void;
+  onUpload: (() => void) | undefined;
+  onSync: (() => void) | undefined;
 }) {
   const failed = c.status === "failed";
-  const isUpload = c.source.toLowerCase() === "opentable";
-  // Sources arrive as codes ("LIGHTSPEED"); people read the registry's display name.
-  const name = sourceIdentity(c.source).label;
-  // OpenTable: sign in through the live view and let the sync run, or fall back to a CSV export.
-  const action = isUpload ? (
+  const isUpload = onUpload !== undefined;
+  const isSync = onSync !== undefined;
+  const legacy = isLegacyCsvDrop(c.connectorName);
+  // Sources arrive as codes ("LIGHTSPEED"); the OpenTable datasets get distinct names.
+  const name = connectorDisplayName(c.source, c.connectorName);
+  // OpenTable datasets: sign in through the live view to sync, or fall back to a CSV export.
+  const action = isSync ? (
     <>
       <Button variant={failed ? "default" : "outline"} size="sm" onClick={onSync}>
         <LogIn aria-hidden="true" />
         Sync OpenTable
       </Button>
-      <Button variant="ghost" size="sm" onClick={onUpload} disabled={uploading}>
-        <Upload aria-hidden="true" />
-        {uploading ? "Uploading…" : "Upload CSV"}
-      </Button>
+      {isUpload && (
+        <Button variant="ghost" size="sm" onClick={onUpload} disabled={uploading}>
+          <Upload aria-hidden="true" />
+          {uploading ? "Uploading…" : "Upload CSV"}
+        </Button>
+      )}
     </>
+  ) : legacy ? (
+    <span className="text-xs text-muted-foreground">Deprecated — use the exports below</span>
   ) : c.runnable ? (
     <Button variant={failed ? "default" : "outline"} size="sm" onClick={onRun} disabled={busy}>
       <RefreshCw className={running ? "animate-spin" : undefined} aria-hidden="true" />
