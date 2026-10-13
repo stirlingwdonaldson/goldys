@@ -1,5 +1,6 @@
 package com.goldys.platform.reconciliation;
 
+import com.goldys.platform.canonical.ProductRecorded;
 import com.goldys.platform.canonical.RecipeCostRecorded;
 import com.goldys.platform.canonical.SaleRecipeLinkRecorded;
 import org.springframework.context.event.EventListener;
@@ -24,6 +25,11 @@ public class RecipeProjectionListener {
 
   @EventListener
   public void on(SaleRecipeLinkRecorded event) {
+    projector.recomputeAll();
+  }
+
+  @EventListener
+  public void on(ProductRecorded event) {
     projector.recomputeAll();
   }
 }
