@@ -49,6 +49,7 @@ Many specs still carry their original `Status: Draft` or `In review` header. The
 | 10-12 | TimesFM forecasting | [spec](specs/2026-10-12-timesfm-forecasting-design.md) | [plan](plans/2026-10-12-timesfm-forecasting.md) | In progress |
 | 10-12 | Recipe ingredients (the "recipes.ingredients" slice) | [spec](specs/2026-10-12-recipe-ingredients-design.md) | [plan](plans/2026-10-12-recipe-ingredients.md) | Implemented (V49, V50) |
 | 10-12 | Invoice identity (supplier-scoped headers, reorder-stable lines) | [spec](specs/2026-10-12-invoice-identity-design.md) | [plan](plans/2026-10-12-invoice-identity.md) | Planned — not implemented |
+| 10-13 | Supplier PDF templates (deterministic extraction for non-templated suppliers) | [spec](specs/2026-10-13-supplier-pdf-templates-design.md) | — | Design — awaiting approval |
 
 Some older records reference paths that have since moved. File paths inside them
 have been updated to the current layout (`docs/operations/`, `docs/design/`,
