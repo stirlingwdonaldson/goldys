@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class ProductAliasQueryTest {
@@ -19,9 +18,33 @@ class ProductAliasQueryTest {
     ProductAlias alias =
         ProductAlias.create(
             "baba ganoush", "eggplant dip", "MANUAL", Instant.parse("2026-10-13T00:00:00Z"));
-    when(repository.findByAlias("eggplant dip")).thenReturn(Optional.of(alias));
+    when(repository.findByAliasOrderByCanonicalNameAsc("eggplant dip")).thenReturn(List.of(alias));
 
     assertThat(query.lookupCanonical("eggplant dip")).contains("baba ganoush");
+  }
+
+  @Test
+  void lookupCanonicalReturnsAlphabeticallyFirstCanonicalForMultiAlias() {
+    ProductAlias bolognese =
+        ProductAlias.create(
+            "kids gnocchi bolognese",
+            "kids gnocchi",
+            "MANUAL",
+            Instant.parse("2026-10-13T00:00:00Z"));
+    ProductAlias napoli =
+        ProductAlias.create(
+            "kids gnocchi napoli", "kids gnocchi", "MANUAL", Instant.parse("2026-10-13T00:00:00Z"));
+    when(repository.findByAliasOrderByCanonicalNameAsc("kids gnocchi"))
+        .thenReturn(List.of(bolognese, napoli));
+
+    assertThat(query.lookupCanonical("kids gnocchi")).contains("kids gnocchi bolognese");
+  }
+
+  @Test
+  void lookupCanonicalEmptyWhenNoMatches() {
+    when(repository.findByAliasOrderByCanonicalNameAsc("missing")).thenReturn(List.of());
+
+    assertThat(query.lookupCanonical("missing")).isEmpty();
   }
 
   @Test

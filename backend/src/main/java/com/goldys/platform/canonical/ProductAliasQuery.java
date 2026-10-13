@@ -18,7 +18,8 @@ public class ProductAliasQuery {
     if (alias.isEmpty()) {
       return Optional.empty();
     }
-    return repository.findByAlias(alias).map(ProductAlias::canonicalName);
+    List<ProductAlias> matches = repository.findByAliasOrderByCanonicalNameAsc(alias);
+    return matches.stream().findFirst().map(ProductAlias::canonicalName);
   }
 
   public List<ProductAliasView> all() {
