@@ -254,7 +254,7 @@ public class OpenTableSessionService {
         detail = "A sync was already running";
         transition(State.DONE);
       } else if ("SUCCESS".equals(status) || "NO_NEW_DATA".equals(status)) {
-        detail = "Sync complete";
+        detail = "Reservations, reviews and menu items are up to date.";
         transition(State.DONE);
       } else {
         detail = "Sync ended " + status + "; see Data health for details";
