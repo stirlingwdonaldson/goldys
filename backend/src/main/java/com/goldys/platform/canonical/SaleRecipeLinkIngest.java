@@ -21,4 +21,9 @@ public class SaleRecipeLinkIngest {
   public void recordAll(List<SaleRecipeLinkInput> inputs) {
     service.recordAll(inputs);
   }
+
+  /** Set (or clear) the resolved Lightspeed product id on the current link. */
+  public void setProductId(int saleItemRecipeId, Integer lightspeedProductId) {
+    service.setProductId(saleItemRecipeId, lightspeedProductId);
+  }
 }

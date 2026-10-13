@@ -314,6 +314,7 @@ class RecipeProjectorTest {
 
   private static SaleRecipeLinkView link(
       int recipeId, String recipeName, String folder, String description, Boolean isRecipeActive) {
-    return new SaleRecipeLinkView(recipeId, recipeName, folder, description, isRecipeActive);
+    return new SaleRecipeLinkView(
+        recipeId, recipeName, folder, description, isRecipeActive, recipeId, null);
   }
 }
