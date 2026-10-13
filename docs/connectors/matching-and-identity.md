@@ -140,15 +140,19 @@ so a second source can be added later without re-deriving these decisions.
   normalized code is a prefix of the other, e.g. `HAMB008` vs `HAMB008A1c`); (3) exact normalized
   description; (4) whole-token containment, accepted for a single shared token only when the extra
   tokens are packaging noise (`... SET PRICE 4 KG PRICE`, `... ORDER BY BOX`); (5) a majority of
-  shared significant tokens. **Ambiguity is skipped, not guessed:** if more than one line wins a
-  tier, the line is left un-enriched and `PDF_ONLY_LINE` is recorded.
+  shared significant tokens. **Ambiguity is resolved conservatively, not guessed:** if more than one
+  line wins a tier, the tie is broken by the PDF line's quantity, then its ex-tax amount, choosing
+  only the single tied line that agrees; a tie that also ties on quantity and amount is left
+  un-enriched and `PDF_ONLY_LINE` is recorded.
 - **Before matching:** `HybridInvoicePdfExtractor` sanitizes the extractor output
   (`InvoicePdfSanitizer`). A parsed invoice number with no digit (a header label such as
   `Tax Invoice No`) becomes null, so the filename join decides. Annotation rows (no stock code, no
-  amount, and a parenthesised or `COMMENT`/`NOTE` description, or no quantity and no unit) are
-  dropped: they are delivery notes, not purchases. If the PDF still resolves to no invoice the
-  export knows (no current header and no current lines), its lines are not matched: a live drop
-  raises one `AMBIGUOUS_PDF` flag for the PDF, and a replay (no filename) raises nothing.
+  amount, and a parenthesised or `COMMENT`/`NOTE` description, or no quantity and no unit) are not
+  purchases, so they are kept out of the line list and recorded as a per-invoice `invoice_note`
+  (concatenated, keyed by invoice number) rather than silently discarded. If the PDF still resolves
+  to no invoice the export knows (no current header and no current lines), its lines are not
+  matched: a live drop raises one `AMBIGUOUS_PDF` flag for the PDF, and a replay (no filename)
+  raises nothing.
 - **Confidence:** high for the invoice-number and filename joins (exact); line matching is
   tolerant-but-conservative (tiers above, unique-winner only). PDF text extraction is
   per-supplier-layout (`*InvoicePdfExtractor`, with an LLM fallback); unmatched or inconsistent
