@@ -14,6 +14,10 @@ An owner opens **Data health → OpenTable → Sync OpenTable**, picks *Recent a
 - **Nothing types credentials or solves challenges automatically.** GuestCenter's login is
   GuestCenter → Okta → password behind hCaptcha, with Akamai Bot Manager on every page. The
   human does the login (including any challenge) in the live view; automation only starts after.
+- **The live view opens GuestCenter's root** (`guestcenter.opentable.com`), which 302s to `/login`.
+  Navigating straight to a restaurant path (`/restaurant/<id>/`) returns a 404 "Page not found"
+  while signed out, so the assisted flow never uses it; the restaurant id is only used in the JSON
+  API paths after sign-in.
 - **Off by default.** Enable with `OPENTABLE_API_ENABLED=true` and run the sidecar
   (`docker-compose.prod.yml`). Disabled, the dialog says so and the CSV path below still works.
 - **Sessions.** `OT-SessionId` lasts 30 minutes from the last activity, and the app refreshes its

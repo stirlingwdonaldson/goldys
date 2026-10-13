@@ -91,30 +91,27 @@ public final class CdpOpenTableBrowser implements OpenTableBrowser {
   private final ObjectMapper json;
   private final String host;
   private final int port;
-  private final String restaurantId;
   private CdpConnection connection;
   private ScheduledExecutorService frameScheduler;
   private LiveFramePoller framePoller;
 
   public CdpOpenTableBrowser(
-      CdpTargets targets,
-      HttpClient http,
-      ObjectMapper json,
-      String host,
-      int port,
-      String restaurantId) {
+      CdpTargets targets, HttpClient http, ObjectMapper json, String host, int port) {
     this.targets = targets;
     this.http = http;
     this.json = json;
     this.host = host;
     this.port = port;
-    this.restaurantId = restaurantId;
   }
 
+  /**
+   * Opens GuestCenter's root, which redirects to {@code /login} when signed out. The restaurant
+   * path ({@code /restaurant/<id>/}) 404s while signed out, so the root is the way in.
+   */
   @Override
   public synchronized void navigateToGuestCenter() {
     ObjectNode params = connection().params();
-    params.put("url", GUESTCENTER + "/restaurant/" + restaurantId + "/");
+    params.put("url", GUESTCENTER + "/");
     connection().send("Page.navigate", params, COMMAND_TIMEOUT);
   }
 
