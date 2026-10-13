@@ -13,6 +13,7 @@ import com.goldys.platform.canonical.RecipeCostView;
 import com.goldys.platform.canonical.SaleItemPriceView;
 import com.goldys.platform.canonical.SaleRecipeLinkView;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -53,7 +54,10 @@ class RecipeProjectorTest {
         .thenReturn(
             List.of(
                 new SaleItemPriceView(
-                    "New Kids Fish", new BigDecimal("18.50"), new BigDecimal("6.00"))));
+                    "New Kids Fish",
+                    new BigDecimal("18.50"),
+                    new BigDecimal("6.00"),
+                    LocalDate.of(2026, 10, 1))));
 
     projector.recomputeAll();
 
@@ -69,9 +73,21 @@ class RecipeProjectorTest {
     when(saleItems.currentSaleItemPrices())
         .thenReturn(
             List.of(
-                new SaleItemPriceView("Parma", new BigDecimal("18.50"), new BigDecimal("6.00")),
-                new SaleItemPriceView("Parma", new BigDecimal("18.50"), new BigDecimal("6.00")),
-                new SaleItemPriceView("Parma", new BigDecimal("2.00"), new BigDecimal("1.00"))));
+                new SaleItemPriceView(
+                    "Parma",
+                    new BigDecimal("18.50"),
+                    new BigDecimal("6.00"),
+                    LocalDate.of(2026, 10, 1)),
+                new SaleItemPriceView(
+                    "Parma",
+                    new BigDecimal("18.50"),
+                    new BigDecimal("6.00"),
+                    LocalDate.of(2026, 10, 1)),
+                new SaleItemPriceView(
+                    "Parma",
+                    new BigDecimal("2.00"),
+                    new BigDecimal("1.00"),
+                    LocalDate.of(2026, 10, 1))));
 
     projector.recomputeAll();
 
@@ -88,7 +104,10 @@ class RecipeProjectorTest {
         .thenReturn(
             List.of(
                 new SaleItemPriceView(
-                    "Something Else", new BigDecimal("5.00"), new BigDecimal("2.00"))));
+                    "Something Else",
+                    new BigDecimal("5.00"),
+                    new BigDecimal("2.00"),
+                    LocalDate.of(2026, 10, 1))));
 
     projector.recomputeAll();
 
@@ -116,7 +135,11 @@ class RecipeProjectorTest {
     when(saleItems.currentSaleItemPrices())
         .thenReturn(
             List.of(
-                new SaleItemPriceView("Parma", new BigDecimal("18.50"), new BigDecimal("6.00"))));
+                new SaleItemPriceView(
+                    "Parma",
+                    new BigDecimal("18.50"),
+                    new BigDecimal("6.00"),
+                    LocalDate.of(2026, 10, 1))));
 
     projector.recomputeAll();
 

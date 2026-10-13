@@ -85,6 +85,11 @@ public class RecipeProjector {
               c.portionSizeValue(),
               mode(prices),
               mode(costs),
+              "UNKNOWN",
+              "NONE",
+              null,
+              null,
+              null,
               "SINGLE_SOURCE",
               "CTB",
               now));

@@ -62,7 +62,12 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
         subtract(r.actualCost(), cost),
         r.menuPrice(),
         margin,
-        divide(margin, r.menuPrice()));
+        divide(margin, r.menuPrice()),
+        r.menuState(),
+        r.priceSource(),
+        r.lastSoldPrice(),
+        r.lastSoldCost(),
+        r.lastSoldDate());
   }
 
   private static BigDecimal subtract(BigDecimal a, BigDecimal b) {

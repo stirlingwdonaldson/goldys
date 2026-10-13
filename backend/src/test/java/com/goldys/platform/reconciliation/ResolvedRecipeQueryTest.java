@@ -114,6 +114,11 @@ class ResolvedRecipeQueryTest {
         null,
         price == null ? null : new BigDecimal(price),
         actualCost == null ? null : new BigDecimal(actualCost),
+        "ON_MENU",
+        price == null ? "NONE" : "CURRENT",
+        null,
+        null,
+        null,
         "SINGLE_SOURCE",
         "CTB",
         Instant.now());

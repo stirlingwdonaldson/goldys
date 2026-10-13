@@ -1,6 +1,7 @@
 package com.goldys.platform.semantic;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * A recipe's derived costing: cost per portion vs its Lightspeed menu price and actual cost, plus
@@ -19,4 +20,9 @@ public record RecipeCosting(
     BigDecimal costGap,
     BigDecimal menuPrice,
     BigDecimal margin,
-    BigDecimal gpPercent) {}
+    BigDecimal gpPercent,
+    String menuState,
+    String priceSource,
+    BigDecimal lastSoldPrice,
+    BigDecimal lastSoldCost,
+    LocalDate lastSoldDate) {}
