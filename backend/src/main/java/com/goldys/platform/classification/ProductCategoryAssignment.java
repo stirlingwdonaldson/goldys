@@ -24,14 +24,14 @@ class ProductCategoryAssignment {
   @Column(name = "product_name_key", nullable = false, length = 512)
   private String productNameKey;
 
-  @Column(name = "product_category_id", nullable = false)
+  @Column(name = "product_category_id")
   private UUID categoryId;
 
   @Column(name = "confidence", precision = 6, scale = 4)
   private BigDecimal confidence;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "source", nullable = false, length = 16)
+  @Column(name = "source", length = 16)
   private AssignmentSource source;
 
   @Enumerated(EnumType.STRING)
@@ -71,9 +71,13 @@ class ProductCategoryAssignment {
     this.updatedAt = now;
   }
 
-  /** Marks a low-confidence or abstained classification as needing staff review. */
-  public void markNeedsReview(BigDecimal confidence, Instant now) {
+  /**
+   * Marks a low-confidence Jev classification as needing staff review, keeping its chosen category.
+   */
+  public void markNeedsReview(UUID categoryId, BigDecimal confidence, Instant now) {
+    this.categoryId = Objects.requireNonNull(categoryId, "categoryId");
     this.confidence = confidence;
+    this.source = AssignmentSource.JEV;
     this.status = AssignmentStatus.NEEDS_REVIEW;
     this.updatedAt = Objects.requireNonNull(now, "now");
   }
