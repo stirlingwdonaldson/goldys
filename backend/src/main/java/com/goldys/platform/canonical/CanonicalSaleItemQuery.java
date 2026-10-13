@@ -39,6 +39,13 @@ public class CanonicalSaleItemQuery {
         .toList();
   }
 
+  /** Current sale items' display name and POS category — for the categorisation feature text. */
+  public List<SaleItemIdentityView> currentSaleItemIdentities() {
+    return repository.findAllCurrent().stream()
+        .map(s -> new SaleItemIdentityView(s.itemName(), s.categoryName()))
+        .toList();
+  }
+
   /**
    * Paged, filterable listing of current sale line items over the inclusive date range. Null
    * filters match anything; rows come back newest first, ordered by the unique receipt-line id
