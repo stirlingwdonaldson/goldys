@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -59,6 +59,11 @@ interface DataTableProps<TData, TValue> {
   onRowClick?: (row: TData) => void;
   /** Highlight (aria-selected) rows for which this returns true. */
   isRowSelected?: (row: TData) => boolean;
+  /**
+   * Called with the visible rows in display order (after sorting and filtering) whenever that
+   * order changes, e.g. so a detail view can step to the previous/next row.
+   */
+  onRowOrderChange?: (rows: TData[]) => void;
 }
 
 /**
@@ -78,6 +83,7 @@ export function DataTable<TData, TValue>({
   getRowId,
   onRowClick,
   isRowSelected,
+  onRowOrderChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -107,6 +113,15 @@ export function DataTable<TData, TValue>({
   const filter = filterColumn ? table.getColumn(filterColumn) : undefined;
   const rows = table.getRowModel().rows;
   const filteredCount = table.getFilteredRowModel().rows.length;
+
+  // Report the order only when the sequence of row ids changes, not on every render.
+  const rowOrderKey = rows.map((r) => r.id).join("\u0000");
+  const onRowOrderChangeRef = useRef(onRowOrderChange);
+  onRowOrderChangeRef.current = onRowOrderChange;
+  useEffect(() => {
+    onRowOrderChangeRef.current?.(rows.map((r) => r.original));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowOrderKey]);
 
   return (
     <div className="flex flex-col gap-3">

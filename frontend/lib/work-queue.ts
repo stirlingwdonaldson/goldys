@@ -193,12 +193,17 @@ const FLAG_LABEL: Record<string, string> = {
   AMBIGUOUS_PDF: "Invoice PDF not linked to one invoice",
 };
 
+/** A readable label for an invoice ingestion flag type ("MISSING_PDF" → "Invoice PDF missing"). */
+export function invoiceFlagLabel(flagType: string): string {
+  return FLAG_LABEL[flagType] ?? flagType.replace(/_/g, " ").toLowerCase();
+}
+
 function invoiceItems(input: WorkQueueInput): WorkItem[] {
   return (input.invoiceFlags ?? []).map<WorkItem>((f, i) => ({
     id: `invoice:${f.flagType}:${f.invoiceNumber ?? f.pdfFilename ?? i}:${f.stockCode ?? ""}`,
     category: "invoice",
     severity: "medium",
-    title: `${FLAG_LABEL[f.flagType] ?? f.flagType.replace(/_/g, " ").toLowerCase()}${
+    title: `${invoiceFlagLabel(f.flagType)}${
       f.invoiceNumber ? ` · ${f.invoiceNumber}` : ""
     }`,
     detail: f.detail ?? "Check the invoice against the supplier's copy.",

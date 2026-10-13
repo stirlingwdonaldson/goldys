@@ -792,6 +792,9 @@ const demoInvoiceLines: Record<string, LineGraphNode[]> = {
   ],
   "INV-1091": [
     { productNameKey: "house red", stockCode: "HR-1", quantity: 12, unitCost: 8.25, lineTotal: 99.0, uom: "BT" },
+    // Same items as INV-1042 a week earlier, so the detail view shows a unit-cost movement.
+    { productNameKey: "chicken breast", stockCode: "CB-1", quantity: 4, unitCost: 11.8, lineTotal: 47.2, uom: "CTN" },
+    { productNameKey: "beef mince", stockCode: "BM-2", quantity: 8, unitCost: 9.0, lineTotal: 72.0, uom: "KG" },
   ],
 };
 
