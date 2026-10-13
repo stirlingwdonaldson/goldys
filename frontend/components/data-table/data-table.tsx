@@ -50,6 +50,10 @@ interface DataTableProps<TData, TValue> {
   toolbar?: ReactNode;
   /** Stable row id; defaults to TanStack's index-based id. */
   getRowId?: (row: TData, index: number) => string;
+  /** When set, body rows become clickable and call this with the row's data. */
+  onRowClick?: (row: TData) => void;
+  /** Highlight (aria-selected) rows for which this returns true. */
+  isRowSelected?: (row: TData) => boolean;
 }
 
 /**
@@ -67,6 +71,8 @@ export function DataTable<TData, TValue>({
   emptyMessage = "No results.",
   toolbar,
   getRowId,
+  onRowClick,
+  isRowSelected,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -153,7 +159,14 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {rows.length ? (
-              rows.map((row) => <DataTableRow key={row.id} row={row} />)
+              rows.map((row) => (
+                <DataTableRow
+                  key={row.id}
+                  row={row}
+                  onRowClick={onRowClick}
+                  isRowSelected={isRowSelected}
+                />
+              ))
             ) : (
               <TableRow className="hover:bg-transparent">
                 <TableCell
@@ -198,9 +211,22 @@ export function DataTable<TData, TValue>({
   );
 }
 
-function DataTableRow<TData>({ row }: { row: Row<TData> }) {
+function DataTableRow<TData>({
+  row,
+  onRowClick,
+  isRowSelected,
+}: {
+  row: Row<TData>;
+  onRowClick?: (row: TData) => void;
+  isRowSelected?: (row: TData) => boolean;
+}) {
+  const selected = isRowSelected?.(row.original) ?? false;
   return (
-    <TableRow>
+    <TableRow
+      data-state={selected ? "selected" : undefined}
+      className={onRowClick ? "cursor-pointer" : undefined}
+      onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+    >
       {row.getVisibleCells().map((cell) => (
         <TableCell
           key={cell.id}
