@@ -8,9 +8,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.sun.net.httpserver.HttpServer;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -157,6 +161,69 @@ class TimesFmHttpClientTest {
       assertThat(values.get(1).decimalValue()).isEqualByComparingTo("55");
     } finally {
       server.stop(0);
+    }
+  }
+
+  @Test
+  void doesNotSendHttp2UpgradeHeaders() throws Exception {
+    AtomicReference<String> captured = new AtomicReference<>();
+    try (ServerSocket server = new ServerSocket(0)) {
+      Thread serverThread =
+          new Thread(
+              () -> {
+                try (Socket socket = server.accept()) {
+                  socket.setSoTimeout(5000);
+                  InputStream in = socket.getInputStream();
+
+                  // Read the request line + headers, terminated by a blank line.
+                  StringBuilder headers = new StringBuilder();
+                  int newlines = 0;
+                  int b;
+                  while ((b = in.read()) != -1) {
+                    headers.append((char) b);
+                    newlines = (b == '\n') ? newlines + 1 : (b == '\r' ? newlines : 0);
+                    if (newlines == 2) break;
+                  }
+                  captured.set(headers.toString());
+
+                  // Drain the body (per Content-Length) so the write side stays clean.
+                  int contentLength = 0;
+                  for (String line : headers.toString().split("\r\n")) {
+                    if (line.toLowerCase().startsWith("content-length:")) {
+                      contentLength =
+                          Integer.parseInt(line.substring("content-length:".length()).trim());
+                    }
+                  }
+                  for (int i = 0; i < contentLength; i++) {
+                    if (in.read() == -1) break;
+                  }
+
+                  // Respond with a valid, empty forecast.
+                  byte[] resp = "{\"dates\":[],\"quantiles\":{}}".getBytes(StandardCharsets.UTF_8);
+                  OutputStream out = socket.getOutputStream();
+                  out.write(
+                      ("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: "
+                              + resp.length
+                              + "\r\nConnection: close\r\n\r\n")
+                          .getBytes(StandardCharsets.UTF_8));
+                  out.write(resp);
+                  out.flush();
+                } catch (IOException ignored) {
+                  // The client may close early; the captured headers are what matters.
+                }
+              });
+      serverThread.start();
+
+      TimesFmHttpClient client = client("http://localhost:" + server.getLocalPort());
+      client.forecast(request());
+      serverThread.join(5000);
+
+      String headers = captured.get();
+      assertThat(headers).isNotNull();
+      assertThat(headers).contains("POST /forecast HTTP/1.1");
+      assertThat(headers).doesNotContain("Upgrade");
+      assertThat(headers).doesNotContain("h2c");
+      assertThat(headers).doesNotContain("HTTP2-Settings");
     }
   }
 
