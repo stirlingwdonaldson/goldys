@@ -651,6 +651,7 @@ const demoForecastMetrics: ForecastMetric[] = [
   { metric: "reservations.covers", name: "Covers", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
   { metric: "reservations.bookings", name: "Bookings", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
   { metric: "labour.cost", name: "Labour cost", unit: "AUD", sourceDomain: "resolved_labour_day", requiredPermission: "labour.cost" },
+  { metric: "labour.scheduled_hours", name: "Scheduled hours", unit: "hours", sourceDomain: "resolved_labour_day", requiredPermission: "labour.hours" },
   { metric: "inventory.food_cost_percent", name: "Food cost %", unit: "%", sourceDomain: "derived", requiredPermission: "inventory.cost" },
 ];
 
