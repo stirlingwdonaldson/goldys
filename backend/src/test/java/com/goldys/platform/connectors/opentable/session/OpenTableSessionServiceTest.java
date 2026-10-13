@@ -118,6 +118,21 @@ class OpenTableSessionServiceTest {
 
     runCompletion.accept("SUCCESS");
     assertThat(session.snapshot().state()).isEqualTo(State.DONE);
+    // Left on about:blank so GuestCenter's scripts stop keeping the login alive.
+    assertThat(browser.parks).isEqualTo(1);
+  }
+
+  @Test
+  void parksAfterAFailedRunAndAfterAnAbandonedSignIn() {
+    browser.authenticated = true;
+    session.start(Mode.INCREMENTAL);
+    runCompletion.accept("FAILED");
+    assertThat(browser.parks).isEqualTo(1);
+
+    browser.authenticated = false;
+    session.start(Mode.INCREMENTAL);
+    session.end(false);
+    assertThat(browser.parks).isEqualTo(2);
   }
 
   @Test
@@ -164,6 +179,7 @@ class OpenTableSessionServiceTest {
 
     assertThat(session.snapshot().state()).isEqualTo(State.DISCONNECTED);
     assertThat(browser.screencast).isNull();
+    assertThat(browser.parks).isEqualTo(1);
   }
 
   @Test

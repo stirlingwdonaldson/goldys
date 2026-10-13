@@ -20,13 +20,27 @@ An owner opens **Data health → OpenTable → Sync OpenTable**, picks *Recent a
   token every 30 minutes. A sync started within that window of the previous one skips the login.
   The absolute session ceiling is unknown (the auth cookies are HttpOnly); record it here once
   observed in production.
+- **The browser is parked on `about:blank`** after every sync run, after an idle sign-in view
+  times out, and when a sign-in is abandoned. A GuestCenter page left open refreshes its own
+  login every 30 minutes, which would keep the VM signed in indefinitely; parked, the session
+  lapses on OpenTable's own timeouts. Whether a later sync still needs a login depends on how
+  long OpenTable's (HttpOnly) cookies last. The live view handles either case.
 - **Sign out** in the dialog clears the OpenTable login from the sidecar's profile volume.
 
 ### What the run pulls
 
 All requests are same-origin `fetch()` calls inside the signed-in GuestCenter page, spaced ≥1.5 s
-apart, with 429/5xx backoff (5 s doubling to 90 s, 10 attempts). Every response is stored in the
-raw ledger byte-for-byte before parsing.
+apart, with 429/5xx backoff (5 s doubling to 90 s, 10 attempts). Responses are stored in the raw
+ledger byte-for-byte before parsing.
+
+**Unchanged responses aren't stored again.** A response is skipped when it matches the latest
+stored payload for the same dataset window (`fetcherIdentity` + `sourceRecordRef`), ignoring the
+top-level `meta-data` / `meta` blocks, which carry a fresh request id and timestamp on every call.
+The earlier payload stays the evidence for that content; nothing is deleted or rewritten. Skipped
+reservation windows are still canonicalized against the stored record, a no-op when nothing
+changed. Reservation windows snap to half-month boundaries so their refs repeat between syncs.
+Reviews are keyed by the run's date range, so they're always stored, but they're small (tens of
+KB). A sync where nothing changed ends `NO_NEW_DATA`.
 
 | Dataset (`fetcherIdentity`) | Endpoint | Paging | Canonical |
 |---|---|---|---|

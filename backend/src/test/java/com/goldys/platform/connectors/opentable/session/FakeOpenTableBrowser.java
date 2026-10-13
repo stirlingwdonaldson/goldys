@@ -15,6 +15,7 @@ public class FakeOpenTableBrowser implements OpenTableBrowser {
   public boolean unavailable;
   public int navigations;
   public int signOuts;
+  public int parks;
   public Consumer<ScreencastFrame> screencast;
   public final List<InputEvent> dispatched = new ArrayList<>();
   public final List<String> requests = new ArrayList<>();
@@ -72,6 +73,12 @@ public class FakeOpenTableBrowser implements OpenTableBrowser {
     guard();
     signOuts++;
     authenticated = false;
+  }
+
+  @Override
+  public void park() {
+    guard();
+    parks++;
   }
 
   private void guard() {

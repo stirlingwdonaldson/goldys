@@ -1,6 +1,7 @@
 package com.goldys.platform.ingestion;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -54,6 +55,22 @@ public class RawLedgerQuery {
         .map(r -> new RawPayloadWithRef(r.id(), r.payloadBytes(), r.sourceRecordRef()))
         .toList();
   }
+
+  /**
+   * The latest stored payload's id and SHA-256 for one dataset window ({@code source_record_ref}),
+   * without loading its bytes; empty when that window was never stored. Lets a connector skip
+   * re-storing a byte-identical response.
+   */
+  public Optional<StoredDigest> latestDigest(
+      String sourceSystem, String fetcherIdentity, String sourceRecordRef) {
+    return rawRecords
+        .findFirstBySourceSystemAndFetcherIdentityAndSourceRecordRefOrderByFetchedAtDesc(
+            sourceSystem, fetcherIdentity, sourceRecordRef)
+        .map(d -> new StoredDigest(d.getId(), d.getPayloadSha256()));
+  }
+
+  /** A stored raw payload's id and lowercase hex SHA-256. */
+  public record StoredDigest(UUID id, String sha256) {}
 
   /** A stored raw payload: its record id and a defensive copy of its bytes. */
   public record RawPayload(UUID id, byte[] bytes) {}

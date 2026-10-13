@@ -177,10 +177,12 @@ public class OpenTableSessionService {
   /** Stops viewing; {@code signOut} also clears the OpenTable login from the browser profile. */
   public void end(boolean signOut) {
     Viewer closing;
+    boolean abandonedLogin;
     synchronized (this) {
       cancelPollLocked();
       stopScreencastLocked();
-      if (state == State.LOGIN_REQUIRED) {
+      abandonedLogin = state == State.LOGIN_REQUIRED;
+      if (abandonedLogin) {
         transition(State.DISCONNECTED);
       }
       closing = viewer;
@@ -192,6 +194,8 @@ public class OpenTableSessionService {
       } catch (CdpException e) {
         log.warn("Could not clear the OpenTable browser session: {}", e.getMessage());
       }
+    } else if (abandonedLogin) {
+      parkQuietly(); // Don't leave a half-filled login form open on the VM.
     }
     if (closing != null) {
       closing.onClosed();
@@ -202,6 +206,7 @@ public class OpenTableSessionService {
 
   /** Runs on the scheduler while waiting for sign-in. */
   void pollOnce() {
+    boolean idledOut = false;
     synchronized (this) {
       if (state != State.LOGIN_REQUIRED) {
         cancelPollLocked();
@@ -212,8 +217,12 @@ public class OpenTableSessionService {
         stopScreencastLocked();
         detail = "Sign-in view closed after inactivity";
         transition(State.DISCONNECTED);
-        return;
+        idledOut = true;
       }
+    }
+    if (idledOut) {
+      parkQuietly();
+      return;
     }
     boolean authenticated;
     try {
@@ -248,6 +257,9 @@ public class OpenTableSessionService {
   }
 
   private void onRunComplete(String status) {
+    // Leave GuestCenter so its scripts stop refreshing the login: the session then lapses on
+    // OpenTable's own timeouts instead of staying signed in on the VM indefinitely.
+    parkQuietly();
     synchronized (this) {
       runStatus = status;
       if (status == null) {
@@ -260,6 +272,14 @@ public class OpenTableSessionService {
         detail = "Sync ended " + status + "; see Data health for details";
         transition(State.FAILED);
       }
+    }
+  }
+
+  private void parkQuietly() {
+    try {
+      browser.park();
+    } catch (CdpException e) {
+      log.debug("Could not park the OpenTable browser: {}", e.getMessage());
     }
   }
 

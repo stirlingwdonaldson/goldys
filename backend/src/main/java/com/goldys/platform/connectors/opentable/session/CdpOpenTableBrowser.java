@@ -244,6 +244,12 @@ public final class CdpOpenTableBrowser implements OpenTableBrowser {
       params.put("storageTypes", "all");
       cdp.send("Storage.clearDataForOrigin", params, COMMAND_TIMEOUT);
     }
+    park();
+  }
+
+  @Override
+  public synchronized void park() {
+    CdpConnection cdp = connection();
     ObjectNode blank = cdp.params();
     blank.put("url", "about:blank");
     cdp.send("Page.navigate", blank, COMMAND_TIMEOUT);
