@@ -1,18 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, within, act, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, within, act } from "@testing-library/react";
 import ForecastingPage from "./page";
 import type { ForecastComparison, ForecastMetric, ForecastRun } from "@/lib/api/types";
 
 const metrics: ForecastMetric[] = [
   { metric: "sales.gross", name: "Gross sales", unit: "AUD", sourceDomain: "resolved_daily_sales", requiredPermission: "reconciliation.sales" },
+  { metric: "reservations.bookings", name: "Bookings", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
   { metric: "reservations.covers", name: "Covers", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
+  { metric: "labour.scheduled_hours", name: "Scheduled hours", unit: "hours", sourceDomain: "resolved_labour_day", requiredPermission: "labour.hours" },
 ];
 
 const succeededRun: ForecastRun = {
   id: "fc-2",
   status: "SUCCEEDED",
   targetMetric: "sales.gross",
-  covariates: ["reservations.covers"],
+  covariates: ["reservations.bookings", "reservations.covers", "labour.scheduled_hours"],
   historyFrom: "2025-10-05",
   historyTo: "2026-10-05",
   horizonDays: 7,
@@ -28,8 +30,8 @@ const succeededRun: ForecastRun = {
 const queuedRun: ForecastRun = {
   id: "fc-1",
   status: "QUEUED",
-  targetMetric: "reservations.covers",
-  covariates: [],
+  targetMetric: "sales.gross",
+  covariates: ["reservations.bookings", "reservations.covers", "labour.scheduled_hours"],
   historyFrom: "2025-10-06",
   historyTo: "2026-10-06",
   horizonDays: 14,
@@ -64,12 +66,14 @@ vi.mock("@/lib/demo-mode", () => ({
   useApi: () => mocks.api,
 }));
 
-// The screen auto-selects the first metric as its target. Await that, plus the metric
-// list having rendered, before driving the run flow.
+// The screen renders the fixed revenue target and its three predictors once the metric
+// list has loaded; await all of them before driving the run flow.
 async function renderLoaded() {
   render(<ForecastingPage />);
-  await screen.findByText("Covers — resolved_reservation_day");
-  await waitFor(() => expect(screen.getByRole("combobox")).toHaveTextContent("Gross sales"));
+  await screen.findByText("Gross sales — resolved_daily_sales · AUD");
+  await screen.findByText("Bookings — resolved_reservation_day · count");
+  await screen.findByText("Covers — resolved_reservation_day · count");
+  await screen.findByText("Scheduled hours — resolved_labour_day · hours");
 }
 
 describe("ForecastingPage", () => {
@@ -82,37 +86,47 @@ describe("ForecastingPage", () => {
     mocks.api.getForecastComparison.mockResolvedValue(comparison);
   });
 
-  it("renders the target selector, covariate source domains, horizon and sources-in-use", async () => {
+  it("renders the fixed revenue target and predictors with no way to change them", async () => {
     await renderLoaded();
 
-    // The target selector shows the auto-selected first metric.
-    expect(screen.getByRole("combobox")).toHaveTextContent("Gross sales");
+    // The target is locked to revenue and shown read-only.
+    expect(screen.getByText("Gross sales — resolved_daily_sales · AUD")).toBeInTheDocument();
+    // The three predictors are listed, also read-only.
+    expect(screen.getByText("Bookings — resolved_reservation_day · count")).toBeInTheDocument();
+    expect(screen.getByText("Covers — resolved_reservation_day · count")).toBeInTheDocument();
+    expect(screen.getByText("Scheduled hours — resolved_labour_day · hours")).toBeInTheDocument();
 
-    // Covariate options show each metric's sourceDomain (the target is excluded).
-    expect(screen.getByText("Covers — resolved_reservation_day")).toBeInTheDocument();
+    // There is no target dropdown or covariate checkbox to change.
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
+  });
 
-    // Horizon selector offers the four horizons.
+  it("keeps the horizon changeable", async () => {
+    await renderLoaded();
+
     expect(screen.getByRole("button", { name: "7 days" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "14 days" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "30 days" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "90 days" })).toBeInTheDocument();
 
-    // Picking a covariate feeds the sources-in-use panel.
-    fireEvent.click(screen.getByRole("checkbox", { name: "Covers — resolved_reservation_day" }));
-
-    const sources = screen.getByTestId("sources-in-use");
-    expect(within(sources).getByText("Gross sales")).toBeInTheDocument();
-    expect(within(sources).getByText("resolved_daily_sales · AUD")).toBeInTheDocument();
-    expect(within(sources).getByText("Covers")).toBeInTheDocument();
-    expect(within(sources).getByText("resolved_reservation_day · count")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "30 days" }));
+    expect(screen.getByRole("button", { name: "30 days" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("runs a forecast and renders the chart plus the runs list", async () => {
+  it("runs a forecast with the fixed configuration and renders the chart plus the runs list", async () => {
     await renderLoaded();
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Run forecast" }));
     });
+
+    expect(mocks.api.createForecastRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: "sales.gross",
+        covariates: ["reservations.bookings", "reservations.covers", "labour.scheduled_hours"],
+        horizonDays: 7,
+      }),
+    );
 
     // The poll resolves to SUCCEEDED and the forecast chart renders.
     expect(await screen.findByTestId("forecast-chart")).toBeInTheDocument();

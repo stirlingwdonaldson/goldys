@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export interface DateRange {
   from: string;
@@ -31,24 +31,24 @@ export function DateRangeFilter({ from, to, onChange }: DateRangeFilterProps) {
         <label htmlFor="sales-detail-from" className="text-xs text-muted-foreground">
           From
         </label>
-        <Input
+        <DatePicker
           id="sales-detail-from"
-          type="date"
           value={from}
-          onChange={(e) => onChange({ from: e.target.value, to })}
-          className="w-40"
+          max={to}
+          onChange={(value) => onChange({ from: value, to })}
+          className="w-44"
         />
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="sales-detail-to" className="text-xs text-muted-foreground">
           To
         </label>
-        <Input
+        <DatePicker
           id="sales-detail-to"
-          type="date"
           value={to}
-          onChange={(e) => onChange({ from, to: e.target.value })}
-          className="w-40"
+          min={from}
+          onChange={(value) => onChange({ from, to: value })}
+          className="w-44"
         />
       </div>
     </div>

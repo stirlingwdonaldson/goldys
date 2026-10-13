@@ -55,7 +55,7 @@ describe("DataTable", () => {
       />,
     );
     expect(bodyNames()).toEqual(["Acme", "Bidfood"]);
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
     expect(bodyNames()).toEqual(["Costa"]);
 
     fireEvent.change(screen.getByLabelText("Filter…"), { target: { value: "zzz" } });

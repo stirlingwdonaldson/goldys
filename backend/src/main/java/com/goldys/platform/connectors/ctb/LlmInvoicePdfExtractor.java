@@ -1,7 +1,14 @@
 package com.goldys.platform.connectors.ctb;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.Message;
@@ -62,12 +69,19 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
           + "- amountExTax: the line total excluding tax, or null if the text does not state it.\n"
           + "Never invent a value. When a field is not present in the text, emit null for it.";
 
+  private static final Clock CLOCK = Clock.systemUTC();
+
   private final ObjectProvider<ChatModel> chatModel;
   private final ObjectMapper mapper;
+  private final LlmExtractionCacheRepository cache;
 
-  public LlmInvoicePdfExtractor(ObjectProvider<ChatModel> chatModel, ObjectMapper mapper) {
+  public LlmInvoicePdfExtractor(
+      ObjectProvider<ChatModel> chatModel,
+      ObjectMapper mapper,
+      LlmExtractionCacheRepository cache) {
     this.chatModel = chatModel;
     this.mapper = mapper;
+    this.cache = cache;
   }
 
   @Override
@@ -80,6 +94,20 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
       // an AI key don't fill the flag list.
       return new PdfExtractedInvoice(null, List.of());
     }
+    String textSha256 = sha256Hex(text);
+    Optional<PdfExtractedInvoice> cached = cache.findById(textSha256).flatMap(this::readCached);
+    if (cached.isPresent()) {
+      return cached.get();
+    }
+    PdfExtractedInvoice result = callLlm(model, text);
+    // Cache only successful extractions: a transient model failure must be retried, not locked in.
+    if (result.extractionError() == null) {
+      cache.save(LlmExtractionCache.create(textSha256, toJson(result), Instant.now(CLOCK)));
+    }
+    return result;
+  }
+
+  private PdfExtractedInvoice callLlm(ChatModel model, String text) {
     try {
       ChatResponse response =
           model.call(
@@ -91,6 +119,38 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
     } catch (RuntimeException e) {
       log.warn("LLM invoice extraction failed", e);
       return new PdfExtractedInvoice(null, List.of(), "LLM call failed: " + e.getMessage());
+    }
+  }
+
+  private Optional<PdfExtractedInvoice> readCached(LlmExtractionCache cached) {
+    try {
+      PdfExtractedInvoice invoice =
+          mapper.readValue(cached.extractedJson(), PdfExtractedInvoice.class);
+      if (invoice != null && invoice.lines() != null) {
+        return Optional.of(invoice);
+      }
+    } catch (Exception e) {
+      log.warn("Cached LLM extraction was unreadable; re-extracting", e);
+    }
+    return Optional.empty();
+  }
+
+  private String toJson(PdfExtractedInvoice invoice) {
+    try {
+      return mapper.writeValueAsString(invoice);
+    } catch (Exception e) {
+      // Should not happen for this record; surface it rather than silently skip caching.
+      throw new IllegalStateException("Could not serialize LLM extraction", e);
+    }
+  }
+
+  private static String sha256Hex(String text) {
+    try {
+      return HexFormat.of()
+          .formatHex(
+              MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8)));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 is required by the Java platform", e);
     }
   }
 

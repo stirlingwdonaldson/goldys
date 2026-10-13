@@ -173,6 +173,35 @@ PDF-derived lines are created; leave it unset to keep the pipeline read-only ove
 CSV lines. Verify on read-only production data before enabling, then decide the
 default (enable → verify → default, mirroring `APP_CTB_INVOICE_REENRICH`).
 
+## OpenTable browser (assisted sign-in)
+
+The `opentable-browser` service is a headed Chromium that an owner signs in to GuestCenter with,
+through **Data health → Sync OpenTable**; the backend then pulls OpenTable data through it
+(`docs/connectors/opentable.md`). No OpenTable credentials are configured anywhere.
+
+Setup:
+
+1. Set `OPENTABLE_API_ENABLED=true` in `.env.prod`.
+2. Deploy as usual; compose builds and starts `opentable-browser` alongside the backend.
+3. Before the first sync, check (read-only session) that
+   `SELECT count(*) FROM canonical_reservation WHERE source_system = 'OPENTABLE'` is 0. If not,
+   see the open question in the design spec before syncing.
+4. Run a **Full history** sync once, then *Recent and upcoming* as needed.
+
+**Security:** DevTools on the sidecar is full control of the browser and its OpenTable login.
+
+- The sidecar publishes no ports. It shares the internal `opentable-cdp` network only with the
+  backend, and reaches the internet through its own `opentable-egress` network that nothing
+  else joins. Don't add it to `default`, and never publish 9223.
+- The `opentable_browser_profile` volume holds a live OpenTable session. Keep it out of
+  backups, and use **Sign out of OpenTable** in the dialog (or remove the volume) to revoke it.
+- What the owner types in the live view, including their password, passes through the backend
+  in memory only. It is never logged, and Sentry already sends no request bodies
+  (`max-request-body-size: none`).
+
+**Session lifetime:** record when GuestCenter first forces a re-login after a sync (the absolute
+ceiling isn't visible from the browser) in `docs/connectors/opentable.md`.
+
 ## Upgrading
 
 ```bash

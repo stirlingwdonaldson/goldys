@@ -84,6 +84,59 @@ export interface ConnectorStatus {
   runnable: boolean;
 }
 
+/** Assisted OpenTable sign-in state (`OpenTableSessionApplicationService.SessionState`). */
+export type OpenTableSessionStateName =
+  | "DISCONNECTED"
+  | "LOGIN_REQUIRED"
+  | "SYNCING"
+  | "DONE"
+  | "FAILED";
+
+/** INCREMENTAL: recent + upcoming reservations, last 120 days of reviews. FULL: all history. */
+export type OpenTableSyncMode = "INCREMENTAL" | "FULL";
+
+export interface OpenTableSessionState {
+  state: OpenTableSessionStateName;
+  mode: OpenTableSyncMode;
+  /** The sync run's terminal status (SUCCESS, PARTIAL, …) once known. */
+  runStatus: string | null;
+  /** A short operator message; never page content. */
+  detail: string | null;
+  at: string;
+}
+
+/** One live-view frame. `width`/`height` are the remote page's CSS viewport. */
+export interface OpenTableFrame {
+  jpegBase64: string;
+  width: number;
+  height: number;
+}
+
+/**
+ * One input event for the remote browser, in the remote page's CSS pixels. Printable
+ * characters and pastes go as `text`; `key` is limited server-side to editing keys.
+ * These carry what the owner types (their OpenTable password): never log them.
+ */
+export type OpenTableInput =
+  | {
+      type: "mouse";
+      action: "down" | "up" | "move";
+      x: number;
+      y: number;
+      button?: "none" | "left" | "middle" | "right";
+      clickCount?: number;
+    }
+  | { type: "wheel"; x: number; y: number; deltaX: number; deltaY: number }
+  | { type: "key"; action: "down" | "up"; key: string; modifiers?: number }
+  | { type: "text"; text: string };
+
+export interface OpenTableSessionHandlers {
+  onState(state: OpenTableSessionState): void;
+  onFrame(frame: OpenTableFrame): void;
+  /** The stream ended (another viewer took over, the session ended, or the connection dropped). */
+  onClosed(): void;
+}
+
 /** One daily-sales total for a (date, source) pair. */
 export interface DailySales {
   date: string;
@@ -707,7 +760,17 @@ export interface Api {
   getProductRecord(date: string, product: string): Promise<ReconciliationRecord>;
   listConnectorStatuses(): Promise<ConnectorStatus[]>;
   runConnector(source: string): Promise<ConnectorStatus>;
-  uploadOpenTableCsv(file: File): Promise<void>;
+  /** Uploads a CSV drop for one connector (the OpenTable GuestCenter datasets). */
+  uploadConnectorCsv(connectorName: string, file: File): Promise<void>;
+  /** Fails with NOT_CONFIGURED when the assisted sync isn't enabled on this deployment. */
+  getOpenTableSession(): Promise<OpenTableSessionState>;
+  startOpenTableSession(mode: OpenTableSyncMode): Promise<OpenTableSessionState>;
+  /** Relays one input event; events arriving after sign-in completes are dropped silently. */
+  sendOpenTableInput(input: OpenTableInput): Promise<void>;
+  /** Stops the live view; `signOut` also clears the OpenTable login from the VM browser. */
+  endOpenTableSession(signOut: boolean): Promise<void>;
+  /** Subscribes to state and frames; returns an unsubscribe function. */
+  watchOpenTableSession(handlers: OpenTableSessionHandlers): () => void;
   saveOverride(input: SaveOverrideInput): Promise<OverrideResult>;
   saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult>;
   listResolutionRules(): Promise<ResolutionRule[]>;
