@@ -223,6 +223,33 @@ export interface LineGraphNode {
 }
 
 /**
+ * One current invoice header for the browse list (mirrors the backend
+ * `InvoiceReportingService.InvoiceSummary`). `invoiceDate` is an ISO date string; the other
+ * nullable fields stay `| null` and are never defaulted.
+ */
+export interface InvoiceSummary {
+  supplierName: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string | null;
+  totalAmount: number | null;
+  purchaseNumber: string | null;
+  hasPdf: boolean;
+}
+
+/** One invoice header plus its line graph nodes (mirrors the backend `InvoiceDetail`). */
+export interface InvoiceDetail extends InvoiceSummary {
+  lines: LineGraphNode[];
+}
+
+/** Browse-list filters; an absent field means "any". */
+export interface InvoiceFilter {
+  supplier?: string;
+  from?: string;
+  to?: string;
+}
+
+/**
  * The latest trading date's resolved total, or nulls when there is no data yet or the latest
  * date is still unresolved. `total: null` with a non-null `date` means "needs a decision".
  */
@@ -722,6 +749,12 @@ export interface Api {
     to: string,
   ): Promise<InvoiceGraphNode[]>;
   getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]>;
+  listInvoices(
+    filter: InvoiceFilter,
+    page: number,
+    size: number,
+  ): Promise<DataPage<InvoiceSummary>>;
+  getInvoice(invoiceNumber: string): Promise<InvoiceDetail>;
   listInvoiceFlags(): Promise<InvoiceIngestFlag[]>;
   /** Sources → domains → metrics → dashboards; requires `connectors` READ. */
   getPlatformMap(): Promise<NetworkGraphDto>;
