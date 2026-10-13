@@ -137,6 +137,17 @@ export const liveApi: Api = {
   getInvoiceGraphSuppliers,
   getInvoiceGraphInvoices,
   getInvoiceGraphLines,
+  listInvoices: (filter: import("./types").InvoiceFilter, page: number, size: number) => {
+    const q = new URLSearchParams({ page: String(page), size: String(size) });
+    if (filter.supplier) q.set("supplier", filter.supplier);
+    if (filter.from) q.set("from", filter.from);
+    if (filter.to) q.set("to", filter.to);
+    return fetchApi<import("./types").DataPage<import("./types").InvoiceSummary>>(
+      `/api/invoices?${q.toString()}`,
+    );
+  },
+  getInvoice: (invoiceNumber: string) =>
+    fetchApi<import("./types").InvoiceDetail>(`/api/invoices/${encodeURIComponent(invoiceNumber)}`),
   listInvoiceFlags: () => fetchApi<import("./types").InvoiceIngestFlag[]>("/api/inventory/flags"),
   getPlatformMap: () => fetchApi<import("./types").NetworkGraphDto>("/api/platform-map"),
   getTopSellers: () => fetchApi<import("./types").TopSeller[]>("/api/dashboard/top-sellers"),

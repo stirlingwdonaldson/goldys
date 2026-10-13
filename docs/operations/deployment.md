@@ -230,6 +230,26 @@ It runs once at startup before the inventory projection rebuild; re-runs are ide
 never deleted — a resolved one keeps its row and is excluded from the default `GET
 /api/inventory/flags` view (`?status=all` includes resolved).
 
+## Invoice PDF link backfill (one-off)
+
+The invoice→PDF link (`invoice_pdf_link`) is written on the live enrichment path; PDFs ingested
+before that table existed have no link, so the invoices viewer cannot open them. The
+`InvoicePdfLinkBackfillRunner` re-derives the link for the already-stored PDFs by parsing each
+PDF's own text for its invoice number and recording a `BACKFILL` link when that number resolves to
+an invoice the CTB export knows:
+
+```bash
+# set APP_CTB_INVOICE_PDF_LINK_BACKFILL=true in .env.prod, then
+export SENTRY_RELEASE=$(git rev-parse --short HEAD)
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build backend
+# UNSET APP_CTB_INVOICE_PDF_LINK_BACKFILL again so it does not re-run on every restart
+```
+
+It runs once at startup before the projection seeder. It is idempotent — an already-linked PDF is
+skipped without re-extracting, and linking a raw record that already has a link is a no-op — so a
+re-run is safe; a single unreadable PDF is counted as unresolved and logged rather than aborting
+the pass.
+
 ## Rollback
 
 ```bash

@@ -91,6 +91,15 @@ so a second source can be added later without re-deriving these decisions.
 - **Confidence:** high for the `invoice_number` join (exact).
 - **Manual resolution path:** not yet wired; COGS comes from line items, so invoice-header totals
   are metadata only.
+- **Invoice → PDF link:** `invoice_pdf_link` is a plain idempotent evidence table (like
+  `invoice_ingest_flag`, not bitemporal) that records which raw record holds an invoice's PDF. It
+  maps `pdf_raw_record_id` (primary key) → `invoice_number`, with an optional `pdf_filename` and a
+  `link_source` of `ENRICHMENT` (the live path: a newly ingested PDF matched to its canonical
+  invoice) or `BACKFILL` (the one-off `InvoicePdfLinkBackfillRunner`). The invoices viewer resolves
+  invoice → PDF through this table; keying on the PDF raw record id means a re-pull cannot pile up
+  duplicate links for the same document. The link joins on `invoice_number` today, so it inherits
+  the same supplier-scoping caveat as the header identity — see
+  `docs/superpowers/specs/2026-10-12-invoice-identity-design.md`.
 
 ## Invoice line (`canonical_invoice_line`)
 

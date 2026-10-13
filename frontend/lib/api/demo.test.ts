@@ -279,6 +279,34 @@ describe("demoApi forecasting", () => {
   });
 });
 
+describe("demoApi invoices", () => {
+  it("lists a page containing both a linked (hasPdf) and an unlinked invoice", async () => {
+    const page = await demoApi.listInvoices({}, 0, 20);
+    expect(page.items.length).toBeGreaterThan(0);
+    expect(page.items.some((i) => i.hasPdf)).toBe(true);
+    expect(page.items.some((i) => !i.hasPdf)).toBe(true);
+  });
+
+  it("returns an empty page when no invoice matches the supplier", async () => {
+    const page = await demoApi.listInvoices({ supplier: "No Such Supplier" }, 0, 20);
+    expect(page.items).toEqual([]);
+    expect(page.total).toBe(0);
+  });
+
+  it("returns a header plus lines for a known invoice", async () => {
+    const detail = await demoApi.getInvoice("INV-1042");
+    expect(detail.invoiceNumber).toBe("INV-1042");
+    expect(detail.lines.length).toBeGreaterThan(0);
+    for (const line of detail.lines) {
+      expect(line.productNameKey).toBeTruthy();
+    }
+  });
+
+  it("throws NOT_FOUND for an unknown invoice number", async () => {
+    await expect(demoApi.getInvoice("NOPE")).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
+
 describe("demoApi OpenTable assisted sign-in", () => {
   it("walks sign-in, sync and completion, streaming a frame while signing in", async () => {
     vi.useFakeTimers();

@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 import com.goldys.platform.canonical.CanonicalInvoiceLineEnrichment;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.canonical.EnrichmentResult;
+import com.goldys.platform.canonical.InvoicePdfLinkService;
+import com.goldys.platform.canonical.InvoicePdfLinkSource;
 import com.goldys.platform.ingestion.port.DocumentTextExtractor;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +32,7 @@ class InvoicePdfEnrichmentServiceTest {
   private final CanonicalInvoiceQuery invoiceQuery = mock(CanonicalInvoiceQuery.class);
   private final InvoiceIngestFlagService flags = mock(InvoiceIngestFlagService.class);
   private final InvoiceGapRecoveryService gapRecovery = mock(InvoiceGapRecoveryService.class);
+  private final InvoicePdfLinkService pdfLinkService = mock(InvoicePdfLinkService.class);
 
   @BeforeEach
   void everyInvoiceIsKnownUnlessATestSaysOtherwise() {
@@ -42,7 +45,14 @@ class InvoicePdfEnrichmentServiceTest {
 
   private InvoicePdfEnrichmentService service(boolean gapRecoveryEnabled) {
     return new InvoicePdfEnrichmentService(
-        extractor, parser, enrichment, invoiceQuery, flags, gapRecovery, gapRecoveryEnabled);
+        extractor,
+        parser,
+        enrichment,
+        invoiceQuery,
+        flags,
+        gapRecovery,
+        pdfLinkService,
+        gapRecoveryEnabled);
   }
 
   @Test
@@ -90,6 +100,39 @@ class InvoicePdfEnrichmentServiceTest {
             eq(PDF_RAW_ID),
             eq(lines),
             eq(Set.of()));
+  }
+
+  @Test
+  void recordsThePdfLinkWhenTheInvoiceIsKnown() {
+    byte[] pdf = new byte[] {1};
+    List<PdfExtractedLine> lines =
+        List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null));
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("PDF-OWN-NUMBER", lines));
+    when(invoiceQuery.invoiceNumberForPdfFilename("bruno-1.pdf")).thenReturn(Optional.of("INV-1"));
+    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+        .thenReturn(EnrichmentResult.ENRICHED);
+
+    service().enrich(pdf, "bruno-1.pdf", PDF_RAW_ID);
+
+    // The viewer needs the invoice→PDF pointer regardless of how well the lines matched.
+    verify(pdfLinkService)
+        .link("INV-1", PDF_RAW_ID, "bruno-1.pdf", InvoicePdfLinkSource.ENRICHMENT);
+  }
+
+  @Test
+  void doesNotRecordAPdfLinkWhenTheInvoiceIsUnknown() {
+    byte[] pdf = new byte[] {1};
+    List<PdfExtractedLine> lines =
+        List.of(new PdfExtractedLine("A", "d1", null, "KG", null, null, null, null));
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("053202347", lines));
+    when(invoiceQuery.invoiceNumberForPdfFilename("orphan.pdf")).thenReturn(Optional.empty());
+    when(invoiceQuery.isKnownInvoice("053202347")).thenReturn(false);
+
+    service().enrich(pdf, "orphan.pdf", PDF_RAW_ID);
+
+    verify(pdfLinkService, never()).link(any(), any(), any(), any());
   }
 
   @Test
