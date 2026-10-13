@@ -13,6 +13,7 @@ import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.connectors.lightspeed.LightspeedProductCatalogIngestService;
 import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
 import com.goldys.platform.connectors.opentable.OpenTableMenuItemsCsvIngestService;
 import com.goldys.platform.connectors.opentable.OpenTableReservationsCsvIngestService;
@@ -41,6 +42,8 @@ class ConnectorApplicationServiceTest {
       mock(OpenTableReviewsCsvIngestService.class);
   private final OpenTableMenuItemsCsvIngestService openTableMenuItems =
       mock(OpenTableMenuItemsCsvIngestService.class);
+  private final LightspeedProductCatalogIngestService lightspeedProductCatalog =
+      mock(LightspeedProductCatalogIngestService.class);
 
   @SuppressWarnings("unchecked")
   private final ObjectProvider<CtbSftpPull> sftpPull = mock(ObjectProvider.class);
@@ -52,6 +55,7 @@ class ConnectorApplicationServiceTest {
           openTableReservations,
           openTableReviews,
           openTableMenuItems,
+          lightspeedProductCatalog,
           permissions,
           sftpPull);
 
@@ -67,12 +71,12 @@ class ConnectorApplicationServiceTest {
 
     var statuses = service.connectors(OWNER);
 
-    assertThat(statuses).hasSize(7);
-    var ctb = statuses.get(1);
+    assertThat(statuses).hasSize(8);
+    var ctb = statuses.get(2);
     assertThat(ctb.source()).isEqualTo("CTB");
     assertThat(ctb.status()).isEqualTo("success");
     assertThat(ctb.runnable()).isTrue();
-    assertThat(statuses.get(2).status()).isEqualTo("never_run");
+    assertThat(statuses.get(3).status()).isEqualTo("never_run");
   }
 
   @Test
@@ -95,7 +99,7 @@ class ConnectorApplicationServiceTest {
 
     var statuses = service.connectors(OWNER);
 
-    var ctb = statuses.get(1);
+    var ctb = statuses.get(2);
     assertThat(ctb.status()).isEqualTo("failed");
     assertThat(ctb.failureCount()).isEqualTo(1);
     assertThat(ctb.failure().type()).isEqualTo("AUTH_FAILED");
@@ -159,6 +163,7 @@ class ConnectorApplicationServiceTest {
     assertThat(statuses.stream().map(ConnectorApplicationService.ConnectorStatus::connectorName))
         .containsExactly(
             "lightspeed-insights",
+            "lightspeed-product-catalog",
             "ctb-revenue",
             "opentable-csv-drop",
             "opentable-reservations",
@@ -192,6 +197,15 @@ class ConnectorApplicationServiceTest {
     service.uploadOpenTableMenuItemsCsv(OWNER, bytes);
 
     verify(openTableMenuItems).ingest(bytes);
+  }
+
+  @Test
+  void uploadLightspeedProductsCsvDelegates() {
+    byte[] bytes = {1, 2, 3};
+
+    service.uploadLightspeedProductsCsv(OWNER, bytes);
+
+    verify(lightspeedProductCatalog).ingest(bytes);
   }
 
   @Test

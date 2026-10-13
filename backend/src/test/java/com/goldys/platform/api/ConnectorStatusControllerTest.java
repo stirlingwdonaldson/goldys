@@ -183,6 +183,23 @@ class ConnectorStatusControllerTest {
   }
 
   @Test
+  void uploadLightspeedProductsReturnsNoContentAndIngests() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+
+    MockMultipartFile file =
+        new MockMultipartFile("file", "products.csv", "text/csv", "a,b\n1,2".getBytes());
+
+    mvc.perform(
+            multipart("/api/connectors/lightspeed-products/upload")
+                .file(file)
+                .with(authenticated(owner()))
+                .with(csrf()))
+        .andExpect(status().isNoContent());
+
+    verify(connectors).uploadLightspeedProductsCsv(any(), any(byte[].class));
+  }
+
+  @Test
   void connectorsCarryTheFailureDetail() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(connectors.connectors(any()))
