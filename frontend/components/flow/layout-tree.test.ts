@@ -1,21 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { Box } from "lucide-react";
-import { layoutTree, layoutDendrogram } from "./layout";
-import type { DendrogramInputNode, TreeNode } from "./layout";
+import { layoutTree } from "./layout";
+import type { TreeNode } from "./layout";
 
 const treeNode = (id: string, children?: TreeNode[]): TreeNode => ({
   id,
   data: { title: id, icon: Box, tone: "neutral" },
   children,
-});
-
-const dendro = (n: Partial<DendrogramInputNode> & Pick<DendrogramInputNode, "id">): DendrogramInputNode => ({
-  parentId: null,
-  isLeaf: false,
-  label: n.id,
-  height: 0,
-  size: 1,
-  ...n,
 });
 
 describe("layoutTree", () => {
@@ -46,40 +37,3 @@ describe("layoutTree", () => {
   });
 });
 
-describe("layoutDendrogram", () => {
-  const input = (): DendrogramInputNode[] => [
-    dendro({ id: "a", parentId: "m1", isLeaf: true }),
-    dendro({ id: "b", parentId: "m1", isLeaf: true }),
-    dendro({ id: "c", parentId: "m2", isLeaf: true }),
-    dendro({ id: "d", parentId: "m2", isLeaf: true }),
-    dendro({ id: "m1", parentId: "root", height: 2 }),
-    dendro({ id: "m2", parentId: "root", height: 3 }),
-    dendro({ id: "root", height: 5 }),
-  ];
-
-  it("dendrogram_leaves_share_a_row", () => {
-    const { nodes } = layoutDendrogram(input());
-    const leaves = nodes.filter((n) => input().some((i) => i.id === n.id && i.isLeaf));
-    const ys = new Set(leaves.map((n) => n.position.y));
-    expect(ys.size).toBe(1);
-
-    const a = nodes.find((n) => n.id === "a")!;
-    const m1 = nodes.find((n) => n.id === "m1")!;
-    const root = nodes.find((n) => n.id === "root")!;
-    // Internal nodes sit above the leaf row, and the root above its merges.
-    expect(m1.position.y).toBeLessThan(a.position.y);
-    expect(root.position.y).toBeLessThan(m1.position.y);
-  });
-
-  it("dendrogram_is_deterministic", () => {
-    const first = layoutDendrogram(input());
-    const second = layoutDendrogram(input());
-
-    const positions = (r: ReturnType<typeof layoutDendrogram>) =>
-      r.nodes.map((n) => [n.id, n.position.x, n.position.y]);
-    expect(positions(first)).toEqual(positions(second));
-    expect(first.edges.map((e) => [e.source, e.target])).toEqual(
-      second.edges.map((e) => [e.source, e.target]),
-    );
-  });
-});

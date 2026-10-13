@@ -86,3 +86,10 @@
     text-wrap: balance;
   }
 }
+
+/* Dendrogram nodes are SVG <g> elements with tabindex; give keyboard focus a visible ring
+ * (Tailwind's ring utilities don't render on SVG groups, so this is hand-written). */
+.dendro-node:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}

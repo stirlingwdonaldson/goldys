@@ -1,16 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GitMerge, Scissors, Tag } from "lucide-react";
-import { FlowCanvas } from "@/components/flow/flow-canvas";
-import type { FlowNode, StepNode } from "@/components/flow/types";
-import { layoutDendrogram, type DendrogramInputNode } from "@/components/flow/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/states/empty-state";
 import { formatPercent } from "@/lib/format";
 import type { AssignmentRow, DendrogramNode } from "@/lib/api";
+import {
+  layoutDendrogram,
+  DENDRO_LEFT_PAD,
+  DENDRO_TOP_PAD,
+  type DendroLayout,
+  type DendroLayoutNode,
+  type DendroTone,
+} from "./dendrogram-layout";
 
 /** What a selected cluster can be curated into. */
 export type DendroAction = "rename" | "merge" | "split";
@@ -89,21 +94,31 @@ export function toSelection(
   };
 }
 
-/** Leaves are products; an internal node is a merge of everything below it. */
-function toInputNode(node: DendrogramNode): DendrogramInputNode {
-  return {
-    id: node.id,
-    parentId: node.parentId,
-    isLeaf: node.isLeaf,
-    label: node.productNameKey ?? `Merge of ${node.size}`,
-    height: node.mergeHeight,
-    size: node.size,
-  };
-}
-
 function nodeLabel(node: DendrogramNode): string {
   return node.productNameKey ?? `Merge of ${node.size}`;
 }
+
+/** A merge distance rendered on the axis: two decimals, or three when the range is sub-unit. */
+function formatHeight(value: number, maxHeight: number): string {
+  return maxHeight >= 1 ? value.toFixed(1) : value.toFixed(2);
+}
+
+// Tone → colour. Problems draw the eye; a settled node reads as quiet ink, never a loud green.
+const TONE_FILL: Record<DendroTone, string> = {
+  settled: "hsl(var(--muted-foreground))",
+  mixed: "hsl(var(--status-conflict))",
+  missing: "hsl(var(--status-missing))",
+};
+const LEAF_TEXT: Record<DendroTone, string> = {
+  settled: "hsl(var(--foreground))",
+  mixed: "hsl(var(--status-conflict))",
+  missing: "hsl(var(--status-missing))",
+};
+const EDGE_STROKE: Record<DendroTone, string> = {
+  settled: "hsl(var(--muted-foreground) / 0.45)",
+  mixed: "hsl(var(--status-conflict))",
+  missing: "hsl(var(--status-missing))",
+};
 
 /**
  * The select-then-action bar: what the selected cluster covers, and the curation it
@@ -193,25 +208,127 @@ function ActionBar({
   );
 }
 
+/** One selectable node: a leaf dot + rotated label, or a merge dot. */
+function NodeGlyph({
+  node,
+  leafY,
+  selected,
+  onSelect,
+}: {
+  node: DendroLayoutNode;
+  leafY: number;
+  selected: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const label = node.isLeaf
+    ? (node.productNameKey ?? "")
+    : `Merge of ${node.size} products`;
+  const colour = node.isLeaf ? LEAF_TEXT[node.tone] : TONE_FILL[node.tone];
+  const ring = selected ? "hsl(var(--ring))" : undefined;
+
+  return (
+    <g
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      aria-pressed={selected}
+      className="dendro-node cursor-pointer"
+      onClick={() => onSelect(node.id)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(node.id);
+        }
+      }}
+    >
+      {node.isLeaf ? (
+        <>
+          <circle
+            cx={node.x}
+            cy={leafY}
+            r={3.5}
+            fill={node.tone === "missing" ? "none" : colour}
+            stroke={colour}
+            strokeWidth={1.25}
+          />
+          <text
+            transform={`translate(${node.x + 4} ${leafY + 8}) rotate(-45)`}
+            textAnchor="end"
+            fontSize={11}
+            fill={colour}
+            className="pointer-events-none select-none"
+          >
+            {node.productNameKey}
+          </text>
+        </>
+      ) : (
+        <circle
+          cx={node.x}
+          cy={node.y}
+          r={4.5}
+          fill={node.tone === "missing" ? "none" : colour}
+          stroke={colour}
+          strokeWidth={1.5}
+        />
+      )}
+      {ring ? (
+        <circle
+          cx={node.x}
+          cy={node.isLeaf ? leafY : node.y}
+          r={9}
+          fill="none"
+          stroke={ring}
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
+      ) : null}
+      {/* Generous invisible hit target so a small dot is easy to click. */}
+      <circle
+        cx={node.x}
+        cy={node.isLeaf ? leafY : node.y}
+        r={12}
+        fill="transparent"
+        stroke="none"
+        aria-hidden="true"
+      />
+      <title>{node.isLeaf ? `${node.productNameKey ?? ""}` : `Merge of ${node.size} products`}</title>
+    </g>
+  );
+}
+
+/** Measures the container so a small tree stretches to fill it while a wide one scrolls. */
+function useContainerWidth(): [React.RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState(960);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setWidth(el.clientWidth || 960);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, width];
+}
+
 /**
- * The agglomerative dendrogram for the latest clustering run: leaves in a row, merges
- * raised by their merge height. Selecting a node says which cluster it covers and offers
- * curation of that cluster.
+ * The agglomerative dendrogram for the latest clustering run: leaves in a row along the bottom,
+ * merges raised by their merge height on the distance axis. Selecting a node says which cluster it
+ * covers and offers curation of that cluster. A proper dendrogram, not a node graph: the vertical
+ * axis is the merge distance, edges are undirected elbows, and only problems get colour.
  */
 export function DendrogramView({ nodes, assignments, onCurate, height = 460 }: DendrogramViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameName, setRenameName] = useState("");
+  const [ref, width] = useContainerWidth();
 
-  const laid = useMemo(() => {
-    const { nodes: flowNodes, edges } = layoutDendrogram(nodes.map(toInputNode));
-    // `drill` is the id a click reports back, which is how the canvas drives selection here.
-    const selectable: FlowNode[] = flowNodes.map((node) => {
-      const step = node as StepNode;
-      return { ...step, data: { ...step.data, drill: step.id } };
-    });
-    return { nodes: selectable, edges };
-  }, [nodes]);
+  const laid: DendroLayout = useMemo(
+    () => layoutDendrogram(nodes, assignments, { width, height }),
+    [nodes, assignments, width, height],
+  );
 
   const selected = selectedId ? nodes.find((node) => node.id === selectedId) ?? null : null;
   const selection = useMemo(
@@ -239,14 +356,74 @@ export function DendrogramView({ nodes, assignments, onCurate, height = 460 }: D
     );
   }
 
+  const { maxHeight, leafY, axisHeight, width: contentWidth, height: contentHeight } = laid;
+  const ticks = maxHeight <= 0 ? [0] : [0, maxHeight / 2, maxHeight];
+
   return (
     <div className="flex flex-col gap-3">
-      <FlowCanvas
-        laidOut={laid}
-        ariaLabel="Product clustering dendrogram: merges and their heights"
-        onDrill={select}
-        height={height}
-      />
+      <div ref={ref} role="region" aria-label="Product clustering dendrogram: merges and their heights">
+        <div className="overflow-x-auto rounded-lg border bg-muted/30" style={{ height }}>
+          <svg
+            width={contentWidth}
+            height={contentHeight}
+            viewBox={`0 0 ${contentWidth} ${contentHeight}`}
+            className="block"
+            style={{ margin: "0 auto" }}
+            aria-hidden={nodes.length > 0 ? undefined : true}
+          >
+            {/* Distance axis, ticks at the bottom, middle and top of the merge range. */}
+            <line
+              x1={DENDRO_LEFT_PAD}
+              y1={leafY}
+              x2={DENDRO_LEFT_PAD}
+              y2={DENDRO_TOP_PAD}
+              stroke="hsl(var(--muted-foreground) / 0.4)"
+              aria-hidden="true"
+            />
+            {ticks.map((value) => {
+              const y = leafY - (maxHeight <= 0 ? 0 : (value / maxHeight) * axisHeight);
+              return (
+                <g key={value} aria-hidden="true">
+                  <line x1={DENDRO_LEFT_PAD - 4} x2={DENDRO_LEFT_PAD} y1={y} y2={y} stroke="hsl(var(--muted-foreground) / 0.4)" />
+                  <text
+                    x={DENDRO_LEFT_PAD - 7}
+                    y={y}
+                    textAnchor="end"
+                    dominantBaseline="middle"
+                    fontSize={10}
+                    fill="hsl(var(--muted-foreground))"
+                    className="tabular-nums"
+                  >
+                    {formatHeight(value, maxHeight)}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Undirected elbows: child rises to the parent's height, then across to the parent. */}
+            {laid.edges.map((edge) => {
+              const source = laid.nodes.find((n) => n.id === edge.source);
+              const target = laid.nodes.find((n) => n.id === edge.target);
+              if (!source || !target) return null;
+              return (
+                <path
+                  key={edge.id}
+                  d={`M ${source.x} ${source.y} V ${target.y} H ${target.x}`}
+                  fill="none"
+                  stroke={EDGE_STROKE[source.tone]}
+                  strokeWidth={source.tone === "mixed" ? 1.5 : 1}
+                  strokeDasharray={source.tone === "missing" ? "4 4" : undefined}
+                  aria-hidden="true"
+                />
+              );
+            })}
+
+            {laid.nodes.map((node) => (
+              <NodeGlyph key={node.id} node={node} leafY={leafY} selected={node.id === selectedId} onSelect={select} />
+            ))}
+          </svg>
+        </div>
+      </div>
 
       {selection ? (
         <ActionBar

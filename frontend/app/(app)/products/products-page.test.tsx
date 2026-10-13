@@ -190,8 +190,8 @@ describe("ProductsPage", () => {
 
     // Radix Tabs activate on mouse-down, not click.
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Clusters" }));
-    // `Merge of 2` is the dendrogram dataset's sentinel: it reaches the Clusters view.
-    expect(screen.getByText("Merge of 2")).toBeInTheDocument();
+    // The dendrogram region is the Clusters view's sentinel: it reaches that tab.
+    expect(screen.getByRole("region", { name: /dendrogram/i })).toBeInTheDocument();
 
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Pipeline" }));
     expect(screen.getByRole("region", { name: /pipeline/i })).toBeInTheDocument();

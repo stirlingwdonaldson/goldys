@@ -42,9 +42,8 @@ export function resolveNodeClick(
 
 /**
  * Nodes and edges already positioned by one of the `layout.ts` tree layouts
- * (`layoutTree`, `layoutDendrogram`). Their absolute coordinates are used as-is,
- * so `fitView` frames the picture — including the negative y of a dendrogram's
- * merge nodes.
+ * (`layoutColumns`, `layoutTree`). Their absolute coordinates are used as-is,
+ * so `fitView` frames the picture.
  */
 export interface LaidOutGraph {
   nodes: FlowNode[];
