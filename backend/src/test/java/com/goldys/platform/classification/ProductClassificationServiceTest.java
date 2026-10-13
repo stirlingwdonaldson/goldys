@@ -153,6 +153,11 @@ class ProductClassificationServiceTest {
     assertThat(internal).allSatisfy(n -> assertThat(n.mergeHeight()).isNotNull());
     assertThat(internal).allSatisfy(n -> assertThat(n.size()).isNotNull());
 
+    // The node's integer id (merge order / leaf position) is preserved for deterministic render.
+    assertThat(savedClusters)
+        .extracting(ClassificationCluster::nodeOrder)
+        .containsExactlyInAnyOrder(0, 1, 2, 3, 4);
+
     assertThat(savedProjections).hasSize(3);
     assertThat(savedProjections)
         .anySatisfy(

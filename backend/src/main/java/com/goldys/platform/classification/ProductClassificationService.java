@@ -164,7 +164,8 @@ public class ProductClassificationService {
               leaf,
               productNameKey,
               mergeHeight,
-              size));
+              size,
+              node.id()));
     }
     for (int i = 0; i < result.projection().size(); i++) {
       Point2d point = result.projection().get(i);

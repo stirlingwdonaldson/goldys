@@ -36,6 +36,9 @@ class ClassificationCluster {
   @Column(name = "size")
   private Integer size;
 
+  @Column(name = "node_order", nullable = false)
+  private int nodeOrder;
+
   protected ClassificationCluster() {}
 
   ClassificationCluster(
@@ -45,7 +48,8 @@ class ClassificationCluster {
       boolean isLeaf,
       String productNameKey,
       Double mergeHeight,
-      Integer size) {
+      Integer size,
+      int nodeOrder) {
     this.id = Objects.requireNonNull(id, "id");
     this.runId = Objects.requireNonNull(runId, "runId");
     this.parentId = parentId;
@@ -53,6 +57,7 @@ class ClassificationCluster {
     this.productNameKey = productNameKey;
     this.mergeHeight = mergeHeight;
     this.size = size;
+    this.nodeOrder = nodeOrder;
   }
 
   UUID id() {
@@ -81,5 +86,9 @@ class ClassificationCluster {
 
   Integer size() {
     return size;
+  }
+
+  int nodeOrder() {
+    return nodeOrder;
   }
 }

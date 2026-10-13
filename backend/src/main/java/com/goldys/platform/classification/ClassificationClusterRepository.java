@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 interface ClassificationClusterRepository extends JpaRepository<ClassificationCluster, UUID> {
 
-  List<ClassificationCluster> findByRunIdOrderByIdAsc(UUID runId);
+  List<ClassificationCluster> findByRunIdOrderByNodeOrderAsc(UUID runId);
 }
