@@ -1,6 +1,7 @@
 package com.goldys.platform.classification;
 
 import com.goldys.platform.semantic.ClassificationRunView;
+import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -31,6 +32,8 @@ public class ProductClassificationService {
 
   /** The cap on {@link #listRuns()}; a single venue never needs more than the recent few. */
   static final int RUN_LIST_LIMIT = 25;
+
+  private static final String INTERRUPTED_MESSAGE = "service restarted before completion";
 
   private final FeatureTextExtractor featureTexts;
   private final ProductCategoryRepository categories;
@@ -187,6 +190,19 @@ public class ProductClassificationService {
                     run.finishedAt(),
                     run.errorMessage()))
         .toList();
+  }
+
+  /**
+   * Flips any run stranded in {@code RUNNING} by a previous shutdown to {@code FAILED}, mirroring
+   * {@code ForecastService.failInterruptedRuns}. An uncaught {@link Error} (e.g. an {@code
+   * OutOfMemoryError}) in {@link #execute} would otherwise leave a run running forever.
+   */
+  @PostConstruct
+  void failInterruptedRuns() {
+    for (ClassificationRun run : runs.findByStatus(ClassificationRunStatus.RUNNING)) {
+      run.markFailed(INTERRUPTED_MESSAGE, clock.instant());
+      runs.save(run);
+    }
   }
 
   /**

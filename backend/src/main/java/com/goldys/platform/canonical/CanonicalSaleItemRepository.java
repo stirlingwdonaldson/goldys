@@ -25,6 +25,17 @@ interface CanonicalSaleItemRepository extends BitemporalRepository<CanonicalSale
   @Query("select s from CanonicalSaleItem s where s.supersededAt is null")
   List<CanonicalSaleItem> findAllCurrent();
 
+  /**
+   * The distinct (name, category) pairs across current sale items, without materialising the full
+   * entity list. The categorisation feature text only needs these two fields per product, and the
+   * sale-item table is far too large to load in full; pushing the {@code distinct} into the
+   * database keeps the JVM working set to the distinct pairs rather than every line ever sold.
+   */
+  @Query(
+      "select distinct s.itemName, s.categoryName from CanonicalSaleItem s "
+          + "where s.supersededAt is null order by s.itemName, s.categoryName")
+  List<Object[]> findDistinctCurrentIdentities();
+
   @Query(
       "select s from CanonicalSaleItem s where s.supersededAt is null and s.tradingDate in :dates")
   List<CanonicalSaleItem> findCurrentByTradingDateIn(Collection<LocalDate> dates);

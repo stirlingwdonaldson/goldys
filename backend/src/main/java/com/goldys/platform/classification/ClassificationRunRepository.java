@@ -9,6 +9,8 @@ interface ClassificationRunRepository extends JpaRepository<ClassificationRun, U
 
   List<ClassificationRun> findAllByOrderByStartedAtDesc();
 
+  List<ClassificationRun> findByStatus(ClassificationRunStatus status);
+
   Optional<ClassificationRun> findTopByKindOrderByStartedAtDesc(ClassificationRunKind kind);
 
   Optional<ClassificationRun> findTopByKindAndStatusOrderByStartedAtDesc(

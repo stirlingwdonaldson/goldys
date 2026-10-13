@@ -44,8 +44,8 @@ public class CanonicalSaleItemQuery {
 
   /** Current sale items' display name and POS category — for the categorisation feature text. */
   public List<SaleItemIdentityView> currentSaleItemIdentities() {
-    return repository.findAllCurrent().stream()
-        .map(s -> new SaleItemIdentityView(s.itemName(), s.categoryName()))
+    return repository.findDistinctCurrentIdentities().stream()
+        .map(row -> new SaleItemIdentityView((String) row[0], (String) row[1]))
         .toList();
   }
 
