@@ -7,6 +7,7 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.classification.AssignmentStatus;
 import com.goldys.platform.classification.ProductCategoryQuery;
 import com.goldys.platform.classification.ProductCategoryService;
+import com.goldys.platform.classification.ProductClassificationService;
 import com.goldys.platform.semantic.AssignmentView;
 import com.goldys.platform.semantic.CategoryNode;
 import com.goldys.platform.semantic.CategorySales;
@@ -15,6 +16,7 @@ import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import com.goldys.platform.semantic.ProductPoint;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -33,16 +35,19 @@ public class ProductCategoryReportingService {
   private final ProductCategoryQuery query;
   private final ProductCategoryMetricsQuery metrics;
   private final ProductCategoryService categories;
+  private final ProductClassificationService classification;
   private final PermissionService permissions;
 
   public ProductCategoryReportingService(
       ProductCategoryQuery query,
       ProductCategoryMetricsQuery metrics,
       ProductCategoryService categories,
+      ProductClassificationService classification,
       PermissionService permissions) {
     this.query = query;
     this.metrics = metrics;
     this.categories = categories;
+    this.classification = classification;
     this.permissions = permissions;
   }
 
@@ -71,17 +76,35 @@ public class ProductCategoryReportingService {
   }
 
   /**
-   * The assignment queue, optionally filtered by status ({@code null}/{@code ""} = all). The status
-   * arrives as a string so the {@code api} layer never has to import the classification enum.
+   * The assignment queue, optionally filtered by status ({@code null} = all). The status arrives as
+   * a string so the {@code api} layer never has to import the classification enum; a non-null value
+   * must name an {@link AssignmentStatus}, otherwise {@link AssignmentStatus#valueOf} rejects it.
    */
   public List<AssignmentView> assignments(UserRole role, String status) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     return query.assignments(status == null ? null : AssignmentStatus.valueOf(status));
   }
 
+  /**
+   * Submits an on-demand categorisation pipeline run. {@code kind} is case-insensitive: {@code
+   * CLUSTER}, {@code ASSIGN} or {@code FULL}; anything else is rejected as a bad request.
+   */
+  public void runClassification(UserRole role, String kind) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    switch (kind == null ? "" : kind.toUpperCase(Locale.ROOT)) {
+      case "CLUSTER" -> classification.runClustering();
+      case "ASSIGN" -> classification.runAssignment();
+      case "FULL" -> classification.runFull();
+      default -> throw new IllegalArgumentException("Unknown classification run kind: " + kind);
+    }
+  }
+
   /** Creates a category (authorized by the classification service) and returns its public DTO. */
   public CategoryNode create(
       UserRole role, String name, String groupName, int displayOrder, String description) {
+    if (name == null || name.isBlank()) {
+      throw new IllegalArgumentException("Category name must not be blank");
+    }
     return categories.create(role, name, groupName, displayOrder, description);
   }
 

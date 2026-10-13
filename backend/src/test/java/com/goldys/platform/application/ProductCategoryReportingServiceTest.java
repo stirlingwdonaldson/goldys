@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +18,7 @@ import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.classification.ProductCategoryQuery;
 import com.goldys.platform.classification.ProductCategoryService;
+import com.goldys.platform.classification.ProductClassificationService;
 import com.goldys.platform.semantic.CategorySales;
 import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import java.math.BigDecimal;
@@ -44,6 +46,7 @@ class ProductCategoryReportingServiceTest {
             mock(ProductCategoryQuery.class),
             metrics,
             mock(ProductCategoryService.class),
+            mock(ProductClassificationService.class),
             permissions);
 
     assertThat(service.salesByCategory(OWNER, from, to)).containsExactly(expected);
@@ -61,11 +64,59 @@ class ProductCategoryReportingServiceTest {
             mock(ProductCategoryQuery.class),
             mock(ProductCategoryMetricsQuery.class),
             mock(ProductCategoryService.class),
+            mock(ProductClassificationService.class),
             permissions);
 
     assertThatThrownBy(
             () ->
                 service.salesByCategory(OWNER, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31)))
         .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void runClassificationRequiresWriteThenDelegates() {
+    PermissionService permissions = mock(PermissionService.class);
+    ProductClassificationService classification = mock(ProductClassificationService.class);
+    ProductCategoryReportingService service = service(classification, permissions);
+
+    service.runClassification(OWNER, "CLUSTER");
+    service.runClassification(OWNER, "assign");
+    service.runClassification(OWNER, "Full");
+
+    verify(permissions, times(3))
+        .require(OWNER, new ResourceKey("products.category"), PermissionAction.WRITE);
+    verify(classification).runClustering();
+    verify(classification).runAssignment();
+    verify(classification).runFull();
+  }
+
+  @Test
+  void runClassificationRejectsUnknownKind() {
+    ProductCategoryReportingService service =
+        service(mock(ProductClassificationService.class), mock(PermissionService.class));
+
+    assertThatThrownBy(() -> service.runClassification(OWNER, "BOGUS"))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void createRejectsBlankName() {
+    ProductCategoryReportingService service =
+        service(mock(ProductClassificationService.class), mock(PermissionService.class));
+
+    assertThatThrownBy(() -> service.create(OWNER, null, "Drinks", 0, null))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> service.create(OWNER, "  ", "Drinks", 0, null))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  private static ProductCategoryReportingService service(
+      ProductClassificationService classification, PermissionService permissions) {
+    return new ProductCategoryReportingService(
+        mock(ProductCategoryQuery.class),
+        mock(ProductCategoryMetricsQuery.class),
+        mock(ProductCategoryService.class),
+        classification,
+        permissions);
   }
 }

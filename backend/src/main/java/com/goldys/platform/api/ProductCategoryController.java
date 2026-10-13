@@ -9,6 +9,7 @@ import com.goldys.platform.semantic.DendrogramNode;
 import com.goldys.platform.semantic.ProductPoint;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -69,6 +70,15 @@ public class ProductCategoryController {
         body.description());
   }
 
+  /** Submits an on-demand clustering/assignment run, accepted for asynchronous execution. */
+  @PostMapping("/runs")
+  ResponseEntity<Void> run(
+      @RequestBody RunClassificationRequest body,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    reporting.runClassification(currentUser.roleOf(user), body.kind());
+    return ResponseEntity.accepted().build();
+  }
+
   /** Renames and/or regroups a category. A field left {@code null} is left unchanged. */
   @PatchMapping("/categories/{id}")
   void update(
@@ -100,6 +110,8 @@ public class ProductCategoryController {
 
   record CreateCategoryRequest(
       String name, String groupName, int displayOrder, String description) {}
+
+  record RunClassificationRequest(String kind) {}
 
   record UpdateCategoryRequest(String name, String groupName) {}
 

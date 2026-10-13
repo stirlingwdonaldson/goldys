@@ -2,9 +2,14 @@ package com.goldys.platform.api;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -50,6 +56,37 @@ class ProductCategoryControllerTest {
         .andExpect(jsonPath("$[0].name").value("Cocktails"))
         .andExpect(jsonPath("$[0].groupName").value("Drinks"))
         .andExpect(jsonPath("$[0].productCount").value(3));
+  }
+
+  @Test
+  void runClassificationReturns202AndDelegates() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+
+    mvc.perform(
+            post("/api/products/categories/runs")
+                .with(authenticated(owner()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"kind\":\"CLUSTER\"}"))
+        .andExpect(status().isAccepted());
+
+    verify(reporting).runClassification(any(), eq("CLUSTER"));
+  }
+
+  @Test
+  void runClassificationUnknownKindReturns400() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    doThrow(new IllegalArgumentException("Unknown classification run kind: BOGUS"))
+        .when(reporting)
+        .runClassification(any(), eq("BOGUS"));
+
+    mvc.perform(
+            post("/api/products/categories/runs")
+                .with(authenticated(owner()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"kind\":\"BOGUS\"}"))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
