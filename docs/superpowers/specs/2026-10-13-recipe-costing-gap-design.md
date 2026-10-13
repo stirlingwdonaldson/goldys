@@ -105,7 +105,9 @@ the most-recent trading date for the "last sold" fallback. This is a read-facade
 name set = `{normalized link.saleItemStockDescription for ACTIVE links} ∪ {normalized recipe.recipeName}`,
 then resolve the modal price/cost across every matching sale item (same `ProductNameKey.normalize`,
 including the leading-`"New "` alias). This recovers the ~24 name-match recipes without changing the
-existing link-based behaviour.
+existing link-based behaviour. **The recipe-name candidate is suppressed when the recipe is
+`OFF_MENU`** (it has links, none active): a same-named sale item is not a current price for a dish
+positively marked off-menu, so that recipe falls to the historical fallback instead.
 
 **c. Derive `menu_state` from links only** (CTB is the authority on menu membership):
 
