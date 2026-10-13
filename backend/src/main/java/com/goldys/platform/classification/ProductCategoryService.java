@@ -4,6 +4,7 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.semantic.CategoryNode;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
@@ -38,10 +39,14 @@ public class ProductCategoryService {
   }
 
   @Transactional
-  public ProductCategory create(
+  public CategoryNode create(
       UserRole role, String name, String groupName, int displayOrder, String description) {
     permissions.require(role, RESOURCE, PermissionAction.WRITE);
-    return categories.save(ProductCategory.create(name, groupName, displayOrder, description));
+    ProductCategory saved =
+        categories.save(ProductCategory.create(name, groupName, displayOrder, description));
+    // Map to the public DTO here: the entity is package-private, and callers in other packages
+    // (the application layer) must never touch it directly.
+    return new CategoryNode(saved.id(), saved.name(), saved.groupName(), 0);
   }
 
   @Transactional

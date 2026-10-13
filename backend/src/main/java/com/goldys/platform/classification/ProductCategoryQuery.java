@@ -1,5 +1,9 @@
 package com.goldys.platform.classification;
 
+import com.goldys.platform.semantic.AssignmentView;
+import com.goldys.platform.semantic.CategoryNode;
+import com.goldys.platform.semantic.DendrogramNode;
+import com.goldys.platform.semantic.ProductPoint;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;

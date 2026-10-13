@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.goldys.platform.semantic.DendrogramNode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;

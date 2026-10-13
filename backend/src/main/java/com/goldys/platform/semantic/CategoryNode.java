@@ -1,4 +1,4 @@
-package com.goldys.platform.classification;
+package com.goldys.platform.semantic;
 
 import java.util.UUID;
 

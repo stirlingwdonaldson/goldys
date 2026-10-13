@@ -15,6 +15,7 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.semantic.CategoryNode;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,13 +47,16 @@ class ProductCategoryServiceTest {
             mock(ProductCategoryAssignmentRepository.class),
             mock(PermissionService.class));
 
-    ProductCategory created = service.create(OWNER, "Cocktails", "Drinks", 0, null);
+    CategoryNode created = service.create(OWNER, "Cocktails", "Drinks", 0, null);
 
     assertThat(created.name()).isEqualTo("Cocktails");
     assertThat(created.groupName()).isEqualTo("Drinks");
-    assertThat(created.displayOrder()).isEqualTo(0);
-    assertThat(created.description()).isNull();
-    verify(categories).save(created);
+    assertThat(created.productCount()).isEqualTo(0);
+    ArgumentCaptor<ProductCategory> captor = ArgumentCaptor.forClass(ProductCategory.class);
+    verify(categories).save(captor.capture());
+    assertThat(captor.getValue().name()).isEqualTo("Cocktails");
+    assertThat(captor.getValue().displayOrder()).isEqualTo(0);
+    assertThat(captor.getValue().description()).isNull();
   }
 
   @Test
@@ -65,7 +69,7 @@ class ProductCategoryServiceTest {
             mock(ProductCategoryAssignmentRepository.class),
             mock(PermissionService.class));
 
-    ProductCategory existing = service.create(OWNER, "Draft Beer", "Drinks", 0, null);
+    ProductCategory existing = ProductCategory.create("Draft Beer", "Drinks", 0, null);
     ProductCategory target = ProductCategory.create("Lager", "Drinks", 1, null);
     when(categories.findById(target.id())).thenReturn(Optional.of(target));
     when(categories.findByName("Draft Beer")).thenReturn(Optional.of(existing));
