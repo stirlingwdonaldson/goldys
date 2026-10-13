@@ -14,6 +14,8 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 
 /** {@link OpenTableBrowser} driving the {@code opentable-browser} sidecar over DevTools. */
@@ -25,6 +27,9 @@ public final class CdpOpenTableBrowser implements OpenTableBrowser {
   // A 1000-row reservations window is several MB and GuestCenter's reporting backend is slow.
   private static final Duration FETCH_TIMEOUT = Duration.ofSeconds(150);
   private static final Duration NAVIGATION_WAIT = Duration.ofSeconds(20);
+  // The live view is driven by this capture cadence. DevTools' own screencast is damage-driven:
+  // it sends nothing for an idle page, so the sign-in form would never appear.
+  private static final Duration FRAME_INTERVAL = Duration.ofMillis(500);
 
   /** Origins whose storage holds the GuestCenter/Okta login. */
   private static final List<String> LOGIN_ORIGINS =
@@ -88,7 +93,8 @@ public final class CdpOpenTableBrowser implements OpenTableBrowser {
   private final int port;
   private final String restaurantId;
   private CdpConnection connection;
-  private Runnable screencastUnsubscribe;
+  private ScheduledExecutorService frameScheduler;
+  private LiveFramePoller framePoller;
 
   public CdpOpenTableBrowser(
       CdpTargets targets,
@@ -123,42 +129,50 @@ public final class CdpOpenTableBrowser implements OpenTableBrowser {
     return evaluate(script, COMMAND_TIMEOUT).asInt(0) == 200;
   }
 
+  /**
+   * Streams the page to {@code onFrame} by capturing it on a timer: DevTools' {@code
+   * Page.startScreencast} only emits a frame when the page repaints, so an idle login form would
+   * stream nothing. The first capture is synchronous, so a failure here is reported to the caller.
+   */
   @Override
   public synchronized void startScreencast(Consumer<ScreencastFrame> onFrame) {
     stopScreencast();
-    CdpConnection cdp = connection();
-    screencastUnsubscribe =
-        cdp.on(
-            "Page.screencastFrame",
-            frame -> {
-              ObjectNode ack = cdp.params();
-              ack.put("sessionId", frame.path("sessionId").asInt());
-              cdp.post("Page.screencastFrameAck", ack);
-              JsonNode meta = frame.path("metadata");
-              onFrame.accept(
-                  new ScreencastFrame(
-                      frame.path("data").asText(),
-                      meta.path("deviceWidth").asInt(),
-                      meta.path("deviceHeight").asInt()));
-            });
-    ObjectNode params = cdp.params();
-    params.put("format", "jpeg");
-    params.put("quality", 60);
-    params.put("maxWidth", 1280);
-    params.put("maxHeight", 800);
-    params.put("everyNthFrame", 2);
-    cdp.send("Page.startScreencast", params, COMMAND_TIMEOUT);
+    onFrame.accept(captureFrame());
+    if (frameScheduler == null) {
+      frameScheduler =
+          Executors.newSingleThreadScheduledExecutor(
+              runnable -> {
+                Thread thread = new Thread(runnable, "opentable-frames");
+                thread.setDaemon(true);
+                return thread;
+              });
+    }
+    framePoller = new LiveFramePoller(frameScheduler, FRAME_INTERVAL, this::captureFrame, onFrame);
+    framePoller.start();
   }
 
   @Override
   public synchronized void stopScreencast() {
-    if (screencastUnsubscribe != null) {
-      screencastUnsubscribe.run();
-      screencastUnsubscribe = null;
-      if (connection != null && connection.isOpen()) {
-        connection.post("Page.stopScreencast", null);
-      }
+    if (framePoller != null) {
+      framePoller.close();
+      framePoller = null;
     }
+    if (frameScheduler != null) {
+      frameScheduler.shutdownNow();
+      frameScheduler = null;
+    }
+  }
+
+  /** One JPEG of the current viewport, with the CSS pixel size the live view scales to. */
+  private ScreencastFrame captureFrame() {
+    CdpConnection cdp = connection();
+    ObjectNode params = cdp.params();
+    params.put("format", "jpeg");
+    params.put("quality", 60);
+    JsonNode shot = cdp.send("Page.captureScreenshot", params, COMMAND_TIMEOUT);
+    JsonNode view = evaluate("({ w: window.innerWidth, h: window.innerHeight })", COMMAND_TIMEOUT);
+    return new ScreencastFrame(
+        shot.path("data").asText(""), view.path("w").asInt(0), view.path("h").asInt(0));
   }
 
   @Override
@@ -290,7 +304,6 @@ public final class CdpOpenTableBrowser implements OpenTableBrowser {
 
   private synchronized CdpConnection connection() {
     if (connection == null || !connection.isOpen()) {
-      screencastUnsubscribe = null; // A screencast never survives a reconnect.
       URI ws = targets.pageWebSocket(host, port);
       connection = new CdpConnection(new JdkWebSocketCdpTransport(ws, http, COMMAND_TIMEOUT), json);
       connection.send("Page.enable", null, COMMAND_TIMEOUT);
