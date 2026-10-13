@@ -218,11 +218,13 @@ public class OpenTableSessionService {
         detail = "Sign-in view closed after inactivity";
         transition(State.DISCONNECTED);
         idledOut = true;
+      } else {
+        // The first screencast can race the login navigation the sidecar is still committing, which
+        // Chromium rejects with "Not attached to an active page". Re-arm it while we wait so the
+        // view recovers without the owner reloading. Only while still waiting for sign-in: once the
+        // view has idled out and disconnected above, the screencast must stay stopped.
+        startScreencastLocked();
       }
-      // The first screencast can race the login navigation the sidecar is still committing, which
-      // Chromium rejects with "Not attached to an active page". Re-arm it while we wait so the view
-      // recovers without the owner reloading.
-      startScreencastLocked();
     }
     if (idledOut) {
       parkQuietly();
