@@ -8,6 +8,7 @@ public record InvoiceMetadataView(
     String supplierName,
     String invoiceNumber,
     LocalDate invoiceDate,
+    LocalDate dueDate,
     BigDecimal totalAmount,
     String purchaseNumber,
     String pdfFilename) {}

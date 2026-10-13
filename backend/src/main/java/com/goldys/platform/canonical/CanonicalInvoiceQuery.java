@@ -92,6 +92,7 @@ public class CanonicalInvoiceQuery {
         i.supplierName(),
         i.invoiceNumber(),
         i.invoiceDate(),
+        i.dueDate(),
         i.totalAmount(),
         i.purchaseNumber(),
         i.pdfFilename());
