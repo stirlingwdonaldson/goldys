@@ -29,6 +29,13 @@ function gpColumn(): ColumnDef<RecipeCosting> {
   };
 }
 
+/** A menu status in venue-friendly language for the "Menu price" cell. */
+function menuStateLabel(menuState: string): string {
+  if (menuState === "OFF_MENU") return "Off menu";
+  if (menuState === "UNKNOWN") return "Not on menu";
+  return "No price matched";
+}
+
 /** Sub-recipe lines grouped by their sub-recipe name, preserving first-seen order. */
 function groupSubRecipes(lines: RecipeIngredient[]): [string, RecipeIngredient[]][] {
   const groups = new Map<string, RecipeIngredient[]>();
@@ -138,9 +145,29 @@ export default function RecipesPage() {
         cell: ({ row }) => row.original.portionSize ?? "—",
       },
       currencyColumn("costPerPortion", "Cost/portion", (r) => r.costPerPortion),
-      currencyColumn("actualCost", "Actual cost", (r) => r.actualCost),
+      currencyColumn("actualCost", "Actual cost", (r) => r.actualCost ?? r.lastSoldCost),
       currencyColumn("costGap", "Cost gap", (r) => r.costGap),
-      currencyColumn("menuPrice", "Menu price", (r) => r.menuPrice),
+      {
+        id: "menuPrice",
+        accessorFn: (r) => r.menuPrice ?? r.lastSoldPrice ?? 0,
+        header: "Menu price",
+        cell: ({ row }) => {
+          const r = row.original;
+          if (r.priceSource === "HISTORICAL") {
+            return (
+              <span className="tabular-nums">
+                {formatCurrency(r.lastSoldPrice)}
+                <span className="text-muted-foreground"> · Last sold {r.lastSoldDate}</span>
+              </span>
+            );
+          }
+          if (r.priceSource === "NONE") {
+            return <span className="text-muted-foreground">{menuStateLabel(r.menuState)}</span>;
+          }
+          return <span className="tabular-nums">{formatCurrency(r.menuPrice)}</span>;
+        },
+        meta: { title: "Menu price", align: "right" },
+      },
       currencyColumn("margin", "Margin", (r) => r.margin),
       gpColumn(),
       {
@@ -213,6 +240,9 @@ export default function RecipesPage() {
 
           <Section title="Recipe costing">
             <DataTable columns={columns} data={rows} getRowId={(r) => String(r.recipeId)} />
+            <p className="text-xs text-muted-foreground">
+              Last-sold figures are historical, not current prices.
+            </p>
           </Section>
 
           {selected ? (

@@ -27,6 +27,11 @@ const parma: RecipeCosting = {
   menuPrice: 18.5,
   margin: 12.5,
   gpPercent: 0.6757,
+  menuState: "ON_MENU",
+  priceSource: "CURRENT",
+  lastSoldPrice: null,
+  lastSoldCost: null,
+  lastSoldDate: null,
 };
 
 describe("RecipesPage", () => {
@@ -37,6 +42,48 @@ describe("RecipesPage", () => {
     expect(screen.getByText("Mains")).toBeInTheDocument();
     expect(screen.getByText("1 serve")).toBeInTheDocument();
     expect(screen.getByText("Recipe costing")).toBeInTheDocument();
+  });
+
+  it("renders the last-sold note and the off-menu label", () => {
+    state.recipes = [
+      {
+        recipeId: 5,
+        name: "Eggplant Parmigiana",
+        folder: "Mains",
+        portionSize: "1",
+        costPerPortion: 4.2,
+        actualCost: null,
+        costGap: 0.6,
+        menuPrice: null,
+        margin: 12.8,
+        gpPercent: 0.7529,
+        menuState: "OFF_MENU",
+        priceSource: "HISTORICAL",
+        lastSoldPrice: 17.0,
+        lastSoldCost: 4.8,
+        lastSoldDate: "2026-09-14",
+      },
+      {
+        recipeId: 6,
+        name: "Chef's Special",
+        folder: "Mains",
+        portionSize: "1",
+        costPerPortion: 3.0,
+        actualCost: null,
+        costGap: null,
+        menuPrice: null,
+        margin: null,
+        gpPercent: null,
+        menuState: "OFF_MENU",
+        priceSource: "NONE",
+        lastSoldPrice: null,
+        lastSoldCost: null,
+        lastSoldDate: null,
+      },
+    ];
+    render(<RecipesPage />);
+    expect(screen.getByText(/Last sold/)).toBeInTheDocument();
+    expect(screen.getByText("Off menu")).toBeInTheDocument();
   });
 
   it("renders empty state when there are no recipes", () => {
