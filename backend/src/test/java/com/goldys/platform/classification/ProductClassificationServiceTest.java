@@ -126,7 +126,8 @@ class ProductClassificationServiceTest {
     when(recipeLinks.currentLinks())
         .thenReturn(
             List.of(
-                new SaleRecipeLinkView(1, "Classic Beef Burger", "Mains", "Beef Burger", true)));
+                new SaleRecipeLinkView(
+                    1, "Classic Beef Burger", "Mains", "Beef Burger", true, 1, null)));
 
     ProductClassificationService svc =
         service(new FakeEmbeddingClient(), new FakeClassifier(req -> null));
