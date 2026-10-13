@@ -279,6 +279,37 @@ describe("demoApi forecasting", () => {
   });
 });
 
+describe("demoApi product categorisation", () => {
+  it("returns taxonomy fixtures including a flat null-group category", async () => {
+    const taxonomy = await demoApi.getCategoryTaxonomy();
+    expect(taxonomy.length).toBeGreaterThan(0);
+    const flat = taxonomy.filter((c) => c.groupName === null);
+    expect(flat.length).toBeGreaterThan(0);
+    expect(taxonomy.some((c) => c.groupName !== null)).toBe(true);
+  });
+
+  it("returns assignments with a NEEDS_REVIEW row and treats no status as all", async () => {
+    const all = await demoApi.getCategoryAssignments();
+    expect(all.length).toBeGreaterThan(0);
+    expect(all.some((a) => a.status === "NEEDS_REVIEW")).toBe(true);
+
+    const reviewed = await demoApi.getCategoryAssignments("NEEDS_REVIEW");
+    expect(reviewed.length).toBeGreaterThan(0);
+    for (const row of reviewed) {
+      expect(row.status).toBe("NEEDS_REVIEW");
+    }
+  });
+
+  it("returns embedding-space points with numeric coordinates", async () => {
+    const points = await demoApi.getCategoryEmbeddingSpace();
+    expect(points.length).toBeGreaterThan(0);
+    for (const p of points) {
+      expect(typeof p.x).toBe("number");
+      expect(typeof p.y).toBe("number");
+    }
+  });
+});
+
 describe("demoApi OpenTable assisted sign-in", () => {
   it("walks sign-in, sync and completion, streaming a frame while signing in", async () => {
     vi.useFakeTimers();

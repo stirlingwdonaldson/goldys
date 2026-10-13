@@ -9,6 +9,8 @@ import { isApiError } from "./errors";
 import type {
   ActivityPoint,
   Api,
+  AssignmentRow,
+  CategoryNode,
   ConnectorStatus,
   OpenTableFrame,
   OpenTableInput,
@@ -17,6 +19,7 @@ import type {
   OpenTableSyncMode,
   ConversationThreadSummary,
   ConversationThreadView,
+  CreateCategoryInput,
   CreateForecastInput,
   DashboardBootstrap,
   DashboardDocument,
@@ -24,10 +27,12 @@ import type {
   DashboardSharing,
   DashboardSummary,
   DashboardTemplate,
+  DendrogramNode,
   ForecastComparison,
   ForecastMetric,
   ForecastRun,
   ProductOverrideInput,
+  ProductPoint,
   RecomputeStatus,
   ReconciliationException,
   ReconciliationRecord,
@@ -39,6 +44,7 @@ import type {
   SaveOverrideInput,
   SaveResolutionRuleInput,
   SavedDashboardSummary,
+  UpdateCategoryInput,
 } from "./types";
 
 /** Real backend calls. The demo fixtures stay behind the `demo` flag; these hit the live endpoints. */
@@ -260,6 +266,40 @@ export const liveApi: Api = {
   getRecipes: () => fetchApi<import("./types").RecipeCosting[]>("/api/recipes"),
   getRecipeIngredients: (recipeId: number) =>
     fetchApi<import("./types").RecipeIngredient[]>(`/api/recipes/${recipeId}/ingredients`),
+  getCategoryTaxonomy: () => fetchApi<CategoryNode[]>("/api/products/categories/taxonomy"),
+  getCategoryDendrogram: () =>
+    fetchApi<DendrogramNode[]>("/api/products/categories/dendrogram"),
+  getCategoryEmbeddingSpace: () =>
+    fetchApi<ProductPoint[]>("/api/products/categories/embedding-space"),
+  getCategoryAssignments: (status?: string) => {
+    // Omit the query param entirely for "all": the backend rejects `?status=` (400).
+    const q = status ? `?status=${encodeURIComponent(status)}` : "";
+    return fetchApi<AssignmentRow[]>(`/api/products/categories/assignments${q}`);
+  },
+  createCategory: (input: CreateCategoryInput) =>
+    fetchApi<CategoryNode>("/api/products/categories/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  renameCategory: (id: string, input: UpdateCategoryInput) =>
+    fetchApi<void>(
+      `/api/products/categories/categories/${id}`,
+      { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) },
+      { responseType: "void" },
+    ),
+  moveProduct: (productNameKey: string, categoryId: string) =>
+    fetchApi<void>(
+      `/api/products/categories/assignments/${encodeURIComponent(productNameKey)}/move`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoryId }) },
+      { responseType: "void" },
+    ),
+  clearProductOverride: (productNameKey: string) =>
+    fetchApi<void>(
+      `/api/products/categories/assignments/${encodeURIComponent(productNameKey)}/override`,
+      { method: "DELETE" },
+      { responseType: "void" },
+    ),
 };
 
 /**
