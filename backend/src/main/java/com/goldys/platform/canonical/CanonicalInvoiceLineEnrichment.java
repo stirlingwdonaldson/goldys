@@ -43,10 +43,12 @@ public class CanonicalInvoiceLineEnrichment {
       String uom,
       BigDecimal unitQuantity,
       BigDecimal packSize,
-      BigDecimal wetAmount) {
+      BigDecimal wetAmount,
+      BigDecimal quantity,
+      BigDecimal amountExTax) {
     List<CanonicalInvoiceLine> lines = repository.lockCurrentByInvoiceNumber(invoiceNumber);
     InvoiceLineMatcher.Selection selection =
-        InvoiceLineMatcher.select(stockCode, description, candidates(lines));
+        InvoiceLineMatcher.select(stockCode, description, quantity, amountExTax, candidates(lines));
     return switch (selection.result()) {
       case AMBIGUOUS -> EnrichmentResult.AMBIGUOUS; // several lines win; skip rather than guess
       case NO_MATCH -> EnrichmentResult.NO_MATCH; // no CSV line (pdf-only line)
@@ -57,18 +59,22 @@ public class CanonicalInvoiceLineEnrichment {
 
   /**
    * True when the invoice has a current line the given PDF line maps to. Used to retire flags once
-   * a replay with a better matcher resolves them.
+   * a replay with a better matcher resolves them. Quantity/amount are not available on a flag row,
+   * so the tie-break does not apply here.
    */
   @Transactional(readOnly = true)
   public boolean hasMatch(String invoiceNumber, String stockCode, String description) {
     List<CanonicalInvoiceLine> lines = repository.findCurrentByInvoiceNumber(invoiceNumber);
-    return InvoiceLineMatcher.select(stockCode, description, candidates(lines)).result()
+    return InvoiceLineMatcher.select(stockCode, description, null, null, candidates(lines)).result()
         == InvoiceLineMatcher.Result.MATCH;
   }
 
   private static List<InvoiceLineMatcher.Candidate> candidates(List<CanonicalInvoiceLine> lines) {
     return lines.stream()
-        .map(l -> new InvoiceLineMatcher.Candidate(l.stockCode(), l.productNameKey()))
+        .map(
+            l ->
+                new InvoiceLineMatcher.Candidate(
+                    l.stockCode(), l.productNameKey(), l.quantity(), l.lineTotal()))
         .toList();
   }
 

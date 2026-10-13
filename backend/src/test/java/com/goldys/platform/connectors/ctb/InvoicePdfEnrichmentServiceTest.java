@@ -66,12 +66,14 @@ class InvoicePdfEnrichmentServiceTest {
     when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
     when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("PDF-OWN-NUMBER", lines));
     when(invoiceQuery.invoiceNumberForPdfFilename("bruno-1.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+    when(enrichment.enrich(
+            eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
 
     service().enrich(pdf, "bruno-1.pdf", PDF_RAW_ID);
 
-    verify(enrichment).enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any());
+    verify(enrichment)
+        .enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any());
     verify(flags, never()).flag(any(), any(), any(), any(), anyString());
     // Recovery runs for every enriched PDF (matched or not); a fully-matched PDF passes an empty
     // unmatched set so the invoice-level reconciliation still runs.
@@ -88,13 +90,14 @@ class InvoicePdfEnrichmentServiceTest {
     when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("PDF-OWN-NUMBER", lines));
     when(invoiceQuery.invoiceNumberForPdfFilename("unknown.pdf")).thenReturn(Optional.empty());
     when(enrichment.enrich(
-            eq("PDF-OWN-NUMBER"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+            eq("PDF-OWN-NUMBER"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
 
     service().enrich(pdf, "unknown.pdf", PDF_RAW_ID);
 
     verify(enrichment)
-        .enrich(eq("PDF-OWN-NUMBER"), eq("CODE"), eq("desc"), any(), any(), any(), any());
+        .enrich(
+            eq("PDF-OWN-NUMBER"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any());
     verify(gapRecovery)
         .recover(
             eq("PDF-OWN-NUMBER"),
@@ -113,7 +116,8 @@ class InvoicePdfEnrichmentServiceTest {
     when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
     when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("PDF-OWN-NUMBER", lines));
     when(invoiceQuery.invoiceNumberForPdfFilename("bruno-1.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+    when(enrichment.enrich(
+            eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
 
     service().enrich(pdf, "bruno-1.pdf", PDF_RAW_ID);
@@ -147,7 +151,8 @@ class InvoicePdfEnrichmentServiceTest {
     when(parser.extract("text"))
         .thenReturn(new PdfExtractedInvoice("INV-1", lines, null, List.of("(2 BOXES)", "COMMENT")));
     when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+    when(enrichment.enrich(
+            eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
 
     service().enrich(pdf, "a.pdf", PDF_RAW_ID);
@@ -163,7 +168,8 @@ class InvoicePdfEnrichmentServiceTest {
     when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
     when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("INV-1", lines));
     when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+    when(enrichment.enrich(
+            eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
 
     service().enrich(pdf, "a.pdf", PDF_RAW_ID);
@@ -236,7 +242,8 @@ class InvoicePdfEnrichmentServiceTest {
     when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("INV-1", lines));
     when(invoiceQuery.currentPdfFilenameForInvoiceNumber("INV-1"))
         .thenReturn(Optional.of("stored.pdf"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+    when(enrichment.enrich(
+            eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.NO_MATCH);
 
     service().enrich(pdf, null, PDF_RAW_ID);
@@ -260,12 +267,14 @@ class InvoicePdfEnrichmentServiceTest {
     when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
     when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("INV-1", lines));
     when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+    when(enrichment.enrich(
+            eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
 
     service(false).enrich(pdf, "a.pdf", PDF_RAW_ID);
 
-    verify(enrichment).enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any());
+    verify(enrichment)
+        .enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any());
     verify(gapRecovery, never()).recover(any(), any(), any(), any(), any(), any());
   }
 
@@ -277,7 +286,8 @@ class InvoicePdfEnrichmentServiceTest {
     when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
     when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("INV-1", lines));
     when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+    when(enrichment.enrich(
+            eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.NO_MATCH);
 
     service().enrich(pdf, "a.pdf", PDF_RAW_ID);
@@ -304,11 +314,11 @@ class InvoicePdfEnrichmentServiceTest {
     when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
     when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("INV-1", lines));
     when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("A"), any(), any(), any(), any(), any()))
+    when(enrichment.enrich(eq("INV-1"), eq("A"), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.NO_MATCH);
-    when(enrichment.enrich(eq("INV-1"), eq("B"), any(), any(), any(), any(), any()))
+    when(enrichment.enrich(eq("INV-1"), eq("B"), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.ENRICHED);
-    when(enrichment.enrich(eq("INV-1"), eq("C"), any(), any(), any(), any(), any()))
+    when(enrichment.enrich(eq("INV-1"), eq("C"), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.NO_MATCH);
 
     service().enrich(pdf, "a.pdf", PDF_RAW_ID);
@@ -340,7 +350,8 @@ class InvoicePdfEnrichmentServiceTest {
             anyString());
     verify(flags, never())
         .flag(eq(InvoiceIngestFlagType.PDF_ONLY_LINE), any(), any(), any(), any());
-    verify(enrichment, never()).enrich(any(), any(), any(), any(), any(), any(), any());
+    verify(enrichment, never())
+        .enrich(any(), any(), any(), any(), any(), any(), any(), any(), any());
     verify(gapRecovery, never()).recover(any(), any(), any(), any(), any(), any());
   }
 
@@ -357,7 +368,8 @@ class InvoicePdfEnrichmentServiceTest {
     service().enrich(new byte[] {1}, null, PDF_RAW_ID);
 
     verify(flags, never()).flag(any(), any(), any(), any(), any());
-    verify(enrichment, never()).enrich(any(), any(), any(), any(), any(), any(), any());
+    verify(enrichment, never())
+        .enrich(any(), any(), any(), any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -368,7 +380,8 @@ class InvoicePdfEnrichmentServiceTest {
     when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
     when(parser.extract("text")).thenReturn(new PdfExtractedInvoice("INV-1", lines));
     when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
-    when(enrichment.enrich(eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any()))
+    when(enrichment.enrich(
+            eq("INV-1"), eq("CODE"), eq("desc"), any(), any(), any(), any(), any(), any()))
         .thenReturn(EnrichmentResult.AMBIGUOUS);
 
     service().enrich(pdf, "a.pdf", PDF_RAW_ID);

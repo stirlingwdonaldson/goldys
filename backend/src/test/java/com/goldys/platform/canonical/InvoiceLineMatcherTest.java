@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.goldys.platform.canonical.InvoiceLineMatcher.Candidate;
 import com.goldys.platform.canonical.InvoiceLineMatcher.Result;
 import com.goldys.platform.canonical.InvoiceLineMatcher.Selection;
+import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,16 @@ import org.junit.jupiter.api.Test;
 class InvoiceLineMatcherTest {
 
   private static Selection select(String code, String description, Candidate... candidates) {
-    return InvoiceLineMatcher.select(code, description, List.of(candidates));
+    return InvoiceLineMatcher.select(code, description, null, null, List.of(candidates));
+  }
+
+  private static Selection select(
+      String code,
+      String description,
+      BigDecimal quantity,
+      BigDecimal amount,
+      Candidate... candidates) {
+    return InvoiceLineMatcher.select(code, description, quantity, amount, List.of(candidates));
   }
 
   @Test
@@ -157,5 +167,63 @@ class InvoiceLineMatcherTest {
     Selection s = select(null, null, new Candidate("ABC1", "some product"));
 
     assertThat(s.result()).isEqualTo(Result.NO_MATCH);
+  }
+
+  @Test
+  void breaksADescriptionTieByQuantity() {
+    Selection s =
+        select(
+            null,
+            "TOMATO SAUCE",
+            new BigDecimal("2"),
+            null,
+            new Candidate(null, "tomato sauce", new BigDecimal("2"), null),
+            new Candidate(null, "tomato sauce", new BigDecimal("6"), null));
+
+    assertThat(s.result()).isEqualTo(Result.MATCH);
+    assertThat(s.index()).isEqualTo(0);
+  }
+
+  @Test
+  void breaksATieByAmountWhenQuantityDoesNot() {
+    Selection s =
+        select(
+            null,
+            "TOMATO SAUCE",
+            null,
+            new BigDecimal("4.00"),
+            new Candidate(null, "tomato sauce", null, new BigDecimal("4.00")),
+            new Candidate(null, "tomato sauce", null, new BigDecimal("8.00")));
+
+    assertThat(s.result()).isEqualTo(Result.MATCH);
+    assertThat(s.index()).isEqualTo(0);
+  }
+
+  @Test
+  void staysAmbiguousWhenTiedCandidatesAlsoTieOnQuantity() {
+    Selection s =
+        select(
+            null,
+            "TOMATO SAUCE",
+            new BigDecimal("2"),
+            null,
+            new Candidate(null, "tomato sauce", new BigDecimal("2"), null),
+            new Candidate(null, "tomato sauce", new BigDecimal("2"), null));
+
+    assertThat(s.result()).isEqualTo(Result.AMBIGUOUS);
+  }
+
+  @Test
+  void staysAmbiguousWhenNoTiedCandidateAgreesOnQuantityOrAmount() {
+    Selection s =
+        select(
+            null,
+            "TOMATO SAUCE",
+            new BigDecimal("9"),
+            new BigDecimal("9.99"),
+            new Candidate(null, "tomato sauce", new BigDecimal("2"), new BigDecimal("4.00")),
+            new Candidate(null, "tomato sauce", new BigDecimal("6"), new BigDecimal("8.00")));
+
+    assertThat(s.result()).isEqualTo(Result.AMBIGUOUS);
   }
 }
