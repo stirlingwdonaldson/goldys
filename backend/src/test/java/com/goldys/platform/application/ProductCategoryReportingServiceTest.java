@@ -20,10 +20,13 @@ import com.goldys.platform.classification.ProductCategoryQuery;
 import com.goldys.platform.classification.ProductCategoryService;
 import com.goldys.platform.classification.ProductClassificationService;
 import com.goldys.platform.semantic.CategorySales;
+import com.goldys.platform.semantic.ClassificationRunView;
 import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /** Application-layer coverage: read authorization and denial propagation. */
@@ -97,6 +100,26 @@ class ProductCategoryReportingServiceTest {
 
     assertThatThrownBy(() -> service.runClassification(OWNER, "BOGUS"))
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void listRunsRequiresReadThenDelegates() {
+    PermissionService permissions = mock(PermissionService.class);
+    ProductClassificationService classification = mock(ProductClassificationService.class);
+    ClassificationRunView view =
+        new ClassificationRunView(
+            UUID.randomUUID(),
+            "FULL",
+            "SUCCEEDED",
+            5,
+            Instant.parse("2026-10-13T00:00:00Z"),
+            Instant.parse("2026-10-13T00:01:00Z"),
+            null);
+    when(classification.listRuns()).thenReturn(List.of(view));
+    ProductCategoryReportingService service = service(classification, permissions);
+
+    assertThat(service.listRuns(OWNER)).containsExactly(view);
+    verify(permissions).require(OWNER, new ResourceKey("products.category"), PermissionAction.READ);
   }
 
   @Test

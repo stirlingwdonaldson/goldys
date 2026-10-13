@@ -21,6 +21,7 @@ import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.semantic.CategoryNode;
+import com.goldys.platform.semantic.ClassificationRunView;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import java.util.List;
@@ -87,6 +88,29 @@ class ProductCategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"kind\":\"BOGUS\"}"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void listRunsReturns200AndDelegates() throws Exception {
+    ClassificationRunView view =
+        new ClassificationRunView(
+            UUID.randomUUID(),
+            "FULL",
+            "SUCCEEDED",
+            5,
+            java.time.Instant.parse("2026-10-13T00:00:00Z"),
+            java.time.Instant.parse("2026-10-13T00:01:00Z"),
+            null);
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(reporting.listRuns(any())).thenReturn(List.of(view));
+
+    mvc.perform(get("/api/products/categories/runs").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].kind").value("FULL"))
+        .andExpect(jsonPath("$[0].status").value("SUCCEEDED"))
+        .andExpect(jsonPath("$[0].productCount").value(5));
+
+    verify(reporting).listRuns(any());
   }
 
   @Test

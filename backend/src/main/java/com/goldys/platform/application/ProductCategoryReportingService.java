@@ -11,6 +11,7 @@ import com.goldys.platform.classification.ProductClassificationService;
 import com.goldys.platform.semantic.AssignmentView;
 import com.goldys.platform.semantic.CategoryNode;
 import com.goldys.platform.semantic.CategorySales;
+import com.goldys.platform.semantic.ClassificationRunView;
 import com.goldys.platform.semantic.DendrogramNode;
 import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import com.goldys.platform.semantic.ProductPoint;
@@ -83,6 +84,12 @@ public class ProductCategoryReportingService {
   public List<AssignmentView> assignments(UserRole role, String status) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     return query.assignments(status == null ? null : AssignmentStatus.valueOf(status));
+  }
+
+  /** The recent classification runs, newest first (for the screen's run-status display). */
+  public List<ClassificationRunView> listRuns(UserRole role) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return classification.listRuns();
   }
 
   /**
