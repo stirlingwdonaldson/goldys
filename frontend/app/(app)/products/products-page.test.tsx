@@ -245,18 +245,18 @@ describe("ProductsPage", () => {
     expect(screen.getByText(/No classification run has produced data yet/)).toBeInTheDocument();
   });
 
-  it("shows the latest run status in the Pipeline tab", () => {
+  it("shows the latest run status without opening the Pipeline tab", () => {
     seed();
     render(<ProductsPage />);
 
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Pipeline" }));
-
+    // The status line is always visible, not gated behind the Pipeline tab, so a run that is
+    // submitted from any tab still reports its outcome.
     const status = within(screen.getByTestId("latest-run-status"));
     expect(status.getByText("SUCCEEDED")).toBeInTheDocument();
     expect(status.getByText(/3 products/)).toBeInTheDocument();
   });
 
-  it("shows a failed run's error message in the Pipeline tab", () => {
+  it("shows a failed run's error message regardless of tab", () => {
     seed();
     state.runs = [
       {
@@ -271,8 +271,25 @@ describe("ProductsPage", () => {
     ];
     render(<ProductsPage />);
 
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Pipeline" }));
-
     expect(screen.getByText("Product embedding classification is disabled")).toBeInTheDocument();
+  });
+
+  it("shows Running… and disables the trigger while a run is in flight", () => {
+    seed();
+    state.runs = [
+      {
+        id: "cls-3",
+        kind: "FULL",
+        status: "RUNNING",
+        productCount: null,
+        startedAt: "2026-10-13T00:00:00Z",
+        finishedAt: null,
+        errorMessage: null,
+      },
+    ];
+    render(<ProductsPage />);
+
+    expect(screen.getByRole("button", { name: "Running…" })).toBeDisabled();
+    expect(screen.getByText("Running — this can take a moment.")).toBeInTheDocument();
   });
 });

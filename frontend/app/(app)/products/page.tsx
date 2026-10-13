@@ -421,10 +421,10 @@ function RunStatusLine({ run }: { run: ClassificationRun | null }) {
 /** The run trigger: a primary FULL button plus a small menu for CLUSTER/ASSIGN. */
 function RunClassificationMenu({
   onRun,
-  starting,
+  running,
 }: {
   onRun: (kind: ClassificationRunKind) => void;
-  starting: boolean;
+  running: boolean;
 }) {
   return (
     <div className="flex items-center">
@@ -432,9 +432,9 @@ function RunClassificationMenu({
         variant="brand"
         className="rounded-r-none"
         onClick={() => onRun("FULL")}
-        disabled={starting}
+        disabled={running}
       >
-        {starting ? "Starting…" : "Run classification"}
+        {running ? "Running…" : "Run classification"}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -443,7 +443,7 @@ function RunClassificationMenu({
             size="icon"
             className="rounded-l-none border-l border-brand-foreground/25"
             aria-label="More classification run options"
-            disabled={starting}
+            disabled={running}
           >
             <ChevronDown />
           </Button>
@@ -596,11 +596,16 @@ export default function ProductsPage() {
   const scatterPoints = points.data ?? [];
   const clusterNodes = dendrogram.data ?? [];
 
+  // The latest run is resolved once so both the always-visible status line and the trigger's
+  // running state agree. `activeRun` (the just-submitted run) wins over the list's newest entry.
+  const latestRun = activeRun ?? runsQuery.data?.[0] ?? null;
+  const running = runStarting || latestRun?.status === "RUNNING";
+
   const header = (
     <PageHeader
       title="Products"
       description="Internal categorisation: how products are grouped, and what needs a decision."
-      actions={<RunClassificationMenu onRun={(kind) => void handleRun(kind)} starting={runStarting} />}
+      actions={<RunClassificationMenu onRun={(kind) => void handleRun(kind)} running={running} />}
     />
   );
 
@@ -625,13 +630,12 @@ export default function ProductsPage() {
   const hasAny =
     categories.length > 0 || rows.length > 0 || scatterPoints.length > 0 || clusterNodes.length > 0;
 
-  const latestRun = activeRun ?? runsQuery.data?.[0] ?? null;
-
   return (
     <div className="flex flex-col gap-6">
       {header}
       {writeError ? <InlineError>{writeError}</InlineError> : null}
       {runError ? <InlineError>{runError}</InlineError> : null}
+      <RunStatusLine run={latestRun} />
 
       {hasAny ? (
         <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
@@ -670,7 +674,6 @@ export default function ProductsPage() {
               title="Pipeline"
               description="products → embed → cluster → curate → assign → report. Click a stage to jump to its data."
             >
-              <RunStatusLine run={latestRun} />
               <PipelineFlow
                 categories={categories}
                 assignments={rows}
@@ -683,7 +686,6 @@ export default function ProductsPage() {
         </Tabs>
       ) : (
         <div className="flex flex-col gap-4">
-          <RunStatusLine run={latestRun} />
           <AwaitingData
             label="Products"
             description="The product taxonomy, the assignment queue and the clustering views."
