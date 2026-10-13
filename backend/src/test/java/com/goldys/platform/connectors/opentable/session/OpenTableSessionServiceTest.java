@@ -105,6 +105,26 @@ class OpenTableSessionServiceTest {
   }
 
   @Test
+  void liveViewRecoversWhenTheScreencastRacesTheNavigation() {
+    // The sidecar rejects Page.startScreencast while the login navigation is still committing
+    // ("Not attached to an active page"); the poll must re-arm the live view.
+    browser.failScreencasts = 1;
+    RecordingViewer viewer = new RecordingViewer();
+    session.attach(viewer);
+
+    session.start(Mode.INCREMENTAL);
+    assertThat(browser.screencast).isNull();
+    assertThat(session.snapshot().detail()).isEqualTo("Live view unavailable");
+
+    session.pollOnce();
+
+    assertThat(browser.screencast).isNotNull();
+    assertThat(session.snapshot().detail()).isNull();
+    browser.screencast.accept(new ScreencastFrame("AAAA", 1280, 800));
+    assertThat(viewer.frames).hasSize(1);
+  }
+
+  @Test
   void signingInStopsTheViewAndStartsTheSyncAutomatically() {
     session.attach(new RecordingViewer());
     session.start(Mode.FULL);
