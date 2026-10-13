@@ -3,7 +3,6 @@ package com.goldys.platform.connectors.lightspeed;
 import com.goldys.platform.canonical.CanonicalProductQuery;
 import com.goldys.platform.canonical.CanonicalSaleRecipeLinkQuery;
 import com.goldys.platform.canonical.ProductAliasQuery;
-import com.goldys.platform.canonical.ProductAliasView;
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.ProductView;
 import com.goldys.platform.canonical.SaleRecipeLinkIngest;
@@ -22,8 +21,10 @@ import org.springframework.stereotype.Service;
  * <p>The resolution order per link is: (1) keep the existing product id if that product is still
  * present in the current product snapshot (the id fast-path); (2) match the link's stock
  * description directly against a current product's normalized name; (3) match via the manual alias
- * table. If none resolve, the link's product id is cleared ({@code null}) so a stale pointer never
- * survives a re-import.
+ * table (deterministically, via {@link ProductAliasQuery#lookupCanonical}). If none resolve, the
+ * link's existing id is kept: a non-null id is a retirement signal (so the projector reads {@code
+ * OFF_MENU} rather than {@code UNKNOWN}), and a null id simply stays {@code null} (never-matched →
+ * {@code UNKNOWN}).
  */
 @Service
 public class RecipeProductMatcher {
@@ -52,21 +53,18 @@ public class RecipeProductMatcher {
       productByName.put(ProductNameKey.normalize(p.productName()), p.productId());
     }
 
-    // Both sides of the alias pair are already normalized by the alias seeder.
-    Map<String, String> aliasToCanonical = new HashMap<>();
-    for (ProductAliasView a : aliasQuery.all()) {
-      aliasToCanonical.putIfAbsent(a.alias(), a.canonicalName());
-    }
-
     for (SaleRecipeLinkView link : linkQuery.currentLinks()) {
       Integer existing = link.lightspeedProductId();
-      Integer target = (existing != null && currentIds.contains(existing)) ? existing : null;
-      if (target == null) {
+      // A non-null id is a retirement signal: it stays set unless a name/alias re-match resolves
+      // it to a different (still-present) product. Only a null id means "never matched".
+      Integer target = existing;
+      if (existing == null || !currentIds.contains(existing)) {
         String key = ProductNameKey.normalize(link.saleItemStockDescription());
-        target = productByName.get(key);
-        if (target == null) {
-          String canonical = aliasToCanonical.get(key);
-          if (canonical != null) {
+        if (productByName.containsKey(key)) {
+          target = productByName.get(key);
+        } else {
+          String canonical = aliasQuery.lookupCanonical(key).orElse(null);
+          if (canonical != null && productByName.containsKey(canonical)) {
             target = productByName.get(canonical);
           }
         }
