@@ -3,6 +3,8 @@ package com.goldys.platform.connectors.ctb;
 import com.goldys.platform.canonical.CanonicalInvoiceLineEnrichment;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.canonical.EnrichmentResult;
+import com.goldys.platform.canonical.InvoicePdfLinkService;
+import com.goldys.platform.canonical.InvoicePdfLinkSource;
 import com.goldys.platform.ingestion.port.DocumentTextExtractor;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +31,7 @@ public class InvoicePdfEnrichmentService {
   private final CanonicalInvoiceQuery invoiceQuery;
   private final InvoiceIngestFlagService flags;
   private final InvoiceGapRecoveryService gapRecovery;
+  private final InvoicePdfLinkService pdfLinkService;
   private final boolean gapRecoveryEnabled;
 
   public InvoicePdfEnrichmentService(
@@ -38,6 +41,7 @@ public class InvoicePdfEnrichmentService {
       CanonicalInvoiceQuery invoiceQuery,
       InvoiceIngestFlagService flags,
       InvoiceGapRecoveryService gapRecovery,
+      InvoicePdfLinkService pdfLinkService,
       @Value("${app.ctb-invoice-gap-recovery:false}") boolean gapRecoveryEnabled) {
     this.extractor = extractor;
     this.parser = parser;
@@ -45,6 +49,7 @@ public class InvoicePdfEnrichmentService {
     this.invoiceQuery = invoiceQuery;
     this.flags = flags;
     this.gapRecovery = gapRecovery;
+    this.pdfLinkService = pdfLinkService;
     this.gapRecoveryEnabled = gapRecoveryEnabled;
   }
 
@@ -59,6 +64,14 @@ public class InvoicePdfEnrichmentService {
         pdfFilename != null
             ? pdfFilename
             : invoiceQuery.currentPdfFilenameForInvoiceNumber(invoiceNumber).orElse(null);
+    // Link the PDF to its invoice as soon as it resolves, before extraction is judged: the viewer
+    // needs the invoice→PDF pointer even when extraction later fails or parses no usable lines. The
+    // result is reused below so the known-invoice check runs once.
+    boolean known = invoiceQuery.isKnownInvoice(invoiceNumber);
+    if (known) {
+      pdfLinkService.link(
+          invoiceNumber, pdfRawRecordId, pdfFilename, InvoicePdfLinkSource.ENRICHMENT);
+    }
     if (parsed.extractionError() != null) {
       flags.flag(
           InvoiceIngestFlagType.LLM_EXTRACTION_FAILED,
@@ -77,7 +90,7 @@ public class InvoicePdfEnrichmentService {
           (text == null || text.isBlank()) ? "no extractable text" : "no lines parsed");
       return;
     }
-    if (!invoiceQuery.isKnownInvoice(invoiceNumber)) {
+    if (!known) {
       flagUnresolvedInvoice(parsed.invoiceNumber(), pdfFilename);
       return;
     }
