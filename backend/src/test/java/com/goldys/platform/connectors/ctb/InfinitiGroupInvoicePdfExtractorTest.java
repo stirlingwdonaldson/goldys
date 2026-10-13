@@ -24,6 +24,16 @@ class InfinitiGroupInvoicePdfExtractorTest {
   }
 
   @Test
+  void keepsTheGstAndTaxInclusiveColumnsInsteadOfDroppingThem() {
+    PdfExtractedInvoice inv = new InfinitiGroupInvoicePdfExtractor().extract(TEXT);
+    PdfExtractedLine l = inv.lines().get(0);
+    assertThat(l.gstAmount()).isEqualByComparingTo("17.50");
+    assertThat(l.amountIncTax()).isEqualByComparingTo("192.50");
+    assertThat(l.incGst()).isTrue();
+    assertThat(l.taxRate()).isNull();
+  }
+
+  @Test
   void returnsEmptyOnAnotherLayout() {
     assertThat(new InfinitiGroupInvoicePdfExtractor().extract("other").lines()).isEmpty();
   }

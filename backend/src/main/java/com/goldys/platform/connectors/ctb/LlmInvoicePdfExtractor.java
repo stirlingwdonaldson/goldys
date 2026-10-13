@@ -53,7 +53,8 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
           + "{\"invoiceNumber\": string|null, \"lines\": [{\"stockCode\": string|null, "
           + "\"description\": string|null, \"quantity\": number|null, \"uom\": string|null, "
           + "\"unitQuantity\": number|null, \"packSize\": number|null, \"wetAmount\": number|null, "
-          + "\"amountExTax\": number|null}]}\n"
+          + "\"amountExTax\": number|null, \"amountIncTax\": number|null, "
+          + "\"gstAmount\": number|null, \"taxRate\": number|null, \"incGst\": boolean|null}]}\n"
           + "Rules:\n"
           + "- invoiceNumber: the invoice number value printed on the invoice (e.g. 758262), "
           + "never a label such as 'Tax Invoice No'; null if absent.\n"
@@ -67,6 +68,12 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
           + "- packSize: the pack/carton size (e.g. 4 in '4 CTN'), or null.\n"
           + "- wetAmount: the Wine Equalisation Tax amount for the line (liquor only), or null.\n"
           + "- amountExTax: the line total excluding tax, or null if the text does not state it.\n"
+          + "- amountIncTax: the line total including tax, or null if the text does not state it.\n"
+          + "- gstAmount: the line's GST amount, or null if the text does not state it.\n"
+          + "- taxRate: the tax percentage applied to the line (e.g. 10 for \"10%\"), or null if "
+          + "not stated.\n"
+          + "- incGst: true when the line's price includes GST, false when it does not, null when "
+          + "not stated.\n"
           + "Never invent a value. When a field is not present in the text, emit null for it.";
 
   private static final Clock CLOCK = Clock.systemUTC();

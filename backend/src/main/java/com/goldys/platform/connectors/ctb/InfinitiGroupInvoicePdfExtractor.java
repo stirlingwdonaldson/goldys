@@ -13,8 +13,9 @@ import org.springframework.stereotype.Component;
  * text line per line item. Each row is stock code, free-text description, unit, QTY, Sup, B/O, then
  * four money columns ({@code Each Ex}, {@code Total Ex Tax}, {@code GST}, {@code Total Inc}).
  * {@code amountExTax} is populated from the second money column ({@code Total Ex Tax}) — the value
- * the CTB CSV export omits for this supplier. Returns an empty invoice on any other layout so the
- * hybrid extractor falls through (spec §6).
+ * the CTB CSV export omits for this supplier — and {@code gstAmount}/{@code amountIncTax} from the
+ * third and fourth (GST, Total Inc), which would otherwise be dropped. Returns an empty invoice on
+ * any other layout so the hybrid extractor falls through (spec §6).
  *
  * <p>This layout is one text row per item, so it deliberately does not extend {@link
  * LinearizedColumnPdfExtractor}, which assumes a fixed multi-line block per line item.
@@ -74,6 +75,8 @@ public class InfinitiGroupInvoicePdfExtractor implements DeterministicPdfExtract
     if (quantity == null || amountExTax == null) {
       return null;
     }
+    // The third and fourth money columns are the line's GST and tax-inclusive total; keep them
+    // rather than dropping the tax treatment the PDF prints. The layout has no explicit rate.
     return new PdfExtractedLine(
         m.group(1).trim(),
         m.group(2).trim(),
@@ -82,7 +85,11 @@ public class InfinitiGroupInvoicePdfExtractor implements DeterministicPdfExtract
         null,
         null,
         null,
-        amountExTax);
+        amountExTax,
+        money(m.group(10)),
+        money(m.group(9)),
+        null,
+        true);
   }
 
   private static BigDecimal number(String s) {
