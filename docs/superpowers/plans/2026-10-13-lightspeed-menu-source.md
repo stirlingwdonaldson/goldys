@@ -30,6 +30,7 @@ The failure modes below are implied by the spec but not exercised by any task's 
 3. **A product present but `is_modifier = true` or zero `sell_price_inc_tax`** — not sellable, so a recipe linked to it must *not* read `ON_MENU` (Task 2/6).
 4. **Snapshot versioning — "close absent":** a product present in snapshot 1 but absent from snapshot 2 must be superseded (closed), and its recipe reads `OFF_MENU` after the rebuild; history is retained, nothing deleted (Task 2).
 5. **Idempotent re-ingest of the *same* CSV** — no spurious supersession or duplicate current rows (Task 2/5).
+6. **CTB re-pull must not wipe a resolved product id** — re-recording a link with unchanged CTB facts (via the periodic `CtbConnector`) must preserve `lightspeed_product_id`; `sameFact` ignores the enrichment and `record` carries it forward (Task 4).
 
 ---
 
@@ -262,10 +263,10 @@ Expected: FAIL.
 - [ ] **Step 3: Implement**
 
   - `SaleRecipeLinkInput` gains trailing `Integer lightspeedProductId` (before `rawRecordId`, keep existing field order otherwise).
-  - `CanonicalSaleRecipeLink` gains `lightspeed_product_id` column/field, in `create(...)`, `sameFact(...)`, and a `lightspeedProductId()` getter.
+  - `CanonicalSaleRecipeLink` gains `lightspeed_product_id` column/field and a `lightspeedProductId()` getter. **`sameFact(...)` does NOT compare `lightspeedProductId`** — it is a derived enrichment, not a CTB source fact. When `record` supersedes a changed CTB fact, the successor must carry forward the existing row's `lightspeedProductId` (unless the input explicitly sets one), so a CTB re-pull never wipes the resolved id.
   - `SaleRecipeLinkView` gains `int saleItemRecipeId` and `Integer lightspeedProductId` (and `CanonicalSaleRecipeLinkQuery.toView` populates them).
   - `CanonicalSaleRecipeLinkRepository` gains `lockCurrentBySaleItemRecipeId(int saleItemRecipeId)` (pessimistic write on `sale_item_recipe_id` + `sourceSystem` + `supersededAt is null`).
-  - `CanonicalSaleRecipeLinkService.setProductId(int saleItemRecipeId, Integer productId)`: `@Transactional`; lock the current link; if absent, no-op; if `lightspeedProductId` already equals `productId`, no-op (idempotent); else `supersede(now)`, save, then insert a successor copying *all* fact fields and `logical_entity_id`/`raw_record_id` from the existing row but with the new `lightspeedProductId`; publish `SaleRecipeLinkRecorded`.
+  - `CanonicalSaleRecipeLinkService.setProductId(int saleItemRecipeId, Integer productId)`: `@Transactional`; lock the current link; if absent, no-op; if `lightspeedProductId` already equals `productId`, no-op (idempotent); else `supersede(now)`, save, then insert a successor copying *all CTB fact fields* and `logical_entity_id`/`raw_record_id` from the existing row but with the new `lightspeedProductId`; publish `SaleRecipeLinkRecorded`.
   - `SaleRecipeLinkIngest.setProductId(...)` delegates to the service (public facade).
 
 - [ ] **Step 4: Run the test class + full fast lane**
