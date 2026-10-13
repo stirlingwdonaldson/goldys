@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table/data-table";
+import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { currencyColumn, dateColumn } from "@/components/data-table/columns";
 import { StatCard } from "@/components/data-display/stat-card";
@@ -17,8 +18,6 @@ import type { DeletedSaleRow } from "@/lib/api/types";
 import { formatCurrency, formatNumber, toNumber } from "@/lib/format";
 import { useApiData } from "@/lib/use-api-data";
 import { buildDeletedSalesTrend } from "./deleted-sales-trend";
-
-const PAGE_SIZE = 50;
 
 interface DeletedOrdersTabProps {
   from: string;
@@ -85,47 +84,21 @@ function deletedOrderColumns(
   ];
 }
 
-/** Server-side pager over the deleted-sales `DataPage`, mirroring the payments tab's. */
-function Pager({ page, total, onPage }: { page: number; total: number; onPage: (p: number) => void }) {
-  const hasPrev = page > 0;
-  const hasNext = (page + 1) * PAGE_SIZE < total;
-  if (!hasPrev && !hasNext) return null;
-  return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Button variant="outline" size="sm" disabled={!hasPrev} onClick={() => onPage(page - 1)}>
-        Previous
-      </Button>
-      <span>
-        {total > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, total)}` : "0"} of{" "}
-        {total}
-      </span>
-      <Button variant="outline" size="sm" disabled={!hasNext} onClick={() => onPage(page + 1)}>
-        Next
-      </Button>
-    </div>
-  );
-}
-
 /**
  * The Deleted orders tab: the resolved deleted-order trend over time, then the canonical
  * deleted orders behind it. The chart reads `getDeletedSaleTotals`; the table pages
  * `listDeletedSales` server-side, always scoped by the shared date range.
  */
 export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedOrdersTabProps) {
-  const [page, setPage] = useState(0);
+  const { page, setPage, pageSize, setPageSize } = usePageState(`${from}|${to}`);
 
   const totals = useApiData((api) => api.getDeletedSaleTotals(from, to), [from, to], apiOverride);
   const rows = useApiData(
-    (api) => api.listDeletedSales({ from, to }, page, PAGE_SIZE),
-    [from, to, page],
+    (api) => api.listDeletedSales({ from, to }, page, pageSize),
+    [from, to, page, pageSize],
     apiOverride,
   );
 
-  // A new date range starts a new result set; without this the old page index would
-  // point past the new total and show an empty table.
-  useEffect(() => {
-    setPage(0);
-  }, [from, to]);
 
   const columns = useMemo(() => deletedOrderColumns(onViewSale), [onViewSale]);
 
@@ -201,7 +174,15 @@ export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedO
           />
         ) : null}
 
-        {rows.data ? <Pager page={page} total={rows.data.total} onPage={setPage} /> : null}
+        {rows.data ? (
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            total={rows.data.total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        ) : null}
       </div>
     </div>
   );
