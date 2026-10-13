@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDay, formatNumber } from "@/lib/format";
 import type { InvoiceSummary, LineGraphNode } from "@/lib/api/types";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 25;
 
 const columns: ColumnDef<InvoiceSummary>[] = [
   {
