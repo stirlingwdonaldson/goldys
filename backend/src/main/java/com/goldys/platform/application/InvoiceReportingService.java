@@ -124,7 +124,9 @@ public class InvoiceReportingService {
   }
 
   private static boolean inRange(LocalDate date, LocalDate from, LocalDate to) {
-    return date != null && !date.isBefore(from) && !date.isAfter(to);
+    return date != null
+        && (from == null || !date.isBefore(from))
+        && (to == null || !date.isAfter(to));
   }
 
   /** One current invoice header row for the list endpoint. */

@@ -37,8 +37,10 @@ public class InvoiceController {
   @GetMapping
   DataPage<InvoiceReportingService.InvoiceSummary> list(
       @RequestParam(required = false) String supplier,
-      @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-      @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @RequestParam(value = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate from,
+      @RequestParam(value = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate to,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size,
       @AuthenticationPrincipal AccountUserDetails user) {

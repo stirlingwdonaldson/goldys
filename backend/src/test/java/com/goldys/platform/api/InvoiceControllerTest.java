@@ -73,6 +73,17 @@ class InvoiceControllerTest {
   }
 
   @Test
+  void listWithoutDateParamsSucceeds() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(reporting.list(any(), any(), any(), any(), anyInt(), anyInt()))
+        .thenReturn(new DataPage<>(List.of(), 0, 0, 50));
+
+    mvc.perform(get("/api/invoices").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(0));
+  }
+
+  @Test
   void detailReturnsTheInvoice() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(reporting.detail(any(), any()))

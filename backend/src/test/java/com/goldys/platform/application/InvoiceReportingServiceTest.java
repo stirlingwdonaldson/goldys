@@ -81,6 +81,25 @@ class InvoiceReportingServiceTest {
   }
 
   @Test
+  void listWithoutDateBoundsReturnsAllInvoices() {
+    when(invoices.currentInvoices())
+        .thenReturn(
+            List.of(
+                invoice("A. Foods", "INV-1", "2026-09-01", "10.00"),
+                invoice("A. Foods", "INV-2", "2026-08-01", "20.00"),
+                invoice("B. Foods", "INV-3", "2026-10-01", "30.00")));
+    when(pdfLinks.linkedInvoiceNumbers()).thenReturn(Set.of());
+
+    DataPage<InvoiceReportingService.InvoiceSummary> page =
+        service.list(role(), null, null, null, 0, 200);
+
+    assertThat(page.total()).isEqualTo(3);
+    assertThat(page.items())
+        .extracting(InvoiceReportingService.InvoiceSummary::invoiceNumber)
+        .containsExactly("INV-3", "INV-1", "INV-2");
+  }
+
+  @Test
   void listPaginatesInMemory() {
     when(invoices.currentInvoices())
         .thenReturn(
