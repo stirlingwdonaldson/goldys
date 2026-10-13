@@ -41,13 +41,25 @@ import type {
   SavedDashboardSummary,
 } from "./types";
 
+/** A `?from=…&to=…` suffix, or "" when both bounds are absent. */
+function dateRangeQuery(from?: string, to?: string): string {
+  const q = new URLSearchParams();
+  if (from) q.set("from", from);
+  if (to) q.set("to", to);
+  const qs = q.toString();
+  return qs ? `?${qs}` : "";
+}
+
 /** Real backend calls. The demo fixtures stay behind the `demo` flag; these hit the live endpoints. */
 export const liveApi: Api = {
   getDashboardBootstrap: () => fetchApi<DashboardBootstrap>("/api/dashboard/bootstrap"),
   getDashboardSummary: () => fetchApi<DashboardSummary>("/api/dashboard/summary"),
-  getDashboardActivity: () => fetchApi<ActivityPoint[]>("/api/dashboard/activity"),
-  listReconciliationExceptions: () =>
-    fetchApi<ReconciliationException[]>("/api/reconciliation/exceptions"),
+  getDashboardActivity: (from?: string, to?: string) =>
+    fetchApi<ActivityPoint[]>(`/api/dashboard/activity${dateRangeQuery(from, to)}`),
+  listReconciliationExceptions: (page: number, size: number) =>
+    fetchApi<import("./types").DataPage<ReconciliationException>>(
+      `/api/reconciliation/exceptions?page=${page}&size=${size}`,
+    ),
   getReconciliationRecord: (id: string) =>
     fetchApi<ReconciliationRecord>(`/api/reconciliation/records/${id}`),
   getProductRecord: (date: string, product: string) =>
@@ -88,8 +100,10 @@ export const liveApi: Api = {
       { responseType: "void" },
     ),
   watchOpenTableSession: (handlers: OpenTableSessionHandlers) => watchOpenTableStream(handlers),
-  listProductExceptions: () =>
-    fetchApi<ReconciliationException[]>("/api/reconciliation/products/exceptions"),
+  listProductExceptions: (page: number, size: number) =>
+    fetchApi<import("./types").DataPage<ReconciliationException>>(
+      `/api/reconciliation/products/exceptions?page=${page}&size=${size}`,
+    ),
   saveOverride: (input: SaveOverrideInput) =>
     fetchApi(`/api/reconciliation/records/${input.recordId}/override`, {
       method: "POST",
@@ -113,10 +127,19 @@ export const liveApi: Api = {
     fetchApi<void>(`/api/reconciliation/rules/${id}`, { method: "DELETE" }, { responseType: "void" }),
   getRecomputeStatus: () => fetchApi<RecomputeStatus>("/api/reconciliation/recompute/status"),
   listRuleAudit: () => fetchApi<RuleAuditEntry[]>("/api/reconciliation/rules/audit"),
-  listReconciliationAudit: () =>
-    fetchApi<ReconciliationAuditEntry[]>("/api/reconciliation/audit"),
+  listReconciliationAudit: (page: number, size: number) =>
+    fetchApi<import("./types").DataPage<ReconciliationAuditEntry>>(
+      `/api/reconciliation/audit?page=${page}&size=${size}`,
+    ),
   listProducts: () => fetchApi<string[]>("/api/reconciliation/products"),
-  listDailySales: () => fetchApi<import("./types").DailySales[]>("/api/sales/daily"),
+  listDailySales: (filter: import("./types").SalesFilter, page: number, size: number) => {
+    const q = new URLSearchParams({ page: String(page), size: String(size) });
+    if (filter.from) q.set("from", filter.from);
+    if (filter.to) q.set("to", filter.to);
+    return fetchApi<import("./types").DataPage<import("./types").DailySales>>(
+      `/api/sales/daily?${q.toString()}`,
+    );
+  },
   getLatestSales: () => fetchApi<import("./types").LatestSales>("/api/sales/latest"),
   getReservationSummary: (date: string) =>
     fetchApi<import("./types").ReservationSummary>(
@@ -150,9 +173,26 @@ export const liveApi: Api = {
     fetchApi<import("./types").InvoiceDetail>(`/api/invoices/${encodeURIComponent(invoiceNumber)}`),
   listInvoiceFlags: () => fetchApi<import("./types").InvoiceIngestFlag[]>("/api/inventory/flags"),
   getPlatformMap: () => fetchApi<import("./types").NetworkGraphDto>("/api/platform-map"),
-  getTopSellers: () => fetchApi<import("./types").TopSeller[]>("/api/dashboard/top-sellers"),
-  getSalesTrend: () =>
-    fetchApi<import("./types").SalesTrendPoint[]>("/api/dashboard/sales-trend"),
+  getTopSellers: (from?: string, to?: string, limit?: number) => {
+    const q = new URLSearchParams();
+    if (from) q.set("from", from);
+    if (to) q.set("to", to);
+    if (limit != null) q.set("limit", String(limit));
+    const qs = q.toString();
+    return fetchApi<import("./types").TopSeller[]>(
+      `/api/dashboard/top-sellers${qs ? `?${qs}` : ""}`,
+    );
+  },
+  getSalesTrend: (from?: string, to?: string) =>
+    fetchApi<import("./types").SalesTrendPoint[]>(
+      `/api/dashboard/sales-trend${dateRangeQuery(from, to)}`,
+    ),
+  queryMetrics: (query: import("./types").MetricQuery) =>
+    fetchApi<import("./types").MetricResult>("/api/metrics/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(query),
+    }),
   listDashboards: () => fetchApi<SavedDashboardSummary[]>("/api/dashboards"),
   getDashboard: (id: string) => fetchApi<DashboardDocument>(`/api/dashboards/${id}`),
   saveDashboard: (input: SaveDashboardInput) =>

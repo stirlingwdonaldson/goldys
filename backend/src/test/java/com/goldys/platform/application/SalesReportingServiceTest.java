@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.auth.AccessDeniedException;
@@ -68,10 +69,25 @@ class SalesReportingServiceTest {
                 new DailySalesView(
                     "CTB", SEP_13, new BigDecimal("100"), null, null, Instant.EPOCH)));
 
-    var rows = service.dailySales(OWNER);
+    var page = service.dailySales(OWNER, null, null, 0, 50);
 
-    assertThat(rows).hasSize(1);
-    assertThat(rows.get(0).source()).isEqualTo("CTB");
+    assertThat(page.items()).hasSize(1);
+    assertThat(page.total()).isEqualTo(1);
+    assertThat(page.items().get(0).source()).isEqualTo("CTB");
+  }
+
+  @Test
+  void dailySalesDelegatesToTheRangeQueryWhenBounded() {
+    when(dailySales.currentDailySalesBetween(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new DailySalesView(
+                    "CTB", SEP_13, new BigDecimal("100"), null, null, Instant.EPOCH)));
+
+    var page = service.dailySales(OWNER, SEP_13, SEP_13, 0, 50);
+
+    assertThat(page.items()).hasSize(1);
+    verify(dailySales).currentDailySalesBetween(SEP_13, SEP_13);
   }
 
   @Test

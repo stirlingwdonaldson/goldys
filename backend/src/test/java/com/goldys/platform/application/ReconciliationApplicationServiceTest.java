@@ -63,7 +63,7 @@ class ReconciliationApplicationServiceTest {
         .when(permissions)
         .require(any(), any(), any());
 
-    assertThatThrownBy(() -> service.listDailyExceptions(OWNER))
+    assertThatThrownBy(() -> service.listDailyExceptions(OWNER, 0, 50))
         .isInstanceOf(AccessDeniedException.class);
   }
 
@@ -101,16 +101,17 @@ class ReconciliationApplicationServiceTest {
                 new OverrideAuditService.OverrideAuditEntry(
                     "daily_sales", "daily_sales", "CTB", null, "a@b.com", older, newer)));
 
-    var entries = service.audit(OWNER);
+    var page = service.audit(OWNER, 0, 50);
 
-    assertThat(entries).hasSize(3);
-    assertThat(entries.get(0))
+    assertThat(page.items()).hasSize(3);
+    assertThat(page.total()).isEqualTo(3);
+    assertThat(page.items().get(0))
         .extracting(e -> e.kind(), e -> e.change())
         .containsExactly("override", "set");
-    assertThat(entries.get(1))
+    assertThat(page.items().get(1))
         .extracting(e -> e.kind(), e -> e.change())
         .containsExactly("override", "removed");
-    assertThat(entries.get(2))
+    assertThat(page.items().get(2))
         .extracting(e -> e.kind(), e -> e.change())
         .containsExactly("rule", "created");
   }
@@ -121,6 +122,6 @@ class ReconciliationApplicationServiceTest {
         .when(permissions)
         .require(any(), any(), any());
 
-    assertThatThrownBy(() -> service.audit(OWNER)).isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> service.audit(OWNER, 0, 50)).isInstanceOf(AccessDeniedException.class);
   }
 }

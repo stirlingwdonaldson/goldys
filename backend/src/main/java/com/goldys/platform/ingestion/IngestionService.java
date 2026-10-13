@@ -305,25 +305,33 @@ public class IngestionService {
     if (days < 1) {
       return List.of();
     }
-    Instant now = CLOCK.instant();
-    LocalDate firstDay = now.atZone(ZoneOffset.UTC).toLocalDate().minusDays(days - 1L);
-    Instant windowStart = firstDay.atStartOfDay(ZoneOffset.UTC).toInstant();
-    return activityWindow(runRepository.findByStartedAtGreaterThanEqual(windowStart), now, days);
+    LocalDate today = CLOCK.instant().atZone(ZoneOffset.UTC).toLocalDate();
+    return activity(today.minusDays(days - 1L), today);
   }
 
   /**
-   * Bucket completed runs into UTC days over the trailing {@code days} days ending at {@code now},
-   * counting {@code SUCCESS}/{@code NO_NEW_DATA} as clean and {@code FAILED}/{@code PARTIAL} as
-   * failed. Dangling {@code RUNNING} rows and runs outside the window are ignored.
+   * Daily connector-run activity over the inclusive {@code from}–{@code to} range, oldest first.
+   * Same zero-filling as {@link #activity(int)} but with an explicit window instead of a trailing
+   * day count.
+   */
+  public List<IngestionActivityPoint> activity(LocalDate from, LocalDate to) {
+    if (from.isAfter(to)) {
+      return List.of();
+    }
+    Instant windowStart = from.atStartOfDay(ZoneOffset.UTC).toInstant();
+    return activityWindow(runRepository.findByStartedAtGreaterThanEqual(windowStart), from, to);
+  }
+
+  /**
+   * Bucket completed runs into UTC days over the inclusive {@code from}–{@code to} range, counting
+   * {@code SUCCESS}/{@code NO_NEW_DATA} as clean and {@code FAILED}/{@code PARTIAL} as failed.
+   * Dangling {@code RUNNING} rows and runs outside the window are ignored.
    */
   static List<IngestionActivityPoint> activityWindow(
-      List<IngestionRun> runs, Instant now, int days) {
-    LocalDate today = now.atZone(ZoneOffset.UTC).toLocalDate();
-    LocalDate firstDay = today.minusDays(days - 1L);
-
+      List<IngestionRun> runs, LocalDate from, LocalDate to) {
     Map<LocalDate, int[]> buckets = new LinkedHashMap<>();
-    for (int i = 0; i < days; i++) {
-      buckets.put(firstDay.plusDays(i), new int[2]); // [clean, failed]
+    for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
+      buckets.put(d, new int[2]); // [clean, failed]
     }
 
     for (IngestionRun run : runs) {

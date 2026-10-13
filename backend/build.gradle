@@ -120,6 +120,7 @@ tasks.register('fastTest', Test) {
 			'LightspeedIngestControllerTest',
 			'LiveLlmEvalTest',
 			'LlmInvoicePdfExtractorEvalTest',
+			'MetricQueryControllerTest',
 			'PlatformMapControllerTest',
 			'ProvenanceControllerTest',
 			'RecipeControllerTest',

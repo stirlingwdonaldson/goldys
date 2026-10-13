@@ -1,6 +1,7 @@
 package com.goldys.platform.api;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -18,6 +19,7 @@ import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
+import com.goldys.platform.semantic.DataPage;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -42,24 +44,30 @@ class ReconciliationControllerTest {
   @Test
   void exceptionsReturnsTheConflict() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(reconciliation.listDailyExceptions(any()))
+    when(reconciliation.listDailyExceptions(any(), anyInt(), anyInt()))
         .thenReturn(
-            List.of(
-                new ReconciliationApplicationService.DailyException(
-                    "2026-09-13:daily_sales",
-                    "2026-09-13",
-                    "2026-09-13",
-                    "daily_sales",
-                    List.of(
-                        new ReconciliationApplicationService.SourceValue("LIGHTSPEED", "27650.66"),
-                        new ReconciliationApplicationService.SourceValue("CTB", "20990.83")),
-                    "conflict")));
+            new DataPage<>(
+                List.of(
+                    new ReconciliationApplicationService.DailyException(
+                        "2026-09-13:daily_sales",
+                        "2026-09-13",
+                        "2026-09-13",
+                        "daily_sales",
+                        List.of(
+                            new ReconciliationApplicationService.SourceValue(
+                                "LIGHTSPEED", "27650.66"),
+                            new ReconciliationApplicationService.SourceValue("CTB", "20990.83")),
+                        "conflict")),
+                1,
+                0,
+                50));
 
     mvc.perform(get("/api/reconciliation/exceptions").with(authenticated(owner())))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].recordId").value("2026-09-13"))
-        .andExpect(jsonPath("$[0].status").value("conflict"))
-        .andExpect(jsonPath("$[0].sources[0].source").value("LIGHTSPEED"));
+        .andExpect(jsonPath("$.items[0].recordId").value("2026-09-13"))
+        .andExpect(jsonPath("$.items[0].status").value("conflict"))
+        .andExpect(jsonPath("$.items[0].sources[0].source").value("LIGHTSPEED"))
+        .andExpect(jsonPath("$.total").value(1));
   }
 
   @Test
@@ -67,7 +75,7 @@ class ReconciliationControllerTest {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     doThrow(AccessDeniedException.forResource("reconciliation.sales"))
         .when(reconciliation)
-        .listDailyExceptions(any());
+        .listDailyExceptions(any(), anyInt(), anyInt());
 
     mvc.perform(get("/api/reconciliation/exceptions").with(authenticated(owner())))
         .andExpect(status().isForbidden())
@@ -112,26 +120,31 @@ class ReconciliationControllerTest {
   @Test
   void productExceptionsReturnsTheConflict() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(reconciliation.listProductExceptions(any()))
+    when(reconciliation.listProductExceptions(any(), anyInt(), anyInt()))
         .thenReturn(
-            List.of(
-                new ReconciliationApplicationService.ProductException(
-                    "2026-09-14:garlic aioli",
-                    "garlic aioli",
-                    "garlic aioli",
-                    "garlic aioli",
-                    List.of(
-                        new ReconciliationApplicationService.SourceValue(
-                            "LIGHTSPEED", "150 × $380.88"),
-                        new ReconciliationApplicationService.SourceValue("CTB", "127 × $322.46")),
-                    "conflict")));
+            new DataPage<>(
+                List.of(
+                    new ReconciliationApplicationService.ProductException(
+                        "2026-09-14:garlic aioli",
+                        "garlic aioli",
+                        "garlic aioli",
+                        "garlic aioli",
+                        List.of(
+                            new ReconciliationApplicationService.SourceValue(
+                                "LIGHTSPEED", "150 × $380.88"),
+                            new ReconciliationApplicationService.SourceValue(
+                                "CTB", "127 × $322.46")),
+                        "conflict")),
+                1,
+                0,
+                50));
 
     mvc.perform(get("/api/reconciliation/products/exceptions").with(authenticated(owner())))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].field").value("garlic aioli"))
-        .andExpect(jsonPath("$[0].status").value("conflict"))
-        .andExpect(jsonPath("$[0].sources[0].source").value("LIGHTSPEED"))
-        .andExpect(jsonPath("$[0].sources[0].value").value("150 × $380.88"));
+        .andExpect(jsonPath("$.items[0].field").value("garlic aioli"))
+        .andExpect(jsonPath("$.items[0].status").value("conflict"))
+        .andExpect(jsonPath("$.items[0].sources[0].source").value("LIGHTSPEED"))
+        .andExpect(jsonPath("$.items[0].sources[0].value").value("150 × $380.88"));
   }
 
   @Test
@@ -149,34 +162,39 @@ class ReconciliationControllerTest {
   @Test
   void auditReturnsRuleAndOverrideHistory() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(reconciliation.audit(any()))
+    when(reconciliation.audit(any(), anyInt(), anyInt()))
         .thenReturn(
-            List.of(
-                new ReconciliationApplicationService.AuditEntry(
-                    "rule",
-                    "created",
-                    "daily_sales",
-                    "daily_sales",
-                    null,
-                    null,
-                    "a@b.com",
-                    java.time.Instant.parse("2026-09-13T09:00:00Z")),
-                new ReconciliationApplicationService.AuditEntry(
-                    "override",
-                    "set",
-                    "daily_sales",
-                    "daily_sales",
-                    "LIGHTSPEED",
-                    "typo",
-                    "a@b.com",
-                    java.time.Instant.parse("2026-09-14T09:00:00Z"))));
+            new DataPage<>(
+                List.of(
+                    new ReconciliationApplicationService.AuditEntry(
+                        "rule",
+                        "created",
+                        "daily_sales",
+                        "daily_sales",
+                        null,
+                        null,
+                        "a@b.com",
+                        java.time.Instant.parse("2026-09-13T09:00:00Z")),
+                    new ReconciliationApplicationService.AuditEntry(
+                        "override",
+                        "set",
+                        "daily_sales",
+                        "daily_sales",
+                        "LIGHTSPEED",
+                        "typo",
+                        "a@b.com",
+                        java.time.Instant.parse("2026-09-14T09:00:00Z"))),
+                2,
+                0,
+                50));
 
     mvc.perform(get("/api/reconciliation/audit").with(authenticated(owner())))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].kind").value("rule"))
-        .andExpect(jsonPath("$[0].change").value("created"))
-        .andExpect(jsonPath("$[1].kind").value("override"))
-        .andExpect(jsonPath("$[1].source").value("LIGHTSPEED"));
+        .andExpect(jsonPath("$.items[0].kind").value("rule"))
+        .andExpect(jsonPath("$.items[0].change").value("created"))
+        .andExpect(jsonPath("$.items[1].kind").value("override"))
+        .andExpect(jsonPath("$.items[1].source").value("LIGHTSPEED"))
+        .andExpect(jsonPath("$.total").value(2));
   }
 
   private static AccountUserDetails owner() {

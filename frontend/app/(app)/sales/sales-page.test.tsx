@@ -10,10 +10,15 @@ vi.mock("@/lib/use-api-data", () => ({
     const src = String(fetcher);
     if (src.includes("listDailySales")) {
       return {
-        data: [
-          { date: "2026-10-05", source: "CTB", totalSales: 12000, gst: 1000, net: 11000 },
-          { date: "2026-10-05", source: "Lightspeed", totalSales: 8000, gst: 700, net: 7300 },
-        ],
+        data: {
+          items: [
+            { date: "2026-10-05", source: "CTB", totalSales: 12000, gst: 1000, net: 11000 },
+            { date: "2026-10-05", source: "Lightspeed", totalSales: 8000, gst: 700, net: 7300 },
+          ],
+          total: 2,
+          page: 0,
+          size: 10,
+        },
         loading: false,
         error: null,
         reload: async () => {},

@@ -74,7 +74,7 @@ class DashboardControllerTest {
   @Test
   void activityReturnsDailySeries() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(dashboard.activity(any()))
+    when(dashboard.activity(any(), any(), any()))
         .thenReturn(
             List.of(
                 new DashboardApplicationService.ActivityPoint("2026-09-21", 5, 0),
@@ -94,7 +94,7 @@ class DashboardControllerTest {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     doThrow(AccessDeniedException.forResource("reconciliation.sales"))
         .when(dashboard)
-        .activity(any());
+        .activity(any(), any(), any());
 
     mvc.perform(get("/api/dashboard/activity").with(authenticated(owner())))
         .andExpect(status().isForbidden())
@@ -104,7 +104,7 @@ class DashboardControllerTest {
   @Test
   void topSellersDelegatesToApplicationService() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(dashboard.topSellers(any()))
+    when(dashboard.topSellers(any(), any(), any(), any()))
         .thenReturn(
             List.of(
                 new DashboardApplicationService.TopSeller(
