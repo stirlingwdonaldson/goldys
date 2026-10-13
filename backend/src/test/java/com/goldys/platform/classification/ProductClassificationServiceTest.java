@@ -16,6 +16,7 @@ import com.goldys.platform.semantic.ClassificationRunView;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -368,6 +369,48 @@ class ProductClassificationServiceTest {
   }
 
   @Test
+  void execute_records_finished_at_after_work_completes() {
+    when(productSales.distinctProductNameKeys()).thenReturn(List.of("beef burger"));
+    when(saleItems.currentSaleItemIdentities()).thenReturn(List.of());
+    when(recipeLinks.currentLinks()).thenReturn(List.of());
+
+    ProductCategory category = ProductCategory.create("Mains", "Food", 0, "Main courses");
+    when(categories.findAllByOrderByGroupNameAscDisplayOrderAscNameAsc())
+        .thenReturn(List.of(category));
+
+    // The classification work itself takes time: the classifier advances the clock while it runs,
+    // so finished_at must be read *after* the work, not at the top of execute().
+    MutableClock clock = new MutableClock(NOW);
+    ProductClassifier classifier =
+        req -> {
+          clock.advanceTo(NOW.plusSeconds(90));
+          return new ProductClassification(
+              category.id(), Map.of(category.id(), new BigDecimal("0.9")), new BigDecimal("0.9"));
+        };
+    ProductClassificationService svc =
+        new ProductClassificationService(
+            extractor,
+            categories,
+            assignments,
+            runs,
+            clusters,
+            projections,
+            new FakeEmbeddingClient(),
+            classifier,
+            new EmbeddingProperties(true, "http://localhost:8002"),
+            new JevProperties(true, "https://api.typesafe.ai", ""),
+            executor,
+            clock);
+
+    svc.runAssignment();
+    ClassificationRun run = runStore.values().iterator().next();
+    svc.execute(run.id());
+
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.SUCCEEDED);
+    assertThat(run.finishedAt()).isEqualTo(NOW.plusSeconds(90));
+  }
+
+  @Test
   void listRuns_maps_most_recent_first() {
     ClassificationRun older =
         ClassificationRun.create(ClassificationRunKind.CLUSTER, NOW.minusSeconds(60));
@@ -413,6 +456,34 @@ class ProductClassificationServiceTest {
     assertThat(run.status()).isEqualTo(ClassificationRunStatus.FAILED);
     assertThat(run.errorMessage()).isEqualTo("service restarted before completion");
     assertThat(run.finishedAt()).isEqualTo(NOW);
+  }
+
+  /** A clock whose instant can be moved forward mid-test, to simulate the passage of wall time. */
+  private static final class MutableClock extends Clock {
+    private Instant now;
+
+    MutableClock(Instant start) {
+      this.now = start;
+    }
+
+    void advanceTo(Instant instant) {
+      this.now = instant;
+    }
+
+    @Override
+    public Instant instant() {
+      return now;
+    }
+
+    @Override
+    public ZoneId getZone() {
+      return ZoneOffset.UTC;
+    }
+
+    @Override
+    public Clock withZone(ZoneId zone) {
+      return this;
+    }
   }
 
   /** A fake classifier that records each request it sees and delegates to a handler. */

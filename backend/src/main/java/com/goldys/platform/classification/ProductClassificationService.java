@@ -134,7 +134,6 @@ public class ProductClassificationService {
     run.markRunning();
     runs.save(run);
 
-    Instant now = clock.instant();
     try {
       requireEnabled(run.kind());
       int productCount =
@@ -147,9 +146,9 @@ public class ProductClassificationService {
               yield count;
             }
           };
-      run.markSucceeded(productCount, now);
+      run.markSucceeded(productCount, clock.instant());
     } catch (RuntimeException e) {
-      run.markFailed(failureMessage(e), now);
+      run.markFailed(failureMessage(e), clock.instant());
     }
     runs.save(run);
   }
