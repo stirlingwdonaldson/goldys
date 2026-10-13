@@ -42,3 +42,41 @@ export function sourceIdentity(source: string): SourceIdentity {
     .join("");
   return { label: source, initials: initials || "?", className: "bg-muted text-muted-foreground" };
 }
+
+/**
+ * Display name for a connector tile. Most sources have one connector and read the
+ * registry label; OpenTable has several exports (the four datasets share the OPENTABLE
+ * source), so each gets a distinct name.
+ */
+export function connectorDisplayName(source: string, connectorName: string): string {
+  if (source.toUpperCase() !== "OPENTABLE") return sourceIdentity(source).label;
+  switch (connectorName) {
+    case "opentable-reservations":
+      return "OpenTable reservations";
+    case "opentable-reviews":
+      return "OpenTable reviews";
+    case "opentable-menu-items":
+      return "OpenTable menu";
+    case "opentable-csv-drop":
+      return "OpenTable legacy CSV";
+    default:
+      return sourceIdentity(source).label;
+  }
+}
+
+/** The connector name when the tile is an upload target, else null (run-only or deprecated). */
+export function uploadTargetFor(connectorName: string): string | null {
+  switch (connectorName) {
+    case "opentable-reservations":
+    case "opentable-reviews":
+    case "opentable-menu-items":
+      return connectorName;
+    default:
+      return null;
+  }
+}
+
+/** True for the deprecated thin 8-column OpenTable CSV drop (raw-only, no upload action). */
+export function isLegacyCsvDrop(connectorName: string): boolean {
+  return connectorName === "opentable-csv-drop";
+}

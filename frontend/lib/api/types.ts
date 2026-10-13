@@ -700,7 +700,8 @@ export interface Api {
   getProductRecord(date: string, product: string): Promise<ReconciliationRecord>;
   listConnectorStatuses(): Promise<ConnectorStatus[]>;
   runConnector(source: string): Promise<ConnectorStatus>;
-  uploadOpenTableCsv(file: File): Promise<void>;
+  /** Uploads a CSV drop for one connector (the OpenTable GuestCenter datasets). */
+  uploadConnectorCsv(connectorName: string, file: File): Promise<void>;
   saveOverride(input: SaveOverrideInput): Promise<OverrideResult>;
   saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult>;
   listResolutionRules(): Promise<ResolutionRule[]>;

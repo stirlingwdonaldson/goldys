@@ -137,8 +137,11 @@ const records: Record<string, ReconciliationRecord> = {
 const connectorStatuses: ConnectorStatus[] = [
   { source: "LIGHTSPEED", connectorName: "lightspeed-scrape", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0, runnable: false },
   { source: "CTB", connectorName: "ctb-export", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1, runnable: true },
+  { source: "OPENTABLE", connectorName: "opentable-csv-drop", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
+  { source: "OPENTABLE", connectorName: "opentable-reservations", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
+  { source: "OPENTABLE", connectorName: "opentable-reviews", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
+  { source: "OPENTABLE", connectorName: "opentable-menu-items", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
   { source: "DEPUTY", connectorName: "deputy-api", lastRunAt: "2026-09-19T22:30:00Z", status: "failed", failureCount: 2, runnable: false },
-  { source: "OPENTABLE", connectorName: "opentable-guestcenter", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
 ];
 
 let productExceptions: ReconciliationException[] = [
@@ -843,14 +846,14 @@ export const demoApi: Api = {
     return existing;
   },
 
-  async uploadOpenTableCsv(_file: File): Promise<void> {
+  async uploadConnectorCsv(connectorName: string, _file: File): Promise<void> {
     void _file; // demo no-op: nothing to upload
     await delay(600);
-    const opentable = connectorStatuses.find((c) => c.source === "OpenTable");
-    if (opentable) {
-      opentable.lastRunAt = new Date().toISOString();
-      opentable.status = "success";
-      opentable.failureCount = 0;
+    const connector = connectorStatuses.find((c) => c.connectorName === connectorName);
+    if (connector) {
+      connector.lastRunAt = new Date().toISOString();
+      connector.status = "success";
+      connector.failureCount = 0;
     }
   },
 
