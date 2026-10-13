@@ -17,7 +17,7 @@ import {
 import { layoutColumns, type FlowDirection } from "./layout";
 import { ColumnHeading } from "./column-heading";
 import { StepNodeView } from "./step-node";
-import type { ColumnGraph, FlowNode, StepNode, StepNodeData } from "./types";
+import type { ColumnGraph, FlowEdge, FlowNode, StepNode, StepNodeData } from "./types";
 
 const nodeTypes: NodeTypes = { step: StepNodeView, columnHeading: ColumnHeading };
 
@@ -40,13 +40,30 @@ export function resolveNodeClick(
   }
 }
 
+/**
+ * Nodes and edges already positioned by one of the `layout.ts` tree layouts
+ * (`layoutTree`, `layoutDendrogram`). Their absolute coordinates are used as-is,
+ * so `fitView` frames the picture — including the negative y of a dendrogram's
+ * merge nodes.
+ */
+export interface LaidOutGraph {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+}
+
+/** Renders nothing; the canvas still draws the dotted background and controls. */
+const EMPTY_GRAPH: ColumnGraph = { columns: [], edges: [] };
+
 interface FlowCanvasProps {
-  graph: ColumnGraph;
+  /** Logical column graph, laid out with `layoutColumns`. Omit when `laidOut` is given. */
+  graph?: ColumnGraph;
   /** Accessible name for the canvas region; the graph itself is decorative to screen readers. */
   ariaLabel: string;
   height?: number;
   /** When set, clicking a node with `data.drill` calls this instead of navigating. */
   onDrill?: (id: string) => void;
+  /** Pre-positioned nodes/edges; takes precedence over `graph`. */
+  laidOut?: LaidOutGraph;
   /** Horizontal space between stages; tighter for wide graphs so they stay readable when fitted. */
   columnGap?: number;
   /** Left-to-right (default) or top-to-bottom. */
@@ -66,9 +83,20 @@ export function FlowCanvas(props: FlowCanvasProps) {
   );
 }
 
-function FlowCanvasInner({ graph, ariaLabel, height = 360, onDrill, columnGap, direction }: FlowCanvasProps) {
+function FlowCanvasInner({
+  graph,
+  ariaLabel,
+  height = 360,
+  onDrill,
+  laidOut,
+  columnGap,
+  direction,
+}: FlowCanvasProps) {
   const router = useRouter();
-  const laid = useMemo(() => layoutColumns(graph, { columnGap, direction }), [graph, columnGap, direction]);
+  const laid = useMemo(
+    () => laidOut ?? layoutColumns(graph ?? EMPTY_GRAPH, { columnGap, direction }),
+    [laidOut, graph, columnGap, direction],
+  );
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(laid.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(laid.edges);
 

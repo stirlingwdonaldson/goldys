@@ -418,7 +418,8 @@ class ConversationalEvalTest {
             ToolId.CREATE_DASHBOARD_DRAFT,
             ToolId.GET_RECONCILIATION_STATUS,
             ToolId.GET_RECIPE_COSTING,
-            ToolId.GET_RECIPE_INGREDIENTS);
+            ToolId.GET_RECIPE_INGREDIENTS,
+            ToolId.GET_SALES_BY_CATEGORY);
 
     for (ToolId id : ToolId.values()) {
       assertThat(id.name()).doesNotContain("SQL", "EXECUTE", "RAW", "QUERY");

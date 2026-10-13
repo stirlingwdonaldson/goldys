@@ -148,6 +148,18 @@ forecasting:
     enabled: ${FORECASTING_TIMESFM_ENABLED:false}
     base-url: ${FORECASTING_TIMESFM_BASE_URL:http://localhost:8001}
 
+# Product categorisation (bound by classification.EmbeddingProperties and
+# classification.JevProperties). Both disabled by default; set
+# CLASSIFICATION_EMBEDDING_ENABLED / CLASSIFICATION_JEV_ENABLED to turn them on.
+classification:
+  embedding:
+    enabled: ${CLASSIFICATION_EMBEDDING_ENABLED:false}
+    base-url: ${CLASSIFICATION_EMBEDDING_BASE_URL:http://localhost:8002}
+  jev:
+    enabled: ${CLASSIFICATION_JEV_ENABLED:false}
+    base-url: ${CLASSIFICATION_JEV_BASE_URL:https://api.typesafe.ai}
+    api-key: ${CLASSIFICATION_JEV_API_KEY:}
+
 # Cooking the Books SFTP drop — the Custom Invoice Export lands here and is polled by the
 # SFTP pull. Disabled by default; set ctb.sftp.enabled=true and provide host/user/password
 # (CTB_SFTP_HOST/USER/PASSWORD) to turn it on. Cron is the venue zone (app.venue.timezone).

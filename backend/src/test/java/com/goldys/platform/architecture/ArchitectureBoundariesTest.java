@@ -10,6 +10,7 @@ import com.goldys.platform.semantic.InventoryMetricsQuery;
 import com.goldys.platform.semantic.InvoiceLineMetricsQuery;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.PaymentMetricsQuery;
+import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import com.goldys.platform.semantic.RecipeIngredientMetricsQuery;
 import com.goldys.platform.semantic.RecipeMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
@@ -437,4 +438,61 @@ class ArchitectureBoundariesTest {
           .orShould()
           .dependOnClassesThat()
           .haveFullyQualifiedName("com.goldys.platform.ingestion.RawLedgerQuery");
+
+  /**
+   * The classification domain is a leaf: it composes {@code canonical} (feature extraction), {@code
+   * semantic} (implements {@code ProductCategoryMetricsQuery} and returns the category DTOs) and
+   * {@code auth} (permission checks) with its own JPA persistence, and reaches nothing else in the
+   * platform — not the API / application delivery layers, nor reporting / conversational /
+   * reconciliation / ingestion / connectors / dashboard / widget / forecasting / config / metrics.
+   */
+  @ArchTest
+  static final ArchRule classificationDoesNotReachHigherPackages =
+      noClasses()
+          .that()
+          .resideInAPackage("..classification..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "..api..",
+              "..application..",
+              "..reporting..",
+              "..conversational..",
+              "..reconciliation..",
+              "..ingestion..",
+              "..connectors..",
+              "..dashboard..",
+              "..widget..",
+              "..forecasting..",
+              "..config..",
+              "..metrics..");
+
+  /** REST delivery reaches the classification domain only through the application service. */
+  @ArchTest
+  static final ArchRule apiDoesNotReachClassification =
+      noClasses()
+          .that()
+          .resideInAPackage("..api..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..classification..");
+
+  /** Reporting tools consume the semantic contracts, never the classification implementation. */
+  @ArchTest
+  static final ArchRule reportingDoesNotReachClassification =
+      noClasses()
+          .that()
+          .resideInAPackage("..reporting..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("..classification..");
+
+  /** The product-category semantic interface is implemented only in the classification package. */
+  @ArchTest
+  static final ArchRule productCategoryMetricsImplementedInClassification =
+      classes()
+          .that()
+          .implement(ProductCategoryMetricsQuery.class)
+          .should()
+          .resideInAPackage("..classification..");
 }

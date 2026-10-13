@@ -4,13 +4,17 @@ import type { WidgetSpec } from "@/components/widgets/types";
 import type {
   ActivityPoint,
   Api,
+  AssignmentRow,
+  CategoryNode,
   ConnectorStatus,
   ConversationMessage,
   ConversationThreadSummary,
   ConversationThreadView,
+  CreateCategoryInput,
   CreateForecastInput,
   DailySales,
   DataPage,
+  DendrogramNode,
   EntityDescriptor,
   ForecastComparison,
   ForecastMetric,
@@ -41,6 +45,7 @@ import type {
   MetricQuery,
   OverrideResult,
   ProductOverrideInput,
+  ProductPoint,
   RecipeCosting,
   RecipeIngredient,
   RecomputeStatus,
@@ -59,6 +64,7 @@ import type {
   SavedWidget,
   TopSeller,
   TrustSummary,
+  UpdateCategoryInput,
   PaymentRow,
   DeletedSaleRow,
   SaleItemRow,
@@ -774,6 +780,41 @@ const demoRecipeIngredients: Record<number, RecipeIngredient[]> = {
     { parentRecipeId: 3, lineRecipeId: 901, lineRecipeName: "Burger Sauce", isSubRecipe: true, recipeDetailId: 302, stockId: 10, stockCode: "MAYO", stockDescription: "Mayonnaise", portionWeight: 25, unitOfMeasurement: "grams", costPerQty: 0.2, costPerUnit: 0.008, supplierName: "Wholesaler" },
   ],
 };
+
+// Product-categorisation demo fixtures: a curated taxonomy (flat + grouped categories), a small
+// dendrogram, a few embedding-space points, and an assignment queue with a NEEDS_REVIEW row — so
+// the categorisation screen renders without a backend. Demo data only.
+const demoCategoryTaxonomy: CategoryNode[] = [
+  { id: "cat-beer", name: "Beer", groupName: null, productCount: 24 },
+  { id: "cat-mains", name: "Mains", groupName: null, productCount: 41 },
+  { id: "cat-red-wine", name: "Red Wine", groupName: "Wine", productCount: 18 },
+  { id: "cat-white-wine", name: "White Wine", groupName: "Wine", productCount: 14 },
+  { id: "cat-desserts", name: "Desserts", groupName: "Sweets", productCount: 9 },
+];
+
+const demoCategoryDendrogram: DendrogramNode[] = [
+  { id: "leaf-1", parentId: "merge-1", isLeaf: true, productNameKey: "pint carlton draught", mergeHeight: 0, size: 1 },
+  { id: "leaf-2", parentId: "merge-1", isLeaf: true, productNameKey: "house red", mergeHeight: 0, size: 1 },
+  { id: "merge-1", parentId: null, isLeaf: false, productNameKey: null, mergeHeight: 0.42, size: 2 },
+  { id: "leaf-3", parentId: "merge-2", isLeaf: true, productNameKey: "chicken schnitzel", mergeHeight: 0, size: 1 },
+  { id: "merge-2", parentId: null, isLeaf: false, productNameKey: null, mergeHeight: 0.71, size: 3 },
+];
+
+const demoEmbeddingSpace: ProductPoint[] = [
+  { productNameKey: "pint carlton draught", x: 0.82, y: 0.11, categoryId: "cat-beer", confidence: 0.94 },
+  { productNameKey: "house red", x: 0.71, y: 0.05, categoryId: "cat-red-wine", confidence: 0.88 },
+  { productNameKey: "chicken schnitzel", x: -0.4, y: 0.62, categoryId: "cat-mains", confidence: 0.9 },
+  { productNameKey: "parma", x: -0.35, y: 0.55, categoryId: "cat-mains", confidence: 0.61 },
+  { productNameKey: "garlic aioli", x: 0.2, y: -0.3, categoryId: null, confidence: null },
+];
+
+const demoCategoryAssignments: AssignmentRow[] = [
+  { productNameKey: "chicken schnitzel", categoryId: "cat-mains", categoryName: "Mains", groupName: null, confidence: 0.9, source: "CLUSTERED", status: "ASSIGNED" },
+  { productNameKey: "house red", categoryId: "cat-red-wine", categoryName: "Red Wine", groupName: "Wine", confidence: 0.88, source: "MANUAL", status: "ASSIGNED" },
+  { productNameKey: "parma", categoryId: "cat-mains", categoryName: "Mains", groupName: null, confidence: 0.61, source: "CLUSTERED", status: "NEEDS_REVIEW" },
+  { productNameKey: "pint carlton draught", categoryId: "cat-beer", categoryName: "Beer", groupName: null, confidence: 0.94, source: "JEV", status: "ASSIGNED" },
+  { productNameKey: "garlic aioli", categoryId: null, categoryName: null, groupName: null, confidence: null, source: null, status: "UNASSIGNED" },
+];
 
 // Invoice browse fixtures: realistic current headers covering the hard states — a linked PDF, one
 // with no PDF, a null due date and a null total. Lines exist for two invoices; the rest return an
@@ -1725,6 +1766,70 @@ export const demoApi: Api = {
   async getRecipeIngredients(recipeId: number): Promise<RecipeIngredient[]> {
     await delay(300);
     return demoRecipeIngredients[recipeId] ?? [];
+  },
+
+  async getCategoryTaxonomy(): Promise<CategoryNode[]> {
+    await delay(300);
+    return demoCategoryTaxonomy;
+  },
+
+  async getCategoryDendrogram(): Promise<DendrogramNode[]> {
+    await delay(300);
+    return demoCategoryDendrogram;
+  },
+
+  async getCategoryEmbeddingSpace(): Promise<ProductPoint[]> {
+    await delay(300);
+    return demoEmbeddingSpace;
+  },
+
+  async getCategoryAssignments(status?: string): Promise<AssignmentRow[]> {
+    await delay(300);
+    if (!status) return demoCategoryAssignments;
+    return demoCategoryAssignments.filter((a) => a.status === status);
+  },
+
+  async createCategory(input: CreateCategoryInput): Promise<CategoryNode> {
+    await delay(400);
+    const created: CategoryNode = {
+      id: `cat-${Date.now()}`,
+      name: input.name,
+      groupName: input.groupName ?? null,
+      productCount: 0,
+    };
+    demoCategoryTaxonomy.push(created);
+    return created;
+  },
+
+  async renameCategory(id: string, input: UpdateCategoryInput): Promise<void> {
+    await delay(400);
+    const category = demoCategoryTaxonomy.find((c) => c.id === id);
+    if (!category) throw new ApiError("VALIDATION_FAILED", `No category with id ${id}.`);
+    if (input.name != null) category.name = input.name;
+    if (input.groupName != null) category.groupName = input.groupName;
+  },
+
+  async moveProduct(productNameKey: string, categoryId: string): Promise<void> {
+    await delay(400);
+    const assignment = demoCategoryAssignments.find((a) => a.productNameKey === productNameKey);
+    if (assignment) {
+      assignment.categoryId = categoryId;
+      assignment.status = "ASSIGNED";
+      assignment.source = "MANUAL";
+    }
+  },
+
+  async clearProductOverride(productNameKey: string): Promise<void> {
+    await delay(400);
+    const assignment = demoCategoryAssignments.find((a) => a.productNameKey === productNameKey);
+    if (assignment) {
+      assignment.categoryId = null;
+      assignment.categoryName = null;
+      assignment.groupName = null;
+      assignment.confidence = null;
+      assignment.source = null;
+      assignment.status = "UNASSIGNED";
+    }
   },
 };
 

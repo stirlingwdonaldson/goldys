@@ -354,6 +354,68 @@ export interface RecipeIngredient {
   supplierName: string | null;
 }
 
+/** One curated category in the taxonomy (mirrors backend `CategoryNode`). `groupName` is null for flat (top-level) categories. */
+export interface CategoryNode {
+  id: string;
+  name: string;
+  groupName: string | null;
+  productCount: number;
+}
+
+/**
+ * One node of the agglomerative dendrogram for a classification run (mirrors backend
+ * `DendrogramNode`). Leaves are products (`productNameKey` set); internal nodes are merges
+ * (`productNameKey` null) with a `mergeHeight` and a `size` of leaves beneath them.
+ */
+export interface DendrogramNode {
+  id: string;
+  parentId: string | null;
+  isLeaf: boolean;
+  productNameKey: string | null;
+  mergeHeight: number;
+  size: number;
+}
+
+/**
+ * One product's position in the 2-D embedding projection of the latest run (mirrors backend
+ * `ProductPoint`). `categoryId` and `confidence` are null while the product is unassigned.
+ */
+export interface ProductPoint {
+  productNameKey: string;
+  x: number;
+  y: number;
+  categoryId: string | null;
+  confidence: number | null;
+}
+
+/**
+ * A product→category assignment as surfaced to the UI (mirrors backend `AssignmentView`).
+ * `categoryId`/`categoryName`/`groupName`/`confidence`/`source` are null when unassigned.
+ */
+export interface AssignmentRow {
+  productNameKey: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  groupName: string | null;
+  confidence: number | null;
+  source: string | null;
+  status: string;
+}
+
+/** Body for `POST /api/products/categories/categories` (mirrors the controller's `CreateCategoryRequest`). */
+export interface CreateCategoryInput {
+  name: string;
+  groupName?: string | null;
+  displayOrder: number;
+  description?: string | null;
+}
+
+/** Body for `PATCH /api/products/categories/categories/{id}`. A field left null is left unchanged. */
+export interface UpdateCategoryInput {
+  name?: string | null;
+  groupName?: string | null;
+}
+
 /** One invoice-ingestion anomaly, read-only (mirrors the backend `InvoiceIngestFlagView`). */
 export interface InvoiceIngestFlag {
   flagType: string;
@@ -938,6 +1000,16 @@ export interface Api {
   getForecastComparison(id: string): Promise<ForecastComparison>;
   getRecipes(): Promise<RecipeCosting[]>;
   getRecipeIngredients(recipeId: number): Promise<RecipeIngredient[]>;
+  getCategoryTaxonomy(): Promise<CategoryNode[]>;
+  getCategoryDendrogram(): Promise<DendrogramNode[]>;
+  getCategoryEmbeddingSpace(): Promise<ProductPoint[]>;
+  /** Omit `status` (or pass null/undefined) for all assignments; never pass an empty string. */
+  getCategoryAssignments(status?: string): Promise<AssignmentRow[]>;
+  createCategory(input: CreateCategoryInput): Promise<CategoryNode>;
+  /** Renames and/or regroups a category; a null field is left unchanged. */
+  renameCategory(id: string, input: UpdateCategoryInput): Promise<void>;
+  moveProduct(productNameKey: string, categoryId: string): Promise<void>;
+  clearProductOverride(productNameKey: string): Promise<void>;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */
