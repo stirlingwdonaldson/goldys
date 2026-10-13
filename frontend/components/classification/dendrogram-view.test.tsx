@@ -3,9 +3,6 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import type { AssignmentRow, DendrogramNode } from "@/lib/api";
 import { DendrogramView } from "./dendrogram-view";
 
-// React Flow reads the router on mount.
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-
 const nodes: DendrogramNode[] = [
   { id: "leaf-1", parentId: "merge-1", isLeaf: true, productNameKey: "pint carlton draught", mergeHeight: 0, size: 1 },
   { id: "leaf-2", parentId: "merge-1", isLeaf: true, productNameKey: "house red", mergeHeight: 0, size: 1 },
@@ -34,27 +31,29 @@ const assignments: AssignmentRow[] = [
 ];
 
 describe("DendrogramView", () => {
-  it("renders the merge tree, with an accessible region label", () => {
+  it("renders the merge tree with an accessible region and selectable nodes", () => {
     render(<DendrogramView nodes={nodes} assignments={assignments} onCurate={() => {}} />);
 
     expect(screen.getByRole("region", { name: /dendrogram/i })).toBeInTheDocument();
-    expect(screen.getByText("pint carlton draught")).toBeInTheDocument();
-    expect(screen.getByText("house red")).toBeInTheDocument();
-    expect(screen.getByText("Merge of 2")).toBeInTheDocument();
+    // Product leaves are drawn as visible (rotated) labels and are selectable buttons.
+    expect(screen.getByRole("button", { name: "pint carlton draught" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "house red" })).toBeInTheDocument();
+    // The internal merge node is a keyboard-reachable button named by its leaf count.
+    expect(screen.getByRole("button", { name: /merge of 2 products/i })).toBeInTheDocument();
   });
 
   it("selects a node and offers curation of the cluster it covers", () => {
     const onCurate = vi.fn();
     render(<DendrogramView nodes={nodes} assignments={assignments} onCurate={onCurate} />);
 
-    fireEvent.click(screen.getByText("Merge of 2"));
+    fireEvent.click(screen.getByRole("button", { name: /merge of 2 products/i }));
 
     // The action bar names what the selected cluster covers: two products, one shared category.
     expect(screen.getByText("Beer")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /merge/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /merge into one category/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /split/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /merge/i }));
+    fireEvent.click(screen.getByRole("button", { name: /merge into one category/i }));
     expect(onCurate).toHaveBeenCalledWith(
       "merge",
       expect.objectContaining({
@@ -68,7 +67,7 @@ describe("DendrogramView", () => {
     const onCurate = vi.fn();
     render(<DendrogramView nodes={nodes} assignments={assignments} onCurate={onCurate} />);
 
-    fireEvent.click(screen.getByText("Merge of 2"));
+    fireEvent.click(screen.getByRole("button", { name: /merge of 2 products/i }));
     fireEvent.click(screen.getByRole("button", { name: /rename/i }));
     fireEvent.change(screen.getByLabelText("New name"), { target: { value: "Draught beer" } });
     fireEvent.click(screen.getByRole("button", { name: "Save name" }));

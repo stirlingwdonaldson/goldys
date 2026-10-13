@@ -1,5 +1,4 @@
 import { MarkerType } from "@xyflow/react";
-import { Box, type LucideIcon } from "lucide-react";
 import type { ColumnGraph, FlowEdge, FlowNode, FlowTone, StepNodeData } from "./types";
 
 export const NODE_WIDTH = 216;
@@ -16,9 +15,6 @@ const MAX_EDGE_WIDTH = 6;
 /** Tree layout: gap between sibling nodes along the cross axis, and between parent/child levels. */
 const TREE_SIBLING_GAP = 24;
 const TREE_LEVEL_GAP = 48;
-/** Dendrogram layout: gap between adjacent leaves, and the vertical span reserved for internal nodes. */
-const DENDRO_LEAF_GAP = 24;
-const DENDRO_HEIGHT_BAND = 200;
 
 /** Left-to-right (the default) or top-to-bottom, for graphs with many stages. */
 export type FlowDirection = "horizontal" | "vertical";
@@ -165,28 +161,6 @@ export interface TreeNode {
   children?: TreeNode[];
 }
 
-/** A node in a dendrogram's flat parent-link list. Leaves are `isLeaf`; internal nodes merge below the root. */
-export interface DendrogramInputNode {
-  id: string;
-  parentId: string | null;
-  isLeaf: boolean;
-  label: string;
-  /** Merge distance: higher merges sit higher (closer to the root) in the picture. */
-  height: number;
-  size: number;
-}
-
-export interface DendrogramOptions {
-  /** Horizontal gap between adjacent leaves. */
-  leafGap?: number;
-  /** Vertical span (px) reserved for the internal nodes above the leaf row. */
-  heightBand?: number;
-  /** Icon shown on every node. */
-  icon?: LucideIcon;
-  /** Tone applied to every node and edge. */
-  tone?: FlowTone;
-}
-
 /** Builds a child edge with the same tone-driven stroke and arrow as {@link layoutColumns}. */
 function childEdge(source: string, target: string, tone: FlowTone): FlowEdge {
   const stroke = EDGE_STROKE[tone];
@@ -265,78 +239,3 @@ export function layoutTree(
   return { nodes, edges };
 }
 
-/**
- * Lays a flat parent-link list out as a dendrogram: leaves sit in a row along the x-axis in input
- * order, each internal node is centred between its children and raised above the leaf row by its
- * normalized `height` (root highest). Edges are straight lines from child to parent. Deterministic.
- */
-export function layoutDendrogram(
-  nodes: DendrogramInputNode[],
-  options: DendrogramOptions = {},
-): { nodes: FlowNode[]; edges: FlowEdge[] } {
-  const leafGap = options.leafGap ?? DENDRO_LEAF_GAP;
-  const heightBand = options.heightBand ?? DENDRO_HEIGHT_BAND;
-  const icon = options.icon ?? Box;
-  const tone = options.tone ?? "neutral";
-
-  const leaves = nodes.filter((n) => n.isLeaf);
-  const internals = nodes.filter((n) => !n.isLeaf);
-
-  // Centre of each node along the x-axis. Leaves get consecutive slots in input order.
-  const centreX = new Map<string, number>();
-  leaves.forEach((leaf, i) => centreX.set(leaf.id, i * (NODE_WIDTH + leafGap) + NODE_WIDTH / 2));
-
-  // Normalize internal heights into [0, 1] so taller merges rise further above the leaf row.
-  const heights = internals.map((n) => n.height);
-  const minH = heights.length ? Math.min(...heights) : 0;
-  const maxH = heights.length ? Math.max(...heights) : 0;
-  const norm = (h: number) => (maxH === minH ? 0.5 : (h - minH) / (maxH - minH));
-
-  const children = new Map<string, DendrogramInputNode[]>();
-  for (const n of nodes) {
-    if (n.parentId == null) continue;
-    const kids = children.get(n.parentId);
-    if (kids) kids.push(n);
-    else children.set(n.parentId, [n]);
-  }
-
-  // Bottom-up (ascending height) so an internal node's children are placed before it.
-  const byHeight = [...internals].sort((a, b) => a.height - b.height);
-  for (const node of byHeight) {
-    const centres = (children.get(node.id) ?? []).map((k) => centreX.get(k.id)!);
-    if (centres.length === 0) {
-      centreX.set(node.id, 0);
-      continue;
-    }
-    centreX.set(node.id, (Math.min(...centres) + Math.max(...centres)) / 2);
-  }
-
-  const flowNodes: FlowNode[] = nodes.map((n) => {
-    const x = (centreX.get(n.id) ?? 0) - NODE_WIDTH / 2;
-    // Leaves sit at y=0..NODE_HEIGHT; the base offset clears that row entirely so the lowest
-    // merge (norm=0) doesn't dip into the leaf row.
-    const y = n.isLeaf ? 0 : -(NODE_HEIGHT + TREE_LEVEL_GAP + norm(n.height) * heightBand);
-    const hasChildren = (children.get(n.id)?.length ?? 0) > 0;
-    return {
-      id: n.id,
-      type: "step" as const,
-      position: { x, y },
-      data: {
-        title: n.label,
-        icon,
-        tone,
-        hasInput: n.parentId != null,
-        hasOutput: hasChildren,
-        vertical: true,
-      },
-      draggable: true,
-      connectable: false,
-    };
-  });
-
-  const flowEdges: FlowEdge[] = nodes
-    .filter((n) => n.parentId != null)
-    .map((n) => childEdge(n.parentId!, n.id, tone));
-
-  return { nodes: flowNodes, edges: flowEdges };
-}

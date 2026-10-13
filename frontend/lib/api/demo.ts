@@ -797,9 +797,13 @@ const demoCategoryTaxonomy: CategoryNode[] = [
 const demoCategoryDendrogram: DendrogramNode[] = [
   { id: "leaf-1", parentId: "merge-1", isLeaf: true, productNameKey: "pint carlton draught", mergeHeight: 0, size: 1 },
   { id: "leaf-2", parentId: "merge-1", isLeaf: true, productNameKey: "house red", mergeHeight: 0, size: 1 },
-  { id: "merge-1", parentId: null, isLeaf: false, productNameKey: null, mergeHeight: 0.42, size: 2 },
   { id: "leaf-3", parentId: "merge-2", isLeaf: true, productNameKey: "chicken schnitzel", mergeHeight: 0, size: 1 },
-  { id: "merge-2", parentId: null, isLeaf: false, productNameKey: null, mergeHeight: 0.71, size: 3 },
+  { id: "leaf-4", parentId: "merge-2", isLeaf: true, productNameKey: "parma", mergeHeight: 0, size: 1 },
+  { id: "leaf-5", parentId: "merge-3", isLeaf: true, productNameKey: "garlic aioli", mergeHeight: 0, size: 1 },
+  { id: "merge-1", parentId: "root", isLeaf: false, productNameKey: null, mergeHeight: 0.35, size: 2 },
+  { id: "merge-2", parentId: "merge-3", isLeaf: false, productNameKey: null, mergeHeight: 0.2, size: 2 },
+  { id: "merge-3", parentId: "root", isLeaf: false, productNameKey: null, mergeHeight: 0.55, size: 3 },
+  { id: "root", parentId: null, isLeaf: false, productNameKey: null, mergeHeight: 0.8, size: 5 },
 ];
 
 const demoEmbeddingSpace: ProductPoint[] = [
