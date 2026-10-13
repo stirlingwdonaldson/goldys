@@ -92,6 +92,10 @@ public class SecurityConfig {
                 .logoutSuccessHandler(
                     (request, response, authentication) -> response.setStatus(204)));
 
+    // Keep proxy compression away from SSE: a gzipped stream is buffered, so the browser never
+    // receives the events (the live view and Ask Goldy's chat both go through the Next.js proxy).
+    http.headers(headers -> headers.addHeaderWriter(new StreamingCacheControlHeaderWriter()));
+
     return http.build();
   }
 
