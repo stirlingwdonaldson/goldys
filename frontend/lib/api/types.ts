@@ -468,6 +468,59 @@ export interface MetricQuery {
   comparison: string | null;
 }
 
+/** A generic metric-query result (mirrors the backend sealed `MetricResult`). */
+export type MetricResult = TimeSeriesMetricResult | RankedListMetricResult;
+
+/** One bucket's value in a metric series; `status` explains a null value. */
+export interface MetricSeriesPoint {
+  bucketStart: string;
+  value: number | string | null;
+  status: MissingDataStatus | null;
+}
+
+/** One series of points; `dimensionValue` is null for an ungrouped series. */
+export interface MetricSeries {
+  dimensionValue: string | null;
+  points: MetricSeriesPoint[];
+}
+
+/** One row in a ranked-list result (used by `product.top_sellers`). */
+export interface MetricRankedItem {
+  label: string;
+  primary: number | string;
+  secondary: number | string;
+  hasConflict: boolean;
+}
+
+/** Provenance for a metric result (mirrors the backend `MetricProvenance` record). */
+export interface MetricResultProvenance {
+  metric: string;
+  definitionVersion: string;
+  range: { from: string; to: string; calendar: "TRADING" | "CALENDAR" };
+  grain: "DAY" | "WEEK" | "MONTH";
+  sourceDomain: string;
+  dataFreshness: string | null;
+  missingPeriods: string[];
+  calculationVersion: string;
+  trust: TrustSummary | null;
+}
+
+/** A time-series (or multi-series) metric result. */
+export interface TimeSeriesMetricResult {
+  metric: string;
+  series: MetricSeries[];
+  notices: string[];
+  provenance: MetricResultProvenance;
+}
+
+/** A ranked-list metric result. */
+export interface RankedListMetricResult {
+  metric: string;
+  items: MetricRankedItem[];
+  notices: string[];
+  provenance: MetricResultProvenance;
+}
+
 /** A widget's grid span: width in 12-column units, height in row units. */
 export interface WidgetLayout {
   w: number;
@@ -708,6 +761,12 @@ export interface SaleItemFilter {
   saleNumber?: string;
 }
 
+/** Optional filter for the Daily-sales list (from/to are inclusive ISO dates). */
+export interface SalesFilter {
+  from?: string;
+  to?: string;
+}
+
 /** Lifecycle of a TimesFM forecast run (mirrors the backend `ForecastRunStatus`). */
 export type ForecastRunStatus = "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
 
@@ -780,9 +839,9 @@ export interface ForecastComparison {
 export interface Api {
   getDashboardBootstrap(): Promise<DashboardBootstrap>;
   getDashboardSummary(): Promise<DashboardSummary>;
-  getDashboardActivity(): Promise<ActivityPoint[]>;
-  listReconciliationExceptions(): Promise<ReconciliationException[]>;
-  listProductExceptions(): Promise<ReconciliationException[]>;
+  getDashboardActivity(from?: string, to?: string): Promise<ActivityPoint[]>;
+  listReconciliationExceptions(page: number, size: number): Promise<DataPage<ReconciliationException>>;
+  listProductExceptions(page: number, size: number): Promise<DataPage<ReconciliationException>>;
   getReconciliationRecord(id: string): Promise<ReconciliationRecord>;
   getProductRecord(date: string, product: string): Promise<ReconciliationRecord>;
   listConnectorStatuses(): Promise<ConnectorStatus[]>;
@@ -805,9 +864,9 @@ export interface Api {
   deleteResolutionRule(id: string): Promise<void>;
   getRecomputeStatus(): Promise<RecomputeStatus>;
   listRuleAudit(): Promise<RuleAuditEntry[]>;
-  listReconciliationAudit(): Promise<ReconciliationAuditEntry[]>;
+  listReconciliationAudit(page: number, size: number): Promise<DataPage<ReconciliationAuditEntry>>;
   listProducts(): Promise<string[]>;
-  listDailySales(): Promise<DailySales[]>;
+  listDailySales(filter: SalesFilter, page: number, size: number): Promise<DataPage<DailySales>>;
   getLatestSales(): Promise<LatestSales>;
   getReservationSummary(date: string): Promise<ReservationSummary | undefined>;
   getInventoryLines(from: string, to: string): Promise<InventoryLineBreakdown>;
@@ -831,8 +890,10 @@ export interface Api {
   getLabourSummary(from: string, to: string): Promise<LabourSummary>;
   listDailyCovers(from: string, to: string): Promise<DailyCovers[]>;
   getProvenance(metricId: string, date: string): Promise<Provenance>;
-  getTopSellers(): Promise<TopSeller[]>;
-  getSalesTrend(): Promise<SalesTrendPoint[]>;
+  getTopSellers(from?: string, to?: string, limit?: number): Promise<TopSeller[]>;
+  getSalesTrend(from?: string, to?: string): Promise<SalesTrendPoint[]>;
+  /** Runs a bounded catalogue query and returns the raw metric result (time-series or ranked list). */
+  queryMetrics(query: MetricQuery): Promise<MetricResult>;
   listDashboards(): Promise<SavedDashboardSummary[]>;
   getDashboard(id: string): Promise<DashboardDocument>;
   saveDashboard(input: SaveDashboardInput): Promise<DashboardDocument>;

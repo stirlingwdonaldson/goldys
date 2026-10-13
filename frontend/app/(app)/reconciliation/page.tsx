@@ -20,6 +20,7 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { ReconciliationDrillIn } from "@/components/reconciliation/drill-in";
 import { ExceptionsList, type StatusFilter } from "@/components/reconciliation/exceptions-list";
 import { ReconciliationAudit } from "@/components/reconciliation/reconciliation-audit";
+import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import type { ReconciliationException } from "@/lib/api";
 
 export default function ReconciliationPage() {
@@ -45,9 +46,17 @@ function ReconciliationContent() {
   const { toast } = useToast();
   const shell = useShellStatus();
 
-  const { data: exceptions, loading, error, reload } = useApiData((a) => a.listReconciliationExceptions());
-  const { data: productExceptions, reload: reloadProducts } = useApiData((a) => a.listProductExceptions());
-  const { data: audit, reload: reloadAudit } = useApiData((a) => a.listReconciliationAudit());
+  // Exceptions are bounded open conflicts, so one page (capped at the backend's 200) is the whole
+  // set; ExceptionsList then filters and pages client-side over it. Audit, by contrast, grows
+  // forever, so it pages on the server.
+  const { data: exceptions, loading, error, reload } = useApiData((a) => a.listReconciliationExceptions(0, 200));
+  const { data: productExceptions, reload: reloadProducts } = useApiData((a) => a.listProductExceptions(0, 200));
+  const { page: auditPage, setPage: setAuditPage, pageSize: auditPageSize, setPageSize: setAuditPageSize } =
+    usePageState("audit");
+  const { data: audit, reload: reloadAudit } = useApiData(
+    (a) => a.listReconciliationAudit(auditPage, auditPageSize),
+    [auditPage, auditPageSize],
+  );
 
   const tab: Tab = params.get("tab") === "product" ? "product" : "daily";
   const statusParam = params.get("status");
@@ -137,8 +146,8 @@ function ReconciliationContent() {
     );
   }
 
-  const daily = exceptions ?? [];
-  const products = productExceptions ?? [];
+  const daily = exceptions?.items ?? [];
+  const products = productExceptions?.items ?? [];
   const total = daily.length + products.length;
   const current = tab === "daily" ? daily : products;
   const counts = {
@@ -237,7 +246,14 @@ function ReconciliationContent() {
             <SheetTitle>Change history</SheetTitle>
             <SheetDescription>Every rule change and manual decision, newest first.</SheetDescription>
           </SheetHeader>
-          <ReconciliationAudit entries={audit ?? []} />
+          <ReconciliationAudit entries={audit?.items ?? []} />
+          <TablePagination
+            page={auditPage}
+            pageSize={auditPageSize}
+            total={audit?.total ?? 0}
+            onPageChange={setAuditPage}
+            onPageSizeChange={setAuditPageSize}
+          />
         </SheetContent>
       </Sheet>
     </div>
