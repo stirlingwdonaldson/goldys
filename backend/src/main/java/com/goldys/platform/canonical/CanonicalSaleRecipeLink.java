@@ -35,6 +35,9 @@ class CanonicalSaleRecipeLink extends BitemporalEntity {
   @Column(name = "is_recipe_active", updatable = false)
   private Boolean isRecipeActive;
 
+  @Column(name = "lightspeed_product_id", updatable = false)
+  private Integer lightspeedProductId;
+
   protected CanonicalSaleRecipeLink() {}
 
   private CanonicalSaleRecipeLink(
@@ -50,7 +53,8 @@ class CanonicalSaleRecipeLink extends BitemporalEntity {
       int recipeId,
       String recipeName,
       String recipeFolderName,
-      Boolean isRecipeActive) {
+      Boolean isRecipeActive,
+      Integer lightspeedProductId) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.saleItemRecipeId = saleItemRecipeId;
     this.saleItemStockCode = saleItemStockCode;
@@ -59,6 +63,7 @@ class CanonicalSaleRecipeLink extends BitemporalEntity {
     this.recipeName = recipeName;
     this.recipeFolderName = recipeFolderName;
     this.isRecipeActive = isRecipeActive;
+    this.lightspeedProductId = lightspeedProductId;
   }
 
   static CanonicalSaleRecipeLink create(
@@ -74,7 +79,8 @@ class CanonicalSaleRecipeLink extends BitemporalEntity {
       int recipeId,
       String recipeName,
       String recipeFolderName,
-      Boolean isRecipeActive) {
+      Boolean isRecipeActive,
+      Integer lightspeedProductId) {
     return new CanonicalSaleRecipeLink(
         logicalEntityId,
         sourceSystem,
@@ -88,7 +94,8 @@ class CanonicalSaleRecipeLink extends BitemporalEntity {
         recipeId,
         recipeName,
         recipeFolderName,
-        isRecipeActive);
+        isRecipeActive,
+        lightspeedProductId);
   }
 
   boolean sameFact(SaleRecipeLinkInput input) {
@@ -98,6 +105,10 @@ class CanonicalSaleRecipeLink extends BitemporalEntity {
         && Objects.equals(recipeName, input.recipeName())
         && Objects.equals(recipeFolderName, input.recipeFolderName())
         && Objects.equals(isRecipeActive, input.isRecipeActive());
+  }
+
+  int saleItemRecipeId() {
+    return saleItemRecipeId;
   }
 
   int recipeId() {
@@ -122,5 +133,9 @@ class CanonicalSaleRecipeLink extends BitemporalEntity {
 
   Boolean isRecipeActive() {
     return isRecipeActive;
+  }
+
+  Integer lightspeedProductId() {
+    return lightspeedProductId;
   }
 }

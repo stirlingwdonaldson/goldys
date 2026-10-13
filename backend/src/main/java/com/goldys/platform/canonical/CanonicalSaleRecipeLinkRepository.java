@@ -13,6 +13,12 @@ interface CanonicalSaleRecipeLinkRepository extends BitemporalRepository<Canonic
           + "and l.sourceSystem = :source and l.supersededAt is null")
   Optional<CanonicalSaleRecipeLink> lockCurrentSaleRecipeLink(String ref, String source);
 
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query(
+      "select l from CanonicalSaleRecipeLink l where l.saleItemRecipeId = :saleItemRecipeId "
+          + "and l.supersededAt is null")
+  Optional<CanonicalSaleRecipeLink> lockCurrentBySaleItemRecipeId(int saleItemRecipeId);
+
   @Query("select l from CanonicalSaleRecipeLink l where l.supersededAt is null")
   List<CanonicalSaleRecipeLink> findAllCurrent();
 }

@@ -26,6 +26,8 @@ public class CanonicalSaleRecipeLinkQuery {
         l.recipeName(),
         l.recipeFolderName(),
         l.saleItemStockDescription(),
-        l.isRecipeActive());
+        l.isRecipeActive(),
+        l.saleItemRecipeId(),
+        l.lightspeedProductId());
   }
 }

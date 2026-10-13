@@ -95,6 +95,17 @@ public class ConnectorStatusController {
     return ResponseEntity.noContent().build();
   }
 
+  /** Uploads the Lightspeed product-catalog CSV drop. */
+  @PostMapping(
+      value = "/connectors/lightspeed-products/upload",
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  ResponseEntity<Void> uploadLightspeedProductsCsv(
+      @RequestParam("file") MultipartFile file, @AuthenticationPrincipal AccountUserDetails user) {
+    UserRole role = currentUser.roleOf(user);
+    connectors.uploadLightspeedProductsCsv(role, readBytes(file));
+    return ResponseEntity.noContent().build();
+  }
+
   private static byte[] readBytes(MultipartFile file) {
     try {
       return file.getBytes();

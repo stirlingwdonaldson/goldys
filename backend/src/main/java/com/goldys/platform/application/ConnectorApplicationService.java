@@ -4,6 +4,7 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.connectors.lightspeed.LightspeedProductCatalogIngestService;
 import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
 import com.goldys.platform.connectors.opentable.OpenTableMenuItemsCsvIngestService;
 import com.goldys.platform.connectors.opentable.OpenTableReservationsCsvIngestService;
@@ -33,6 +34,8 @@ public class ConnectorApplicationService {
       List.of(
           new ConnectorStatus(
               "LIGHTSPEED", "lightspeed-insights", null, "never_run", 0, null, false),
+          new ConnectorStatus(
+              "LIGHTSPEED", "lightspeed-product-catalog", null, "never_run", 0, null, false),
           new ConnectorStatus("CTB", "ctb-revenue", null, "never_run", 0, null, false),
           // The thin 8-column drop is deprecated in favour of the three rich exports below; it
           // remains registered (raw-only) so its historical run status still surfaces.
@@ -49,6 +52,7 @@ public class ConnectorApplicationService {
   private final OpenTableReservationsCsvIngestService openTableReservationsIngest;
   private final OpenTableReviewsCsvIngestService openTableReviewsIngest;
   private final OpenTableMenuItemsCsvIngestService openTableMenuItemsIngest;
+  private final LightspeedProductCatalogIngestService lightspeedProductCatalogIngest;
   private final PermissionService permissions;
   private final ObjectProvider<CtbSftpPull> sftpPull;
 
@@ -58,6 +62,7 @@ public class ConnectorApplicationService {
       OpenTableReservationsCsvIngestService openTableReservationsIngest,
       OpenTableReviewsCsvIngestService openTableReviewsIngest,
       OpenTableMenuItemsCsvIngestService openTableMenuItemsIngest,
+      LightspeedProductCatalogIngestService lightspeedProductCatalogIngest,
       PermissionService permissions,
       ObjectProvider<CtbSftpPull> sftpPull) {
     this.ingestion = ingestion;
@@ -65,6 +70,7 @@ public class ConnectorApplicationService {
     this.openTableReservationsIngest = openTableReservationsIngest;
     this.openTableReviewsIngest = openTableReviewsIngest;
     this.openTableMenuItemsIngest = openTableMenuItemsIngest;
+    this.lightspeedProductCatalogIngest = lightspeedProductCatalogIngest;
     this.permissions = permissions;
     this.sftpPull = sftpPull;
   }
@@ -122,6 +128,12 @@ public class ConnectorApplicationService {
   public void uploadOpenTableMenuItemsCsv(UserRole role, byte[] bytes) {
     permissions.require(role, RESOURCE, PermissionAction.WRITE);
     openTableMenuItemsIngest.ingest(bytes);
+  }
+
+  /** Ingests the Lightspeed product-catalog CSV drop. */
+  public void uploadLightspeedProductsCsv(UserRole role, byte[] bytes) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    lightspeedProductCatalogIngest.ingest(bytes);
   }
 
   /** Triggers the CTB SFTP drop pull on demand (requires {@code ctb.sftp.enabled=true}). */

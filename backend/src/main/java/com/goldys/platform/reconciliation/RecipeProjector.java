@@ -1,9 +1,11 @@
 package com.goldys.platform.reconciliation;
 
+import com.goldys.platform.canonical.CanonicalProductQuery;
 import com.goldys.platform.canonical.CanonicalRecipeCostQuery;
 import com.goldys.platform.canonical.CanonicalSaleItemQuery;
 import com.goldys.platform.canonical.CanonicalSaleRecipeLinkQuery;
 import com.goldys.platform.canonical.ProductNameKey;
+import com.goldys.platform.canonical.ProductView;
 import com.goldys.platform.canonical.RecipeCostView;
 import com.goldys.platform.canonical.SaleItemPriceView;
 import com.goldys.platform.canonical.SaleRecipeLinkView;
@@ -13,9 +15,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,16 +43,19 @@ public class RecipeProjector {
   private final CanonicalRecipeCostQuery recipeCosts;
   private final CanonicalSaleRecipeLinkQuery links;
   private final CanonicalSaleItemQuery saleItems;
+  private final CanonicalProductQuery products;
   private final ResolvedRecipeRepository resolved;
 
   public RecipeProjector(
       CanonicalRecipeCostQuery recipeCosts,
       CanonicalSaleRecipeLinkQuery links,
       CanonicalSaleItemQuery saleItems,
+      CanonicalProductQuery products,
       ResolvedRecipeRepository resolved) {
     this.recipeCosts = recipeCosts;
     this.links = links;
     this.saleItems = saleItems;
+    this.products = products;
     this.resolved = resolved;
   }
 
@@ -59,8 +66,18 @@ public class RecipeProjector {
 
     Map<String, PriceInfo> byName = priceIndex();
 
-    // Group every current link (active and inactive) by recipe id so we can tell ON_MENU from
-    // OFF_MENU and derive the last-sold price from inactive links.
+    // Sellable Lightspeed product ids, computed once: a current product counts as on-menu when it
+    // is
+    // not a modifier and carries a positive tax-inclusive sell price.
+    Set<Integer> sellableProductIds = new HashSet<>();
+    for (ProductView p : products.currentProducts()) {
+      if (!p.isModifier() && p.sellPriceIncTax() != null && p.sellPriceIncTax().signum() > 0) {
+        sellableProductIds.add(p.productId());
+      }
+    }
+
+    // Group every current link (active and inactive) by recipe id so we can derive the last-sold
+    // price from inactive links and the folder/current price from active links.
     Map<Integer, List<SaleRecipeLinkView>> linksByRecipe = new HashMap<>();
     for (SaleRecipeLinkView link : links.currentLinks()) {
       linksByRecipe.computeIfAbsent(link.recipeId(), k -> new ArrayList<>()).add(link);
@@ -80,18 +97,34 @@ public class RecipeProjector {
         }
       }
 
+      // Menu state comes from product presence: any link whose Lightspeed product is currently
+      // sellable means ON_MENU; otherwise, only when every link resolves to a product (so we know
+      // it was retired) do we say OFF_MENU, else UNKNOWN.
+      boolean anyPresent =
+          recipeLinks.stream()
+              .anyMatch(
+                  l ->
+                      l.lightspeedProductId() != null
+                          && sellableProductIds.contains(l.lightspeedProductId()));
+      boolean allHaveId = recipeLinks.stream().allMatch(l -> l.lightspeedProductId() != null);
       String menuState =
-          !active.isEmpty() ? ON_MENU : (!recipeLinks.isEmpty() ? OFF_MENU : UNKNOWN);
+          anyPresent
+              ? ON_MENU
+              : (recipeLinks.isEmpty() ? UNKNOWN : (allHaveId ? OFF_MENU : UNKNOWN));
+
+      // The active/inactive split (by isRecipeActive) still drives the folder, current price/cost,
+      // and last-sold enrichment below; it is independent of the presence-based menu_state.
+      boolean offMenuByActive = active.isEmpty() && !recipeLinks.isEmpty();
       String folder = active.isEmpty() ? null : active.get(0).recipeFolderName();
 
       // Current price: matched via the active links' sale-item descriptions, with the recipe name
-      // as a fallback. The name fallback is suppressed when the recipe is off-menu, since a
+      // as a fallback. The name fallback is suppressed when the recipe has no active link, since a
       // same-named sale item is then spurious for the "current" price.
       List<String> currentKeys = new ArrayList<>();
       for (SaleRecipeLinkView link : active) {
         currentKeys.add(ProductNameKey.normalize(link.saleItemStockDescription()));
       }
-      if (!OFF_MENU.equals(menuState)) {
+      if (!offMenuByActive) {
         currentKeys.add(ProductNameKey.normalize(c.recipeName()));
       }
       List<BigDecimal> currentPrices = new ArrayList<>();
