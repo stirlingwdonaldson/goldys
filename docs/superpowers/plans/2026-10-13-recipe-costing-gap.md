@@ -302,8 +302,8 @@ Add `menuState: string; priceSource: string; lastSoldPrice: number | null; lastS
 
 - [ ] **Step 2: Update demo fixtures**
 
-Update the four existing `getRecipes()` fixtures with the new fields (`menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null`), and add two more:
-- `{ recipeId: 5, name: "Sticky Date Pudding", folder: "Dessert", portionSize: "6", costPerPortion: 1.9, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "OFF_MENU", priceSource: "HISTORICAL", lastSoldPrice: 11.0, lastSoldCost: 2.1, lastSoldDate: "2026-09-14" }`
+Update the four existing `getRecipes()` fixtures with the new fields (`menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null`), and add two more (derived figures use the effective price, matching the backend):
+- `{ recipeId: 5, name: "Eggplant Parmigiana", folder: "Mains", portionSize: "1", costPerPortion: 4.2, actualCost: null, costGap: 0.6, menuPrice: null, margin: 12.8, gpPercent: 0.7529, menuState: "OFF_MENU", priceSource: "HISTORICAL", lastSoldPrice: 17.0, lastSoldCost: 4.8, lastSoldDate: "2026-09-14" }`
 - `{ recipeId: 6, name: "Pickle Brine", folder: "Prep", portionSize: "1", costPerPortion: 0.8, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null }`
 
 - [ ] **Step 3: Render provenance in `page.tsx`**
