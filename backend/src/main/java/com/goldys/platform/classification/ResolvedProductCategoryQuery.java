@@ -94,8 +94,15 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
     return out;
   }
 
+  /**
+   * Adds two possibly-null totals, treating null as zero. A product whose days are all unresolved
+   * (all null) therefore surfaces as zero rather than throwing or dropping the row.
+   */
   private static BigDecimal nullSafeAdd(BigDecimal current, BigDecimal add) {
-    return current == null ? add : current.add(add);
+    if (current == null) {
+      return add == null ? BigDecimal.ZERO : add;
+    }
+    return add == null ? current : current.add(add);
   }
 
   /** Composite grouping key for a leaf category within its (nullable) group. */

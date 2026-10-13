@@ -120,13 +120,19 @@ public class ProductCategoryQuery {
   }
 
   /**
-   * The most recent {@code CLUSTER} or {@code FULL} run (the runs that produce cluster artifacts).
+   * The most recent {@code SUCCEEDED} {@code CLUSTER} or {@code FULL} run. Status is filtered so a
+   * newer {@code RUNNING}/{@code FAILED}/{@code PARTIAL} run never blanks the artifacts of the last
+   * run that actually produced them.
    */
   private Optional<ClassificationRun> latestRunWithClusters() {
     ClassificationRun cluster =
-        runs.findTopByKindOrderByStartedAtDesc(ClassificationRunKind.CLUSTER).orElse(null);
+        runs.findTopByKindAndStatusOrderByStartedAtDesc(
+                ClassificationRunKind.CLUSTER, ClassificationRunStatus.SUCCEEDED)
+            .orElse(null);
     ClassificationRun full =
-        runs.findTopByKindOrderByStartedAtDesc(ClassificationRunKind.FULL).orElse(null);
+        runs.findTopByKindAndStatusOrderByStartedAtDesc(
+                ClassificationRunKind.FULL, ClassificationRunStatus.SUCCEEDED)
+            .orElse(null);
     if (cluster == null) {
       return Optional.ofNullable(full);
     }
