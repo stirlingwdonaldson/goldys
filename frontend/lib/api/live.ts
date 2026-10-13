@@ -5,10 +5,16 @@ import {
   getInvoiceGraphInvoices,
   getInvoiceGraphLines,
 } from "./invoice-graph";
+import { isApiError } from "./errors";
 import type {
   ActivityPoint,
   Api,
   ConnectorStatus,
+  OpenTableFrame,
+  OpenTableInput,
+  OpenTableSessionHandlers,
+  OpenTableSessionState,
+  OpenTableSyncMode,
   ConversationThreadSummary,
   ConversationThreadView,
   CreateForecastInput,
@@ -54,6 +60,34 @@ export const liveApi: Api = {
     form.append("file", file);
     return fetchApi<void>("/api/connectors/opentable/upload", { method: "POST", body: form }, { responseType: "void" });
   },
+  getOpenTableSession: () =>
+    fetchApi<OpenTableSessionState>("/api/connectors/opentable/session"),
+  startOpenTableSession: (mode: OpenTableSyncMode) =>
+    fetchApi<OpenTableSessionState>("/api/connectors/opentable/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode }),
+    }),
+  sendOpenTableInput: async (input: OpenTableInput) => {
+    try {
+      await fetchApi<void>(
+        "/api/connectors/opentable/session/input",
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) },
+        { responseType: "void" },
+      );
+    } catch (e) {
+      // 409: sign-in finished while keystrokes were in flight. Expected, not an error.
+      if (isApiError(e) && e.status === 409) return;
+      throw e;
+    }
+  },
+  endOpenTableSession: (signOut: boolean) =>
+    fetchApi<void>(
+      `/api/connectors/opentable/session${signOut ? "?logout=true" : ""}`,
+      { method: "DELETE" },
+      { responseType: "void" },
+    ),
+  watchOpenTableSession: (handlers: OpenTableSessionHandlers) => watchOpenTableStream(handlers),
   listProductExceptions: () =>
     fetchApi<ReconciliationException[]>("/api/reconciliation/products/exceptions"),
   saveOverride: (input: SaveOverrideInput) =>
@@ -227,3 +261,31 @@ export const liveApi: Api = {
   getRecipeIngredients: (recipeId: number) =>
     fetchApi<import("./types").RecipeIngredient[]>(`/api/recipes/${recipeId}/ingredients`),
 };
+
+/**
+ * Live-view stream over Server-Sent Events (same origin, so the session cookie rides along).
+ * EventSource would silently reconnect after the server ends the stream (another viewer took
+ * over, or the session ended), re-attaching a viewer nobody is watching; so any error closes it
+ * for good and reports `onClosed`. The panel reopens it explicitly when needed.
+ */
+function watchOpenTableStream(handlers: OpenTableSessionHandlers): () => void {
+  const source = new EventSource("/api/connectors/opentable/session/stream");
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    source.close();
+    handlers.onClosed();
+  };
+  source.addEventListener("state", (e) => {
+    handlers.onState(JSON.parse((e as MessageEvent<string>).data) as OpenTableSessionState);
+  });
+  source.addEventListener("frame", (e) => {
+    handlers.onFrame(JSON.parse((e as MessageEvent<string>).data) as OpenTableFrame);
+  });
+  source.onerror = close;
+  return () => {
+    closed = true;
+    source.close();
+  };
+}

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { demoApi } from "./demo";
 
 describe("demoApi sales-detail lists", () => {
@@ -276,5 +276,44 @@ describe("demoApi forecasting", () => {
 
   it("rejects an unknown run id", async () => {
     await expect(demoApi.getForecastRun("nope")).rejects.toThrow();
+  });
+});
+
+describe("demoApi OpenTable assisted sign-in", () => {
+  it("walks sign-in, sync and completion, streaming a frame while signing in", async () => {
+    vi.useFakeTimers();
+    try {
+      const states: string[] = [];
+      const frames: number[] = [];
+      const stop = demoApi.watchOpenTableSession({
+        onState: (s) => states.push(s.state),
+        onFrame: (f) => frames.push(f.width),
+        onClosed: () => {},
+      });
+
+      const started = demoApi.startOpenTableSession("INCREMENTAL");
+      await vi.advanceTimersByTimeAsync(300);
+      expect((await started).state).toBe("LOGIN_REQUIRED");
+      expect(frames).toContain(1280);
+
+      // Typing before Enter doesn't sign in; Enter simulates completing the login.
+      const typed = demoApi.sendOpenTableInput({ type: "text", text: "a" });
+      await vi.advanceTimersByTimeAsync(20);
+      await typed;
+      expect(states.at(-1)).toBe("LOGIN_REQUIRED");
+      const enter = demoApi.sendOpenTableInput({ type: "key", action: "down", key: "Enter" });
+      await vi.advanceTimersByTimeAsync(20);
+      await enter;
+      expect(states.at(-1)).toBe("SYNCING");
+
+      await vi.advanceTimersByTimeAsync(2500);
+      const done = demoApi.getOpenTableSession();
+      await vi.advanceTimersByTimeAsync(150);
+      expect((await done).state).toBe("DONE");
+      expect((await done).runStatus).toBe("SUCCESS");
+      stop();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
