@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { TablePagination, useClientPagination } from "@/components/data-table/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
@@ -108,6 +109,36 @@ interface ComparisonState {
   loading: boolean;
   data: ForecastComparison | null;
   error: string | null;
+}
+
+type ComparisonPoint = ForecastComparison["points"][number];
+
+/** Predicted median against the actual, one row per forecast day, paged. */
+function ComparisonTable({ points }: { points: ComparisonPoint[] }) {
+  const { pageRows, pagination } = useClientPagination(points);
+  return (
+    <div className="flex flex-col gap-3">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-muted-foreground">
+            <th className="font-medium">Date</th>
+            <th className="font-medium">Predicted median</th>
+            <th className="font-medium">Actual</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pageRows.map((p) => (
+            <tr key={p.date} className="border-t">
+              <td className="py-1.5">{formatDay(p.date)}</td>
+              <td className="py-1.5">{formatNumber(p.predictedMedian)}</td>
+              <td className="py-1.5">{p.actual == null ? "—" : formatNumber(p.actual)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <TablePagination {...pagination} />
+    </div>
+  );
 }
 
 export default function ForecastingPage() {
@@ -324,24 +355,7 @@ export default function ForecastingPage() {
                 {comparison.data.points.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No actuals yet to compare.</p>
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-muted-foreground">
-                        <th className="font-medium">Date</th>
-                        <th className="font-medium">Predicted median</th>
-                        <th className="font-medium">Actual</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {comparison.data.points.map((p) => (
-                        <tr key={p.date} className="border-t">
-                          <td className="py-1.5">{formatDay(p.date)}</td>
-                          <td className="py-1.5">{formatNumber(p.predictedMedian)}</td>
-                          <td className="py-1.5">{p.actual == null ? "—" : formatNumber(p.actual)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <ComparisonTable points={comparison.data.points} />
                 )}
               </>
             ) : null}

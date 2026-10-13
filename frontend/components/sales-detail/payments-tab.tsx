@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table/data-table";
+import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { currencyColumn, dateColumn, numberColumn } from "@/components/data-table/columns";
 import { EmptyState } from "@/components/states/empty-state";
@@ -15,8 +16,6 @@ import type { Api } from "@/lib/api";
 import type { PaymentRow } from "@/lib/api/types";
 import { useApiData } from "@/lib/use-api-data";
 import { buildPaymentMixWidget } from "./payment-mix-chart";
-
-const PAGE_SIZE = 50;
 
 interface PaymentsTabProps {
   from: string;
@@ -76,48 +75,22 @@ function paymentColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<Pa
   ];
 }
 
-/** Server-side pager over the payments `DataPage`, mirroring the data explorer's. */
-function Pager({ page, total, onPage }: { page: number; total: number; onPage: (p: number) => void }) {
-  const hasPrev = page > 0;
-  const hasNext = (page + 1) * PAGE_SIZE < total;
-  if (!hasPrev && !hasNext) return null;
-  return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Button variant="outline" size="sm" disabled={!hasPrev} onClick={() => onPage(page - 1)}>
-        Previous
-      </Button>
-      <span>
-        {total > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, total)}` : "0"} of{" "}
-        {total}
-      </span>
-      <Button variant="outline" size="sm" disabled={!hasNext} onClick={() => onPage(page + 1)}>
-        Next
-      </Button>
-    </div>
-  );
-}
-
 /**
  * The Payments tab: the resolved payment mix over time, then the canonical payment
  * tenders behind it. The chart reads `getPaymentMix`; the table pages `listPayments`
  * server-side, always scoped by the shared date range.
  */
 export function PaymentsTab({ from, to, onViewSale, apiOverride }: PaymentsTabProps) {
-  const [page, setPage] = useState(0);
+  const { page, setPage, pageSize, setPageSize } = usePageState(`${from}|${to}`);
   const [paymentType, setPaymentType] = useState("");
 
   const mix = useApiData((api) => api.getPaymentMix(from, to), [from, to], apiOverride);
   const rows = useApiData(
-    (api) => api.listPayments({ from, to, paymentType }, page, PAGE_SIZE),
-    [from, to, paymentType, page],
+    (api) => api.listPayments({ from, to, paymentType }, page, pageSize),
+    [from, to, paymentType, page, pageSize],
     apiOverride,
   );
 
-  // A new date range starts a new result set; without this the old page index would
-  // point past the new total and show an empty table.
-  useEffect(() => {
-    setPage(0);
-  }, [from, to]);
 
   // The dropdown offers exactly the tender types present in the resolved mix.
   const paymentTypes = useMemo(() => {
@@ -198,7 +171,15 @@ export function PaymentsTab({ from, to, onViewSale, apiOverride }: PaymentsTabPr
           />
         ) : null}
 
-        {rows.data ? <Pager page={page} total={rows.data.total} onPage={setPage} /> : null}
+        {rows.data ? (
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            total={rows.data.total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        ) : null}
       </div>
     </div>
   );

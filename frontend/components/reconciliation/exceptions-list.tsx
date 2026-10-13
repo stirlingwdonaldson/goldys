@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Pagination } from "@/components/reconciliation/pagination";
+import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import { SourceLabel } from "@/components/sources/source-tile";
 import { formatCurrency, formatDay, formatNumber, humanizeKey } from "@/lib/format";
 import { Kbd } from "@/components/ui/kbd";
@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import type { ExceptionStatus, ReconciliationException } from "@/lib/api";
 import { difference, parseAmount } from "./source-values";
 
-const PAGE_SIZE = 25;
 
 export type StatusFilter = "all" | "conflict" | "missing";
 
@@ -79,21 +78,22 @@ export function ExceptionsList({
   onReview,
   keyboardEnabled,
 }: ExceptionsListProps) {
-  const [page, setPage] = useState(1);
+  // Changing the filter starts a new result set, so it returns to the first page.
+  const { page, setPage, pageSize, setPageSize } = usePageState(`${status}|${query}|${kind}`);
   const [active, setActive] = useState(0);
   const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const filtered = filterExceptions(exceptions, status, query);
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, pageCount);
-  const start = (safePage - 1) * PAGE_SIZE;
-  const rows = filtered.slice(start, start + PAGE_SIZE);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  // Clamp: deciding an item can shrink the list under the current page.
+  const safePage = Math.min(page, pageCount - 1);
+  const start = safePage * pageSize;
+  const rows = filtered.slice(start, start + pageSize);
 
-  // Reset to the first page when the filter changes underneath us.
+  // A new page of rows starts the J/K cursor at the top.
   useEffect(() => {
-    setPage(1);
     setActive(0);
-  }, [status, query, kind]);
+  }, [status, query, kind, safePage, pageSize]);
 
   // J/K to move, Enter to open: a long queue shouldn't need the mouse (heuristic 7).
   useEffect(() => {
@@ -199,15 +199,14 @@ export function ExceptionsList({
             })}
           </ul>
         )}
-        <Pagination
-          page={safePage}
-          pageCount={pageCount}
-          onPageChange={setPage}
-          from={filtered.length === 0 ? 0 : start + 1}
-          to={Math.min(start + PAGE_SIZE, filtered.length)}
-          total={filtered.length}
-        />
       </div>
+      <TablePagination
+        page={safePage}
+        pageSize={pageSize}
+        total={filtered.length}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+      />
       <p className="hidden items-center gap-1.5 px-1 text-xs text-muted-foreground md:flex">
         <Kbd>J</Kbd>
         <Kbd>K</Kbd> move · <Kbd>Enter</Kbd> open · <Kbd>Esc</Kbd> close

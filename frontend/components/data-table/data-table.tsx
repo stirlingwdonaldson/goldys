@@ -10,6 +10,7 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
+  type PaginationState,
   type Row,
   type SortingState,
   type VisibilityState,
@@ -34,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { DEFAULT_PAGE_SIZE, TablePagination } from "./table-pagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -41,7 +43,10 @@ interface DataTableProps<TData, TValue> {
   /** Column id the toolbar's text filter applies to. Omit to hide the filter input. */
   filterColumn?: string;
   filterPlaceholder?: string;
-  /** Client-side page size. `false` renders every row — for callers that page on the server. */
+  /**
+   * Initial client-side page size (people can change it from the rows-per-page menu). `false`
+   * renders every row, for callers that page on the server with their own `TablePagination`.
+   */
   pageSize?: number | false;
   initialSorting?: SortingState;
   /** Shown in the body when there are no rows (or the filter matches none). */
@@ -62,7 +67,7 @@ export function DataTable<TData, TValue>({
   data,
   filterColumn,
   filterPlaceholder = "Filter…",
-  pageSize = 10,
+  pageSize = DEFAULT_PAGE_SIZE,
   initialSorting = [],
   emptyMessage = "No results.",
   toolbar,
@@ -72,6 +77,10 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const paginated = pageSize !== false;
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: pageSize === false ? DEFAULT_PAGE_SIZE : pageSize,
+  });
 
   const table = useReactTable({
     data,
@@ -84,8 +93,8 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    initialState: paginated ? { pagination: { pageSize, pageIndex: 0 } } : undefined,
-    state: { sorting, columnFilters, columnVisibility },
+    onPaginationChange: setPagination,
+    state: { sorting, columnFilters, columnVisibility, ...(paginated ? { pagination } : {}) },
   });
 
   const hideableColumns = table.getAllColumns().filter((c) => c.getCanHide());
@@ -168,31 +177,14 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      {paginated && table.getPageCount() > 1 ? (
-        <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-          <span>
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()} ·{" "}
-            {filteredCount} rows
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+      {paginated ? (
+        <TablePagination
+          page={pagination.pageIndex}
+          pageSize={pagination.pageSize}
+          total={filteredCount}
+          onPageChange={(pageIndex) => table.setPageIndex(pageIndex)}
+          onPageSizeChange={(size) => setPagination({ pageIndex: 0, pageSize: size })}
+        />
       ) : null}
     </div>
   );

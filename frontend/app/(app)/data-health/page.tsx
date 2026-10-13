@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Activity, AlertTriangle, LogIn, RefreshCw, Timer, Upload, Wrench } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
@@ -49,17 +49,44 @@ export default function DataHealthPage() {
     refreshShell();
   }, [reloadConnectors, refreshShell]);
 
+  // A pull runs asynchronously on the server: "Run now" returns while the run is still
+  // RUNNING. Poll quietly while any source reports "running" so the card stays disabled
+  // until the run actually finishes (whoever started it: this tab, another tab, or the
+  // schedule), then announce the outcome of runs started from this page.
+  const anyRunning = connectors.data?.some((c) => c.status === "running") ?? false;
+  const refreshConnectors = connectors.refresh;
+  const startedHere = useRef(new Set<string>());
+  useEffect(() => {
+    if (!anyRunning) return;
+    const id = setInterval(() => void refreshConnectors(), RUN_POLL_MS);
+    return () => clearInterval(id);
+  }, [anyRunning, refreshConnectors]);
+  useEffect(() => {
+    for (const c of connectors.data ?? []) {
+      if (c.status === "running" || !startedHere.current.has(c.source)) continue;
+      startedHere.current.delete(c.source);
+      refreshShell();
+      toast(runOutcomeToast(c));
+    }
+  }, [connectors.data, refreshShell, toast]);
+
   async function run(source: string) {
     setRunning(source);
     try {
       const result = await api.runConnector(source);
-      await connectors.reload();
-      shell.refresh();
-      toast(
-        result.status === "failed"
-          ? { title: `${sourceIdentity(source).label} run failed`, description: "See the card for what went wrong.", tone: "error" }
-          : { title: `${sourceIdentity(source).label} ran`, description: result.status === "no_new_data" ? "No new data since the last run." : "New data is in.", tone: "success" },
-      );
+      if (result.status === "running") {
+        startedHere.current.add(source);
+        toast({
+          title: `${sourceIdentity(source).label} is running`,
+          description: "This can take a few minutes. We'll let you know when it finishes.",
+          tone: "info",
+        });
+        await connectors.refresh();
+      } else {
+        await connectors.reload();
+        shell.refresh();
+        toast(runOutcomeToast(result));
+      }
     } catch (e) {
       toast({
         title: `Couldn't run ${sourceIdentity(source).label}`,
@@ -167,8 +194,8 @@ export default function DataHealthPage() {
             <ConnectorCard
               key={c.source}
               connector={c}
-              running={running === c.source}
-              busy={running !== null}
+              running={running === c.source || c.status === "running"}
+              busy={running !== null || c.status === "running"}
               uploading={uploading}
               onRun={() => run(c.source)}
               onUpload={() => fileInputRef.current?.click()}
@@ -233,6 +260,19 @@ export default function DataHealthPage() {
       {syncDialog}
     </>
   );
+}
+
+const RUN_POLL_MS = 3000;
+
+function runOutcomeToast(c: ConnectorStatus) {
+  const label = sourceIdentity(c.source).label;
+  return c.status === "failed"
+    ? { title: `${label} run failed`, description: "See the card for what went wrong.", tone: "error" as const }
+    : {
+        title: `${label} ran`,
+        description: c.status === "no_new_data" ? "No new data since the last run." : "New data is in.",
+        tone: "success" as const,
+      };
 }
 
 /**

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { AppShell } from "@/components/app-shell/app-shell";
+import { AuthGate } from "@/components/app-shell/auth-gate";
 import { CurrentUserProvider } from "@/components/app-shell/current-user-provider";
 import { ToastProvider } from "@/components/feedback/toast";
 import { DemoModeProvider } from "@/lib/demo-mode";
@@ -11,11 +12,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const sidebarOpen = (await cookies()).get("sidebar_state")?.value !== "false";
   return (
     <CurrentUserProvider>
-      <DemoModeProvider>
-        <ToastProvider>
-          <AppShell defaultSidebarOpen={sidebarOpen}>{children}</AppShell>
-        </ToastProvider>
-      </DemoModeProvider>
+      <AuthGate>
+        <DemoModeProvider>
+          <ToastProvider>
+            <AppShell defaultSidebarOpen={sidebarOpen}>{children}</AppShell>
+          </ToastProvider>
+        </DemoModeProvider>
+      </AuthGate>
     </CurrentUserProvider>
   );
 }
