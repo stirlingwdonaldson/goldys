@@ -70,7 +70,7 @@ public class InvoiceReportingService {
     int safePage = Math.max(page, 0);
     int fromIndex = safePage * safeSize;
     List<InvoiceSummary> items =
-        fromIndex >= summaries.size()
+        fromIndex < 0 || fromIndex >= summaries.size()
             ? List.of()
             : summaries.subList(fromIndex, Math.min(fromIndex + safeSize, summaries.size()));
     return new DataPage<>(items, summaries.size(), safePage, safeSize);

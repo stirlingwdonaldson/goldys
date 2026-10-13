@@ -157,6 +157,17 @@ class InvoiceControllerTest {
   }
 
   @Test
+  void pdfSanitizesCarriageReturnAndLineFeed() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(documents.pdf(any(), any()))
+        .thenReturn(new InvoiceDocumentService.PdfDocument(new byte[] {1}, "a\r\nb.pdf"));
+
+    mvc.perform(get("/api/invoices/INV-1/pdf").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Content-Disposition", "inline; filename=\"ab.pdf\""));
+  }
+
+  @Test
   void pdfReturns404WhenNoLink() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(documents.pdf(any(), any()))

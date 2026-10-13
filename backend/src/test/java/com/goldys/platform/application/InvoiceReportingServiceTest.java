@@ -118,6 +118,22 @@ class InvoiceReportingServiceTest {
   }
 
   @Test
+  void listWithHugePageReturnsEmptyPageNotThrow() {
+    when(invoices.currentInvoices())
+        .thenReturn(
+            List.of(
+                invoice("A. Foods", "INV-1", "2026-09-01", "10.00"),
+                invoice("A. Foods", "INV-2", "2026-09-02", "20.00")));
+    when(pdfLinks.linkedInvoiceNumbers()).thenReturn(Set.of());
+
+    DataPage<InvoiceReportingService.InvoiceSummary> page =
+        service.list(role(), null, null, null, Integer.MAX_VALUE / 2, 200);
+
+    assertThat(page.total()).isEqualTo(2);
+    assertThat(page.items()).isEmpty();
+  }
+
+  @Test
   void detailReturnsHeaderAndLinesSortedByLineTotalDesc() {
     when(invoices.currentInvoices())
         .thenReturn(List.of(invoice("A. Foods", "INV-1", "2026-09-01", "30.00")));

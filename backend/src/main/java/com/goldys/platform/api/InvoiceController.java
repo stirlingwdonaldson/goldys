@@ -70,6 +70,6 @@ public class InvoiceController {
   }
 
   private static String sanitize(String filename) {
-    return filename.replace("/", "").replace("\\", "").replace("\"", "");
+    return filename.replaceAll("[\\r\\n\"]", "").replace("/", "").replace("\\", "");
   }
 }
