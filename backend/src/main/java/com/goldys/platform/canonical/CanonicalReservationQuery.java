@@ -1,8 +1,10 @@
 package com.goldys.platform.canonical;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,7 +32,20 @@ public class CanonicalReservationQuery {
 
   /** Current reservations whose local trading date falls in {@code dates}. */
   public List<ReservationView> currentReservationsForDates(Collection<LocalDate> dates) {
-    return currentReservations().stream().filter(v -> dates.contains(v.tradingDate())).toList();
+    if (dates.isEmpty()) {
+      return List.of();
+    }
+    // Scope to the date range in the venue zone instead of loading every current reservation and
+    // filtering in Java: a bulk backfill records tens of thousands of facts, and the per-record
+    // projection recompute otherwise re-reads the whole table each time (quadratic).
+    LocalDate min = Collections.min(dates);
+    LocalDate max = Collections.max(dates);
+    Instant from = min.atStartOfDay(zone).toInstant();
+    Instant to = max.plusDays(1).atStartOfDay(zone).toInstant();
+    return repository.findCurrentByReservationAtBetween(from, to).stream()
+        .map(this::toView)
+        .filter(v -> dates.contains(v.tradingDate()))
+        .toList();
   }
 
   private ReservationView toView(CanonicalReservation r) {

@@ -21,6 +21,7 @@ import com.goldys.platform.conversational.eval.ConversationalEvalHarness.WidgetS
 import com.goldys.platform.dashboard.DashboardFilters;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.WidgetLayout;
+import com.goldys.platform.reconciliation.ReservationProjector;
 import com.goldys.platform.reporting.CompareMetricPeriodsInput;
 import com.goldys.platform.reporting.GetReservationSummaryInput;
 import com.goldys.platform.reporting.GetSalesByPeriodInput;
@@ -85,6 +86,7 @@ class ConversationalEvalTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired CanonicalDailySalesIngest dailySales;
   @Autowired CanonicalReservationIngest reservations;
+  @Autowired ReservationProjector reservationProjector;
   @Autowired ToolDispatcher dispatcher;
   @Autowired ToolRegistry registry;
   @Autowired ObjectMapper mapper;
@@ -181,6 +183,9 @@ class ConversationalEvalTest {
     seedReservation(date, 4, "SEATED");
     seedReservation(date, 4, "SEATED");
     seedReservation(date, 4, "NO_SHOW");
+    // The reservation projection is debounced; project the seeded date explicitly so the resolved
+    // read model is populated before the tool is dispatched.
+    reservationProjector.recompute(date);
 
     Scenario scenario =
         new Scenario(

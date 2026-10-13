@@ -65,6 +65,42 @@ class CanonicalReservationQueryIntegrationTest {
         .containsExactlyInAnyOrder("SEATED", "NO_SHOW");
   }
 
+  @Test
+  void scopesToRequestedDatesOnly() {
+    service.record(
+        new ReservationInput(
+            "OPENTABLE",
+            "r1",
+            Instant.parse("2026-09-20T05:00:00Z"),
+            4,
+            "SEATED",
+            null,
+            null,
+            null,
+            rawRecord("OPENTABLE")));
+    service.record(
+        new ReservationInput(
+            "OPENTABLE",
+            "r2",
+            Instant.parse("2026-10-05T05:00:00Z"),
+            2,
+            "NO_SHOW",
+            null,
+            null,
+            null,
+            rawRecord("OPENTABLE")));
+
+    List<ReservationView> september =
+        query.currentReservationsForDates(Set.of(LocalDate.of(2026, 9, 20)));
+    assertThat(september).hasSize(1);
+    assertThat(september.get(0).tradingDate()).isEqualTo(LocalDate.of(2026, 9, 20));
+
+    List<ReservationView> october =
+        query.currentReservationsForDates(Set.of(LocalDate.of(2026, 10, 5)));
+    assertThat(october).hasSize(1);
+    assertThat(october.get(0).tradingDate()).isEqualTo(LocalDate.of(2026, 10, 5));
+  }
+
   private UUID rawRecord(String source) {
     UUID runId = UUID.randomUUID();
     UUID recordId = UUID.randomUUID();
