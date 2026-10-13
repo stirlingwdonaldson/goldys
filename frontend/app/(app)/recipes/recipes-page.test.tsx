@@ -82,7 +82,9 @@ describe("RecipesPage", () => {
       },
     ];
     render(<RecipesPage />);
-    expect(screen.getByText(/Last sold/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Last sold/)).toHaveLength(2);
+    expect(screen.getByText("$17.00")).toBeInTheDocument();
+    expect(screen.getByText("$4.80")).toBeInTheDocument();
     expect(screen.getByText("Off menu")).toBeInTheDocument();
   });
 
