@@ -113,7 +113,11 @@ public class InvoicePdfEnrichmentService {
               line.packSize(),
               line.wetAmount(),
               line.quantity(),
-              line.amountExTax());
+              line.amountExTax(),
+              line.amountIncTax(),
+              line.gstAmount(),
+              line.taxRate(),
+              line.incGst());
       if (result == EnrichmentResult.NO_MATCH) {
         unmatchedIndexes.add(i);
       }

@@ -45,7 +45,11 @@ public class CanonicalInvoiceLineEnrichment {
       BigDecimal packSize,
       BigDecimal wetAmount,
       BigDecimal quantity,
-      BigDecimal amountExTax) {
+      BigDecimal amountExTax,
+      BigDecimal amountIncTax,
+      BigDecimal gstAmount,
+      BigDecimal taxRate,
+      Boolean incGst) {
     List<CanonicalInvoiceLine> lines = repository.lockCurrentByInvoiceNumber(invoiceNumber);
     InvoiceLineMatcher.Selection selection =
         InvoiceLineMatcher.select(stockCode, description, quantity, amountExTax, candidates(lines));
@@ -53,7 +57,16 @@ public class CanonicalInvoiceLineEnrichment {
       case AMBIGUOUS -> EnrichmentResult.AMBIGUOUS; // several lines win; skip rather than guess
       case NO_MATCH -> EnrichmentResult.NO_MATCH; // no CSV line (pdf-only line)
       case MATCH ->
-          enrichLine(lines.get(selection.index()), uom, unitQuantity, packSize, wetAmount);
+          enrichLine(
+              lines.get(selection.index()),
+              uom,
+              unitQuantity,
+              packSize,
+              wetAmount,
+              amountIncTax,
+              gstAmount,
+              taxRate,
+              incGst);
     };
   }
 
@@ -83,11 +96,19 @@ public class CanonicalInvoiceLineEnrichment {
       String uom,
       BigDecimal unitQuantity,
       BigDecimal packSize,
-      BigDecimal wetAmount) {
+      BigDecimal wetAmount,
+      BigDecimal amountIncTax,
+      BigDecimal gstAmount,
+      BigDecimal taxRate,
+      Boolean incGst) {
     if (Objects.equals(l.uom(), uom)
         && sameAmount(l.unitQuantity(), unitQuantity)
         && sameAmount(l.packSize(), packSize)
-        && sameAmount(l.wetAmount(), wetAmount)) {
+        && sameAmount(l.wetAmount(), wetAmount)
+        && sameAmount(l.lineTotalIncTax(), amountIncTax)
+        && sameAmount(l.lineGstAmount(), gstAmount)
+        && sameAmount(l.lineTaxRate(), taxRate)
+        && Objects.equals(l.incGst(), incGst)) {
       return EnrichmentResult.UNCHANGED; // already enriched
     }
     Instant now = CLOCK.instant();
@@ -113,6 +134,10 @@ public class CanonicalInvoiceLineEnrichment {
             unitQuantity,
             packSize,
             wetAmount,
+            amountIncTax,
+            gstAmount,
+            taxRate,
+            incGst,
             l.origin()));
     return EnrichmentResult.ENRICHED;
   }
