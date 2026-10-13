@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.connectors.ctb.LlmExtractionCacheRepository;
 import com.goldys.platform.connectors.ctb.LlmInvoicePdfExtractor;
 import com.goldys.platform.connectors.ctb.PdfExtractedInvoice;
 import com.goldys.platform.connectors.ctb.PdfExtractedLine;
@@ -46,6 +47,7 @@ class LlmInvoicePdfExtractorEvalTest {
 
   @Autowired ObjectProvider<ChatModel> chatModel;
   @Autowired ObjectMapper mapper;
+  @Autowired LlmExtractionCacheRepository cache;
 
   @Test
   void extractsTheFixtureLinesExactly() throws IOException {
@@ -54,7 +56,7 @@ class LlmInvoicePdfExtractorEvalTest {
         model != null,
         "No ChatModel bean (spring.ai.model.chat=none); invoice-PDF LLM eval skipped. "
             + "Set SPRING_AI_MODEL_CHAT=openai to run it.");
-    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(chatModel, mapper);
+    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(chatModel, mapper, cache);
 
     List<Fixture> fixtures = loadFixtures();
     List<Result> results = new ArrayList<>();
