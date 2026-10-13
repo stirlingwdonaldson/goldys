@@ -133,6 +133,8 @@ export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedO
   const periodCount = (totals.data ?? []).reduce((sum, t) => sum + t.count, 0);
   const periodValue = (totals.data ?? []).reduce((sum, t) => sum + (toNumber(t.totalIncTax) ?? 0), 0);
 
+  const trend = useMemo(() => (totals.data ? buildDeletedSalesTrend(totals.data) : null), [totals.data]);
+
   // A denied request hides the whole tab behind one clear state.
   if (totals.error?.code === "NOT_PERMITTED" || rows.error?.code === "NOT_PERMITTED") {
     return <PermissionDenied subject="deleted orders" />;
@@ -149,7 +151,7 @@ export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedO
             onRetry={totals.reload}
           />
         ) : null}
-        {totals.data ? (
+        {trend ? (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
               <StatCard
@@ -163,7 +165,10 @@ export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedO
                 hint="Resolved deleted value in this period"
               />
             </div>
-            <WidgetRenderer widget={buildDeletedSalesTrend(totals.data)} />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <WidgetRenderer widget={trend.count} />
+              <WidgetRenderer widget={trend.value} />
+            </div>
           </>
         ) : null}
       </div>
