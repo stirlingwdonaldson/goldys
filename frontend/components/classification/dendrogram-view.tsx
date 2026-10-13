@@ -319,7 +319,7 @@ function useContainerWidth(): [React.RefObject<HTMLDivElement | null>, number] {
  * covers and offers curation of that cluster. A proper dendrogram, not a node graph: the vertical
  * axis is the merge distance, edges are undirected elbows, and only problems get colour.
  */
-export function DendrogramView({ nodes, assignments, onCurate, height = 460 }: DendrogramViewProps) {
+export function DendrogramView({ nodes, assignments, onCurate, height = 800 }: DendrogramViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameName, setRenameName] = useState("");
