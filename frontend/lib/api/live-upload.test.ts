@@ -7,7 +7,7 @@ import { liveApi } from "./live";
 setupApiServer();
 it.each([200, 204])("uploads native multipart bytes and accepts empty %i", async status => {
   let uploaded = "";
-  server.use(http.post("http://localhost:3000/api/connectors/opentable/upload", async ({ request }) => {
+  server.use(http.post("http://localhost:3000/api/connectors/opentable-reservations/upload", async ({ request }) => {
     expect(request.headers.get("content-type")).toMatch(/^multipart\/form-data; boundary=/);
     const form = await request.formData();
     const file = form.get("file");
@@ -17,6 +17,8 @@ it.each([200, 204])("uploads native multipart bytes and accepts empty %i", async
     uploaded = await file.text();
     return new HttpResponse(null, { status });
   }));
-  await expect(liveApi.uploadOpenTableCsv(new File(["fixture bytes"], "fixture.csv"))).resolves.toBeUndefined();
+  await expect(
+    liveApi.uploadConnectorCsv("opentable-reservations", new File(["fixture bytes"], "fixture.csv")),
+  ).resolves.toBeUndefined();
   expect(uploaded).toBe("fixture bytes");
 });

@@ -12,17 +12,9 @@ import {
   YAxis,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { TablePagination, useClientPagination } from "@/components/data-table/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -34,12 +26,19 @@ import { AXIS_TICK, CHART_TOOLTIP_PROPS, compactAxis, formatXTick } from "@/comp
 import { toChartPoints } from "./forecast-chart";
 import type {
   ForecastComparison,
-  ForecastMetric,
   ForecastRun,
   ForecastSeriesPoint,
 } from "@/lib/api/types";
 
 const HORIZONS = [7, 14, 30, 90];
+
+/**
+ * Fixed forecasting configuration: predict revenue (gross sales) from the demand signals a pub
+ * knows ahead of time — bookings, covers and scheduled labour hours. The target and predictors
+ * are intentionally not user-editable, so every run uses the same, sensible model.
+ */
+const TARGET_METRIC = "sales.gross";
+const FIXED_COVARIATES = ["reservations.bookings", "reservations.covers", "labour.scheduled_hours"];
 
 const STATUS_VARIANT: Record<ForecastRun["status"], "success" | "failed" | "info" | "neutral"> = {
   SUCCEEDED: "success",
@@ -112,13 +111,41 @@ interface ComparisonState {
   error: string | null;
 }
 
+type ComparisonPoint = ForecastComparison["points"][number];
+
+/** Predicted median against the actual, one row per forecast day, paged. */
+function ComparisonTable({ points }: { points: ComparisonPoint[] }) {
+  const { pageRows, pagination } = useClientPagination(points);
+  return (
+    <div className="flex flex-col gap-3">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-muted-foreground">
+            <th className="font-medium">Date</th>
+            <th className="font-medium">Predicted median</th>
+            <th className="font-medium">Actual</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pageRows.map((p) => (
+            <tr key={p.date} className="border-t">
+              <td className="py-1.5">{formatDay(p.date)}</td>
+              <td className="py-1.5">{formatNumber(p.predictedMedian)}</td>
+              <td className="py-1.5">{p.actual == null ? "—" : formatNumber(p.actual)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <TablePagination {...pagination} />
+    </div>
+  );
+}
+
 export default function ForecastingPage() {
   const api = useApi();
   const metricsQuery = useApiData((a) => a.listForecastMetrics());
   const runsQuery = useApiData((a) => a.listForecastRuns());
 
-  const [target, setTarget] = useState<string | undefined>(undefined);
-  const [covariates, setCovariates] = useState<string[]>([]);
   const [horizon, setHorizon] = useState<number>(7);
   const [activeRun, setActiveRun] = useState<ForecastRun | null>(null);
   const [starting, setStarting] = useState(false);
@@ -131,29 +158,16 @@ export default function ForecastingPage() {
 
   const metricByKey = useMemo(() => new Map(metrics.map((m) => [m.metric, m])), [metrics]);
   const metricName = (key: string): string => metricByKey.get(key)?.name ?? key;
-
-  const sourcesInUse = useMemo(
-    () =>
-      [target, ...covariates]
-        .filter((key): key is string => Boolean(key))
-        .map((key) => metricByKey.get(key))
-        .filter((m): m is ForecastMetric => Boolean(m)),
-    [target, covariates, metricByKey],
-  );
+  const metricLabel = (key: string): string => {
+    const m = metricByKey.get(key);
+    return m ? `${m.name} — ${m.sourceDomain} · ${m.unit}` : key;
+  };
 
   useEffect(() => {
     return () => {
       if (pollTimer.current) clearTimeout(pollTimer.current);
     };
   }, []);
-
-  // Default to the first metric once loaded, so the page is ready to run immediately
-  // (and keeps the target selector deterministic for the screen's tests).
-  useEffect(() => {
-    if (target === undefined && metrics.length > 0) {
-      setTarget(metrics[0].metric);
-    }
-  }, [target, metrics]);
 
   async function pollRun(id: string) {
     try {
@@ -172,15 +186,14 @@ export default function ForecastingPage() {
   }
 
   async function handleRun() {
-    if (!target) return;
     setStarting(true);
     setCreateError(null);
     setActiveRun(null);
     setComparison(null);
     try {
       const run = await api.createForecastRun({
-        target,
-        covariates,
+        target: TARGET_METRIC,
+        covariates: FIXED_COVARIATES,
         historyFrom: oneYearAgoISO(),
         horizonDays: horizon,
       });
@@ -212,10 +225,6 @@ export default function ForecastingPage() {
     }
   }
 
-  function toggleCovariate(metric: string, checked: boolean) {
-    setCovariates((prev) => (checked ? [...prev, metric] : prev.filter((c) => c !== metric)));
-  }
-
   if (metricsQuery.loading) return <LoadingState rows={3} />;
   if (metricsQuery.error) {
     return (
@@ -240,52 +249,31 @@ export default function ForecastingPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Forecasting"
-        description="Project a metric forward with TimesFM, using other metrics as context."
+        description="Forecast revenue forward with TimesFM, using bookings, covers and scheduled hours as context."
       />
 
       <Card>
         <CardHeader>
           <CardTitle>Set up a forecast</CardTitle>
-          <CardDescription>Choose a target, optional covariates, and a horizon.</CardDescription>
+          <CardDescription>
+            Forecasts revenue using bookings, covers and scheduled labour hours as predictors.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="forecast-target">Target metric</Label>
-            <Select value={target} onValueChange={(v) => setTarget(v)}>
-              <SelectTrigger id="forecast-target" aria-label="Target metric">
-                <SelectValue placeholder="Select a target" />
-              </SelectTrigger>
-              <SelectContent>
-                {metrics.map((m) => (
-                  <SelectItem key={m.metric} value={m.metric}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <span className="text-sm font-medium">Target metric</span>
+            <p className="text-sm text-muted-foreground">{metricLabel(TARGET_METRIC)}</p>
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Covariates</span>
-            <p className="text-sm text-muted-foreground">
-              Optional inputs that may influence the target. Each shows its source domain.
-            </p>
-            <div className="flex flex-col gap-2">
-              {metrics
-                .filter((m) => m.metric !== target)
-                .map((m) => (
-                  <div key={m.metric} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`covariate-${m.metric}`}
-                      checked={covariates.includes(m.metric)}
-                      onCheckedChange={(checked) => toggleCovariate(m.metric, checked === true)}
-                    />
-                    <Label htmlFor={`covariate-${m.metric}`}>
-                      {m.name} — {m.sourceDomain}
-                    </Label>
-                  </div>
-                ))}
-            </div>
+            <span className="text-sm font-medium">Predictors</span>
+            <ul className="flex flex-col gap-1.5">
+              {FIXED_COVARIATES.map((key) => (
+                <li key={key} className="text-sm text-muted-foreground">
+                  {metricLabel(key)}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -306,33 +294,10 @@ export default function ForecastingPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="brand" onClick={handleRun} disabled={!target || starting}>
+            <Button variant="brand" onClick={handleRun} disabled={starting}>
               {starting ? "Starting…" : "Run forecast"}
             </Button>
-            {target ? null : (
-              <span className="text-sm text-muted-foreground">Pick a target to run a forecast.</span>
-            )}
           </div>
-
-          <section data-testid="sources-in-use" className="rounded-lg border p-4">
-            <h2 className="text-sm font-semibold">Sources in use</h2>
-            {sourcesInUse.length === 0 ? (
-              <p className="mt-1 text-sm text-muted-foreground">
-                Pick a target to see which sources feed the forecast.
-              </p>
-            ) : (
-              <ul className="mt-2 flex flex-col gap-1.5">
-                {sourcesInUse.map((m) => (
-                  <li key={m.metric} className="flex items-baseline justify-between gap-4 text-sm">
-                    <span className="font-medium">{m.name}</span>
-                    <span className="text-muted-foreground">
-                      {m.sourceDomain} · {m.unit}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         </CardContent>
       </Card>
 
@@ -390,24 +355,7 @@ export default function ForecastingPage() {
                 {comparison.data.points.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No actuals yet to compare.</p>
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-muted-foreground">
-                        <th className="font-medium">Date</th>
-                        <th className="font-medium">Predicted median</th>
-                        <th className="font-medium">Actual</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {comparison.data.points.map((p) => (
-                        <tr key={p.date} className="border-t">
-                          <td className="py-1.5">{formatDay(p.date)}</td>
-                          <td className="py-1.5">{formatNumber(p.predictedMedian)}</td>
-                          <td className="py-1.5">{p.actual == null ? "—" : formatNumber(p.actual)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <ComparisonTable points={comparison.data.points} />
                 )}
               </>
             ) : null}

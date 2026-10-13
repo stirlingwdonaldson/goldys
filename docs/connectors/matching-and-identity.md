@@ -11,15 +11,56 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Reservation (`canonical_reservation`)
 
-- **Source:** `OPENTABLE` (GuestCenter CSV drop).
+- **Source:** `OPENTABLE`, from the assisted-session JSON pull (`opentable-api`) or the CSV drop.
 - **Logical identity:** `UUID.nameUUIDFromBytes("reservation:" + reservationId)`.
 - **Source identity:** `(source_system = OPENTABLE, source_record_ref = OpenTable Reservation ID)`.
+  From the JSON pull this is the response's `reservationId` (a 24-character hex string, e.g.
+  `6ac9ab1b204b58f759bb1af6`). Re-pulling an unchanged reservation is a no-op; any change to a
+  modelled field supersedes the current version.
+- **Status (JSON pull):** `stateCategory` maps `booked`→`BOOKED`, `seated`→`SEATED`,
+  `finished`→`COMPLETED`, `noShow`→`NO_SHOW`, `cancelled`→`CANCELLED`. A seated or finished
+  reservation whose `primarySource` is `walkin` becomes `WALK_IN`, so `ReservationProjector` keeps
+  counting walk-ins (it counts them as attended too). Unknown categories pass through upper-cased
+  and count as bookings only.
+- **Reservation time:** `visitDate` is venue-local wall time with no offset, interpreted in
+  `opentable.timezone`.
 - **Matching strategy:** deterministic single source; no cross-source matching. Covers are derived
   from OpenTable party size and are **not** reconciled against Lightspeed's `Covers` metric (a
   downstream echo of the same party size).
 - **Confidence:** n/a (single source).
 - **Manual resolution path:** `ReservationOverrideService.save(...)` sets an override for a
   `(trading_date, service_period)`, replacing the computed covers.
+
+## Guest (`canonical_guest`)
+
+- **Source:** `OPENTABLE` (GuestCenter reviews export). The schema exists (`canonical_guest`) but is
+  **not populated this slice** — reviews are ingested raw only until slice 2.
+- **Logical identity:** `UUID.nameUUIDFromBytes("guest:" + guestId)`.
+- **Source identity:** `(source_system = OPENTABLE, source_record_ref = Guest ID)`.
+- **Identity ruling — no Guest ID in reservations:** the reservations CSV has **no `Guest ID`
+  column** — guest identity there is name plus **masked** phone/email (`**********`). No clean
+  guest row can be created from reservations: matching on name + masked PII would merge distinct
+  people and split name variants. The reviews CSV carries the clean `Guest ID`, so `canonical_guest`
+  is populated from reviews only.
+- **Matching strategy:** deterministic single source keyed on `Guest ID`. Reservation → guest
+  linkage is the nullable `canonical_reservation.guest_id`, left null this slice.
+- **Deferred name-matching:** reservation → guest linkage by name is deferred until reviews provide
+  the `Guest ID` anchor; it is explicitly *not* guessed from names now.
+- **Confidence:** n/a (single source, unpopulated).
+- **Manual resolution path:** not wired.
+
+## Review (`canonical_review`) — future
+
+- **Source:** `OPENTABLE` (GuestCenter reviews export; ingested raw only until slice 2).
+- **Logical identity:** keyed on `Review ID` — `OT-140126-…` (OpenTable) / `RT-140126-…` (Google),
+  with `Source` distinguishing the origin. Identity/strategy finalized when slice 2 lands.
+
+## Menu item (`canonical_menu_item`) — future
+
+- **Source:** `OPENTABLE` (GuestCenter menu export; ingested raw only until slice 3).
+- **Logical identity:** keyed on `Invariant ID` (stable across edits; `Item ID` changes per edit,
+  so invariant is the logical key). Modifier-group children are a later design. Identity/strategy
+  finalized when slice 3 lands.
 
 ## Labour entry (`canonical_labour_entry`)
 

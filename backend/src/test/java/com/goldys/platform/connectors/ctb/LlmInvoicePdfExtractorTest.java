@@ -3,12 +3,17 @@ package com.goldys.platform.connectors.ctb;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -21,6 +26,17 @@ class LlmInvoicePdfExtractorTest {
 
   private static final ObjectMapper MAPPER =
       new ObjectMapper().registerModule(new ParameterNamesModule());
+
+  private final LlmExtractionCacheRepository cache = mock(LlmExtractionCacheRepository.class);
+
+  @BeforeEach
+  void noCacheByDefault() {
+    when(cache.findById(any())).thenReturn(Optional.empty());
+  }
+
+  private LlmInvoicePdfExtractor extractor(ChatModel model) {
+    return new LlmInvoicePdfExtractor(providerReturning(model), MAPPER, cache);
+  }
 
   @Test
   void parsesSchemaJsonIntoTheContract() {
@@ -36,9 +52,8 @@ class LlmInvoicePdfExtractorTest {
                                 + "\"quantity\":3.25,\"uom\":\"KG\","
                                 + "\"unitQuantity\":null,\"packSize\":null,\"wetAmount\":null}"
                                 + "]}")))));
-    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
 
-    PdfExtractedInvoice out = extractor.extract("Tax Invoice\nBEEF RUMP CAP ...");
+    PdfExtractedInvoice out = extractor(model).extract("Tax Invoice\nBEEF RUMP CAP ...");
 
     assertThat(out.invoiceNumber()).isEqualTo("F58991755");
     assertThat(out.lines()).hasSize(1);
@@ -63,17 +78,16 @@ class LlmInvoicePdfExtractorTest {
                                 + "{\"stockCode\":\"A\",\"description\":\"x\",\"quantity\":1,"
                                 + "\"uom\":\"EACH\"}]}\n"
                                 + "```")))));
-    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
 
-    assertThat(extractor.extract("text").lines()).hasSize(1);
-    assertThat(extractor.extract("text").invoiceNumber()).isEqualTo("INV-1");
+    PdfExtractedInvoice out = extractor(model).extract("text");
+
+    assertThat(out.lines()).hasSize(1);
+    assertThat(out.invoiceNumber()).isEqualTo("INV-1");
   }
 
   @Test
   void returnsEmptyWhenNoModelIsAvailable() {
-    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(null), MAPPER);
-
-    PdfExtractedInvoice out = extractor.extract("text");
+    PdfExtractedInvoice out = extractor(null).extract("text");
 
     assertThat(out.lines()).isEmpty();
     // No model is not a failure: environments without an AI key must not fill the flag list.
@@ -86,9 +100,8 @@ class LlmInvoicePdfExtractorTest {
     when(model.call(any(Prompt.class)))
         .thenReturn(
             new ChatResponse(List.of(new Generation(new AssistantMessage("I can't do that.")))));
-    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
 
-    PdfExtractedInvoice out = extractor.extract("text");
+    PdfExtractedInvoice out = extractor(model).extract("text");
 
     assertThat(out.lines()).isEmpty();
     assertThat(out.extractionError()).isNotNull();
@@ -101,9 +114,8 @@ class LlmInvoicePdfExtractorTest {
         .thenReturn(
             new ChatResponse(
                 List.of(new Generation(new AssistantMessage("{\"invoiceNumber\":\"INV-9\"}")))));
-    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
 
-    PdfExtractedInvoice out = extractor.extract("text");
+    PdfExtractedInvoice out = extractor(model).extract("text");
 
     assertThat(out.invoiceNumber()).isEqualTo("INV-9");
     assertThat(out.lines()).isEmpty();
@@ -120,9 +132,8 @@ class LlmInvoicePdfExtractorTest {
                 List.of(
                     new Generation(
                         new AssistantMessage("{\"invoiceNumber\":null,\"lines\":null}")))));
-    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
 
-    PdfExtractedInvoice out = extractor.extract("text");
+    PdfExtractedInvoice out = extractor(model).extract("text");
 
     assertThat(out.lines()).isEmpty();
     assertThat(out.extractionError()).isNull();
@@ -132,12 +143,69 @@ class LlmInvoicePdfExtractorTest {
   void returnsEmptyWithErrorWhenTheModelCallFails() {
     ChatModel model = mock(ChatModel.class);
     when(model.call(any(Prompt.class))).thenThrow(new RuntimeException("boom"));
-    LlmInvoicePdfExtractor extractor = new LlmInvoicePdfExtractor(providerReturning(model), MAPPER);
 
-    PdfExtractedInvoice out = extractor.extract("text");
+    PdfExtractedInvoice out = extractor(model).extract("text");
 
     assertThat(out.lines()).isEmpty();
     assertThat(out.extractionError()).contains("boom");
+  }
+
+  @Test
+  void returnsCachedExtractionWithoutCallingTheModel() {
+    ChatModel model = mock(ChatModel.class);
+    LlmExtractionCache cached =
+        LlmExtractionCache.create(
+            "abc",
+            "{\"invoiceNumber\":\"INV-1\",\"lines\":["
+                + "{\"stockCode\":\"A\",\"description\":\"x\",\"quantity\":1,\"uom\":\"EACH\"}]}",
+            Instant.now());
+    when(cache.findById(any())).thenReturn(Optional.of(cached));
+
+    PdfExtractedInvoice out = extractor(model).extract("text");
+
+    assertThat(out.invoiceNumber()).isEqualTo("INV-1");
+    assertThat(out.lines()).hasSize(1);
+    verify(model, never()).call(any(Prompt.class));
+  }
+
+  @Test
+  void storesASuccessfulExtraction() {
+    ChatModel model = mock(ChatModel.class);
+    when(model.call(any(Prompt.class)))
+        .thenReturn(
+            new ChatResponse(
+                List.of(
+                    new Generation(
+                        new AssistantMessage(
+                            "{\"invoiceNumber\":\"INV-2\",\"lines\":["
+                                + "{\"stockCode\":\"B\",\"description\":\"y\",\"quantity\":2,"
+                                + "\"uom\":\"CTN\"}]}")))));
+
+    PdfExtractedInvoice out = extractor(model).extract("text");
+
+    assertThat(out.lines()).hasSize(1);
+    verify(cache).save(any(LlmExtractionCache.class));
+  }
+
+  @Test
+  void reExtractsWhenCachedJsonIsUnreadable() {
+    ChatModel model = mock(ChatModel.class);
+    when(model.call(any(Prompt.class)))
+        .thenReturn(
+            new ChatResponse(
+                List.of(
+                    new Generation(
+                        new AssistantMessage(
+                            "{\"invoiceNumber\":\"INV-3\",\"lines\":["
+                                + "{\"stockCode\":\"C\",\"description\":\"z\",\"quantity\":3,"
+                                + "\"uom\":\"EACH\"}]}")))));
+    when(cache.findById(any()))
+        .thenReturn(Optional.of(LlmExtractionCache.create("abc", "not json", Instant.now())));
+
+    PdfExtractedInvoice out = extractor(model).extract("text");
+
+    assertThat(out.invoiceNumber()).isEqualTo("INV-3");
+    verify(model).call(any(Prompt.class));
   }
 
   private static ObjectProvider<ChatModel> providerReturning(ChatModel model) {

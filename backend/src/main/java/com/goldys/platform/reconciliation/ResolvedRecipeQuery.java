@@ -51,7 +51,11 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
     // A zero or missing cost per portion means the dish has no theoretical cost on record, so
     // margin, GP% and cost gap are all unknown (never a fabricated figure from a 0).
     BigDecimal cost = blank(r.costPerPortion());
-    BigDecimal margin = subtract(r.menuPrice(), cost);
+    // The effective price/cost fall back to the most recent sale when no current figure is on
+    // record, so a delisted dish still gets a margin and GP% from its last selling price.
+    BigDecimal effectivePrice = r.menuPrice() != null ? r.menuPrice() : r.lastSoldPrice();
+    BigDecimal effectiveCost = r.actualCost() != null ? r.actualCost() : r.lastSoldCost();
+    BigDecimal margin = subtract(effectivePrice, cost);
     return new RecipeCosting(
         r.recipeId(),
         r.recipeName(),
@@ -59,10 +63,15 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
         r.portionSize(),
         r.costPerPortion(),
         r.actualCost(),
-        subtract(r.actualCost(), cost),
+        subtract(effectiveCost, cost),
         r.menuPrice(),
         margin,
-        divide(margin, r.menuPrice()));
+        divide(margin, effectivePrice),
+        r.menuState(),
+        r.priceSource(),
+        r.lastSoldPrice(),
+        r.lastSoldCost(),
+        r.lastSoldDate());
   }
 
   private static BigDecimal subtract(BigDecimal a, BigDecimal b) {

@@ -1,9 +1,11 @@
 "use client";
 
+import { TablePagination, useClientPagination } from "@/components/data-table/table-pagination";
 import type { TableWidget } from "./types";
 import { WidgetShell } from "./widget-shell";
 
 export function TableWidgetView({ widget }: { widget: TableWidget }) {
+  const { pageRows, pagination } = useClientPagination(widget.rows, widget.id);
   if (widget.columns.length === 0 || widget.rows.length === 0) {
     return (
       <WidgetShell title={widget.title} description={widget.description}>
@@ -25,7 +27,7 @@ export function TableWidgetView({ widget }: { widget: TableWidget }) {
             </tr>
           </thead>
           <tbody>
-            {widget.rows.map((row, i) => (
+            {pageRows.map((row, i) => (
               <tr key={i}>
                 {widget.columns.map((c) => (
                   <td key={c.key} className="border-b px-2 py-1">
@@ -37,6 +39,7 @@ export function TableWidgetView({ widget }: { widget: TableWidget }) {
           </tbody>
         </table>
       </div>
+      <TablePagination {...pagination} className="mt-3" />
     </WidgetShell>
   );
 }

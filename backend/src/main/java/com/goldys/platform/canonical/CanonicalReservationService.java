@@ -65,12 +65,7 @@ class CanonicalReservationService {
             input.rawRecordId(),
             recordedAt,
             recordedAt,
-            input.reservationAt(),
-            input.partySize(),
-            input.status(),
-            input.tableName(),
-            input.sourceChannel(),
-            input.partyName()));
+            input));
   }
 
   private static UUID logicalIdFor(String reservationId) {

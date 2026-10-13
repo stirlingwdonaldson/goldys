@@ -118,10 +118,33 @@ services:
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       SENTRY_RELEASE: ${SENTRY_RELEASE:-}
       SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-1.0}
+      # OpenTable assisted sign-in (docs/connectors/opentable.md). Off until the owner opts in;
+      # needs the opentable-browser service below.
+      OPENTABLE_API_ENABLED: ${OPENTABLE_API_ENABLED:-false}
+      OPENTABLE_CDP_HOST: opentable-browser
+      OPENTABLE_CDP_PORT: 9223
     restart: unless-stopped
+    networks:
+      - default
+      - opentable-cdp
     depends_on:
       postgres:
         condition: service_healthy
+
+  # Headed Chromium the owner signs in to GuestCenter with, through the app's live view. DevTools
+  # is full control of the browser and its OpenTable session: no ports are published and only the
+  # backend shares its network. The profile volume holds a live OpenTable login: keep it out of
+  # backups, and use "Sign out" in the app to clear it.
+  opentable-browser:
+    build:
+      context: ./opentable-browser
+    shm_size: 1gb
+    volumes:
+      - opentable_browser_profile:/profile
+    networks:
+      - opentable-cdp
+      - opentable-egress
+    restart: unless-stopped
 
   frontend:
     build:
@@ -157,11 +180,20 @@ services:
     depends_on:
       - backend
 
+networks:
+  # Backend <-> opentable-browser only, with no route out. DevTools (9223) is reachable here.
+  opentable-cdp:
+    internal: true
+  # The sidecar's own way to the internet (OpenTable). Nothing else joins it, so no other
+  # container can reach DevTools; the sidecar is deliberately not on `default`.
+  opentable-egress: {}
+
 volumes:
   goldys_pg_data:
   goldys_sftp_data:
   goldys_sftp_hostkeys:
   timesfm_cache:
+  opentable_browser_profile:
 
 secrets:
   # Sentry org auth token for source map upload during the frontend image build. Read from the

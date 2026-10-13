@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 
 /**
  * One recipe's resolved cost + Lightspeed price/cost enrichment. Disposable projection; rebuilt by
@@ -45,6 +46,21 @@ class ResolvedRecipe {
   @Column(name = "actual_cost", precision = 14, scale = 4)
   private BigDecimal actualCost;
 
+  @Column(name = "menu_state", nullable = false)
+  private String menuState;
+
+  @Column(name = "price_source", nullable = false)
+  private String priceSource;
+
+  @Column(name = "last_sold_price", precision = 14, scale = 4)
+  private BigDecimal lastSoldPrice;
+
+  @Column(name = "last_sold_cost", precision = 14, scale = 4)
+  private BigDecimal lastSoldCost;
+
+  @Column(name = "last_sold_date")
+  private LocalDate lastSoldDate;
+
   @Column(name = "resolution_type", nullable = false)
   private String resolutionType;
 
@@ -67,6 +83,11 @@ class ResolvedRecipe {
       BigDecimal portionSizeValue,
       BigDecimal menuPrice,
       BigDecimal actualCost,
+      String menuState,
+      String priceSource,
+      BigDecimal lastSoldPrice,
+      BigDecimal lastSoldCost,
+      LocalDate lastSoldDate,
       String resolutionType,
       String authoritativeSource,
       Instant resolvedAt) {
@@ -80,6 +101,11 @@ class ResolvedRecipe {
     this.portionSizeValue = portionSizeValue;
     this.menuPrice = menuPrice;
     this.actualCost = actualCost;
+    this.menuState = menuState;
+    this.priceSource = priceSource;
+    this.lastSoldPrice = lastSoldPrice;
+    this.lastSoldCost = lastSoldCost;
+    this.lastSoldDate = lastSoldDate;
     this.resolutionType = resolutionType;
     this.authoritativeSource = authoritativeSource;
     this.resolvedAt = resolvedAt;
@@ -123,6 +149,26 @@ class ResolvedRecipe {
 
   BigDecimal actualCost() {
     return actualCost;
+  }
+
+  String menuState() {
+    return menuState;
+  }
+
+  String priceSource() {
+    return priceSource;
+  }
+
+  BigDecimal lastSoldPrice() {
+    return lastSoldPrice;
+  }
+
+  BigDecimal lastSoldCost() {
+    return lastSoldCost;
+  }
+
+  LocalDate lastSoldDate() {
+    return lastSoldDate;
   }
 
   String resolutionType() {

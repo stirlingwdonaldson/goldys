@@ -3,36 +3,40 @@ import type { DeletedSaleDay } from "@/lib/api/types";
 import { buildDeletedSalesTrend } from "./deleted-sales-trend";
 
 describe("buildDeletedSalesTrend", () => {
-  it("builds count and value-inc-tax series from the resolved totals", () => {
-    const totals: DeletedSaleDay[] = [
-      { tradingDate: "2026-10-04", count: 1, totalIncTax: 120.0, totalTax: 10.91, hasConflict: false },
-      { tradingDate: "2026-10-05", count: 2, totalIncTax: "65.50", totalTax: 5.95, hasConflict: false },
-    ];
+  const totals: DeletedSaleDay[] = [
+    { tradingDate: "2026-10-04", count: 1, totalIncTax: 120.0, totalTax: 10.91, hasConflict: false },
+    { tradingDate: "2026-10-05", count: 2, totalIncTax: "65.50", totalTax: 5.95, hasConflict: false },
+  ];
 
-    const widget = buildDeletedSalesTrend(totals);
+  it("plots the daily count as a plain number, not currency", () => {
+    const { count } = buildDeletedSalesTrend(totals);
 
-    expect(widget.schemaVersion).toBe(2);
-    expect(widget.type).toBe("time-series");
-    expect(widget.yFormat).toBe("currency");
-    expect(widget.series.map((s) => s.label)).toEqual(["Deleted orders", "Value inc tax"]);
-
-    const count = widget.series.find((s) => s.key === "count");
-    expect(count?.points).toEqual([
+    expect(count.schemaVersion).toBe(2);
+    expect(count.type).toBe("bar-chart");
+    expect(count.yFormat).toBe("number");
+    expect(count.series).toHaveLength(1);
+    expect(count.series[0].points).toEqual([
       { x: "2026-10-04", y: 1 },
       { x: "2026-10-05", y: 2 },
     ]);
+  });
 
+  it("plots the daily value inc tax on its own currency chart", () => {
+    const { value } = buildDeletedSalesTrend(totals);
+
+    expect(value.type).toBe("time-series");
+    expect(value.yFormat).toBe("currency");
+    expect(value.series).toHaveLength(1);
     // A numeric string value is coerced to a number point.
-    const value = widget.series.find((s) => s.key === "totalIncTax");
-    expect(value?.points).toEqual([
+    expect(value.series[0].points).toEqual([
       { x: "2026-10-04", y: 120 },
       { x: "2026-10-05", y: 65.5 },
     ]);
   });
 
-  it("returns an empty series array for empty totals", () => {
-    const widget = buildDeletedSalesTrend([]);
-    expect(widget.series).toEqual([]);
-    expect(widget.type).toBe("time-series");
+  it("returns empty series for empty totals", () => {
+    const { count, value } = buildDeletedSalesTrend([]);
+    expect(count.series).toEqual([]);
+    expect(value.series).toEqual([]);
   });
 });

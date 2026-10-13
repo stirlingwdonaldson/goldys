@@ -74,6 +74,11 @@ class GetRecipeCostingToolTest {
         new BigDecimal("1.20"),
         new BigDecimal("18.50"),
         new BigDecimal("12.50"),
-        new BigDecimal("0.6757"));
+        new BigDecimal("0.6757"),
+        "ON_MENU",
+        "CURRENT",
+        null,
+        null,
+        null);
   }
 }

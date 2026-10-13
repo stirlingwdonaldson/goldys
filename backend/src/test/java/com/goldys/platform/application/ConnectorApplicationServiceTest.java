@@ -14,6 +14,9 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.connectors.opentable.OpenTableCsvIngestService;
+import com.goldys.platform.connectors.opentable.OpenTableMenuItemsCsvIngestService;
+import com.goldys.platform.connectors.opentable.OpenTableReservationsCsvIngestService;
+import com.goldys.platform.connectors.opentable.OpenTableReviewsCsvIngestService;
 import com.goldys.platform.ingestion.CtbSftpPull;
 import com.goldys.platform.ingestion.FailureDetail;
 import com.goldys.platform.ingestion.IngestionRunSummary;
@@ -32,12 +35,25 @@ class ConnectorApplicationServiceTest {
   private final PermissionService permissions = mock(PermissionService.class);
   private final IngestionService ingestion = mock(IngestionService.class);
   private final OpenTableCsvIngestService openTable = mock(OpenTableCsvIngestService.class);
+  private final OpenTableReservationsCsvIngestService openTableReservations =
+      mock(OpenTableReservationsCsvIngestService.class);
+  private final OpenTableReviewsCsvIngestService openTableReviews =
+      mock(OpenTableReviewsCsvIngestService.class);
+  private final OpenTableMenuItemsCsvIngestService openTableMenuItems =
+      mock(OpenTableMenuItemsCsvIngestService.class);
 
   @SuppressWarnings("unchecked")
   private final ObjectProvider<CtbSftpPull> sftpPull = mock(ObjectProvider.class);
 
   private final ConnectorApplicationService service =
-      new ConnectorApplicationService(ingestion, openTable, permissions, sftpPull);
+      new ConnectorApplicationService(
+          ingestion,
+          openTable,
+          openTableReservations,
+          openTableReviews,
+          openTableMenuItems,
+          permissions,
+          sftpPull);
 
   @Test
   void mergesKnownSourcesWithLatestRunAndFlagsRunnable() {
@@ -51,7 +67,7 @@ class ConnectorApplicationServiceTest {
 
     var statuses = service.connectors(OWNER);
 
-    assertThat(statuses).hasSize(4);
+    assertThat(statuses).hasSize(7);
     var ctb = statuses.get(1);
     assertThat(ctb.source()).isEqualTo("CTB");
     assertThat(ctb.status()).isEqualTo("success");
@@ -114,6 +130,68 @@ class ConnectorApplicationServiceTest {
     service.uploadOpenTableCsv(OWNER, bytes);
 
     verify(openTable).ingest(bytes);
+  }
+
+  @Test
+  void connectorsListsNewSources() {
+    when(ingestion.latestRunPerSource()).thenReturn(List.of());
+    when(ingestion.isRunnable(any())).thenReturn(false);
+
+    var statuses = service.connectors(OWNER);
+
+    assertThat(statuses.stream().map(ConnectorApplicationService.ConnectorStatus::connectorName))
+        .contains("opentable-reservations", "opentable-reviews", "opentable-menu-items");
+  }
+
+  @Test
+  void preservesDistinctConnectorNamesWhenSourceHasARun() {
+    // A source's latest run must not overwrite the other connectors of that source (the four
+    // OpenTable exports share source "OPENTABLE"); each tile keeps its own connector name.
+    when(ingestion.latestRunPerSource())
+        .thenReturn(
+            List.of(
+                new IngestionRunSummary(
+                    "OPENTABLE", "opentable-reservations", "SUCCESS", Instant.EPOCH, null, null)));
+    when(ingestion.isRunnable(any())).thenReturn(false);
+
+    var statuses = service.connectors(OWNER);
+
+    assertThat(statuses.stream().map(ConnectorApplicationService.ConnectorStatus::connectorName))
+        .containsExactly(
+            "lightspeed-insights",
+            "ctb-revenue",
+            "opentable-csv-drop",
+            "opentable-reservations",
+            "opentable-reviews",
+            "opentable-menu-items",
+            "deputy-api");
+  }
+
+  @Test
+  void uploadOpenTableReservationsCsvDelegates() {
+    byte[] bytes = {1, 2, 3};
+
+    service.uploadOpenTableReservationsCsv(OWNER, bytes);
+
+    verify(openTableReservations).ingest(bytes);
+  }
+
+  @Test
+  void uploadOpenTableReviewsCsvDelegates() {
+    byte[] bytes = {1, 2, 3};
+
+    service.uploadOpenTableReviewsCsv(OWNER, bytes);
+
+    verify(openTableReviews).ingest(bytes);
+  }
+
+  @Test
+  void uploadOpenTableMenuItemsCsvDelegates() {
+    byte[] bytes = {1, 2, 3};
+
+    service.uploadOpenTableMenuItemsCsv(OWNER, bytes);
+
+    verify(openTableMenuItems).ingest(bytes);
   }
 
   @Test

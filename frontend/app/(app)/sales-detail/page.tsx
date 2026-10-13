@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
@@ -49,6 +49,21 @@ function SalesDetail() {
   const [range, setRange] = useState(defaultRange);
   // The sale drilled into from a Payments or Sale items row; null hides the relationship graph.
   const [selectedSale, setSelectedSale] = useState<string | null>(null);
+  // The sale panel sits above the tables, so a "View sale" click lower down a long table would
+  // otherwise swap its contents off-screen and look like nothing happened. Each click (even on
+  // the already-open sale) bumps this, and the effect below scrolls the panel into view.
+  const [viewRequest, setViewRequest] = useState(0);
+  const salePanelRef = useRef<HTMLDivElement>(null);
+
+  function viewSale(saleNumber: string) {
+    setSelectedSale(saleNumber);
+    setViewRequest((n) => n + 1);
+  }
+
+  useEffect(() => {
+    if (viewRequest === 0) return;
+    salePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [viewRequest]);
 
   // The lineage graph's metric node drills to a tab id; switching is local, as with the tab bar.
   function switchTab(tabId: string) {
@@ -82,27 +97,29 @@ function SalesDetail() {
       </Tabs>
 
       {selectedSale ? (
-        <Section
-          title={`Sale ${selectedSale}`}
-          description="Payments and line items behind this sale."
-          actions={
-            <Button variant="outline" size="sm" onClick={() => setSelectedSale(null)}>
-              Close
-            </Button>
-          }
-        >
-          <RelationshipGraphView saleNumber={selectedSale} />
-        </Section>
+        <div ref={salePanelRef} className="scroll-mt-4">
+          <Section
+            title={`Sale ${selectedSale}`}
+            description="Payments and line items behind this sale."
+            actions={
+              <Button variant="outline" size="sm" onClick={() => setSelectedSale(null)}>
+                Close
+              </Button>
+            }
+          >
+            <RelationshipGraphView key={selectedSale} saleNumber={selectedSale} />
+          </Section>
+        </div>
       ) : null}
 
       {tab === "payments" ? (
-        <PaymentsTab from={range.from} to={range.to} onViewSale={setSelectedSale} />
+        <PaymentsTab from={range.from} to={range.to} onViewSale={viewSale} />
       ) : null}
       {tab === "deleted-orders" ? (
-        <DeletedOrdersTab from={range.from} to={range.to} onViewSale={setSelectedSale} />
+        <DeletedOrdersTab from={range.from} to={range.to} onViewSale={viewSale} />
       ) : null}
       {tab === "sale-items" ? (
-        <SaleItemsTab from={range.from} to={range.to} onViewSale={setSelectedSale} />
+        <SaleItemsTab from={range.from} to={range.to} onViewSale={viewSale} />
       ) : null}
 
       <Section

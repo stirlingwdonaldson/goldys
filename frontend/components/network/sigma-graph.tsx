@@ -12,6 +12,10 @@ import { fa2Settings, labelThreshold, nodeSize, type ForceSettings } from "./gra
 import { initialPositions, readPositions, writePositions, type Positions } from "./layout-cache";
 import type { NetworkCanvasProps } from "./network-canvas";
 import type { NetworkNode } from "./types";
+import { VisualTween } from "./tween";
+
+/** How long a hover/focus highlight takes to fade in or out. */
+const HIGHLIGHT_FADE_MS = 180;
 
 interface NodeAttributes {
   x: number;
@@ -160,6 +164,11 @@ function Controller(props: NetworkCanvasProps & { model: NetworkGraphModel; toke
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [wheelZoom, setWheelZoom] = useState(false);
   const dragging = useRef<string | null>(null);
+  // One tween per graph: node and edge ids from an old graph mean nothing in a new one.
+  const tween = useMemo(() => {
+    void model;
+    return new VisualTween(HIGHLIGHT_FADE_MS);
+  }, [model]);
 
   const active = hoverId ?? focusId ?? null;
   // Full strength for the active node and anything directly linked to it; everything further away
@@ -181,27 +190,43 @@ function Controller(props: NetworkCanvasProps & { model: NetworkGraphModel; toke
     setSettings({
       labelRenderedSizeThreshold: labelThreshold(display.textFade),
       enableCameraZooming: wheelZoom,
+      // Each reducer works out the element's target look, then the tween eases colour and size
+      // toward it, so highlights fade in and out instead of snapping (HIGHLIGHT_FADE_MS).
       nodeReducer: (id, a) => {
         const colour = colourFor(a.node);
         const fill = colour ? toRgba(colour) : grey;
         const base = { ...a, size: a.baseSize * display.nodeSize, color: fill };
-        if (lit === null) return base;
-        if (lit.has(id)) return { ...base, forceLabel: active !== null, zIndex: id === active ? 3 : 2 };
-        return { ...base, color: mixColour(fill, bg, 0.85), label: "", zIndex: 0 };
+        let target: typeof base & { forceLabel?: boolean; zIndex?: number } = base;
+        if (lit !== null && lit.has(id)) {
+          target = { ...base, forceLabel: active !== null, zIndex: id === active ? 3 : 2 };
+        } else if (lit !== null) {
+          target = { ...base, color: mixColour(fill, bg, 0.85), label: "", zIndex: 0 };
+        }
+        return { ...target, ...tween.resolve(`n:${id}`, target, performance.now()) };
       },
       edgeReducer: (id, a) => {
         const [source, target] = model.extremities(id);
         const size = display.linkThickness * (0.8 + 0.8 * a.weight);
+        let look: EdgeAttributes & { zIndex: number };
         if (active !== null && (source === active || target === active)) {
-          return { ...a, size: size * 1.5, color: edgeActive, zIndex: 2 };
+          look = { ...a, size: size * 1.5, color: edgeActive, zIndex: 2 };
+        } else if (lit !== null && !(lit.has(source) && lit.has(target))) {
+          look = { ...a, size, color: edgeFaded, zIndex: 0 };
+        } else {
+          look = { ...a, size, color: lit === null ? edgeQuiet : edgeLit, zIndex: 1 };
         }
-        if (lit !== null && !(lit.has(source) && lit.has(target))) {
-          return { ...a, size, color: edgeFaded, zIndex: 0 };
-        }
-        return { ...a, size, color: lit === null ? edgeQuiet : edgeLit, zIndex: 1 };
+        return { ...look, ...tween.resolve(`e:${id}`, look, performance.now()) };
       },
     });
-  }, [setSettings, model, tokens, colourFor, display, active, lit, wheelZoom]);
+    // setSettings refreshes with the new targets (Sigma may defer that to its next frame), so
+    // refresh every frame for at least one fade, and for as long as anything is still moving.
+    const settleBy = performance.now() + HIGHLIGHT_FADE_MS;
+    let frame = requestAnimationFrame(function tick() {
+      sigma.refresh();
+      if (performance.now() < Math.max(settleBy, tween.activeUntil())) frame = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [setSettings, sigma, tween, model, tokens, colourFor, display, active, lit, wheelZoom]);
 
   useEffect(() => {
     registerEvents({

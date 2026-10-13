@@ -10,6 +10,7 @@ import com.goldys.platform.canonical.SaleRecipeLinkView;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -21,11 +22,19 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Maintains the recipe read model ({@code resolved_recipe}) from canonical recipe costs and
  * sale-recipe links, enriched with each recipe's Lightspeed menu price and actual cost (matched by
- * normalized name). Recipes are single-source (CTB), so there is no conflict resolution.
+ * normalized name) and its menu state, price source, and last-sold price/cost. Recipes are
+ * single-source (CTB), so there is no conflict resolution.
  */
 @Service
 public class RecipeProjector {
   private static final Clock CLOCK = Clock.systemUTC();
+
+  private static final String ON_MENU = "ON_MENU";
+  private static final String OFF_MENU = "OFF_MENU";
+  private static final String UNKNOWN = "UNKNOWN";
+  private static final String CURRENT = "CURRENT";
+  private static final String HISTORICAL = "HISTORICAL";
+  private static final String NONE = "NONE";
 
   private final CanonicalRecipeCostQuery recipeCosts;
   private final CanonicalSaleRecipeLinkQuery links;
@@ -48,14 +57,12 @@ public class RecipeProjector {
   public void recomputeAll() {
     resolved.deleteAllInBatch();
 
-    Map<String, Mode> byName = priceModes();
+    Map<String, PriceInfo> byName = priceIndex();
+
+    // Group every current link (active and inactive) by recipe id so we can tell ON_MENU from
+    // OFF_MENU and derive the last-sold price from inactive links.
     Map<Integer, List<SaleRecipeLinkView>> linksByRecipe = new HashMap<>();
     for (SaleRecipeLinkView link : links.currentLinks()) {
-      // Inactive links (is_recipe_active=false) mean the dish is no longer on the menu, so it
-      // contributes no folder, price or cost. A null flag is treated as active.
-      if (Boolean.FALSE.equals(link.isRecipeActive())) {
-        continue;
-      }
       linksByRecipe.computeIfAbsent(link.recipeId(), k -> new ArrayList<>()).add(link);
     }
 
@@ -63,16 +70,104 @@ public class RecipeProjector {
     List<ResolvedRecipe> rows = new ArrayList<>();
     for (RecipeCostView c : recipeCosts.currentRecipeCosts()) {
       List<SaleRecipeLinkView> recipeLinks = linksByRecipe.getOrDefault(c.recipeId(), List.of());
-      String folder = recipeLinks.isEmpty() ? null : recipeLinks.get(0).recipeFolderName();
-      List<BigDecimal> prices = new ArrayList<>();
-      List<BigDecimal> costs = new ArrayList<>();
+      List<SaleRecipeLinkView> active = new ArrayList<>();
+      List<SaleRecipeLinkView> inactive = new ArrayList<>();
       for (SaleRecipeLinkView link : recipeLinks) {
-        Mode m = byName.get(ProductNameKey.normalize(link.saleItemStockDescription()));
-        if (m != null) {
-          prices.add(m.price);
-          costs.add(m.cost);
+        if (Boolean.FALSE.equals(link.isRecipeActive())) {
+          inactive.add(link);
+        } else {
+          active.add(link);
         }
       }
+
+      String menuState =
+          !active.isEmpty() ? ON_MENU : (!recipeLinks.isEmpty() ? OFF_MENU : UNKNOWN);
+      String folder = active.isEmpty() ? null : active.get(0).recipeFolderName();
+
+      // Current price: matched via the active links' sale-item descriptions, with the recipe name
+      // as a fallback. The name fallback is suppressed when the recipe is off-menu, since a
+      // same-named sale item is then spurious for the "current" price.
+      List<String> currentKeys = new ArrayList<>();
+      for (SaleRecipeLinkView link : active) {
+        currentKeys.add(ProductNameKey.normalize(link.saleItemStockDescription()));
+      }
+      if (!OFF_MENU.equals(menuState)) {
+        currentKeys.add(ProductNameKey.normalize(c.recipeName()));
+      }
+      List<BigDecimal> currentPrices = new ArrayList<>();
+      List<BigDecimal> currentCosts = new ArrayList<>();
+      for (String key : currentKeys) {
+        PriceInfo info = byName.get(key);
+        if (info != null) {
+          currentPrices.add(info.price());
+          currentCosts.add(info.cost());
+        }
+      }
+      BigDecimal menuPrice = mode(currentPrices);
+      BigDecimal actualCost = mode(currentCosts);
+
+      // Last-sold: matched via the inactive links' descriptions plus the recipe name, taking the
+      // most-recent trading date and the modal price/cost among the candidates on that date.
+      List<String> historicalKeys = new ArrayList<>();
+      for (SaleRecipeLinkView link : inactive) {
+        historicalKeys.add(ProductNameKey.normalize(link.saleItemStockDescription()));
+      }
+      historicalKeys.add(ProductNameKey.normalize(c.recipeName()));
+
+      LocalDate lastSoldDate = null;
+      for (String key : historicalKeys) {
+        PriceInfo info = byName.get(key);
+        if (info != null
+            && info.lastSoldDate() != null
+            && (lastSoldDate == null || info.lastSoldDate().isAfter(lastSoldDate))) {
+          lastSoldDate = info.lastSoldDate();
+        }
+      }
+      BigDecimal lastSoldPrice = null;
+      BigDecimal lastSoldCost = null;
+      if (lastSoldDate != null) {
+        List<BigDecimal> datedPrices = new ArrayList<>();
+        List<BigDecimal> datedCosts = new ArrayList<>();
+        for (String key : historicalKeys) {
+          PriceInfo info = byName.get(key);
+          if (info != null && lastSoldDate.equals(info.lastSoldDate())) {
+            datedPrices.add(info.lastSoldPrice());
+            datedCosts.add(info.lastSoldCost());
+          }
+        }
+        lastSoldPrice = mode(datedPrices);
+        lastSoldCost = mode(datedCosts);
+      }
+
+      String priceSource;
+      BigDecimal menuPriceOut;
+      BigDecimal actualCostOut;
+      BigDecimal lastSoldPriceOut;
+      BigDecimal lastSoldCostOut;
+      LocalDate lastSoldDateOut;
+      if (menuPrice != null) {
+        priceSource = CURRENT;
+        menuPriceOut = menuPrice;
+        actualCostOut = actualCost;
+        lastSoldPriceOut = null;
+        lastSoldCostOut = null;
+        lastSoldDateOut = null;
+      } else if (lastSoldPrice != null) {
+        priceSource = HISTORICAL;
+        menuPriceOut = null;
+        actualCostOut = null;
+        lastSoldPriceOut = lastSoldPrice;
+        lastSoldCostOut = lastSoldCost;
+        lastSoldDateOut = lastSoldDate;
+      } else {
+        priceSource = NONE;
+        menuPriceOut = null;
+        actualCostOut = null;
+        lastSoldPriceOut = null;
+        lastSoldCostOut = null;
+        lastSoldDateOut = null;
+      }
+
       rows.add(
           new ResolvedRecipe(
               c.recipeId(),
@@ -83,8 +178,13 @@ public class RecipeProjector {
               c.totalCost(),
               c.portionSize(),
               c.portionSizeValue(),
-              mode(prices),
-              mode(costs),
+              menuPriceOut,
+              actualCostOut,
+              menuState,
+              priceSource,
+              lastSoldPriceOut,
+              lastSoldCostOut,
+              lastSoldDateOut,
               "SINGLE_SOURCE",
               "CTB",
               now));
@@ -92,20 +192,51 @@ public class RecipeProjector {
     resolved.saveAll(rows);
   }
 
-  /** Normalized sale-item name → mode sold price / mode cost. */
-  private Map<String, Mode> priceModes() {
-    Map<String, List<BigDecimal>> pricesByName = new LinkedHashMap<>();
-    Map<String, List<BigDecimal>> costsByName = new LinkedHashMap<>();
+  /**
+   * Normalized sale-item name → aggregated price info: the modal sold price/cost across all items,
+   * the most-recent (non-null) trading date, and the modal price/cost among items on that date.
+   */
+  private Map<String, PriceInfo> priceIndex() {
+    Map<String, List<SaleItemPriceView>> itemsByName = new LinkedHashMap<>();
     for (SaleItemPriceView p : saleItems.currentSaleItemPrices()) {
-      String name = ProductNameKey.normalize(p.itemName());
-      pricesByName.computeIfAbsent(name, k -> new ArrayList<>()).add(p.soldPriceIncTax());
-      costsByName.computeIfAbsent(name, k -> new ArrayList<>()).add(p.costIncTax());
+      itemsByName
+          .computeIfAbsent(ProductNameKey.normalize(p.itemName()), k -> new ArrayList<>())
+          .add(p);
     }
-    Map<String, Mode> byName = new LinkedHashMap<>();
-    for (String name : pricesByName.keySet()) {
-      byName.put(name, new Mode(mode(pricesByName.get(name)), mode(costsByName.get(name))));
+
+    Map<String, PriceInfo> index = new LinkedHashMap<>();
+    for (Map.Entry<String, List<SaleItemPriceView>> entry : itemsByName.entrySet()) {
+      List<SaleItemPriceView> items = entry.getValue();
+      List<BigDecimal> prices = new ArrayList<>();
+      List<BigDecimal> costs = new ArrayList<>();
+      LocalDate lastSoldDate = null;
+      for (SaleItemPriceView p : items) {
+        prices.add(p.soldPriceIncTax());
+        costs.add(p.costIncTax());
+        if (p.tradingDate() != null
+            && (lastSoldDate == null || p.tradingDate().isAfter(lastSoldDate))) {
+          lastSoldDate = p.tradingDate();
+        }
+      }
+      BigDecimal lastSoldPrice = null;
+      BigDecimal lastSoldCost = null;
+      if (lastSoldDate != null) {
+        List<BigDecimal> datedPrices = new ArrayList<>();
+        List<BigDecimal> datedCosts = new ArrayList<>();
+        for (SaleItemPriceView p : items) {
+          if (lastSoldDate.equals(p.tradingDate())) {
+            datedPrices.add(p.soldPriceIncTax());
+            datedCosts.add(p.costIncTax());
+          }
+        }
+        lastSoldPrice = mode(datedPrices);
+        lastSoldCost = mode(datedCosts);
+      }
+      index.put(
+          entry.getKey(),
+          new PriceInfo(mode(prices), mode(costs), lastSoldDate, lastSoldPrice, lastSoldCost));
     }
-    return byName;
+    return index;
   }
 
   /** The most frequent value, or null when empty/all-null; ties keep the first seen. */
@@ -127,5 +258,10 @@ public class RecipeProjector {
     return best;
   }
 
-  private record Mode(BigDecimal price, BigDecimal cost) {}
+  private record PriceInfo(
+      BigDecimal price,
+      BigDecimal cost,
+      LocalDate lastSoldDate,
+      BigDecimal lastSoldPrice,
+      BigDecimal lastSoldCost) {}
 }

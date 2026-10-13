@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -406,11 +407,11 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="dash-from">From</Label>
-                <Input id="dash-from" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                <DatePicker id="dash-from" clearable value={fromDate} max={toDate || undefined} onChange={setFromDate} />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="dash-to">To</Label>
-                <Input id="dash-to" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+                <DatePicker id="dash-to" clearable value={toDate} min={fromDate || undefined} onChange={setToDate} />
               </div>
             </div>
 

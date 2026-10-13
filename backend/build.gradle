@@ -95,6 +95,7 @@ tasks.register('fastTest', Test) {
 		// @DataJpaTest / @Import / PostgresContainerConfiguration.)
 		[
 			'AuthControllerTest',
+			'CanonicalGuestMigrationTest',
 			'CanonicalSchemaTest',
 			'ChatControllerSseTest',
 			'ChatControllerTest',

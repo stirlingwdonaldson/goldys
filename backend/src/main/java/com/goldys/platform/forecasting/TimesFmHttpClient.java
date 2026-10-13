@@ -34,7 +34,11 @@ public class TimesFmHttpClient implements TimesFmClient {
   public TimesFmHttpClient(TimesFmProperties properties, ObjectMapper mapper) {
     this.baseUrl = properties.baseUrl();
     this.mapper = mapper;
-    this.http = HttpClient.newBuilder().build();
+    // Pin HTTP/1.1: the default builder sends `Connection: Upgrade, HTTP2-Settings` and
+    // `Upgrade: h2c` headers (an HTTP/2 cleartext upgrade attempt). Uvicorn, which serves the
+    // self-hosted TimesFM service, treats that as a protocol switch it doesn't support and drops
+    // the request body, so every forecast came back as HTTP 422 "Field required".
+    this.http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
   }
 
   @Override
