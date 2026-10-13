@@ -17,13 +17,18 @@ import com.goldys.platform.connectors.opentable.session.BrowserResponse;
 import com.goldys.platform.connectors.opentable.session.FakeOpenTableBrowser;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.FetchedPayload;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,6 +46,10 @@ class OpenTableApiConnectorTest {
   private final FakeOpenTableBrowser browser = new FakeOpenTableBrowser();
   private final CanonicalReservationIngest canonical = mock(CanonicalReservationIngest.class);
   private final List<FetchedPayload> stored = new ArrayList<>();
+
+  /** A minimal raw ledger: latest payload per (fetcherIdentity, sourceRecordRef). */
+  private final Map<String, StoredPayloads.Stored> ledger = new HashMap<>();
+
   private OpenTableApiConnector connector;
 
   @BeforeEach
@@ -55,12 +64,26 @@ class OpenTableApiConnectorTest {
             json,
             VenueClock.fixed(ZONE, TODAY.atTime(9, 0).atZone(ZONE).toInstant()),
             "140126",
-            LocalDate.of(2020, 1, 1));
+            LocalDate.of(2020, 1, 1),
+            (fetcher, ref) -> Optional.ofNullable(ledger.get(fetcher + "|" + ref)));
   }
 
   private UUID sink(FetchedPayload payload) {
     stored.add(payload);
-    return UUID.randomUUID();
+    UUID id = UUID.randomUUID();
+    byte[] bytes = payload.bytes();
+    ledger.put(
+        payload.fetcherIdentity() + "|" + payload.sourceRecordRef(),
+        new StoredPayloads.Stored(id, sha256(bytes), () -> bytes));
+    return id;
+  }
+
+  private static String sha256(byte[] bytes) {
+    try {
+      return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   private BrowserResponse defaultRoute(String path) {
@@ -112,8 +135,10 @@ class OpenTableApiConnectorTest {
     connector.fetch(null, this::sink);
 
     List<FetchedPayload> windows = storedAs("opentable-reservations");
-    assertThat(windows.getFirst().sourceRecordRef()).startsWith(TODAY.minusDays(60) + "..");
-    assertThat(windows.getLast().sourceRecordRef()).endsWith(".." + TODAY.plusMonths(18));
+    // Today - 60 days = 2026-08-14 and today + 18 months = 2028-04-13, each snapped outward to its
+    // half-month so window refs stay stable from one day's sync to the next.
+    assertThat(windows.getFirst().sourceRecordRef()).isEqualTo("2026-08-01..2026-08-15");
+    assertThat(windows.getLast().sourceRecordRef()).isEqualTo("2028-04-01..2028-04-15");
     assertContiguous(windows);
     for (FetchedPayload w : windows) {
       String[] range = w.sourceRecordRef().split("\\.\\.");
@@ -246,6 +271,69 @@ class OpenTableApiConnectorTest {
         .extracting(FetchedPayload::sourceRecordRef)
         .containsExactly("p1", "p2");
     assertThat(browser.requests).noneMatch(r -> r.contains("sources="));
+  }
+
+  @Test
+  void aRepeatSyncOfUnchangedDataStoresNothingNewButStillCanonicalizes() {
+    connector.fetch(null, this::sink);
+    int firstRun = stored.size();
+    int windows = storedAs("opentable-reservations").size();
+
+    connector.fetch(null, this::sink);
+
+    assertThat(stored).hasSize(firstRun);
+    assertThat(storedAs("opentable-reservations")).hasSize(windows);
+    assertThat(storedAs("opentable-menu-items")).hasSize(1);
+    assertThat(storedAs("opentable-menus")).hasSize(1);
+    // Canonicalization still runs for every window (a no-op downstream when nothing changed).
+    verify(canonical, times(windows * 2)).record(any());
+  }
+
+  @Test
+  void requestMetadataAloneDoesNotCountAsAChange() {
+    int[] call = {0};
+    browser.router =
+        path ->
+            path.contains("reservations/gold")
+                ? json(
+                    200,
+                    "{\"meta-data\":{\"ot-requestid\":\"req-"
+                        + (call[0]++)
+                        + "\",\"last_modified\":\"t"
+                        + call[0]
+                        + "\"},\"data\":[{\"reservationId\":\"r1\",\"visitDate\":\"2026-10-11T18:30:00\","
+                        + "\"partySize\":2,\"stateCategory\":\"booked\",\"primarySource\":\"phone\"}]}")
+                : defaultRoute(path);
+
+    connector.fetch(null, this::sink);
+    int windows = storedAs("opentable-reservations").size();
+    connector.fetch(null, this::sink);
+
+    assertThat(storedAs("opentable-reservations")).hasSize(windows);
+  }
+
+  @Test
+  void changedDataIsStoredAgain() {
+    connector.fetch(null, this::sink);
+    int windows = storedAs("opentable-reservations").size();
+
+    browser.router =
+        path -> path.contains("reservations/gold") ? reservations(2) : defaultRoute(path);
+    connector.fetch(null, this::sink);
+
+    assertThat(storedAs("opentable-reservations")).hasSize(windows * 2);
+  }
+
+  @Test
+  void halfMonthBoundaries() {
+    assertThat(OpenTableApiConnector.halfMonthStart(LocalDate.of(2026, 8, 14)))
+        .isEqualTo(LocalDate.of(2026, 8, 1));
+    assertThat(OpenTableApiConnector.halfMonthStart(LocalDate.of(2026, 8, 16)))
+        .isEqualTo(LocalDate.of(2026, 8, 16));
+    assertThat(OpenTableApiConnector.halfMonthEnd(LocalDate.of(2028, 2, 20)))
+        .isEqualTo(LocalDate.of(2028, 2, 29));
+    assertThat(OpenTableApiConnector.halfMonthEnd(LocalDate.of(2026, 10, 15)))
+        .isEqualTo(LocalDate.of(2026, 10, 15));
   }
 
   private static void assertContiguous(List<FetchedPayload> windows) {

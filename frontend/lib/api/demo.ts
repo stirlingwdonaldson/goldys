@@ -36,6 +36,9 @@ import type {
   InventorySummary,
   InvoiceIngestFlag,
   InvoiceGraphNode,
+  InvoiceSummary,
+  InvoiceDetail,
+  InvoiceFilter,
   LabourSummary,
   LineGraphNode,
   Provenance,
@@ -147,8 +150,11 @@ const records: Record<string, ReconciliationRecord> = {
 const connectorStatuses: ConnectorStatus[] = [
   { source: "LIGHTSPEED", connectorName: "lightspeed-scrape", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0, runnable: false },
   { source: "CTB", connectorName: "ctb-export", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1, runnable: true },
+  { source: "OPENTABLE", connectorName: "opentable-csv-drop", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
+  { source: "OPENTABLE", connectorName: "opentable-reservations", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
+  { source: "OPENTABLE", connectorName: "opentable-reviews", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
+  { source: "OPENTABLE", connectorName: "opentable-menu-items", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
   { source: "DEPUTY", connectorName: "deputy-api", lastRunAt: "2026-09-19T22:30:00Z", status: "failed", failureCount: 2, runnable: false },
-  { source: "OPENTABLE", connectorName: "opentable-guestcenter", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
 ];
 
 let productExceptions: ReconciliationException[] = [
@@ -810,6 +816,28 @@ const demoCategoryAssignments: AssignmentRow[] = [
   { productNameKey: "garlic aioli", categoryId: null, categoryName: null, groupName: null, confidence: null, source: null, status: "UNASSIGNED" },
 ];
 
+// Invoice browse fixtures: realistic current headers covering the hard states — a linked PDF, one
+// with no PDF, a null due date and a null total. Lines exist for two invoices; the rest return an
+// empty line set, mirroring a header with no enriched lines. Demo data only.
+const demoInvoiceSummaries: InvoiceSummary[] = [
+  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1042", invoiceDate: "2026-09-28", dueDate: "2026-10-28", totalAmount: 1420.15, purchaseNumber: "PO-88", hasPdf: true },
+  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1091", invoiceDate: "2026-09-21", dueDate: null, totalAmount: 980.4, purchaseNumber: "PO-91", hasPdf: false },
+  { supplierName: "Oranges & Lemons", invoiceNumber: "INV-1103", invoiceDate: "2026-09-15", dueDate: "2026-10-15", totalAmount: null, purchaseNumber: null, hasPdf: true },
+  { supplierName: "Sealane Beverages", invoiceNumber: "INV-0987", invoiceDate: "2026-09-08", dueDate: "2026-10-08", totalAmount: 512.0, purchaseNumber: "PO-77", hasPdf: false },
+];
+
+const demoInvoiceLines: Record<string, LineGraphNode[]> = {
+  "INV-1042": [
+    { productNameKey: "chicken breast", stockCode: "CB-1", quantity: 4, unitCost: 12.5, lineTotal: 50.0, uom: "CTN" },
+    { productNameKey: "beef mince", stockCode: "BM-2", quantity: 10, unitCost: 9.0, lineTotal: 90.0, uom: "KG" },
+  ],
+  "INV-1091": [
+    { productNameKey: "house red", stockCode: "HR-1", quantity: 12, unitCost: 8.25, lineTotal: 99.0, uom: "BT" },
+    // Same items as INV-1042 a week earlier, so the detail view shows a unit-cost movement.
+    { productNameKey: "chicken breast", stockCode: "CB-1", quantity: 4, unitCost: 11.8, lineTotal: 47.2, uom: "CTN" },
+    { productNameKey: "beef mince", stockCode: "BM-2", quantity: 8, unitCost: 9.0, lineTotal: 72.0, uom: "KG" },
+  ],
+};
 
 /**
  * Demo OpenTable assisted sign-in. There is no remote browser: the live view shows a placeholder
@@ -885,14 +913,19 @@ export const demoApi: Api = {
     };
   },
 
-  async getDashboardActivity(): Promise<ActivityPoint[]> {
+  async getDashboardActivity(from?: string, to?: string): Promise<ActivityPoint[]> {
     await delay(400);
-    return activityFixture();
+    const all = activityFixture();
+    return all.filter((p) => (!from || p.date >= from) && (!to || p.date <= to));
   },
 
-  async listReconciliationExceptions(): Promise<ReconciliationException[]> {
+  async listReconciliationExceptions(
+    page: number,
+    size: number,
+  ): Promise<DataPage<ReconciliationException>> {
     await delay(400);
-    return deriveExceptions(records);
+    const items = deriveExceptions(records);
+    return { items, total: items.length, page, size };
   },
 
   async getReconciliationRecord(id: string): Promise<ReconciliationRecord> {
@@ -924,14 +957,14 @@ export const demoApi: Api = {
     return existing;
   },
 
-  async uploadOpenTableCsv(_file: File): Promise<void> {
+  async uploadConnectorCsv(connectorName: string, _file: File): Promise<void> {
     void _file; // demo no-op: nothing to upload
     await delay(600);
-    const opentable = connectorStatuses.find((c) => c.source === "OPENTABLE");
-    if (opentable) {
-      opentable.lastRunAt = new Date().toISOString();
-      opentable.status = "success";
-      opentable.failureCount = 0;
+    const connector = connectorStatuses.find((c) => c.connectorName === connectorName);
+    if (connector) {
+      connector.lastRunAt = new Date().toISOString();
+      connector.status = "success";
+      connector.failureCount = 0;
     }
   },
 
@@ -1013,9 +1046,12 @@ export const demoApi: Api = {
     return { ok: true, recordId: input.recordId, field: input.field };
   },
 
-  async listProductExceptions(): Promise<ReconciliationException[]> {
+  async listProductExceptions(
+    page: number,
+    size: number,
+  ): Promise<DataPage<ReconciliationException>> {
     await delay(400);
-    return productExceptions;
+    return { items: productExceptions, total: productExceptions.length, page, size };
   },
 
   async saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult> {
@@ -1170,9 +1206,9 @@ export const demoApi: Api = {
     return [...ruleAudit];
   },
 
-  async listReconciliationAudit(): Promise<ReconciliationAuditEntry[]> {
+  async listReconciliationAudit(page: number, size: number): Promise<DataPage<ReconciliationAuditEntry>> {
     await delay(300);
-    return [...reconciliationAudit];
+    return { items: [...reconciliationAudit], total: reconciliationAudit.length, page, size };
   },
 
   async listProducts(): Promise<string[]> {
@@ -1180,13 +1216,17 @@ export const demoApi: Api = {
     return [...DEMO_PRODUCTS];
   },
 
-  async listDailySales(): Promise<DailySales[]> {
+  async listDailySales(filter: import("./types").SalesFilter, page: number, size: number): Promise<DataPage<DailySales>> {
     await delay(300);
-    return [
+    const all = [
       { date: "2026-10-05", source: "CTB", totalSales: 10865.72, gst: 985.44, net: 9880.28 },
       { date: "2026-10-04", source: "CTB", totalSales: 29605.13, gst: 2689.54, net: 26915.6 },
       { date: "2026-10-03", source: "CTB", totalSales: 43618.92, gst: 3960.39, net: 39658.53 },
     ];
+    const items = all.filter(
+      (r) => (!filter.from || r.date >= filter.from) && (!filter.to || r.date <= filter.to),
+    );
+    return { items, total: items.length, page, size };
   },
 
   async getLatestSales(): Promise<LatestSales> {
@@ -1297,6 +1337,27 @@ export const demoApi: Api = {
     ];
   },
 
+  async listInvoices(
+    filter: InvoiceFilter,
+    page: number,
+    size: number,
+  ): Promise<DataPage<InvoiceSummary>> {
+    await delay(300);
+    const items = demoInvoiceSummaries.filter(
+      (i) =>
+        (!filter.supplier || i.supplierName === filter.supplier) &&
+        inDateRange(i.invoiceDate, filter.from, filter.to),
+    );
+    return { items, total: items.length, page, size };
+  },
+
+  async getInvoice(invoiceNumber: string): Promise<InvoiceDetail> {
+    await delay(300);
+    const header = demoInvoiceSummaries.find((i) => i.invoiceNumber === invoiceNumber);
+    if (!header) throw new ApiError("NOT_FOUND", `No invoice ${invoiceNumber}.`);
+    return { ...header, lines: demoInvoiceLines[invoiceNumber] ?? [] };
+  },
+
   async getLabourSummary(from: string, to: string): Promise<LabourSummary> {
     await delay(300);
     return {
@@ -1323,26 +1384,64 @@ export const demoApi: Api = {
     return demoProvenance(metricId, date);
   },
 
-  async getTopSellers(): Promise<TopSeller[]> {
+  async getTopSellers(from?: string, to?: string, limit?: number): Promise<TopSeller[]> {
     await delay(300);
-    return [
+    const all = [
       { name: "pint carlton draught", quantitySold: 493, amount: 7904.25, hasConflict: false },
       { name: "chicken schnitzel", quantitySold: 211, amount: 5591.5, hasConflict: false },
       { name: "garlic aioli", quantitySold: 150, amount: 380.88, hasConflict: true },
       { name: "parma", quantitySold: 132, amount: 3696, hasConflict: false },
       { name: "house red", quantitySold: 98, amount: 1078, hasConflict: false },
     ];
+    return limit != null ? all.slice(0, limit) : all;
   },
 
-  async getSalesTrend(): Promise<SalesTrendPoint[]> {
+  async getSalesTrend(from?: string, to?: string): Promise<SalesTrendPoint[]> {
     await delay(300);
-    return [
+    const all = [
       { date: "2026-10-01", total: 9582.11 },
       { date: "2026-10-02", total: 33909.35 },
       { date: "2026-10-03", total: 43618.92 },
       { date: "2026-10-04", total: 29605.13 },
       { date: "2026-10-05", total: 10865.72 },
     ];
+    return all.filter((p) => (!from || p.date >= from) && (!to || p.date <= to));
+  },
+
+  async queryMetrics(query: MetricQuery): Promise<import("./types").MetricResult> {
+    await delay(300);
+    const provenance = {
+      metric: query.metric,
+      definitionVersion: "1",
+      range: query.range,
+      grain: query.grain,
+      sourceDomain: "resolved_daily_sales",
+      dataFreshness: new Date().toISOString(),
+      missingPeriods: [],
+      calculationVersion: "1",
+      trust: null,
+    };
+    if (query.metric === "product.top_sellers") {
+      return {
+        metric: query.metric,
+        items: [
+          { label: "pint carlton draught", primary: 7904.25, secondary: 493, hasConflict: false },
+        ],
+        notices: [],
+        provenance,
+      };
+    }
+    return {
+      metric: query.metric,
+      series: [
+        {
+          dimensionValue: null,
+          points: [{ bucketStart: query.range.from, value: 9582.11, status: null }],
+        },
+      ],
+      notices: [],
+      provenance,
+    };
   },
 
   async listDashboards(): Promise<SavedDashboardSummary[]> {
@@ -1655,10 +1754,12 @@ export const demoApi: Api = {
   async getRecipes(): Promise<RecipeCosting[]> {
     await delay(300);
     return [
-      { recipeId: 1, name: "Parma", folder: "Mains", portionSize: "1", costPerPortion: 6.0, actualCost: 7.2, costGap: 1.2, menuPrice: 18.5, margin: 12.5, gpPercent: 0.6757 },
-      { recipeId: 2, name: "Kids Fish & Chippies", folder: "Kids", portionSize: "1 serve", costPerPortion: 4.1, actualCost: 4.5, costGap: 0.4, menuPrice: 12.0, margin: 7.9, gpPercent: 0.6583 },
-      { recipeId: 3, name: "Cheeseburger", folder: "Mains", portionSize: "1", costPerPortion: 5.4, actualCost: 5.9, costGap: 0.5, menuPrice: 19.0, margin: 13.6, gpPercent: 0.7158 },
-      { recipeId: 4, name: "Sticky Date Pudding", folder: "Dessert", portionSize: "6", costPerPortion: 1.9, actualCost: 2.1, costGap: 0.2, menuPrice: 11.0, margin: 9.1, gpPercent: 0.8273 },
+      { recipeId: 1, name: "Parma", folder: "Mains", portionSize: "1", costPerPortion: 6.0, actualCost: 7.2, costGap: 1.2, menuPrice: 18.5, margin: 12.5, gpPercent: 0.6757, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 2, name: "Kids Fish & Chippies", folder: "Kids", portionSize: "1 serve", costPerPortion: 4.1, actualCost: 4.5, costGap: 0.4, menuPrice: 12.0, margin: 7.9, gpPercent: 0.6583, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 3, name: "Cheeseburger", folder: "Mains", portionSize: "1", costPerPortion: 5.4, actualCost: 5.9, costGap: 0.5, menuPrice: 19.0, margin: 13.6, gpPercent: 0.7158, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 4, name: "Sticky Date Pudding", folder: "Dessert", portionSize: "6", costPerPortion: 1.9, actualCost: 2.1, costGap: 0.2, menuPrice: 11.0, margin: 9.1, gpPercent: 0.8273, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 5, name: "Eggplant Parmigiana", folder: "Mains", portionSize: "1", costPerPortion: 4.2, actualCost: null, costGap: 0.6, menuPrice: null, margin: 12.8, gpPercent: 0.7529, menuState: "OFF_MENU", priceSource: "HISTORICAL", lastSoldPrice: 17.0, lastSoldCost: 4.8, lastSoldDate: "2026-09-14" },
+      { recipeId: 6, name: "Pickle Brine", folder: "Prep", portionSize: "1", costPerPortion: 0.8, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
     ];
   },
 

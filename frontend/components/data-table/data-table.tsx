@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -55,6 +55,15 @@ interface DataTableProps<TData, TValue> {
   toolbar?: ReactNode;
   /** Stable row id; defaults to TanStack's index-based id. */
   getRowId?: (row: TData, index: number) => string;
+  /** When set, body rows become clickable and call this with the row's data. */
+  onRowClick?: (row: TData) => void;
+  /** Highlight (aria-selected) rows for which this returns true. */
+  isRowSelected?: (row: TData) => boolean;
+  /**
+   * Called with the visible rows in display order (after sorting and filtering) whenever that
+   * order changes, e.g. so a detail view can step to the previous/next row.
+   */
+  onRowOrderChange?: (rows: TData[]) => void;
 }
 
 /**
@@ -72,6 +81,9 @@ export function DataTable<TData, TValue>({
   emptyMessage = "No results.",
   toolbar,
   getRowId,
+  onRowClick,
+  isRowSelected,
+  onRowOrderChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -101,6 +113,15 @@ export function DataTable<TData, TValue>({
   const filter = filterColumn ? table.getColumn(filterColumn) : undefined;
   const rows = table.getRowModel().rows;
   const filteredCount = table.getFilteredRowModel().rows.length;
+
+  // Report the order only when the sequence of row ids changes, not on every render.
+  const rowOrderKey = rows.map((r) => r.id).join("\u0000");
+  const onRowOrderChangeRef = useRef(onRowOrderChange);
+  onRowOrderChangeRef.current = onRowOrderChange;
+  useEffect(() => {
+    onRowOrderChangeRef.current?.(rows.map((r) => r.original));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowOrderKey]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -162,7 +183,14 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {rows.length ? (
-              rows.map((row) => <DataTableRow key={row.id} row={row} />)
+              rows.map((row) => (
+                <DataTableRow
+                  key={row.id}
+                  row={row}
+                  onRowClick={onRowClick}
+                  isRowSelected={isRowSelected}
+                />
+              ))
             ) : (
               <TableRow className="hover:bg-transparent">
                 <TableCell
@@ -190,9 +218,22 @@ export function DataTable<TData, TValue>({
   );
 }
 
-function DataTableRow<TData>({ row }: { row: Row<TData> }) {
+function DataTableRow<TData>({
+  row,
+  onRowClick,
+  isRowSelected,
+}: {
+  row: Row<TData>;
+  onRowClick?: (row: TData) => void;
+  isRowSelected?: (row: TData) => boolean;
+}) {
+  const selected = isRowSelected?.(row.original) ?? false;
   return (
-    <TableRow>
+    <TableRow
+      data-state={selected ? "selected" : undefined}
+      className={onRowClick ? "cursor-pointer" : undefined}
+      onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+    >
       {row.getVisibleCells().map((cell) => (
         <TableCell
           key={cell.id}

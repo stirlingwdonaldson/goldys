@@ -10,4 +10,6 @@ public record SaleRecipeLinkView(
     String recipeName,
     String recipeFolderName,
     String saleItemStockDescription,
-    Boolean isRecipeActive) {}
+    Boolean isRecipeActive,
+    int saleItemRecipeId,
+    Integer lightspeedProductId) {}

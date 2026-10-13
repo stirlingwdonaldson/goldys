@@ -50,7 +50,8 @@ class InvoiceGapRecoveryServiceTest {
   private void invoiceWithDate() {
     when(invoiceQuery.currentInvoices())
         .thenReturn(
-            List.of(new InvoiceMetadataView("Supplier", "INV-7200", date, null, null, "a.pdf")));
+            List.of(
+                new InvoiceMetadataView("Supplier", "INV-7200", date, null, null, null, "a.pdf")));
   }
 
   @Test

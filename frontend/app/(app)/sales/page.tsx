@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useApiData } from "@/lib/use-api-data";
 import { DataTable } from "@/components/data-table/data-table";
 import { currencyColumn, dateColumn, sourceColumn, traceColumn } from "@/components/data-table/columns";
+import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import { ProvenanceSheet, type ProvenanceTarget } from "@/components/trust/provenance-sheet";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -28,8 +29,9 @@ function salesColumns(onTrace: (row: DailySales) => void): ColumnDef<DailySales>
 export default function SalesPage() {
   // The trend must render the reconciled/resolved daily totals, never a client-side
   // sum of competing per-source rows (audit finding F01). The per-source table below
-  // stays for source comparison.
-  const sales = useApiData((api) => api.listDailySales());
+  // stays for source comparison and pages on the server.
+  const { page, setPage, pageSize, setPageSize } = usePageState("sales");
+  const sales = useApiData((api) => api.listDailySales({}, page, pageSize), [page, pageSize]);
   const trend = useApiData((api) => api.getSalesTrend());
   const [trace, setTrace] = useState<ProvenanceTarget | null>(null);
   const columns = useMemo(
@@ -51,7 +53,8 @@ export default function SalesPage() {
       />
     );
   }
-  const rows = sales.data ?? [];
+  const rows = sales.data?.items ?? [];
+  const total = sales.data?.total ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -59,7 +62,7 @@ export default function SalesPage() {
 
       <SalesTrend points={trend.data ?? []} />
 
-      {rows.length === 0 ? (
+      {total === 0 ? (
         <EmptyState
           title="No sales data"
           description="Daily sales will appear here once sources ingest."
@@ -71,8 +74,16 @@ export default function SalesPage() {
             data={rows}
             filterColumn="source"
             filterPlaceholder="Filter by source"
+            pageSize={false}
             initialSorting={[{ id: "date", desc: true }]}
             getRowId={(r) => `${r.date}-${r.source}`}
+          />
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
           />
         </Section>
       )}

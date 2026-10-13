@@ -95,6 +95,7 @@ tasks.register('fastTest', Test) {
 		// @DataJpaTest / @Import / PostgresContainerConfiguration.)
 		[
 			'AuthControllerTest',
+			'CanonicalGuestMigrationTest',
 			'CanonicalSchemaTest',
 			'ChatControllerSseTest',
 			'ChatControllerTest',
@@ -119,6 +120,7 @@ tasks.register('fastTest', Test) {
 			'LightspeedIngestControllerTest',
 			'LiveLlmEvalTest',
 			'LlmInvoicePdfExtractorEvalTest',
+			'MetricQueryControllerTest',
 			'PlatformMapControllerTest',
 			'ProvenanceControllerTest',
 			'RecipeControllerTest',

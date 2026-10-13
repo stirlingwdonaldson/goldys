@@ -19,8 +19,8 @@ export interface WorkQueueResult {
  */
 export async function loadWorkQueue(api: Api): Promise<WorkQueueResult> {
   const [daily, product, connectors, flags, recompute] = await Promise.allSettled([
-    api.listReconciliationExceptions(),
-    api.listProductExceptions(),
+    api.listReconciliationExceptions(0, 200),
+    api.listProductExceptions(0, 200),
     api.listConnectorStatuses(),
     api.listInvoiceFlags(),
     api.getRecomputeStatus(),
@@ -35,8 +35,8 @@ export async function loadWorkQueue(api: Api): Promise<WorkQueueResult> {
   ].filter((s): s is string => s !== null);
   return {
     items: buildWorkQueue({
-      dailyExceptions: value(daily),
-      productExceptions: value(product),
+      dailyExceptions: value(daily)?.items ?? null,
+      productExceptions: value(product)?.items ?? null,
       connectors: value(connectors),
       invoiceFlags: value(flags),
       recompute: value(recompute),

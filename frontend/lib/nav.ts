@@ -62,6 +62,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { title: "Reservations", href: "/reservations", icon: CalendarDays, keywords: ["covers", "bookings", "opentable", "venue"] },
       { title: "Kitchen", href: "/kitchen", icon: ChefHat, keywords: ["food cost", "stock", "invoices", "suppliers"] },
+      { title: "Invoices", href: "/invoices", icon: ReceiptText, keywords: ["supplier invoices", "pdf", "purchases", "documents"] },
       { title: "Staff & labour", href: "/staff", icon: Users, keywords: ["roster", "wages", "deputy"] },
     ],
   },

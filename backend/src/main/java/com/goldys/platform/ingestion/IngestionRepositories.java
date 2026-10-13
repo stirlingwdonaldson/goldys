@@ -76,6 +76,15 @@ interface RawRecordRepository
   List<RawRecord> findBySourceSystemAndFetcherIdentity(String sourceSystem, String fetcherIdentity);
 
   /**
+   * Id and hash of the latest payload for one dataset window. A closed interface projection, so
+   * only those two columns are selected and {@code payload_bytes} is never loaded. Backed by {@code
+   * idx_raw_record_source_fetcher_ref} (V58).
+   */
+  Optional<RawRecordDigest>
+      findFirstBySourceSystemAndFetcherIdentityAndSourceRecordRefOrderByFetchedAtDesc(
+          String sourceSystem, String fetcherIdentity, String sourceRecordRef);
+
+  /**
    * Raw-record ids of one fetcher identity, deliberately excluding {@code payload_bytes}: replay
    * backfills fetch the bytes one record at a time via {@code findById}, so a dataset of hundreds
    * of MB is never materialised as one list.
@@ -117,3 +126,10 @@ interface IngestionStageRepository extends JpaRepository<IngestionStage, UUID> {
 
 /** A status → count aggregate used by the ingestion-health read model. */
 record StatusCount(IngestionStatus status, long count) {}
+
+/** Id and SHA-256 of one stored raw payload, without its bytes (Spring Data projection). */
+interface RawRecordDigest {
+  UUID getId();
+
+  String getPayloadSha256();
+}

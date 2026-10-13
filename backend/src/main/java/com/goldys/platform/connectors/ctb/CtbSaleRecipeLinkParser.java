@@ -41,6 +41,7 @@ public class CtbSaleRecipeLinkParser {
               sanitize(n.get("recipeName")),
               sanitize(n.get("recipeFolderName")),
               bool(n.get("isRecipeActive")),
+              null,
               rawRecordId));
     }
     return out;

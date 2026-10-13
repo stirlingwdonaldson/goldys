@@ -15,6 +15,7 @@ public class FakeOpenTableBrowser implements OpenTableBrowser {
   public boolean unavailable;
   public int navigations;
   public int signOuts;
+  public int parks;
   public Consumer<ScreencastFrame> screencast;
 
   /** How many upcoming {@link #startScreencast} calls to fail (a start mid-navigation). */
@@ -81,6 +82,12 @@ public class FakeOpenTableBrowser implements OpenTableBrowser {
     guard();
     signOuts++;
     authenticated = false;
+  }
+
+  @Override
+  public void park() {
+    guard();
+    parks++;
   }
 
   private void guard() {

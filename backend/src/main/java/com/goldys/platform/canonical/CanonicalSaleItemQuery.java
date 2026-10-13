@@ -35,7 +35,10 @@ public class CanonicalSaleItemQuery {
   /** Current sale items' name, sold price and cost — for the recipe price/cost join. */
   public List<SaleItemPriceView> currentSaleItemPrices() {
     return repository.findAllCurrent().stream()
-        .map(s -> new SaleItemPriceView(s.itemName(), s.soldPriceIncTax(), s.costIncTax()))
+        .map(
+            s ->
+                new SaleItemPriceView(
+                    s.itemName(), s.soldPriceIncTax(), s.costIncTax(), s.tradingDate()))
         .toList();
   }
 

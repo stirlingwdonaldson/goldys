@@ -5,6 +5,7 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.VenueClock;
+import com.goldys.platform.ingestion.IngestionActivityPoint;
 import com.goldys.platform.ingestion.IngestionHealth;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.reconciliation.OverrideUsage;
@@ -15,7 +16,6 @@ import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
-import com.goldys.platform.semantic.catalog.RankedListResult;
 import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.semantic.catalog.TimeSeriesResult;
@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 public class DashboardApplicationService {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
   private static final int TOP_SELLERS_WINDOW_DAYS = 30;
+  private static final int TOP_SELLERS_LIMIT = 5;
   private static final int TREND_DAYS = 13; // trailing 14 days inclusive
   private static final int ACTIVITY_DAYS = 14;
 
@@ -66,19 +67,19 @@ public class DashboardApplicationService {
     return summaryInternal();
   }
 
-  public List<ActivityPoint> activity(UserRole role) {
+  public List<ActivityPoint> activity(UserRole role, LocalDate from, LocalDate to) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return activityInternal();
+    return activityInternal(from, to);
   }
 
-  public List<TopSeller> topSellers(UserRole role) {
+  public List<TopSeller> topSellers(UserRole role, LocalDate from, LocalDate to, Integer limit) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return topSellersInternal();
+    return topSellersInternal(from, to, limit);
   }
 
-  public List<SalesTrend> salesTrend(UserRole role) {
+  public List<SalesTrend> salesTrend(UserRole role, LocalDate from, LocalDate to) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return salesTrendInternal();
+    return salesTrendInternal(from, to);
   }
 
   /**
@@ -90,9 +91,9 @@ public class DashboardApplicationService {
     return new Bootstrap(
         summaryInternal(),
         latestTradingDayInternal(),
-        salesTrendInternal(),
-        activityInternal(),
-        topSellersInternal());
+        salesTrendInternal(null, null),
+        activityInternal(null, null),
+        topSellersInternal(null, null, null));
   }
 
   private Summary summaryInternal() {
@@ -103,28 +104,32 @@ public class DashboardApplicationService {
         health.completenessPercent(), openConflicts, health.timeToDetectFailure(), usage);
   }
 
-  private List<ActivityPoint> activityInternal() {
-    return ingestion.activity(ACTIVITY_DAYS).stream()
-        .map(p -> new ActivityPoint(p.date(), p.clean(), p.failed()))
+  private List<ActivityPoint> activityInternal(LocalDate from, LocalDate to) {
+    List<IngestionActivityPoint> points;
+    if (from == null && to == null) {
+      points = ingestion.activity(ACTIVITY_DAYS);
+    } else {
+      LocalDate end = to != null ? to : venueClock.today();
+      LocalDate start = from != null ? from : end.minusDays(ACTIVITY_DAYS - 1L);
+      points = ingestion.activity(start, end);
+    }
+    return points.stream().map(p -> new ActivityPoint(p.date(), p.clean(), p.failed())).toList();
+  }
+
+  private List<TopSeller> topSellersInternal(LocalDate from, LocalDate to, Integer limit) {
+    // Read the resolved product metric directly rather than through the PRODUCT_TOP_SELLERS
+    // catalogue metric: the catalogue path has no per-call limit (its executor hardcodes 5), while
+    // this screen read needs a caller-controlled window and limit. The resolved values are the
+    // same.
+    TimeRange range = defaultRange(from, to, TOP_SELLERS_WINDOW_DAYS);
+    int n = limit != null ? limit : TOP_SELLERS_LIMIT;
+    return productMetrics.topSellers(range.from(), range.to(), n).stream()
+        .map(t -> new TopSeller(t.productName(), t.quantitySold(), t.amount(), t.hasConflict()))
         .toList();
   }
 
-  private List<TopSeller> topSellersInternal() {
-    LocalDate to = venueClock.today();
-    TimeRange range = new TimeRange(to.minusDays(TOP_SELLERS_WINDOW_DAYS), to, Calendar.CALENDAR);
-    RankedListResult result =
-        (RankedListResult)
-            metrics.query(
-                new MetricQuery(
-                    MetricId.PRODUCT_TOP_SELLERS, range, TimeGrain.DAY, Set.of(), null));
-    return result.items().stream()
-        .map(i -> new TopSeller(i.label(), i.secondary(), i.primary(), i.hasConflict()))
-        .toList();
-  }
-
-  private List<SalesTrend> salesTrendInternal() {
-    LocalDate to = venueClock.today();
-    TimeRange range = new TimeRange(to.minusDays(TREND_DAYS), to, Calendar.CALENDAR);
+  private List<SalesTrend> salesTrendInternal(LocalDate from, LocalDate to) {
+    TimeRange range = defaultRange(from, to, TREND_DAYS);
     TimeSeriesResult result =
         (TimeSeriesResult)
             metrics.query(
@@ -133,6 +138,13 @@ public class DashboardApplicationService {
         .flatMap(s -> s.points().stream())
         .map(p -> new SalesTrend(p.bucketStart().toString(), p.value()))
         .toList();
+  }
+
+  /** An explicit range when supplied, otherwise the trailing {@code trailingDays} ending today. */
+  private TimeRange defaultRange(LocalDate from, LocalDate to, int trailingDays) {
+    LocalDate end = to != null ? to : venueClock.today();
+    LocalDate start = from != null ? from : end.minusDays(trailingDays);
+    return new TimeRange(start, end, Calendar.CALENDAR);
   }
 
   private LatestSales latestTradingDayInternal() {

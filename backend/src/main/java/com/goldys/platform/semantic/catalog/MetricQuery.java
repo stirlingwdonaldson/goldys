@@ -1,6 +1,5 @@
 package com.goldys.platform.semantic.catalog;
 
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -17,8 +16,12 @@ public record MetricQuery(
     if (metric == null) {
       throw new IllegalArgumentException("Unknown metric: null");
     }
-    Objects.requireNonNull(range, "range");
-    Objects.requireNonNull(grain, "grain");
+    if (range == null) {
+      throw new IllegalArgumentException("range is required");
+    }
+    if (grain == null) {
+      throw new IllegalArgumentException("grain is required");
+    }
     dimensions = dimensions == null ? Set.of() : Set.copyOf(dimensions);
   }
 }

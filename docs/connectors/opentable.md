@@ -24,13 +24,27 @@ An owner opens **Data health → OpenTable → Sync OpenTable**, picks *Recent a
   token every 30 minutes. A sync started within that window of the previous one skips the login.
   The absolute session ceiling is unknown (the auth cookies are HttpOnly); record it here once
   observed in production.
+- **The browser is parked on `about:blank`** after every sync run, after an idle sign-in view
+  times out, and when a sign-in is abandoned. A GuestCenter page left open refreshes its own
+  login every 30 minutes, which would keep the VM signed in indefinitely; parked, the session
+  lapses on OpenTable's own timeouts. Whether a later sync still needs a login depends on how
+  long OpenTable's (HttpOnly) cookies last. The live view handles either case.
 - **Sign out** in the dialog clears the OpenTable login from the sidecar's profile volume.
 
 ### What the run pulls
 
 All requests are same-origin `fetch()` calls inside the signed-in GuestCenter page, spaced ≥1.5 s
-apart, with 429/5xx backoff (5 s doubling to 90 s, 10 attempts). Every response is stored in the
-raw ledger byte-for-byte before parsing.
+apart, with 429/5xx backoff (5 s doubling to 90 s, 10 attempts). Responses are stored in the raw
+ledger byte-for-byte before parsing.
+
+**Unchanged responses aren't stored again.** A response is skipped when it matches the latest
+stored payload for the same dataset window (`fetcherIdentity` + `sourceRecordRef`), ignoring the
+top-level `meta-data` / `meta` blocks, which carry a fresh request id and timestamp on every call.
+The earlier payload stays the evidence for that content; nothing is deleted or rewritten. Skipped
+reservation windows are still canonicalized against the stored record, a no-op when nothing
+changed. Reservation windows snap to half-month boundaries so their refs repeat between syncs.
+Reviews are keyed by the run's date range, so they're always stored, but they're small (tens of
+KB). A sync where nothing changed ends `NO_NEW_DATA`.
 
 | Dataset (`fetcherIdentity`) | Endpoint | Paging | Canonical |
 |---|---|---|---|
@@ -66,11 +80,55 @@ Status mapping and identity are in [`matching-and-identity.md`](matching-and-ide
 
 ## Fallback: manual CSV drop
 
-`POST /api/ingest/opentable` (token-gated by `OPENTABLE_DROP_TOKEN`) or **Upload CSV** on the
-OpenTable card stores the CSV in the raw ledger and parses it with `OpenTableCsvParser`.
+Three rich GuestCenter reports are ingested as CSV — via a token-gated webhook or an in-app
+multipart upload from the connectors screen. Each ingest service stores the bytes in the raw
+ledger first; only the reservations path also canonicalizes. Reviews and menu items are validated
+for shape and parked raw until their canonical slices land.
 
-The parser expects columns `Reservation ID`, `Date`, `Time`, `Party Size`, `Status`, `Table`,
-`Source`, `Guest Name`. **GuestCenter's current reservations report does not match this:** it has
-no Reservation ID column, uses `Visit Date` (date and time together), and reads statuses as
-`Finished` / `No show`. A real export will fail with `CONNECTOR_SCHEMA_MISMATCH` until the parser
-is updated, so prefer the assisted sync.
+| Report | Endpoint | Fetcher identity | Canonical target |
+|---|---|---|---|
+| Reservations (rich) | `POST /api/ingest/opentable-reservations` | `opentable-reservations` | `canonical_reservation` |
+| Reviews | `POST /api/ingest/opentable-reviews` | `opentable-reviews` | raw only (future `canonical_review`) |
+| Menu items | `POST /api/ingest/opentable-menu-items` | `opentable-menu-items` | raw only (future `canonical_menu_item`) |
+
+The shapes below are the real columns from a one-time manual export of restaurant **140126**
+(Goldy's), not provisional.
+
+### Reservations (rich, 156 columns)
+
+Required columns: `Reservation ID`, `Visit Date`, `Size`, `Status`. The full export groups into
+four facets:
+
+- **Guest identity & lifetime value** — name/contact, first/recent visit, visit counts,
+  no-show/cancel counts, lifetime and per-cover spend. Phone/email are **masked** (`**********`)
+  and map to `null`.
+- **Operational/floor detail** — dining area (assigned/booked + ids), table type, wait staff,
+  wait/turn times, reservation type, and the full visit lifecycle timestamps
+  (created/seated/finished/cancelled/no-show).
+- **Booking source & marketing** — online channel, partner, campaign, referrer, RestRef fields.
+- **Revenue & payment breakdown** — prepaid-experience block and a POS breakdown (subtotal, tax,
+  service charges, tip, paid, due) plus income/revenue totals.
+
+`Status` values observed: `Finished` (→ `COMPLETED`), `Seated`, `Cancelled`, `Booked`; a separate
+`Reservation Status` column holds the system values (`Done`, `AssumedSeated`, `AssumedDone`,
+`Cancelled`) and is kept distinct. The file carries a UTF-8 BOM (stripped at parse time; the raw
+bytes keep it).
+
+### Reviews
+
+Required columns: `Review ID`, `Source`, `Review Date`, `Overall Rating`; `Comment` optional
+(multi-line, quoted). `Source` distinguishes OpenTable reviews from Google reviews. Reviews carry
+a clean `Guest ID` (e.g. `6a8e7ffc…`) — the anchor for the future `canonical_guest`. Review
+identity is `Review ID` (`OT-140126-…` for OpenTable, `RT-140126-…` for Google).
+
+### Menu items
+
+Required columns: `Item ID`, `Invariant ID`, `Items`, `Price`. `Price` carries a currency prefix
+(e.g. `A$72.00`). The **`Invariant ID` is the stable logical key** (survives edits); `Item ID`
+changes per edit. Rows include modifier groups (sizes/variations), categories, dietary and status.
+
+The thin 8-column `opentable-csv-drop` path (`POST /api/ingest/opentable`,
+`OpenTableCsvIngestService`) is **deprecated** (raw-only, no longer canonicalizes) — its assumed
+columns (`Reservation ID`, `Date`, `Time`, …) do not match GuestCenter's current report, so a
+stale thin upload cannot bitemporally supersede a rich reservation row. Prefer the assisted sync
+or the rich exports above.

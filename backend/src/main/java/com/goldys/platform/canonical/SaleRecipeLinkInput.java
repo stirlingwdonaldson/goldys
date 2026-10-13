@@ -12,4 +12,5 @@ public record SaleRecipeLinkInput(
     String recipeName,
     String recipeFolderName,
     Boolean isRecipeActive,
+    Integer lightspeedProductId,
     UUID rawRecordId) {}

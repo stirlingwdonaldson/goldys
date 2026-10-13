@@ -33,4 +33,11 @@ public interface OpenTableBrowser {
 
   /** Clears GuestCenter and OpenTable login state from the browser profile. */
   void signOut();
+
+  /**
+   * Leaves GuestCenter for {@code about:blank}. While a GuestCenter page is open its own scripts
+   * keep refreshing the login (every 30 minutes), which would hold the session open indefinitely;
+   * parked, nothing refreshes it, so it lapses on OpenTable's own timeouts.
+   */
+  void park();
 }

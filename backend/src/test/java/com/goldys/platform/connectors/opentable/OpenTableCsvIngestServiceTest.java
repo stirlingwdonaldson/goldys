@@ -4,16 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.goldys.platform.canonical.CanonicalReservationIngest;
-import com.goldys.platform.canonical.ReservationInput;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -21,13 +18,10 @@ import org.mockito.ArgumentCaptor;
 class OpenTableCsvIngestServiceTest {
 
   private final IngestionService ingestion = mock(IngestionService.class);
-  private final OpenTableCsvParser parser = new OpenTableCsvParser("Australia/Sydney");
-  private final CanonicalReservationIngest canonical = mock(CanonicalReservationIngest.class);
-  private final OpenTableCsvIngestService service =
-      new OpenTableCsvIngestService(ingestion, parser, canonical);
+  private final OpenTableCsvIngestService service = new OpenTableCsvIngestService(ingestion);
 
   @Test
-  void persistsByteFaithfullyAndCanonicalizesEachRow() {
+  void storesRawButDoesNotCanonicalize() {
     byte[] csv = fixtureCsv();
     UUID rawId = UUID.randomUUID();
     when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any())).thenReturn(rawId);
@@ -46,18 +40,9 @@ class OpenTableCsvIngestServiceTest {
             eq("opentable-csv-drop"));
     assertThat(bytes.getValue()).isEqualTo(csv);
 
-    ArgumentCaptor<ReservationInput> input = ArgumentCaptor.forClass(ReservationInput.class);
-    verify(canonical, times(2)).record(input.capture());
-    ReservationInput first = input.getAllValues().get(0);
-    assertThat(first.sourceSystem()).isEqualTo("OPENTABLE");
-    assertThat(first.reservationId()).isEqualTo("1000000001");
-    assertThat(first.reservationAt()).isEqualTo(Instant.parse("2026-09-23T09:30:00Z"));
-    assertThat(first.partySize()).isEqualTo(4);
-    assertThat(first.status()).isEqualTo("BOOKED");
-    assertThat(first.tableName()).isEqualTo("12");
-    assertThat(first.sourceChannel()).isEqualTo("OpenTable");
-    assertThat(first.partyName()).isEqualTo("Smith");
-    assertThat(first.rawRecordId()).isEqualTo(rawId);
+    // The thin drop path is raw-only: the service has no parser or canonical dependency, so the
+    // only interaction is the byte-faithful raw push — it can never downgrade a rich reservation.
+    verifyNoMoreInteractions(ingestion);
   }
 
   private static byte[] fixtureCsv() {

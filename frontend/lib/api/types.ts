@@ -276,6 +276,33 @@ export interface LineGraphNode {
 }
 
 /**
+ * One current invoice header for the browse list (mirrors the backend
+ * `InvoiceReportingService.InvoiceSummary`). `invoiceDate` is an ISO date string; the other
+ * nullable fields stay `| null` and are never defaulted.
+ */
+export interface InvoiceSummary {
+  supplierName: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string | null;
+  totalAmount: number | null;
+  purchaseNumber: string | null;
+  hasPdf: boolean;
+}
+
+/** One invoice header plus its line graph nodes (mirrors the backend `InvoiceDetail`). */
+export interface InvoiceDetail extends InvoiceSummary {
+  lines: LineGraphNode[];
+}
+
+/** Browse-list filters; an absent field means "any". */
+export interface InvoiceFilter {
+  supplier?: string;
+  from?: string;
+  to?: string;
+}
+
+/**
  * The latest trading date's resolved total, or nulls when there is no data yet or the latest
  * date is still unresolved. `total: null` with a non-null `date` means "needs a decision".
  */
@@ -297,6 +324,13 @@ export interface RecipeCosting {
   menuPrice: number | null;
   margin: number | null;
   gpPercent: number | null;
+  /** "ON_MENU" | "OFF_MENU" | "UNKNOWN" — the recipe's current menu status. */
+  menuState: string;
+  /** "CURRENT" | "HISTORICAL" | "NONE" — where the effective menu price came from. */
+  priceSource: string;
+  lastSoldPrice: number | null;
+  lastSoldCost: number | null;
+  lastSoldDate: string | null;
 }
 
 /**
@@ -494,6 +528,59 @@ export interface MetricQuery {
   grain: "DAY" | "WEEK" | "MONTH";
   dimensions: string[];
   comparison: string | null;
+}
+
+/** A generic metric-query result (mirrors the backend sealed `MetricResult`). */
+export type MetricResult = TimeSeriesMetricResult | RankedListMetricResult;
+
+/** One bucket's value in a metric series; `status` explains a null value. */
+export interface MetricSeriesPoint {
+  bucketStart: string;
+  value: number | string | null;
+  status: MissingDataStatus | null;
+}
+
+/** One series of points; `dimensionValue` is null for an ungrouped series. */
+export interface MetricSeries {
+  dimensionValue: string | null;
+  points: MetricSeriesPoint[];
+}
+
+/** One row in a ranked-list result (used by `product.top_sellers`). */
+export interface MetricRankedItem {
+  label: string;
+  primary: number | string;
+  secondary: number | string;
+  hasConflict: boolean;
+}
+
+/** Provenance for a metric result (mirrors the backend `MetricProvenance` record). */
+export interface MetricResultProvenance {
+  metric: string;
+  definitionVersion: string;
+  range: { from: string; to: string; calendar: "TRADING" | "CALENDAR" };
+  grain: "DAY" | "WEEK" | "MONTH";
+  sourceDomain: string;
+  dataFreshness: string | null;
+  missingPeriods: string[];
+  calculationVersion: string;
+  trust: TrustSummary | null;
+}
+
+/** A time-series (or multi-series) metric result. */
+export interface TimeSeriesMetricResult {
+  metric: string;
+  series: MetricSeries[];
+  notices: string[];
+  provenance: MetricResultProvenance;
+}
+
+/** A ranked-list metric result. */
+export interface RankedListMetricResult {
+  metric: string;
+  items: MetricRankedItem[];
+  notices: string[];
+  provenance: MetricResultProvenance;
 }
 
 /** A widget's grid span: width in 12-column units, height in row units. */
@@ -736,6 +823,12 @@ export interface SaleItemFilter {
   saleNumber?: string;
 }
 
+/** Optional filter for the Daily-sales list (from/to are inclusive ISO dates). */
+export interface SalesFilter {
+  from?: string;
+  to?: string;
+}
+
 /** Lifecycle of a TimesFM forecast run (mirrors the backend `ForecastRunStatus`). */
 export type ForecastRunStatus = "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
 
@@ -808,14 +901,15 @@ export interface ForecastComparison {
 export interface Api {
   getDashboardBootstrap(): Promise<DashboardBootstrap>;
   getDashboardSummary(): Promise<DashboardSummary>;
-  getDashboardActivity(): Promise<ActivityPoint[]>;
-  listReconciliationExceptions(): Promise<ReconciliationException[]>;
-  listProductExceptions(): Promise<ReconciliationException[]>;
+  getDashboardActivity(from?: string, to?: string): Promise<ActivityPoint[]>;
+  listReconciliationExceptions(page: number, size: number): Promise<DataPage<ReconciliationException>>;
+  listProductExceptions(page: number, size: number): Promise<DataPage<ReconciliationException>>;
   getReconciliationRecord(id: string): Promise<ReconciliationRecord>;
   getProductRecord(date: string, product: string): Promise<ReconciliationRecord>;
   listConnectorStatuses(): Promise<ConnectorStatus[]>;
   runConnector(source: string): Promise<ConnectorStatus>;
-  uploadOpenTableCsv(file: File): Promise<void>;
+  /** Uploads a CSV drop for one connector (the OpenTable GuestCenter datasets). */
+  uploadConnectorCsv(connectorName: string, file: File): Promise<void>;
   /** Fails with NOT_CONFIGURED when the assisted sync isn't enabled on this deployment. */
   getOpenTableSession(): Promise<OpenTableSessionState>;
   startOpenTableSession(mode: OpenTableSyncMode): Promise<OpenTableSessionState>;
@@ -832,9 +926,9 @@ export interface Api {
   deleteResolutionRule(id: string): Promise<void>;
   getRecomputeStatus(): Promise<RecomputeStatus>;
   listRuleAudit(): Promise<RuleAuditEntry[]>;
-  listReconciliationAudit(): Promise<ReconciliationAuditEntry[]>;
+  listReconciliationAudit(page: number, size: number): Promise<DataPage<ReconciliationAuditEntry>>;
   listProducts(): Promise<string[]>;
-  listDailySales(): Promise<DailySales[]>;
+  listDailySales(filter: SalesFilter, page: number, size: number): Promise<DataPage<DailySales>>;
   getLatestSales(): Promise<LatestSales>;
   getReservationSummary(date: string): Promise<ReservationSummary | undefined>;
   getInventoryLines(from: string, to: string): Promise<InventoryLineBreakdown>;
@@ -846,14 +940,22 @@ export interface Api {
     to: string,
   ): Promise<InvoiceGraphNode[]>;
   getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]>;
+  listInvoices(
+    filter: InvoiceFilter,
+    page: number,
+    size: number,
+  ): Promise<DataPage<InvoiceSummary>>;
+  getInvoice(invoiceNumber: string): Promise<InvoiceDetail>;
   listInvoiceFlags(): Promise<InvoiceIngestFlag[]>;
   /** Sources → domains → metrics → dashboards; requires `connectors` READ. */
   getPlatformMap(): Promise<NetworkGraphDto>;
   getLabourSummary(from: string, to: string): Promise<LabourSummary>;
   listDailyCovers(from: string, to: string): Promise<DailyCovers[]>;
   getProvenance(metricId: string, date: string): Promise<Provenance>;
-  getTopSellers(): Promise<TopSeller[]>;
-  getSalesTrend(): Promise<SalesTrendPoint[]>;
+  getTopSellers(from?: string, to?: string, limit?: number): Promise<TopSeller[]>;
+  getSalesTrend(from?: string, to?: string): Promise<SalesTrendPoint[]>;
+  /** Runs a bounded catalogue query and returns the raw metric result (time-series or ranked list). */
+  queryMetrics(query: MetricQuery): Promise<MetricResult>;
   listDashboards(): Promise<SavedDashboardSummary[]>;
   getDashboard(id: string): Promise<DashboardDocument>;
   saveDashboard(input: SaveDashboardInput): Promise<DashboardDocument>;

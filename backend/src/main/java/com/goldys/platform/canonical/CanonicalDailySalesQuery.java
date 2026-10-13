@@ -31,6 +31,17 @@ public class CanonicalDailySalesQuery {
     return repository.findCurrentByDates(dates).stream().map(this::toView).toList();
   }
 
+  /**
+   * Current rows whose trading date falls within the inclusive range. A null bound is treated as
+   * unbounded, using PostgreSQL-safe sentinels (year 1 and 9999) rather than {@link LocalDate#MIN}
+   * / {@link LocalDate#MAX}, which are outside the {@code date} column's range.
+   */
+  public List<DailySalesView> currentDailySalesBetween(LocalDate from, LocalDate to) {
+    LocalDate lower = from != null ? from : LocalDate.of(1, 1, 1);
+    LocalDate upper = to != null ? to : LocalDate.of(9999, 12, 31);
+    return repository.findCurrentBetween(lower, upper).stream().map(this::toView).toList();
+  }
+
   public Optional<LocalDate> latestTradingDate() {
     return repository.findLatestTradingDate();
   }

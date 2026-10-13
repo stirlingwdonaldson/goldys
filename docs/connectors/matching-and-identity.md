@@ -31,6 +31,37 @@ so a second source can be added later without re-deriving these decisions.
 - **Manual resolution path:** `ReservationOverrideService.save(...)` sets an override for a
   `(trading_date, service_period)`, replacing the computed covers.
 
+## Guest (`canonical_guest`)
+
+- **Source:** `OPENTABLE` (GuestCenter reviews export). The schema exists (`canonical_guest`) but is
+  **not populated this slice** — reviews are ingested raw only until slice 2.
+- **Logical identity:** `UUID.nameUUIDFromBytes("guest:" + guestId)`.
+- **Source identity:** `(source_system = OPENTABLE, source_record_ref = Guest ID)`.
+- **Identity ruling — no Guest ID in reservations:** the reservations CSV has **no `Guest ID`
+  column** — guest identity there is name plus **masked** phone/email (`**********`). No clean
+  guest row can be created from reservations: matching on name + masked PII would merge distinct
+  people and split name variants. The reviews CSV carries the clean `Guest ID`, so `canonical_guest`
+  is populated from reviews only.
+- **Matching strategy:** deterministic single source keyed on `Guest ID`. Reservation → guest
+  linkage is the nullable `canonical_reservation.guest_id`, left null this slice.
+- **Deferred name-matching:** reservation → guest linkage by name is deferred until reviews provide
+  the `Guest ID` anchor; it is explicitly *not* guessed from names now.
+- **Confidence:** n/a (single source, unpopulated).
+- **Manual resolution path:** not wired.
+
+## Review (`canonical_review`) — future
+
+- **Source:** `OPENTABLE` (GuestCenter reviews export; ingested raw only until slice 2).
+- **Logical identity:** keyed on `Review ID` — `OT-140126-…` (OpenTable) / `RT-140126-…` (Google),
+  with `Source` distinguishing the origin. Identity/strategy finalized when slice 2 lands.
+
+## Menu item (`canonical_menu_item`) — future
+
+- **Source:** `OPENTABLE` (GuestCenter menu export; ingested raw only until slice 3).
+- **Logical identity:** keyed on `Invariant ID` (stable across edits; `Item ID` changes per edit,
+  so invariant is the logical key). Modifier-group children are a later design. Identity/strategy
+  finalized when slice 3 lands.
+
 ## Labour entry (`canonical_labour_entry`)
 
 - **Source:** `DEPUTY` (raw webhook; canonicalization deferred until the payload schema is
@@ -60,6 +91,15 @@ so a second source can be added later without re-deriving these decisions.
 - **Confidence:** high for the `invoice_number` join (exact).
 - **Manual resolution path:** not yet wired; COGS comes from line items, so invoice-header totals
   are metadata only.
+- **Invoice → PDF link:** `invoice_pdf_link` is a plain idempotent evidence table (like
+  `invoice_ingest_flag`, not bitemporal) that records which raw record holds an invoice's PDF. It
+  maps `pdf_raw_record_id` (primary key) → `invoice_number`, with an optional `pdf_filename` and a
+  `link_source` of `ENRICHMENT` (the live path: a newly ingested PDF matched to its canonical
+  invoice) or `BACKFILL` (the one-off `InvoicePdfLinkBackfillRunner`). The invoices viewer resolves
+  invoice → PDF through this table; keying on the PDF raw record id means a re-pull cannot pile up
+  duplicate links for the same document. The link joins on `invoice_number` today, so it inherits
+  the same supplier-scoping caveat as the header identity — see
+  `docs/superpowers/specs/2026-10-12-invoice-identity-design.md`.
 
 ## Invoice line (`canonical_invoice_line`)
 

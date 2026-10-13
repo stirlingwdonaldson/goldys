@@ -9,6 +9,7 @@ import com.goldys.platform.connectors.opentable.session.OpenTableBrowser;
 import com.goldys.platform.connectors.opentable.session.OpenTableSessionScheduler;
 import com.goldys.platform.connectors.opentable.session.OpenTableSessionService;
 import com.goldys.platform.ingestion.IngestionService;
+import com.goldys.platform.ingestion.RawLedgerQuery;
 import java.net.http.HttpClient;
 import java.time.Clock;
 import java.time.Duration;
@@ -47,7 +48,16 @@ public class OpenTableApiConfig {
       @Value("${opentable.timezone:Australia/Melbourne}") String zone,
       @Value("${opentable.restaurant-id:140126}") String restaurantId,
       @Value("${opentable.backfill-from:2020-01-01}") String backfillFrom,
-      @Value("${opentable.request-spacing:PT1.5S}") Duration spacing) {
+      @Value("${opentable.request-spacing:PT1.5S}") Duration spacing,
+      RawLedgerQuery rawLedger) {
+    StoredPayloads stored =
+        (fetcherIdentity, ref) ->
+            rawLedger
+                .latestDigest(OpenTableReservationJsonParser.SOURCE_SYSTEM, fetcherIdentity, ref)
+                .map(
+                    d ->
+                        new StoredPayloads.Stored(
+                            d.id(), d.sha256(), () -> rawLedger.payloadBytes(d.id())));
     OpenTableApiClient client = new OpenTableApiClient(browser, spacing, OpenTableApiConfig::sleep);
     return new OpenTableApiConnector(
         client,
@@ -56,7 +66,8 @@ public class OpenTableApiConfig {
         json,
         venueClock,
         restaurantId,
-        LocalDate.parse(backfillFrom));
+        LocalDate.parse(backfillFrom),
+        stored);
   }
 
   @Bean(destroyMethod = "close")

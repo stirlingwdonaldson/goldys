@@ -12,6 +12,7 @@ import com.goldys.platform.reconciliation.ProductSalesExceptionQuery;
 import com.goldys.platform.reconciliation.ProductSalesOverrideService;
 import com.goldys.platform.reconciliation.ReconciliationExceptionQuery;
 import com.goldys.platform.reconciliation.RuleAuditService;
+import com.goldys.platform.semantic.DataPage;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ReconciliationApplicationService {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
+  private static final int MAX_PAGE_SIZE = 200;
 
   private final ReconciliationExceptionQuery dailyExceptions;
   private final ProductSalesExceptionQuery productExceptions;
@@ -61,9 +63,10 @@ public class ReconciliationApplicationService {
     this.permissions = permissions;
   }
 
-  public List<DailyException> listDailyExceptions(UserRole role) {
+  public DataPage<DailyException> listDailyExceptions(UserRole role, int page, int size) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return dailyExceptions.listDaily().stream().map(this::toException).toList();
+    List<DailyException> all = dailyExceptions.listDaily().stream().map(this::toException).toList();
+    return page(all, page, size);
   }
 
   public Record dailyRecord(UserRole role, LocalDate date) {
@@ -88,9 +91,11 @@ public class ReconciliationApplicationService {
     return new Record(date.toString(), date.toString(), "day", List.of(field));
   }
 
-  public List<ProductException> listProductExceptions(UserRole role) {
+  public DataPage<ProductException> listProductExceptions(UserRole role, int page, int size) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return productExceptions.listAll().stream().map(this::toProductException).toList();
+    List<ProductException> all =
+        productExceptions.listAll().stream().map(this::toProductException).toList();
+    return page(all, page, size);
   }
 
   public List<String> listProducts(UserRole role) {
@@ -141,10 +146,10 @@ public class ReconciliationApplicationService {
 
   /**
    * The reconciliation screen's combined, read-only audit history: every rule change (created /
-   * updated / deleted) plus every manual override (set / removed), newest first. Authorized on the
-   * domain read resource like the other reconciliation reads.
+   * updated / deleted) plus every manual override (set / removed), newest first, paged. Authorized
+   * on the domain read resource like the other reconciliation reads.
    */
-  public List<AuditEntry> audit(UserRole role) {
+  public DataPage<AuditEntry> audit(UserRole role, int page, int size) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     List<AuditEntry> out = new ArrayList<>();
     for (RuleAuditService.RuleAuditEntry e : ruleAudit.history()) {
@@ -166,7 +171,19 @@ public class ReconciliationApplicationService {
               active ? o.at() : o.supersededAt()));
     }
     out.sort(Comparator.comparing(AuditEntry::at).reversed());
-    return out;
+    return page(out, page, size);
+  }
+
+  /** In-memory paging over an already-ordered list, with the same size cap as the other lists. */
+  private static <T> DataPage<T> page(List<T> all, int page, int size) {
+    int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+    int safePage = Math.max(page, 0);
+    int fromIndex = safePage * safeSize;
+    List<T> items =
+        fromIndex >= all.size()
+            ? List.of()
+            : all.subList(fromIndex, Math.min(fromIndex + safeSize, all.size()));
+    return new DataPage<>(items, all.size(), safePage, safeSize);
   }
 
   private DailyException toException(ReconciliationExceptionQuery.DailyException e) {
