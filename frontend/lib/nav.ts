@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   LineChart,
   MessagesSquare,
+  Package,
   ReceiptText,
   Scale,
   ScrollText,
@@ -64,6 +65,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: "Reservations", href: "/reservations", icon: CalendarDays, keywords: ["covers", "bookings", "opentable", "venue"] },
       { title: "Kitchen", href: "/kitchen", icon: ChefHat, keywords: ["food cost", "stock", "invoices", "suppliers"] },
       { title: "Invoices", href: "/invoices", icon: ReceiptText, keywords: ["supplier invoices", "pdf", "purchases", "documents"] },
+      { title: "Products", href: "/products", icon: Package, keywords: ["catalogue", "categories", "classification", "menu"] },
       { title: "Staff & labour", href: "/staff", icon: Users, keywords: ["roster", "wages", "deputy"] },
     ],
   },
@@ -85,16 +87,16 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Intelligence",
     items: [
       {
-        title: "Flow lab",
-        href: "/flow-lab",
-        icon: Workflow,
-        keywords: ["diagrams", "automations", "lineage", "dependencies", "react flow", "workflow"],
-      },
-      {
         title: "Forecasting",
         href: "/forecasting",
         icon: LineChart,
         keywords: ["predict", "timesfm", "revenue", "forecast"],
+      },
+      {
+        title: "Flow lab",
+        href: "/flow-lab",
+        icon: Workflow,
+        keywords: ["diagrams", "automations", "lineage", "dependencies", "react flow", "workflow"],
       },
     ],
   },
