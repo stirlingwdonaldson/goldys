@@ -16,6 +16,7 @@ import com.goldys.platform.semantic.ClassificationRunView;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,11 +46,14 @@ class ProductClassificationServiceTest {
       mock(ClassificationClusterRepository.class);
   private final ClassificationProjectionRepository projections =
       mock(ClassificationProjectionRepository.class);
+  private final ClusterNamer namer = mock(ClusterNamer.class);
+  private final CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
 
   private final Map<UUID, ClassificationRun> runStore = new HashMap<>();
   private final Map<String, ProductCategoryAssignment> assignmentStore = new HashMap<>();
   private final List<ClassificationCluster> savedClusters = new ArrayList<>();
   private final List<ClassificationProjection> savedProjections = new ArrayList<>();
+  private final List<CategorySuggestion> suggestionStore = new ArrayList<>();
 
   // A no-op executor: submit persists RUNNING and returns before the async execute runs, so the
   // RUNNING state is observable. The tests call execute(...) directly, synchronously.
@@ -64,6 +68,7 @@ class ProductClassificationServiceTest {
     assignmentStore.clear();
     savedClusters.clear();
     savedProjections.clear();
+    suggestionStore.clear();
 
     when(runs.save(any()))
         .thenAnswer(
@@ -103,15 +108,28 @@ class ProductClassificationServiceTest {
               savedProjections.add(p);
               return p;
             });
+    when(suggestions.save(any()))
+        .thenAnswer(
+            inv -> {
+              CategorySuggestion s = inv.getArgument(0);
+              suggestionStore.add(s);
+              return s;
+            });
   }
 
   private ProductClassificationService service(
       EmbeddingClient embedding, ProductClassifier classifier) {
+    return service(embedding, classifier, false);
+  }
+
+  private ProductClassificationService service(
+      EmbeddingClient embedding, ProductClassifier classifier, boolean namingEnabled) {
     return service(
         embedding,
         classifier,
         new EmbeddingProperties(true, "http://localhost:8002"),
-        new JevProperties(true, "https://api.typesafe.ai", ""));
+        new JevProperties(true, "https://api.typesafe.ai", ""),
+        namingEnabled);
   }
 
   private ProductClassificationService service(
@@ -119,6 +137,15 @@ class ProductClassificationServiceTest {
       ProductClassifier classifier,
       EmbeddingProperties embeddingProperties,
       JevProperties jevProperties) {
+    return service(embedding, classifier, embeddingProperties, jevProperties, false);
+  }
+
+  private ProductClassificationService service(
+      EmbeddingClient embedding,
+      ProductClassifier classifier,
+      EmbeddingProperties embeddingProperties,
+      JevProperties jevProperties,
+      boolean namingEnabled) {
     return new ProductClassificationService(
         extractor,
         categories,
@@ -128,6 +155,9 @@ class ProductClassificationServiceTest {
         projections,
         embedding,
         classifier,
+        namer,
+        suggestions,
+        new NamingProperties(namingEnabled),
         embeddingProperties,
         jevProperties,
         executor,
@@ -368,6 +398,117 @@ class ProductClassificationServiceTest {
   }
 
   @Test
+  void execute_records_finished_at_after_work_completes() {
+    when(productSales.distinctProductNameKeys()).thenReturn(List.of("beef burger"));
+    when(saleItems.currentSaleItemIdentities()).thenReturn(List.of());
+    when(recipeLinks.currentLinks()).thenReturn(List.of());
+
+    ProductCategory category = ProductCategory.create("Mains", "Food", 0, "Main courses");
+    when(categories.findAllByOrderByGroupNameAscDisplayOrderAscNameAsc())
+        .thenReturn(List.of(category));
+
+    // The classification work itself takes time: the classifier advances the clock while it runs,
+    // so finished_at must be read *after* the work, not at the top of execute().
+    MutableClock clock = new MutableClock(NOW);
+    ProductClassifier classifier =
+        req -> {
+          clock.advanceTo(NOW.plusSeconds(90));
+          return new ProductClassification(
+              category.id(), Map.of(category.id(), new BigDecimal("0.9")), new BigDecimal("0.9"));
+        };
+    ProductClassificationService svc =
+        new ProductClassificationService(
+            extractor,
+            categories,
+            assignments,
+            runs,
+            clusters,
+            projections,
+            new FakeEmbeddingClient(),
+            classifier,
+            namer,
+            suggestions,
+            new NamingProperties(false),
+            new EmbeddingProperties(true, "http://localhost:8002"),
+            new JevProperties(true, "https://api.typesafe.ai", ""),
+            executor,
+            clock);
+
+    svc.runAssignment();
+    ClassificationRun run = runStore.values().iterator().next();
+    svc.execute(run.id());
+
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.SUCCEEDED);
+    assertThat(run.finishedAt()).isEqualTo(NOW.plusSeconds(90));
+  }
+
+  @Test
+  void clustering_generates_suggestions() {
+    when(productSales.distinctProductNameKeys()).thenReturn(List.of("beef burger", "kids fish"));
+    when(saleItems.currentSaleItemIdentities())
+        .thenReturn(
+            List.of(
+                new SaleItemIdentityView("Beef Burger", "Burgers"),
+                new SaleItemIdentityView("Lemonade", "Drinks")));
+    when(recipeLinks.currentLinks()).thenReturn(List.of());
+    when(namer.suggest(any())).thenReturn(List.of(new SuggestedCategory("Beer", "Drinks", null)));
+
+    ProductClassificationService svc =
+        service(new FakeEmbeddingClient(), new FakeClassifier(req -> null), true);
+    svc.runClustering();
+    ClassificationRun run = runStore.values().iterator().next();
+    svc.execute(run.id());
+
+    assertThat(suggestionStore).hasSize(1);
+    assertThat(suggestionStore.get(0).name()).isEqualTo("Beer");
+    assertThat(suggestionStore.get(0).groupName()).isEqualTo("Drinks");
+    assertThat(suggestionStore.get(0).runId()).isEqualTo(run.id());
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.SUCCEEDED);
+  }
+
+  @Test
+  void disabled_naming_skips_suggestions() {
+    when(productSales.distinctProductNameKeys()).thenReturn(List.of("beef burger", "kids fish"));
+    when(saleItems.currentSaleItemIdentities())
+        .thenReturn(
+            List.of(
+                new SaleItemIdentityView("Beef Burger", "Burgers"),
+                new SaleItemIdentityView("Lemonade", "Drinks")));
+    when(recipeLinks.currentLinks()).thenReturn(List.of());
+
+    ProductClassificationService svc =
+        service(new FakeEmbeddingClient(), new FakeClassifier(req -> null));
+    svc.runClustering();
+    ClassificationRun run = runStore.values().iterator().next();
+    svc.execute(run.id());
+
+    assertThat(suggestionStore).isEmpty();
+    verify(namer, never()).suggest(any());
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.SUCCEEDED);
+  }
+
+  @Test
+  void naming_failure_does_not_fail_the_run() {
+    when(productSales.distinctProductNameKeys()).thenReturn(List.of("beef burger", "kids fish"));
+    when(saleItems.currentSaleItemIdentities())
+        .thenReturn(
+            List.of(
+                new SaleItemIdentityView("Beef Burger", "Burgers"),
+                new SaleItemIdentityView("Lemonade", "Drinks")));
+    when(recipeLinks.currentLinks()).thenReturn(List.of());
+    when(namer.suggest(any())).thenThrow(new RuntimeException("boom"));
+
+    ProductClassificationService svc =
+        service(new FakeEmbeddingClient(), new FakeClassifier(req -> null), true);
+    svc.runClustering();
+    ClassificationRun run = runStore.values().iterator().next();
+    svc.execute(run.id());
+
+    assertThat(suggestionStore).isEmpty();
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.SUCCEEDED);
+  }
+
+  @Test
   void listRuns_maps_most_recent_first() {
     ClassificationRun older =
         ClassificationRun.create(ClassificationRunKind.CLUSTER, NOW.minusSeconds(60));
@@ -413,6 +554,34 @@ class ProductClassificationServiceTest {
     assertThat(run.status()).isEqualTo(ClassificationRunStatus.FAILED);
     assertThat(run.errorMessage()).isEqualTo("service restarted before completion");
     assertThat(run.finishedAt()).isEqualTo(NOW);
+  }
+
+  /** A clock whose instant can be moved forward mid-test, to simulate the passage of wall time. */
+  private static final class MutableClock extends Clock {
+    private Instant now;
+
+    MutableClock(Instant start) {
+      this.now = start;
+    }
+
+    void advanceTo(Instant instant) {
+      this.now = instant;
+    }
+
+    @Override
+    public Instant instant() {
+      return now;
+    }
+
+    @Override
+    public ZoneId getZone() {
+      return ZoneOffset.UTC;
+    }
+
+    @Override
+    public Clock withZone(ZoneId zone) {
+      return this;
+    }
   }
 
   /** A fake classifier that records each request it sees and delegates to a handler. */

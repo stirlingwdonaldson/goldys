@@ -6,6 +6,7 @@ import type {
   Api,
   AssignmentRow,
   CategoryNode,
+  CategorySuggestion,
   ClassificationRun,
   ClassificationRunKind,
   ConnectorStatus,
@@ -844,20 +845,34 @@ const demoClassificationRuns: ClassificationRun[] = [
   },
 ];
 
+// A pending taxonomy draft: two suggested categories (one grouped, one flat with a merge hint) that
+// staff can rename/delete, plus an "Apply taxonomy" action that promotes them into the taxonomy.
+const demoCategorySuggestions: CategorySuggestion[] = [
+  {
+    id: "sg-1",
+    runId: "cls-1",
+    name: "Craft Beer",
+    groupName: "Beer",
+    displayOrder: 0,
+    hint: "merges 'pint carlton draught' and 'pale ale' clusters",
+  },
+  { id: "sg-2", runId: "cls-1", name: "House Wines", groupName: null, displayOrder: 1, hint: null },
+];
+
 // Invoice browse fixtures: realistic current headers covering the hard states — a linked PDF, one
 // with no PDF, a null due date and a null total. Lines exist for two invoices; the rest return an
 // empty line set, mirroring a header with no enriched lines. Demo data only.
-const demoInvoiceSummaries: InvoiceSummary[] = [
-  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1042", invoiceDate: "2026-09-28", dueDate: "2026-10-28", totalAmount: 1420.15, purchaseNumber: "PO-88", hasPdf: true },
-  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1091", invoiceDate: "2026-09-21", dueDate: null, totalAmount: 980.4, purchaseNumber: "PO-91", hasPdf: false },
-  { supplierName: "Oranges & Lemons", invoiceNumber: "INV-1103", invoiceDate: "2026-09-15", dueDate: "2026-10-15", totalAmount: null, purchaseNumber: null, hasPdf: true },
-  { supplierName: "Sealane Beverages", invoiceNumber: "INV-0987", invoiceDate: "2026-09-08", dueDate: "2026-10-08", totalAmount: 512.0, purchaseNumber: "PO-77", hasPdf: false },
+const demoInvoiceSummaries: Omit<InvoiceDetail, "lines">[] = [
+  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1042", invoiceDate: "2026-09-28", dueDate: "2026-10-28", totalAmount: 154.0, purchaseNumber: "PO-88", hasPdf: true, amountExTax: 140.0, gstAmount: 14.0, freightAmount: 0 },
+  { supplierName: "Paramount Liquor", invoiceNumber: "INV-1091", invoiceDate: "2026-09-21", dueDate: null, totalAmount: 240.02, purchaseNumber: "PO-91", hasPdf: false, amountExTax: 218.2, gstAmount: 21.82, freightAmount: 0 },
+  { supplierName: "Oranges & Lemons", invoiceNumber: "INV-1103", invoiceDate: "2026-09-15", dueDate: "2026-10-15", totalAmount: null, purchaseNumber: null, hasPdf: true, amountExTax: null, gstAmount: null, freightAmount: null },
+  { supplierName: "Sealane Beverages", invoiceNumber: "INV-0987", invoiceDate: "2026-09-08", dueDate: "2026-10-08", totalAmount: 512.0, purchaseNumber: "PO-77", hasPdf: false, amountExTax: null, gstAmount: null, freightAmount: null },
 ];
 
 const demoInvoiceLines: Record<string, LineGraphNode[]> = {
   "INV-1042": [
-    { productNameKey: "chicken breast", stockCode: "CB-1", quantity: 4, unitCost: 12.5, lineTotal: 50.0, uom: "CTN" },
-    { productNameKey: "beef mince", stockCode: "BM-2", quantity: 10, unitCost: 9.0, lineTotal: 90.0, uom: "KG" },
+    { productNameKey: "chicken breast", stockCode: "CB-1", quantity: 4, unitCost: 12.5, lineTotal: 50.0, uom: "CTN", lineTotalIncTax: 55.0, lineGstAmount: 5.0, lineTaxRate: 10, incGst: true },
+    { productNameKey: "beef mince", stockCode: "BM-2", quantity: 10, unitCost: 9.0, lineTotal: 90.0, uom: "KG", lineTotalIncTax: 99.0, lineGstAmount: 9.0, lineTaxRate: 10, incGst: true },
   ],
   "INV-1091": [
     { productNameKey: "house red", stockCode: "HR-1", quantity: 12, unitCost: 8.25, lineTotal: 99.0, uom: "BT" },
@@ -1899,6 +1914,7 @@ export const demoApi: Api = {
       { recipeId: 4, name: "Sticky Date Pudding", folder: "Dessert", portionSize: "6", costPerPortion: 1.9, actualCost: 2.1, costGap: 0.2, menuPrice: 11.0, margin: 9.1, gpPercent: 0.8273, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
       { recipeId: 5, name: "Eggplant Parmigiana", folder: "Mains", portionSize: "1", costPerPortion: 4.2, actualCost: null, costGap: 0.6, menuPrice: null, margin: 12.8, gpPercent: 0.7529, menuState: "OFF_MENU", priceSource: "HISTORICAL", lastSoldPrice: 17.0, lastSoldCost: 4.8, lastSoldDate: "2026-09-14" },
       { recipeId: 6, name: "Pickle Brine", folder: "Prep", portionSize: "1", costPerPortion: 0.8, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 7, name: "", folder: "", portionSize: "1", costPerPortion: 0, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
     ];
   },
 
@@ -1946,6 +1962,23 @@ export const demoApi: Api = {
     if (!category) throw new ApiError("VALIDATION_FAILED", `No category with id ${id}.`);
     if (input.name != null) category.name = input.name;
     if (input.groupName != null) category.groupName = input.groupName;
+  },
+
+  async deleteCategory(id: string): Promise<void> {
+    await delay(400);
+    const index = demoCategoryTaxonomy.findIndex((c) => c.id === id);
+    if (index < 0) throw new ApiError("VALIDATION_FAILED", `No category with id ${id}.`);
+    demoCategoryTaxonomy.splice(index, 1);
+    for (const assignment of demoCategoryAssignments) {
+      if (assignment.categoryId === id) {
+        assignment.categoryId = null;
+        assignment.categoryName = null;
+        assignment.groupName = null;
+        assignment.confidence = null;
+        assignment.source = null;
+        assignment.status = "UNASSIGNED";
+      }
+    }
   },
 
   async moveProduct(productNameKey: string, categoryId: string): Promise<void> {
@@ -2069,6 +2102,64 @@ export const demoApi: Api = {
       if (q && !(r.comment ?? "").toLowerCase().includes(q) && !(r.guestName ?? "").toLowerCase().includes(q)) return false;
       return true;
     });
+  },
+
+  async getCategorySuggestions(): Promise<CategorySuggestion[]> {
+    await delay(300);
+    return [...demoCategorySuggestions];
+  },
+
+  async addCategorySuggestion(input: {
+    name: string;
+    groupName?: string | null;
+  }): Promise<CategorySuggestion> {
+    await delay(300);
+    const suggestion: CategorySuggestion = {
+      id: `sg-${Date.now()}`,
+      runId: null,
+      name: input.name,
+      groupName: input.groupName ?? null,
+      displayOrder: demoCategorySuggestions.length,
+      hint: null,
+    };
+    demoCategorySuggestions.push(suggestion);
+    return suggestion;
+  },
+
+  async updateCategorySuggestion(
+    id: string,
+    input: { name?: string | null; groupName?: string | null },
+  ): Promise<void> {
+    await delay(300);
+    const suggestion = demoCategorySuggestions.find((s) => s.id === id);
+    if (!suggestion) return;
+    if (input.name != null) suggestion.name = input.name;
+    if (input.groupName != null) suggestion.groupName = input.groupName === "" ? null : input.groupName;
+  },
+
+  async deleteCategorySuggestion(id: string): Promise<void> {
+    await delay(300);
+    const index = demoCategorySuggestions.findIndex((s) => s.id === id);
+    if (index >= 0) demoCategorySuggestions.splice(index, 1);
+  },
+
+  async applyCategorySuggestions(): Promise<CategoryNode[]> {
+    await delay(400);
+    const created: CategoryNode[] = [];
+    for (const suggestion of [...demoCategorySuggestions]) {
+      if (!demoCategoryTaxonomy.some((c) => c.name === suggestion.name)) {
+        const category: CategoryNode = {
+          id: `cat-${suggestion.name.toLowerCase().replace(/\s+/g, "-")}`,
+          name: suggestion.name,
+          groupName: suggestion.groupName,
+          productCount: 0,
+        };
+        demoCategoryTaxonomy.push(category);
+        created.push(category);
+      }
+    }
+    demoCategorySuggestions.length = 0;
+    return created;
   },
 };
 

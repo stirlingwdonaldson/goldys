@@ -1,4 +1,4 @@
--- Correct the canonical_review.guest_id link. V65 declared `guest_id uuid REFERENCES
+-- Correct the canonical_review.guest_id link. V69 declared `guest_id uuid REFERENCES
 -- canonical_guest(id)`, but the entity stores the guest's logical identity there —
 -- `UUID.nameUUIDFromBytes("guest:" + Guest ID)`, the same value canonical_guest.logical_entity_id
 -- holds — so a review links to its guest without a matching step. A row's `id` is a random per-row

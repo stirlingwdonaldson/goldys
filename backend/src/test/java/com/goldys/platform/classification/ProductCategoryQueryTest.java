@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.goldys.platform.semantic.CategorySuggestionView;
 import com.goldys.platform.semantic.DendrogramNode;
 import java.time.Instant;
 import java.util.List;
@@ -22,9 +23,10 @@ class ProductCategoryQueryTest {
       mock(ClassificationClusterRepository.class);
   private final ClassificationProjectionRepository projections =
       mock(ClassificationProjectionRepository.class);
+  private final CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
 
   private final ProductCategoryQuery query =
-      new ProductCategoryQuery(categories, assignments, runs, clusters, projections);
+      new ProductCategoryQuery(categories, assignments, runs, clusters, projections, suggestions);
 
   @Test
   void dendrogram_prefers_succeeded_run_over_newer_running_run() {
@@ -54,5 +56,20 @@ class ProductCategoryQueryTest {
     assertThat(result.get(0).isLeaf()).isTrue();
     assertThat(result.get(0).mergeHeight()).isEqualTo(0.0);
     assertThat(result.get(0).size()).isEqualTo(1);
+  }
+
+  @Test
+  void suggestions_maps_the_draft_in_display_order() {
+    UUID runId = UUID.randomUUID();
+    CategorySuggestion beer =
+        CategorySuggestion.create(runId, "Beer", "Drinks", 0, "merges clusters 0 and 2");
+    CategorySuggestion wine = CategorySuggestion.create(null, "Red Wine", null, 1, null);
+    when(suggestions.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(beer, wine));
+
+    assertThat(query.suggestions())
+        .containsExactly(
+            new CategorySuggestionView(
+                beer.id(), beer.runId(), "Beer", "Drinks", 0, "merges clusters 0 and 2"),
+            new CategorySuggestionView(wine.id(), wine.runId(), "Red Wine", null, 1, null));
   }
 }

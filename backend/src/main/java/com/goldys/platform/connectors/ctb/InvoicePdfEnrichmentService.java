@@ -3,10 +3,12 @@ package com.goldys.platform.connectors.ctb;
 import com.goldys.platform.canonical.CanonicalInvoiceLineEnrichment;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.canonical.EnrichmentResult;
+import com.goldys.platform.canonical.InvoiceNoteService;
 import com.goldys.platform.canonical.InvoicePdfLinkService;
 import com.goldys.platform.canonical.InvoicePdfLinkSource;
 import com.goldys.platform.ingestion.port.DocumentTextExtractor;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ public class InvoicePdfEnrichmentService {
   private final InvoiceIngestFlagService flags;
   private final InvoiceGapRecoveryService gapRecovery;
   private final InvoicePdfLinkService pdfLinkService;
+  private final InvoiceNoteService noteService;
   private final boolean gapRecoveryEnabled;
 
   public InvoicePdfEnrichmentService(
@@ -42,6 +45,7 @@ public class InvoicePdfEnrichmentService {
       InvoiceIngestFlagService flags,
       InvoiceGapRecoveryService gapRecovery,
       InvoicePdfLinkService pdfLinkService,
+      InvoiceNoteService noteService,
       @Value("${app.ctb-invoice-gap-recovery:false}") boolean gapRecoveryEnabled) {
     this.extractor = extractor;
     this.parser = parser;
@@ -50,6 +54,7 @@ public class InvoicePdfEnrichmentService {
     this.flags = flags;
     this.gapRecovery = gapRecovery;
     this.pdfLinkService = pdfLinkService;
+    this.noteService = noteService;
     this.gapRecoveryEnabled = gapRecoveryEnabled;
   }
 
@@ -71,6 +76,7 @@ public class InvoicePdfEnrichmentService {
     if (known) {
       pdfLinkService.link(
           invoiceNumber, pdfRawRecordId, pdfFilename, InvoicePdfLinkSource.ENRICHMENT);
+      recordAnnotations(invoiceNumber, parsed);
     }
     if (parsed.extractionError() != null) {
       flags.flag(
@@ -105,7 +111,13 @@ public class InvoicePdfEnrichmentService {
               line.uom(),
               line.unitQuantity(),
               line.packSize(),
-              line.wetAmount());
+              line.wetAmount(),
+              line.quantity(),
+              line.amountExTax(),
+              line.amountIncTax(),
+              line.gstAmount(),
+              line.taxRate(),
+              line.incGst());
       if (result == EnrichmentResult.NO_MATCH) {
         unmatchedIndexes.add(i);
       }
@@ -128,6 +140,18 @@ public class InvoicePdfEnrichmentService {
       gapRecovery.recover(
           invoiceNumber, flagFilename, pdf, pdfRawRecordId, parsed.lines(), unmatchedIndexes);
     }
+  }
+
+  /**
+   * Keeps the PDF's delivery-note annotations as an invoice note instead of letting the extractor
+   * discard them. Only runs once the invoice is known, so every note is anchored to a real invoice.
+   */
+  private void recordAnnotations(String invoiceNumber, PdfExtractedInvoice parsed) {
+    List<String> annotations = parsed.annotations() == null ? List.of() : parsed.annotations();
+    if (annotations.isEmpty()) {
+      return;
+    }
+    noteService.record(invoiceNumber, String.join(" | ", annotations));
   }
 
   /**

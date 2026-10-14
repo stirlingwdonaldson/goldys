@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,7 +17,9 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.CategoryNode;
+import com.goldys.platform.semantic.CategorySuggestionView;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -34,7 +37,15 @@ class ProductCategoryServiceTest {
       ProductCategoryRepository categories,
       ProductCategoryAssignmentRepository assignments,
       PermissionService permissions) {
-    return new ProductCategoryService(categories, assignments, permissions);
+    return service(categories, assignments, mock(CategorySuggestionRepository.class), permissions);
+  }
+
+  private ProductCategoryService service(
+      ProductCategoryRepository categories,
+      ProductCategoryAssignmentRepository assignments,
+      CategorySuggestionRepository suggestions,
+      PermissionService permissions) {
+    return new ProductCategoryService(categories, assignments, suggestions, permissions);
   }
 
   @Test
@@ -151,5 +162,166 @@ class ProductCategoryServiceTest {
 
     verify(permissions)
         .require(OWNER, new ResourceKey("products.category"), PermissionAction.WRITE);
+  }
+
+  @Test
+  void addSuggestionAppendsAndReturnsView() {
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.count()).thenReturn(3L);
+    when(suggestions.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    ProductCategoryService service =
+        service(
+            mock(ProductCategoryRepository.class),
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    CategorySuggestionView view = service.addSuggestion(OWNER, "Cocktails", "Drinks");
+
+    assertThat(view.name()).isEqualTo("Cocktails");
+    assertThat(view.groupName()).isEqualTo("Drinks");
+    assertThat(view.displayOrder()).isEqualTo(3);
+    assertThat(view.runId()).isNull();
+  }
+
+  @Test
+  void updateSuggestionRenamesAndRegroups() {
+    CategorySuggestion suggestion = CategorySuggestion.create(null, "Cocktails", null, 0, null);
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.findById(suggestion.id())).thenReturn(Optional.of(suggestion));
+    ProductCategoryService service =
+        service(
+            mock(ProductCategoryRepository.class),
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    service.updateSuggestion(OWNER, suggestion.id(), "Beer", null);
+    assertThat(suggestion.name()).isEqualTo("Beer");
+    assertThat(suggestion.groupName()).isNull();
+
+    service.updateSuggestion(OWNER, suggestion.id(), null, "Drinks");
+    assertThat(suggestion.name()).isEqualTo("Beer");
+    assertThat(suggestion.groupName()).isEqualTo("Drinks");
+  }
+
+  @Test
+  void updateSuggestionClearsGroupWithEmptyString() {
+    CategorySuggestion suggestion = CategorySuggestion.create(null, "Cocktails", "Drinks", 0, null);
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.findById(suggestion.id())).thenReturn(Optional.of(suggestion));
+    ProductCategoryService service =
+        service(
+            mock(ProductCategoryRepository.class),
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    // Empty string (the review panel sends "" when the group input is cleared) means "clear".
+    service.updateSuggestion(OWNER, suggestion.id(), null, "");
+
+    assertThat(suggestion.groupName()).isNull();
+  }
+
+  @Test
+  void applySuggestionsCreatesCategoriesAndClearsDraft() {
+    CategorySuggestion beer1 = CategorySuggestion.create(null, "Beer", "Drinks", 0, null);
+    CategorySuggestion beer2 = CategorySuggestion.create(null, "Beer", "Drinks", 1, null);
+    CategorySuggestion wine = CategorySuggestion.create(null, "Wine", null, 2, null);
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(beer1, beer2, wine));
+
+    ProductCategory existingBeer = ProductCategory.create("Beer", "Drinks", 5, null);
+    ProductCategoryRepository categories = mock(ProductCategoryRepository.class);
+    when(categories.findByName("Beer")).thenReturn(Optional.of(existingBeer));
+    when(categories.findByName("Wine")).thenReturn(Optional.empty());
+    when(categories.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    ProductCategoryService service =
+        service(
+            categories,
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    List<CategoryNode> created = service.applySuggestions(OWNER);
+
+    assertThat(created).extracting(CategoryNode::name).containsExactly("Wine");
+    assertThat(created.get(0).groupName()).isNull();
+    verify(suggestions).deleteAll();
+  }
+
+  @Test
+  void applySuggestionsSkipsDuplicateDraftNames() {
+    CategorySuggestion beer1 = CategorySuggestion.create(null, "Beer", "Drinks", 0, null);
+    CategorySuggestion beer2 = CategorySuggestion.create(null, "Beer", "Drinks", 1, null);
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(beer1, beer2));
+
+    ProductCategoryRepository categories = mock(ProductCategoryRepository.class);
+    when(categories.findByName("Beer")).thenReturn(Optional.empty());
+    when(categories.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    ProductCategoryService service =
+        service(
+            categories,
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    List<CategoryNode> created = service.applySuggestions(OWNER);
+
+    assertThat(created).extracting(CategoryNode::name).containsExactly("Beer");
+    verify(categories, times(1)).save(any());
+  }
+
+  @Test
+  void applySuggestionsRequiresWritePermission() {
+    PermissionService permissions = mock(PermissionService.class);
+    doThrow(AccessDeniedException.forResource("products.category"))
+        .when(permissions)
+        .require(any(), any(), any());
+    ProductCategoryService service =
+        service(
+            mock(ProductCategoryRepository.class),
+            mock(ProductCategoryAssignmentRepository.class),
+            mock(CategorySuggestionRepository.class),
+            permissions);
+
+    assertThatThrownBy(() -> service.applySuggestions(OWNER))
+        .isInstanceOf(AccessDeniedException.class);
+
+    verify(permissions)
+        .require(OWNER, new ResourceKey("products.category"), PermissionAction.WRITE);
+  }
+
+  @Test
+  void deleteUnassignsItsProductsAndDeletesTheCategory() {
+    ProductCategory category = ProductCategory.create("Beer", "Drinks", 0, null);
+    ProductCategoryRepository categories = mock(ProductCategoryRepository.class);
+    when(categories.findById(category.id())).thenReturn(Optional.of(category));
+
+    ProductCategoryAssignment assigned =
+        ProductCategoryAssignment.create("kids fish", Instant.now());
+    assigned.markAssigned(category.id(), null, AssignmentSource.JEV, Instant.now());
+    ProductCategoryAssignment other = ProductCategoryAssignment.create("pale ale", Instant.now());
+    other.markAssigned(UUID.randomUUID(), null, AssignmentSource.JEV, Instant.now());
+    ProductCategoryAssignmentRepository assignments =
+        mock(ProductCategoryAssignmentRepository.class);
+    when(assignments.findAll()).thenReturn(List.of(assigned, other));
+
+    ProductCategoryService service =
+        service(
+            categories,
+            assignments,
+            mock(CategorySuggestionRepository.class),
+            mock(PermissionService.class));
+
+    service.delete(OWNER, category.id());
+
+    assertThat(assigned.status()).isEqualTo(AssignmentStatus.UNASSIGNED);
+    assertThat(assigned.categoryId()).isNull();
+    assertThat(other.categoryId()).isNotNull();
+    verify(categories).delete(category);
   }
 }

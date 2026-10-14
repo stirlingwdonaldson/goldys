@@ -140,15 +140,19 @@ so a second source can be added later without re-deriving these decisions.
   normalized code is a prefix of the other, e.g. `HAMB008` vs `HAMB008A1c`); (3) exact normalized
   description; (4) whole-token containment, accepted for a single shared token only when the extra
   tokens are packaging noise (`... SET PRICE 4 KG PRICE`, `... ORDER BY BOX`); (5) a majority of
-  shared significant tokens. **Ambiguity is skipped, not guessed:** if more than one line wins a
-  tier, the line is left un-enriched and `PDF_ONLY_LINE` is recorded.
+  shared significant tokens. **Ambiguity is resolved conservatively, not guessed:** if more than one
+  line wins a tier, the tie is broken by the PDF line's quantity, then its ex-tax amount, choosing
+  only the single tied line that agrees; a tie that also ties on quantity and amount is left
+  un-enriched and `PDF_ONLY_LINE` is recorded.
 - **Before matching:** `HybridInvoicePdfExtractor` sanitizes the extractor output
   (`InvoicePdfSanitizer`). A parsed invoice number with no digit (a header label such as
   `Tax Invoice No`) becomes null, so the filename join decides. Annotation rows (no stock code, no
-  amount, and a parenthesised or `COMMENT`/`NOTE` description, or no quantity and no unit) are
-  dropped: they are delivery notes, not purchases. If the PDF still resolves to no invoice the
-  export knows (no current header and no current lines), its lines are not matched: a live drop
-  raises one `AMBIGUOUS_PDF` flag for the PDF, and a replay (no filename) raises nothing.
+  amount, and a parenthesised or `COMMENT`/`NOTE` description, or no quantity and no unit) are not
+  purchases, so they are kept out of the line list and recorded as a per-invoice `invoice_note`
+  (concatenated, keyed by invoice number) rather than silently discarded. If the PDF still resolves
+  to no invoice the export knows (no current header and no current lines), its lines are not
+  matched: a live drop raises one `AMBIGUOUS_PDF` flag for the PDF, and a replay (no filename)
+  raises nothing.
 - **Confidence:** high for the invoice-number and filename joins (exact); line matching is
   tolerant-but-conservative (tiers above, unique-winner only). PDF text extraction is
   per-supplier-layout (`*InvoicePdfExtractor`, with an LLM fallback); unmatched or inconsistent
@@ -166,18 +170,50 @@ so a second source can be added later without re-deriving these decisions.
 - **Manual resolution path:** `InventoryOverrideService.save(...)` sets an override for a
   `trading_date`, replacing the computed purchases (COGS).
 
+## Stocktake header (`canonical_stocktake`)
+
+- **Source:** `CTB` (`ctb-stocktakes` header list, pulled daily by `CtbConnector`).
+- **Logical identity:** `UUID.nameUUIDFromBytes("stocktake:" + stocktakeId)`.
+- **Source identity:** `(source_system = CTB, source_record_ref = "stocktake:<id>")`.
+- **Matching strategy:** deterministic single source; re-pull supersedes on
+  `(source_system, source_record_ref)` (unchanged → no-op).
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not wired.
+- The header carries the stocktake's `stocktakeDate`; the detail payload does not, so
+  `canonical_stock_count.counted_date` is resolved from this entity.
+
 ## Stock count (`canonical_stock_count`)
 
-- **Source:** `CTB` (stocktake detail — **ingested raw** via `ctb-stocktake-detail`, under the
-  one-off `ctb-detail-backfill` run).
-- **Logical identity / matching:** to be finalized when the canonical source is confirmed. Model is
-  in place; identity is deferred with the source.
+- **Source:** `CTB` (stocktake detail via `ctb-stocktake-detail`, backfilled by the one-off
+  `ctb-detail-backfill` run).
+- **Logical identity:** `UUID.nameUUIDFromBytes("stock-count:" + stocktakeId + ":" + lineId)`.
+- **Source identity:** `(source_system = CTB, source_record_ref = "stocktake:<stocktakeId>:<lineId>")`.
+- **Line id ruling:** `stocktakeDetailId` is **not** a line id (only 4 distinct values across all
+  lines); the per-line id is the source `id` field, which is unique only within a stocktake. The
+  parent `stocktakeId` therefore anchors identity — the same "owner-scoped line id" problem the
+  recipe-ingredient slice solved.
+- **Date:** `counted_date` is resolved from the canonical stocktake header via `stocktake_id` (the
+  detail payload carries no date). A line whose header is absent fails the canonicalization run, never
+  silently skipped.
+- **Matching strategy:** deterministic single source; re-record supersedes on
+  `(source_system, source_record_ref)`.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not wired.
 
 ## Wastage (`canonical_wastage`)
 
-- **Source:** `CTB` (wastage detail — **ingested raw** via `ctb-wastage-detail`, under the one-off
+- **Source:** `CTB` (wastage detail via `ctb-wastage-detail`, backfilled by the one-off
   `ctb-detail-backfill` run).
-- **Logical identity / matching:** deferred with the source, as above.
+- **Logical identity:** `UUID.nameUUIDFromBytes("wastage:" + wastageRecordId + ":" + lineId)`.
+- **Source identity:** `(source_system = CTB, source_record_ref = "wastage:<recordId>:<detailId>")`,
+  where `lineId` is the source's globally unique `wastageRecordDetailId`.
+- **No stock code:** wastage has no `stockCode` in the source — product identity is `product_name_key`
+  from `stockDesc` only (a documented limitation).
+- **Date:** self-contained (`recordDate`); no header entity is needed.
+- **Matching strategy:** deterministic single source; re-record supersedes on
+  `(source_system, source_record_ref)`.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not wired.
 
 ## Recipe composition
 

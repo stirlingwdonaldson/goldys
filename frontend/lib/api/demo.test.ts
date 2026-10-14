@@ -327,6 +327,36 @@ describe("demoApi product categorisation", () => {
     expect(runs[0].productCount).not.toBeNull();
     expect(runs[0].finishedAt).not.toBeNull();
   });
+
+  it("lists suggestions and applies them into the taxonomy", async () => {
+    const suggestions = await demoApi.getCategorySuggestions();
+    expect(suggestions.length).toBeGreaterThan(0);
+    expect(suggestions.some((s) => s.groupName === null)).toBe(true);
+    expect(suggestions.some((s) => s.hint !== null)).toBe(true);
+
+    const before = (await demoApi.getCategoryTaxonomy()).length;
+    const created = await demoApi.applyCategorySuggestions();
+    expect(created.length).toBe(suggestions.length);
+
+    const taxonomy = await demoApi.getCategoryTaxonomy();
+    expect(taxonomy.length).toBe(before + suggestions.length);
+    expect(taxonomy.some((c) => c.name === "Craft Beer")).toBe(true);
+    expect((await demoApi.getCategorySuggestions()).length).toBe(0);
+  });
+
+  it("deletes a category and unassigns its products", async () => {
+    const before = (await demoApi.getCategoryTaxonomy()).length;
+    await demoApi.deleteCategory("cat-beer");
+
+    const taxonomy = await demoApi.getCategoryTaxonomy();
+    expect(taxonomy.length).toBe(before - 1);
+    expect(taxonomy.some((c) => c.id === "cat-beer")).toBe(false);
+
+    const beer = (await demoApi.getCategoryAssignments()).find(
+      (a) => a.productNameKey === "pint carlton draught",
+    );
+    expect(beer?.categoryId).toBeNull();
+  });
 });
 
 describe("demoApi invoices", () => {

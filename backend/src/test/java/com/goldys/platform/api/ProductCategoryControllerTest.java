@@ -8,7 +8,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,6 +23,7 @@ import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.config.SecurityConfig;
 import com.goldys.platform.semantic.CategoryNode;
+import com.goldys.platform.semantic.CategorySuggestionView;
 import com.goldys.platform.semantic.ClassificationRunView;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -111,6 +114,112 @@ class ProductCategoryControllerTest {
         .andExpect(jsonPath("$[0].productCount").value(5));
 
     verify(reporting).listRuns(any());
+  }
+
+  @Test
+  void suggestionsReturns200AndList() throws Exception {
+    CategorySuggestionView view =
+        new CategorySuggestionView(UUID.randomUUID(), null, "Beer", "Drinks", 0, null);
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(reporting.listSuggestions(any())).thenReturn(List.of(view));
+
+    mvc.perform(get("/api/products/categories/suggestions").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].name").value("Beer"))
+        .andExpect(jsonPath("$[0].groupName").value("Drinks"));
+
+    verify(reporting).listSuggestions(any());
+  }
+
+  @Test
+  void addSuggestionDelegates() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+
+    mvc.perform(
+            post("/api/products/categories/suggestions")
+                .with(authenticated(owner()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Cocktails\",\"groupName\":\"Drinks\"}"))
+        .andExpect(status().isOk());
+
+    verify(reporting).addSuggestion(any(), eq("Cocktails"), eq("Drinks"));
+  }
+
+  @Test
+  void updateSuggestionDelegates() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    UUID id = UUID.randomUUID();
+
+    mvc.perform(
+            patch("/api/products/categories/suggestions/" + id)
+                .with(authenticated(owner()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Beer\",\"groupName\":\"Drinks\"}"))
+        .andExpect(status().isOk());
+
+    verify(reporting).updateSuggestion(any(), eq(id), eq("Beer"), eq("Drinks"));
+  }
+
+  @Test
+  void deleteSuggestionDelegates() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    UUID id = UUID.randomUUID();
+
+    mvc.perform(
+            delete("/api/products/categories/suggestions/" + id)
+                .with(authenticated(owner()))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    verify(reporting).deleteSuggestion(any(), eq(id));
+  }
+
+  @Test
+  void applySuggestionsReturns200() throws Exception {
+    CategoryNode node = new CategoryNode(UUID.randomUUID(), "Beer", "Drinks", 0);
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(reporting.applySuggestions(any())).thenReturn(List.of(node));
+
+    mvc.perform(
+            post("/api/products/categories/suggestions/apply")
+                .with(authenticated(owner()))
+                .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].name").value("Beer"));
+
+    verify(reporting).applySuggestions(any());
+  }
+
+  @Test
+  void deleteCategoryDelegates() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    UUID id = UUID.randomUUID();
+
+    mvc.perform(
+            delete("/api/products/categories/categories/" + id)
+                .with(authenticated(owner()))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    verify(reporting).delete(any(), eq(id));
+  }
+
+  @Test
+  void updateClearsGroupWithEmptyString() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    UUID id = UUID.randomUUID();
+
+    mvc.perform(
+            patch("/api/products/categories/categories/" + id)
+                .with(authenticated(owner()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"groupName\":\"\"}"))
+        .andExpect(status().isOk());
+
+    verify(reporting).regroup(any(), eq(id), eq(null));
   }
 
   @Test

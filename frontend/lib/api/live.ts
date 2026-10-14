@@ -346,6 +346,12 @@ export const liveApi: Api = {
       { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) },
       { responseType: "void" },
     ),
+  deleteCategory: (id: string) =>
+    fetchApi<void>(
+      `/api/products/categories/categories/${id}`,
+      { method: "DELETE" },
+      { responseType: "void" },
+    ),
   moveProduct: (productNameKey: string, categoryId: string) =>
     fetchApi<void>(
       `/api/products/categories/assignments/${encodeURIComponent(productNameKey)}/move`,
@@ -393,6 +399,34 @@ export const liveApi: Api = {
     const qs = q.toString();
     return fetchApi<ReviewView[]>(`/api/reviews${qs ? `?${qs}` : ""}`);
   },
+
+  getCategorySuggestions: () =>
+    fetchApi<import("./types").CategorySuggestion[]>("/api/products/categories/suggestions"),
+  addCategorySuggestion: (input: { name: string; groupName?: string | null }) =>
+    fetchApi<import("./types").CategorySuggestion>("/api/products/categories/suggestions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  updateCategorySuggestion: (
+    id: string,
+    input: { name?: string | null; groupName?: string | null },
+  ) =>
+    fetchApi<void>(
+      `/api/products/categories/suggestions/${id}`,
+      { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) },
+      { responseType: "void" },
+    ),
+  deleteCategorySuggestion: (id: string) =>
+    fetchApi<void>(
+      `/api/products/categories/suggestions/${id}`,
+      { method: "DELETE" },
+      { responseType: "void" },
+    ),
+  applyCategorySuggestions: () =>
+    fetchApi<import("./types").CategoryNode[]>("/api/products/categories/suggestions/apply", {
+      method: "POST",
+    }),
 };
 
 /**

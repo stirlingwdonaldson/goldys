@@ -98,7 +98,11 @@ public class InvoiceReportingService {
                         l.quantity(),
                         l.unitCost(),
                         l.lineTotal(),
-                        l.uom()))
+                        l.uom(),
+                        l.lineTotalIncTax(),
+                        l.lineGstAmount(),
+                        l.lineTaxRate(),
+                        l.incGst()))
             .toList();
 
     return new InvoiceDetail(
@@ -109,6 +113,9 @@ public class InvoiceReportingService {
         header.totalAmount(),
         header.purchaseNumber(),
         linked.contains(invoiceNumber),
+        header.amountExTax(),
+        header.gstAmount(),
+        header.freightAmount(),
         lines);
   }
 
@@ -148,5 +155,8 @@ public class InvoiceReportingService {
       BigDecimal totalAmount,
       String purchaseNumber,
       boolean hasPdf,
+      BigDecimal amountExTax,
+      BigDecimal gstAmount,
+      BigDecimal freightAmount,
       List<LineGraphNode> lines) {}
 }

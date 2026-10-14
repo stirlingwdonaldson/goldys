@@ -273,6 +273,11 @@ export interface LineGraphNode {
   unitCost: number;
   lineTotal: number;
   uom: string | null;
+  /** PDF-parsed tax treatment; absent/null when the PDF didn't print it. */
+  lineTotalIncTax?: number | null;
+  lineGstAmount?: number | null;
+  lineTaxRate?: number | null;
+  incGst?: boolean | null;
 }
 
 /**
@@ -292,6 +297,10 @@ export interface InvoiceSummary {
 
 /** One invoice header plus its line graph nodes (mirrors the backend `InvoiceDetail`). */
 export interface InvoiceDetail extends InvoiceSummary {
+  /** The invoice's ex-tax goods total, against which line totals are reconciled. */
+  amountExTax: number | null;
+  gstAmount: number | null;
+  freightAmount: number | null;
   lines: LineGraphNode[];
 }
 
@@ -437,6 +446,19 @@ export interface ClassificationRun {
   /** ISO-8601 instant; null while running. */
   finishedAt: string | null;
   errorMessage: string | null;
+}
+
+/**
+ * One taxonomy suggestion awaiting review (mirrors `semantic.CategorySuggestionView`). `runId` is
+ * null for staff-added suggestions; `groupName`/`hint` are null when absent.
+ */
+export interface CategorySuggestion {
+  id: string;
+  runId: string | null;
+  name: string;
+  groupName: string | null;
+  displayOrder: number;
+  hint: string | null;
 }
 
 /** One invoice-ingestion anomaly, read-only (mirrors the backend `InvoiceIngestFlagView`). */
@@ -1121,6 +1143,8 @@ export interface Api {
   createCategory(input: CreateCategoryInput): Promise<CategoryNode>;
   /** Renames and/or regroups a category; a null field is left unchanged. */
   renameCategory(id: string, input: UpdateCategoryInput): Promise<void>;
+  /** Deletes a category; its products return to UNASSIGNED. */
+  deleteCategory(id: string): Promise<void>;
   moveProduct(productNameKey: string, categoryId: string): Promise<void>;
   clearProductOverride(productNameKey: string): Promise<void>;
   /** Submits an asynchronous categorisation run; accepted (202) immediately. */
@@ -1133,6 +1157,18 @@ export interface Api {
   getReviewRatings(from: string, to: string): Promise<RatingBucket[]>;
   getReviewSources(from: string, to: string): Promise<SourceSummary[]>;
   getReviews(filter: ReviewFilter): Promise<ReviewView[]>;
+
+  /** The pending taxonomy draft, in display order. */
+  getCategorySuggestions(): Promise<CategorySuggestion[]>;
+  addCategorySuggestion(input: { name: string; groupName?: string | null }): Promise<CategorySuggestion>;
+  /** Renames and/or regroups a suggestion; a null field is left unchanged. */
+  updateCategorySuggestion(
+    id: string,
+    input: { name?: string | null; groupName?: string | null },
+  ): Promise<void>;
+  deleteCategorySuggestion(id: string): Promise<void>;
+  /** Applies the draft: promotes its suggestions to confirmed categories and clears it. */
+  applyCategorySuggestions(): Promise<CategoryNode[]>;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */

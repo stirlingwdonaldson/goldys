@@ -32,20 +32,20 @@ export function lineMatchKey(line: Pick<LineGraphNode, "productNameKey" | "stock
 
 export interface TotalsCheck {
   linesTotal: number;
-  /** invoiceTotal − linesTotal; positive means the lines come up short. */
+  /** headerExTax − linesTotal; positive means the lines come up short. */
   difference: number;
   matches: boolean;
 }
 
 /**
- * Compares the sum of line totals to the invoice header total. Null when there's nothing to
- * compare (no lines, or no header total). Each line total is rounded to the cent on the source
- * document, so allow a cent per line of drift, with a 5c floor.
+ * Compares the sum of ex-tax line totals to the invoice's ex-tax header total. Null when there's
+ * nothing to compare (no lines, or no ex-tax header total). Each line total is rounded to the cent
+ * on the source document, so allow a cent per line of drift, with a 5c floor.
  */
-export function checkTotals(lines: LineGraphNode[], invoiceTotal: number | null): TotalsCheck | null {
-  if (lines.length === 0 || invoiceTotal == null) return null;
+export function checkTotals(lines: LineGraphNode[], headerExTax: number | null): TotalsCheck | null {
+  if (lines.length === 0 || headerExTax == null) return null;
   const linesTotal = lines.reduce((sum, l) => sum + l.lineTotal, 0);
-  const difference = invoiceTotal - linesTotal;
+  const difference = headerExTax - linesTotal;
   const tolerance = Math.max(0.05, lines.length * 0.01);
   return { linesTotal, difference, matches: Math.abs(difference) <= tolerance };
 }

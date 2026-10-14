@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/states/empty-state";
 import { formatPercent } from "@/lib/format";
 import type { AssignmentRow, DendrogramNode } from "@/lib/api";
+import { categoryColour } from "./category-colours";
 import {
   layoutDendrogram,
   DENDRO_LEFT_PAD,
@@ -223,7 +224,12 @@ function NodeGlyph({
   const label = node.isLeaf
     ? (node.productNameKey ?? "")
     : `Merge of ${node.size} products`;
-  const colour = node.isLeaf ? LEAF_TEXT[node.tone] : TONE_FILL[node.tone];
+  const colour =
+    node.tone === "settled" && node.categoryId != null
+      ? categoryColour(node.categoryId)
+      : node.isLeaf
+        ? LEAF_TEXT[node.tone]
+        : TONE_FILL[node.tone];
   const ring = selected ? "hsl(var(--ring))" : undefined;
 
   return (
@@ -319,7 +325,7 @@ function useContainerWidth(): [React.RefObject<HTMLDivElement | null>, number] {
  * covers and offers curation of that cluster. A proper dendrogram, not a node graph: the vertical
  * axis is the merge distance, edges are undirected elbows, and only problems get colour.
  */
-export function DendrogramView({ nodes, assignments, onCurate, height = 460 }: DendrogramViewProps) {
+export function DendrogramView({ nodes, assignments, onCurate, height = 800 }: DendrogramViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameName, setRenameName] = useState("");
@@ -329,6 +335,17 @@ export function DendrogramView({ nodes, assignments, onCurate, height = 460 }: D
     () => layoutDendrogram(nodes, assignments, { width, height }),
     [nodes, assignments, width, height],
   );
+
+  // One legend entry per assigned category, so the colours carry a name.
+  const legend = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const a of assignments) {
+      if (a.categoryId != null && a.categoryName != null && !seen.has(a.categoryId)) {
+        seen.set(a.categoryId, a.categoryName);
+      }
+    }
+    return [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [assignments]);
 
   const selected = selectedId ? nodes.find((node) => node.id === selectedId) ?? null : null;
   const selection = useMemo(
@@ -424,6 +441,21 @@ export function DendrogramView({ nodes, assignments, onCurate, height = 460 }: D
           </svg>
         </div>
       </div>
+
+      {legend.length > 0 ? (
+        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {legend.map(([id, name]) => (
+            <li key={id} className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="inline-block h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: categoryColour(id) }}
+              />
+              {name}
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       {selection ? (
         <ActionBar

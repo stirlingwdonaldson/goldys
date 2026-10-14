@@ -19,7 +19,9 @@ import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.classification.ProductCategoryQuery;
 import com.goldys.platform.classification.ProductCategoryService;
 import com.goldys.platform.classification.ProductClassificationService;
+import com.goldys.platform.semantic.CategoryNode;
 import com.goldys.platform.semantic.CategorySales;
+import com.goldys.platform.semantic.CategorySuggestionView;
 import com.goldys.platform.semantic.ClassificationRunView;
 import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import java.math.BigDecimal;
@@ -141,5 +143,90 @@ class ProductCategoryReportingServiceTest {
         mock(ProductCategoryService.class),
         classification,
         permissions);
+  }
+
+  private static ProductCategoryReportingService service(
+      ProductCategoryQuery query,
+      ProductCategoryService categories,
+      PermissionService permissions) {
+    return new ProductCategoryReportingService(
+        query,
+        mock(ProductCategoryMetricsQuery.class),
+        categories,
+        mock(ProductClassificationService.class),
+        permissions);
+  }
+
+  @Test
+  void listSuggestionsRequiresReadThenDelegates() {
+    ProductCategoryQuery query = mock(ProductCategoryQuery.class);
+    CategorySuggestionView view =
+        new CategorySuggestionView(UUID.randomUUID(), null, "Beer", "Drinks", 0, null);
+    when(query.suggestions()).thenReturn(List.of(view));
+    PermissionService permissions = mock(PermissionService.class);
+    ProductCategoryReportingService service =
+        service(query, mock(ProductCategoryService.class), permissions);
+
+    assertThat(service.listSuggestions(OWNER)).containsExactly(view);
+    verify(permissions).require(OWNER, new ResourceKey("products.category"), PermissionAction.READ);
+  }
+
+  @Test
+  void addSuggestionDelegates() {
+    ProductCategoryService categories = mock(ProductCategoryService.class);
+    ProductCategoryReportingService service =
+        service(mock(ProductCategoryQuery.class), categories, mock(PermissionService.class));
+
+    service.addSuggestion(OWNER, "Cocktails", "Drinks");
+
+    verify(categories).addSuggestion(OWNER, "Cocktails", "Drinks");
+  }
+
+  @Test
+  void updateSuggestionDelegates() {
+    ProductCategoryService categories = mock(ProductCategoryService.class);
+    ProductCategoryReportingService service =
+        service(mock(ProductCategoryQuery.class), categories, mock(PermissionService.class));
+    UUID id = UUID.randomUUID();
+
+    service.updateSuggestion(OWNER, id, "Beer", null);
+
+    verify(categories).updateSuggestion(OWNER, id, "Beer", null);
+  }
+
+  @Test
+  void deleteSuggestionDelegates() {
+    ProductCategoryService categories = mock(ProductCategoryService.class);
+    ProductCategoryReportingService service =
+        service(mock(ProductCategoryQuery.class), categories, mock(PermissionService.class));
+    UUID id = UUID.randomUUID();
+
+    service.deleteSuggestion(OWNER, id);
+
+    verify(categories).deleteSuggestion(OWNER, id);
+  }
+
+  @Test
+  void applySuggestionsDelegates() {
+    ProductCategoryService categories = mock(ProductCategoryService.class);
+    CategoryNode node = new CategoryNode(UUID.randomUUID(), "Beer", "Drinks", 0);
+    when(categories.applySuggestions(OWNER)).thenReturn(List.of(node));
+    ProductCategoryReportingService service =
+        service(mock(ProductCategoryQuery.class), categories, mock(PermissionService.class));
+
+    assertThat(service.applySuggestions(OWNER)).containsExactly(node);
+    verify(categories).applySuggestions(OWNER);
+  }
+
+  @Test
+  void deleteDelegates() {
+    ProductCategoryService categories = mock(ProductCategoryService.class);
+    ProductCategoryReportingService service =
+        service(mock(ProductCategoryQuery.class), categories, mock(PermissionService.class));
+    UUID id = UUID.randomUUID();
+
+    service.delete(OWNER, id);
+
+    verify(categories).delete(OWNER, id);
   }
 }

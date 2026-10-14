@@ -86,3 +86,14 @@ amounts and reconciling them to the invoice header total (design in progress).
 - PDFs are not yet amount-reconciled to invoice headers, so no dollar figure is asserted.
 - The 373 "MATCH" flags are false alarms addressed separately by the matcher fix on branch
   `fix/ctb-invoice-line-matching`.
+
+## Scheduled follow-up (accuracy review)
+
+PDF-derived gap lines (`origin='PDF'`) inherit their stock codes from the PDF extractor, which for
+non-templated suppliers is the LLM fallback. Those codes can be hallucinated (`FUEL` vs
+`FUEL LEVY`, placeholder codes like `12345`) even though line descriptions are usually sound. On a
+low-frequency cadence (e.g. quarterly), sample a handful of `origin='PDF'` lines across the top gap
+suppliers and verify their codes/descriptions against the stored PDFs; where a supplier keeps
+producing bad codes, write a deterministic template extractor (see
+`docs/superpowers/specs/2026-10-13-supplier-pdf-templates-design.md`).
+

@@ -56,6 +56,7 @@ export type {
   AspectSentimentSummary,
   AspectSentimentView,
   CategoryNode,
+  CategorySuggestion,
   ClassificationRun,
   ClassificationRunKind,
   ClassificationRunStatus,

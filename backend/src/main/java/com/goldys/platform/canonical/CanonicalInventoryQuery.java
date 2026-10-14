@@ -79,7 +79,11 @@ public class CanonicalInventoryQuery {
         l.uom(),
         l.unitQuantity(),
         l.packSize(),
-        l.wetAmount());
+        l.wetAmount(),
+        l.lineTotalIncTax(),
+        l.lineGstAmount(),
+        l.lineTaxRate(),
+        l.incGst());
   }
 
   private static InvoiceLineView toView(CanonicalInvoiceLine l) {

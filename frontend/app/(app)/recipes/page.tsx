@@ -11,21 +11,82 @@ import { AwaitingData } from "@/components/states/awaiting-data";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { StatCard } from "@/components/data-display/stat-card";
-import { formatCurrency, formatNumber, formatPercent } from "@/lib/format";
+import {
+  EMPTY,
+  formatCurrency,
+  formatDay,
+  formatNumber,
+  formatPercent,
+  toNumber,
+  type Numeric,
+} from "@/lib/format";
 import { EmptyState } from "@/components/states/empty-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { currencyColumn } from "@/components/data-table/columns";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+/**
+ * Display-only GP% threshold for the table's green/amber pill. No venue target is
+ * configured in the API, so this is a legible default (a manager can eyeball it);
+ * it colours the cell only and never feeds a calculation.
+ */
+const HEALTHY_GP_PERCENT = 0.7;
+
+/** A missing figure: a muted em dash, never a fabricated zero (design-system §1). */
+function MissingValue() {
+  return <span className="text-muted-foreground">{EMPTY}</span>;
+}
+
+/** A right-aligned money figure; negatives get the amber "needs attention" tone. */
+function currencyCell(value: Numeric) {
+  const n = toNumber(value);
+  if (n == null) return <MissingValue />;
+  return (
+    <span className={cn("whitespace-nowrap tabular-nums", n < 0 && "text-status-conflict")}>
+      {formatCurrency(n)}
+    </span>
+  );
+}
+
+/**
+ * A delisted dish's last-sold price/cost: the figure, dimmed, with a short "Last sold"
+ * pill. The date lives in the pill's tooltip so the cell stays on one line
+ * (docs/design/ui-direction.md: "pills stay short, the detail goes in the tooltip").
+ */
+function HistoricalFigure({ value, date }: { value: number | null; date: string | null }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <span className="tabular-nums text-muted-foreground">{formatCurrency(value)}</span>
+      <Badge variant="neutral" title={date ? `Last sold ${formatDay(date)}` : "Last sold"}>
+        Last sold
+      </Badge>
+    </span>
+  );
+}
 
 function gpColumn(): ColumnDef<RecipeCosting> {
+  const healthy = `At or above the healthy ${formatPercent(HEALTHY_GP_PERCENT)} mark`;
   return {
     id: "gpPercent",
-    accessorFn: (r) => r.gpPercent ?? 0,
-    header: "GP%",
-    cell: ({ row }) => (
-      <span className="tabular-nums">{formatPercent(row.original.gpPercent)}</span>
-    ),
+    accessorFn: (r) => toNumber(r.gpPercent) ?? 0,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="GP%" />,
+    cell: ({ row }) => {
+      const gp = toNumber(row.original.gpPercent);
+      if (gp == null) return <MissingValue />;
+      const isHealthy = gp >= HEALTHY_GP_PERCENT;
+      return (
+        <Badge
+          variant={isHealthy ? "success" : "conflict"}
+          className="tabular-nums"
+          title={isHealthy ? healthy : `Below the healthy ${formatPercent(HEALTHY_GP_PERCENT)} mark`}
+        >
+          {formatPercent(gp)}
+        </Badge>
+      );
+    },
     meta: { title: "GP%", align: "right" },
   };
 }
@@ -129,21 +190,43 @@ export default function RecipesPage() {
     () => [
       {
         id: "name",
-        accessorFn: (r) => r.name ?? "",
+        accessorFn: (r) => r.name?.trim() ?? "",
         header: "Recipe",
-        cell: ({ row }) => row.original.name ?? "—",
+        cell: ({ row }) => {
+          const name = row.original.name?.trim();
+          // An empty name is real (unnamed CTB shells) — label it rather than
+          // leave a blank cell; never hide absence (design-system §1).
+          if (!name) return <span className="italic text-muted-foreground">Unnamed recipe</span>;
+          return (
+            <span className="block max-w-xs truncate font-medium text-foreground" title={name}>
+              {name}
+            </span>
+          );
+        },
       },
       {
         id: "folder",
-        accessorFn: (r) => r.folder ?? "",
+        accessorFn: (r) => r.folder?.trim() ?? "",
         header: "Folder",
-        cell: ({ row }) => row.original.folder ?? "—",
+        cell: ({ row }) => {
+          const folder = row.original.folder?.trim();
+          if (!folder) return <MissingValue />;
+          return (
+            <span className="block max-w-40 truncate text-muted-foreground" title={folder}>
+              {folder}
+            </span>
+          );
+        },
       },
       {
         id: "yield",
         accessorFn: (r) => r.portionSize ?? "",
         header: "Yield",
-        cell: ({ row }) => row.original.portionSize ?? "—",
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap text-muted-foreground">
+            {row.original.portionSize?.trim() || EMPTY}
+          </span>
+        ),
       },
       currencyColumn("costPerPortion", "Cost/portion", (r) => r.costPerPortion),
       {
@@ -153,21 +236,20 @@ export default function RecipesPage() {
         cell: ({ row }) => {
           const r = row.original;
           if (r.priceSource === "HISTORICAL") {
-            return (
-              <span className="tabular-nums text-muted-foreground">
-                {formatCurrency(r.lastSoldCost)}
-                <span> · Last sold {r.lastSoldDate}</span>
-              </span>
-            );
+            return <HistoricalFigure value={r.lastSoldCost} date={r.lastSoldDate} />;
           }
-          if (r.priceSource === "NONE") {
-            return <span className="text-muted-foreground">—</span>;
-          }
-          return <span className="tabular-nums">{formatCurrency(r.actualCost)}</span>;
+          if (r.priceSource === "NONE") return <MissingValue />;
+          return currencyCell(r.actualCost);
         },
         meta: { title: "Actual cost", align: "right" },
       },
-      currencyColumn("costGap", "Cost gap", (r) => r.costGap),
+      {
+        id: "costGap",
+        accessorFn: (r) => toNumber(r.costGap) ?? 0,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Cost gap" />,
+        cell: ({ row }) => currencyCell(row.original.costGap),
+        meta: { title: "Cost gap", align: "right" },
+      },
       {
         id: "menuPrice",
         accessorFn: (r) => r.menuPrice ?? r.lastSoldPrice ?? 0,
@@ -175,21 +257,26 @@ export default function RecipesPage() {
         cell: ({ row }) => {
           const r = row.original;
           if (r.priceSource === "HISTORICAL") {
-            return (
-              <span className="tabular-nums text-muted-foreground">
-                {formatCurrency(r.lastSoldPrice)}
-                <span> · Last sold {r.lastSoldDate}</span>
-              </span>
-            );
+            return <HistoricalFigure value={r.lastSoldPrice} date={r.lastSoldDate} />;
           }
           if (r.priceSource === "NONE") {
-            return <span className="text-muted-foreground">{menuStateLabel(r.menuState)}</span>;
+            return (
+              <Badge variant="missing" className="whitespace-nowrap">
+                {menuStateLabel(r.menuState)}
+              </Badge>
+            );
           }
-          return <span className="tabular-nums">{formatCurrency(r.menuPrice)}</span>;
+          return currencyCell(r.menuPrice);
         },
         meta: { title: "Menu price", align: "right" },
       },
-      currencyColumn("margin", "Margin", (r) => r.margin),
+      {
+        id: "margin",
+        accessorFn: (r) => toNumber(r.margin) ?? 0,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Margin" />,
+        cell: ({ row }) => currencyCell(row.original.margin),
+        meta: { title: "Margin", align: "right" },
+      },
       gpColumn(),
       {
         id: "breakdown",
@@ -198,7 +285,8 @@ export default function RecipesPage() {
           <Button
             variant="outline"
             size="sm"
-            aria-label={`Show ingredients for ${row.original.name ?? "recipe"}`}
+            className="whitespace-nowrap"
+            aria-label={`Show ingredients for ${row.original.name?.trim() || "recipe"}`}
             onClick={() => setSelected(row.original)}
           >
             Ingredients

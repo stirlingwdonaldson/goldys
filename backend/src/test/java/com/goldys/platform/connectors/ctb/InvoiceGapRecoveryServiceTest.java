@@ -51,7 +51,8 @@ class InvoiceGapRecoveryServiceTest {
     when(invoiceQuery.currentInvoices())
         .thenReturn(
             List.of(
-                new InvoiceMetadataView("Supplier", "INV-7200", date, null, null, null, "a.pdf")));
+                new InvoiceMetadataView(
+                    "Supplier", "INV-7200", date, null, null, null, "a.pdf", null, null, null)));
   }
 
   @Test

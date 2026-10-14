@@ -38,8 +38,9 @@ import { TaxonomyTree } from "@/components/classification/taxonomy-tree";
 import { DendrogramView, type DendroAction, type DendroSelection } from "@/components/classification/dendrogram-view";
 import { EmbeddingScatter } from "@/components/classification/embedding-scatter";
 import { PipelineFlow, type PipelineStage } from "@/components/classification/pipeline-flow";
+import { SuggestionsPanel } from "@/components/classification/suggestions-panel";
 
-type Tab = "categories" | "clusters" | "pipeline";
+type Tab = "categories" | "clusters" | "pipeline" | "suggestions";
 
 /** Status pills follow the platform's status vocabulary, not a bespoke one. */
 function StatusBadge({ status }: { status: string }) {
@@ -120,15 +121,21 @@ function RenameCategoryForm({
   );
 }
 
-/** The drilled-in category: its name, and the products that sit in it. */
+/** The drilled-in category: its name, group and the products that sit in it. */
 function CategoryDetail({
   category,
   products,
+  groups,
   onRename,
+  onRegroup,
+  onDelete,
 }: {
   category: CategoryNode;
   products: AssignmentRow[];
+  groups: string[];
   onRename: (categoryId: string, name: string) => void;
+  onRegroup: (categoryId: string, groupName: string) => void;
+  onDelete: (categoryId: string) => void;
 }) {
   return (
     <Section
@@ -137,6 +144,42 @@ function CategoryDetail({
     >
       {/* Keyed so drilling into another category resets the name draft. */}
       <RenameCategoryForm key={category.id} category={category} onSave={(name) => onRename(category.id, name)} />
+      <div className="flex flex-wrap items-center gap-2">
+        <label htmlFor="category-group" className="text-sm text-muted-foreground">
+          Group
+        </label>
+        <select
+          id="category-group"
+          aria-label="Category group"
+          className="h-8 rounded-md border bg-background px-2 text-sm"
+          value={category.groupName ?? ""}
+          onChange={(event) => onRegroup(category.id, event.target.value)}
+        >
+          <option value="">No group</option>
+          {groups
+            .filter((group) => group !== category.groupName)
+            .map((group) => (
+              <option key={group} value={group}>
+                {group}
+              </option>
+            ))}
+        </select>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => {
+            if (
+              window.confirm(
+                `Delete the "${category.name}" category? Its products will become uncategorised.`,
+              )
+            ) {
+              onDelete(category.id);
+            }
+          }}
+        >
+          Delete
+        </Button>
+      </div>
       {products.length === 0 ? (
         <p className="text-sm text-muted-foreground">No products are assigned to this category yet.</p>
       ) : (
@@ -239,10 +282,26 @@ function AssignmentsTable({
     [categories, onMove, onClear],
   );
 
+  const sortedRows = useMemo(
+    () =>
+      [...rows].sort((a, b) => {
+        // Group first (flat/unassigned last), then category, then product, so the two-level
+        // group → category structure is visible in the queue.
+        const ga = a.groupName ?? "\uffff";
+        const gb = b.groupName ?? "\uffff";
+        if (ga !== gb) return ga.localeCompare(gb);
+        const ca = a.categoryName ?? "\uffff";
+        const cb = b.categoryName ?? "\uffff";
+        if (ca !== cb) return ca.localeCompare(cb);
+        return a.productNameKey.localeCompare(b.productNameKey);
+      }),
+    [rows],
+  );
+
   return (
     <DataTable
       columns={columns}
-      data={rows}
+      data={sortedRows}
       getRowId={(row) => row.productNameKey}
       filterColumn="product"
       filterPlaceholder="Filter products"
@@ -257,6 +316,8 @@ function CategoriesTab({
   selectedCategoryId,
   onSelectCategory,
   onRename,
+  onRegroup,
+  onDelete,
   onMove,
   onClear,
 }: {
@@ -265,12 +326,19 @@ function CategoriesTab({
   selectedCategoryId: string | null;
   onSelectCategory: (categoryId: string | null) => void;
   onRename: (categoryId: string, name: string) => void;
+  onRegroup: (categoryId: string, groupName: string) => void;
+  onDelete: (categoryId: string) => void;
   onMove: (productNameKey: string, categoryId: string) => void;
   onClear: (productNameKey: string) => void;
 }) {
   const needsReview = rows.filter((row) => row.status === "NEEDS_REVIEW").length;
   const unassigned = rows.filter((row) => row.status === "UNASSIGNED").length;
   const selected = categories.find((category) => category.id === selectedCategoryId) ?? null;
+  const groups = useMemo(
+    () =>
+      [...new Set(categories.map((c) => c.groupName).filter((g): g is string => g != null))].sort(),
+    [categories],
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -295,7 +363,10 @@ function CategoriesTab({
         <CategoryDetail
           category={selected}
           products={rows.filter((row) => row.categoryId === selected.id)}
+          groups={groups}
           onRename={onRename}
+          onRegroup={onRegroup}
+          onDelete={onDelete}
         />
       ) : null}
 
@@ -421,10 +492,10 @@ function RunStatusLine({ run }: { run: ClassificationRun | null }) {
 /** The run trigger: a primary FULL button plus a small menu for CLUSTER/ASSIGN. */
 function RunClassificationMenu({
   onRun,
-  starting,
+  running,
 }: {
   onRun: (kind: ClassificationRunKind) => void;
-  starting: boolean;
+  running: boolean;
 }) {
   return (
     <div className="flex items-center">
@@ -432,9 +503,9 @@ function RunClassificationMenu({
         variant="brand"
         className="rounded-r-none"
         onClick={() => onRun("FULL")}
-        disabled={starting}
+        disabled={running}
       >
-        {starting ? "Starting…" : "Run classification"}
+        {running ? "Running…" : "Run classification"}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -443,7 +514,7 @@ function RunClassificationMenu({
             size="icon"
             className="rounded-l-none border-l border-brand-foreground/25"
             aria-label="More classification run options"
-            disabled={starting}
+            disabled={running}
           >
             <ChevronDown />
           </Button>
@@ -469,19 +540,27 @@ export default function ProductsPage() {
   const points = useApiData((api) => api.getCategoryEmbeddingSpace());
   const dendrogram = useApiData((api) => api.getCategoryDendrogram());
   const runsQuery = useApiData((api) => api.listClassificationRuns());
+  const suggestionsQuery = useApiData((api) => api.getCategorySuggestions());
 
   const [tab, setTab] = useState<Tab>("categories");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [writeError, setWriteError] = useState<string | null>(null);
   const [runStarting, setRunStarting] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
   const [activeRun, setActiveRun] = useState<ClassificationRun | null>(null);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const api = useApi();
 
   const reloadAll = useCallback(async () => {
-    await Promise.all([taxonomy.reload(), assignments.reload(), points.reload(), dendrogram.reload()]);
-  }, [taxonomy, assignments, points, dendrogram]);
+    await Promise.all([
+      taxonomy.reload(),
+      assignments.reload(),
+      points.reload(),
+      dendrogram.reload(),
+      suggestionsQuery.reload(),
+    ]);
+  }, [taxonomy, assignments, points, dendrogram, suggestionsQuery]);
 
   // Clear any in-flight poll on unmount, mirroring the forecasting page.
   useEffect(() => {
@@ -515,6 +594,18 @@ export default function ProductsPage() {
   );
   const clearOverride = useCallback(
     (productNameKey: string) => write("Clearing the override", () => api.clearProductOverride(productNameKey)),
+    [api, write],
+  );
+  const regroup = useCallback(
+    (categoryId: string, groupName: string) =>
+      write("Regroup", () => api.renameCategory(categoryId, { groupName })),
+    [api, write],
+  );
+  const deleteCategory = useCallback(
+    async (categoryId: string) => {
+      await write("Delete", () => api.deleteCategory(categoryId));
+      setSelectedCategoryId(null);
+    },
     [api, write],
   );
 
@@ -589,6 +680,51 @@ export default function ProductsPage() {
     [api, pollLatestRun],
   );
 
+  /** Suggestion edits share one write path: call the Api, then re-read the draft. */
+  const suggestionWrite = useCallback(
+    async (operation: () => Promise<unknown>) => {
+      setWriteError(null);
+      try {
+        await operation();
+        await suggestionsQuery.reload();
+      } catch (e: unknown) {
+        setWriteError(isApiError(e) ? e.message : "Couldn't update the suggestions.");
+      }
+    },
+    [suggestionsQuery],
+  );
+
+  const updateSuggestion = useCallback(
+    (id: string, input: { name?: string | null; groupName?: string | null }) =>
+      suggestionWrite(() => api.updateCategorySuggestion(id, input)),
+    [api, suggestionWrite],
+  );
+
+  const deleteSuggestion = useCallback(
+    (id: string) => suggestionWrite(() => api.deleteCategorySuggestion(id)),
+    [api, suggestionWrite],
+  );
+
+  const addSuggestion = useCallback(
+    (name: string, groupName: string | null) =>
+      suggestionWrite(() => api.addCategorySuggestion({ name, groupName })),
+    [api, suggestionWrite],
+  );
+
+  const applySuggestions = useCallback(async () => {
+    setWriteError(null);
+    setApplying(true);
+    try {
+      await api.applyCategorySuggestions();
+      await reloadAll();
+      setTab("categories");
+    } catch (e: unknown) {
+      setWriteError(isApiError(e) ? e.message : "Couldn't apply the taxonomy.");
+    } finally {
+      setApplying(false);
+    }
+  }, [api, reloadAll]);
+
   const loading = taxonomy.loading || assignments.loading || points.loading || dendrogram.loading;
   const error = taxonomy.error ?? assignments.error ?? points.error ?? dendrogram.error;
   const categories = taxonomy.data ?? [];
@@ -596,11 +732,16 @@ export default function ProductsPage() {
   const scatterPoints = points.data ?? [];
   const clusterNodes = dendrogram.data ?? [];
 
+  // The latest run is resolved once so both the always-visible status line and the trigger's
+  // running state agree. `activeRun` (the just-submitted run) wins over the list's newest entry.
+  const latestRun = activeRun ?? runsQuery.data?.[0] ?? null;
+  const running = runStarting || latestRun?.status === "RUNNING";
+
   const header = (
     <PageHeader
       title="Products"
       description="Internal categorisation: how products are grouped, and what needs a decision."
-      actions={<RunClassificationMenu onRun={(kind) => void handleRun(kind)} starting={runStarting} />}
+      actions={<RunClassificationMenu onRun={(kind) => void handleRun(kind)} running={running} />}
     />
   );
 
@@ -625,13 +766,12 @@ export default function ProductsPage() {
   const hasAny =
     categories.length > 0 || rows.length > 0 || scatterPoints.length > 0 || clusterNodes.length > 0;
 
-  const latestRun = activeRun ?? runsQuery.data?.[0] ?? null;
-
   return (
     <div className="flex flex-col gap-6">
       {header}
       {writeError ? <InlineError>{writeError}</InlineError> : null}
       {runError ? <InlineError>{runError}</InlineError> : null}
+      <RunStatusLine run={latestRun} />
 
       {hasAny ? (
         <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
@@ -639,6 +779,7 @@ export default function ProductsPage() {
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="clusters">Clusters</TabsTrigger>
             <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+            <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="categories">
@@ -648,6 +789,8 @@ export default function ProductsPage() {
               selectedCategoryId={selectedCategoryId}
               onSelectCategory={setSelectedCategoryId}
               onRename={rename}
+              onRegroup={regroup}
+              onDelete={deleteCategory}
               onMove={move}
               onClear={clearOverride}
             />
@@ -670,7 +813,6 @@ export default function ProductsPage() {
               title="Pipeline"
               description="products → embed → cluster → curate → assign → report. Click a stage to jump to its data."
             >
-              <RunStatusLine run={latestRun} />
               <PipelineFlow
                 categories={categories}
                 assignments={rows}
@@ -680,10 +822,25 @@ export default function ProductsPage() {
               />
             </Section>
           </TabsContent>
+
+          <TabsContent value="suggestions">
+            <Section
+              title="Suggestions"
+              description="The draft taxonomy the model proposed. Rename, regroup, add or delete, then apply to create the categories."
+            >
+              <SuggestionsPanel
+                suggestions={suggestionsQuery.data ?? []}
+                applying={applying}
+                onUpdate={updateSuggestion}
+                onDelete={deleteSuggestion}
+                onAdd={addSuggestion}
+                onApply={() => void applySuggestions()}
+              />
+            </Section>
+          </TabsContent>
         </Tabs>
       ) : (
         <div className="flex flex-col gap-4">
-          <RunStatusLine run={latestRun} />
           <AwaitingData
             label="Products"
             description="The product taxonomy, the assignment queue and the clustering views."

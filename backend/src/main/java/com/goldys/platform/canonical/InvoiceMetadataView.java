@@ -11,4 +11,7 @@ public record InvoiceMetadataView(
     LocalDate dueDate,
     BigDecimal totalAmount,
     String purchaseNumber,
-    String pdfFilename) {}
+    String pdfFilename,
+    BigDecimal amountExTax,
+    BigDecimal gstAmount,
+    BigDecimal freightAmount) {}

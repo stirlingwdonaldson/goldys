@@ -74,6 +74,10 @@ class CanonicalInvoiceLineService {
             input.unitQuantity(),
             input.packSize(),
             input.wetAmount(),
+            null, // lineTotalIncTax — CSV does not supply tax treatment
+            null, // lineGstAmount
+            null, // lineTaxRate
+            null, // incGst
             input.origin()));
   }
 

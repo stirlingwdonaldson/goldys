@@ -11,6 +11,7 @@ import com.goldys.platform.classification.ProductClassificationService;
 import com.goldys.platform.semantic.AssignmentView;
 import com.goldys.platform.semantic.CategoryNode;
 import com.goldys.platform.semantic.CategorySales;
+import com.goldys.platform.semantic.CategorySuggestionView;
 import com.goldys.platform.semantic.ClassificationRunView;
 import com.goldys.platform.semantic.DendrogramNode;
 import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
@@ -106,6 +107,32 @@ public class ProductCategoryReportingService {
     }
   }
 
+  /** The pending taxonomy draft, in display order. */
+  public List<CategorySuggestionView> listSuggestions(UserRole role) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return query.suggestions();
+  }
+
+  /** Adds a staff-authored suggestion (a category the model missed) to the draft. */
+  public CategorySuggestionView addSuggestion(UserRole role, String name, String groupName) {
+    return categories.addSuggestion(role, name, groupName);
+  }
+
+  /** Renames and/or regroups a suggestion; a null field is left unchanged. */
+  public void updateSuggestion(UserRole role, UUID id, String name, String groupName) {
+    categories.updateSuggestion(role, id, name, groupName);
+  }
+
+  /** Removes a suggestion from the draft. */
+  public void deleteSuggestion(UserRole role, UUID id) {
+    categories.deleteSuggestion(role, id);
+  }
+
+  /** Applies the draft: promotes its suggestions to confirmed categories and clears it. */
+  public List<CategoryNode> applySuggestions(UserRole role) {
+    return categories.applySuggestions(role);
+  }
+
   /** Creates a category (authorized by the classification service) and returns its public DTO. */
   public CategoryNode create(
       UserRole role, String name, String groupName, int displayOrder, String description) {
@@ -133,5 +160,10 @@ public class ProductCategoryReportingService {
   /** Clears a staff override, returning the product to {@code UNASSIGNED}. */
   public void clearOverride(UserRole role, String productNameKey) {
     categories.clearOverride(role, productNameKey);
+  }
+
+  /** Deletes a category, unassigning any products that belonged to it. */
+  public void delete(UserRole role, UUID id) {
+    categories.delete(role, id);
   }
 }

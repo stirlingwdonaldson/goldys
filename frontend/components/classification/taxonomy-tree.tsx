@@ -40,6 +40,8 @@ function groupNode(groupName: string, children: CategoryNode[]): TreeNode {
       subtitle: `${children.length} categories · ${products} products`,
       icon: Folder,
       tone: "neutral",
+      // A group is a level above its categories: the bold border reads as a header.
+      emphasis: true,
     },
     children: children.map((child) => categoryNode(child, true)),
   };
