@@ -193,6 +193,20 @@ class ProductCategoryControllerTest {
   }
 
   @Test
+  void deleteCategoryDelegates() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    UUID id = UUID.randomUUID();
+
+    mvc.perform(
+            delete("/api/products/categories/categories/" + id)
+                .with(authenticated(owner()))
+                .with(csrf()))
+        .andExpect(status().isOk());
+
+    verify(reporting).delete(any(), eq(id));
+  }
+
+  @Test
   void controllerNeverImportsCanonicalOrClassification() {
     JavaClasses classes = new ClassFileImporter().importPackages("com.goldys.platform.api");
     noClasses()

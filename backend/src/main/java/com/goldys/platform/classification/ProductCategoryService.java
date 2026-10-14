@@ -181,4 +181,24 @@ public class ProductCategoryService {
     suggestions.deleteAll();
     return created;
   }
+
+  /**
+   * Deletes a category, first returning any products assigned to it to {@code UNASSIGNED} so no
+   * assignment is left pointing at a deleted row.
+   */
+  @Transactional
+  public void delete(UserRole role, UUID id) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    ProductCategory category =
+        categories
+            .findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("No category with id " + id));
+    Instant now = CLOCK.instant();
+    for (ProductCategoryAssignment assignment : assignments.findAll()) {
+      if (id.equals(assignment.categoryId())) {
+        assignment.markUnassigned(now);
+      }
+    }
+    categories.delete(category);
+  }
 }

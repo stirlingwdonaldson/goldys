@@ -136,6 +136,12 @@ public class ProductCategoryController {
     }
   }
 
+  /** Deletes a category, returning any products assigned to it to {@code UNASSIGNED}. */
+  @DeleteMapping("/categories/{id}")
+  void delete(@PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    reporting.delete(currentUser.roleOf(user), id);
+  }
+
   @PostMapping("/assignments/{productNameKey}/move")
   void move(
       @PathVariable String productNameKey,
