@@ -2,6 +2,7 @@ package com.goldys.platform.reconciliation;
 
 import com.goldys.platform.canonical.CanonicalPaymentQuery;
 import com.goldys.platform.canonical.PaymentView;
+import com.goldys.platform.util.Nulls;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -58,7 +59,7 @@ public class PaymentProjector {
 
     Map<Key, Mutable> buckets = new HashMap<>();
     for (PaymentView v : payments.currentPaymentsForDates(dates)) {
-      Key key = new Key(v.tradingDate(), nz(v.paymentTypeName()));
+      Key key = new Key(v.tradingDate(), Nulls.valueIfBlank(v.paymentTypeName(), "Unspecified"));
       buckets.computeIfAbsent(key, k -> new Mutable()).add(v);
     }
 
@@ -82,10 +83,6 @@ public class PaymentProjector {
     resolved.saveAll(rows);
   }
 
-  private static String nz(String v) {
-    return v == null || v.isBlank() ? "Unspecified" : v;
-  }
-
   private record Key(LocalDate date, String type) {}
 
   private static final class Mutable {
@@ -94,13 +91,9 @@ public class PaymentProjector {
     long count = 0;
 
     void add(PaymentView v) {
-      amount = amount.add(nz(v.amount()));
-      tip = tip.add(nz(v.tip()));
+      amount = amount.add(Nulls.zeroIfNull(v.amount()));
+      tip = tip.add(Nulls.zeroIfNull(v.tip()));
       count += v.paymentCount();
     }
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }

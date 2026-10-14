@@ -9,6 +9,7 @@ import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
+import com.goldys.platform.util.Nulls;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -105,12 +106,8 @@ public class LightspeedAllSalesIngestService {
     BigDecimal gst = BigDecimal.ZERO;
 
     void add(LightspeedAllSale sale) {
-      total = total.add(nz(sale.totalIncTax()));
-      gst = gst.add(nz(sale.totalTax()));
+      total = total.add(Nulls.zeroIfNull(sale.totalIncTax()));
+      gst = gst.add(Nulls.zeroIfNull(sale.totalTax()));
     }
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }

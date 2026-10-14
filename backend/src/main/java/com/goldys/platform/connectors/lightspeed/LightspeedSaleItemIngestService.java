@@ -12,8 +12,8 @@ import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
 import com.goldys.platform.ingestion.RawLedgerQuery;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
+import com.goldys.platform.util.Nulls;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
@@ -118,8 +118,8 @@ public class LightspeedSaleItemIngestService {
               it.productNumber(),
               it.sku(),
               it.categoryName(),
-              nz(it.quantity()),
-              nz(it.amount()),
+              Nulls.zeroIfNull(it.quantity()),
+              Nulls.zeroIfNull(it.amount()),
               it.soldPriceIncTax(),
               it.totalTax(),
               it.costIncTax(),
@@ -144,9 +144,5 @@ public class LightspeedSaleItemIngestService {
     } catch (IOException e) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON webhook payload", e);
     }
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }
