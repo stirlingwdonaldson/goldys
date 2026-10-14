@@ -49,7 +49,7 @@ KB). A sync where nothing changed ends `NO_NEW_DATA`.
 | Dataset (`fetcherIdentity`) | Endpoint | Paging | Canonical |
 |---|---|---|---|
 | `opentable-reservations` | `GET /gateway/long-proxies/restaurant-reporting/reportingBiDatasourcesGold/api/v5/reservations/gold/?rid=…&startDate=…&endDate=…&offset=0&limit=1000&sort=visitDate&stateCategories=booked,seated,finished,noShow,cancelled&isVisitDate=true` | Half-month windows; a full (1000-row) window is split and retried | `canonical_reservation` |
-| `opentable-reviews` | `POST /gateway/proxies/hospitality/ot4rFeedbackService/api/v1/feedback/restaurant/{rid}/reviews/details` | `page` 0…n, 25 per page, until `meta.totalCount` | raw only |
+| `opentable-reviews` | `POST /gateway/proxies/hospitality/ot4rFeedbackService/api/v1/feedback/restaurant/{rid}/reviews/details` | `page` 0…n, 25 per page, until `meta.totalCount` | `canonical_review` |
 | `opentable-menu-items` | `GET /gateway/proxies/menu-manager/restaurantMenuService/v2/restaurants/{rid}/items?pageSize=100&pageNumber=n&statuses=Active,Inactive,Unassigned,Archived` | until a short page | raw only |
 | `opentable-menus` | `GET …/restaurantMenuService/v1/restaurants/{rid}/menus` | single | raw only |
 
@@ -82,13 +82,13 @@ Status mapping and identity are in [`matching-and-identity.md`](matching-and-ide
 
 Three rich GuestCenter reports are ingested as CSV — via a token-gated webhook or an in-app
 multipart upload from the connectors screen. Each ingest service stores the bytes in the raw
-ledger first; only the reservations path also canonicalizes. Reviews and menu items are validated
-for shape and parked raw until their canonical slices land.
+ledger first; the reservations and reviews paths also canonicalize. Menu items are validated
+for shape and parked raw until their canonical slice lands.
 
 | Report | Endpoint | Fetcher identity | Canonical target |
 |---|---|---|---|
 | Reservations (rich) | `POST /api/ingest/opentable-reservations` | `opentable-reservations` | `canonical_reservation` |
-| Reviews | `POST /api/ingest/opentable-reviews` | `opentable-reviews` | raw only (future `canonical_review`) |
+| Reviews | `POST /api/ingest/opentable-reviews` | `opentable-reviews` | `canonical_review` |
 | Menu items | `POST /api/ingest/opentable-menu-items` | `opentable-menu-items` | raw only (future `canonical_menu_item`) |
 
 The shapes below are the real columns from a one-time manual export of restaurant **140126**
@@ -116,10 +116,20 @@ bytes keep it).
 
 ### Reviews
 
-Required columns: `Review ID`, `Source`, `Review Date`, `Overall Rating`; `Comment` optional
-(multi-line, quoted). `Source` distinguishes OpenTable reviews from Google reviews. Reviews carry
-a clean `Guest ID` (e.g. `6a8e7ffc…`) — the anchor for the future `canonical_guest`. Review
-identity is `Review ID` (`OT-140126-…` for OpenTable, `RT-140126-…` for Google).
+Both the CSV drop and the assisted-session JSON pull canonicalize into `canonical_review`.
+
+**CSV columns.** Required columns: `Review ID`, `Source`, `Review Date`, `Overall Rating`; `Comment`
+optional (multi-line, quoted). `Source` distinguishes OpenTable reviews from Google reviews. Reviews
+carry a clean `Guest ID` (e.g. `6a8e7ffc…`) — the anchor for `canonical_guest`. Review identity is
+`Review ID` (`OT-140126-…` for OpenTable, `RT-140126-…` for Google).
+
+**JSON (API pull).** The same fields arrive under different names: `id` is the review identity
+(identical to `otReviewId`; `OT-…` for OpenTable, `RT-…` for Google and Facebook), `source` is
+`OpenTable` / `Google` / `Facebook`, `reviewDate`/`visitDate` are ISO instants, `recommends` is the
+would-recommend flag, `noiseText` is the free-text noise label, `privateNotes` is the private note,
+and `tags`/`keywords` are already arrays. Ratings are whole floats (`5.0`) with `0.0` meaning "not
+rated"; the parser normalises both to the canonical 1–5 integer with `0` → null. The numeric
+`noiseRating` is not modelled (see the review-analytics design spec's open questions).
 
 ### Menu items
 

@@ -33,27 +33,34 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Guest (`canonical_guest`)
 
-- **Source:** `OPENTABLE` (GuestCenter reviews export). The schema exists (`canonical_guest`) but is
-  **not populated this slice** — reviews are ingested raw only until slice 2.
+- **Source:** `OPENTABLE` (GuestCenter reviews, CSV drop and JSON pull). Populated from reviews,
+  which are the only source carrying the clean `Guest ID`.
 - **Logical identity:** `UUID.nameUUIDFromBytes("guest:" + guestId)`.
 - **Source identity:** `(source_system = OPENTABLE, source_record_ref = Guest ID)`.
 - **Identity ruling — no Guest ID in reservations:** the reservations CSV has **no `Guest ID`
   column** — guest identity there is name plus **masked** phone/email (`**********`). No clean
   guest row can be created from reservations: matching on name + masked PII would merge distinct
-  people and split name variants. The reviews CSV carries the clean `Guest ID`, so `canonical_guest`
-  is populated from reviews only.
+  people and split name variants. The reviews export carries the clean `Guest ID`, so
+  `canonical_guest` is populated from reviews only.
 - **Matching strategy:** deterministic single source keyed on `Guest ID`. Reservation → guest
-  linkage is the nullable `canonical_reservation.guest_id`, left null this slice.
-- **Deferred name-matching:** reservation → guest linkage by name is deferred until reviews provide
-  the `Guest ID` anchor; it is explicitly *not* guessed from names now.
-- **Confidence:** n/a (single source, unpopulated).
+  linkage is the nullable `canonical_reservation.guest_id`, left null.
+- **Deferred name-matching:** reservation → guest linkage by name is deferred; it is explicitly
+  *not* guessed from names now.
+- **Confidence:** n/a (single source).
 - **Manual resolution path:** not wired.
 
-## Review (`canonical_review`) — future
+## Review (`canonical_review`)
 
-- **Source:** `OPENTABLE` (GuestCenter reviews export; ingested raw only until slice 2).
-- **Logical identity:** keyed on `Review ID` — `OT-140126-…` (OpenTable) / `RT-140126-…` (Google),
-  with `Source` distinguishing the origin. Identity/strategy finalized when slice 2 lands.
+- **Source:** `OPENTABLE` (GuestCenter reviews; both the CSV drop and the assisted-session JSON
+  pull canonicalize).
+- **Logical identity:** `UUID.nameUUIDFromBytes("review:" + reviewId)`, keyed on the source
+  `Review ID` / JSON `id` — `OT-140126-…` (OpenTable) / `RT-140126-…` (Google and Facebook), with
+  `source` (`OpenTable` / `Google` / `Facebook`) distinguishing the origin.
+- **Source identity:** `(source_system = OPENTABLE, source_record_ref = review id)`.
+- **Matching strategy:** deterministic single source; re-record supersedes on a changed fact (the
+  close-and-reinsert pattern), unchanged re-record is a no-op. No cross-source matching.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not wired (read-only analytics).
 
 ## Menu item (`canonical_menu_item`) — future
 
