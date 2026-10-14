@@ -1,5 +1,6 @@
 package com.goldys.platform.ingestion;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,6 +58,23 @@ public class RawLedgerQuery {
   }
 
   /**
+   * Stored payloads of one source and fetcher identity with each record's {@code fetched_at},
+   * ascending. Used by replays of re-pulled datasets (e.g. the daily stocktake header list) that
+   * must keep the most recent version per id rather than the first.
+   */
+  public List<RawPayloadWithRefAndTime> rawPayloadsForFetcherWithFetchedAt(
+      String sourceSystem, String fetcherIdentity) {
+    return rawRecords
+        .findBySourceSystemAndFetcherIdentityOrderByFetchedAtAsc(sourceSystem, fetcherIdentity)
+        .stream()
+        .map(
+            r ->
+                new RawPayloadWithRefAndTime(
+                    r.id(), r.payloadBytes(), r.sourceRecordRef(), r.fetchedAt()))
+        .toList();
+  }
+
+  /**
    * The latest stored payload's id and SHA-256 for one dataset window ({@code source_record_ref}),
    * without loading its bytes; empty when that window was never stored. Lets a connector skip
    * re-storing a byte-identical response.
@@ -77,4 +95,8 @@ public class RawLedgerQuery {
 
   /** A stored raw payload plus its source-record reference. */
   public record RawPayloadWithRef(UUID id, byte[] bytes, String sourceRecordRef) {}
+
+  /** A stored raw payload plus its source-record reference and fetch time. */
+  public record RawPayloadWithRefAndTime(
+      UUID id, byte[] bytes, String sourceRecordRef, Instant fetchedAt) {}
 }

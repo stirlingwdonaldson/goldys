@@ -76,6 +76,13 @@ interface RawRecordRepository
   List<RawRecord> findBySourceSystemAndFetcherIdentity(String sourceSystem, String fetcherIdentity);
 
   /**
+   * One fetcher's payloads in ascending {@code fetched_at} order, so a replay that must pick the
+   * latest version of a re-pulled dataset can keep the last-seen (most recent) record per id.
+   */
+  List<RawRecord> findBySourceSystemAndFetcherIdentityOrderByFetchedAtAsc(
+      String sourceSystem, String fetcherIdentity);
+
+  /**
    * Id and hash of the latest payload for one dataset window. A closed interface projection, so
    * only those two columns are selected and {@code payload_bytes} is never loaded. Backed by {@code
    * idx_raw_record_source_fetcher_ref} (V58).
