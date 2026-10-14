@@ -483,8 +483,14 @@ export default function ProductsPage() {
   const api = useApi();
 
   const reloadAll = useCallback(async () => {
-    await Promise.all([taxonomy.reload(), assignments.reload(), points.reload(), dendrogram.reload()]);
-  }, [taxonomy, assignments, points, dendrogram]);
+    await Promise.all([
+      taxonomy.reload(),
+      assignments.reload(),
+      points.reload(),
+      dendrogram.reload(),
+      suggestionsQuery.reload(),
+    ]);
+  }, [taxonomy, assignments, points, dendrogram, suggestionsQuery]);
 
   // Clear any in-flight poll on unmount, mirroring the forecasting page.
   useEffect(() => {
@@ -628,14 +634,14 @@ export default function ProductsPage() {
     setApplying(true);
     try {
       await api.applyCategorySuggestions();
-      await Promise.all([reloadAll(), suggestionsQuery.reload()]);
+      await reloadAll();
       setTab("categories");
     } catch (e: unknown) {
       setWriteError(isApiError(e) ? e.message : "Couldn't apply the taxonomy.");
     } finally {
       setApplying(false);
     }
-  }, [api, reloadAll, suggestionsQuery]);
+  }, [api, reloadAll]);
 
   const loading = taxonomy.loading || assignments.loading || points.loading || dendrogram.loading;
   const error = taxonomy.error ?? assignments.error ?? points.error ?? dendrogram.error;
