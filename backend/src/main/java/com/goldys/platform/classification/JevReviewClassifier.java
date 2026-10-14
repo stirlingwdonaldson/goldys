@@ -23,12 +23,9 @@ import org.springframework.stereotype.Component;
  * {baseUrl}/v1/systemone} with a {@code state} (the review's feature text), a {@code model}, and a
  * {@code questions} map — one {@code choice} question for the overall sentiment, one {@code score}
  * question for the predicted rating, and one {@code choice} question per aspect to detect. The
- * response maps the fixed classification shape {@code {"sentiment":{"label","confidence"},
- * "predictedRating","aspects":[{"aspect","label","confidence"}]}} to {@link ReviewClassification};
- * an omitted {@code predictedRating} leaves the rating null (a review with no rating signal).
- *
- * <p>The exact Jev wire schema is an external unknown: the port and value types are fixed, only
- * this adapter's JSON mapping follows the Jev docs, so a schema correction is a one-file change.
+ * response returns each answer under {@code answers.<questionId>}: a {@code choice} answer carries
+ * {@code choice} + {@code confidence}, and the {@code score} rating answer carries a 0-based {@code
+ * score} that this adapter shifts onto the 1..5 star scale.
  *
  * <p>Failures — non-2xx, IO, or an unparseable body — surface as {@link JevException} with an
  * operator-facing message that never carries the request payload or the API key.
@@ -89,7 +86,7 @@ public class JevReviewClassifier implements ReviewClassifier {
               + " CLASSIFICATION_JEV_API_KEY");
     }
     JsonNode response = post("/v1/systemone", buildBody(request));
-    return map(response);
+    return map(response, request.aspects());
   }
 
   private ObjectNode buildBody(ReviewClassificationRequest request) {
@@ -133,41 +130,46 @@ public class JevReviewClassifier implements ReviewClassifier {
     return question;
   }
 
-  private ReviewClassification map(JsonNode response) {
-    Sentiment sentiment = sentiment(response.path("sentiment"));
-
-    JsonNode ratingNode = response.get("predictedRating");
-    BigDecimal predictedRating =
-        (ratingNode == null || ratingNode.isNull()) ? null : ratingNode.decimalValue();
-
-    List<AspectSentiment> aspects = new ArrayList<>();
-    JsonNode aspectsNode = response.path("aspects");
-    if (aspectsNode.isArray()) {
-      for (JsonNode aspectNode : aspectsNode) {
-        aspects.add(aspectSentiment(aspectNode));
-      }
+  private ReviewClassification map(JsonNode response, List<String> aspects) {
+    JsonNode answers = response.path("answers");
+    if (answers.isMissingNode() || !answers.isObject()) {
+      throw new JevException("Jev service returned an unparseable response");
     }
 
-    return new ReviewClassification(sentiment, predictedRating, aspects);
+    Sentiment sentiment = choiceSentiment(answers.path(SENTIMENT_QUESTION));
+    BigDecimal predictedRating = ratingScore(answers.path(RATING_QUESTION));
+
+    List<AspectSentiment> aspectList = new ArrayList<>(aspects.size());
+    for (String aspect : aspects) {
+      aspectList.add(choiceAspect(aspect, answers.path(aspect)));
+    }
+
+    return new ReviewClassification(sentiment, predictedRating, aspectList);
   }
 
-  private Sentiment sentiment(JsonNode node) {
-    String label = node.path("label").asText(null);
-    JsonNode confidence = node.get("confidence");
+  /** A {@code choice} answer's selected label + confidence (the sentiment and aspect questions). */
+  private Sentiment choiceSentiment(JsonNode answer) {
+    String label = answer.path("choice").asText(null);
+    JsonNode confidence = answer.get("confidence");
     if (label == null || confidence == null || !confidence.isNumber()) {
       throw new JevException("Jev service returned an unparseable response");
     }
     return new Sentiment(label, confidence.decimalValue());
   }
 
-  private AspectSentiment aspectSentiment(JsonNode node) {
-    String aspect = node.path("aspect").asText(null);
-    String label = node.path("label").asText(null);
-    JsonNode confidence = node.get("confidence");
-    if (aspect == null || label == null || confidence == null || !confidence.isNumber()) {
+  /** The {@code score} rating answer, shifted from Jev's 0-based level line onto the 1..5 scale. */
+  private BigDecimal ratingScore(JsonNode answer) {
+    JsonNode score = answer.get("score");
+    if (score == null || !score.isNumber()) {
       throw new JevException("Jev service returned an unparseable response");
     }
-    return new AspectSentiment(aspect, label, confidence.decimalValue());
+    return score.decimalValue().add(BigDecimal.ONE);
+  }
+
+  /** One aspect question's answer; the aspect name is the question id. */
+  private AspectSentiment choiceAspect(String aspect, JsonNode answer) {
+    Sentiment sentiment = choiceSentiment(answer);
+    return new AspectSentiment(aspect, sentiment.label(), sentiment.confidence());
   }
 
   private JsonNode post(String path, ObjectNode body) {

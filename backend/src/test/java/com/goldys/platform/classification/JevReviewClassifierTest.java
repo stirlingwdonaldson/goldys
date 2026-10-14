@@ -14,15 +14,31 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 /**
- * Exercises the Jev review-classification adapter against the fixed response shape from the review
- * classification spec: {@code
- * {"sentiment":{"label","confidence"},"predictedRating","aspects":[{"aspect","label","confidence"}]}}.
- * The request is the Jev System One envelope ({@code state} + {@code model} + typed {@code
- * questions}), pinned in the adapter; a schema correction there is a one-file change.
+ * Exercises the Jev review-classification adapter against the real System One response shape: each
+ * answer comes back under {@code answers.<questionId>} — a {@code choice} answer with {@code
+ * choice} + {@code confidence}, and the {@code score} rating answer with a 0-based {@code score}
+ * (https://docs.typesafe.ai).
  */
 class JevReviewClassifierTest {
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
+
+  private static final String RESPONSE =
+      "{"
+          + "\"answers\":{"
+          + "\"sentiment\":{\"type\":\"choice\",\"choice\":\"NEGATIVE\",\"confidence\":0.94,"
+          + "\"probabilities\":{\"POSITIVE\":0.02,\"NEUTRAL\":0.04,\"NEGATIVE\":0.94}},"
+          + "\"rating\":{\"type\":\"score\",\"score\":0.8,\"confidence\":0.70,"
+          + "\"probabilities\":{\"0\":0.2,\"1\":0.8,\"2\":0.0,\"3\":0.0,\"4\":0.0}},"
+          + "\"food\":{\"type\":\"choice\",\"choice\":\"NEGATIVE\",\"confidence\":0.71},"
+          + "\"service\":{\"type\":\"choice\",\"choice\":\"NEGATIVE\",\"confidence\":0.97},"
+          + "\"ambience\":{\"type\":\"choice\",\"choice\":\"NEUTRAL\",\"confidence\":0.62},"
+          + "\"value\":{\"type\":\"choice\",\"choice\":\"POSITIVE\",\"confidence\":0.55},"
+          + "\"noise\":{\"type\":\"choice\",\"choice\":\"NEUTRAL\",\"confidence\":0.80},"
+          + "\"wait_time\":{\"type\":\"choice\",\"choice\":\"NEGATIVE\",\"confidence\":0.66}"
+          + "},"
+          + "\"usage\":{\"input_tokens\":300,\"output_tokens\":40}"
+          + "}";
 
   @Test
   void maps_jev_response_to_review_classification() throws Exception {
@@ -36,13 +52,7 @@ class JevReviewClassifierTest {
           capturedBody.set(
               new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
           capturedAuth.set(exchange.getRequestHeaders().getFirst("Authorization"));
-          String response =
-              "{\"sentiment\":{\"label\":\"NEGATIVE\",\"confidence\":0.94},"
-                  + "\"predictedRating\":1.8,"
-                  + "\"aspects\":["
-                  + "{\"aspect\":\"service\",\"label\":\"NEGATIVE\",\"confidence\":0.97},"
-                  + "{\"aspect\":\"food\",\"label\":\"NEGATIVE\",\"confidence\":0.71}]}";
-          byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+          byte[] bytes = RESPONSE.getBytes(StandardCharsets.UTF_8);
           exchange.getResponseHeaders().set("Content-Type", "application/json");
           exchange.sendResponseHeaders(200, bytes.length);
           exchange.getResponseBody().write(bytes);
@@ -60,14 +70,17 @@ class JevReviewClassifierTest {
 
       assertThat(result.sentiment().label()).isEqualTo("NEGATIVE");
       assertThat(result.sentiment().confidence()).isEqualByComparingTo("0.94");
+      // The rating is a 0-based Jev score over the five star levels, shifted onto 1..5.
       assertThat(result.predictedRating()).isEqualByComparingTo("1.8");
-      assertThat(result.aspects()).hasSize(2);
-      assertThat(result.aspects().get(0).aspect()).isEqualTo("service");
-      assertThat(result.aspects().get(0).label()).isEqualTo("NEGATIVE");
-      assertThat(result.aspects().get(0).confidence()).isEqualByComparingTo("0.97");
-      assertThat(result.aspects().get(1).aspect()).isEqualTo("food");
-      assertThat(result.aspects().get(1).label()).isEqualTo("NEGATIVE");
-      assertThat(result.aspects().get(1).confidence()).isEqualByComparingTo("0.71");
+
+      assertThat(result.aspects()).hasSize(6);
+      assertThat(result.aspects())
+          .extracting(AspectSentiment::aspect)
+          .containsExactly("food", "service", "ambience", "value", "noise", "wait_time");
+      assertThat(result.aspects())
+          .extracting(AspectSentiment::label)
+          .containsExactly("NEGATIVE", "NEGATIVE", "NEUTRAL", "POSITIVE", "NEUTRAL", "NEGATIVE");
+      assertThat(result.aspects().get(1).confidence()).isEqualByComparingTo("0.97");
 
       // The request must follow the System One envelope: the state is the feature text and the
       // model is the Jev model id; the API key travels as a bearer token.
@@ -75,6 +88,9 @@ class JevReviewClassifierTest {
       assertThat(body.get("state").asText())
           .isEqualTo("Disinterested wait staff. Plonked food down");
       assertThat(body.get("model").asText()).isEqualTo("jev-latest");
+      assertThat(body.path("questions")).hasSize(8); // sentiment + rating + 6 aspects
+      assertThat(body.path("questions").path("rating").path("type").asText()).isEqualTo("score");
+      assertThat(body.path("questions").path("food").path("type").asText()).isEqualTo("choice");
       assertThat(capturedAuth.get()).isEqualTo("Bearer test-api-key");
     } finally {
       server.stop(0);
@@ -114,18 +130,14 @@ class JevReviewClassifierTest {
   }
 
   @Test
-  void null_predicted_rating_maps_to_null() throws Exception {
+  void response_without_answers_throws_unparseable() throws Exception {
     HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
     server.createContext(
         "/v1/systemone",
         exchange -> {
-          String response =
-              "{\"sentiment\":{\"label\":\"POSITIVE\",\"confidence\":0.88},"
-                  + "\"aspects\":[{\"aspect\":\"service\",\"label\":\"POSITIVE\",\"confidence\":0.90}]}";
-          byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-          exchange.getResponseHeaders().set("Content-Type", "application/json");
-          exchange.sendResponseHeaders(200, bytes.length);
-          exchange.getResponseBody().write(bytes);
+          byte[] response = "{}".getBytes(StandardCharsets.UTF_8);
+          exchange.sendResponseHeaders(200, response.length);
+          exchange.getResponseBody().write(response);
           exchange.close();
         });
     server.start();
@@ -136,12 +148,10 @@ class JevReviewClassifierTest {
                   true, "http://localhost:" + server.getAddress().getPort(), "test-api-key"),
               MAPPER);
 
-      ReviewClassification result = classifier.classify(request());
+      JevException ex = (JevException) catchThrowable(() -> classifier.classify(request()));
 
-      assertThat(result.sentiment().label()).isEqualTo("POSITIVE");
-      assertThat(result.predictedRating()).isNull();
-      assertThat(result.aspects()).hasSize(1);
-      assertThat(result.aspects().get(0).aspect()).isEqualTo("service");
+      assertThat(ex).isNotNull();
+      assertThat(ex.getMessage()).isEqualTo("Jev service returned an unparseable response");
     } finally {
       server.stop(0);
     }
