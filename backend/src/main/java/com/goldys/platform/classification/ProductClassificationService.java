@@ -9,7 +9,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
@@ -33,7 +36,12 @@ public class ProductClassificationService {
   /** The cap on {@link #listRuns()}; a single venue never needs more than the recent few. */
   static final int RUN_LIST_LIMIT = 25;
 
+  /** How many product feature texts a single cluster contributes to the naming prompt. */
+  private static final int NAMING_SAMPLE_LIMIT = 15;
+
   private static final String INTERRUPTED_MESSAGE = "service restarted before completion";
+
+  private static final Logger log = LoggerFactory.getLogger(ProductClassificationService.class);
 
   private final FeatureTextExtractor featureTexts;
   private final ProductCategoryRepository categories;
@@ -43,6 +51,9 @@ public class ProductClassificationService {
   private final ClassificationProjectionRepository projections;
   private final EmbeddingClient embedding;
   private final ProductClassifier classifier;
+  private final ClusterNamer namer;
+  private final CategorySuggestionRepository suggestions;
+  private final NamingProperties namingProperties;
   private final EmbeddingProperties embeddingProperties;
   private final JevProperties jevProperties;
   private final TaskExecutor executor;
@@ -58,6 +69,9 @@ public class ProductClassificationService {
       ClassificationProjectionRepository projections,
       EmbeddingClient embedding,
       ProductClassifier classifier,
+      ClusterNamer namer,
+      CategorySuggestionRepository suggestions,
+      NamingProperties namingProperties,
       EmbeddingProperties embeddingProperties,
       JevProperties jevProperties,
       @Qualifier("applicationTaskExecutor") TaskExecutor executor) {
@@ -70,6 +84,9 @@ public class ProductClassificationService {
         projections,
         embedding,
         classifier,
+        namer,
+        suggestions,
+        namingProperties,
         embeddingProperties,
         jevProperties,
         executor,
@@ -86,6 +103,9 @@ public class ProductClassificationService {
       ClassificationProjectionRepository projections,
       EmbeddingClient embedding,
       ProductClassifier classifier,
+      ClusterNamer namer,
+      CategorySuggestionRepository suggestions,
+      NamingProperties namingProperties,
       EmbeddingProperties embeddingProperties,
       JevProperties jevProperties,
       TaskExecutor executor,
@@ -98,6 +118,9 @@ public class ProductClassificationService {
     this.projections = projections;
     this.embedding = embedding;
     this.classifier = classifier;
+    this.namer = namer;
+    this.suggestions = suggestions;
+    this.namingProperties = namingProperties;
     this.embeddingProperties = embeddingProperties;
     this.jevProperties = jevProperties;
     this.executor = executor;
@@ -136,16 +159,19 @@ public class ProductClassificationService {
 
     try {
       requireEnabled(run.kind());
-      int productCount =
-          switch (run.kind()) {
-            case CLUSTER -> cluster(run);
-            case ASSIGN -> assign(run);
-            case FULL -> {
-              int count = cluster(run);
-              assign(run);
-              yield count;
-            }
-          };
+      int productCount;
+      if (run.kind() == ClassificationRunKind.CLUSTER) {
+        Clustering clustering = cluster(run);
+        nameSuggestions(run, clustering);
+        productCount = clustering.products().size();
+      } else if (run.kind() == ClassificationRunKind.ASSIGN) {
+        productCount = assign(run);
+      } else { // FULL
+        Clustering clustering = cluster(run);
+        nameSuggestions(run, clustering);
+        productCount = clustering.products().size();
+        assign(run);
+      }
       run.markSucceeded(productCount, clock.instant());
     } catch (RuntimeException e) {
       run.markFailed(failureMessage(e), clock.instant());
@@ -206,9 +232,10 @@ public class ProductClassificationService {
 
   /**
    * Embeds and clusters the current feature texts, persisting the dendrogram nodes and the 2-D
-   * projection. Returns the number of products covered.
+   * projection. Returns the products, their feature texts and the flat-cut label per product, so
+   * the naming step can summarise the same clusters without re-reading the DB.
    */
-  private int cluster(ClassificationRun run) {
+  private Clustering cluster(ClassificationRun run) {
     Map<String, String> texts = featureTexts.featureTexts();
     List<String> products = new ArrayList<>(texts.keySet());
     List<float[]> vectors = embedding.embed(new ArrayList<>(texts.values()));
@@ -240,8 +267,55 @@ public class ProductClassificationService {
       projections.save(
           new ClassificationProjection(run.id(), products.get(i), point.x(), point.y()));
     }
-    return products.size();
+    return new Clustering(products, texts, result.labels());
   }
+
+  /**
+   * Best-effort naming: after clustering, asks the {@link ClusterNamer} for a draft taxonomy and
+   * persists it to {@code category_suggestion}. A missing/disabled namer, or one that throws,
+   * leaves the draft empty and never fails the run.
+   */
+  private void nameSuggestions(ClassificationRun run, Clustering clustering) {
+    if (!namingProperties.enabled()) {
+      return;
+    }
+    try {
+      List<SuggestedCategory> named = namer.suggest(summarize(clustering));
+      suggestions.deleteAll();
+      int order = 0;
+      for (SuggestedCategory s : named) {
+        suggestions.save(
+            CategorySuggestion.create(run.id(), s.name(), s.groupName(), order++, s.hint()));
+      }
+    } catch (RuntimeException e) {
+      log.warn("Category naming failed; continuing without suggestions", e);
+    }
+  }
+
+  /** Groups products by flat-cut label and emits one capped summary per cluster, label order. */
+  private List<ClusterSummary> summarize(Clustering clustering) {
+    Map<Integer, List<String>> byLabel = new TreeMap<>();
+    for (int i = 0; i < clustering.products().size(); i++) {
+      byLabel
+          .computeIfAbsent(clustering.flatLabels().get(i), k -> new ArrayList<>())
+          .add(clustering.texts().get(clustering.products().get(i)));
+    }
+    List<ClusterSummary> result = new ArrayList<>();
+    int index = 0;
+    for (Map.Entry<Integer, List<String>> entry : byLabel.entrySet()) {
+      List<String> texts = entry.getValue();
+      List<String> sample =
+          new ArrayList<>(texts.subList(0, Math.min(texts.size(), NAMING_SAMPLE_LIMIT)));
+      result.add(new ClusterSummary(index++, sample, texts.size()));
+    }
+    return result;
+  }
+
+  /**
+   * The in-memory clustering output the naming step needs: products, their texts, flat-cut labels.
+   */
+  private record Clustering(
+      List<String> products, Map<String, String> texts, List<Integer> flatLabels) {}
 
   /**
    * Assigns every product to a category via the classifier. Returns the number of products covered.
