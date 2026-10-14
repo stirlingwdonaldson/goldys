@@ -94,7 +94,15 @@ public class SecurityConfig {
 
     // Keep proxy compression away from SSE: a gzipped stream is buffered, so the browser never
     // receives the events (the live view and Ask Goldy's chat both go through the Next.js proxy).
-    http.headers(headers -> headers.addHeaderWriter(new StreamingCacheControlHeaderWriter()));
+    // Frame the API only from our own origin: the invoice detail view previews the supplier PDF in
+    // an <iframe> that resolves same-origin through the Next.js /api proxy. Spring Security's
+    // default X-Frame-Options: DENY blocks even that same-origin frame, which the browser reports
+    // as "<host> refused to connect". SAMEORIGIN keeps cross-origin clickjacking blocked.
+    http.headers(
+        headers ->
+            headers
+                .frameOptions(frameOptions -> frameOptions.sameOrigin())
+                .addHeaderWriter(new StreamingCacheControlHeaderWriter()));
 
     return http.build();
   }

@@ -121,6 +121,20 @@ class InvoiceControllerTest {
   }
 
   @Test
+  void pdfIsFrameableByTheAppForThePreview() throws Exception {
+    // The detail view embeds this response in an <iframe>. Spring Security's default
+    // X-Frame-Options: DENY blocks even same-origin framing, which surfaced in the browser as
+    // "platform.swd.sh refused to connect" instead of the PDF.
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(documents.pdf(any(), any()))
+        .thenReturn(new InvoiceDocumentService.PdfDocument(new byte[] {1}, "inv-1.pdf"));
+
+    mvc.perform(get("/api/invoices/INV-1/pdf").with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(header().string("X-Frame-Options", "SAMEORIGIN"));
+  }
+
+  @Test
   void pdfAttachmentDisposition() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(documents.pdf(any(), any()))
