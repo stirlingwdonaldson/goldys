@@ -3,6 +3,7 @@ import { render, screen, fireEvent, within, act } from "@testing-library/react";
 import type {
   AssignmentRow,
   CategoryNode,
+  CategorySuggestion,
   ClassificationRun,
   DendrogramNode,
   ProductPoint,
@@ -16,6 +17,7 @@ const state = vi.hoisted(() => {
     points: null as ProductPoint[] | null,
     dendrogram: null as DendrogramNode[] | null,
     runs: null as ClassificationRun[] | null,
+    suggestions: null as CategorySuggestion[] | null,
     api: {
       renameCategory: vi.fn(async () => {}),
       createCategory: vi.fn(async () => ({ id: "cat-new", name: "New", groupName: null, productCount: 0 })),
@@ -23,6 +25,11 @@ const state = vi.hoisted(() => {
       clearProductOverride: vi.fn(async () => {}),
       runClassification: vi.fn(async () => {}),
       listClassificationRuns: vi.fn(async () => store.runs ?? []),
+      getCategorySuggestions: vi.fn(async () => store.suggestions ?? []),
+      updateCategorySuggestion: vi.fn(async () => {}),
+      deleteCategorySuggestion: vi.fn(async () => {}),
+      addCategorySuggestion: vi.fn(async () => {}),
+      applyCategorySuggestions: vi.fn(async () => []),
     },
   };
   // The read side routes by invoking the fetcher, not by matching its source text. Each
@@ -36,6 +43,7 @@ const state = vi.hoisted(() => {
       getCategoryEmbeddingSpace: () => store.points,
       getCategoryDendrogram: () => store.dendrogram,
       listClassificationRuns: () => store.runs,
+      getCategorySuggestions: () => store.suggestions,
     },
   });
 });
@@ -121,6 +129,7 @@ function seed() {
   state.points = points;
   state.dendrogram = dendrogram;
   state.runs = [succeededRun];
+  state.suggestions = [];
 }
 
 /** The taxonomy canvas: category names also appear in the move selects, so scope to it. */
@@ -291,5 +300,30 @@ describe("ProductsPage", () => {
 
     expect(screen.getByRole("button", { name: "Running…" })).toBeDisabled();
     expect(screen.getByText("Running — this can take a moment.")).toBeInTheDocument();
+  });
+
+  it("renders the Suggestions tab with the draft and applies it", async () => {
+    seed();
+    state.suggestions = [
+      { id: "sg-1", runId: null, name: "Beer", groupName: "Drinks", displayOrder: 0, hint: null },
+    ];
+    render(<ProductsPage />);
+
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Suggestions" }));
+    expect(screen.getByDisplayValue("Beer")).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Apply taxonomy" }));
+    });
+    expect(state.api.applyCategorySuggestions).toHaveBeenCalled();
+  });
+
+  it("shows the empty state when there are no suggestions", () => {
+    seed();
+    state.suggestions = [];
+    render(<ProductsPage />);
+
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Suggestions" }));
+    expect(screen.getByText(/Run classification to generate suggestions/)).toBeInTheDocument();
   });
 });

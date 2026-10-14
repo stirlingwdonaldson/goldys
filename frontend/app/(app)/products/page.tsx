@@ -38,8 +38,9 @@ import { TaxonomyTree } from "@/components/classification/taxonomy-tree";
 import { DendrogramView, type DendroAction, type DendroSelection } from "@/components/classification/dendrogram-view";
 import { EmbeddingScatter } from "@/components/classification/embedding-scatter";
 import { PipelineFlow, type PipelineStage } from "@/components/classification/pipeline-flow";
+import { SuggestionsPanel } from "@/components/classification/suggestions-panel";
 
-type Tab = "categories" | "clusters" | "pipeline";
+type Tab = "categories" | "clusters" | "pipeline" | "suggestions";
 
 /** Status pills follow the platform's status vocabulary, not a bespoke one. */
 function StatusBadge({ status }: { status: string }) {
@@ -469,12 +470,14 @@ export default function ProductsPage() {
   const points = useApiData((api) => api.getCategoryEmbeddingSpace());
   const dendrogram = useApiData((api) => api.getCategoryDendrogram());
   const runsQuery = useApiData((api) => api.listClassificationRuns());
+  const suggestionsQuery = useApiData((api) => api.getCategorySuggestions());
 
   const [tab, setTab] = useState<Tab>("categories");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [writeError, setWriteError] = useState<string | null>(null);
   const [runStarting, setRunStarting] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
   const [activeRun, setActiveRun] = useState<ClassificationRun | null>(null);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const api = useApi();
@@ -589,6 +592,51 @@ export default function ProductsPage() {
     [api, pollLatestRun],
   );
 
+  /** Suggestion edits share one write path: call the Api, then re-read the draft. */
+  const suggestionWrite = useCallback(
+    async (operation: () => Promise<unknown>) => {
+      setWriteError(null);
+      try {
+        await operation();
+        await suggestionsQuery.reload();
+      } catch (e: unknown) {
+        setWriteError(isApiError(e) ? e.message : "Couldn't update the suggestions.");
+      }
+    },
+    [suggestionsQuery],
+  );
+
+  const updateSuggestion = useCallback(
+    (id: string, input: { name?: string | null; groupName?: string | null }) =>
+      suggestionWrite(() => api.updateCategorySuggestion(id, input)),
+    [api, suggestionWrite],
+  );
+
+  const deleteSuggestion = useCallback(
+    (id: string) => suggestionWrite(() => api.deleteCategorySuggestion(id)),
+    [api, suggestionWrite],
+  );
+
+  const addSuggestion = useCallback(
+    (name: string, groupName: string | null) =>
+      suggestionWrite(() => api.addCategorySuggestion({ name, groupName })),
+    [api, suggestionWrite],
+  );
+
+  const applySuggestions = useCallback(async () => {
+    setWriteError(null);
+    setApplying(true);
+    try {
+      await api.applyCategorySuggestions();
+      await Promise.all([reloadAll(), suggestionsQuery.reload()]);
+      setTab("categories");
+    } catch (e: unknown) {
+      setWriteError(isApiError(e) ? e.message : "Couldn't apply the taxonomy.");
+    } finally {
+      setApplying(false);
+    }
+  }, [api, reloadAll, suggestionsQuery]);
+
   const loading = taxonomy.loading || assignments.loading || points.loading || dendrogram.loading;
   const error = taxonomy.error ?? assignments.error ?? points.error ?? dendrogram.error;
   const categories = taxonomy.data ?? [];
@@ -643,6 +691,7 @@ export default function ProductsPage() {
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="clusters">Clusters</TabsTrigger>
             <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+            <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="categories">
@@ -680,6 +729,22 @@ export default function ProductsPage() {
                 points={scatterPoints}
                 dendrogram={clusterNodes}
                 onDrill={(stage) => setTab(STAGE_TAB[stage])}
+              />
+            </Section>
+          </TabsContent>
+
+          <TabsContent value="suggestions">
+            <Section
+              title="Suggestions"
+              description="The draft taxonomy the model proposed. Rename, regroup, add or delete, then apply to create the categories."
+            >
+              <SuggestionsPanel
+                suggestions={suggestionsQuery.data ?? []}
+                applying={applying}
+                onUpdate={updateSuggestion}
+                onDelete={deleteSuggestion}
+                onAdd={addSuggestion}
+                onApply={() => void applySuggestions()}
               />
             </Section>
           </TabsContent>
