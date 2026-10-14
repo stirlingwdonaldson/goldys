@@ -7,13 +7,19 @@ Claude outputs/
 # Local Git worktrees used for isolated feature development
 .worktrees/
 
-# Impeccable ships a ~16MB platform binary that its launcher re-fetches from a
-# version-pinned cache when absent; committing it would bloat every clone with a
-# non-diffable, platform-specific artifact.
-.opencode/skills/impeccable/scripts/bin/
-
 # Local environment files (secrets). The .example files are the committed templates.
 .env
 .env.*
 !.env.example
 !.env.oidc.example
+
+# Ripwire installs per-machine skill symlinks and a manifest into the repo; they are
+# machine-local (absolute paths under ~/.local/share/ripwire) and not portable.
+.opencode/skills/ripwire-*
+.opencode/skills/.ripwire-manifest-v1
+
+# Superpowers runtime state (sdd task briefs/reports, brainstorm servers, review diffs).
+.superpowers/
+
+# Local scratch/state (state_store.db, stream_store); never commit.
+data/

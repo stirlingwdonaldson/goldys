@@ -1,7 +1,6 @@
 # DESIGN.md
 
-Entry point for design tools and agents (impeccable reads this file). The approved,
-authoritative design docs are:
+Entry point for design tools and agents. The approved, authoritative design docs are:
 
 - [`docs/design/ui-direction.md`](docs/design/ui-direction.md): visual direction, tokens,
   responsive rules, shared building blocks. Tokens live in `frontend/app/globals.css`.

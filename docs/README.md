@@ -49,8 +49,8 @@ consequences, status).
 
 ### Frontend and design
 
-- [../DESIGN.md](../DESIGN.md): short entry point for design agents (impeccable), linking
-  the two docs below and the constraints they must respect.
+- [../DESIGN.md](../DESIGN.md): short entry point for design agents, linking the two
+  docs below and the constraints they must respect.
 - [design/design-system.md](design/design-system.md): principles, screen inventory,
   interaction patterns (reconciliation, data tables, node graphs).
 - [design/ui-direction.md](design/ui-direction.md): visual direction and tokens; overrides
@@ -59,6 +59,11 @@ consequences, status).
 - [frontend/](frontend/audit.md): frontend architecture audit (2026-10-09) with the
   proposed target architecture, dependency decisions, migration plan and verification
   baseline. **Proposals, not yet approved.**
+
+### Agent tooling
+
+- [agents.md](agents.md): the review personas (`code-reviewer`, `security-auditor`,
+  `test-engineer`) and the `/review`, `/ship`, `/test` commands that run them.
 
 ### Operations
 
