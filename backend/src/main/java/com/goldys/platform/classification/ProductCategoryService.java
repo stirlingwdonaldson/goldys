@@ -9,7 +9,9 @@ import com.goldys.platform.semantic.CategorySuggestionView;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -126,7 +128,10 @@ public class ProductCategoryService {
         saved.hint());
   }
 
-  /** Renames and/or regroups a suggestion. A null field is left unchanged. */
+  /**
+   * Renames and/or regroups a suggestion. A null field is left unchanged; an empty-string group
+   * clears it (the review panel sends {@code ""} when the group input is emptied).
+   */
   @Transactional
   public void updateSuggestion(UserRole role, UUID id, String name, String groupName) {
     permissions.require(role, RESOURCE, PermissionAction.WRITE);
@@ -138,7 +143,7 @@ public class ProductCategoryService {
       suggestion.rename(name);
     }
     if (groupName != null) {
-      suggestion.regroup(groupName);
+      suggestion.regroup(groupName.isEmpty() ? null : groupName);
     }
   }
 
@@ -159,8 +164,13 @@ public class ProductCategoryService {
   public List<CategoryNode> applySuggestions(UserRole role) {
     permissions.require(role, RESOURCE, PermissionAction.WRITE);
     List<CategoryNode> created = new ArrayList<>();
+    // Track names created in this pass so two draft entries sharing a name don't both become
+    // categories — a DB-level findByName alone would miss a duplicate saved earlier in the same
+    // (not-yet-flushed) transaction.
+    Set<String> createdNames = new HashSet<>();
     for (CategorySuggestion suggestion : suggestions.findAllByOrderByDisplayOrderAsc()) {
-      if (categories.findByName(suggestion.name()).isEmpty()) {
+      if (categories.findByName(suggestion.name()).isEmpty()
+          && createdNames.add(suggestion.name())) {
         ProductCategory category =
             categories.save(
                 ProductCategory.create(

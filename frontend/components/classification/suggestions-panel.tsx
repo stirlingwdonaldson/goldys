@@ -66,8 +66,8 @@ export function SuggestionsPanel({
                 placeholder="Group (optional)"
                 className="h-8 w-40"
                 onBlur={(event) => {
-                  const next = event.target.value.trim();
-                  onUpdate(suggestion.id, { groupName: next === "" ? null : next });
+                  // Empty string clears the group; null (omitted) leaves it unchanged.
+                  onUpdate(suggestion.id, { groupName: event.target.value.trim() });
                 }}
               />
               <Button

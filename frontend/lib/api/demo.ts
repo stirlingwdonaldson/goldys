@@ -1926,7 +1926,7 @@ export const demoApi: Api = {
     const suggestion = demoCategorySuggestions.find((s) => s.id === id);
     if (!suggestion) return;
     if (input.name != null) suggestion.name = input.name;
-    if (input.groupName != null) suggestion.groupName = input.groupName;
+    if (input.groupName != null) suggestion.groupName = input.groupName === "" ? null : input.groupName;
   },
 
   async deleteCategorySuggestion(id: string): Promise<void> {

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -205,6 +206,24 @@ class ProductCategoryServiceTest {
   }
 
   @Test
+  void updateSuggestionClearsGroupWithEmptyString() {
+    CategorySuggestion suggestion = CategorySuggestion.create(null, "Cocktails", "Drinks", 0, null);
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.findById(suggestion.id())).thenReturn(Optional.of(suggestion));
+    ProductCategoryService service =
+        service(
+            mock(ProductCategoryRepository.class),
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    // Empty string (the review panel sends "" when the group input is cleared) means "clear".
+    service.updateSuggestion(OWNER, suggestion.id(), null, "");
+
+    assertThat(suggestion.groupName()).isNull();
+  }
+
+  @Test
   void applySuggestionsCreatesCategoriesAndClearsDraft() {
     CategorySuggestion beer1 = CategorySuggestion.create(null, "Beer", "Drinks", 0, null);
     CategorySuggestion beer2 = CategorySuggestion.create(null, "Beer", "Drinks", 1, null);
@@ -230,6 +249,30 @@ class ProductCategoryServiceTest {
     assertThat(created).extracting(CategoryNode::name).containsExactly("Wine");
     assertThat(created.get(0).groupName()).isNull();
     verify(suggestions).deleteAll();
+  }
+
+  @Test
+  void applySuggestionsSkipsDuplicateDraftNames() {
+    CategorySuggestion beer1 = CategorySuggestion.create(null, "Beer", "Drinks", 0, null);
+    CategorySuggestion beer2 = CategorySuggestion.create(null, "Beer", "Drinks", 1, null);
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(beer1, beer2));
+
+    ProductCategoryRepository categories = mock(ProductCategoryRepository.class);
+    when(categories.findByName("Beer")).thenReturn(Optional.empty());
+    when(categories.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    ProductCategoryService service =
+        service(
+            categories,
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    List<CategoryNode> created = service.applySuggestions(OWNER);
+
+    assertThat(created).extracting(CategoryNode::name).containsExactly("Beer");
+    verify(categories, times(1)).save(any());
   }
 
   @Test
