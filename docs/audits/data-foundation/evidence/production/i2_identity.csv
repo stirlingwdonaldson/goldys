@@ -1,0 +1,14 @@
+invoice_numbers,multi_supplier_numbers,max_suppliers_per_number
+1200,0,1
+stock_codes,codes_with_multiple_names
+982,9
+product_keys,names_with_multiple_codes
+967,18
+links,null_recipe,sale_codes,recipe_ids
+645,0,606,445
+stocktakes,stock_counts,orphan_counts
+0,0,0
+guests,reservations,linked_reservations
+172,24194,0
+ingredients,sub_recipe_lines,broken_links,parent_recipes
+2630,1383,0,611

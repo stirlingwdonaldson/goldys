@@ -1,0 +1,1205 @@
+table_name,ordinal,column_name,native_type,nullable,default_expression
+canonical_daily_sales,1,id,uuid,f,
+canonical_daily_sales,2,logical_entity_id,uuid,f,
+canonical_daily_sales,3,trading_date,date,f,
+canonical_daily_sales,4,source_system,character varying(255),f,
+canonical_daily_sales,5,source_record_ref,character varying(512),f,
+canonical_daily_sales,6,raw_record_id,uuid,f,
+canonical_daily_sales,7,total_sales,"numeric(14,4)",f,
+canonical_daily_sales,8,gst_total,"numeric(14,4)",f,
+canonical_daily_sales,9,net_total,"numeric(14,4)",f,
+canonical_daily_sales,10,valid_from,timestamp(6) with time zone,f,
+canonical_daily_sales,11,valid_to,timestamp(6) with time zone,t,
+canonical_daily_sales,12,recorded_at,timestamp(6) with time zone,f,
+canonical_daily_sales,13,superseded_at,timestamp(6) with time zone,t,
+canonical_deleted_sale,1,id,uuid,f,
+canonical_deleted_sale,2,logical_entity_id,uuid,f,
+canonical_deleted_sale,3,source_system,character varying(255),f,
+canonical_deleted_sale,4,source_record_ref,character varying(512),f,
+canonical_deleted_sale,5,raw_record_id,uuid,f,
+canonical_deleted_sale,6,trading_date,date,f,
+canonical_deleted_sale,7,sale_number,character varying(255),f,
+canonical_deleted_sale,8,order_type,character varying(255),t,
+canonical_deleted_sale,9,note,character varying(512),t,
+canonical_deleted_sale,10,total_inc_tax,"numeric(14,4)",f,
+canonical_deleted_sale,11,total_ex_tax,"numeric(14,4)",f,
+canonical_deleted_sale,12,total_tax,"numeric(14,4)",f,
+canonical_deleted_sale,13,total_cost,"numeric(14,4)",t,
+canonical_deleted_sale,14,opened_register_code,character varying(255),t,
+canonical_deleted_sale,15,opened_register_name,character varying(255),t,
+canonical_deleted_sale,16,deleted_register_code,character varying(255),t,
+canonical_deleted_sale,17,deleted_register_name,character varying(255),t,
+canonical_deleted_sale,18,staff_name,character varying(255),t,
+canonical_deleted_sale,19,staff_code,character varying(255),t,
+canonical_deleted_sale,20,deleted_by_staff_name,character varying(255),t,
+canonical_deleted_sale,21,deleted_by_staff_code,character varying(255),t,
+canonical_deleted_sale,22,table_number,character varying(255),t,
+canonical_deleted_sale,23,site_id,character varying(255),t,
+canonical_deleted_sale,24,customer_name,character varying(255),t,
+canonical_deleted_sale,25,valid_from,timestamp(6) with time zone,f,
+canonical_deleted_sale,26,valid_to,timestamp(6) with time zone,t,
+canonical_deleted_sale,27,recorded_at,timestamp(6) with time zone,f,
+canonical_deleted_sale,28,superseded_at,timestamp(6) with time zone,t,
+canonical_deleted_sale,29,sale_opened_time,time without time zone,t,
+canonical_guest,1,id,uuid,f,
+canonical_guest,2,logical_entity_id,uuid,f,
+canonical_guest,3,source_system,character varying(255),f,
+canonical_guest,4,source_record_ref,character varying(512),f,
+canonical_guest,5,raw_record_id,uuid,f,
+canonical_guest,6,guest_name,character varying(1024),t,
+canonical_guest,7,first_name,character varying(1024),t,
+canonical_guest,8,last_name,character varying(1024),t,
+canonical_guest,9,nickname,character varying(1024),t,
+canonical_guest,10,email,character varying(1024),t,
+canonical_guest,11,phone,character varying(1024),t,
+canonical_guest,12,company,character varying(1024),t,
+canonical_guest,13,marketing_opt_in,boolean,t,
+canonical_guest,14,first_visit_date,date,t,
+canonical_guest,15,recent_visit_date,date,t,
+canonical_guest,16,upcoming_visits,integer,t,
+canonical_guest,17,completed_visits,integer,t,
+canonical_guest,18,cancelled_count,integer,t,
+canonical_guest,19,no_show_count,integer,t,
+canonical_guest,20,lifetime_spend,"numeric(19,4)",t,
+canonical_guest,21,lifetime_per_cover_spend,"numeric(19,4)",t,
+canonical_guest,22,valid_from,timestamp(6) with time zone,f,
+canonical_guest,23,valid_to,timestamp(6) with time zone,t,
+canonical_guest,24,recorded_at,timestamp(6) with time zone,f,
+canonical_guest,25,superseded_at,timestamp(6) with time zone,t,
+canonical_invoice,1,id,uuid,f,
+canonical_invoice,2,logical_entity_id,uuid,f,
+canonical_invoice,3,source_system,character varying(255),f,
+canonical_invoice,4,source_record_ref,character varying(512),f,
+canonical_invoice,5,raw_record_id,uuid,f,
+canonical_invoice,6,supplier_name,character varying(255),t,
+canonical_invoice,7,invoice_number,character varying(255),f,
+canonical_invoice,8,invoice_date,date,f,
+canonical_invoice,9,due_date,date,t,
+canonical_invoice,10,total_amount,"numeric(14,4)",t,
+canonical_invoice,11,valid_from,timestamp(6) with time zone,f,
+canonical_invoice,12,valid_to,timestamp(6) with time zone,t,
+canonical_invoice,13,recorded_at,timestamp(6) with time zone,f,
+canonical_invoice,14,superseded_at,timestamp(6) with time zone,t,
+canonical_invoice,15,purchase_number,character varying(255),t,
+canonical_invoice,16,account_number,character varying(255),t,
+canonical_invoice,17,tax_code,character varying(64),t,
+canonical_invoice,18,amount_ex_tax,"numeric(14,4)",t,
+canonical_invoice,19,gst_amount,"numeric(14,4)",t,
+canonical_invoice,20,freight_amount,"numeric(14,4)",t,
+canonical_invoice,21,freight_gst_amount,"numeric(14,4)",t,
+canonical_invoice,22,pdf_filename,character varying(512),t,
+canonical_invoice_line,1,id,uuid,f,
+canonical_invoice_line,2,logical_entity_id,uuid,f,
+canonical_invoice_line,3,source_system,character varying(255),f,
+canonical_invoice_line,4,source_record_ref,character varying(512),f,
+canonical_invoice_line,5,raw_record_id,uuid,f,
+canonical_invoice_line,6,invoice_number,character varying(255),f,
+canonical_invoice_line,7,invoice_date,date,f,
+canonical_invoice_line,8,product_name_key,character varying(512),f,
+canonical_invoice_line,9,quantity,"numeric(14,4)",f,
+canonical_invoice_line,10,unit_cost,"numeric(14,4)",f,
+canonical_invoice_line,11,line_total,"numeric(14,4)",f,
+canonical_invoice_line,12,category,character varying(255),t,
+canonical_invoice_line,13,valid_from,timestamp(6) with time zone,f,
+canonical_invoice_line,14,valid_to,timestamp(6) with time zone,t,
+canonical_invoice_line,15,recorded_at,timestamp(6) with time zone,f,
+canonical_invoice_line,16,superseded_at,timestamp(6) with time zone,t,
+canonical_invoice_line,17,stock_code,character varying(255),t,
+canonical_invoice_line,18,uom,character varying(32),t,
+canonical_invoice_line,19,unit_quantity,"numeric(14,4)",t,
+canonical_invoice_line,20,pack_size,"numeric(14,4)",t,
+canonical_invoice_line,21,wet_amount,"numeric(14,4)",t,
+canonical_invoice_line,22,origin,character varying(16),t,
+canonical_invoice_line,23,line_total_inc_tax,"numeric(14,4)",t,
+canonical_invoice_line,24,line_gst_amount,"numeric(14,4)",t,
+canonical_invoice_line,25,line_tax_rate,"numeric(14,4)",t,
+canonical_invoice_line,26,inc_gst,boolean,t,
+canonical_labour_entry,1,id,uuid,f,
+canonical_labour_entry,2,logical_entity_id,uuid,f,
+canonical_labour_entry,3,source_system,character varying(255),f,
+canonical_labour_entry,4,source_record_ref,character varying(512),f,
+canonical_labour_entry,5,raw_record_id,uuid,f,
+canonical_labour_entry,6,staff_ref,character varying(255),t,
+canonical_labour_entry,7,department,character varying(64),f,
+canonical_labour_entry,8,labour_date,date,f,
+canonical_labour_entry,9,scheduled_hours,"numeric(10,2)",f,
+canonical_labour_entry,10,actual_hours,"numeric(10,2)",f,
+canonical_labour_entry,11,scheduled_cost,"numeric(14,4)",t,
+canonical_labour_entry,12,actual_cost,"numeric(14,4)",t,
+canonical_labour_entry,13,shift_start,timestamp(6) with time zone,t,
+canonical_labour_entry,14,shift_end,timestamp(6) with time zone,t,
+canonical_labour_entry,15,valid_from,timestamp(6) with time zone,f,
+canonical_labour_entry,16,valid_to,timestamp(6) with time zone,t,
+canonical_labour_entry,17,recorded_at,timestamp(6) with time zone,f,
+canonical_labour_entry,18,superseded_at,timestamp(6) with time zone,t,
+canonical_payment,1,id,uuid,f,
+canonical_payment,2,logical_entity_id,uuid,f,
+canonical_payment,3,source_system,character varying(255),f,
+canonical_payment,4,source_record_ref,character varying(512),f,
+canonical_payment,5,raw_record_id,uuid,f,
+canonical_payment,6,trading_date,date,f,
+canonical_payment,7,sale_number,character varying(255),f,
+canonical_payment,8,payment_type_code,character varying(255),t,
+canonical_payment,9,payment_type_name,character varying(255),t,
+canonical_payment,10,payment_source_type,character varying(255),t,
+canonical_payment,11,lspay_payment_mode,character varying(255),t,
+canonical_payment,12,clearing_account,character varying(255),t,
+canonical_payment,13,amount,"numeric(14,4)",f,
+canonical_payment,14,tip,"numeric(14,4)",f,
+canonical_payment,15,tendered,"numeric(14,4)",f,
+canonical_payment,16,surcharge,"numeric(14,4)",f,
+canonical_payment,17,payment_count,integer,f,
+canonical_payment,18,tip_count,integer,f,
+canonical_payment,19,reconciled,character varying(64),f,
+canonical_payment,20,register_code,character varying(255),t,
+canonical_payment,21,register_name,character varying(255),t,
+canonical_payment,22,staff_name,character varying(255),t,
+canonical_payment,23,staff_code,character varying(255),t,
+canonical_payment,24,site_id,character varying(255),t,
+canonical_payment,25,customer_name,character varying(255),t,
+canonical_payment,26,valid_from,timestamp(6) with time zone,f,
+canonical_payment,27,valid_to,timestamp(6) with time zone,t,
+canonical_payment,28,recorded_at,timestamp(6) with time zone,f,
+canonical_payment,29,superseded_at,timestamp(6) with time zone,t,
+canonical_product,1,id,uuid,f,
+canonical_product,2,logical_entity_id,uuid,f,
+canonical_product,3,source_system,character varying(255),f,
+canonical_product,4,source_record_ref,character varying(512),f,
+canonical_product,5,raw_record_id,uuid,f,
+canonical_product,6,product_id,integer,f,
+canonical_product,7,product_name,character varying(512),t,
+canonical_product,8,category,character varying(255),t,
+canonical_product,9,sell_price_inc_tax,"numeric(14,4)",t,
+canonical_product,10,is_modifier,boolean,f,
+canonical_product,11,reporting_group,character varying(255),t,
+canonical_product,12,valid_from,timestamp(6) with time zone,f,
+canonical_product,13,valid_to,timestamp(6) with time zone,t,
+canonical_product,14,recorded_at,timestamp(6) with time zone,f,
+canonical_product,15,superseded_at,timestamp(6) with time zone,t,
+canonical_product_sales,1,id,uuid,f,
+canonical_product_sales,2,logical_entity_id,uuid,f,
+canonical_product_sales,3,trading_date,date,f,
+canonical_product_sales,4,product_name_key,character varying(512),f,
+canonical_product_sales,5,source_system,character varying(255),f,
+canonical_product_sales,6,source_record_ref,character varying(512),f,
+canonical_product_sales,7,raw_record_id,uuid,f,
+canonical_product_sales,8,quantity_sold,"numeric(14,4)",f,
+canonical_product_sales,9,amount,"numeric(14,4)",f,
+canonical_product_sales,10,valid_from,timestamp(6) with time zone,f,
+canonical_product_sales,11,valid_to,timestamp(6) with time zone,t,
+canonical_product_sales,12,recorded_at,timestamp(6) with time zone,f,
+canonical_product_sales,13,superseded_at,timestamp(6) with time zone,t,
+canonical_recipe_cost,1,id,uuid,f,
+canonical_recipe_cost,2,logical_entity_id,uuid,f,
+canonical_recipe_cost,3,source_system,character varying(255),f,
+canonical_recipe_cost,4,source_record_ref,character varying(512),f,
+canonical_recipe_cost,5,raw_record_id,uuid,f,
+canonical_recipe_cost,6,recipe_id,integer,f,
+canonical_recipe_cost,7,recipe_name,character varying(512),t,
+canonical_recipe_cost,8,cost_per_portion,"numeric(14,4)",t,
+canonical_recipe_cost,9,cost_per_portion_incl_labour,"numeric(14,4)",t,
+canonical_recipe_cost,10,total_cost,"numeric(14,4)",t,
+canonical_recipe_cost,11,portion_size,character varying(255),t,
+canonical_recipe_cost,12,portion_size_value,"numeric(14,4)",t,
+canonical_recipe_cost,13,valid_from,timestamp(6) with time zone,f,
+canonical_recipe_cost,14,valid_to,timestamp(6) with time zone,t,
+canonical_recipe_cost,15,recorded_at,timestamp(6) with time zone,f,
+canonical_recipe_cost,16,superseded_at,timestamp(6) with time zone,t,
+canonical_recipe_ingredient,1,id,uuid,f,
+canonical_recipe_ingredient,2,logical_entity_id,uuid,f,
+canonical_recipe_ingredient,3,source_system,character varying(255),f,
+canonical_recipe_ingredient,4,source_record_ref,character varying(512),f,
+canonical_recipe_ingredient,5,raw_record_id,uuid,f,
+canonical_recipe_ingredient,6,parent_recipe_id,integer,f,
+canonical_recipe_ingredient,7,line_recipe_id,integer,t,
+canonical_recipe_ingredient,8,line_recipe_name,character varying(512),t,
+canonical_recipe_ingredient,9,is_sub_recipe,boolean,t,
+canonical_recipe_ingredient,10,recipe_detail_id,integer,f,
+canonical_recipe_ingredient,11,stock_id,integer,t,
+canonical_recipe_ingredient,12,stock_code,character varying(255),t,
+canonical_recipe_ingredient,13,stock_description,character varying(512),t,
+canonical_recipe_ingredient,14,ingredient_description,character varying(512),t,
+canonical_recipe_ingredient,15,supplier_name,character varying(512),t,
+canonical_recipe_ingredient,16,supplier_stock_code,character varying(255),t,
+canonical_recipe_ingredient,17,portion_weight,"numeric(14,4)",t,
+canonical_recipe_ingredient,18,unit_of_measurement,character varying(64),t,
+canonical_recipe_ingredient,19,stock_uom_shortname,character varying(32),t,
+canonical_recipe_ingredient,20,cost_per_qty,"numeric(14,4)",t,
+canonical_recipe_ingredient,21,cost_per_unit,"numeric(14,4)",t,
+canonical_recipe_ingredient,22,stock_usable,"numeric(14,4)",t,
+canonical_recipe_ingredient,23,stock_wastage,"numeric(14,4)",t,
+canonical_recipe_ingredient,24,is_broken_link,boolean,t,
+canonical_recipe_ingredient,25,valid_from,timestamp(6) with time zone,f,
+canonical_recipe_ingredient,26,valid_to,timestamp(6) with time zone,t,
+canonical_recipe_ingredient,27,recorded_at,timestamp(6) with time zone,f,
+canonical_recipe_ingredient,28,superseded_at,timestamp(6) with time zone,t,
+canonical_reservation,1,id,uuid,f,
+canonical_reservation,2,logical_entity_id,uuid,f,
+canonical_reservation,3,source_system,character varying(255),f,
+canonical_reservation,4,source_record_ref,character varying(512),f,
+canonical_reservation,5,raw_record_id,uuid,f,
+canonical_reservation,6,reservation_at,timestamp(6) with time zone,f,
+canonical_reservation,7,party_size,integer,f,
+canonical_reservation,8,status,character varying(64),f,
+canonical_reservation,9,table_name,character varying(255),t,
+canonical_reservation,10,source_channel,character varying(255),t,
+canonical_reservation,11,party_name,character varying(255),t,
+canonical_reservation,12,valid_from,timestamp(6) with time zone,f,
+canonical_reservation,13,valid_to,timestamp(6) with time zone,t,
+canonical_reservation,14,recorded_at,timestamp(6) with time zone,f,
+canonical_reservation,15,superseded_at,timestamp(6) with time zone,t,
+canonical_reservation,16,created_at,timestamp(6) with time zone,t,
+canonical_reservation,17,cancelled_at,timestamp(6) with time zone,t,
+canonical_reservation,18,no_show_at,timestamp(6) with time zone,t,
+canonical_reservation,19,seated_at,timestamp(6) with time zone,t,
+canonical_reservation,20,finished_at,timestamp(6) with time zone,t,
+canonical_reservation,21,last_updated_at,timestamp(6) with time zone,t,
+canonical_reservation,22,total_actual_duration_minutes,integer,t,
+canonical_reservation,23,table_type,character varying(1024),t,
+canonical_reservation,24,dining_area_assigned,character varying(1024),t,
+canonical_reservation,25,dining_area_booked,character varying(1024),t,
+canonical_reservation,26,dining_area_id_assigned,character varying(1024),t,
+canonical_reservation,27,dining_area_id_booked,character varying(1024),t,
+canonical_reservation,28,wait_staff,character varying(1024),t,
+canonical_reservation,29,created_by,character varying(1024),t,
+canonical_reservation,30,turn_time_setting,character varying(1024),t,
+canonical_reservation,31,reservation_type,character varying(1024),t,
+canonical_reservation,32,occasion,character varying(1024),t,
+canonical_reservation,33,reservation_status,character varying(1024),t,
+canonical_reservation,34,online_waitlist,boolean,t,
+canonical_reservation,35,is_flex_reso,boolean,t,
+canonical_reservation,36,quoted_wait_time,integer,t,
+canonical_reservation,37,total_wait_time,integer,t,
+canonical_reservation,38,online_channel,character varying(1024),t,
+canonical_reservation,39,partner,character varying(1024),t,
+canonical_reservation,40,campaign_type,character varying(1024),t,
+canonical_reservation,41,campaign_details,character varying(1024),t,
+canonical_reservation,42,referrer_name,character varying(1024),t,
+canonical_reservation,43,referrer_business,character varying(1024),t,
+canonical_reservation,44,restref_source,character varying(1024),t,
+canonical_reservation,45,restref_campaign_name,character varying(1024),t,
+canonical_reservation,46,restref_id,character varying(1024),t,
+canonical_reservation,47,guest_first_name,character varying(1024),t,
+canonical_reservation,48,guest_last_name,character varying(1024),t,
+canonical_reservation,49,guest_nickname,character varying(1024),t,
+canonical_reservation,50,guest_email,character varying(1024),t,
+canonical_reservation,51,guest_phone,character varying(1024),t,
+canonical_reservation,52,company,character varying(1024),t,
+canonical_reservation,53,marketing_opt_in,boolean,t,
+canonical_reservation,54,birthday,date,t,
+canonical_reservation,55,anniversary,date,t,
+canonical_reservation,56,first_visit_date,date,t,
+canonical_reservation,57,recent_visit_date,date,t,
+canonical_reservation,58,upcoming_visits,integer,t,
+canonical_reservation,59,completed_visits,integer,t,
+canonical_reservation,60,cancelled_count,integer,t,
+canonical_reservation,61,no_show_count,integer,t,
+canonical_reservation,62,lifetime_spend,"numeric(19,4)",t,
+canonical_reservation,63,lifetime_per_cover_spend,"numeric(19,4)",t,
+canonical_reservation,64,guest_id,uuid,t,
+canonical_reservation,65,experience_title,character varying(1024),t,
+canonical_reservation,66,experience_type,character varying(1024),t,
+canonical_reservation,67,experience_type_enum,character varying(1024),t,
+canonical_reservation,68,experience_price_type,character varying(1024),t,
+canonical_reservation,69,prepayment_method,character varying(1024),t,
+canonical_reservation,70,prepayment_status,character varying(1024),t,
+canonical_reservation,71,vendor_payout_status,character varying(1024),t,
+canonical_reservation,72,currency,character varying(16),t,
+canonical_reservation,73,experience_price,"numeric(19,4)",t,
+canonical_reservation,74,experience_subtotal,"numeric(19,4)",t,
+canonical_reservation,75,addons_subtotal,"numeric(19,4)",t,
+canonical_reservation,76,service_charges,"numeric(19,4)",t,
+canonical_reservation,77,prepaid_experience_tip,"numeric(19,4)",t,
+canonical_reservation,78,prepaid_experience_vat,"numeric(19,4)",t,
+canonical_reservation,79,prepaid_experience_total_paid,"numeric(19,4)",t,
+canonical_reservation,80,experience_total_sales,"numeric(19,4)",t,
+canonical_reservation,81,experience_total_sales_with_tip,"numeric(19,4)",t,
+canonical_reservation,82,prepayment_required_total,"numeric(19,4)",t,
+canonical_reservation,83,prepayment_paid_total,"numeric(19,4)",t,
+canonical_reservation,84,pos_check_ids,character varying(1024),t,
+canonical_reservation,85,pos_subtotal,"numeric(19,4)",t,
+canonical_reservation,86,pos_tax,"numeric(19,4)",t,
+canonical_reservation,87,pos_service_charges,"numeric(19,4)",t,
+canonical_reservation,88,pos_tip,"numeric(19,4)",t,
+canonical_reservation,89,pos_paid,"numeric(19,4)",t,
+canonical_reservation,90,pos_due,"numeric(19,4)",t,
+canonical_reservation,91,total_tips,"numeric(19,4)",t,
+canonical_reservation,92,total_vat,"numeric(19,4)",t,
+canonical_reservation,93,total_income,"numeric(19,4)",t,
+canonical_reservation,94,total_income_with_tip,"numeric(19,4)",t,
+canonical_reservation,95,total_revenue,"numeric(19,4)",t,
+canonical_reservation,96,total_revenue_with_tip,"numeric(19,4)",t,
+canonical_reservation,97,total_revenue_without_tip,"numeric(19,4)",t,
+canonical_reservation,98,pos_spend,"numeric(19,4)",t,
+canonical_reservation,99,pos_refund,"numeric(19,4)",t,
+canonical_reservation,100,pos_revenue,"numeric(19,4)",t,
+canonical_reservation,101,refund_amount,"numeric(19,4)",t,
+canonical_reservation,102,vendor_payout_amount,"numeric(19,4)",t,
+canonical_reservation,103,guest_requests,character varying(1024),t,
+canonical_reservation,104,visit_notes,character varying(1024),t,
+canonical_reservation,105,reservation_tags,character varying(1024),t,
+canonical_reservation,106,guest_tags,character varying(1024),t,
+canonical_review,1,id,uuid,f,
+canonical_review,2,logical_entity_id,uuid,f,
+canonical_review,3,source_system,character varying(255),f,
+canonical_review,4,source_record_ref,character varying(512),f,
+canonical_review,5,raw_record_id,uuid,f,
+canonical_review,6,valid_from,timestamp(6) with time zone,f,
+canonical_review,7,valid_to,timestamp(6) with time zone,t,
+canonical_review,8,recorded_at,timestamp(6) with time zone,f,
+canonical_review,9,superseded_at,timestamp(6) with time zone,t,
+canonical_review,10,source,character varying(16),f,
+canonical_review,11,guest_id,uuid,t,
+canonical_review,12,guest_name,character varying(1024),t,
+canonical_review,13,reviewed_at,timestamp(6) with time zone,f,
+canonical_review,14,visited_at,timestamp(6) with time zone,t,
+canonical_review,15,overall_rating,integer,t,
+canonical_review,16,food_rating,integer,t,
+canonical_review,17,service_rating,integer,t,
+canonical_review,18,ambience_rating,integer,t,
+canonical_review,19,value_rating,integer,t,
+canonical_review,20,noise_label,character varying(1024),t,
+canonical_review,21,would_recommend,boolean,t,
+canonical_review,22,comment,text,t,
+canonical_review,23,private_note,text,t,
+canonical_review,24,tags,text[],t,
+canonical_review,25,keywords,text[],t,
+canonical_sale_item,1,id,uuid,f,
+canonical_sale_item,2,valid_from,timestamp(6) with time zone,f,
+canonical_sale_item,3,valid_to,timestamp(6) with time zone,t,
+canonical_sale_item,4,recorded_at,timestamp(6) with time zone,f,
+canonical_sale_item,5,superseded_at,timestamp(6) with time zone,t,
+canonical_sale_item,6,item_name,character varying(255),t,
+canonical_sale_item,7,quantity_sold,"numeric(20,6)",t,
+canonical_sale_item,8,amount,"numeric(38,2)",t,
+canonical_sale_item,9,logical_entity_id,uuid,f,
+canonical_sale_item,10,source_system,character varying(255),f,
+canonical_sale_item,11,source_record_ref,character varying(512),f,
+canonical_sale_item,12,raw_record_id,uuid,f,
+canonical_sale_item,13,trading_date,date,f,
+canonical_sale_item,14,sale_number,character varying(255),t,
+canonical_sale_item,15,product_number,character varying(255),t,
+canonical_sale_item,16,sku,character varying(255),t,
+canonical_sale_item,17,category_name,character varying(255),t,
+canonical_sale_item,18,sold_price_inc_tax,"numeric(14,4)",t,
+canonical_sale_item,19,total_tax,"numeric(14,4)",t,
+canonical_sale_item,20,cost_inc_tax,"numeric(14,4)",t,
+canonical_sale_item,21,order_type,character varying(64),t,
+canonical_sale_item,22,sale_type,character varying(64),t,
+canonical_sale_item,23,staff_name,character varying(255),t,
+canonical_sale_item,24,register_name,character varying(255),t,
+canonical_sale_item,25,table_number,character varying(255),t,
+canonical_sale_item,26,sale_closed_time,time without time zone,t,
+canonical_sale_recipe_link,1,id,uuid,f,
+canonical_sale_recipe_link,2,logical_entity_id,uuid,f,
+canonical_sale_recipe_link,3,source_system,character varying(255),f,
+canonical_sale_recipe_link,4,source_record_ref,character varying(512),f,
+canonical_sale_recipe_link,5,raw_record_id,uuid,f,
+canonical_sale_recipe_link,6,sale_item_recipe_id,integer,f,
+canonical_sale_recipe_link,7,sale_item_stock_code,character varying(255),t,
+canonical_sale_recipe_link,8,sale_item_stock_description,character varying(512),t,
+canonical_sale_recipe_link,9,recipe_id,integer,f,
+canonical_sale_recipe_link,10,recipe_name,character varying(512),t,
+canonical_sale_recipe_link,11,recipe_folder_name,character varying(512),t,
+canonical_sale_recipe_link,12,is_recipe_active,boolean,t,
+canonical_sale_recipe_link,13,valid_from,timestamp(6) with time zone,f,
+canonical_sale_recipe_link,14,valid_to,timestamp(6) with time zone,t,
+canonical_sale_recipe_link,15,recorded_at,timestamp(6) with time zone,f,
+canonical_sale_recipe_link,16,superseded_at,timestamp(6) with time zone,t,
+canonical_sale_recipe_link,17,lightspeed_product_id,integer,t,
+canonical_shift,1,id,uuid,f,
+canonical_shift,2,valid_from,timestamp(6) with time zone,f,
+canonical_shift,3,valid_to,timestamp(6) with time zone,t,
+canonical_shift,4,recorded_at,timestamp(6) with time zone,f,
+canonical_shift,5,superseded_at,timestamp(6) with time zone,t,
+canonical_shift,6,staff_member_ref,uuid,t,
+canonical_shift,7,shift_start,timestamp(6) with time zone,t,
+canonical_shift,8,shift_end,timestamp(6) with time zone,t,
+canonical_shift,9,logical_entity_id,uuid,f,
+canonical_shift,10,source_system,character varying(255),f,
+canonical_shift,11,source_record_ref,character varying(512),f,
+canonical_shift,12,raw_record_id,uuid,f,
+canonical_stock_count,1,id,uuid,f,
+canonical_stock_count,2,logical_entity_id,uuid,f,
+canonical_stock_count,3,source_system,character varying(255),f,
+canonical_stock_count,4,source_record_ref,character varying(512),f,
+canonical_stock_count,5,raw_record_id,uuid,f,
+canonical_stock_count,6,counted_date,date,f,
+canonical_stock_count,7,product_name_key,character varying(512),f,
+canonical_stock_count,8,quantity_on_hand,"numeric(14,4)",f,
+canonical_stock_count,9,valid_from,timestamp(6) with time zone,f,
+canonical_stock_count,10,valid_to,timestamp(6) with time zone,t,
+canonical_stock_count,11,recorded_at,timestamp(6) with time zone,f,
+canonical_stock_count,12,superseded_at,timestamp(6) with time zone,t,
+canonical_stock_count,13,stocktake_id,integer,f,
+canonical_stock_count,14,line_id,integer,f,
+canonical_stock_count,15,stock_id,integer,t,
+canonical_stock_count,16,stock_code,character varying(255),t,
+canonical_stock_count,17,unit_of_measurement_name,character varying(64),t,
+canonical_stock_count,18,unit_cost,"numeric(14,4)",t,
+canonical_stock_count,19,line_value,"numeric(14,4)",t,
+canonical_stock_count,20,supplier_name,character varying(512),t,
+canonical_stock_count,21,area_name,character varying(255),t,
+canonical_stock_count,22,recipe_id,integer,t,
+canonical_stocktake,1,id,uuid,f,
+canonical_stocktake,2,logical_entity_id,uuid,f,
+canonical_stocktake,3,source_system,character varying(255),f,
+canonical_stocktake,4,source_record_ref,character varying(512),f,
+canonical_stocktake,5,raw_record_id,uuid,f,
+canonical_stocktake,6,stocktake_id,integer,f,
+canonical_stocktake,7,stocktake_date,date,f,
+canonical_stocktake,8,description,character varying(512),t,
+canonical_stocktake,9,outlet_name,character varying(255),t,
+canonical_stocktake,10,total_stock_value,"numeric(14,4)",t,
+canonical_stocktake,11,is_partial,boolean,t,
+canonical_stocktake,12,is_locked,boolean,t,
+canonical_stocktake,13,valid_from,timestamp(6) with time zone,f,
+canonical_stocktake,14,valid_to,timestamp(6) with time zone,t,
+canonical_stocktake,15,recorded_at,timestamp(6) with time zone,f,
+canonical_stocktake,16,superseded_at,timestamp(6) with time zone,t,
+canonical_wastage,1,id,uuid,f,
+canonical_wastage,2,logical_entity_id,uuid,f,
+canonical_wastage,3,source_system,character varying(255),f,
+canonical_wastage,4,source_record_ref,character varying(512),f,
+canonical_wastage,5,raw_record_id,uuid,f,
+canonical_wastage,6,wastage_date,date,f,
+canonical_wastage,7,product_name_key,character varying(512),f,
+canonical_wastage,8,quantity,"numeric(14,4)",f,
+canonical_wastage,9,reason,character varying(255),t,
+canonical_wastage,10,valid_from,timestamp(6) with time zone,f,
+canonical_wastage,11,valid_to,timestamp(6) with time zone,t,
+canonical_wastage,12,recorded_at,timestamp(6) with time zone,f,
+canonical_wastage,13,superseded_at,timestamp(6) with time zone,t,
+canonical_wastage,14,wastage_record_id,integer,f,
+canonical_wastage,15,line_id,integer,f,
+canonical_wastage,16,cost,"numeric(14,4)",t,
+canonical_wastage,17,supplier_name,character varying(512),t,
+canonical_wastage,18,unit_of_measurement_name,character varying(64),t,
+canonical_wastage,19,unit_size,character varying(64),t,
+canonical_wastage,20,recipe_id,integer,t,
+category_suggestion,1,id,uuid,f,
+category_suggestion,2,run_id,uuid,t,
+category_suggestion,3,name,character varying(128),f,
+category_suggestion,4,group_name,character varying(128),t,
+category_suggestion,5,display_order,integer,f,0
+category_suggestion,6,hint,character varying(512),t,
+category_suggestion,7,created_at,timestamp(6) with time zone,f,now()
+classification_cluster,1,id,uuid,f,
+classification_cluster,2,run_id,uuid,f,
+classification_cluster,3,parent_id,uuid,t,
+classification_cluster,4,is_leaf,boolean,f,
+classification_cluster,5,product_name_key,character varying(512),t,
+classification_cluster,6,merge_height,double precision,t,
+classification_cluster,7,size,integer,t,
+classification_cluster,8,node_order,integer,f,
+classification_projection,1,run_id,uuid,f,
+classification_projection,2,product_name_key,character varying(512),f,
+classification_projection,3,x,double precision,f,
+classification_projection,4,y,double precision,f,
+classification_run,1,id,uuid,f,
+classification_run,2,kind,character varying(16),f,
+classification_run,3,status,character varying(16),f,
+classification_run,4,product_count,integer,t,
+classification_run,5,started_at,timestamp(6) with time zone,f,
+classification_run,6,finished_at,timestamp(6) with time zone,t,
+classification_run,7,error_message,text,t,
+conversation_message,1,id,uuid,f,
+conversation_message,2,thread_id,uuid,f,
+conversation_message,3,role,character varying(16),f,
+conversation_message,4,content,text,f,
+conversation_message,5,tool_trace,jsonb,t,
+conversation_message,6,created_at,timestamp(6) with time zone,f,
+conversation_thread,1,id,uuid,f,
+conversation_thread,2,user_account_id,uuid,f,
+conversation_thread,3,title,character varying(200),f,
+conversation_thread,4,summary,text,t,
+conversation_thread,5,created_at,timestamp(6) with time zone,f,
+conversation_thread,6,updated_at,timestamp(6) with time zone,f,
+conversation_thread,7,last_message_at,timestamp(6) with time zone,t,
+daily_sales_override,1,id,uuid,f,
+daily_sales_override,2,trading_date,date,f,
+daily_sales_override,3,authoritative_source,character varying(255),f,
+daily_sales_override,4,reason,text,t,
+daily_sales_override,7,recorded_at,timestamp(6) with time zone,f,
+daily_sales_override,8,superseded_at,timestamp(6) with time zone,t,
+daily_sales_override,9,actor_email,character varying(255),f,
+flyway_schema_history,1,installed_rank,integer,f,
+flyway_schema_history,2,version,character varying(50),t,
+flyway_schema_history,3,description,character varying(200),f,
+flyway_schema_history,4,type,character varying(20),f,
+flyway_schema_history,5,script,character varying(1000),f,
+flyway_schema_history,6,checksum,integer,t,
+flyway_schema_history,7,installed_by,character varying(100),f,
+flyway_schema_history,8,installed_on,timestamp without time zone,f,now()
+flyway_schema_history,9,execution_time,integer,f,
+flyway_schema_history,10,success,boolean,f,
+forecast_run,1,id,uuid,f,
+forecast_run,2,created_at,timestamp with time zone,f,
+forecast_run,3,created_by,character varying(255),f,
+forecast_run,4,target_metric,text,f,
+forecast_run,5,target_dimension,text,t,
+forecast_run,6,covariates,jsonb,f,
+forecast_run,7,history_from,date,f,
+forecast_run,8,history_to,date,f,
+forecast_run,9,horizon_days,integer,f,
+forecast_run,10,grain,text,f,'DAY'::text
+forecast_run,11,status,text,f,
+forecast_run,12,error_message,text,t,
+forecast_run,13,model_version,text,t,
+forecast_run,14,elapsed_ms,bigint,t,
+forecast_run,15,forecast_series,jsonb,t,
+ingestion_failure,1,id,uuid,f,
+ingestion_failure,2,source_system,character varying(255),f,
+ingestion_failure,3,failure_type,character varying(255),f,
+ingestion_failure,4,detail,text,t,
+ingestion_failure,5,occurred_at,timestamp(6) with time zone,f,
+ingestion_failure,6,ingestion_run_id,uuid,f,
+ingestion_failure,7,stack_trace,text,t,
+ingestion_run,1,id,uuid,f,
+ingestion_run,2,source_system,character varying(255),f,
+ingestion_run,3,connector_name,character varying(255),f,
+ingestion_run,4,status,character varying(32),f,
+ingestion_run,5,started_at,timestamp(6) with time zone,f,
+ingestion_run,6,completed_at,timestamp(6) with time zone,t,
+ingestion_run,7,input_watermark,text,t,
+ingestion_run,8,output_watermark,text,t,
+ingestion_run,9,fetched_count,bigint,f,0
+ingestion_run,10,persisted_count,bigint,f,0
+ingestion_run,11,failure_summary,text,t,
+ingestion_stage,1,id,uuid,f,
+ingestion_stage,2,ingestion_run_id,uuid,f,
+ingestion_stage,3,source_system,character varying(255),f,
+ingestion_stage,4,dataset,character varying(255),f,
+ingestion_stage,5,stage,character varying(32),f,
+ingestion_stage,6,outcome,character varying(32),f,
+ingestion_stage,7,occurred_at,timestamp(6) with time zone,f,
+inventory_override,1,id,uuid,f,
+inventory_override,2,trading_date,date,f,
+inventory_override,3,overridden_purchases,"numeric(14,4)",t,
+inventory_override,4,reason,text,t,
+inventory_override,5,actor_email,character varying(255),f,
+inventory_override,6,recorded_at,timestamp(6) with time zone,f,
+inventory_override,7,superseded_at,timestamp(6) with time zone,t,
+invoice_ingest_flag,1,id,uuid,f,
+invoice_ingest_flag,2,flag_type,character varying(64),f,
+invoice_ingest_flag,3,invoice_number,character varying(255),t,
+invoice_ingest_flag,4,pdf_filename,character varying(512),t,
+invoice_ingest_flag,5,stock_code,character varying(255),t,
+invoice_ingest_flag,6,detail,text,t,
+invoice_ingest_flag,7,occurred_at,timestamp(6) with time zone,f,
+invoice_ingest_flag,8,resolved_at,timestamp(6) with time zone,t,
+invoice_note,1,invoice_number,character varying(255),f,
+invoice_note,2,note,text,f,
+invoice_note,3,recorded_at,timestamp(6) with time zone,f,
+invoice_pdf_link,1,pdf_raw_record_id,uuid,f,
+invoice_pdf_link,2,invoice_number,character varying(255),f,
+invoice_pdf_link,3,pdf_filename,character varying(512),t,
+invoice_pdf_link,4,link_source,character varying(32),f,
+invoice_pdf_link,5,linked_at,timestamp(6) with time zone,f,
+labour_override,1,id,uuid,f,
+labour_override,2,trading_date,date,f,
+labour_override,3,department,text,f,
+labour_override,4,overridden_actual_hours,"numeric(14,4)",t,
+labour_override,5,reason,text,t,
+labour_override,6,actor_email,character varying(255),f,
+labour_override,7,recorded_at,timestamp(6) with time zone,f,
+labour_override,8,superseded_at,timestamp(6) with time zone,t,
+llm_extraction_cache,1,text_sha256,character varying(64),f,
+llm_extraction_cache,2,extracted_json,text,f,
+llm_extraction_cache,3,created_at,timestamp(6) with time zone,f,
+permission,1,id,uuid,f,
+permission,2,department,character varying(255),f,
+permission,3,seniority,character varying(255),f,
+permission,4,resource,character varying(255),f,
+permission,5,can_read,boolean,f,
+permission,6,can_write,boolean,f,
+product_alias,1,id,uuid,f,
+product_alias,2,canonical_name,character varying(512),f,
+product_alias,3,alias,character varying(512),f,
+product_alias,4,source,character varying(32),t,
+product_alias,5,created_at,timestamp(6) with time zone,f,
+product_category,1,id,uuid,f,
+product_category,2,name,character varying(128),f,
+product_category,3,group_name,character varying(128),t,
+product_category,4,display_order,integer,f,0
+product_category,5,description,character varying(512),t,
+product_category,6,created_at,timestamp(6) with time zone,f,now()
+product_category,7,updated_at,timestamp(6) with time zone,f,now()
+product_category_assignment,1,product_name_key,character varying(512),f,
+product_category_assignment,2,product_category_id,uuid,t,
+product_category_assignment,3,confidence,"numeric(6,4)",t,
+product_category_assignment,4,source,character varying(16),t,
+product_category_assignment,5,status,character varying(16),f,
+product_category_assignment,6,assigned_at,timestamp(6) with time zone,f,
+product_category_assignment,7,updated_at,timestamp(6) with time zone,f,
+product_sales_override,1,id,uuid,f,
+product_sales_override,2,trading_date,date,f,
+product_sales_override,3,product_name_key,character varying(512),f,
+product_sales_override,4,authoritative_source,character varying(255),f,
+product_sales_override,5,reason,text,t,
+product_sales_override,6,actor_email,character varying(255),f,
+product_sales_override,7,recorded_at,timestamp(6) with time zone,f,
+product_sales_override,8,superseded_at,timestamp(6) with time zone,t,
+raw_record,1,id,uuid,f,
+raw_record,2,source_system,character varying(255),f,
+raw_record,3,fetch_method,character varying(255),f,
+raw_record,4,content_type,character varying(255),f,
+raw_record,6,fetcher_identity,character varying(255),f,
+raw_record,7,fetched_at,timestamp(6) with time zone,f,
+raw_record,8,ingestion_run_id,uuid,f,
+raw_record,9,payload_bytes,bytea,f,
+raw_record,10,payload_sha256,character(64),f,
+raw_record,11,payload_byte_length,bigint,f,
+raw_record,12,character_encoding,character varying(64),t,
+raw_record,13,source_record_ref,character varying(512),t,
+reconciliation_exception,1,entity_type,text,f,
+reconciliation_exception,2,entity_key,text,f,
+reconciliation_exception,3,trading_date,date,f,
+reconciliation_exception,4,field_key,text,f,
+reconciliation_exception,5,status,text,f,
+reconciliation_exception,6,detected_at,timestamp(6) with time zone,f,
+reservation_override,1,id,uuid,f,
+reservation_override,2,trading_date,date,f,
+reservation_override,3,service_period,text,f,
+reservation_override,4,overridden_covers,bigint,t,
+reservation_override,5,reason,text,t,
+reservation_override,6,actor_email,character varying(255),f,
+reservation_override,7,recorded_at,timestamp(6) with time zone,f,
+reservation_override,8,superseded_at,timestamp(6) with time zone,t,
+resolution_rule,1,id,uuid,f,
+resolution_rule,2,entity_type,character varying(64),f,
+resolution_rule,3,field_key,character varying(512),f,
+resolution_rule,4,strategy,character varying(32),f,
+resolution_rule,5,custom_logic,character varying(32),t,
+resolution_rule,6,source_priority,jsonb,t,
+resolution_rule,7,actor_email,character varying(255),f,
+resolution_rule,8,recorded_at,timestamp(6) with time zone,f,
+resolution_rule,9,superseded_at,timestamp(6) with time zone,t,
+resolution_rule,10,superseded_by,character varying(255),t,
+resolved_daily_sales,1,trading_date,date,f,
+resolved_daily_sales,2,total_sales,"numeric(14,4)",t,
+resolved_daily_sales,3,resolution_type,text,f,
+resolved_daily_sales,4,authoritative_source,text,t,
+resolved_daily_sales,5,has_conflict,boolean,f,
+resolved_daily_sales,6,resolved_at,timestamp(6) with time zone,f,
+resolved_daily_sales,7,net_sales,"numeric(14,4)",t,
+resolved_daily_sales,8,gst,"numeric(14,4)",t,
+resolved_deleted_sale_day,1,trading_date,date,f,
+resolved_deleted_sale_day,2,deleted_count,bigint,f,
+resolved_deleted_sale_day,3,total_inc_tax,"numeric(14,4)",f,
+resolved_deleted_sale_day,4,total_tax,"numeric(14,4)",f,
+resolved_deleted_sale_day,5,resolution_type,text,f,
+resolved_deleted_sale_day,6,authoritative_source,text,t,
+resolved_deleted_sale_day,7,has_conflict,boolean,f,
+resolved_deleted_sale_day,8,resolved_at,timestamp(6) with time zone,f,
+resolved_inventory_day,1,trading_date,date,f,
+resolved_inventory_day,2,purchases,"numeric(14,4)",t,
+resolved_inventory_day,3,wastage,"numeric(14,4)",t,
+resolved_inventory_day,4,stock_on_hand,"numeric(14,4)",t,
+resolved_inventory_day,5,resolution_type,text,f,
+resolved_inventory_day,6,authoritative_source,text,t,
+resolved_inventory_day,7,has_conflict,boolean,f,
+resolved_inventory_day,8,resolved_at,timestamp(6) with time zone,f,
+resolved_labour_day,1,trading_date,date,f,
+resolved_labour_day,2,department,text,f,
+resolved_labour_day,3,scheduled_hours,"numeric(14,4)",t,
+resolved_labour_day,4,actual_hours,"numeric(14,4)",t,
+resolved_labour_day,5,scheduled_cost,"numeric(14,4)",t,
+resolved_labour_day,6,actual_cost,"numeric(14,4)",t,
+resolved_labour_day,7,resolution_type,text,f,
+resolved_labour_day,8,authoritative_source,text,t,
+resolved_labour_day,9,has_conflict,boolean,f,
+resolved_labour_day,10,resolved_at,timestamp(6) with time zone,f,
+resolved_payment_day,1,trading_date,date,f,
+resolved_payment_day,2,payment_type_name,text,f,
+resolved_payment_day,3,amount,"numeric(14,4)",f,
+resolved_payment_day,4,tip,"numeric(14,4)",f,
+resolved_payment_day,5,payment_count,bigint,f,
+resolved_payment_day,6,resolution_type,text,f,
+resolved_payment_day,7,authoritative_source,text,t,
+resolved_payment_day,8,has_conflict,boolean,f,
+resolved_payment_day,9,resolved_at,timestamp(6) with time zone,f,
+resolved_product_sales,1,trading_date,date,f,
+resolved_product_sales,2,product_name_key,character varying(512),f,
+resolved_product_sales,3,quantity_sold,"numeric(14,4)",t,
+resolved_product_sales,4,amount,"numeric(14,4)",t,
+resolved_product_sales,5,resolution_type,text,f,
+resolved_product_sales,6,authoritative_source,text,t,
+resolved_product_sales,7,has_conflict,boolean,f,
+resolved_product_sales,8,resolved_at,timestamp(6) with time zone,f,
+resolved_recipe,1,recipe_id,integer,f,
+resolved_recipe,2,recipe_name,character varying(512),t,
+resolved_recipe,3,recipe_folder_name,character varying(512),t,
+resolved_recipe,4,cost_per_portion,"numeric(14,4)",t,
+resolved_recipe,5,cost_per_portion_incl_labour,"numeric(14,4)",t,
+resolved_recipe,6,total_cost,"numeric(14,4)",t,
+resolved_recipe,7,portion_size,character varying(255),t,
+resolved_recipe,8,portion_size_value,"numeric(14,4)",t,
+resolved_recipe,9,menu_price,"numeric(14,4)",t,
+resolved_recipe,10,actual_cost,"numeric(14,4)",t,
+resolved_recipe,11,resolution_type,text,f,
+resolved_recipe,12,authoritative_source,text,f,
+resolved_recipe,13,resolved_at,timestamp(6) with time zone,f,
+resolved_recipe,14,menu_state,character varying(16),f,'UNKNOWN'::character varying
+resolved_recipe,15,price_source,character varying(16),f,'NONE'::character varying
+resolved_recipe,16,last_sold_price,"numeric(14,4)",t,
+resolved_recipe,17,last_sold_cost,"numeric(14,4)",t,
+resolved_recipe,18,last_sold_date,date,t,
+resolved_recipe_ingredient,1,id,uuid,f,
+resolved_recipe_ingredient,2,parent_recipe_id,integer,f,
+resolved_recipe_ingredient,3,line_recipe_id,integer,t,
+resolved_recipe_ingredient,4,line_recipe_name,character varying(512),t,
+resolved_recipe_ingredient,5,is_sub_recipe,boolean,t,
+resolved_recipe_ingredient,6,recipe_detail_id,integer,f,
+resolved_recipe_ingredient,7,stock_id,integer,t,
+resolved_recipe_ingredient,8,stock_code,character varying(255),t,
+resolved_recipe_ingredient,9,stock_description,character varying(512),t,
+resolved_recipe_ingredient,10,portion_weight,"numeric(14,4)",t,
+resolved_recipe_ingredient,11,unit_of_measurement,character varying(64),t,
+resolved_recipe_ingredient,12,cost_per_qty,"numeric(14,4)",t,
+resolved_recipe_ingredient,13,cost_per_unit,"numeric(14,4)",t,
+resolved_recipe_ingredient,14,supplier_name,character varying(512),t,
+resolved_recipe_ingredient,15,resolved_at,timestamp(6) with time zone,f,
+resolved_reservation_day,1,trading_date,date,f,
+resolved_reservation_day,2,service_period,text,f,
+resolved_reservation_day,3,bookings,bigint,f,
+resolved_reservation_day,4,attended,bigint,f,
+resolved_reservation_day,5,covers,bigint,f,
+resolved_reservation_day,6,cancelled,bigint,f,
+resolved_reservation_day,7,no_shows,bigint,f,
+resolved_reservation_day,8,walk_ins,bigint,f,
+resolved_reservation_day,9,resolution_type,text,f,
+resolved_reservation_day,10,authoritative_source,text,t,
+resolved_reservation_day,11,has_conflict,boolean,f,
+resolved_reservation_day,12,resolved_at,timestamp(6) with time zone,f,
+resolved_sale_item_day,1,trading_date,date,f,
+resolved_sale_item_day,2,category_name,text,f,
+resolved_sale_item_day,3,quantity,"numeric(14,4)",f,
+resolved_sale_item_day,4,amount,"numeric(14,4)",f,
+resolved_sale_item_day,5,resolution_type,text,f,
+resolved_sale_item_day,6,authoritative_source,text,t,
+resolved_sale_item_day,7,has_conflict,boolean,f,
+resolved_sale_item_day,8,resolved_at,timestamp(6) with time zone,f,
+review_classification,1,review_id,character varying(512),f,
+review_classification,2,sentiment,character varying(16),f,
+review_classification,3,sentiment_confidence,"numeric(6,4)",f,
+review_classification,4,predicted_rating,"numeric(3,2)",t,
+review_classification,5,aspects,jsonb,f,
+review_classification,6,classified_at,timestamp(6) with time zone,f,
+review_classification_run,1,id,uuid,f,
+review_classification_run,2,kind,character varying(16),f,
+review_classification_run,3,status,character varying(16),f,
+review_classification_run,4,review_count,integer,t,
+review_classification_run,5,started_at,timestamp(6) with time zone,f,
+review_classification_run,6,finished_at,timestamp(6) with time zone,t,
+review_classification_run,7,error_message,text,t,
+saved_dashboard,1,id,uuid,f,
+saved_dashboard,2,title,character varying(200),f,
+saved_dashboard,3,description,character varying(500),t,
+saved_dashboard,4,layout,character varying(32),f,
+saved_dashboard,5,widgets,jsonb,f,
+saved_dashboard,6,created_by,character varying(255),f,
+saved_dashboard,7,created_at,timestamp(6) with time zone,f,
+saved_dashboard,8,updated_at,timestamp(6) with time zone,f,
+saved_dashboard,9,filters,jsonb,f,'{}'::jsonb
+saved_dashboard,10,visibility,character varying(16),f,'PRIVATE'::character varying
+saved_dashboard,11,pinned,boolean,f,false
+saved_dashboard,12,current_revision,integer,f,1
+saved_dashboard_revision,1,id,uuid,f,
+saved_dashboard_revision,2,dashboard_id,uuid,f,
+saved_dashboard_revision,3,revision,integer,f,
+saved_dashboard_revision,4,document,jsonb,f,
+saved_dashboard_revision,5,created_by,character varying(255),f,
+saved_dashboard_revision,6,created_at,timestamp(6) with time zone,f,
+saved_dashboard_share,1,id,uuid,f,
+saved_dashboard_share,2,dashboard_id,uuid,f,
+saved_dashboard_share,3,department,character varying(64),f,
+saved_dashboard_share,4,seniority,character varying(64),f,
+user_account,1,id,uuid,f,
+user_account,2,email,character varying(255),f,
+user_account,3,password_hash,character varying(255),f,
+user_account,4,display_name,character varying(255),f,
+user_account,5,department,character varying(100),f,
+user_account,6,seniority,character varying(100),f,
+user_account,7,active,boolean,f,true
+user_account,8,created_at,timestamp(6) with time zone,f,
+user_account,9,updated_at,timestamp(6) with time zone,f,
+table_name,conname,contype,definition
+canonical_daily_sales,canonical_daily_sales_pkey,p,PRIMARY KEY (id)
+canonical_daily_sales,canonical_daily_sales_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_deleted_sale,canonical_deleted_sale_pkey,p,PRIMARY KEY (id)
+canonical_deleted_sale,canonical_deleted_sale_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_guest,canonical_guest_pkey,p,PRIMARY KEY (id)
+canonical_guest,canonical_guest_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_invoice,canonical_invoice_pkey,p,PRIMARY KEY (id)
+canonical_invoice,canonical_invoice_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_invoice_line,canonical_invoice_line_pkey,p,PRIMARY KEY (id)
+canonical_invoice_line,canonical_invoice_line_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_labour_entry,canonical_labour_entry_pkey,p,PRIMARY KEY (id)
+canonical_labour_entry,canonical_labour_entry_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_payment,canonical_payment_pkey,p,PRIMARY KEY (id)
+canonical_payment,canonical_payment_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_product,canonical_product_pkey,p,PRIMARY KEY (id)
+canonical_product,canonical_product_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_product_sales,canonical_product_sales_pkey,p,PRIMARY KEY (id)
+canonical_product_sales,canonical_product_sales_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_recipe_cost,canonical_recipe_cost_pkey,p,PRIMARY KEY (id)
+canonical_recipe_cost,canonical_recipe_cost_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_recipe_ingredient,canonical_recipe_ingredient_pkey,p,PRIMARY KEY (id)
+canonical_recipe_ingredient,canonical_recipe_ingredient_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_reservation,canonical_reservation_pkey,p,PRIMARY KEY (id)
+canonical_reservation,canonical_reservation_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_review,canonical_review_pkey,p,PRIMARY KEY (id)
+canonical_review,canonical_review_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_sale_item,canonical_sale_item_pkey,p,PRIMARY KEY (id)
+canonical_sale_item,canonical_sale_item_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_sale_recipe_link,canonical_sale_recipe_link_pkey,p,PRIMARY KEY (id)
+canonical_sale_recipe_link,canonical_sale_recipe_link_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_shift,canonical_shift_pkey,p,PRIMARY KEY (id)
+canonical_shift,canonical_shift_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_stock_count,canonical_stock_count_pkey,p,PRIMARY KEY (id)
+canonical_stock_count,canonical_stock_count_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_stocktake,canonical_stocktake_pkey,p,PRIMARY KEY (id)
+canonical_stocktake,canonical_stocktake_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+canonical_wastage,canonical_wastage_pkey,p,PRIMARY KEY (id)
+canonical_wastage,canonical_wastage_raw_record_id_fkey,f,FOREIGN KEY (raw_record_id) REFERENCES raw_record(id)
+category_suggestion,category_suggestion_pkey,p,PRIMARY KEY (id)
+category_suggestion,category_suggestion_run_id_fkey,f,FOREIGN KEY (run_id) REFERENCES classification_run(id)
+classification_cluster,classification_cluster_pkey,p,PRIMARY KEY (id)
+classification_cluster,classification_cluster_run_id_fkey,f,FOREIGN KEY (run_id) REFERENCES classification_run(id)
+classification_projection,classification_projection_pkey,p,"PRIMARY KEY (run_id, product_name_key)"
+classification_projection,classification_projection_run_id_fkey,f,FOREIGN KEY (run_id) REFERENCES classification_run(id)
+classification_run,classification_run_pkey,p,PRIMARY KEY (id)
+conversation_message,conversation_message_pkey,p,PRIMARY KEY (id)
+conversation_message,conversation_message_thread_fk,f,FOREIGN KEY (thread_id) REFERENCES conversation_thread(id) ON DELETE CASCADE
+conversation_thread,conversation_thread_pkey,p,PRIMARY KEY (id)
+conversation_thread,conversation_thread_user_fk,f,FOREIGN KEY (user_account_id) REFERENCES user_account(id)
+daily_sales_override,daily_sales_override_pkey,p,PRIMARY KEY (id)
+flyway_schema_history,flyway_schema_history_pk,p,PRIMARY KEY (installed_rank)
+forecast_run,forecast_run_horizon_days_check,c,CHECK ((horizon_days > 0))
+forecast_run,forecast_run_pkey,p,PRIMARY KEY (id)
+ingestion_failure,ingestion_failure_ingestion_run_id_fkey,f,FOREIGN KEY (ingestion_run_id) REFERENCES ingestion_run(id)
+ingestion_failure,ingestion_failure_pkey,p,PRIMARY KEY (id)
+ingestion_run,ingestion_run_fetched_count_check,c,CHECK ((fetched_count >= 0))
+ingestion_run,ingestion_run_persisted_count_check,c,CHECK ((persisted_count >= 0))
+ingestion_run,ingestion_run_pkey,p,PRIMARY KEY (id)
+ingestion_run,ingestion_run_status_check,c,"CHECK (((status)::text = ANY ((ARRAY['RUNNING'::character varying, 'SUCCESS'::character varying, 'PARTIAL'::character varying, 'FAILED'::character varying, 'NO_NEW_DATA'::character varying])::text[])))"
+ingestion_stage,ingestion_stage_ingestion_run_id_fkey,f,FOREIGN KEY (ingestion_run_id) REFERENCES ingestion_run(id)
+ingestion_stage,ingestion_stage_outcome_check,c,"CHECK (((outcome)::text = ANY ((ARRAY['SUCCESS'::character varying, 'EMPTY'::character varying, 'FAILED'::character varying])::text[])))"
+ingestion_stage,ingestion_stage_pkey,p,PRIMARY KEY (id)
+ingestion_stage,ingestion_stage_stage_check,c,"CHECK (((stage)::text = ANY ((ARRAY['RAW_STORED'::character varying, 'PARSED'::character varying, 'CANONICALIZED'::character varying, 'ENRICHED'::character varying])::text[])))"
+inventory_override,inventory_override_pkey,p,PRIMARY KEY (id)
+invoice_ingest_flag,invoice_ingest_flag_pkey,p,PRIMARY KEY (id)
+invoice_note,invoice_note_pkey,p,PRIMARY KEY (invoice_number)
+invoice_pdf_link,invoice_pdf_link_pkey,p,PRIMARY KEY (pdf_raw_record_id)
+labour_override,labour_override_pkey,p,PRIMARY KEY (id)
+llm_extraction_cache,llm_extraction_cache_pkey,p,PRIMARY KEY (text_sha256)
+permission,permission_department_seniority_resource_key,u,"UNIQUE (department, seniority, resource)"
+permission,permission_pkey,p,PRIMARY KEY (id)
+product_alias,product_alias_pkey,p,PRIMARY KEY (id)
+product_category,product_category_pkey,p,PRIMARY KEY (id)
+product_category,uq_product_category_name,u,UNIQUE (name)
+product_category_assignment,product_category_assignment_pkey,p,PRIMARY KEY (product_name_key)
+product_category_assignment,product_category_assignment_product_category_id_fkey,f,FOREIGN KEY (product_category_id) REFERENCES product_category(id)
+product_sales_override,product_sales_override_pkey,p,PRIMARY KEY (id)
+raw_record,raw_record_digest_format_check,c,CHECK ((payload_sha256 ~ '^[0-9a-f]{64}$'::text))
+raw_record,raw_record_ingestion_run_id_fkey,f,FOREIGN KEY (ingestion_run_id) REFERENCES ingestion_run(id)
+raw_record,raw_record_payload_byte_length_check,c,CHECK ((payload_byte_length >= 0))
+raw_record,raw_record_pkey,p,PRIMARY KEY (id)
+reconciliation_exception,reconciliation_exception_pkey,p,"PRIMARY KEY (entity_type, entity_key, trading_date, field_key)"
+reservation_override,reservation_override_pkey,p,PRIMARY KEY (id)
+resolution_rule,resolution_rule_pkey,p,PRIMARY KEY (id)
+resolved_daily_sales,resolved_daily_sales_pkey,p,PRIMARY KEY (trading_date)
+resolved_deleted_sale_day,resolved_deleted_sale_day_pkey,p,PRIMARY KEY (trading_date)
+resolved_inventory_day,resolved_inventory_day_pkey,p,PRIMARY KEY (trading_date)
+resolved_labour_day,resolved_labour_day_pkey,p,"PRIMARY KEY (trading_date, department)"
+resolved_payment_day,resolved_payment_day_pkey,p,"PRIMARY KEY (trading_date, payment_type_name)"
+resolved_product_sales,resolved_product_sales_pkey,p,"PRIMARY KEY (trading_date, product_name_key)"
+resolved_recipe,resolved_recipe_pkey,p,PRIMARY KEY (recipe_id)
+resolved_recipe_ingredient,resolved_recipe_ingredient_pkey,p,PRIMARY KEY (id)
+resolved_reservation_day,resolved_reservation_day_pkey,p,"PRIMARY KEY (trading_date, service_period)"
+resolved_sale_item_day,resolved_sale_item_day_pkey,p,"PRIMARY KEY (trading_date, category_name)"
+review_classification,review_classification_pkey,p,PRIMARY KEY (review_id)
+review_classification_run,review_classification_run_pkey,p,PRIMARY KEY (id)
+saved_dashboard,saved_dashboard_pkey,p,PRIMARY KEY (id)
+saved_dashboard_revision,saved_dashboard_revision_dashboard_id_fkey,f,FOREIGN KEY (dashboard_id) REFERENCES saved_dashboard(id) ON DELETE CASCADE
+saved_dashboard_revision,saved_dashboard_revision_pkey,p,PRIMARY KEY (id)
+saved_dashboard_revision,uq_dashboard_revision,u,"UNIQUE (dashboard_id, revision)"
+saved_dashboard_share,saved_dashboard_share_dashboard_id_fkey,f,FOREIGN KEY (dashboard_id) REFERENCES saved_dashboard(id) ON DELETE CASCADE
+saved_dashboard_share,saved_dashboard_share_pkey,p,PRIMARY KEY (id)
+saved_dashboard_share,uq_dashboard_share,u,"UNIQUE (dashboard_id, department, seniority)"
+user_account,user_account_email_key,u,UNIQUE (email)
+user_account,user_account_pkey,p,PRIMARY KEY (id)
+tablename,indexname,indexdef
+canonical_daily_sales,canonical_daily_sales_pkey,CREATE UNIQUE INDEX canonical_daily_sales_pkey ON public.canonical_daily_sales USING btree (id)
+canonical_daily_sales,ix_daily_sales_logical,CREATE INDEX ix_daily_sales_logical ON public.canonical_daily_sales USING btree (logical_entity_id) WHERE (superseded_at IS NULL)
+canonical_daily_sales,ux_daily_sales_current,"CREATE UNIQUE INDEX ux_daily_sales_current ON public.canonical_daily_sales USING btree (trading_date, source_system) WHERE (superseded_at IS NULL)"
+canonical_deleted_sale,canonical_deleted_sale_pkey,CREATE UNIQUE INDEX canonical_deleted_sale_pkey ON public.canonical_deleted_sale USING btree (id)
+canonical_deleted_sale,ix_deleted_sale_logical_current,CREATE INDEX ix_deleted_sale_logical_current ON public.canonical_deleted_sale USING btree (logical_entity_id) WHERE (superseded_at IS NULL)
+canonical_deleted_sale,uq_deleted_sale_current_source_fact,"CREATE UNIQUE INDEX uq_deleted_sale_current_source_fact ON public.canonical_deleted_sale USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_guest,canonical_guest_pkey,CREATE UNIQUE INDEX canonical_guest_pkey ON public.canonical_guest USING btree (id)
+canonical_guest,ix_guest_logical_current,CREATE INDEX ix_guest_logical_current ON public.canonical_guest USING btree (logical_entity_id) WHERE (superseded_at IS NULL)
+canonical_guest,uq_guest_current_source_fact,"CREATE UNIQUE INDEX uq_guest_current_source_fact ON public.canonical_guest USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_invoice,canonical_invoice_pkey,CREATE UNIQUE INDEX canonical_invoice_pkey ON public.canonical_invoice USING btree (id)
+canonical_invoice,uq_invoice_current_source_fact,"CREATE UNIQUE INDEX uq_invoice_current_source_fact ON public.canonical_invoice USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_invoice_line,canonical_invoice_line_pkey,CREATE UNIQUE INDEX canonical_invoice_line_pkey ON public.canonical_invoice_line USING btree (id)
+canonical_invoice_line,uq_invoice_line_current_source_fact,"CREATE UNIQUE INDEX uq_invoice_line_current_source_fact ON public.canonical_invoice_line USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_labour_entry,canonical_labour_entry_pkey,CREATE UNIQUE INDEX canonical_labour_entry_pkey ON public.canonical_labour_entry USING btree (id)
+canonical_labour_entry,uq_labour_current_source_fact,"CREATE UNIQUE INDEX uq_labour_current_source_fact ON public.canonical_labour_entry USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_payment,canonical_payment_pkey,CREATE UNIQUE INDEX canonical_payment_pkey ON public.canonical_payment USING btree (id)
+canonical_payment,idx_canonical_payment_sale_number,CREATE INDEX idx_canonical_payment_sale_number ON public.canonical_payment USING btree (sale_number) WHERE (superseded_at IS NULL)
+canonical_payment,ix_payment_logical_current,CREATE INDEX ix_payment_logical_current ON public.canonical_payment USING btree (logical_entity_id) WHERE (superseded_at IS NULL)
+canonical_payment,uq_payment_current_source_fact,"CREATE UNIQUE INDEX uq_payment_current_source_fact ON public.canonical_payment USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_product,canonical_product_pkey,CREATE UNIQUE INDEX canonical_product_pkey ON public.canonical_product USING btree (id)
+canonical_product,uq_product_current_source_fact,"CREATE UNIQUE INDEX uq_product_current_source_fact ON public.canonical_product USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_product_sales,canonical_product_sales_pkey,CREATE UNIQUE INDEX canonical_product_sales_pkey ON public.canonical_product_sales USING btree (id)
+canonical_product_sales,ix_product_sales_logical,CREATE INDEX ix_product_sales_logical ON public.canonical_product_sales USING btree (logical_entity_id) WHERE (superseded_at IS NULL)
+canonical_product_sales,ux_product_sales_current,"CREATE UNIQUE INDEX ux_product_sales_current ON public.canonical_product_sales USING btree (product_name_key, trading_date, source_system) WHERE (superseded_at IS NULL)"
+canonical_recipe_cost,canonical_recipe_cost_pkey,CREATE UNIQUE INDEX canonical_recipe_cost_pkey ON public.canonical_recipe_cost USING btree (id)
+canonical_recipe_cost,uq_recipe_cost_current_source_fact,"CREATE UNIQUE INDEX uq_recipe_cost_current_source_fact ON public.canonical_recipe_cost USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_recipe_ingredient,canonical_recipe_ingredient_pkey,CREATE UNIQUE INDEX canonical_recipe_ingredient_pkey ON public.canonical_recipe_ingredient USING btree (id)
+canonical_recipe_ingredient,idx_recipe_ingredient_parent_recipe,CREATE INDEX idx_recipe_ingredient_parent_recipe ON public.canonical_recipe_ingredient USING btree (parent_recipe_id)
+canonical_recipe_ingredient,uq_recipe_ingredient_current_source_fact,"CREATE UNIQUE INDEX uq_recipe_ingredient_current_source_fact ON public.canonical_recipe_ingredient USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_reservation,canonical_reservation_pkey,CREATE UNIQUE INDEX canonical_reservation_pkey ON public.canonical_reservation USING btree (id)
+canonical_reservation,ix_reservation_logical_current,CREATE INDEX ix_reservation_logical_current ON public.canonical_reservation USING btree (logical_entity_id) WHERE (superseded_at IS NULL)
+canonical_reservation,uq_reservation_current_source_fact,"CREATE UNIQUE INDEX uq_reservation_current_source_fact ON public.canonical_reservation USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_review,canonical_review_pkey,CREATE UNIQUE INDEX canonical_review_pkey ON public.canonical_review USING btree (id)
+canonical_review,ix_review_guest_id,CREATE INDEX ix_review_guest_id ON public.canonical_review USING btree (guest_id)
+canonical_review,ix_review_reviewed_at_current,CREATE INDEX ix_review_reviewed_at_current ON public.canonical_review USING btree (reviewed_at) WHERE (superseded_at IS NULL)
+canonical_review,uq_review_current_source_fact,"CREATE UNIQUE INDEX uq_review_current_source_fact ON public.canonical_review USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_sale_item,canonical_sale_item_pkey,CREATE UNIQUE INDEX canonical_sale_item_pkey ON public.canonical_sale_item USING btree (id)
+canonical_sale_item,idx_canonical_sale_item_logical_current,"CREATE INDEX idx_canonical_sale_item_logical_current ON public.canonical_sale_item USING btree (logical_entity_id, source_system) WHERE (superseded_at IS NULL)"
+canonical_sale_item,idx_canonical_sale_item_sale_number,CREATE INDEX idx_canonical_sale_item_sale_number ON public.canonical_sale_item USING btree (sale_number) WHERE (superseded_at IS NULL)
+canonical_sale_item,uq_canonical_sale_item_current_source_fact,"CREATE UNIQUE INDEX uq_canonical_sale_item_current_source_fact ON public.canonical_sale_item USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_sale_recipe_link,canonical_sale_recipe_link_pkey,CREATE UNIQUE INDEX canonical_sale_recipe_link_pkey ON public.canonical_sale_recipe_link USING btree (id)
+canonical_sale_recipe_link,uq_sale_recipe_link_current_source_fact,"CREATE UNIQUE INDEX uq_sale_recipe_link_current_source_fact ON public.canonical_sale_recipe_link USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_shift,canonical_shift_pkey,CREATE UNIQUE INDEX canonical_shift_pkey ON public.canonical_shift USING btree (id)
+canonical_shift,idx_canonical_shift_logical_current,"CREATE INDEX idx_canonical_shift_logical_current ON public.canonical_shift USING btree (logical_entity_id, source_system) WHERE (superseded_at IS NULL)"
+canonical_shift,uq_canonical_shift_current_source_fact,"CREATE UNIQUE INDEX uq_canonical_shift_current_source_fact ON public.canonical_shift USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_stock_count,canonical_stock_count_pkey,CREATE UNIQUE INDEX canonical_stock_count_pkey ON public.canonical_stock_count USING btree (id)
+canonical_stock_count,idx_stock_count_stocktake,CREATE INDEX idx_stock_count_stocktake ON public.canonical_stock_count USING btree (stocktake_id)
+canonical_stock_count,uq_stock_count_current_source_fact,"CREATE UNIQUE INDEX uq_stock_count_current_source_fact ON public.canonical_stock_count USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_stocktake,canonical_stocktake_pkey,CREATE UNIQUE INDEX canonical_stocktake_pkey ON public.canonical_stocktake USING btree (id)
+canonical_stocktake,idx_stocktake_id,CREATE INDEX idx_stocktake_id ON public.canonical_stocktake USING btree (stocktake_id)
+canonical_stocktake,uq_stocktake_current_source_fact,"CREATE UNIQUE INDEX uq_stocktake_current_source_fact ON public.canonical_stocktake USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+canonical_wastage,canonical_wastage_pkey,CREATE UNIQUE INDEX canonical_wastage_pkey ON public.canonical_wastage USING btree (id)
+canonical_wastage,idx_wastage_record,CREATE INDEX idx_wastage_record ON public.canonical_wastage USING btree (wastage_record_id)
+canonical_wastage,uq_wastage_current_source_fact,"CREATE UNIQUE INDEX uq_wastage_current_source_fact ON public.canonical_wastage USING btree (source_system, source_record_ref) WHERE (superseded_at IS NULL)"
+category_suggestion,category_suggestion_pkey,CREATE UNIQUE INDEX category_suggestion_pkey ON public.category_suggestion USING btree (id)
+category_suggestion,ix_category_suggestion_run,CREATE INDEX ix_category_suggestion_run ON public.category_suggestion USING btree (run_id)
+classification_cluster,classification_cluster_pkey,CREATE UNIQUE INDEX classification_cluster_pkey ON public.classification_cluster USING btree (id)
+classification_cluster,ix_cluster_parent,CREATE INDEX ix_cluster_parent ON public.classification_cluster USING btree (parent_id)
+classification_cluster,ix_cluster_run,CREATE INDEX ix_cluster_run ON public.classification_cluster USING btree (run_id)
+classification_projection,classification_projection_pkey,"CREATE UNIQUE INDEX classification_projection_pkey ON public.classification_projection USING btree (run_id, product_name_key)"
+classification_run,classification_run_pkey,CREATE UNIQUE INDEX classification_run_pkey ON public.classification_run USING btree (id)
+conversation_message,conversation_message_pkey,CREATE UNIQUE INDEX conversation_message_pkey ON public.conversation_message USING btree (id)
+conversation_message,idx_conversation_message_thread,"CREATE INDEX idx_conversation_message_thread ON public.conversation_message USING btree (thread_id, created_at)"
+conversation_thread,conversation_thread_pkey,CREATE UNIQUE INDEX conversation_thread_pkey ON public.conversation_thread USING btree (id)
+conversation_thread,idx_conversation_thread_user,"CREATE INDEX idx_conversation_thread_user ON public.conversation_thread USING btree (user_account_id, updated_at DESC)"
+daily_sales_override,daily_sales_override_pkey,CREATE UNIQUE INDEX daily_sales_override_pkey ON public.daily_sales_override USING btree (id)
+daily_sales_override,ux_daily_sales_override_current,CREATE UNIQUE INDEX ux_daily_sales_override_current ON public.daily_sales_override USING btree (trading_date) WHERE (superseded_at IS NULL)
+flyway_schema_history,flyway_schema_history_pk,CREATE UNIQUE INDEX flyway_schema_history_pk ON public.flyway_schema_history USING btree (installed_rank)
+flyway_schema_history,flyway_schema_history_s_idx,CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success)
+forecast_run,forecast_run_created_at_idx,CREATE INDEX forecast_run_created_at_idx ON public.forecast_run USING btree (created_at DESC)
+forecast_run,forecast_run_pkey,CREATE UNIQUE INDEX forecast_run_pkey ON public.forecast_run USING btree (id)
+ingestion_failure,idx_ingestion_failure_source_occurred,"CREATE INDEX idx_ingestion_failure_source_occurred ON public.ingestion_failure USING btree (source_system, occurred_at DESC)"
+ingestion_failure,ingestion_failure_pkey,CREATE UNIQUE INDEX ingestion_failure_pkey ON public.ingestion_failure USING btree (id)
+ingestion_run,idx_ingestion_run_source_started,"CREATE INDEX idx_ingestion_run_source_started ON public.ingestion_run USING btree (source_system, started_at DESC)"
+ingestion_run,idx_ingestion_run_started_at,CREATE INDEX idx_ingestion_run_started_at ON public.ingestion_run USING btree (started_at)
+ingestion_run,ingestion_run_pkey,CREATE UNIQUE INDEX ingestion_run_pkey ON public.ingestion_run USING btree (id)
+ingestion_stage,idx_ingestion_stage_run,CREATE INDEX idx_ingestion_stage_run ON public.ingestion_stage USING btree (ingestion_run_id)
+ingestion_stage,idx_ingestion_stage_source_dataset,"CREATE INDEX idx_ingestion_stage_source_dataset ON public.ingestion_stage USING btree (source_system, dataset, occurred_at DESC)"
+ingestion_stage,ingestion_stage_pkey,CREATE UNIQUE INDEX ingestion_stage_pkey ON public.ingestion_stage USING btree (id)
+inventory_override,inventory_override_pkey,CREATE UNIQUE INDEX inventory_override_pkey ON public.inventory_override USING btree (id)
+inventory_override,ux_inventory_override_current,CREATE UNIQUE INDEX ux_inventory_override_current ON public.inventory_override USING btree (trading_date) WHERE (superseded_at IS NULL)
+invoice_ingest_flag,idx_invoice_ingest_flag_invoice,CREATE INDEX idx_invoice_ingest_flag_invoice ON public.invoice_ingest_flag USING btree (invoice_number)
+invoice_ingest_flag,idx_invoice_ingest_flag_open,"CREATE INDEX idx_invoice_ingest_flag_open ON public.invoice_ingest_flag USING btree (flag_type, occurred_at DESC) WHERE (resolved_at IS NULL)"
+invoice_ingest_flag,idx_invoice_ingest_flag_type_occurred,"CREATE INDEX idx_invoice_ingest_flag_type_occurred ON public.invoice_ingest_flag USING btree (flag_type, occurred_at DESC)"
+invoice_ingest_flag,invoice_ingest_flag_pkey,CREATE UNIQUE INDEX invoice_ingest_flag_pkey ON public.invoice_ingest_flag USING btree (id)
+invoice_note,invoice_note_pkey,CREATE UNIQUE INDEX invoice_note_pkey ON public.invoice_note USING btree (invoice_number)
+invoice_pdf_link,idx_invoice_pdf_link_invoice,CREATE INDEX idx_invoice_pdf_link_invoice ON public.invoice_pdf_link USING btree (invoice_number)
+invoice_pdf_link,invoice_pdf_link_pkey,CREATE UNIQUE INDEX invoice_pdf_link_pkey ON public.invoice_pdf_link USING btree (pdf_raw_record_id)
+labour_override,labour_override_pkey,CREATE UNIQUE INDEX labour_override_pkey ON public.labour_override USING btree (id)
+labour_override,ux_labour_override_current,"CREATE UNIQUE INDEX ux_labour_override_current ON public.labour_override USING btree (trading_date, department) WHERE (superseded_at IS NULL)"
+llm_extraction_cache,llm_extraction_cache_pkey,CREATE UNIQUE INDEX llm_extraction_cache_pkey ON public.llm_extraction_cache USING btree (text_sha256)
+permission,permission_department_seniority_resource_key,"CREATE UNIQUE INDEX permission_department_seniority_resource_key ON public.permission USING btree (department, seniority, resource)"
+permission,permission_pkey,CREATE UNIQUE INDEX permission_pkey ON public.permission USING btree (id)
+product_alias,product_alias_pkey,CREATE UNIQUE INDEX product_alias_pkey ON public.product_alias USING btree (id)
+product_alias,uq_product_alias_pair,"CREATE UNIQUE INDEX uq_product_alias_pair ON public.product_alias USING btree (canonical_name, alias)"
+product_category,product_category_pkey,CREATE UNIQUE INDEX product_category_pkey ON public.product_category USING btree (id)
+product_category,uq_product_category_name,CREATE UNIQUE INDEX uq_product_category_name ON public.product_category USING btree (name)
+product_category_assignment,ix_assignment_category,CREATE INDEX ix_assignment_category ON public.product_category_assignment USING btree (product_category_id)
+product_category_assignment,ix_assignment_status,CREATE INDEX ix_assignment_status ON public.product_category_assignment USING btree (status)
+product_category_assignment,product_category_assignment_pkey,CREATE UNIQUE INDEX product_category_assignment_pkey ON public.product_category_assignment USING btree (product_name_key)
+product_sales_override,product_sales_override_pkey,CREATE UNIQUE INDEX product_sales_override_pkey ON public.product_sales_override USING btree (id)
+product_sales_override,ux_product_sales_override_current,"CREATE UNIQUE INDEX ux_product_sales_override_current ON public.product_sales_override USING btree (product_name_key, trading_date) WHERE (superseded_at IS NULL)"
+raw_record,idx_raw_record_run,CREATE INDEX idx_raw_record_run ON public.raw_record USING btree (ingestion_run_id)
+raw_record,idx_raw_record_source_fetched,"CREATE INDEX idx_raw_record_source_fetched ON public.raw_record USING btree (source_system, fetched_at DESC)"
+raw_record,idx_raw_record_source_fetcher_ref,"CREATE INDEX idx_raw_record_source_fetcher_ref ON public.raw_record USING btree (source_system, fetcher_identity, source_record_ref, fetched_at DESC)"
+raw_record,raw_record_pkey,CREATE UNIQUE INDEX raw_record_pkey ON public.raw_record USING btree (id)
+reconciliation_exception,reconciliation_exception_pkey,"CREATE UNIQUE INDEX reconciliation_exception_pkey ON public.reconciliation_exception USING btree (entity_type, entity_key, trading_date, field_key)"
+reservation_override,reservation_override_pkey,CREATE UNIQUE INDEX reservation_override_pkey ON public.reservation_override USING btree (id)
+reservation_override,ux_reservation_override_current,"CREATE UNIQUE INDEX ux_reservation_override_current ON public.reservation_override USING btree (trading_date, service_period) WHERE (superseded_at IS NULL)"
+resolution_rule,resolution_rule_pkey,CREATE UNIQUE INDEX resolution_rule_pkey ON public.resolution_rule USING btree (id)
+resolution_rule,ux_resolution_rule_current,"CREATE UNIQUE INDEX ux_resolution_rule_current ON public.resolution_rule USING btree (entity_type, field_key) WHERE (superseded_at IS NULL)"
+resolved_daily_sales,resolved_daily_sales_pkey,CREATE UNIQUE INDEX resolved_daily_sales_pkey ON public.resolved_daily_sales USING btree (trading_date)
+resolved_deleted_sale_day,resolved_deleted_sale_day_pkey,CREATE UNIQUE INDEX resolved_deleted_sale_day_pkey ON public.resolved_deleted_sale_day USING btree (trading_date)
+resolved_inventory_day,resolved_inventory_day_pkey,CREATE UNIQUE INDEX resolved_inventory_day_pkey ON public.resolved_inventory_day USING btree (trading_date)
+resolved_labour_day,resolved_labour_day_pkey,"CREATE UNIQUE INDEX resolved_labour_day_pkey ON public.resolved_labour_day USING btree (trading_date, department)"
+resolved_payment_day,resolved_payment_day_pkey,"CREATE UNIQUE INDEX resolved_payment_day_pkey ON public.resolved_payment_day USING btree (trading_date, payment_type_name)"
+resolved_product_sales,resolved_product_sales_pkey,"CREATE UNIQUE INDEX resolved_product_sales_pkey ON public.resolved_product_sales USING btree (trading_date, product_name_key)"
+resolved_recipe,resolved_recipe_pkey,CREATE UNIQUE INDEX resolved_recipe_pkey ON public.resolved_recipe USING btree (recipe_id)
+resolved_recipe_ingredient,idx_resolved_recipe_ingredient_parent,CREATE INDEX idx_resolved_recipe_ingredient_parent ON public.resolved_recipe_ingredient USING btree (parent_recipe_id)
+resolved_recipe_ingredient,resolved_recipe_ingredient_pkey,CREATE UNIQUE INDEX resolved_recipe_ingredient_pkey ON public.resolved_recipe_ingredient USING btree (id)
+resolved_reservation_day,resolved_reservation_day_pkey,"CREATE UNIQUE INDEX resolved_reservation_day_pkey ON public.resolved_reservation_day USING btree (trading_date, service_period)"
+resolved_sale_item_day,resolved_sale_item_day_pkey,"CREATE UNIQUE INDEX resolved_sale_item_day_pkey ON public.resolved_sale_item_day USING btree (trading_date, category_name)"
+review_classification,review_classification_pkey,CREATE UNIQUE INDEX review_classification_pkey ON public.review_classification USING btree (review_id)
+review_classification_run,review_classification_run_pkey,CREATE UNIQUE INDEX review_classification_run_pkey ON public.review_classification_run USING btree (id)
+saved_dashboard,saved_dashboard_pkey,CREATE UNIQUE INDEX saved_dashboard_pkey ON public.saved_dashboard USING btree (id)
+saved_dashboard_revision,saved_dashboard_revision_pkey,CREATE UNIQUE INDEX saved_dashboard_revision_pkey ON public.saved_dashboard_revision USING btree (id)
+saved_dashboard_revision,uq_dashboard_revision,"CREATE UNIQUE INDEX uq_dashboard_revision ON public.saved_dashboard_revision USING btree (dashboard_id, revision)"
+saved_dashboard_share,saved_dashboard_share_pkey,CREATE UNIQUE INDEX saved_dashboard_share_pkey ON public.saved_dashboard_share USING btree (id)
+saved_dashboard_share,uq_dashboard_share,"CREATE UNIQUE INDEX uq_dashboard_share ON public.saved_dashboard_share USING btree (dashboard_id, department, seniority)"
+user_account,idx_user_account_role,"CREATE INDEX idx_user_account_role ON public.user_account USING btree (department, seniority) WHERE (active = true)"
+user_account,user_account_email_key,CREATE UNIQUE INDEX user_account_email_key ON public.user_account USING btree (email)
+user_account,user_account_pkey,CREATE UNIQUE INDEX user_account_pkey ON public.user_account USING btree (id)
+schemaname,viewname,definition
+relname,estimated_rows,total_bytes,n_live_tup,n_dead_tup
+canonical_daily_sales,1877,655360,1975,4
+canonical_deleted_sale,12788,4767744,12819,1355
+canonical_guest,119,131072,172,0
+canonical_invoice,2232,819200,2367,456
+canonical_invoice_line,21206,5726208,21474,1778
+canonical_labour_entry,-1,24576,0,0
+canonical_payment,973119,534110208,978439,0
+canonical_product,-1,24576,0,0
+canonical_product_sales,13097,4587520,13985,136
+canonical_recipe_cost,1326,573440,1326,0
+canonical_recipe_ingredient,2630,1310720,2630,0
+canonical_reservation,22605,14286848,24304,1
+canonical_review,1218,761856,1218,0
+canonical_sale_item,1464000,681656320,1465456,2241
+canonical_sale_recipe_link,645,278528,645,0
+canonical_shift,-1,32768,0,0
+canonical_stock_count,-1,32768,0,0
+canonical_stocktake,-1,32768,0,0
+canonical_wastage,-1,32768,0,0
+category_suggestion,13,49152,13,28
+classification_cluster,51670,9846784,51670,0
+classification_projection,25840,4677632,25840,0
+classification_run,-1,32768,12,12
+conversation_message,-1,49152,10,0
+conversation_thread,-1,49152,5,10
+daily_sales_override,-1,49152,2,0
+flyway_schema_history,51,81920,73,0
+forecast_run,-1,49152,16,0
+ingestion_failure,-1,139264,28,0
+ingestion_run,2806,794624,2832,78
+ingestion_stage,53,98304,95,0
+inventory_override,-1,24576,0,0
+invoice_ingest_flag,1216,573440,1236,100
+invoice_note,-1,16384,0,0
+invoice_pdf_link,-1,49152,24,0
+labour_override,-1,24576,0,0
+llm_extraction_cache,-1,65536,22,0
+permission,-1,49152,21,0
+product_alias,-1,49152,38,0
+product_category,-1,49152,14,0
+product_category_assignment,2584,1155072,2584,130
+product_sales_override,-1,24576,0,0
+raw_record,5309,1125441536,5644,0
+reconciliation_exception,0,1187840,0,0
+reservation_override,-1,24576,0,0
+resolution_rule,-1,49152,4,5
+resolved_daily_sales,1944,303104,1944,4
+resolved_deleted_sale_day,1009,212992,1009,0
+resolved_inventory_day,169,81920,169,0
+resolved_labour_day,-1,16384,0,0
+resolved_payment_day,7181,1957888,7181,0
+resolved_product_sales,13849,3727360,13849,0
+resolved_recipe,663,294912,663,0
+resolved_recipe_ingredient,2630,1400832,2630,0
+resolved_reservation_day,1424,327680,1424,0
+resolved_sale_item_day,19053,4644864,19053,0
+review_classification,680,253952,680,0
+review_classification_run,-1,32768,3,3
+saved_dashboard,-1,32768,4,6
+saved_dashboard_revision,-1,90112,4,9
+saved_dashboard_share,-1,16384,0,0
+user_account,-1,65536,4,10
+installed_rank,version,description,script,checksum,installed_on,success
+1,1,baseline schema,V1__baseline_schema.sql,1911382473,2026-09-20 02:03:03.577234,t
+2,2,ingestion ledger,V2__ingestion_ledger.sql,1817138265,2026-09-20 02:03:03.680854,t
+3,3,staff profiles,V3__staff_profiles.sql,1576826287,2026-09-20 02:03:03.734553,t
+4,4,canonical provenance,V4__canonical_provenance.sql,-1232399602,2026-09-20 02:03:03.774586,t
+5,5,daily sales reconciliation,V5__daily_sales_reconciliation.sql,-1619662168,2026-09-21 03:33:03.946552,t
+6,6,seed admin permissions,V6__seed_admin_permissions.sql,1111167792,2026-09-21 03:33:04.020628,t
+7,7,user accounts,V7__user_accounts.sql,537013742,2026-09-21 03:33:04.038919,t
+8,8,drop staff profile and override actor email,V8__drop_staff_profile_and_override_actor_email.sql,1959224427,2026-09-21 03:33:04.064387,t
+9,9,product sales,V9__product_sales.sql,495368880,2026-09-21 06:50:00.13589,t
+10,10,product sales override,V10__product_sales_override.sql,1751477768,2026-09-21 06:50:00.192394,t
+11,11,reservations,V11__reservations.sql,-2110004514,2026-09-24 07:24:06.126142,t
+12,12,resolution rule,V12__resolution_rule.sql,1397203311,2026-10-02 12:29:09.903645,t
+13,13,seed conversational permission,V13__seed_conversational_permission.sql,1181635360,2026-10-02 12:29:09.985874,t
+14,14,ingestion failure stack trace,V14__ingestion_failure_stack_trace.sql,168453912,2026-10-02 14:16:24.28531,t
+15,15,daily sales read model,V15__daily_sales_read_model.sql,1354505274,2026-10-06 04:25:38.55321,t
+16,16,product sales exception key,V16__product_sales_exception_key.sql,-729119772,2026-10-06 04:25:38.612655,t
+17,17,resolved product sales,V17__resolved_product_sales.sql,-1501860677,2026-10-06 09:47:16.912476,t
+18,18,saved dashboards,V18__saved_dashboards.sql,-1923334224,2026-10-06 09:47:16.963318,t
+19,19,ingestion run started at index,V19__ingestion_run_started_at_index.sql,940492862,2026-10-06 09:47:16.987527,t
+20,20,reservation read model,V20__reservation_read_model.sql,-1989323101,2026-10-07 06:26:47.258013,t
+21,21,labour,V21__labour.sql,1805011799,2026-10-07 06:26:47.329337,t
+22,22,inventory,V22__inventory.sql,231276644,2026-10-07 06:26:47.398159,t
+23,23,seed domain permissions,V23__seed_domain_permissions.sql,751211094,2026-10-07 06:26:47.501588,t
+24,24,daily sales net gst,V24__daily_sales_net_gst.sql,1479412948,2026-10-07 06:26:47.519133,t
+25,25,dashboard documents v2,V25__dashboard_documents_v2.sql,-853454526,2026-10-07 06:26:47.52934,t
+26,26,seed ask goldys permissions,V26__seed_ask_goldys_permissions.sql,-1030744694,2026-10-08 00:41:56.543026,t
+27,27,conversation threads,V27__conversation_threads.sql,-1645351770,2026-10-08 00:41:56.586402,t
+28,28,invoice metadata columns,V28__invoice_metadata_columns.sql,-618249307,2026-10-08 04:57:11.950884,t
+29,29,invoice line enrichment,V29__invoice_line_enrichment.sql,1588969328,2026-10-08 13:39:54.848305,t
+30,30,invoice ingest flag,V30__invoice_ingest_flag.sql,-2121848703,2026-10-08 13:39:54.892688,t
+31,31,invoice pdf filename,V31__invoice_pdf_filename.sql,-961649272,2026-10-08 13:39:54.933964,t
+32,32,ingestion stage,V32__ingestion_stage.sql,97823225,2026-10-09 06:57:20.619323,t
+33,33,payments,V33__payments.sql,2022651069,2026-10-10 03:24:07.309988,t
+34,34,deleted sales,V34__deleted_sales.sql,-617895916,2026-10-10 03:24:07.378341,t
+35,35,sale item line details,V35__sale_item_line_details.sql,-1441720920,2026-10-10 03:24:07.413352,t
+36,36,payment read model,V36__payment_read_model.sql,-1234531861,2026-10-10 03:24:07.428118,t
+37,37,deleted sale read model,V37__deleted_sale_read_model.sql,533293286,2026-10-10 03:24:07.44873,t
+38,38,sale item read model,V38__sale_item_read_model.sql,633351338,2026-10-10 03:24:07.469439,t
+39,39,seed payment sale item permissions,V39__seed_payment_sale_item_permissions.sql,1842195585,2026-10-10 03:24:07.489665,t
+40,40,sale number indexes,V40__sale_number_indexes.sql,-139660854,2026-10-10 03:24:07.501734,t
+41,41,sale item fractional quantity,V41__sale_item_fractional_quantity.sql,1271135041,2026-10-10 06:45:21.170157,t
+42,42,invoice ingest flag resolved at,V42__invoice_ingest_flag_resolved_at.sql,1010059057,2026-10-11 12:42:35.281788,t
+43,43,invoice line origin,V43__invoice_line_origin.sql,-1930317512,2026-10-12 01:39:21.519169,t
+44,44,forecast run,V44__forecast_run.sql,441613578,2026-10-12 07:31:34.81443,t
+45,45,seed forecasting permissions,V45__seed_forecasting_permissions.sql,-1350006523,2026-10-12 07:31:34.891558,t
+46,46,raw record source record ref,V46__raw_record_source_record_ref.sql,-14937,2026-10-12 10:09:45.185013,t
+47,47,recipe composition,V47__recipe_composition.sql,-1460933101,2026-10-12 10:09:45.2602,t
+48,48,seed recipe permissions,V48__seed_recipe_permissions.sql,-607689738,2026-10-12 10:09:45.344111,t
+49,49,recipe ingredients,V49__recipe_ingredients.sql,1407168847,2026-10-12 12:52:41.524054,t
+50,50,seed recipe ingredients permission,V50__seed_recipe_ingredients_permission.sql,-370023247,2026-10-12 12:52:41.604613,t
+51,51,llm extraction cache,V51__llm_extraction_cache.sql,976247391,2026-10-13 03:07:19.768513,t
+52,52,seed opentable session permission,V52__seed_opentable_session_permission.sql,-850779732,2026-10-13 03:22:55.268213,t
+53,53,sale item deleted sale time,V53__sale_item_deleted_sale_time.sql,1086555599,2026-10-13 04:51:49.310033,t
+54,54,reservation detail,V54__reservation_detail.sql,-1218189506,2026-10-13 06:31:12.642219,t
+55,55,canonical guest,V55__canonical_guest.sql,-791418005,2026-10-13 06:31:12.717951,t
+56,56,recipe cost price provenance,V56__recipe_cost_price_provenance.sql,1679754743,2026-10-13 06:31:12.774608,t
+57,57,invoice pdf link,V57__invoice_pdf_link.sql,1519697601,2026-10-13 06:31:12.798061,t
+58,58,raw record dataset ref index,V58__raw_record_dataset_ref_index.sql,1700285685,2026-10-13 06:31:12.823221,t
+59,59,lightspeed product catalog,V59__lightspeed_product_catalog.sql,-1548707516,2026-10-13 10:54:36.301994,t
+60,60,product is modifier not null,V60__product_is_modifier_not_null.sql,-1361766451,2026-10-13 10:54:36.409707,t
+61,61,product categorisation,V61__product_categorisation.sql,-1600925614,2026-10-13 10:54:36.424368,t
+62,62,seed product categorisation permissions,V62__seed_product_categorisation_permissions.sql,-851708491,2026-10-13 10:54:36.506956,t
+63,63,product category assignment nullable,V63__product_category_assignment_nullable.sql,20519313,2026-10-13 10:54:36.526054,t
+64,64,classification cluster node order,V64__classification_cluster_node_order.sql,-1135350101,2026-10-13 10:54:36.536659,t
+65,65,invoice note,V65__invoice_note.sql,-2085242725,2026-10-14 01:13:51.872773,t
+66,66,invoice line tax fields,V66__invoice_line_tax_fields.sql,-1010079180,2026-10-14 01:13:51.952735,t
+67,67,category suggestion,V67__category_suggestion.sql,-247180779,2026-10-14 01:53:20.107754,t
+68,68,stock wastage canonical,V68__stock_wastage_canonical.sql,186916253,2026-10-14 05:28:55.772154,t
+69,69,canonical review,V69__canonical_review.sql,-1871795105,2026-10-14 05:28:55.851542,t
+70,70,review classification,V70__review_classification.sql,-1019190163,2026-10-14 05:28:55.902048,t
+71,71,seed reviews permission,V71__seed_reviews_permission.sql,413080903,2026-10-14 05:28:55.942287,t
+72,72,drop review guest fk,V72__drop_review_guest_fk.sql,1564393134,2026-10-14 05:28:55.958767,t
+73,73,drop raw record parsed payload,V73__drop_raw_record_parsed_payload.sql,-31580205,2026-10-14 05:28:55.974892,t
+current_database,current_user,current_schema,version,current_setting,rolsuper,rolcreaterole,rolcreatedb
+goldys,goldys,public,"PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",on,t,t,t

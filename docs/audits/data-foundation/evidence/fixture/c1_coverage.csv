@@ -1,0 +1,11 @@
+source_system,fetch_method,content_type,fetcher_identity,raw_records,first,last,bytes,largest,distinct_payloads
+CTB,FILE_EXPORT,text/csv,ctb-invoices,1,2026-10-12 08:20:49.925028+00,2026-10-12 08:20:49.925028+00,24,24,1
+LIGHTSPEED,FILE_EXPORT,application/json,lightspeed-insights,1,2026-10-13 08:20:49.925028+00,2026-10-13 08:20:49.925028+00,18,18,1
+source_system,connector_name,status,runs,first,last,fetched,persisted,incomplete
+CTB,ctb-revenue,SUCCESS,1,2026-10-12 08:20:49.925028+00,2026-10-12 08:20:49.925028+00,2,2,0
+LIGHTSPEED,lightspeed-insights,PARTIAL,1,2026-10-13 08:20:49.925028+00,2026-10-13 08:20:49.925028+00,1,1,0
+source_system,failure_type,failures,first,last
+CTB,CONNECTOR_FETCH_FAILED,1,2026-10-13 08:20:49.925028+00,2026-10-13 08:20:49.925028+00
+source_system,fetcher_identity,raw_records,raw_with_any_canonical,raw_with_current_canonical,canonical_versions
+CTB,ctb-invoices,1,1,1,4
+LIGHTSPEED,lightspeed-insights,1,1,1,4

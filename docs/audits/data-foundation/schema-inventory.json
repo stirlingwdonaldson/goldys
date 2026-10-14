@@ -1,0 +1,4199 @@
+{
+  "canonical_daily_sales": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "total_sales",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "gst_total",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "net_total",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_deleted_sale": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "sale_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "order_type",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "note",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "total_inc_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_ex_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "opened_register_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "opened_register_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "deleted_register_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "deleted_register_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "staff_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "staff_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "deleted_by_staff_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "deleted_by_staff_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "table_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "site_id",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "customer_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "sale_opened_time",
+      "native_type": "time without time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_guest": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "guest_name",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "first_name",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "last_name",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "nickname",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "email",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "phone",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "company",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "marketing_opt_in",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "first_visit_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "recent_visit_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "upcoming_visits",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "completed_visits",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "cancelled_count",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "no_show_count",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "lifetime_spend",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "lifetime_per_cover_spend",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_invoice": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "supplier_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "invoice_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "invoice_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "due_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "total_amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "purchase_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "account_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "tax_code",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "amount_ex_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "gst_amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "freight_amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "freight_gst_amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "pdf_filename",
+      "native_type": "varchar(512)",
+      "nullable": true
+    }
+  ],
+  "canonical_invoice_line": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "invoice_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "invoice_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "product_name_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "quantity",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "unit_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "line_total",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "category",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "stock_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "uom",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "unit_quantity",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "pack_size",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "wet_amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "origin",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "line_total_inc_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "line_gst_amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "line_tax_rate",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "inc_gst",
+      "native_type": "boolean",
+      "nullable": true
+    }
+  ],
+  "canonical_labour_entry": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "staff_ref",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "department",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "labour_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "scheduled_hours",
+      "native_type": "numeric(10,2)",
+      "nullable": true
+    },
+    {
+      "column": "actual_hours",
+      "native_type": "numeric(10,2)",
+      "nullable": true
+    },
+    {
+      "column": "scheduled_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "actual_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "shift_start",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "shift_end",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_payment": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "sale_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "payment_type_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "payment_type_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "payment_source_type",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "lspay_payment_mode",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "clearing_account",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "tip",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "tendered",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "surcharge",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "payment_count",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "tip_count",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "reconciled",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "register_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "register_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "staff_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "staff_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "site_id",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "customer_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_product": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "product_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "product_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "category",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "sell_price_inc_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "is_modifier",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "reporting_group",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_product_sales": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "product_name_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "quantity_sold",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_recipe_cost": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "recipe_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "cost_per_portion",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "cost_per_portion_incl_labour",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "portion_size",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "portion_size_value",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_recipe_ingredient": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "parent_recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "line_recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "line_recipe_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "is_sub_recipe",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "recipe_detail_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "stock_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "stock_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "stock_description",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "ingredient_description",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "supplier_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "supplier_stock_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "portion_weight",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "unit_of_measurement",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "stock_uom_shortname",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "cost_per_qty",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "cost_per_unit",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "stock_usable",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "stock_wastage",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "is_broken_link",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_reservation": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "reservation_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "party_size",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "status",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "table_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_channel",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "party_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "cancelled_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "no_show_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "seated_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "finished_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "last_updated_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "total_actual_duration_minutes",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "table_type",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "dining_area_assigned",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "dining_area_booked",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "dining_area_id_assigned",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "dining_area_id_booked",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "wait_staff",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "created_by",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "turn_time_setting",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "reservation_type",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "occasion",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "reservation_status",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "online_waitlist",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "is_flex_reso",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "quoted_wait_time",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "total_wait_time",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "online_channel",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "partner",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "campaign_type",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "campaign_details",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "referrer_name",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "referrer_business",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "restref_source",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "restref_campaign_name",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "restref_id",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "guest_first_name",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "guest_last_name",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "guest_nickname",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "guest_email",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "guest_phone",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "company",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "marketing_opt_in",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "birthday",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "anniversary",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "first_visit_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "recent_visit_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "upcoming_visits",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "completed_visits",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "cancelled_count",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "no_show_count",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "lifetime_spend",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "lifetime_per_cover_spend",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "guest_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "experience_title",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "experience_type",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "experience_type_enum",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "experience_price_type",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "prepayment_method",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "prepayment_status",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "vendor_payout_status",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "currency",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "experience_price",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "experience_subtotal",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "addons_subtotal",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "service_charges",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "prepaid_experience_tip",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "prepaid_experience_vat",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "prepaid_experience_total_paid",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "experience_total_sales",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "experience_total_sales_with_tip",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "prepayment_required_total",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "prepayment_paid_total",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "pos_check_ids",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "pos_subtotal",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "pos_tax",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "pos_service_charges",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "pos_tip",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "pos_paid",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "pos_due",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_tips",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_vat",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_income",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_income_with_tip",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_revenue",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_revenue_with_tip",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_revenue_without_tip",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "pos_spend",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "pos_refund",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "pos_revenue",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "refund_amount",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "vendor_payout_amount",
+      "native_type": "numeric(19,4)",
+      "nullable": true
+    },
+    {
+      "column": "guest_requests",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "visit_notes",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "reservation_tags",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "guest_tags",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    }
+  ],
+  "canonical_review": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "source",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "guest_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "guest_name",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "reviewed_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "visited_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "overall_rating",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "food_rating",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "service_rating",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "ambience_rating",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "value_rating",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "noise_label",
+      "native_type": "varchar(1024)",
+      "nullable": true
+    },
+    {
+      "column": "would_recommend",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "comment",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "private_note",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "tags",
+      "native_type": "text[]",
+      "nullable": true
+    },
+    {
+      "column": "keywords",
+      "native_type": "text[]",
+      "nullable": true
+    }
+  ],
+  "canonical_sale_item": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "item_name",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "quantity_sold",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "amount",
+      "native_type": "numeric(38,2)",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "sale_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "product_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "sku",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "category_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "sold_price_inc_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "cost_inc_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "order_type",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "sale_type",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "staff_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "register_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "table_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "sale_closed_time",
+      "native_type": "time without time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_sale_recipe_link": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "sale_item_recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "sale_item_stock_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "sale_item_stock_description",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "recipe_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "recipe_folder_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "is_recipe_active",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "lightspeed_product_id",
+      "native_type": "integer",
+      "nullable": true
+    }
+  ],
+  "canonical_shift": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "staff_member_ref",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "shift_start",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "shift_end",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    }
+  ],
+  "canonical_stock_count": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "counted_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "product_name_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "quantity_on_hand",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "stocktake_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "line_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "stock_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "stock_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "unit_of_measurement_name",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "unit_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "line_value",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "supplier_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "area_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    }
+  ],
+  "canonical_stocktake": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "stocktake_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "stocktake_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "description",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "outlet_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "total_stock_value",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "is_partial",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "is_locked",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "canonical_wastage": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "logical_entity_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "wastage_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "product_name_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "quantity",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "reason",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "valid_from",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "valid_to",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "wastage_record_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "line_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "supplier_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "unit_of_measurement_name",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "unit_size",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    }
+  ],
+  "category_suggestion": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "run_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "name",
+      "native_type": "varchar(128)",
+      "nullable": true
+    },
+    {
+      "column": "group_name",
+      "native_type": "varchar(128)",
+      "nullable": true
+    },
+    {
+      "column": "display_order",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "hint",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "classification_cluster": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "run_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "parent_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "is_leaf",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "product_name_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "merge_height",
+      "native_type": "double precision",
+      "nullable": true
+    },
+    {
+      "column": "size",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "node_order",
+      "native_type": "int",
+      "nullable": true
+    }
+  ],
+  "classification_projection": [
+    {
+      "column": "run_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "product_name_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "x",
+      "native_type": "double precision",
+      "nullable": true
+    },
+    {
+      "column": "y",
+      "native_type": "double precision",
+      "nullable": true
+    }
+  ],
+  "classification_run": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "kind",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "status",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "product_count",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "started_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "finished_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "error_message",
+      "native_type": "text",
+      "nullable": true
+    }
+  ],
+  "conversation_message": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "thread_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "role",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "content",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "tool_trace",
+      "native_type": "jsonb",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "conversation_thread": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "user_account_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "title",
+      "native_type": "varchar(200)",
+      "nullable": true
+    },
+    {
+      "column": "summary",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "updated_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "last_message_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "daily_sales_override": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "reason",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "actor_email",
+      "native_type": "varchar(255)",
+      "nullable": true
+    }
+  ],
+  "forecast_run": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamptz",
+      "nullable": true
+    },
+    {
+      "column": "created_by",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "--",
+      "native_type": "caller email",
+      "nullable": true
+    },
+    {
+      "column": "matching",
+      "native_type": "saved_dashboard.created_by target_metric text",
+      "nullable": true
+    },
+    {
+      "column": "e.g.",
+      "native_type": "'sales.gross' target_dimension text",
+      "nullable": true
+    },
+    {
+      "column": "history_to",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "horizon_days",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "grain",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "status",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "model_version",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "forecast_series",
+      "native_type": "jsonb",
+      "nullable": true
+    },
+    {
+      "column": "\"quantiles\":",
+      "native_type": "{ \"0.1\": \u2026 } }]",
+      "nullable": true
+    },
+    {
+      "column": "set",
+      "native_type": "on SUCCEEDED",
+      "nullable": true
+    }
+  ],
+  "ingestion_failure": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "failure_type",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "detail",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "occurred_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "ingestion_run_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "stack_trace",
+      "native_type": "text",
+      "nullable": true
+    }
+  ],
+  "ingestion_run": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "connector_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "status",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "started_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "completed_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "input_watermark",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "output_watermark",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "fetched_count",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "persisted_count",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "failure_summary",
+      "native_type": "text",
+      "nullable": true
+    }
+  ],
+  "ingestion_stage": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "ingestion_run_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "dataset",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "stage",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "outcome",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "occurred_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "inventory_override": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "overridden_purchases",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "reason",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "actor_email",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "invoice_ingest_flag": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "flag_type",
+      "native_type": "character varying(64)",
+      "nullable": true
+    },
+    {
+      "column": "invoice_number",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "pdf_filename",
+      "native_type": "character varying(512)",
+      "nullable": true
+    },
+    {
+      "column": "stock_code",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "detail",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "occurred_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "invoice_note": [
+    {
+      "column": "invoice_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "note",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "invoice_pdf_link": [
+    {
+      "column": "pdf_raw_record_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "invoice_number",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "pdf_filename",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "link_source",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "linked_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "labour_override": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "department",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "overridden_actual_hours",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "reason",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "actor_email",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "llm_extraction_cache": [
+    {
+      "column": "text_sha256",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "extracted_json",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "permission": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "department",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "seniority",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "resource",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "can_read",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "can_write",
+      "native_type": "boolean",
+      "nullable": true
+    }
+  ],
+  "product_alias": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "canonical_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "alias",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "source",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "product_category": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "name",
+      "native_type": "varchar(128)",
+      "nullable": true
+    },
+    {
+      "column": "group_name",
+      "native_type": "varchar(128)",
+      "nullable": true
+    },
+    {
+      "column": "display_order",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "description",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "updated_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "product_category_assignment": [
+    {
+      "column": "product_name_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "product_category_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "confidence",
+      "native_type": "numeric(6,4)",
+      "nullable": true
+    },
+    {
+      "column": "source",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "status",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "assigned_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "updated_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "product_sales_override": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "product_name_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "reason",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "actor_email",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "raw_record": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "source_system",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "fetch_method",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "content_type",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "parsed_payload",
+      "native_type": "jsonb",
+      "nullable": true
+    },
+    {
+      "column": "fetcher_identity",
+      "native_type": "character varying(255)",
+      "nullable": true
+    },
+    {
+      "column": "fetched_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "ingestion_run_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "payload_bytes",
+      "native_type": "bytea",
+      "nullable": true
+    },
+    {
+      "column": "payload_sha256",
+      "native_type": "char(64)",
+      "nullable": true
+    },
+    {
+      "column": "payload_byte_length",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "character_encoding",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "source_record_ref",
+      "native_type": "varchar(512)",
+      "nullable": true
+    }
+  ],
+  "reconciliation_exception": [
+    {
+      "column": "entity_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "entity_key",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "field_key",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "status",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "detected_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "reservation_override": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "service_period",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "overridden_covers",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "reason",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "actor_email",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "resolution_rule": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "entity_type",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "field_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "strategy",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "custom_logic",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "source_priority",
+      "native_type": "jsonb",
+      "nullable": true
+    },
+    {
+      "column": "actor_email",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "recorded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "superseded_by",
+      "native_type": "varchar(255)",
+      "nullable": true
+    }
+  ],
+  "resolved_daily_sales": [
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "total_sales",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "resolution_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "has_conflict",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "net_sales",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "gst",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    }
+  ],
+  "resolved_deleted_sale_day": [
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "deleted_count",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "total_inc_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_tax",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "resolution_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "has_conflict",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "resolved_inventory_day": [
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "purchases",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "wastage",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "stock_on_hand",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "resolution_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "has_conflict",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "resolved_labour_day": [
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "department",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "scheduled_hours",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "actual_hours",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "scheduled_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "actual_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "resolution_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "has_conflict",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "resolved_payment_day": [
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "payment_type_name",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "tip",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "payment_count",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "resolution_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "has_conflict",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "resolved_product_sales": [
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "product_name_key",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "quantity_sold",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "resolution_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "has_conflict",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "resolved_recipe": [
+    {
+      "column": "recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "recipe_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "recipe_folder_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "cost_per_portion",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "cost_per_portion_incl_labour",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "total_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "portion_size",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "portion_size_value",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "menu_price",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "actual_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "resolution_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "menu_state",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "price_source",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "last_sold_price",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "last_sold_cost",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "last_sold_date",
+      "native_type": "date",
+      "nullable": true
+    }
+  ],
+  "resolved_recipe_ingredient": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "parent_recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "line_recipe_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "line_recipe_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "is_sub_recipe",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "recipe_detail_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "stock_id",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "stock_code",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "stock_description",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "portion_weight",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "unit_of_measurement",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "cost_per_qty",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "cost_per_unit",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "supplier_name",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "resolved_reservation_day": [
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "service_period",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "bookings",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "attended",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "covers",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "cancelled",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "no_shows",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "walk_ins",
+      "native_type": "bigint",
+      "nullable": true
+    },
+    {
+      "column": "resolution_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "has_conflict",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "resolved_sale_item_day": [
+    {
+      "column": "trading_date",
+      "native_type": "date",
+      "nullable": true
+    },
+    {
+      "column": "category_name",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "quantity",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "amount",
+      "native_type": "numeric(14,4)",
+      "nullable": true
+    },
+    {
+      "column": "resolution_type",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "authoritative_source",
+      "native_type": "text",
+      "nullable": true
+    },
+    {
+      "column": "has_conflict",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "resolved_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "review_classification": [
+    {
+      "column": "review_id",
+      "native_type": "varchar(512)",
+      "nullable": true
+    },
+    {
+      "column": "sentiment",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "sentiment_confidence",
+      "native_type": "numeric(6,4)",
+      "nullable": true
+    },
+    {
+      "column": "predicted_rating",
+      "native_type": "numeric(3,2)",
+      "nullable": true
+    },
+    {
+      "column": "aspects",
+      "native_type": "jsonb",
+      "nullable": true
+    },
+    {
+      "column": "classified_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "review_classification_run": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "kind",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "status",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "review_count",
+      "native_type": "int",
+      "nullable": true
+    },
+    {
+      "column": "started_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "finished_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "error_message",
+      "native_type": "text",
+      "nullable": true
+    }
+  ],
+  "saved_dashboard": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "title",
+      "native_type": "varchar(200)",
+      "nullable": true
+    },
+    {
+      "column": "description",
+      "native_type": "varchar(500)",
+      "nullable": true
+    },
+    {
+      "column": "layout",
+      "native_type": "varchar(32)",
+      "nullable": true
+    },
+    {
+      "column": "widgets",
+      "native_type": "jsonb",
+      "nullable": true
+    },
+    {
+      "column": "created_by",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "updated_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "filters",
+      "native_type": "jsonb",
+      "nullable": true
+    },
+    {
+      "column": "visibility",
+      "native_type": "varchar(16)",
+      "nullable": true
+    },
+    {
+      "column": "pinned",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "current_revision",
+      "native_type": "integer",
+      "nullable": true
+    }
+  ],
+  "saved_dashboard_revision": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "dashboard_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "revision",
+      "native_type": "integer",
+      "nullable": true
+    },
+    {
+      "column": "document",
+      "native_type": "jsonb",
+      "nullable": true
+    },
+    {
+      "column": "created_by",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ],
+  "saved_dashboard_share": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "dashboard_id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "department",
+      "native_type": "varchar(64)",
+      "nullable": true
+    },
+    {
+      "column": "seniority",
+      "native_type": "varchar(64)",
+      "nullable": true
+    }
+  ],
+  "user_account": [
+    {
+      "column": "id",
+      "native_type": "uuid",
+      "nullable": true
+    },
+    {
+      "column": "email",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "password_hash",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "display_name",
+      "native_type": "varchar(255)",
+      "nullable": true
+    },
+    {
+      "column": "department",
+      "native_type": "varchar(100)",
+      "nullable": true
+    },
+    {
+      "column": "seniority",
+      "native_type": "varchar(100)",
+      "nullable": true
+    },
+    {
+      "column": "active",
+      "native_type": "boolean",
+      "nullable": true
+    },
+    {
+      "column": "created_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    },
+    {
+      "column": "updated_at",
+      "native_type": "timestamp(6) with time zone",
+      "nullable": true
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+source_system,current_rows,dates,first,last,gross_net_gst_mismatch,negative_gross,zero_gross
+CTB,191,191,2026-04-02,2026-10-12,0,0,0
+LIGHTSPEED,1675,1675,2020-11-23,2026-10-12,0,1,14
+LIGHTSPEED_PAYMENTS,89,89,2026-01-01,2026-03-31,0,0,0
+headers,old_dates,future_dates,total_missing,ex_tax_missing,gst_missing,freight_missing,account_missing,tax_code_missing,pdf_missing,header_tax_mismatch
+1200,1,0,0,0,0,0,1200,1200,5,0
+lines,quantity_zero,unit_cost_zero,quantity_cost_mismatch,stock_missing,category_missing,uom_missing,unit_quantity_missing,pack_size_missing,wet_missing,negative_lines
+6291,0,22,82,489,6291,1480,5439,5732,6090,114
+ambiguous_header_keys,headers_without_lines,orphan_lines,header_line_ex_tax_mismatch
+0,0,0,97
+payments,negative_amount,tipped,dates
+976199,1943,2012,1945
+sale_items,negative_amount,category_missing,sku_missing,dates
+1462332,3467,0,1461873,1944
+deleted_sales,negative_total,dates
+3207,0,1009

@@ -1,0 +1,30 @@
+source_system,dataset,stage,outcome,stage_rows,last_occurred
+CTB,ctb-invoices,CANONICALIZED,SUCCESS,3,2026-10-13 18:00:06.251141+00
+CTB,ctb-invoices,PARSED,SUCCESS,3,2026-10-13 18:00:00.424337+00
+LIGHTSPEED,lightspeed-deleted-sales,CANONICALIZED,SUCCESS,7,2026-10-12 19:03:37.021142+00
+LIGHTSPEED,lightspeed-deleted-sales,PARSED,SUCCESS,7,2026-10-12 19:03:36.961176+00
+LIGHTSPEED,lightspeed-payments,CANONICALIZED,SUCCESS,2,2026-10-12 19:03:36.71394+00
+LIGHTSPEED,lightspeed-payments,PARSED,FAILED,4,2026-10-12 06:26:10.532889+00
+LIGHTSPEED,lightspeed-payments,PARSED,SUCCESS,3,2026-10-12 19:03:30.734323+00
+LIGHTSPEED,lightspeed-sale-items,CANONICALIZED,EMPTY,4,2026-10-10 08:09:21.737528+00
+LIGHTSPEED,lightspeed-sale-items,CANONICALIZED,FAILED,1,2026-10-10 08:24:20.725531+00
+LIGHTSPEED,lightspeed-sale-items,CANONICALIZED,SUCCESS,15,2026-10-12 19:05:38.742014+00
+LIGHTSPEED,lightspeed-sale-items,PARSED,EMPTY,4,2026-10-10 08:09:21.729708+00
+LIGHTSPEED,lightspeed-sale-items,PARSED,FAILED,22,2026-10-10 08:19:23.571179+00
+LIGHTSPEED,lightspeed-sale-items,PARSED,SUCCESS,20,2026-10-12 19:05:31.580109+00
+source_system,dataset,last_raw,last_canon
+source_system,connector_name,status,runs,counter_mismatch,empty_success
+CTB,ctb-detail-backfill,PARTIAL,1,0,0
+CTB,ctb-detail-backfill,SUCCESS,1,0,0
+CTB,ctb-invoice-pdf,SUCCESS,2687,0,0
+CTB,ctb-invoices,SUCCESS,17,0,0
+CTB,ctb-revenue,FAILED,17,0,0
+CTB,ctb-revenue,PARTIAL,8,0,0
+CTB,ctb-revenue,SUCCESS,9,0,0
+LIGHTSPEED,lightspeed-all-sales,SUCCESS,2,0,0
+LIGHTSPEED,lightspeed-deleted-sales,SUCCESS,7,0,0
+LIGHTSPEED,lightspeed-insights,SUCCESS,28,0,0
+LIGHTSPEED,lightspeed-payments,SUCCESS,7,0,0
+LIGHTSPEED,lightspeed-sale-items,SUCCESS,46,0,0
+OPENTABLE,opentable-api,PARTIAL,1,0,0
+OPENTABLE,opentable-api,SUCCESS,1,0,0
