@@ -377,6 +377,40 @@ class ArchitectureBoundariesTest {
           .resideInAPackage("..semantic..");
 
   /**
+   * The relational query backend compiles SQL over the allowlisted catalogue only: it must never
+   * reach the canonical/reconciliation/ingestion persistence packages, nor the reporting,
+   * conversational, dashboard, widget, forecasting or classification packages.
+   */
+  @ArchTest
+  static final ArchRule queryPackageDoesNotReachPersistenceOrDelivery =
+      noClasses()
+          .that()
+          .resideInAPackage("com.goldys.platform.query..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "..canonical..",
+              "..reconciliation..",
+              "..ingestion..",
+              "..connectors..",
+              "..reporting..",
+              "..conversational..",
+              "..dashboard..",
+              "..widget..",
+              "..forecasting..",
+              "..classification..");
+
+  /** REST delivery reaches the query backend only through the application service. */
+  @ArchTest
+  static final ArchRule apiDoesNotReachQueryPackage =
+      noClasses()
+          .that()
+          .resideInAPackage("..api..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("com.goldys.platform.query..");
+
+  /**
    * The forecasting domain is a leaf: it composes the semantic catalogue and auth with its own JPA
    * persistence, and reaches nothing else in the platform — not the reconciliation/canonical/
    * ingestion internals, the API / application delivery layers, nor the dashboard/reporting/
