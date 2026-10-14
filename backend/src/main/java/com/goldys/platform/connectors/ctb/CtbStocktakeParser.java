@@ -38,7 +38,7 @@ public class CtbStocktakeParser {
       out.add(
           new StocktakeInput(
               "CTB",
-              intField(n.get("stocktakeId")),
+              requiredInt(n.get("stocktakeId"), "stocktakeId"),
               requiredDate(n.get("stocktakeDate")),
               sanitize(n.get("stocktakeDesc")),
               sanitize(n.get("outletName")),
@@ -62,7 +62,7 @@ public class CtbStocktakeParser {
           new StockCountInput(
               "CTB",
               stocktakeId,
-              intField(n.get("id")),
+              requiredInt(n.get("id"), "id"),
               countedDate,
               ProductNameKey.normalize(sanitize(n.get("stockDesc"))),
               nz(decimal(n.get("qtyCount"))),
@@ -104,8 +104,21 @@ public class CtbStocktakeParser {
     }
   }
 
-  private static int intField(JsonNode n) {
-    return n == null || n.isNull() ? 0 : n.asInt();
+  private static int requiredInt(JsonNode n, String field) {
+    if (n == null || n.isNull()) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Missing integer field " + field);
+    }
+    if (n.isIntegralNumber()) {
+      return n.asInt();
+    }
+    String s = n.asText();
+    try {
+      return Integer.parseInt(s.trim());
+    } catch (NumberFormatException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad integer field " + field + ": '" + s + "'", e);
+    }
   }
 
   private static Integer integer(JsonNode n) {

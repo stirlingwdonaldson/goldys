@@ -49,7 +49,7 @@ class CtbWastageParserTest {
     String json =
         """
         {"data":[{"wastageRecordId":7,"wastageRecordDetailId":1,"recordDate":"2026-10-05",
-        "stockDesc":" Chicken  Breast "}]}
+        "stockDesc":" Chicken  Breast ","quantity":1}]}
         """;
 
     List<WastageInput> out = parser.parse(bytes(json), RAW);
@@ -64,7 +64,7 @@ class CtbWastageParserTest {
     String json =
         "{\"data\":[{\"wastageRecordId\":7,\"wastageRecordDetailId\":1,\"recordDate\":\"2026-10-05\",\"stockDesc\":\"Oil"
             + nul
-            + "\"}],\"message\":{\"IsSuccess\":true}}";
+            + "\",\"quantity\":1}],\"message\":{\"IsSuccess\":true}}";
 
     List<WastageInput> out = parser.parse(bytes(json), RAW);
 
@@ -75,7 +75,8 @@ class CtbWastageParserTest {
   void malformedDateThrowsSchemaMismatch() {
     String json =
         """
-        {"data":[{"wastageRecordDetailId":1,"recordDate":"bad"}],"message":{"IsSuccess":true}}
+        {"data":[{"wastageRecordId":7,"wastageRecordDetailId":1,"recordDate":"bad",
+        "stockDesc":"Oil","quantity":1}],"message":{"IsSuccess":true}}
         """;
 
     assertThatThrownBy(() -> parser.parse(bytes(json), RAW))
@@ -87,6 +88,34 @@ class CtbWastageParserTest {
   @Test
   void nonJsonThrowsSchemaMismatch() {
     assertThatThrownBy(() -> parser.parse(bytes("not json"), RAW))
+        .isInstanceOf(ConnectorFetchException.class)
+        .extracting(e -> ((ConnectorFetchException) e).failureType())
+        .isEqualTo("CONNECTOR_SCHEMA_MISMATCH");
+  }
+
+  @Test
+  void missingWastageRecordDetailIdThrowsSchemaMismatch() {
+    String json =
+        """
+        {"data":[{"wastageRecordId":7,"recordDate":"2026-10-05","stockDesc":"Oil","quantity":3}],
+        "message":{"IsSuccess":true}}
+        """;
+
+    assertThatThrownBy(() -> parser.parse(bytes(json), RAW))
+        .isInstanceOf(ConnectorFetchException.class)
+        .extracting(e -> ((ConnectorFetchException) e).failureType())
+        .isEqualTo("CONNECTOR_SCHEMA_MISMATCH");
+  }
+
+  @Test
+  void missingQuantityThrowsSchemaMismatch() {
+    String json =
+        """
+        {"data":[{"wastageRecordId":7,"wastageRecordDetailId":359,"recordDate":"2026-10-05",
+        "stockDesc":"Oil"}],"message":{"IsSuccess":true}}
+        """;
+
+    assertThatThrownBy(() -> parser.parse(bytes(json), RAW))
         .isInstanceOf(ConnectorFetchException.class)
         .extracting(e -> ((ConnectorFetchException) e).failureType())
         .isEqualTo("CONNECTOR_SCHEMA_MISMATCH");

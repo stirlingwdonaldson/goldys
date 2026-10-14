@@ -149,6 +149,33 @@ class CtbStocktakeParserTest {
     assertThat(parser.parseStocktakes(bytes("{\"message\":{\"IsSuccess\":false}}"), RAW)).isEmpty();
   }
 
+  @Test
+  void missingStocktakeIdThrowsSchemaMismatch() {
+    String json =
+        """
+        {"data":[{"stocktakeDate":"2026-10-05"}],"message":{"IsSuccess":true}}
+        """;
+
+    assertThatThrownBy(() -> parser.parseStocktakes(bytes(json), RAW))
+        .isInstanceOf(ConnectorFetchException.class)
+        .extracting(e -> ((ConnectorFetchException) e).failureType())
+        .isEqualTo("CONNECTOR_SCHEMA_MISMATCH");
+  }
+
+  @Test
+  void missingLineIdThrowsSchemaMismatch() {
+    String json =
+        """
+        {"data":[{"stockDesc":"Oil","qtyCount":5}],"message":{"IsSuccess":true}}
+        """;
+
+    assertThatThrownBy(
+            () -> parser.parseStocktakeLines(bytes(json), RAW, 1, LocalDate.parse("2026-10-05")))
+        .isInstanceOf(ConnectorFetchException.class)
+        .extracting(e -> ((ConnectorFetchException) e).failureType())
+        .isEqualTo("CONNECTOR_SCHEMA_MISMATCH");
+  }
+
   private static byte[] bytes(String s) {
     return s.getBytes(StandardCharsets.UTF_8);
   }

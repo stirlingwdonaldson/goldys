@@ -35,11 +35,11 @@ public class CtbWastageParser {
       out.add(
           new WastageInput(
               "CTB",
-              intField(n.get("wastageRecordId")),
-              intField(n.get("wastageRecordDetailId")),
+              requiredInt(n.get("wastageRecordId"), "wastageRecordId"),
+              requiredInt(n.get("wastageRecordDetailId"), "wastageRecordDetailId"),
               requiredDate(n.get("recordDate")),
               ProductNameKey.normalize(sanitize(n.get("stockDesc"))),
-              decimal(n.get("quantity")),
+              requiredDecimal(n.get("quantity"), "quantity"),
               decimal(n.get("cost")),
               sanitize(n.get("reason")),
               sanitize(n.get("supplierName")),
@@ -76,8 +76,42 @@ public class CtbWastageParser {
     }
   }
 
-  private static int intField(JsonNode n) {
-    return n == null || n.isNull() ? 0 : n.asInt();
+  private static int requiredInt(JsonNode n, String field) {
+    if (n == null || n.isNull()) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Missing integer field " + field);
+    }
+    if (n.isIntegralNumber()) {
+      return n.asInt();
+    }
+    String s = n.asText();
+    try {
+      return Integer.parseInt(s.trim());
+    } catch (NumberFormatException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad integer field " + field + ": '" + s + "'", e);
+    }
+  }
+
+  private static BigDecimal requiredDecimal(JsonNode n, String field) {
+    if (n == null || n.isNull()) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Missing decimal field " + field);
+    }
+    if (n.isNumber()) {
+      return n.decimalValue();
+    }
+    String s = n.asText();
+    if (s == null || s.isBlank()) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Missing decimal field " + field);
+    }
+    try {
+      return new BigDecimal(s.trim());
+    } catch (NumberFormatException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Bad decimal field " + field + ": '" + s + "'", e);
+    }
   }
 
   private static Integer integer(JsonNode n) {
