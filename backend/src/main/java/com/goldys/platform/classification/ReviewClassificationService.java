@@ -6,6 +6,8 @@ import com.goldys.platform.canonical.ReviewRecorded;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
@@ -30,6 +32,8 @@ public class ReviewClassificationService {
 
   /** The run kind recorded for a {@link #backfill()} pass. */
   static final String BACKFILL_KIND = "BACKFILL";
+
+  private static final Logger log = LoggerFactory.getLogger(ReviewClassificationService.class);
 
   private final ReviewFeatureTextExtractor featureTexts;
   private final ReviewClassifier classifier;
@@ -65,9 +69,10 @@ public class ReviewClassificationService {
   }
 
   /**
-   * Classifies one review and upserts its {@code review_classification} row. A {@link
-   * ReviewClassifier} failure is swallowed and the review skipped: classification is read-only and
-   * one bad review must not fail the (ingestion) run.
+   * Classifies one review and upserts its {@code review_classification} row. Only a {@link
+   * ReviewClassifier} failure is swallowed (and logged) — one bad review or a Jev hiccup must not
+   * fail the ingestion run — while a feature-text or persistence failure propagates so it is not
+   * silently lost.
    */
   public void classify(
       String reviewId,
@@ -76,11 +81,15 @@ public class ReviewClassificationService {
       String comment,
       String privateNote,
       List<String> tags) {
+    String text = featureTexts.featureText(source, overallRating, comment, privateNote, tags);
+    ReviewClassification classification;
     try {
-      classifyUnchecked(reviewId, source, overallRating, comment, privateNote, tags);
+      classification = classifier.classify(new ReviewClassificationRequest(text, DEFAULT_ASPECTS));
     } catch (RuntimeException e) {
-      // Swallowed: no row, no propagation.
+      log.warn("Skipping classification for review '{}': classifier failed", reviewId, e);
+      return;
     }
+    persist(reviewId, classification);
   }
 
   /**
@@ -140,6 +149,13 @@ public class ReviewClassificationService {
     String text = featureTexts.featureText(source, overallRating, comment, privateNote, tags);
     ReviewClassification classification =
         classifier.classify(new ReviewClassificationRequest(text, DEFAULT_ASPECTS));
+    persist(reviewId, classification);
+  }
+
+  /**
+   * Upserts the single {@code review_classification} row, skipping a null (unclassified) result.
+   */
+  private void persist(String reviewId, ReviewClassification classification) {
     if (classification == null) {
       return;
     }

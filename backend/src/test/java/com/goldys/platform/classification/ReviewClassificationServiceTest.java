@@ -2,7 +2,9 @@ package com.goldys.platform.classification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -119,6 +121,23 @@ class ReviewClassificationServiceTest {
     assertThatCode(() -> svc.classify("OT-1", "OpenTable", 4, "Great food", null, List.of()))
         .doesNotThrowAnyException();
     assertThat(classificationStore).isEmpty();
+  }
+
+  @Test
+  void persistence_failure_is_not_swallowed() {
+    doThrow(new RuntimeException("db down")).when(reviewClassifications).save(any());
+    ReviewClassificationService svc =
+        service(
+            new FakeClassifier(
+                req ->
+                    new ReviewClassification(
+                        new Sentiment("POSITIVE", new BigDecimal("0.90")),
+                        new BigDecimal("4.5"),
+                        List.of())));
+
+    assertThatThrownBy(() -> svc.classify("OT-1", "OpenTable", 4, "Great food", null, List.of()))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("db down");
   }
 
   @Test
