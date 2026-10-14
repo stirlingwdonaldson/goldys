@@ -64,8 +64,7 @@ class CanonicalStocktakeServiceTest {
         service.recordAt(
             input(LocalDate.parse("2026-10-05"), true), Instant.parse("2026-10-12T00:00:00Z"));
 
-    when(repository.lockCurrentSourceFact(eq("CTB"), anyString()))
-        .thenReturn(Optional.of(saved));
+    when(repository.lockCurrentSourceFact(eq("CTB"), anyString())).thenReturn(Optional.of(saved));
     service.recordAt(
         input(LocalDate.parse("2026-10-05"), false), Instant.parse("2026-10-12T01:00:00Z"));
 
@@ -80,8 +79,7 @@ class CanonicalStocktakeServiceTest {
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     CanonicalStocktake saved = service.record(input(LocalDate.parse("2026-10-05"), true));
 
-    when(repository.lockCurrentSourceFact(eq("CTB"), anyString()))
-        .thenReturn(Optional.of(saved));
+    when(repository.lockCurrentSourceFact(eq("CTB"), anyString())).thenReturn(Optional.of(saved));
     CanonicalStocktake again = service.record(input(LocalDate.parse("2026-10-05"), true));
 
     assertThat(again).isSameAs(saved);

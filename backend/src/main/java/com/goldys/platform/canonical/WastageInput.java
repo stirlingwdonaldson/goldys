@@ -7,8 +7,8 @@ import java.util.UUID;
 /**
  * A normalized wastage-line observation from one source. {@code lineId} is the source's globally
  * unique {@code wastageRecordDetailId}; {@code wastageRecordId} anchors it for consistency with the
- * other parent-scoped line identities. Wastage has no stock code in the source — product identity is
- * {@code productNameKey} from {@code stockDesc}.
+ * other parent-scoped line identities. Wastage has no stock code in the source — product identity
+ * is {@code productNameKey} from {@code stockDesc}.
  */
 public record WastageInput(
     String sourceSystem,

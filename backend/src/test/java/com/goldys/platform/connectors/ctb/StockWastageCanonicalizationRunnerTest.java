@@ -54,10 +54,14 @@ class StockWastageCanonicalizationRunnerTest {
                     Instant.parse("2026-10-12T00:00:00Z"))));
     when(rawLedger.rawPayloadsForFetcherWithRef("CTB", "ctb-stocktake-detail"))
         .thenReturn(
-            List.of(new RawLedgerQuery.RawPayloadWithRef(UUID.randomUUID(), bytes(DETAIL), "stocktake:1")));
+            List.of(
+                new RawLedgerQuery.RawPayloadWithRef(
+                    UUID.randomUUID(), bytes(DETAIL), "stocktake:1")));
     when(rawLedger.rawPayloadsForFetcherWithRef("CTB", "ctb-wastage-detail"))
         .thenReturn(
-            List.of(new RawLedgerQuery.RawPayloadWithRef(UUID.randomUUID(), bytes(WASTAGE), "wastage:7")));
+            List.of(
+                new RawLedgerQuery.RawPayloadWithRef(
+                    UUID.randomUUID(), bytes(WASTAGE), "wastage:7")));
 
     CanonicalStocktakeIngest stocktakeIngest = mock(CanonicalStocktakeIngest.class);
     CanonicalStockCountIngest stockCountIngest = mock(CanonicalStockCountIngest.class);
@@ -73,7 +77,8 @@ class StockWastageCanonicalizationRunnerTest {
     ArgumentCaptor<List<StockCountInput>> countCaptor = ArgumentCaptor.forClass((Class) List.class);
     verify(stockCountIngest).recordAll(countCaptor.capture());
     assertThat(countCaptor.getValue()).hasSize(1);
-    assertThat(countCaptor.getValue().get(0).countedDate()).isEqualTo(LocalDate.parse("2026-10-05"));
+    assertThat(countCaptor.getValue().get(0).countedDate())
+        .isEqualTo(LocalDate.parse("2026-10-05"));
 
     @SuppressWarnings("unchecked")
     ArgumentCaptor<List<WastageInput>> wasteCaptor = ArgumentCaptor.forClass((Class) List.class);
@@ -98,7 +103,8 @@ class StockWastageCanonicalizationRunnerTest {
                     bytes(HEADER_06),
                     null,
                     Instant.parse("2026-10-12T01:00:00Z"))));
-    when(rawLedger.rawPayloadsForFetcherWithRef("CTB", "ctb-stocktake-detail")).thenReturn(List.of());
+    when(rawLedger.rawPayloadsForFetcherWithRef("CTB", "ctb-stocktake-detail"))
+        .thenReturn(List.of());
     when(rawLedger.rawPayloadsForFetcherWithRef("CTB", "ctb-wastage-detail")).thenReturn(List.of());
 
     CanonicalStocktakeIngest stocktakeIngest = mock(CanonicalStocktakeIngest.class);
@@ -125,14 +131,17 @@ class StockWastageCanonicalizationRunnerTest {
                     Instant.parse("2026-10-12T00:00:00Z"))));
     when(rawLedger.rawPayloadsForFetcherWithRef("CTB", "ctb-stocktake-detail"))
         .thenReturn(
-            List.of(new RawLedgerQuery.RawPayloadWithRef(UUID.randomUUID(), bytes(DETAIL), "stocktake:999")));
+            List.of(
+                new RawLedgerQuery.RawPayloadWithRef(
+                    UUID.randomUUID(), bytes(DETAIL), "stocktake:999")));
     when(rawLedger.rawPayloadsForFetcherWithRef("CTB", "ctb-wastage-detail")).thenReturn(List.of());
 
     CanonicalStocktakeIngest stocktakeIngest = mock(CanonicalStocktakeIngest.class);
     CanonicalStockCountIngest stockCountIngest = mock(CanonicalStockCountIngest.class);
     CanonicalWastageIngest wastageIngest = mock(CanonicalWastageIngest.class);
 
-    assertThatThrownBy(() -> runner(rawLedger, stocktakeIngest, stockCountIngest, wastageIngest).run(null))
+    assertThatThrownBy(
+            () -> runner(rawLedger, stocktakeIngest, stockCountIngest, wastageIngest).run(null))
         .isInstanceOf(ConnectorFetchException.class);
     verify(stockCountIngest, never()).recordAll(any());
   }

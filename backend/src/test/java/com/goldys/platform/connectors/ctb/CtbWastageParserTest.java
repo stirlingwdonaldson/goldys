@@ -54,7 +54,8 @@ class CtbWastageParserTest {
 
     List<WastageInput> out = parser.parse(bytes(json), RAW);
 
-    assertThat(out.get(0).productNameKey()).isEqualTo(ProductNameKey.normalize(" Chicken  Breast "));
+    assertThat(out.get(0).productNameKey())
+        .isEqualTo(ProductNameKey.normalize(" Chicken  Breast "));
   }
 
   @Test

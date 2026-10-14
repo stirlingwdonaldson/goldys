@@ -15,10 +15,11 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 /**
- * Parses CTB's wastage-detail envelope ({@code WastageRecord/GetWastageRecordDetailByWastageRecordId})
- * into canonical wastage inputs. Wastage has no stock code in the source, so product identity is the
- * normalized {@code stockDesc}. CTB JSON may contain literal {@code \u0000} escapes; string fields
- * are sanitised before they reach a canonical column.
+ * Parses CTB's wastage-detail envelope ({@code
+ * WastageRecord/GetWastageRecordDetailByWastageRecordId}) into canonical wastage inputs. Wastage
+ * has no stock code in the source, so product identity is the normalized {@code stockDesc}. CTB
+ * JSON may contain literal {@code \u0000} escapes; string fields are sanitised before they reach a
+ * canonical column.
  */
 @Component
 public class CtbWastageParser {

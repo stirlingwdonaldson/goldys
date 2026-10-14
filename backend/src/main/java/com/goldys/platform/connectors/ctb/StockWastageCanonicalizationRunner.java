@@ -25,11 +25,11 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * One-off replay: canonicalizes the {@code ctb-stocktakes}, {@code ctb-stocktake-detail} and
- * {@code ctb-wastage-detail} raw records already in the ledger (from the CTB scheduled pull and the
- * detail backfill) into {@code canonical_stocktake}, {@code canonical_stock_count} and
- * {@code canonical_wastage}. Runs only when {@code app.stock-wastage-canonicalize=true}, and is
- * idempotent — the canonical services dedupe on {@code source_record_ref}.
+ * One-off replay: canonicalizes the {@code ctb-stocktakes}, {@code ctb-stocktake-detail} and {@code
+ * ctb-wastage-detail} raw records already in the ledger (from the CTB scheduled pull and the detail
+ * backfill) into {@code canonical_stocktake}, {@code canonical_stock_count} and {@code
+ * canonical_wastage}. Runs only when {@code app.stock-wastage-canonicalize=true}, and is idempotent
+ * — the canonical services dedupe on {@code source_record_ref}.
  *
  * <p>Stocktake detail carries no date, so a line's {@code counted_date} is resolved from the
  * canonical header. A line whose stocktake has no header is a hard failure (never a silent skip),
@@ -39,7 +39,8 @@ import org.springframework.stereotype.Component;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ConditionalOnProperty(name = "app.stock-wastage-canonicalize", havingValue = "true")
 public class StockWastageCanonicalizationRunner implements ApplicationRunner {
-  private static final Logger log = LoggerFactory.getLogger(StockWastageCanonicalizationRunner.class);
+  private static final Logger log =
+      LoggerFactory.getLogger(StockWastageCanonicalizationRunner.class);
 
   private final RawLedgerQuery rawLedger;
   private final CtbStocktakeParser stocktakeParser;

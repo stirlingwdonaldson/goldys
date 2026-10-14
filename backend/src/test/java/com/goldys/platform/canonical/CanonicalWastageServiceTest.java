@@ -69,8 +69,7 @@ class CanonicalWastageServiceTest {
     CanonicalWastage saved =
         service.recordAt(input(7, 359, "12"), Instant.parse("2026-10-12T00:00:00Z"));
 
-    when(repository.lockCurrentSourceFact(eq("CTB"), anyString()))
-        .thenReturn(Optional.of(saved));
+    when(repository.lockCurrentSourceFact(eq("CTB"), anyString())).thenReturn(Optional.of(saved));
     service.recordAt(input(7, 359, "13"), Instant.parse("2026-10-12T01:00:00Z"));
 
     assertThat(saved.supersededAt()).isNotNull();
@@ -84,8 +83,7 @@ class CanonicalWastageServiceTest {
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     CanonicalWastage saved = service.record(input(7, 359, "12"));
 
-    when(repository.lockCurrentSourceFact(eq("CTB"), anyString()))
-        .thenReturn(Optional.of(saved));
+    when(repository.lockCurrentSourceFact(eq("CTB"), anyString())).thenReturn(Optional.of(saved));
     CanonicalWastage again = service.record(input(7, 359, "12"));
 
     assertThat(again).isSameAs(saved);

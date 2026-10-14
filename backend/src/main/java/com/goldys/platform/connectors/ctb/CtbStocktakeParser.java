@@ -19,10 +19,10 @@ import org.springframework.stereotype.Component;
  * Parses CTB's stocktake envelope into canonical inputs: the {@code ctb-stocktakes} header list and
  * the paged {@code ctb-stocktake-detail} counted lines.
  *
- * <p>The detail payload carries no date and no stocktake id: the caller supplies {@code stocktakeId}
- * (from the raw record's {@code source_record_ref = "stocktake:<id>"}) and {@code countedDate}
- * (resolved from the header). CTB JSON may contain literal {@code \u0000} escapes; string fields are
- * sanitised so no control character reaches a canonical column.
+ * <p>The detail payload carries no date and no stocktake id: the caller supplies {@code
+ * stocktakeId} (from the raw record's {@code source_record_ref = "stocktake:<id>"}) and {@code
+ * countedDate} (resolved from the header). CTB JSON may contain literal {@code \u0000} escapes;
+ * string fields are sanitised so no control character reaches a canonical column.
  */
 @Component
 public class CtbStocktakeParser {

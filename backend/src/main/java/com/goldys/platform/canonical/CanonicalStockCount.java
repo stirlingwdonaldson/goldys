@@ -11,8 +11,8 @@ import java.util.UUID;
 
 /**
  * One stocktake observation (product quantity on hand). Fact fields are immutable; a correction
- * closes this row and inserts a successor sharing the same logical identity ({@code
- * (stocktakeId, lineId)}).
+ * closes this row and inserts a successor sharing the same logical identity ({@code (stocktakeId,
+ * lineId)}).
  */
 @Entity
 @Table(name = "canonical_stock_count")

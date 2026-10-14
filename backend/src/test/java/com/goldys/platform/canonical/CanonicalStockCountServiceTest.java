@@ -71,8 +71,7 @@ class CanonicalStockCountServiceTest {
     CanonicalStockCount saved =
         service.recordAt(input(1, 100, "5"), Instant.parse("2026-10-12T00:00:00Z"));
 
-    when(repository.lockCurrentSourceFact(eq("CTB"), anyString()))
-        .thenReturn(Optional.of(saved));
+    when(repository.lockCurrentSourceFact(eq("CTB"), anyString())).thenReturn(Optional.of(saved));
     service.recordAt(input(1, 100, "6"), Instant.parse("2026-10-12T01:00:00Z"));
 
     assertThat(saved.supersededAt()).isNotNull();
@@ -86,8 +85,7 @@ class CanonicalStockCountServiceTest {
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     CanonicalStockCount saved = service.record(input(1, 100, "5"));
 
-    when(repository.lockCurrentSourceFact(eq("CTB"), anyString()))
-        .thenReturn(Optional.of(saved));
+    when(repository.lockCurrentSourceFact(eq("CTB"), anyString())).thenReturn(Optional.of(saved));
     CanonicalStockCount again = service.record(input(1, 100, "5"));
 
     assertThat(again).isSameAs(saved);

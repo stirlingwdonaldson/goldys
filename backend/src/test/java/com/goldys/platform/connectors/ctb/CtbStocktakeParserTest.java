@@ -83,19 +83,22 @@ class CtbStocktakeParserTest {
 
   @Test
   void normalizesProductName() {
-    String json = """
+    String json =
+        """
         {"data":[{"id":1,"stockDesc":" Chicken  Breast "}],"message":{"IsSuccess":true}}
         """;
 
     List<StockCountInput> out =
         parser.parseStocktakeLines(bytes(json), RAW, 1, LocalDate.parse("2026-10-05"));
 
-    assertThat(out.get(0).productNameKey()).isEqualTo(ProductNameKey.normalize(" Chicken  Breast "));
+    assertThat(out.get(0).productNameKey())
+        .isEqualTo(ProductNameKey.normalize(" Chicken  Breast "));
   }
 
   @Test
   void nullQtyCountIsZero() {
-    String json = """
+    String json =
+        """
         {"data":[{"id":1,"stockDesc":"Oil"}],"message":{"IsSuccess":true}}
         """;
 
