@@ -15,6 +15,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  Star,
   TrendingUp,
   Users,
   Workflow,
@@ -77,6 +78,7 @@ export const NAV_GROUPS: NavGroup[] = [
         keywords: ["payments", "voids", "deleted orders", "sale items", "line items", "tenders"],
       },
       { title: "Custom dashboards", href: "/dashboards", icon: LayoutGrid, keywords: ["widgets", "reports"] },
+      { title: "Reviews", href: "/reviews", icon: Star, keywords: ["reputation", "sentiment", "ratings", "feedback", "opentable", "google"] },
     ],
   },
   {

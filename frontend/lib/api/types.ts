@@ -942,6 +942,96 @@ export interface ForecastComparison {
   points: ForecastComparisonPoint[];
 }
 
+/** Headline review metrics over a range (mirrors `semantic.ReviewOverview`). */
+export interface ReviewOverview {
+  total: number;
+  averageRating: number;
+  positive: number;
+  neutral: number;
+  negative: number;
+  wouldRecommendPct: number;
+}
+
+/** One weekly sentiment bucket; `periodStart` is the inclusive start of the week (ISO date). */
+export interface SentimentBucket {
+  periodStart: string;
+  positive: number;
+  neutral: number;
+  negative: number;
+}
+
+/** Mentions and sentiment totals for one review aspect (mirrors `semantic.AspectSentimentSummary`). */
+export interface AspectSentimentSummary {
+  aspect: string;
+  mentions: number;
+  positive: number;
+  neutral: number;
+  negative: number;
+}
+
+/** Counts for one star rating (1..5), actual and predicted (mirrors `semantic.RatingBucket`). */
+export interface RatingBucket {
+  stars: number;
+  given: number;
+  predicted: number;
+}
+
+/** Aggregated review figures for one source system (mirrors `semantic.SourceSummary`). */
+export interface SourceSummary {
+  source: string;
+  total: number;
+  averageRating: number;
+  positive: number;
+  negative: number;
+}
+
+/**
+ * Per-aspect sentiment in a review read view (mirrors `semantic.AspectSentimentView`).
+ * `label` is the sentiment label ("POSITIVE" | "NEUTRAL" | "NEGATIVE").
+ */
+export interface AspectSentimentView {
+  aspect: string;
+  label: string;
+  confidence: number;
+}
+
+/**
+ * One resolved review as read by the analytics page (mirrors `semantic.ReviewView`). Nullable
+ * fields: `overallRating`, the sub-ratings (`foodRating`, `serviceRating`, `ambienceRating`,
+ * `valueRating`), `sentiment`, `predictedRating`, `comment`, `guestName`. `reviewedAt` is an
+ * ISO-8601 instant; `sentiment` is "POSITIVE" | "NEUTRAL" | "NEGATIVE" | null.
+ */
+export interface ReviewView {
+  reviewId: string;
+  source: string;
+  reviewedAt: string;
+  overallRating: number | null;
+  foodRating: number | null;
+  serviceRating: number | null;
+  ambienceRating: number | null;
+  valueRating: number | null;
+  sentiment: string | null;
+  sentimentConfidence: number;
+  predictedRating: number | null;
+  comment: string | null;
+  guestName: string | null;
+  aspects: AspectSentimentView[];
+}
+
+/**
+ * Optional filter for the review list (mirrors `semantic.ReviewFilter`); a null/absent field means
+ * "no filter". `query` maps to the endpoint's `q` param (free text over comment + guest name).
+ */
+export interface ReviewFilter {
+  from?: string | null;
+  to?: string | null;
+  source?: string | null;
+  sentiment?: string | null;
+  aspect?: string | null;
+  minRating?: number | null;
+  query?: string | null;
+}
+
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
 export interface Api {
   getDashboardBootstrap(): Promise<DashboardBootstrap>;
@@ -1061,6 +1151,13 @@ export interface Api {
   runClassification(kind: ClassificationRunKind): Promise<void>;
   /** Recent classification runs, newest first. */
   listClassificationRuns(): Promise<ClassificationRun[]>;
+  getReviewOverview(from: string, to: string): Promise<ReviewOverview>;
+  getReviewSentimentTrend(from: string, to: string): Promise<SentimentBucket[]>;
+  getReviewAspects(from: string, to: string): Promise<AspectSentimentSummary[]>;
+  getReviewRatings(from: string, to: string): Promise<RatingBucket[]>;
+  getReviewSources(from: string, to: string): Promise<SourceSummary[]>;
+  getReviews(filter: ReviewFilter): Promise<ReviewView[]>;
+
   /** The pending taxonomy draft, in display order. */
   getCategorySuggestions(): Promise<CategorySuggestion[]>;
   addCategorySuggestion(input: { name: string; groupName?: string | null }): Promise<CategorySuggestion>;

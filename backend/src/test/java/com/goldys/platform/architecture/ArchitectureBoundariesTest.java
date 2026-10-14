@@ -14,6 +14,7 @@ import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import com.goldys.platform.semantic.RecipeIngredientMetricsQuery;
 import com.goldys.platform.semantic.RecipeMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
+import com.goldys.platform.semantic.ReviewMetricsQuery;
 import com.goldys.platform.semantic.SaleItemMetricsQuery;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -493,6 +494,15 @@ class ArchitectureBoundariesTest {
       classes()
           .that()
           .implement(ProductCategoryMetricsQuery.class)
+          .should()
+          .resideInAPackage("..classification..");
+
+  /** The review semantic interface is implemented only in the classification package. */
+  @ArchTest
+  static final ArchRule reviewMetricsQueryImplementedInClassification =
+      classes()
+          .that()
+          .implement(ReviewMetricsQuery.class)
           .should()
           .resideInAPackage("..classification..");
 }

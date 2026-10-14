@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -21,9 +22,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * Parses the OpenTable GuestCenter reviews export into {@link OpenTableReview} rows. The header is
- * read from the CSV and the required columns are validated, so a report-shape change fails loudly
- * rather than silently producing wrong rows.
+ * Parses the OpenTable GuestCenter reviews export into {@link OpenTableReviewDetail} rows. The
+ * header is read from the CSV and the required columns are validated, so a report-shape change
+ * fails loudly rather than silently producing wrong rows.
  *
  * <p>The parsed rows are not canonicalized yet (reviews canonicalization is a later slice); this
  * parser validates the CSV shape and hands the typed rows to that slice.
@@ -41,7 +42,7 @@ public class OpenTableReviewsCsvParser {
     this.zone = ZoneId.of(zone);
   }
 
-  public List<OpenTableReview> parse(byte[] csv) {
+  public List<OpenTableReviewDetail> parse(byte[] csv) {
     List<CSVRecord> records = readAll(stripBom(csv));
     if (records.size() < 2) {
       throw new ConnectorFetchException(
@@ -49,9 +50,9 @@ public class OpenTableReviewsCsvParser {
     }
 
     Map<String, Integer> columns = columnIndex(records.get(0));
-    require(columns, "Review ID", "Source", "Review Date", "Overall Rating");
+    require(columns, "Review ID", "Source", "Review Date");
 
-    List<OpenTableReview> out = new ArrayList<>();
+    List<OpenTableReviewDetail> out = new ArrayList<>();
     int width = columns.size();
     for (int i = 1; i < records.size(); i++) {
       CSVRecord r = records.get(i);
@@ -64,13 +65,25 @@ public class OpenTableReviewsCsvParser {
     return out;
   }
 
-  private OpenTableReview row(CSVRecord r, Map<String, Integer> c) {
-    return new OpenTableReview(
+  private OpenTableReviewDetail row(CSVRecord r, Map<String, Integer> c) {
+    return new OpenTableReviewDetail(
         requireValue(c, r, "Review ID"),
         requireValue(c, r, "Source"),
         instant(requireValue(c, r, "Review Date"), "Review Date"),
+        instant(get(c, r, "Visit Date"), "Visit Date"),
+        blankToNull(get(c, r, "Guest Name")),
+        blankToNull(get(c, r, "Guest ID")),
         integer(get(c, r, "Overall Rating"), "Overall Rating"),
-        blankToNull(get(c, r, "Comment")));
+        integer(get(c, r, "Food"), "Food"),
+        integer(get(c, r, "Service"), "Service"),
+        integer(get(c, r, "Ambience"), "Ambience"),
+        integer(get(c, r, "Value"), "Value"),
+        blankToNull(get(c, r, "Noise")),
+        booleanValue(get(c, r, "Would Recommend"), "Would Recommend"),
+        blankToNull(get(c, r, "Comment")),
+        blankToNull(get(c, r, "Private Note from Guest")),
+        commaList(get(c, r, "Tags Added by Diner")),
+        commaList(get(c, r, "Keywords")));
   }
 
   private Instant instant(String value, String name) {
@@ -95,6 +108,28 @@ public class OpenTableReviewsCsvParser {
     } catch (NumberFormatException e) {
       throw schemaMismatch("Bad integer in column '" + name + "'", e);
     }
+  }
+
+  /** Parses a {@code Yes}/{@code No} value; blank maps to {@code null}. */
+  private Boolean booleanValue(String value, String name) {
+    String v = blankToNull(value);
+    if (v == null) {
+      return null;
+    }
+    return switch (v.toLowerCase(Locale.ROOT)) {
+      case "yes" -> Boolean.TRUE;
+      case "no" -> Boolean.FALSE;
+      default -> throw schemaMismatch("Bad boolean in column '" + name + "'", null);
+    };
+  }
+
+  /** Splits a comma-separated list; blank maps to an empty list. */
+  private static List<String> commaList(String value) {
+    String v = blankToNull(value);
+    if (v == null) {
+      return List.of();
+    }
+    return Arrays.stream(v.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
   }
 
   private static ConnectorFetchException schemaMismatch(String message, Throwable cause) {

@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://goldys.internal/schemas/review-classification.schema.json",
+  "title": "ClassifiedReview",
+  "description": "A guest review plus its classification: deterministic facts from the source CSV/raw ledger, and a Jev-inferred classification block. See docs/superpowers/specs/2026-10-14-review-classification-design.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewId",
+    "source",
+    "guest",
+    "visitedAt",
+    "reviewedAt",
+    "ratings",
+    "text",
+    "classification"
+  ],
+  "properties": {
+    "reviewId": {
+      "type": "string",
+      "description": "Stable review key; OT-… (OpenTable) / RT-… (Google)."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["OpenTable", "Google"]
+    },
+    "guest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "description": "OpenTable Guest ID (reviews carry a clean one)." },
+        "name": { "type": "string" }
+      }
+    },
+    "visitedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Visit Date, ISO-8601 UTC."
+    },
+    "reviewedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Review Date, ISO-8601 UTC."
+    },
+    "ratings": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Given star/yes-no ratings; null where the export left them blank.",
+      "required": ["overall", "food", "service", "ambience", "value", "noiseLabel", "wouldRecommend"],
+      "properties": {
+        "overall": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Overall Rating, 1..5."
+        },
+        "food": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 5
+        },
+        "service": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 5
+        },
+        "ambience": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 5
+        },
+        "value": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 5
+        },
+        "noiseLabel": {
+          "type": ["string", "null"],
+          "description": "Free-text noise level (e.g. \"Quiet\", \"Do not recall\")."
+        },
+        "wouldRecommend": {
+          "type": ["boolean", "null"],
+          "description": "Would Recommend (Yes/No → bool)."
+        }
+      }
+    },
+    "text": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["comment", "privateNote", "tags", "keywords"],
+      "properties": {
+        "comment": {
+          "type": ["string", "null"],
+          "description": "Primary classification input."
+        },
+        "privateNote": {
+          "type": ["string", "null"],
+          "description": "Secondary, often richer guest note."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tags Added by Diner, split into an array."
+        },
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Jev-inferred output; the only ML-produced fields.",
+      "required": ["sentiment", "predictedRating", "aspects"],
+      "properties": {
+        "sentiment": {
+          "$ref": "#/$defs/sentiment"
+        },
+        "predictedRating": {
+          "type": ["number", "null"],
+          "minimum": 1,
+          "maximum": 5,
+          "description": "1..5 float derived from text; fills the gap where the source left ratings blank."
+        },
+        "aspects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/aspectSentiment" },
+          "description": "Sparse: only aspects detected in the text."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sentimentLabel": {
+      "type": "string",
+      "enum": ["POSITIVE", "NEUTRAL", "NEGATIVE"]
+    },
+    "aspect": {
+      "type": "string",
+      "enum": ["food", "service", "ambience", "value", "noise", "wait_time"]
+    },
+    "sentiment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "confidence"],
+      "properties": {
+        "label": { "$ref": "#/$defs/sentimentLabel" },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "aspectSentiment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["aspect", "label", "confidence"],
+      "properties": {
+        "aspect": { "$ref": "#/$defs/aspect" },
+        "label": { "$ref": "#/$defs/sentimentLabel" },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

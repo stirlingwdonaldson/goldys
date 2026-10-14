@@ -110,6 +110,10 @@ class CanonicalGuest extends BitemporalEntity {
     this.lifetimePerCoverSpend = lifetimePerCoverSpend;
   }
 
+  String guestName() {
+    return guestName;
+  }
+
   static CanonicalGuest create(
       UUID logicalEntityId,
       String sourceSystem,

@@ -387,6 +387,22 @@ describe("demoApi invoices", () => {
   });
 });
 
+describe("demoApi reviews analytics", () => {
+  it("returns a non-zero overview total and a negative count", async () => {
+    const overview = await demoApi.getReviewOverview("2026-10-01", "2026-10-07");
+    expect(overview.total).toBeGreaterThan(0);
+    expect(overview.negative).toBeGreaterThan(0);
+  });
+
+  it("filters reviews by aspect, returning only reviews mentioning that aspect", async () => {
+    const reviews = await demoApi.getReviews({ aspect: "service" });
+    expect(reviews.length).toBeGreaterThan(0);
+    for (const review of reviews) {
+      expect(review.aspects.map((a) => a.aspect)).toContain("service");
+    }
+  });
+});
+
 describe("demoApi OpenTable assisted sign-in", () => {
   it("walks sign-in, sync and completion, streaming a frame while signing in", async () => {
     vi.useFakeTimers();
