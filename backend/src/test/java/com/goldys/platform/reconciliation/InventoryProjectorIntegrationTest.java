@@ -53,6 +53,7 @@ class InventoryProjectorIntegrationTest {
             "CTB",
             ref,
             invoiceNumber,
+            null,
             date,
             product,
             null,

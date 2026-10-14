@@ -46,15 +46,21 @@ public class CtInvoiceCsvParser {
         continue; // header-only / blank row — not a line
       }
       String invoiceNumber = requireValue(columns, r, "Invoice");
+      String supplierCode = optionalString(columns, r, "SupplierCode");
+      String supplierName = requireValue(columns, r, "Supplier");
+      // Group by (supplier, invoice number), not invoice number alone: two suppliers may issue the
+      // same invoice number, and they are distinct invoices.
+      String groupKey = (supplierCode != null ? supplierCode : supplierName) + "::" + invoiceNumber;
       Group g =
           groups.computeIfAbsent(
-              invoiceNumber,
+              groupKey,
               k ->
                   new Group(
-                      requireValue(columns, r, "Supplier"),
+                      supplierCode,
+                      supplierName,
                       optionalString(columns, r, "PONumber"),
                       date(columns, r, "Date"),
-                      k,
+                      invoiceNumber,
                       optionalDate(columns, r, "InvoiceDueDate"),
                       optionalMoney(columns, r, "InvoiceTotalExTax"),
                       optionalMoney(columns, r, "GST"),
@@ -77,6 +83,7 @@ public class CtInvoiceCsvParser {
     for (Group g : groups.values()) {
       out.add(
           new CtInvoice(
+              g.supplierCode,
               g.supplierName,
               g.purchaseNumber,
               g.invoiceDate,
@@ -94,6 +101,7 @@ public class CtInvoiceCsvParser {
 
   /** Header fields captured from the first line row of an invoice, plus its accumulated lines. */
   private static final class Group {
+    final String supplierCode;
     final String supplierName;
     final String purchaseNumber;
     final LocalDate invoiceDate;
@@ -107,6 +115,7 @@ public class CtInvoiceCsvParser {
     final LinkedHashSet<String> pdfFilenames = new LinkedHashSet<>();
 
     Group(
+        String supplierCode,
         String supplierName,
         String purchaseNumber,
         LocalDate invoiceDate,
@@ -116,6 +125,7 @@ public class CtInvoiceCsvParser {
         BigDecimal gstAmount,
         BigDecimal freightAmount,
         BigDecimal incTaxAmount) {
+      this.supplierCode = supplierCode;
       this.supplierName = supplierName;
       this.purchaseNumber = purchaseNumber;
       this.invoiceDate = invoiceDate;

@@ -3,10 +3,14 @@ package com.goldys.platform.connectors.ctb;
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
+import com.goldys.platform.canonical.ProductMappingIngest;
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.ProductSalesInput;
 import com.goldys.platform.canonical.SaleRecipeLinkIngest;
 import com.goldys.platform.canonical.SaleRecipeLinkInput;
+import com.goldys.platform.canonical.SourceProductInput;
+import com.goldys.platform.canonical.SourceProductSaleFactIngest;
+import com.goldys.platform.canonical.SourceProductSaleFactInput;
 import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
@@ -51,6 +55,8 @@ public class CtbConnector implements SourceConnector {
   private final CanonicalProductSalesIngest productSales;
   private final CtbSaleRecipeLinkParser saleRecipeLinkParser;
   private final SaleRecipeLinkIngest saleRecipeLinkIngest;
+  private final ProductMappingIngest productMapping;
+  private final SourceProductSaleFactIngest sourceSaleFact;
   private final VenueClock venueClock;
 
   public CtbConnector(
@@ -63,6 +69,8 @@ public class CtbConnector implements SourceConnector {
       CanonicalProductSalesIngest productSales,
       CtbSaleRecipeLinkParser saleRecipeLinkParser,
       SaleRecipeLinkIngest saleRecipeLinkIngest,
+      ProductMappingIngest productMapping,
+      SourceProductSaleFactIngest sourceSaleFact,
       VenueClock venueClock) {
     this.client = client;
     this.email = email;
@@ -73,6 +81,8 @@ public class CtbConnector implements SourceConnector {
     this.productSales = productSales;
     this.saleRecipeLinkParser = saleRecipeLinkParser;
     this.saleRecipeLinkIngest = saleRecipeLinkIngest;
+    this.productMapping = productMapping;
+    this.sourceSaleFact = sourceSaleFact;
     this.venueClock = venueClock;
   }
 
@@ -226,7 +236,8 @@ public class CtbConnector implements SourceConnector {
         String key = ProductNameKey.normalize(item.stockDescription());
         byProduct.merge(
             key,
-            new ProductSalesInput("CTB", day, key, item.quantitySold(), item.amount(), rawId),
+            new ProductSalesInput(
+                "CTB", day, key, item.quantitySold(), item.amount(), item.stockCode(), rawId),
             (a, b) ->
                 new ProductSalesInput(
                     "CTB",
@@ -234,7 +245,10 @@ public class CtbConnector implements SourceConnector {
                     key,
                     a.quantitySold().add(b.quantitySold()),
                     a.amount().add(b.amount()),
+                    mergeStockCode(a.stockCode(), b.stockCode()),
                     a.rawRecordId()));
+        recordSourceProduct(item, rawId);
+        recordSourceSaleFact(item, day, rawId);
       }
 
       total = page.totalCount();
@@ -270,6 +284,61 @@ public class CtbConnector implements SourceConnector {
       start += PAGE_SIZE;
     }
     saleRecipeLinkIngest.recordAll(all);
+    for (SaleRecipeLinkInput link : all) {
+      if (link.saleItemStockCode() != null && !link.saleItemStockCode().isBlank()) {
+        productMapping.mapSourceProduct(
+            new SourceProductInput(
+                "CTB",
+                link.saleItemStockCode(),
+                null,
+                link.saleItemStockDescription(),
+                null,
+                null,
+                link.rawRecordId()));
+      }
+    }
+  }
+
+  /** Records the CTB sale product's source-scoped identity and maps it to the business hub. */
+  private void recordSourceProduct(CtbSaleItem item, UUID rawId) {
+    String code = item.stockCode();
+    if (code == null || code.isBlank()) {
+      return;
+    }
+    productMapping.mapSourceProduct(
+        new SourceProductInput("CTB", code, null, item.stockDescription(), null, null, rawId));
+  }
+
+  /**
+   * Records the source-native product-day measures (cost, food cost, discount, tax, unit price).
+   */
+  private void recordSourceSaleFact(CtbSaleItem item, LocalDate day, UUID rawId) {
+    String code = item.stockCode();
+    if (code == null || code.isBlank()) {
+      return;
+    }
+    sourceSaleFact.record(
+        new SourceProductSaleFactInput(
+            "CTB",
+            code + "@" + day,
+            day,
+            code,
+            item.costPerUnit(),
+            item.totalFoodCost(),
+            item.discountedAmount(),
+            item.taxAmount(),
+            item.unitPrice(),
+            rawId));
+  }
+
+  private static String mergeStockCode(String a, String b) {
+    if (a == null) {
+      return b;
+    }
+    if (b == null) {
+      return a;
+    }
+    return a.equals(b) ? a : null; // two codes share a name — ambiguous, do not assert one
   }
 
   /**

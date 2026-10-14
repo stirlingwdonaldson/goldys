@@ -4,16 +4,26 @@ import com.goldys.platform.canonical.CanonicalInventoryQuery;
 import com.goldys.platform.canonical.CanonicalInvoiceIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceLineIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
+import com.goldys.platform.canonical.InvoiceIdentity;
 import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
 import com.goldys.platform.canonical.ProductNameKey;
+import com.goldys.platform.canonical.StockItemIngest;
+import com.goldys.platform.canonical.StockItemInput;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.HexFormat;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +31,12 @@ import org.springframework.stereotype.Service;
  * Manual CSV-drop pipeline for CTB supplier invoices: persist the dropped CSV byte-faithfully, then
  * canonicalize the invoice header and each line item. Line items come from the CSV itself (the
  * export carries both header and line columns), so COGS is available without the PDF path.
+ *
+ * <p>Line identity is content-based, not ordinal: each line's source reference is derived from its
+ * content (stock code, description, quantity, unit cost, line total), so a re-ordered export keeps
+ * line identities stable and a re-ingested export is idempotent. After recording, any current
+ * CSV-sourced line whose content is no longer present is superseded, so a shortened export does not
+ * leave stale lines counting toward COGS.
  */
 @Service
 public class CtInvoiceCsvIngestService {
@@ -35,6 +51,7 @@ public class CtInvoiceCsvIngestService {
   private final CtInvoiceCsvParser parser;
   private final CanonicalInvoiceIngest canonical;
   private final CanonicalInvoiceLineIngest lineCanonical;
+  private final StockItemIngest stockItems;
   private final InvoiceIngestFlagService flags;
   private final CanonicalInvoiceQuery invoiceQuery;
   private final CanonicalInventoryQuery inventoryQuery;
@@ -44,6 +61,7 @@ public class CtInvoiceCsvIngestService {
       CtInvoiceCsvParser parser,
       CanonicalInvoiceIngest canonical,
       CanonicalInvoiceLineIngest lineCanonical,
+      StockItemIngest stockItems,
       InvoiceIngestFlagService flags,
       CanonicalInvoiceQuery invoiceQuery,
       CanonicalInventoryQuery inventoryQuery) {
@@ -51,6 +69,7 @@ public class CtInvoiceCsvIngestService {
     this.parser = parser;
     this.canonical = canonical;
     this.lineCanonical = lineCanonical;
+    this.stockItems = stockItems;
     this.flags = flags;
     this.invoiceQuery = invoiceQuery;
     this.inventoryQuery = inventoryQuery;
@@ -81,48 +100,28 @@ public class CtInvoiceCsvIngestService {
 
     try {
       for (CtInvoice invoice : invoices) {
-        canonical.record(
-            new InvoiceInput(
-                "CTB",
-                invoice.invoiceNumber(),
-                invoice.supplierName(),
-                invoice.invoiceDate(),
-                invoice.dueDate(),
-                invoice.incTaxAmount(),
-                invoice.purchaseNumber(),
-                null, // account number — not in the current export
-                null, // tax code — not in the current export
-                invoice.amountExTax(),
-                invoice.gstAmount(),
-                invoice.freightAmount(),
-                null, // freight GST — not a direct column in the current export
-                firstPdfFilename(invoice),
-                rawId));
+        InvoiceIdentity identity =
+            canonical.record(
+                new InvoiceInput(
+                    "CTB",
+                    invoice.invoiceNumber(),
+                    invoice.supplierName(),
+                    invoice.supplierCode(),
+                    invoice.invoiceDate(),
+                    invoice.dueDate(),
+                    invoice.incTaxAmount(),
+                    invoice.purchaseNumber(),
+                    null, // account number — not in the current export
+                    null, // tax code — not in the current export
+                    invoice.amountExTax(),
+                    invoice.gstAmount(),
+                    invoice.freightAmount(),
+                    null, // freight GST — not a direct column in the current export
+                    firstPdfFilename(invoice),
+                    rawId));
         flagPdfAnomalies(invoice);
 
-        int seq = 0;
-        for (CtInvoiceLine line : invoice.lines()) {
-          seq++;
-          lineCanonical.record(
-              new InvoiceLineInput(
-                  "CTB",
-                  invoice.invoiceNumber() + ":" + seq,
-                  invoice.invoiceNumber(),
-                  invoice.invoiceDate(),
-                  ProductNameKey.normalize(line.description()),
-                  line.stockCode(),
-                  quantity(line.rawQuantity()),
-                  line.unitCostExTax() == null ? BigDecimal.ZERO : line.unitCostExTax(),
-                  line.lineTotalExTax(),
-                  null, // category — PDF-only, not in the CSV
-                  null, // uom — PDF enrichment
-                  null, // unitQuantity — PDF enrichment
-                  null, // packSize — PDF enrichment
-                  null, // wetAmount — PDF enrichment
-                  rawId,
-                  "CSV"));
-        }
-
+        recordLines(invoice, identity, rawId);
         convergePdfLinesAfterCsvIngest(invoice.invoiceNumber());
       }
     } catch (RuntimeException e) {
@@ -133,6 +132,91 @@ public class CtInvoiceCsvIngestService {
         rawId,
         IngestionStageKind.CANONICALIZED,
         invoices.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
+  }
+
+  /** Records one invoice's lines with content-based identity, then closes any removed CSV lines. */
+  private void recordLines(CtInvoice invoice, InvoiceIdentity identity, UUID rawId) {
+    String invoiceScopedRef = identity.sourceRecordRef();
+    UUID invoiceLogicalId = identity.logicalEntityId();
+
+    Map<String, Integer> signatureCounts = new HashMap<>();
+    Set<String> lineSourceRefs = new LinkedHashSet<>();
+    for (CtInvoiceLine line : invoice.lines()) {
+      String productNameKey = ProductNameKey.normalize(line.description());
+      String stockCode = line.stockCode();
+      BigDecimal quantity = quantity(line.rawQuantity());
+      BigDecimal unitCost = line.unitCostExTax() == null ? BigDecimal.ZERO : line.unitCostExTax();
+      BigDecimal lineTotal = line.lineTotalExTax();
+
+      String signature = lineSignature(stockCode, productNameKey, quantity, unitCost, lineTotal);
+      // A repeated identical line within one invoice gets a discriminator so exact duplicates stay
+      // distinct (never silently merged); unique lines keep a clean, position-free reference.
+      int occurrence = signatureCounts.merge(signature, 1, Integer::sum);
+      String lineRef =
+          invoiceScopedRef + ":" + signature + (occurrence > 1 ? "#" + occurrence : "");
+      lineSourceRefs.add(lineRef);
+
+      lineCanonical.record(
+          new InvoiceLineInput(
+              "CTB",
+              lineRef,
+              invoice.invoiceNumber(),
+              invoiceLogicalId,
+              invoice.invoiceDate(),
+              productNameKey,
+              stockCode,
+              quantity,
+              unitCost,
+              lineTotal,
+              null, // category — PDF-only, not in the CSV
+              null, // uom — PDF enrichment
+              null, // unitQuantity — PDF enrichment
+              null, // packSize — PDF enrichment
+              null, // wetAmount — PDF enrichment
+              rawId,
+              "CSV"));
+      recordStockItem(identity, stockCode, productNameKey, rawId);
+    }
+
+    // Close any current CSV line this export no longer carries (a shortened/changed export).
+    lineCanonical.convergeCsvLines(invoiceLogicalId, lineSourceRefs);
+  }
+
+  /** Records the supplier-scoped stock item a line references (a purchased ingredient). */
+  private void recordStockItem(
+      InvoiceIdentity identity, String stockCode, String productNameKey, UUID rawId) {
+    if (stockCode == null || stockCode.isBlank()) {
+      return;
+    }
+    stockItems.record(
+        new StockItemInput(
+            "CTB",
+            identity.supplierSourceRef() + "::" + stockCode,
+            identity.supplierLogicalId(),
+            stockCode,
+            productNameKey,
+            null,
+            rawId));
+  }
+
+  /**
+   * A content signature for one line over its canonical fields, so identity is independent of line
+   * order. Uses the same values {@code sameFact} compares; for identical CSV content the signature
+   * is identical, making re-ingest idempotent.
+   */
+  private static String lineSignature(
+      String stockCode,
+      String productNameKey,
+      BigDecimal quantity,
+      BigDecimal unitCost,
+      BigDecimal lineTotal) {
+    String code = stockCode == null ? "" : stockCode.trim();
+    String name = productNameKey == null ? "" : productNameKey;
+    String q = quantity == null ? "" : quantity.toPlainString();
+    String cost = unitCost == null ? "" : unitCost.toPlainString();
+    String total = lineTotal == null ? "" : lineTotal.toPlainString();
+    return sha256Hex(
+        (code + "|" + name + "|" + q + "|" + cost + "|" + total).getBytes(StandardCharsets.UTF_8));
   }
 
   /** The invoice's PDF filename (first-seen), or null when the CSV references none. */
@@ -220,5 +304,13 @@ public class CtInvoiceCsvIngestService {
       }
     }
     return BigDecimal.ONE;
+  }
+
+  private static String sha256Hex(byte[] bytes) {
+    try {
+      return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 unavailable", e);
+    }
   }
 }

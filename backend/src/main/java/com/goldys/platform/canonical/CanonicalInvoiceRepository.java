@@ -4,6 +4,7 @@ import jakarta.persistence.LockModeType;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
@@ -39,6 +40,17 @@ interface CanonicalInvoiceRepository extends BitemporalRepository<CanonicalInvoi
       "select count(i) from CanonicalInvoice i "
           + "where i.invoiceNumber = :invoiceNumber and i.supersededAt is null")
   long countCurrentByInvoiceNumber(String invoiceNumber);
+
+  /**
+   * The current invoice's stable logical id for an invoice number, newest-recorded first. An
+   * invoice number can in principle have several current rows (supplier-scoped identity is still
+   * being rolled out), so ordering makes the first-present value deterministic.
+   */
+  @Query(
+      "select i.logicalEntityId from CanonicalInvoice i "
+          + "where i.invoiceNumber = :invoiceNumber and i.supersededAt is null "
+          + "order by i.recordedAt desc")
+  List<UUID> currentLogicalIdsByInvoiceNumber(String invoiceNumber);
 
   /**
    * All current invoices, newest-recorded first. The ordering makes the facade's first-match

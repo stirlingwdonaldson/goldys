@@ -36,11 +36,18 @@ class CanonicalProductSalesIntegrationTest {
                 "pint carlton draught",
                 bd("1232"),
                 bd("17340.98"),
+                null,
                 rawRecord()));
     var ctb =
         service.record(
             new ProductSalesInput(
-                "CTB", date, "pint carlton draught", bd("1232"), bd("17340.98"), rawRecord()));
+                "CTB",
+                date,
+                "pint carlton draught",
+                bd("1232"),
+                bd("17340.98"),
+                null,
+                rawRecord()));
 
     assertThat(ls.logicalEntityId()).isEqualTo(ctb.logicalEntityId());
   }
@@ -49,7 +56,8 @@ class CanonicalProductSalesIntegrationTest {
   void unchangedRetryDoesNotAppendAVersion() {
     LocalDate date = LocalDate.of(2026, 9, 14);
     ProductSalesInput input =
-        new ProductSalesInput("CTB", date, "chicken parma", bd("391"), bd("11418.06"), rawRecord());
+        new ProductSalesInput(
+            "CTB", date, "chicken parma", bd("391"), bd("11418.06"), null, rawRecord());
 
     var first = service.record(input);
     var retry = service.record(input);

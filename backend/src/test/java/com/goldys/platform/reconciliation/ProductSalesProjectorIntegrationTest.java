@@ -100,7 +100,7 @@ class ProductSalesProjectorIntegrationTest {
 
   private ProductSalesInput input(
       String source, LocalDate date, String key, String qty, String amount) {
-    return new ProductSalesInput(source, date, key, bd(qty), bd(amount), rawRecord());
+    return new ProductSalesInput(source, date, key, bd(qty), bd(amount), null, rawRecord());
   }
 
   private UUID rawRecord() {

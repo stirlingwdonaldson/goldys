@@ -11,7 +11,11 @@ public class CanonicalInvoiceIngest {
     this.service = service;
   }
 
-  public void record(InvoiceInput input) {
-    service.record(input);
+  /**
+   * Records the invoice metadata and returns its identity (logical id + supplier-scoped source
+   * key), which line items use as their parent reference.
+   */
+  public InvoiceIdentity record(InvoiceInput input) {
+    return service.record(input);
   }
 }

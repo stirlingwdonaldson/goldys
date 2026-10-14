@@ -1,6 +1,8 @@
 package com.goldys.platform.canonical;
 
 import java.math.BigDecimal;
+import java.util.Set;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /** Public write facade for canonical invoice line items, so connectors can record parsed facts. */
@@ -14,6 +16,15 @@ public class CanonicalInvoiceLineIngest {
 
   public void record(InvoiceLineInput input) {
     service.record(input);
+  }
+
+  /**
+   * Closes the current CSV-sourced lines of one invoice whose {@code sourceRecordRef} is not in
+   * {@code currentSourceRefs} (lines the re-ingested export no longer carries). Returns the number
+   * of lines closed.
+   */
+  public int convergeCsvLines(UUID invoiceLogicalId, Set<String> currentSourceRefs) {
+    return service.convergeCsvLines(invoiceLogicalId, currentSourceRefs);
   }
 
   /**

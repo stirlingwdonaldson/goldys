@@ -25,6 +25,9 @@ class CanonicalInvoiceLine extends BitemporalEntity {
   @Column(name = "invoice_number", nullable = false, updatable = false)
   private String invoiceNumber;
 
+  @Column(name = "invoice_logical_id", updatable = false)
+  private UUID invoiceLogicalId;
+
   @Column(name = "invoice_date", nullable = false, updatable = false)
   private LocalDate invoiceDate;
 
@@ -94,6 +97,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       Instant validFrom,
       Instant recordedAt,
       String invoiceNumber,
+      UUID invoiceLogicalId,
       LocalDate invoiceDate,
       String productNameKey,
       String stockCode,
@@ -112,6 +116,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       String origin) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.invoiceNumber = invoiceNumber;
+    this.invoiceLogicalId = invoiceLogicalId;
     this.invoiceDate = invoiceDate;
     this.productNameKey = productNameKey;
     this.stockCode = stockCode;
@@ -138,6 +143,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       Instant validFrom,
       Instant recordedAt,
       String invoiceNumber,
+      UUID invoiceLogicalId,
       LocalDate invoiceDate,
       String productNameKey,
       String stockCode,
@@ -162,6 +168,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
         validFrom,
         recordedAt,
         invoiceNumber,
+        invoiceLogicalId,
         invoiceDate,
         productNameKey,
         stockCode,
@@ -200,6 +207,10 @@ class CanonicalInvoiceLine extends BitemporalEntity {
 
   String invoiceNumber() {
     return invoiceNumber;
+  }
+
+  UUID invoiceLogicalId() {
+    return invoiceLogicalId;
   }
 
   LocalDate invoiceDate() {

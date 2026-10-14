@@ -86,6 +86,7 @@ class InvoiceGapConvergenceIntegrationTest {
             "CTB",
             "INV-7302",
             "Bruno's",
+            null,
             invoiceDate,
             null,
             new BigDecimal("100.00"),
@@ -128,6 +129,7 @@ class InvoiceGapConvergenceIntegrationTest {
             "CTB",
             "INV-7303",
             "Bruno's",
+            null,
             invoiceDate,
             null,
             new BigDecimal("100.00"),
@@ -179,10 +181,22 @@ class InvoiceGapConvergenceIntegrationTest {
 
   private InvoiceLineInput line(
       String invoiceNumber, LocalDate date, String total, String origin, String ref) {
+    // Resolve the parent invoice's logical id, as the real gap-recovery path does.
+    UUID invoiceLogicalId =
+        jdbc
+            .queryForList(
+                "select logical_entity_id from canonical_invoice "
+                    + "where invoice_number=? and superseded_at is null",
+                UUID.class,
+                invoiceNumber)
+            .stream()
+            .findFirst()
+            .orElse(null);
     return new InvoiceLineInput(
         "CTB",
         ref,
         invoiceNumber,
+        invoiceLogicalId,
         date,
         "item",
         null,

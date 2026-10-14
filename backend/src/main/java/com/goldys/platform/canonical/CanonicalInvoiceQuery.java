@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /**
@@ -80,6 +81,14 @@ public class CanonicalInvoiceQuery {
       out.put(invoice.invoiceNumber(), invoice.supplierName());
     }
     return out;
+  }
+
+  /** The current invoice's stable logical id for an invoice number, or empty when unknown. */
+  public Optional<UUID> invoiceLogicalIdForInvoiceNumber(String invoiceNumber) {
+    if (invoiceNumber == null) {
+      return Optional.empty();
+    }
+    return repository.currentLogicalIdsByInvoiceNumber(invoiceNumber).stream().findFirst();
   }
 
   /** All current invoice metadata, so modules outside this package can read invoices. */

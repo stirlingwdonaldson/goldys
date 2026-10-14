@@ -3,6 +3,7 @@ package com.goldys.platform.connectors.ctb;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -30,9 +31,19 @@ public class CtbSaleItemParser {
           new CtbSaleItem(
               n.path("stockCode").asText(),
               n.path("stockDescription").asText(),
-              n.path("quantitySold").decimalValue(),
-              n.path("amount").decimalValue()));
+              decimal(n, "quantitySold"),
+              decimal(n, "amount"),
+              decimal(n, "costPerUnit"),
+              decimal(n, "totalFoodCost"),
+              decimal(n, "discountedAmount"),
+              decimal(n, "taxAmount"),
+              decimal(n, "unitPrice")));
     }
     return out;
+  }
+
+  private static BigDecimal decimal(JsonNode n, String field) {
+    JsonNode v = n.get(field);
+    return v == null || v.isNull() ? null : v.decimalValue();
   }
 }

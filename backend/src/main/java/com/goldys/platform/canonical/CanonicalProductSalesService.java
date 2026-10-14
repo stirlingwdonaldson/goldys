@@ -55,7 +55,8 @@ class CanonicalProductSalesService {
             input.tradingDate(),
             input.productNameKey(),
             input.quantitySold(),
-            input.amount()));
+            input.amount(),
+            input.stockCode()));
   }
 
   private static UUID logicalIdFor(String key, java.time.LocalDate date) {

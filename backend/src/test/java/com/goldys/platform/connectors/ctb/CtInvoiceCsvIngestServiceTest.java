@@ -14,8 +14,10 @@ import com.goldys.platform.canonical.CanonicalInventoryQuery;
 import com.goldys.platform.canonical.CanonicalInvoiceIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceLineIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
+import com.goldys.platform.canonical.InvoiceIdentity;
 import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
+import com.goldys.platform.canonical.StockItemIngest;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
@@ -23,6 +25,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -35,9 +38,17 @@ class CtInvoiceCsvIngestServiceTest {
   @Mock IngestionService ingestion;
   @Mock CanonicalInvoiceIngest canonical;
   @Mock CanonicalInvoiceLineIngest lineCanonical;
+  @Mock StockItemIngest stockItems;
   @Mock InvoiceIngestFlagService flags;
   @Mock CanonicalInvoiceQuery invoiceQuery;
   @Mock CanonicalInventoryQuery inventoryQuery;
+
+  @BeforeEach
+  void stubInvoiceIdentity() {
+    when(canonical.record(any(InvoiceInput.class)))
+        .thenReturn(
+            new InvoiceIdentity(UUID.randomUUID(), "BRUNO::TEST", UUID.randomUUID(), "BRUNO"));
+  }
 
   private CtInvoiceCsvIngestService service() {
     return new CtInvoiceCsvIngestService(
@@ -45,6 +56,7 @@ class CtInvoiceCsvIngestServiceTest {
         new CtInvoiceCsvParser(),
         canonical,
         lineCanonical,
+        stockItems,
         flags,
         invoiceQuery,
         inventoryQuery);

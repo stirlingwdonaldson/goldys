@@ -6,6 +6,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 
 /** One version of a source's per-product daily sales total. */
@@ -24,6 +25,9 @@ class CanonicalProductSales extends BitemporalEntity {
   @Column(name = "amount", nullable = false, updatable = false, precision = 14, scale = 4)
   private BigDecimal amount;
 
+  @Column(name = "stock_code", updatable = false)
+  private String stockCode;
+
   protected CanonicalProductSales() {}
 
   private CanonicalProductSales(
@@ -36,12 +40,14 @@ class CanonicalProductSales extends BitemporalEntity {
       LocalDate tradingDate,
       String productNameKey,
       BigDecimal quantitySold,
-      BigDecimal amount) {
+      BigDecimal amount,
+      String stockCode) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.tradingDate = tradingDate;
     this.productNameKey = productNameKey;
     this.quantitySold = quantitySold;
     this.amount = amount;
+    this.stockCode = stockCode;
   }
 
   static CanonicalProductSales create(
@@ -54,7 +60,8 @@ class CanonicalProductSales extends BitemporalEntity {
       LocalDate tradingDate,
       String productNameKey,
       BigDecimal quantitySold,
-      BigDecimal amount) {
+      BigDecimal amount,
+      String stockCode) {
     return new CanonicalProductSales(
         logicalEntityId,
         sourceSystem,
@@ -65,11 +72,14 @@ class CanonicalProductSales extends BitemporalEntity {
         tradingDate,
         productNameKey,
         quantitySold,
-        amount);
+        amount,
+        stockCode);
   }
 
   boolean sameFact(ProductSalesInput input) {
-    return same(amount, input.amount()) && same(quantitySold, input.quantitySold());
+    return same(amount, input.amount())
+        && same(quantitySold, input.quantitySold())
+        && Objects.equals(stockCode, input.stockCode());
   }
 
   private static boolean same(BigDecimal a, BigDecimal b) {
@@ -93,5 +103,9 @@ class CanonicalProductSales extends BitemporalEntity {
 
   BigDecimal amount() {
     return amount;
+  }
+
+  String stockCode() {
+    return stockCode;
   }
 }

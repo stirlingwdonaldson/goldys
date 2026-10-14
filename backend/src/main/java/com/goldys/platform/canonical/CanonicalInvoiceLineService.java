@@ -18,6 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Records canonical invoice line items, locking the current source fact and publishing a projection
  * event so the affected date's COGS is re-projected in the same transaction.
+ *
+ * <p>The line's identity is content-based (its {@code sourceRecordRef} is computed by the caller
+ * from the line's content, not its ordinal position), so reordered lines keep their identity and
+ * re-ingest is idempotent. The {@code invoiceLogicalId} parent reference ties each line to its
+ * invoice entity.
  */
 @Service
 class CanonicalInvoiceLineService {
@@ -41,7 +46,7 @@ class CanonicalInvoiceLineService {
 
   @Transactional
   CanonicalInvoiceLine recordAt(InvoiceLineInput input, Instant recordedAt) {
-    UUID logicalId = logicalIdFor(input.invoiceNumber(), input.sourceRecordRef());
+    UUID logicalId = logicalIdFor(input.sourceRecordRef());
     Optional<CanonicalInvoiceLine> current =
         repository.lockCurrentSourceFact(input.sourceSystem(), input.sourceRecordRef());
 
@@ -63,6 +68,7 @@ class CanonicalInvoiceLineService {
             recordedAt,
             recordedAt,
             input.invoiceNumber(),
+            input.invoiceLogicalId(),
             input.invoiceDate(),
             input.productNameKey(),
             input.stockCode(),
@@ -81,9 +87,34 @@ class CanonicalInvoiceLineService {
             input.origin()));
   }
 
-  private static UUID logicalIdFor(String invoiceNumber, String sourceRecordRef) {
+  private static UUID logicalIdFor(String sourceRecordRef) {
     return UUID.nameUUIDFromBytes(
-        ("invoice-line:" + invoiceNumber + ":" + sourceRecordRef).getBytes(StandardCharsets.UTF_8));
+        ("invoice-line:" + sourceRecordRef).getBytes(StandardCharsets.UTF_8));
+  }
+
+  /**
+   * Closes every current CSV-sourced line of one invoice whose {@code sourceRecordRef} is not in
+   * {@code currentSourceRefs} (a line the re-ingested export no longer carries). PDF-derived lines
+   * are untouched — they are managed by the gap-recovery convergence path. Publishes one
+   * re-projection event per affected invoice date and returns the number of lines closed.
+   */
+  @Transactional
+  int convergeCsvLines(UUID invoiceLogicalId, Set<String> currentSourceRefs) {
+    Instant now = CLOCK.instant();
+    List<CanonicalInvoiceLine> csvLines =
+        repository.findCurrentCsvByInvoiceLogicalId(invoiceLogicalId);
+    Set<LocalDate> affectedDates = new HashSet<>();
+    int superseded = 0;
+    for (CanonicalInvoiceLine line : csvLines) {
+      if (!currentSourceRefs.contains(line.sourceRecordRef())) {
+        line.supersede(now);
+        repository.saveAndFlush(line);
+        affectedDates.add(line.invoiceDate());
+        superseded++;
+      }
+    }
+    publishProjectionEvents(affectedDates);
+    return superseded;
   }
 
   /**

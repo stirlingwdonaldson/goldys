@@ -123,6 +123,7 @@ public class CanonicalInvoiceLineEnrichment {
             now,
             now,
             l.invoiceNumber(),
+            l.invoiceLogicalId(),
             l.invoiceDate(),
             l.productNameKey(),
             l.stockCode(),
