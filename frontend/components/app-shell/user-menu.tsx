@@ -7,10 +7,11 @@ import { logout, type CurrentUser } from "@/lib/api";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SidebarMenuButton } from "@/components/ui/sidebar";
+import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import { useCurrentUser } from "./current-user-provider";
 import { useToast } from "@/components/feedback/toast";
 import { InlineError } from "@/components/states/inline-error";
+import { cn } from "@/lib/utils";
 
 function initials(name: string): string {
   return name
@@ -22,20 +23,33 @@ function initials(name: string): string {
 }
 
 function SignedInUser({ user, signingOut, onSignOut }: { user: CurrentUser; signingOut: boolean; onSignOut: () => void }) {
+  // Collapsed (icon) mode shows only the avatar and an icon-only sign-out, so the two stay
+  // aligned with the icon buttons above them and no text hangs outside the rail.
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
   return (
-    <div className="space-y-1 px-2 py-1.5">
-      <div className="flex items-center gap-2">
-        <Avatar className="h-8 w-8 rounded-lg">
+    <div className={cn("space-y-1 py-1.5", collapsed ? "flex flex-col items-center" : "px-2")}>
+      <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-2")}>
+        <Avatar className="h-8 w-8 shrink-0 rounded-lg">
           <AvatarFallback className="rounded-lg">{initials(user.displayName)}</AvatarFallback>
         </Avatar>
-        <div className="grid flex-1 text-left text-sm leading-tight">
-          <span className="truncate font-semibold">{user.displayName}</span>
-          <span className="truncate text-xs text-muted-foreground">{user.department} &middot; {user.seniority}</span>
-        </div>
+        {!collapsed ? (
+          <div className="grid flex-1 text-left text-sm leading-tight">
+            <span className="truncate font-semibold">{user.displayName}</span>
+            <span className="truncate text-xs text-muted-foreground">{user.department} &middot; {user.seniority}</span>
+          </div>
+        ) : null}
       </div>
-      <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onSignOut} disabled={signingOut}>
-        <LogOut className="mr-2 h-4 w-4" />
-        {signingOut ? "Signing out…" : "Sign out"}
+      <Button
+        variant="ghost"
+        size="sm"
+        className={cn(collapsed ? "size-8 justify-center p-0" : "w-full justify-start")}
+        onClick={onSignOut}
+        disabled={signingOut}
+        aria-label={collapsed ? "Sign out" : undefined}
+      >
+        <LogOut className={cn("h-4 w-4", !collapsed && "mr-2")} aria-hidden="true" />
+        {!collapsed ? (signingOut ? "Signing out…" : "Sign out") : null}
       </Button>
     </div>
   );
