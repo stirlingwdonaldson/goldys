@@ -1,0 +1,128 @@
+{
+  "contractVersion": 1,
+  "source": {
+    "sourceSystem": "CTB",
+    "dataset": "invoice_csv",
+    "fetcherIdentity": "ctb-invoices",
+    "fetchMethod": "FILE_EXPORT",
+    "contentType": "text/csv"
+  },
+  "schemaVersion": "2.0",
+  "compatibility": {
+    "policy": "semver",
+    "breakingBumps": "MAJOR",
+    "additiveBumps": "MINOR"
+  },
+  "recordGrain": "one supplier invoice header plus its line items; a delivery is one CSV file carrying many invoices (one row per line item, header columns repeated per row)",
+
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://goldys.platform/contracts/ctb-invoice-csv.schema.json",
+    "type": "object",
+    "required": ["supplierName", "invoiceDate", "invoiceNumber", "lines"],
+    "additionalProperties": false,
+    "properties": {
+      "supplierCode": { "type": ["string", "null"] },
+      "supplierName": { "type": "string" },
+      "purchaseNumber": { "type": ["string", "null"] },
+      "invoiceDate": { "type": "string", "format": "date" },
+      "invoiceNumber": { "type": "string" },
+      "dueDate": { "type": ["string", "null"], "format": "date" },
+      "amountExTax": { "type": ["number", "null"] },
+      "gstAmount": { "type": ["number", "null"] },
+      "freightAmount": { "type": ["number", "null"] },
+      "incTaxAmount": { "type": ["number", "null"] },
+      "pdfFilenames": { "type": "array", "items": { "type": "string" } },
+      "lines": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["description", "lineTotalExTax"],
+          "additionalProperties": false,
+          "properties": {
+            "stockCode": { "type": ["string", "null"] },
+            "description": { "type": "string" },
+            "rawQuantity": { "type": ["string", "null"] },
+            "unitCostExTax": { "type": ["number", "null"] },
+            "lineTotalExTax": { "type": "number" }
+          }
+        }
+      }
+    }
+  },
+
+  "rawFormat": {
+    "requiredColumns": ["Invoice", "Supplier", "Date", "StockCode", "StockDescription", "LineTotalExTax"],
+    "knownColumns": [
+      "Invoice", "Supplier", "SupplierCode", "Date", "InvoiceDueDate", "InvoiceTotalExTax",
+      "GST", "InvoiceFreight", "Total", "PONumber", "PDF", "StockCode", "StockDescription",
+      "LineQuantity", "LineUnitCostExTax", "LineTotalExTax",
+      "OutletCode", "OutletName", "SupplierGLCode", "StockGLCode", "InvoiceCreatedDate",
+      "InvoiceUpdatedDate", "InvoiceTaxFlag", "InvoiceFreightExTax", "DocumentType", "CreatedBy",
+      "LineUnitCost", "LineTotal", "LineTax", "LineTaxFlag", "LineDiscount",
+      "OutletValue1", "OutletValue2", "OutletValue3", "OutletValue4"
+    ]
+  },
+
+  "fields": [
+    { "name": "supplierCode", "type": "TEXT", "unit": null, "timeSemantics": null,
+      "nullMeans": "source did not supply a supplier code; supplier identity falls back to a name-derived key (reviewable), never assumed" },
+    { "name": "invoiceDate", "type": "DATE", "unit": null, "timeSemantics": "trading date, venue-local wall time with no offset" },
+    { "name": "dueDate", "type": "DATE", "unit": null, "timeSemantics": null,
+      "nullMeans": "no due date in the export" },
+    { "name": "amountExTax", "type": "DECIMAL", "unit": "AUD", "precision": 4, "scale": 4,
+      "nullMeans": "export omitted the value; never converted to zero" },
+    { "name": "gstAmount", "type": "DECIMAL", "unit": "AUD", "precision": 4, "scale": 4,
+      "nullMeans": "export omitted the value" },
+    { "name": "freightAmount", "type": "DECIMAL", "unit": "AUD", "precision": 4, "scale": 4,
+      "nullMeans": "export omitted the value" },
+    { "name": "incTaxAmount", "type": "DECIMAL", "unit": "AUD", "precision": 4, "scale": 4,
+      "nullMeans": "export omitted the value" },
+    { "name": "lines[].stockCode", "type": "TEXT", "unit": null, "timeSemantics": null,
+      "nullMeans": "line has no stock code in the export" },
+    { "name": "lines[].rawQuantity", "type": "TEXT", "unit": null, "timeSemantics": null,
+      "nullMeans": "coarse free-text quantity; canonical quantity is a best-effort parse" },
+    { "name": "lines[].unitCostExTax", "type": "DECIMAL", "unit": "AUD", "precision": 4, "scale": 4,
+      "nullMeans": "export omitted the value; canonical unit_cost defaults to zero (flagged, not fabricated as a real cost)" },
+    { "name": "lines[].lineTotalExTax", "type": "DECIMAL", "unit": "AUD", "precision": 4, "scale": 4,
+      "nullMeans": "line without an amount — parser rejects the row" }
+  ],
+
+  "keys": {
+    "invoice": { "fields": ["supplierCode", "invoiceNumber"],
+                 "note": "supplier-scoped; invoiceNumber is NOT globally unique" },
+    "line": { "kind": "content-derived",
+              "over": ["stockCode", "description", "rawQuantity", "unitCostExTax", "lineTotalExTax"],
+              "note": "no source line id; canonical identity is a content signature (Phase 2)" }
+  },
+
+  "relationships": [
+    { "id": "invoice_lines", "from": "invoice", "to": "invoice_line",
+      "cardinality": "ONE_TO_MANY",
+      "join": "invoice.logical_entity_id = invoice_line.invoice_logical_id" }
+  ],
+
+  "completeness": {
+    "mayOmitLines": true,
+    "backstop": "supplier PDF (fetcher ctb-sftp); gap recovery materialises origin=PDF lines",
+    "evidence": "docs/connectors/ctb-invoice-export-gaps.md"
+  },
+
+  "mapping": [
+    { "output": "supplierCode", "canonical": "canonical_supplier.source_record_ref (source supplier key)" },
+    { "output": "supplierName", "canonical": "canonical_supplier.name (display name)" },
+    { "output": "invoiceNumber", "canonical": "canonical_invoice.source_record_ref (<supplierKey>::<invoiceNumber>)" },
+    { "output": "amountExTax", "canonical": "canonical_invoice.amount_ex_tax" },
+    { "output": "lines[].description", "canonical": "canonical_invoice_line.product_name_key (normalised name)" },
+    { "output": "lines[].stockCode", "canonical": "canonical_invoice_line.stock_code" },
+    { "output": "lines[].lineTotalExTax", "canonical": "canonical_invoice_line.line_total (COGS driver)" }
+  ],
+
+  "unmapped": [
+    { "rawColumn": "OutletCode / OutletName", "policy": "preserved in raw ledger; not canonicalised (venue identity deferred to a later slice)" },
+    { "rawColumn": "SupplierGLCode / StockGLCode", "policy": "preserved in raw ledger; candidate category mapping, currently unused" },
+    { "rawColumn": "LineTax / LineDiscount / LineTaxFlag", "policy": "preserved in raw ledger; not canonicalised (PDF supplies tax treatment)" },
+    { "rawColumn": "InvoiceCreatedDate / InvoiceUpdatedDate", "policy": "preserved in raw ledger; source correction times not yet modelled" },
+    { "rawColumn": "LineUnitCost / LineTotal", "policy": "preserved in raw ledger; LineUnitCostExTax / LineTotalExTax are the authoritative ex-tax figures" }
+  ]
+}

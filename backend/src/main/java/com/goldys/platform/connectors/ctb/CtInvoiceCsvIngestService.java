@@ -88,7 +88,18 @@ public class CtInvoiceCsvIngestService {
 
     List<CtInvoice> invoices;
     try {
-      invoices = parser.parse(csv);
+      ParseResult result = parser.parse(csv);
+      invoices = result.invoices();
+      // Surface additive schema drift (unknown source columns) as a first-class flag, never a
+      // silent discard; the bytes remain byte-faithful in the raw ledger.
+      if (!result.unknownColumns().isEmpty()) {
+        flags.flag(
+            InvoiceIngestFlagType.SCHEMA_DRIFT,
+            null,
+            null,
+            null,
+            "unknown columns: " + String.join(", ", result.unknownColumns()));
+      }
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
       throw e;

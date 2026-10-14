@@ -29,7 +29,7 @@ class CtInvoiceCsvParserTest {
                 + "STK-8,Bruno Pale Ale,1 EACH,3.00,3.00,true\n")
             .getBytes(StandardCharsets.UTF_8);
 
-    List<CtInvoice> invoices = parser.parse(csv);
+    List<CtInvoice> invoices = parser.parse(csv).invoices();
 
     assertThat(invoices).hasSize(1);
     CtInvoice invoice = invoices.get(0);
@@ -56,7 +56,7 @@ class CtInvoiceCsvParserTest {
                 + "Goldys,GL-2,,,,,GOLD306600,Bruno's,2026-09-21,INV-2002,,,,bruno-2.pdf,STK-8,Chips,2 EACH,1.50,3.00,true\n")
             .getBytes(StandardCharsets.UTF_8);
 
-    List<CtInvoice> invoices = parser.parse(csv);
+    List<CtInvoice> invoices = parser.parse(csv).invoices();
 
     assertThat(invoices).hasSize(2);
     assertThat(invoices.get(0).invoiceNumber()).isEqualTo("INV-2001");
@@ -76,7 +76,7 @@ class CtInvoiceCsvParserTest {
                 + "Goldys,GL-1,9/05/2026,90.91,25.00,22.73,GOLD306600,Bruno's,1/05/2026,346489,117.64,9.09,PO-1,bruno-1.pdf,STK-7,Beer,1,3.00,3.00,true\n")
             .getBytes(StandardCharsets.UTF_8);
 
-    CtInvoice invoice = parser.parse(csv).get(0);
+    CtInvoice invoice = parser.parse(csv).invoices().get(0);
 
     assertThat(invoice.invoiceDate()).isEqualTo(LocalDate.of(2026, 5, 1));
     assertThat(invoice.dueDate()).isEqualTo(LocalDate.of(2026, 5, 9));
@@ -90,7 +90,7 @@ class CtInvoiceCsvParserTest {
                 + "Goldys,GL-1,,,,,GOLD306600,Bruno's,2026-09-20,INV-2001,,,,bruno-1956.pdf,STK-7,Beer,1 EACH,3.00,3.00,true\n")
             .getBytes(StandardCharsets.UTF_8);
 
-    List<CtInvoice> invoices = parser.parse(csv);
+    List<CtInvoice> invoices = parser.parse(csv).invoices();
 
     assertThat(invoices).hasSize(1);
     assertThat(invoices.get(0).lines()).hasSize(1);
@@ -104,7 +104,7 @@ class CtInvoiceCsvParserTest {
                 + "Goldys,GL-1,,,,,GOLD306600,Bruno's,2026-09-20,INV-2001,,,,bruno-2.pdf,STK-8,Chips,2 EACH,1.50,3.00,true\n")
             .getBytes(StandardCharsets.UTF_8);
 
-    CtInvoice invoice = parser.parse(csv).get(0);
+    CtInvoice invoice = parser.parse(csv).invoices().get(0);
 
     assertThat(invoice.pdfFilenames()).containsExactly("bruno-1.pdf", "bruno-2.pdf");
   }
@@ -116,7 +116,7 @@ class CtInvoiceCsvParserTest {
                 + "Goldys,GL-1,,,,,GOLD306600,Bruno's,2026-09-20,INV-2001,,,,,STK-7,Beer,1 EACH,3.00,3.00,true\n")
             .getBytes(StandardCharsets.UTF_8);
 
-    CtInvoice invoice = parser.parse(csv).get(0);
+    CtInvoice invoice = parser.parse(csv).invoices().get(0);
 
     assertThat(invoice.pdfFilenames()).isEmpty();
   }
@@ -128,6 +128,6 @@ class CtInvoiceCsvParserTest {
 
     assertThatThrownBy(() -> parser.parse(csv))
         .isInstanceOf(ConnectorFetchException.class)
-        .hasMessageContaining("Missing column");
+        .hasMessageContaining("Missing required column");
   }
 }
