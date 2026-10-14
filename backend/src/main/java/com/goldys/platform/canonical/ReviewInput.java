@@ -10,7 +10,7 @@ import java.util.UUID;
  * <p>{@code guestId} is the source {@code Guest ID} string (null when the review carries none);
  * {@link CanonicalReview} derives the {@code canonical_review.guest_id} UUID from it.
  */
-record ReviewInput(
+public record ReviewInput(
     String sourceSystem,
     String reviewId,
     String source,
