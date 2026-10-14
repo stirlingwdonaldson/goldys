@@ -5,6 +5,7 @@ import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.semantic.AssignmentView;
 import com.goldys.platform.semantic.CategoryNode;
+import com.goldys.platform.semantic.CategorySuggestionView;
 import com.goldys.platform.semantic.ClassificationRunView;
 import com.goldys.platform.semantic.DendrogramNode;
 import com.goldys.platform.semantic.ProductPoint;
@@ -86,6 +87,40 @@ public class ProductCategoryController {
     return reporting.listRuns(currentUser.roleOf(user));
   }
 
+  /** The pending taxonomy draft, in display order. */
+  @GetMapping("/suggestions")
+  List<CategorySuggestionView> suggestions(@AuthenticationPrincipal AccountUserDetails user) {
+    return reporting.listSuggestions(currentUser.roleOf(user));
+  }
+
+  /** Adds a staff-authored suggestion (a category the model missed) to the draft. */
+  @PostMapping("/suggestions")
+  CategorySuggestionView addSuggestion(
+      @RequestBody AddSuggestionRequest body, @AuthenticationPrincipal AccountUserDetails user) {
+    return reporting.addSuggestion(currentUser.roleOf(user), body.name(), body.groupName());
+  }
+
+  /** Renames and/or regroups a suggestion; a null field is left unchanged. */
+  @PatchMapping("/suggestions/{id}")
+  void updateSuggestion(
+      @PathVariable UUID id,
+      @RequestBody UpdateSuggestionRequest body,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    reporting.updateSuggestion(currentUser.roleOf(user), id, body.name(), body.groupName());
+  }
+
+  /** Removes a suggestion from the draft. */
+  @DeleteMapping("/suggestions/{id}")
+  void deleteSuggestion(@PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    reporting.deleteSuggestion(currentUser.roleOf(user), id);
+  }
+
+  /** Applies the draft: promotes its suggestions to confirmed categories and clears it. */
+  @PostMapping("/suggestions/apply")
+  List<CategoryNode> applySuggestions(@AuthenticationPrincipal AccountUserDetails user) {
+    return reporting.applySuggestions(currentUser.roleOf(user));
+  }
+
   /** Renames and/or regroups a category. A field left {@code null} is left unchanged. */
   @PatchMapping("/categories/{id}")
   void update(
@@ -123,4 +158,8 @@ public class ProductCategoryController {
   record UpdateCategoryRequest(String name, String groupName) {}
 
   record MoveRequest(UUID categoryId) {}
+
+  record AddSuggestionRequest(String name, String groupName) {}
+
+  record UpdateSuggestionRequest(String name, String groupName) {}
 }

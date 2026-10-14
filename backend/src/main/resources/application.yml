@@ -159,6 +159,8 @@ classification:
     enabled: ${CLASSIFICATION_JEV_ENABLED:false}
     base-url: ${CLASSIFICATION_JEV_BASE_URL:https://api.typesafe.ai}
     api-key: ${CLASSIFICATION_JEV_API_KEY:}
+  naming:
+    enabled: ${CLASSIFICATION_NAMING_ENABLED:false}
 
 # Cooking the Books SFTP drop — the Custom Invoice Export lands here and is polled by the
 # SFTP pull. Disabled by default; set ctb.sftp.enabled=true and provide host/user/password

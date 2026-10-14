@@ -54,6 +54,7 @@ export type {
   ApiErrorResponse,
   AssignmentRow,
   CategoryNode,
+  CategorySuggestion,
   ClassificationRun,
   ClassificationRunKind,
   ClassificationRunStatus,

@@ -327,6 +327,22 @@ describe("demoApi product categorisation", () => {
     expect(runs[0].productCount).not.toBeNull();
     expect(runs[0].finishedAt).not.toBeNull();
   });
+
+  it("lists suggestions and applies them into the taxonomy", async () => {
+    const suggestions = await demoApi.getCategorySuggestions();
+    expect(suggestions.length).toBeGreaterThan(0);
+    expect(suggestions.some((s) => s.groupName === null)).toBe(true);
+    expect(suggestions.some((s) => s.hint !== null)).toBe(true);
+
+    const before = (await demoApi.getCategoryTaxonomy()).length;
+    const created = await demoApi.applyCategorySuggestions();
+    expect(created.length).toBe(suggestions.length);
+
+    const taxonomy = await demoApi.getCategoryTaxonomy();
+    expect(taxonomy.length).toBe(before + suggestions.length);
+    expect(taxonomy.some((c) => c.name === "Craft Beer")).toBe(true);
+    expect((await demoApi.getCategorySuggestions()).length).toBe(0);
+  });
 });
 
 describe("demoApi invoices", () => {

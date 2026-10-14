@@ -2,6 +2,7 @@ package com.goldys.platform.classification;
 
 import com.goldys.platform.semantic.AssignmentView;
 import com.goldys.platform.semantic.CategoryNode;
+import com.goldys.platform.semantic.CategorySuggestionView;
 import com.goldys.platform.semantic.DendrogramNode;
 import com.goldys.platform.semantic.ProductPoint;
 import java.util.Comparator;
@@ -25,18 +26,21 @@ public class ProductCategoryQuery {
   private final ClassificationRunRepository runs;
   private final ClassificationClusterRepository clusters;
   private final ClassificationProjectionRepository projections;
+  private final CategorySuggestionRepository suggestions;
 
   public ProductCategoryQuery(
       ProductCategoryRepository categories,
       ProductCategoryAssignmentRepository assignments,
       ClassificationRunRepository runs,
       ClassificationClusterRepository clusters,
-      ClassificationProjectionRepository projections) {
+      ClassificationProjectionRepository projections,
+      CategorySuggestionRepository suggestions) {
     this.categories = categories;
     this.assignments = assignments;
     this.runs = runs;
     this.clusters = clusters;
     this.projections = projections;
+    this.suggestions = suggestions;
   }
 
   /** The category taxonomy in group/display/name order, each with its assigned product count. */
@@ -120,6 +124,19 @@ public class ProductCategoryQuery {
                   assignment.source() == null ? null : assignment.source().name(),
                   assignment.status().name());
             })
+        .toList();
+  }
+
+  /**
+   * The pending taxonomy draft, in {@code display_order}. There is one draft at a time — applying
+   * (or a new run) clears it — so this reads all rows rather than filtering by run.
+   */
+  public List<CategorySuggestionView> suggestions() {
+    return suggestions.findAllByOrderByDisplayOrderAsc().stream()
+        .map(
+            s ->
+                new CategorySuggestionView(
+                    s.id(), s.runId(), s.name(), s.groupName(), s.displayOrder(), s.hint()))
         .toList();
   }
 
