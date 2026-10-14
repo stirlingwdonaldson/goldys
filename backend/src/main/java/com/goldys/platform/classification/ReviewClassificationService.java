@@ -10,8 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Orchestrates review classification: on each canonicalized review, build the feature text,
@@ -19,9 +22,11 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * row (latest-wins). A {@code backfill()} pass classifies any history missing a row under a {@code
  * review_classification_run} (kind {@code BACKFILL}).
  *
- * <p>Classification is read-only: a classifier failure on the on-ingest path is swallowed so one
- * bad review never fails the ingestion run; the backfill pass instead surfaces a failure on its own
- * run record so operators can see the backfill did not complete.
+ * <p>Classification is gated on {@code classification.jev.enabled}: when disabled, no classifier is
+ * called and no row is persisted (privacy — the hosted service is never contacted). Classification
+ * is read-only: a classifier failure on the on-ingest path is swallowed so one bad review never
+ * fails the ingestion run; the backfill pass instead surfaces a failure on its own run record so
+ * operators can see the backfill did not complete.
  */
 @Service
 public class ReviewClassificationService {
@@ -40,6 +45,8 @@ public class ReviewClassificationService {
   private final ReviewClassificationRepository reviewClassifications;
   private final ReviewClassificationRunRepository runs;
   private final CanonicalReviewQuery reviews;
+  private final JevProperties jevProperties;
+  private final TransactionTemplate transactionTemplate;
   private final Clock clock;
 
   @Autowired
@@ -48,8 +55,18 @@ public class ReviewClassificationService {
       ReviewClassifier classifier,
       ReviewClassificationRepository reviewClassifications,
       ReviewClassificationRunRepository runs,
-      CanonicalReviewQuery reviews) {
-    this(featureTexts, classifier, reviewClassifications, runs, reviews, Clock.systemUTC());
+      CanonicalReviewQuery reviews,
+      JevProperties jevProperties,
+      PlatformTransactionManager transactionManager) {
+    this(
+        featureTexts,
+        classifier,
+        reviewClassifications,
+        runs,
+        reviews,
+        jevProperties,
+        transactionManager,
+        Clock.systemUTC());
   }
 
   /** Test-friendly constructor with an explicit clock, so tests control classifiedAt/startedAt. */
@@ -59,20 +76,25 @@ public class ReviewClassificationService {
       ReviewClassificationRepository reviewClassifications,
       ReviewClassificationRunRepository runs,
       CanonicalReviewQuery reviews,
+      JevProperties jevProperties,
+      PlatformTransactionManager transactionManager,
       Clock clock) {
     this.featureTexts = featureTexts;
     this.classifier = classifier;
     this.reviewClassifications = reviewClassifications;
     this.runs = runs;
     this.reviews = reviews;
+    this.jevProperties = jevProperties;
+    this.transactionTemplate = newTransactionTemplate(transactionManager);
     this.clock = clock;
   }
 
   /**
-   * Classifies one review and upserts its {@code review_classification} row. Only a {@link
-   * ReviewClassifier} failure is swallowed (and logged) — one bad review or a Jev hiccup must not
-   * fail the ingestion run — while a feature-text or persistence failure propagates so it is not
-   * silently lost.
+   * Classifies one review and upserts its {@code review_classification} row. Classification is
+   * skipped — with no classifier call and no persistence — when Jev is disabled or the review has
+   * no text (comment, private note and tags all blank). Otherwise only a {@link ReviewClassifier}
+   * failure is swallowed (and logged) — one bad review or a Jev hiccup must not fail the ingestion
+   * run — while a feature-text or persistence failure propagates so it is not silently lost.
    */
   public void classify(
       String reviewId,
@@ -81,6 +103,15 @@ public class ReviewClassificationService {
       String comment,
       String privateNote,
       List<String> tags) {
+    if (!jevProperties.enabled()) {
+      log.debug(
+          "Skipping classification for review '{}': Jev classification is disabled", reviewId);
+      return;
+    }
+    if (isTextless(comment, privateNote, tags)) {
+      log.debug("Skipping classification for review '{}': no review text", reviewId);
+      return;
+    }
     String text = featureTexts.featureText(source, overallRating, comment, privateNote, tags);
     ReviewClassification classification;
     try {
@@ -117,9 +148,13 @@ public class ReviewClassificationService {
     runs.save(run);
     Instant now = clock.instant();
     try {
+      requireEnabled();
       int count = 0;
       for (ReviewFact review : reviews.allCurrentReviews()) {
         if (reviewClassifications.existsById(review.reviewId())) {
+          continue;
+        }
+        if (isTextless(review.comment(), review.privateNote(), review.tags())) {
           continue;
         }
         classifyUnchecked(
@@ -138,6 +173,20 @@ public class ReviewClassificationService {
     runs.save(run);
   }
 
+  /**
+   * Rejects a backfill run when Jev is disabled, mirroring the product classifier's {@code
+   * requireEnabled}: a run against an un-deployed or un-warmed sidecar fails fast with an
+   * operator-facing message recorded in {@code error_message} rather than timing out deep in the
+   * HTTP client.
+   */
+  private void requireEnabled() {
+    if (!jevProperties.enabled()) {
+      throw new JevException(
+          "Review Jev classification is disabled; set CLASSIFICATION_JEV_ENABLED=true and"
+              + " CLASSIFICATION_JEV_API_KEY");
+    }
+  }
+
   /** Builds feature text, classifies, and upserts — without swallowing a classifier failure. */
   private void classifyUnchecked(
       String reviewId,
@@ -154,13 +203,46 @@ public class ReviewClassificationService {
 
   /**
    * Upserts the single {@code review_classification} row, skipping a null (unclassified) result.
+   *
+   * <p>Persisted in an independently committed transaction ({@code REQUIRES_NEW}): the {@code
+   * AFTER_COMMIT} listener still runs with the writer's transaction synchronization bound, so a
+   * plain repository {@code save()} would join the already-committed transaction and be lost.
    */
   private void persist(String reviewId, ReviewClassification classification) {
     if (classification == null) {
       return;
     }
-    reviewClassifications.save(
-        ReviewClassificationEntity.create(reviewId, classification, clock.instant()));
+    transactionTemplate.executeWithoutResult(
+        status ->
+            reviewClassifications.save(
+                ReviewClassificationEntity.create(reviewId, classification, clock.instant())));
+  }
+
+  /**
+   * True when a review has no classifier-readable text: comment, private note and tags all blank.
+   */
+  private static boolean isTextless(String comment, String privateNote, List<String> tags) {
+    if (notBlank(comment) || notBlank(privateNote)) {
+      return false;
+    }
+    if (tags != null) {
+      for (String tag : tags) {
+        if (notBlank(tag)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private static boolean notBlank(String value) {
+    return value != null && !value.isBlank();
+  }
+
+  private static TransactionTemplate newTransactionTemplate(PlatformTransactionManager txManager) {
+    TransactionTemplate template = new TransactionTemplate(txManager);
+    template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    return template;
   }
 
   private String failureMessage(RuntimeException e) {

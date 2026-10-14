@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
 /** Orchestration coverage: classify-on-ingest, latest-wins upsert, and the backfill runner. */
 class ReviewClassificationServiceTest {
@@ -62,12 +64,21 @@ class ReviewClassificationServiceTest {
   }
 
   private ReviewClassificationService service(ReviewClassifier classifier) {
+    return service(classifier, new JevProperties(true, "https://api.typesafe.ai", ""));
+  }
+
+  private ReviewClassificationService service(
+      ReviewClassifier classifier, JevProperties jevProperties) {
+    PlatformTransactionManager txManager = mock(PlatformTransactionManager.class);
+    when(txManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
     return new ReviewClassificationService(
         new ReviewFeatureTextExtractor(),
         classifier,
         reviewClassifications,
         runs,
         reviews,
+        jevProperties,
+        txManager,
         Clock.fixed(NOW, ZoneOffset.UTC));
   }
 
@@ -198,6 +209,103 @@ class ReviewClassificationServiceTest {
     assertThat(run.status()).isEqualTo(ClassificationRunStatus.FAILED);
     assertThat(run.errorMessage()).isEqualTo("Jev service returned HTTP 500");
     assertThat(classificationStore).isEmpty();
+  }
+
+  @Test
+  void disabled_jev_skips_classification_and_persistence() {
+    FakeClassifier classifier =
+        new FakeClassifier(
+            req ->
+                new ReviewClassification(
+                    new Sentiment("POSITIVE", new BigDecimal("0.90")),
+                    new BigDecimal("4.5"),
+                    List.of()));
+    ReviewClassificationService svc =
+        service(classifier, new JevProperties(false, "https://api.typesafe.ai", ""));
+
+    svc.classify("OT-1", "OpenTable", 4, "Great food", null, List.of());
+
+    assertThat(classifier.requests()).isEmpty();
+    assertThat(classificationStore).isEmpty();
+  }
+
+  @Test
+  void disabled_jev_skips_on_review_recorded() {
+    FakeClassifier classifier =
+        new FakeClassifier(
+            req ->
+                new ReviewClassification(
+                    new Sentiment("POSITIVE", new BigDecimal("0.90")),
+                    new BigDecimal("4.5"),
+                    List.of()));
+    ReviewClassificationService svc =
+        service(classifier, new JevProperties(false, "https://api.typesafe.ai", ""));
+
+    svc.onReviewRecorded(new ReviewRecorded("OT-1", "OpenTable", 4, "Great food", null, List.of()));
+
+    assertThat(classifier.requests()).isEmpty();
+    assertThat(classificationStore).isEmpty();
+  }
+
+  @Test
+  void disabled_jev_backfill_marks_run_failed() {
+    when(reviews.allCurrentReviews())
+        .thenReturn(List.of(reviewFact("OT-1", "OpenTable", 4, "Great food")));
+    FakeClassifier classifier =
+        new FakeClassifier(
+            req ->
+                new ReviewClassification(
+                    new Sentiment("POSITIVE", new BigDecimal("0.90")),
+                    new BigDecimal("4.5"),
+                    List.of()));
+    ReviewClassificationService svc =
+        service(classifier, new JevProperties(false, "https://api.typesafe.ai", ""));
+
+    svc.backfill();
+
+    ReviewClassificationRun run = runStore.get(runStore.size() - 1);
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.FAILED);
+    assertThat(run.errorMessage()).contains("CLASSIFICATION_JEV_ENABLED=true");
+    assertThat(classifier.requests()).isEmpty();
+    assertThat(classificationStore).isEmpty();
+  }
+
+  @Test
+  void textless_review_is_skipped() {
+    FakeClassifier classifier =
+        new FakeClassifier(
+            req ->
+                new ReviewClassification(
+                    new Sentiment("POSITIVE", new BigDecimal("0.90")),
+                    new BigDecimal("4.5"),
+                    List.of()));
+    ReviewClassificationService svc = service(classifier);
+
+    svc.classify("OT-1", "OpenTable", 4, null, null, List.of());
+
+    assertThat(classifier.requests()).isEmpty();
+    assertThat(classificationStore).isEmpty();
+  }
+
+  @Test
+  void textless_review_is_skipped_in_backfill() {
+    when(reviews.allCurrentReviews()).thenReturn(List.of(reviewFact("OT-1", "OpenTable", 4, null)));
+    FakeClassifier classifier =
+        new FakeClassifier(
+            req ->
+                new ReviewClassification(
+                    new Sentiment("POSITIVE", new BigDecimal("0.90")),
+                    new BigDecimal("4.5"),
+                    List.of()));
+    ReviewClassificationService svc = service(classifier);
+
+    svc.backfill();
+
+    assertThat(classifier.requests()).isEmpty();
+    assertThat(classificationStore).isEmpty();
+    ReviewClassificationRun run = runStore.get(runStore.size() - 1);
+    assertThat(run.status()).isEqualTo(ClassificationRunStatus.SUCCEEDED);
+    assertThat(run.reviewCount()).isEqualTo(0);
   }
 
   private static ReviewFact reviewFact(String id, String source, int rating, String comment) {
