@@ -22,13 +22,12 @@ import org.springframework.stereotype.Component;
  * <p>The request follows the System One envelope (https://docs.typesafe.ai): {@code POST
  * {baseUrl}/v1/systemone} with a {@code state} (the review's feature text), a {@code model}, and a
  * {@code questions} map — one {@code choice} question for the overall sentiment, one {@code score}
- * question for the predicted rating, and one {@code choice} question per aspect to detect. The
- * response maps the fixed classification shape {@code {"sentiment":{"label","confidence"},
- * "predictedRating","aspects":[{"aspect","label","confidence"}]}} to {@link ReviewClassification};
- * an omitted {@code predictedRating} leaves the rating null (a review with no rating signal).
- *
- * <p>The exact Jev wire schema is an external unknown: the port and value types are fixed, only
- * this adapter's JSON mapping follows the Jev docs, so a schema correction is a one-file change.
+ * question for the predicted rating, and, per aspect, a {@code choice} question for its sentiment
+ * plus a {@code noul} question for whether the review mentions it at all. The response returns each
+ * answer under {@code answers.<questionId>}: a {@code choice} answer carries {@code choice} +
+ * {@code confidence}, the {@code score} rating answer carries a 0-based {@code score} shifted onto
+ * the 1..5 star scale, and a {@code noul} answer carries a single {@code noul} (0..1) thresholded
+ * at {@code 0.5} to keep the aspect list sparse — only aspects the review mentions are returned.
  *
  * <p>Failures — non-2xx, IO, or an unparseable body — surface as {@link JevException} with an
  * operator-facing message that never carries the request payload or the API key.
@@ -47,6 +46,9 @@ public class JevReviewClassifier implements ReviewClassifier {
       "What star rating from 1 to 5 would this review warrant?";
   private static final String ASPECT_INSTRUCTIONS_PREFIX =
       "What is the sentiment of this review towards the \"";
+  private static final String ASPECT_PRESENCE_INSTRUCTIONS = "Does this review mention the \"";
+  private static final String PRESENCE_QUESTION_SUFFIX = "_mentioned";
+  private static final BigDecimal PRESENCE_THRESHOLD = new BigDecimal("0.5");
 
   // Readable level/option descriptions so the model judges against situations, not bare labels.
   private static final String POSITIVE_DESCRIPTION =
@@ -89,7 +91,7 @@ public class JevReviewClassifier implements ReviewClassifier {
               + " CLASSIFICATION_JEV_API_KEY");
     }
     JsonNode response = post("/v1/systemone", buildBody(request));
-    return map(response);
+    return map(response, request.aspects());
   }
 
   private ObjectNode buildBody(ReviewClassificationRequest request) {
@@ -98,6 +100,9 @@ public class JevReviewClassifier implements ReviewClassifier {
     questions.set(RATING_QUESTION, ratingScore());
     for (String aspect : request.aspects()) {
       questions.set(aspect, sentimentChoice(ASPECT_INSTRUCTIONS_PREFIX + aspect + "\" aspect?"));
+      questions.set(
+          presenceQuestion(aspect),
+          presenceNoul(ASPECT_PRESENCE_INSTRUCTIONS + aspect + "\" aspect?"));
     }
 
     ObjectNode body = mapper.createObjectNode();
@@ -133,41 +138,69 @@ public class JevReviewClassifier implements ReviewClassifier {
     return question;
   }
 
-  private ReviewClassification map(JsonNode response) {
-    Sentiment sentiment = sentiment(response.path("sentiment"));
+  /** A {@code noul} question asking whether the review mentions an aspect at all. */
+  private ObjectNode presenceNoul(String instructions) {
+    ObjectNode question = mapper.createObjectNode();
+    question.put("type", "noul");
+    question.put("instructions", instructions);
+    return question;
+  }
 
-    JsonNode ratingNode = response.get("predictedRating");
-    BigDecimal predictedRating =
-        (ratingNode == null || ratingNode.isNull()) ? null : ratingNode.decimalValue();
+  private static String presenceQuestion(String aspect) {
+    return aspect + PRESENCE_QUESTION_SUFFIX;
+  }
 
-    List<AspectSentiment> aspects = new ArrayList<>();
-    JsonNode aspectsNode = response.path("aspects");
-    if (aspectsNode.isArray()) {
-      for (JsonNode aspectNode : aspectsNode) {
-        aspects.add(aspectSentiment(aspectNode));
+  private ReviewClassification map(JsonNode response, List<String> aspects) {
+    JsonNode answers = response.path("answers");
+    if (answers.isMissingNode() || !answers.isObject()) {
+      throw new JevException("Jev service returned an unparseable response");
+    }
+
+    Sentiment sentiment = choiceSentiment(answers.path(SENTIMENT_QUESTION));
+    BigDecimal predictedRating = ratingScore(answers.path(RATING_QUESTION));
+
+    List<AspectSentiment> aspectList = new ArrayList<>(aspects.size());
+    for (String aspect : aspects) {
+      if (mentioned(answers.path(presenceQuestion(aspect)))) {
+        aspectList.add(choiceAspect(aspect, answers.path(aspect)));
       }
     }
 
-    return new ReviewClassification(sentiment, predictedRating, aspects);
+    return new ReviewClassification(sentiment, predictedRating, aspectList);
   }
 
-  private Sentiment sentiment(JsonNode node) {
-    String label = node.path("label").asText(null);
-    JsonNode confidence = node.get("confidence");
+  /** True when the {@code noul} presence answer sits at or above the 0.5 "mentioned" midpoint. */
+  private static boolean mentioned(JsonNode presence) {
+    JsonNode noul = presence.get("noul");
+    if (noul == null || !noul.isNumber()) {
+      throw new JevException("Jev service returned an unparseable response");
+    }
+    return noul.decimalValue().compareTo(PRESENCE_THRESHOLD) >= 0;
+  }
+
+  /** A {@code choice} answer's selected label + confidence (the sentiment and aspect questions). */
+  private Sentiment choiceSentiment(JsonNode answer) {
+    String label = answer.path("choice").asText(null);
+    JsonNode confidence = answer.get("confidence");
     if (label == null || confidence == null || !confidence.isNumber()) {
       throw new JevException("Jev service returned an unparseable response");
     }
     return new Sentiment(label, confidence.decimalValue());
   }
 
-  private AspectSentiment aspectSentiment(JsonNode node) {
-    String aspect = node.path("aspect").asText(null);
-    String label = node.path("label").asText(null);
-    JsonNode confidence = node.get("confidence");
-    if (aspect == null || label == null || confidence == null || !confidence.isNumber()) {
+  /** The {@code score} rating answer, shifted from Jev's 0-based level line onto the 1..5 scale. */
+  private BigDecimal ratingScore(JsonNode answer) {
+    JsonNode score = answer.get("score");
+    if (score == null || !score.isNumber()) {
       throw new JevException("Jev service returned an unparseable response");
     }
-    return new AspectSentiment(aspect, label, confidence.decimalValue());
+    return score.decimalValue().add(BigDecimal.ONE);
+  }
+
+  /** One aspect question's answer; the aspect name is the question id. */
+  private AspectSentiment choiceAspect(String aspect, JsonNode answer) {
+    Sentiment sentiment = choiceSentiment(answer);
+    return new AspectSentiment(aspect, sentiment.label(), sentiment.confidence());
   }
 
   private JsonNode post(String path, ObjectNode body) {
