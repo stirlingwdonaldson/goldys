@@ -975,14 +975,19 @@ export interface AspectSentimentView {
 
 /**
  * One resolved review as read by the analytics page (mirrors `semantic.ReviewView`). Nullable
- * fields: `overallRating`, `sentiment`, `predictedRating`, `comment`, `guestName`. `reviewedAt` is
- * an ISO-8601 instant; `sentiment` is "POSITIVE" | "NEUTRAL" | "NEGATIVE" | null.
+ * fields: `overallRating`, the sub-ratings (`foodRating`, `serviceRating`, `ambienceRating`,
+ * `valueRating`), `sentiment`, `predictedRating`, `comment`, `guestName`. `reviewedAt` is an
+ * ISO-8601 instant; `sentiment` is "POSITIVE" | "NEUTRAL" | "NEGATIVE" | null.
  */
 export interface ReviewView {
   reviewId: string;
   source: string;
   reviewedAt: string;
   overallRating: number | null;
+  foodRating: number | null;
+  serviceRating: number | null;
+  ambienceRating: number | null;
+  valueRating: number | null;
   sentiment: string | null;
   sentimentConfidence: number;
   predictedRating: number | null;

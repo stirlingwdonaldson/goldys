@@ -91,6 +91,16 @@ const columns: ColumnDef<ReviewView>[] = [
   },
 ];
 
+/** One nullable star sub-rating, rendered as a dash when absent. */
+function SubRating({ label, value }: { label: string; value: number | null }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="tabular-nums">{value != null ? `${value}★` : "—"}</p>
+    </div>
+  );
+}
+
 /** The drilled-in review: full text, sub-ratings, and per-aspect sentiment. */
 function ReviewDetail({ review, onClose }: { review: ReviewView; onClose: () => void }) {
   return (
@@ -132,6 +142,13 @@ function ReviewDetail({ review, onClose }: { review: ReviewView; onClose: () => 
           <p className="text-xs text-muted-foreground">Confidence</p>
           <p className="tabular-nums">{formatPercent(review.sentimentConfidence)}</p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-2">
+        <SubRating label="Food" value={review.foodRating} />
+        <SubRating label="Service" value={review.serviceRating} />
+        <SubRating label="Ambience" value={review.ambienceRating} />
+        <SubRating label="Value" value={review.valueRating} />
       </div>
 
       {review.aspects.length > 0 ? (

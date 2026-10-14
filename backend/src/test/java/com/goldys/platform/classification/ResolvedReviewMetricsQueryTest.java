@@ -135,6 +135,43 @@ class ResolvedReviewMetricsQueryTest {
             new AspectSentimentView("food", "POSITIVE", 0.95));
   }
 
+  @Test
+  void reviews_populates_sub_ratings() {
+    ReviewFact fact =
+        new ReviewFact(
+            "OT-1",
+            "OpenTable",
+            NOW,
+            NOW,
+            4,
+            5,
+            3,
+            4,
+            5,
+            null,
+            null,
+            "Great",
+            null,
+            List.of(),
+            List.of(),
+            "Ada");
+
+    when(reviews.allCurrentReviews()).thenReturn(List.of(fact));
+    when(classifications.findAll())
+        .thenReturn(List.of(classification("OT-1", "POSITIVE", "4.5", List.of())));
+
+    List<ReviewView> result =
+        query.reviews(new ReviewFilter(null, null, null, null, null, null, null));
+
+    assertThat(result).hasSize(1);
+    ReviewView view = result.get(0);
+    assertThat(view.overallRating()).isEqualTo(4);
+    assertThat(view.foodRating()).isEqualTo(5);
+    assertThat(view.serviceRating()).isEqualTo(3);
+    assertThat(view.ambienceRating()).isEqualTo(4);
+    assertThat(view.valueRating()).isEqualTo(5);
+  }
+
   private static RatingBucket bucket(List<RatingBucket> buckets, int stars) {
     return buckets.stream().filter(b -> b.stars() == stars).findFirst().orElseThrow();
   }
