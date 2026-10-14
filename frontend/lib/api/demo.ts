@@ -158,8 +158,9 @@ const records: Record<string, ReconciliationRecord> = {
 };
 
 const connectorStatuses: ConnectorStatus[] = [
-  { source: "LIGHTSPEED", connectorName: "lightspeed-scrape", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0, runnable: false },
-  { source: "CTB", connectorName: "ctb-export", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1, runnable: true },
+  { source: "LIGHTSPEED", connectorName: "lightspeed-insights", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0, runnable: false },
+  { source: "LIGHTSPEED", connectorName: "lightspeed-product-catalog", lastRunAt: "2026-09-19T08:00:00Z", status: "success", failureCount: 0, runnable: false },
+  { source: "CTB", connectorName: "ctb-revenue", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1, runnable: true },
   { source: "OPENTABLE", connectorName: "opentable-csv-drop", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
   { source: "OPENTABLE", connectorName: "opentable-reservations", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
   { source: "OPENTABLE", connectorName: "opentable-reviews", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },

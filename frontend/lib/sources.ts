@@ -80,3 +80,17 @@ export function uploadTargetFor(connectorName: string): string | null {
 export function isLegacyCsvDrop(connectorName: string): boolean {
   return connectorName === "opentable-csv-drop";
 }
+
+/** Short label for an OpenTable dataset, for the single-card upload picker. */
+export function opentableDatasetLabel(connectorName: string): string {
+  switch (connectorName) {
+    case "opentable-reservations":
+      return "Reservations";
+    case "opentable-reviews":
+      return "Reviews";
+    case "opentable-menu-items":
+      return "Menu";
+    default:
+      return connectorDisplayName("OPENTABLE", connectorName);
+  }
+}
