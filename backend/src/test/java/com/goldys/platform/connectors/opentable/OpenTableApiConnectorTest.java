@@ -4,6 +4,7 @@ import static com.goldys.platform.connectors.opentable.session.FakeOpenTableBrow
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -11,7 +12,10 @@ import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.canonical.CanonicalGuestIngest;
 import com.goldys.platform.canonical.CanonicalReservationIngest;
+import com.goldys.platform.canonical.CanonicalReviewIngest;
+import com.goldys.platform.canonical.ReviewInput;
 import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.connectors.opentable.session.BrowserResponse;
 import com.goldys.platform.connectors.opentable.session.FakeOpenTableBrowser;
@@ -36,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 class OpenTableApiConnectorTest {
   private static final ZoneId ZONE = ZoneId.of("Australia/Melbourne");
@@ -45,6 +50,8 @@ class OpenTableApiConnectorTest {
   private final ObjectMapper json = new ObjectMapper();
   private final FakeOpenTableBrowser browser = new FakeOpenTableBrowser();
   private final CanonicalReservationIngest canonical = mock(CanonicalReservationIngest.class);
+  private final CanonicalReviewIngest reviewIngest = mock(CanonicalReviewIngest.class);
+  private final CanonicalGuestIngest guestIngest = mock(CanonicalGuestIngest.class);
   private final List<FetchedPayload> stored = new ArrayList<>();
 
   /** A minimal raw ledger: latest payload per (fetcherIdentity, sourceRecordRef). */
@@ -60,7 +67,10 @@ class OpenTableApiConnectorTest {
         new OpenTableApiConnector(
             new OpenTableApiClient(browser, Duration.ZERO, d -> {}),
             new OpenTableReservationJsonParser(json, ZONE),
+            new OpenTableReviewJsonParser(json),
             canonical,
+            reviewIngest,
+            guestIngest,
             json,
             VenueClock.fixed(ZONE, TODAY.atTime(9, 0).atZone(ZONE).toInstant()),
             "140126",
@@ -213,7 +223,14 @@ class OpenTableApiConnectorTest {
             int rows = page == 0 ? 25 : 5;
             String data =
                 IntStream.range(0, rows)
-                    .mapToObj(i -> "{\"id\":\"p" + page + "-" + i + "\"}")
+                    .mapToObj(
+                        i ->
+                            "{\"id\":\"OT-p"
+                                + page
+                                + "-"
+                                + i
+                                + "\",\"source\":\"OpenTable\","
+                                + "\"reviewDate\":\"2026-10-13T02:06:40Z\"}")
                     .collect(Collectors.joining(","));
             return json(200, "{\"meta\":{\"totalCount\":30},\"data\":[" + data + "]}");
           }
@@ -235,6 +252,36 @@ class OpenTableApiConnectorTest {
     assertThat(body.path("workflowStatuses")).hasSize(4);
     assertThat(Instant.parse(body.path("startDate").asText()))
         .isEqualTo(TODAY.minusDays(120).atStartOfDay(ZONE).toInstant());
+  }
+
+  @Test
+  void reviewsAreCanonicalizedWithGuestsEnsured() throws Exception {
+    browser.router =
+        path -> {
+          if (path.endsWith("/reviews/details")) {
+            String data =
+                "{\"id\":\"OT-1\",\"source\":\"OpenTable\",\"reviewDate\":\"2026-10-13T02:06:40Z\","
+                    + "\"overallRating\":5.0,\"guestId\":\"68f9d1af3720e3c69efd313c\","
+                    + "\"guestName\":\"Mackenzie\"},"
+                    + "{\"id\":\"RT-1\",\"source\":\"Google\",\"reviewDate\":\"2026-10-13T00:54:05Z\","
+                    + "\"overallRating\":4.0}";
+            return json(200, "{\"meta\":{\"totalCount\":2},\"data\":[" + data + "]}");
+          }
+          return defaultRoute(path);
+        };
+
+    connector.fetch(null, this::sink);
+
+    ArgumentCaptor<ReviewInput> input = ArgumentCaptor.forClass(ReviewInput.class);
+    verify(reviewIngest, times(2)).record(input.capture());
+    assertThat(input.getAllValues())
+        .extracting(ReviewInput::reviewId)
+        .containsExactly("OT-1", "RT-1");
+    assertThat(input.getAllValues().get(0).guestId()).isEqualTo("68f9d1af3720e3c69efd313c");
+    assertThat(input.getAllValues().get(1).guestId()).isNull();
+
+    // Only the OpenTable review carries a Guest ID.
+    verify(guestIngest).ensure(eq("68f9d1af3720e3c69efd313c"), eq("Mackenzie"), any(UUID.class));
   }
 
   @Test
