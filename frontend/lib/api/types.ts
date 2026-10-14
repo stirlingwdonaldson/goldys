@@ -1053,6 +1053,8 @@ export interface Api {
   createCategory(input: CreateCategoryInput): Promise<CategoryNode>;
   /** Renames and/or regroups a category; a null field is left unchanged. */
   renameCategory(id: string, input: UpdateCategoryInput): Promise<void>;
+  /** Deletes a category; its products return to UNASSIGNED. */
+  deleteCategory(id: string): Promise<void>;
   moveProduct(productNameKey: string, categoryId: string): Promise<void>;
   clearProductOverride(productNameKey: string): Promise<void>;
   /** Submits an asynchronous categorisation run; accepted (202) immediately. */

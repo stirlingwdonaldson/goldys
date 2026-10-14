@@ -339,6 +339,12 @@ export const liveApi: Api = {
       { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) },
       { responseType: "void" },
     ),
+  deleteCategory: (id: string) =>
+    fetchApi<void>(
+      `/api/products/categories/categories/${id}`,
+      { method: "DELETE" },
+      { responseType: "void" },
+    ),
   moveProduct: (productNameKey: string, categoryId: string) =>
     fetchApi<void>(
       `/api/products/categories/assignments/${encodeURIComponent(productNameKey)}/move`,

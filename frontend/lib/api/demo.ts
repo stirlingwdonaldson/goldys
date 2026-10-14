@@ -1846,6 +1846,23 @@ export const demoApi: Api = {
     if (input.groupName != null) category.groupName = input.groupName;
   },
 
+  async deleteCategory(id: string): Promise<void> {
+    await delay(400);
+    const index = demoCategoryTaxonomy.findIndex((c) => c.id === id);
+    if (index < 0) throw new ApiError("VALIDATION_FAILED", `No category with id ${id}.`);
+    demoCategoryTaxonomy.splice(index, 1);
+    for (const assignment of demoCategoryAssignments) {
+      if (assignment.categoryId === id) {
+        assignment.categoryId = null;
+        assignment.categoryName = null;
+        assignment.groupName = null;
+        assignment.confidence = null;
+        assignment.source = null;
+        assignment.status = "UNASSIGNED";
+      }
+    }
+  },
+
   async moveProduct(productNameKey: string, categoryId: string): Promise<void> {
     await delay(400);
     const assignment = demoCategoryAssignments.find((a) => a.productNameKey === productNameKey);
