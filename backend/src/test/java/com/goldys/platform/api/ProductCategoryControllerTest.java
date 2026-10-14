@@ -207,6 +207,22 @@ class ProductCategoryControllerTest {
   }
 
   @Test
+  void updateClearsGroupWithEmptyString() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    UUID id = UUID.randomUUID();
+
+    mvc.perform(
+            patch("/api/products/categories/categories/" + id)
+                .with(authenticated(owner()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"groupName\":\"\"}"))
+        .andExpect(status().isOk());
+
+    verify(reporting).regroup(any(), eq(id), eq(null));
+  }
+
+  @Test
   void controllerNeverImportsCanonicalOrClassification() {
     JavaClasses classes = new ClassFileImporter().importPackages("com.goldys.platform.api");
     noClasses()
