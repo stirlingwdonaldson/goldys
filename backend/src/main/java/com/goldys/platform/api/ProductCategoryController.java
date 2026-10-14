@@ -132,8 +132,15 @@ public class ProductCategoryController {
       reporting.rename(role, id, body.name());
     }
     if (body.groupName() != null) {
-      reporting.regroup(role, id, body.groupName());
+      // An empty-string group clears the group (makes the category flat); null means "unchanged".
+      reporting.regroup(role, id, body.groupName().isEmpty() ? null : body.groupName());
     }
+  }
+
+  /** Deletes a category, returning any products assigned to it to {@code UNASSIGNED}. */
+  @DeleteMapping("/categories/{id}")
+  void delete(@PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    reporting.delete(currentUser.roleOf(user), id);
   }
 
   @PostMapping("/assignments/{productNameKey}/move")

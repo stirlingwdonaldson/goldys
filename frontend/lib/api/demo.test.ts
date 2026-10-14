@@ -343,6 +343,20 @@ describe("demoApi product categorisation", () => {
     expect(taxonomy.some((c) => c.name === "Craft Beer")).toBe(true);
     expect((await demoApi.getCategorySuggestions()).length).toBe(0);
   });
+
+  it("deletes a category and unassigns its products", async () => {
+    const before = (await demoApi.getCategoryTaxonomy()).length;
+    await demoApi.deleteCategory("cat-beer");
+
+    const taxonomy = await demoApi.getCategoryTaxonomy();
+    expect(taxonomy.length).toBe(before - 1);
+    expect(taxonomy.some((c) => c.id === "cat-beer")).toBe(false);
+
+    const beer = (await demoApi.getCategoryAssignments()).find(
+      (a) => a.productNameKey === "pint carlton draught",
+    );
+    expect(beer?.categoryId).toBeNull();
+  });
 });
 
 describe("demoApi invoices", () => {

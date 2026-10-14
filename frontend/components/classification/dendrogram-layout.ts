@@ -21,6 +21,8 @@ export interface DendroLayoutNode {
   /** Centre of the node along the distance axis, px (smaller = higher up = later merge). */
   y: number;
   tone: DendroTone;
+  /** The single category every leaf shares; null when the node is mixed or missing. */
+  categoryId: string | null;
 }
 
 export interface DendroLayoutEdge {
@@ -144,6 +146,7 @@ export function layoutDendrogram(
     if (node.isLeaf || kids.length === 0) {
       const cx = leafX.get(id) ?? DENDRO_LEFT_PAD;
       const row = node.isLeaf ? byKey.get(node.productNameKey ?? "") : undefined;
+      const leafTone = node.isLeaf ? dendroToneForLeaf(row) : "missing";
       const result: Subtree = {
         total: 1,
         settled: isSettled(row) ? 1 : 0,
@@ -161,7 +164,8 @@ export function layoutDendrogram(
         mergeHeight: node.mergeHeight,
         x: cx,
         y: yOf(node),
-        tone: node.isLeaf ? dendroToneForLeaf(row) : "missing",
+        tone: leafTone,
+        categoryId: leafTone === "settled" ? (row?.categoryId ?? null) : null,
       });
       subtree.set(id, result);
       return result;
@@ -200,6 +204,7 @@ export function layoutDendrogram(
       x: (minX + maxX) / 2,
       y: yOf(node),
       tone,
+      categoryId: tone === "settled" ? [...categoryIds][0] : null,
     });
     subtree.set(id, result);
     return result;

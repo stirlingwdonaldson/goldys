@@ -217,4 +217,16 @@ class ProductCategoryReportingServiceTest {
     assertThat(service.applySuggestions(OWNER)).containsExactly(node);
     verify(categories).applySuggestions(OWNER);
   }
+
+  @Test
+  void deleteDelegates() {
+    ProductCategoryService categories = mock(ProductCategoryService.class);
+    ProductCategoryReportingService service =
+        service(mock(ProductCategoryQuery.class), categories, mock(PermissionService.class));
+    UUID id = UUID.randomUUID();
+
+    service.delete(OWNER, id);
+
+    verify(categories).delete(OWNER, id);
+  }
 }

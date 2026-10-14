@@ -161,4 +161,9 @@ public class ProductCategoryReportingService {
   public void clearOverride(UserRole role, String productNameKey) {
     categories.clearOverride(role, productNameKey);
   }
+
+  /** Deletes a category, unassigning any products that belonged to it. */
+  public void delete(UserRole role, UUID id) {
+    categories.delete(role, id);
+  }
 }

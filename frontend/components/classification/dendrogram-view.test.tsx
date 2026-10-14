@@ -48,8 +48,8 @@ describe("DendrogramView", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /merge of 2 products/i }));
 
-    // The action bar names what the selected cluster covers: two products, one shared category.
-    expect(screen.getByText("Beer")).toBeInTheDocument();
+    // The action bar names the selected cluster's category (also in the colour legend).
+    expect(screen.getAllByText("Beer").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /merge into one category/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /split/i })).toBeInTheDocument();
 

@@ -294,4 +294,34 @@ class ProductCategoryServiceTest {
     verify(permissions)
         .require(OWNER, new ResourceKey("products.category"), PermissionAction.WRITE);
   }
+
+  @Test
+  void deleteUnassignsItsProductsAndDeletesTheCategory() {
+    ProductCategory category = ProductCategory.create("Beer", "Drinks", 0, null);
+    ProductCategoryRepository categories = mock(ProductCategoryRepository.class);
+    when(categories.findById(category.id())).thenReturn(Optional.of(category));
+
+    ProductCategoryAssignment assigned =
+        ProductCategoryAssignment.create("kids fish", Instant.now());
+    assigned.markAssigned(category.id(), null, AssignmentSource.JEV, Instant.now());
+    ProductCategoryAssignment other = ProductCategoryAssignment.create("pale ale", Instant.now());
+    other.markAssigned(UUID.randomUUID(), null, AssignmentSource.JEV, Instant.now());
+    ProductCategoryAssignmentRepository assignments =
+        mock(ProductCategoryAssignmentRepository.class);
+    when(assignments.findAll()).thenReturn(List.of(assigned, other));
+
+    ProductCategoryService service =
+        service(
+            categories,
+            assignments,
+            mock(CategorySuggestionRepository.class),
+            mock(PermissionService.class));
+
+    service.delete(OWNER, category.id());
+
+    assertThat(assigned.status()).isEqualTo(AssignmentStatus.UNASSIGNED);
+    assertThat(assigned.categoryId()).isNull();
+    assertThat(other.categoryId()).isNotNull();
+    verify(categories).delete(category);
+  }
 }

@@ -121,15 +121,21 @@ function RenameCategoryForm({
   );
 }
 
-/** The drilled-in category: its name, and the products that sit in it. */
+/** The drilled-in category: its name, group and the products that sit in it. */
 function CategoryDetail({
   category,
   products,
+  groups,
   onRename,
+  onRegroup,
+  onDelete,
 }: {
   category: CategoryNode;
   products: AssignmentRow[];
+  groups: string[];
   onRename: (categoryId: string, name: string) => void;
+  onRegroup: (categoryId: string, groupName: string) => void;
+  onDelete: (categoryId: string) => void;
 }) {
   return (
     <Section
@@ -138,6 +144,42 @@ function CategoryDetail({
     >
       {/* Keyed so drilling into another category resets the name draft. */}
       <RenameCategoryForm key={category.id} category={category} onSave={(name) => onRename(category.id, name)} />
+      <div className="flex flex-wrap items-center gap-2">
+        <label htmlFor="category-group" className="text-sm text-muted-foreground">
+          Group
+        </label>
+        <select
+          id="category-group"
+          aria-label="Category group"
+          className="h-8 rounded-md border bg-background px-2 text-sm"
+          value={category.groupName ?? ""}
+          onChange={(event) => onRegroup(category.id, event.target.value)}
+        >
+          <option value="">No group</option>
+          {groups
+            .filter((group) => group !== category.groupName)
+            .map((group) => (
+              <option key={group} value={group}>
+                {group}
+              </option>
+            ))}
+        </select>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => {
+            if (
+              window.confirm(
+                `Delete the "${category.name}" category? Its products will become uncategorised.`,
+              )
+            ) {
+              onDelete(category.id);
+            }
+          }}
+        >
+          Delete
+        </Button>
+      </div>
       {products.length === 0 ? (
         <p className="text-sm text-muted-foreground">No products are assigned to this category yet.</p>
       ) : (
@@ -240,10 +282,26 @@ function AssignmentsTable({
     [categories, onMove, onClear],
   );
 
+  const sortedRows = useMemo(
+    () =>
+      [...rows].sort((a, b) => {
+        // Group first (flat/unassigned last), then category, then product, so the two-level
+        // group → category structure is visible in the queue.
+        const ga = a.groupName ?? "\uffff";
+        const gb = b.groupName ?? "\uffff";
+        if (ga !== gb) return ga.localeCompare(gb);
+        const ca = a.categoryName ?? "\uffff";
+        const cb = b.categoryName ?? "\uffff";
+        if (ca !== cb) return ca.localeCompare(cb);
+        return a.productNameKey.localeCompare(b.productNameKey);
+      }),
+    [rows],
+  );
+
   return (
     <DataTable
       columns={columns}
-      data={rows}
+      data={sortedRows}
       getRowId={(row) => row.productNameKey}
       filterColumn="product"
       filterPlaceholder="Filter products"
@@ -258,6 +316,8 @@ function CategoriesTab({
   selectedCategoryId,
   onSelectCategory,
   onRename,
+  onRegroup,
+  onDelete,
   onMove,
   onClear,
 }: {
@@ -266,12 +326,19 @@ function CategoriesTab({
   selectedCategoryId: string | null;
   onSelectCategory: (categoryId: string | null) => void;
   onRename: (categoryId: string, name: string) => void;
+  onRegroup: (categoryId: string, groupName: string) => void;
+  onDelete: (categoryId: string) => void;
   onMove: (productNameKey: string, categoryId: string) => void;
   onClear: (productNameKey: string) => void;
 }) {
   const needsReview = rows.filter((row) => row.status === "NEEDS_REVIEW").length;
   const unassigned = rows.filter((row) => row.status === "UNASSIGNED").length;
   const selected = categories.find((category) => category.id === selectedCategoryId) ?? null;
+  const groups = useMemo(
+    () =>
+      [...new Set(categories.map((c) => c.groupName).filter((g): g is string => g != null))].sort(),
+    [categories],
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -296,7 +363,10 @@ function CategoriesTab({
         <CategoryDetail
           category={selected}
           products={rows.filter((row) => row.categoryId === selected.id)}
+          groups={groups}
           onRename={onRename}
+          onRegroup={onRegroup}
+          onDelete={onDelete}
         />
       ) : null}
 
@@ -526,6 +596,18 @@ export default function ProductsPage() {
     (productNameKey: string) => write("Clearing the override", () => api.clearProductOverride(productNameKey)),
     [api, write],
   );
+  const regroup = useCallback(
+    (categoryId: string, groupName: string) =>
+      write("Regroup", () => api.renameCategory(categoryId, { groupName })),
+    [api, write],
+  );
+  const deleteCategory = useCallback(
+    async (categoryId: string) => {
+      await write("Delete", () => api.deleteCategory(categoryId));
+      setSelectedCategoryId(null);
+    },
+    [api, write],
+  );
 
   const curateCluster = useCallback(
     async (action: DendroAction, selection: DendroSelection, name?: string) => {
@@ -707,6 +789,8 @@ export default function ProductsPage() {
               selectedCategoryId={selectedCategoryId}
               onSelectCategory={setSelectedCategoryId}
               onRename={rename}
+              onRegroup={regroup}
+              onDelete={deleteCategory}
               onMove={move}
               onClear={clearOverride}
             />
