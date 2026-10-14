@@ -14,16 +14,12 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // This package is self-contained. Parent/worktree lockfiles must not widen server traces.
   outputFileTracingRoot: __dirname,
-  // Proxy API calls and the OIDC login/callback flows to the Spring Boot
-  // backend so the browser's same-origin session cookies reach it. Defaults to
-  // local dev; set BACKEND_ORIGIN when frontend and backend aren't co-located
-  // behind one origin, or drop these rewrites in a deployment that already
-  // routes /api and /oauth2 at the edge.
+  // Proxy API calls to the Spring Boot backend so the browser's same-origin
+  // session cookies reach it. Defaults to local dev; set BACKEND_ORIGIN when
+  // frontend and backend aren't co-located behind one origin.
   async rewrites() {
     return [
       { source: "/api/:path*", destination: `${backendOrigin}/api/:path*` },
-      { source: "/oauth2/:path*", destination: `${backendOrigin}/oauth2/:path*` },
-      { source: "/login/oauth2/:path*", destination: `${backendOrigin}/login/oauth2/:path*` },
     ];
   },
 };
