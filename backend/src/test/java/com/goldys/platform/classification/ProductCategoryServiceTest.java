@@ -16,7 +16,9 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.CategoryNode;
+import com.goldys.platform.semantic.CategorySuggestionView;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -34,7 +36,15 @@ class ProductCategoryServiceTest {
       ProductCategoryRepository categories,
       ProductCategoryAssignmentRepository assignments,
       PermissionService permissions) {
-    return new ProductCategoryService(categories, assignments, permissions);
+    return service(categories, assignments, mock(CategorySuggestionRepository.class), permissions);
+  }
+
+  private ProductCategoryService service(
+      ProductCategoryRepository categories,
+      ProductCategoryAssignmentRepository assignments,
+      CategorySuggestionRepository suggestions,
+      PermissionService permissions) {
+    return new ProductCategoryService(categories, assignments, suggestions, permissions);
   }
 
   @Test
@@ -147,6 +157,95 @@ class ProductCategoryServiceTest {
             permissions);
 
     assertThatThrownBy(() -> service.create(OWNER, "Cocktails", "Drinks", 0, null))
+        .isInstanceOf(AccessDeniedException.class);
+
+    verify(permissions)
+        .require(OWNER, new ResourceKey("products.category"), PermissionAction.WRITE);
+  }
+
+  @Test
+  void addSuggestionAppendsAndReturnsView() {
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.count()).thenReturn(3L);
+    when(suggestions.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    ProductCategoryService service =
+        service(
+            mock(ProductCategoryRepository.class),
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    CategorySuggestionView view = service.addSuggestion(OWNER, "Cocktails", "Drinks");
+
+    assertThat(view.name()).isEqualTo("Cocktails");
+    assertThat(view.groupName()).isEqualTo("Drinks");
+    assertThat(view.displayOrder()).isEqualTo(3);
+    assertThat(view.runId()).isNull();
+  }
+
+  @Test
+  void updateSuggestionRenamesAndRegroups() {
+    CategorySuggestion suggestion = CategorySuggestion.create(null, "Cocktails", null, 0, null);
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.findById(suggestion.id())).thenReturn(Optional.of(suggestion));
+    ProductCategoryService service =
+        service(
+            mock(ProductCategoryRepository.class),
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    service.updateSuggestion(OWNER, suggestion.id(), "Beer", null);
+    assertThat(suggestion.name()).isEqualTo("Beer");
+    assertThat(suggestion.groupName()).isNull();
+
+    service.updateSuggestion(OWNER, suggestion.id(), null, "Drinks");
+    assertThat(suggestion.name()).isEqualTo("Beer");
+    assertThat(suggestion.groupName()).isEqualTo("Drinks");
+  }
+
+  @Test
+  void applySuggestionsCreatesCategoriesAndClearsDraft() {
+    CategorySuggestion beer1 = CategorySuggestion.create(null, "Beer", "Drinks", 0, null);
+    CategorySuggestion beer2 = CategorySuggestion.create(null, "Beer", "Drinks", 1, null);
+    CategorySuggestion wine = CategorySuggestion.create(null, "Wine", null, 2, null);
+    CategorySuggestionRepository suggestions = mock(CategorySuggestionRepository.class);
+    when(suggestions.findAllByOrderByDisplayOrderAsc()).thenReturn(List.of(beer1, beer2, wine));
+
+    ProductCategory existingBeer = ProductCategory.create("Beer", "Drinks", 5, null);
+    ProductCategoryRepository categories = mock(ProductCategoryRepository.class);
+    when(categories.findByName("Beer")).thenReturn(Optional.of(existingBeer));
+    when(categories.findByName("Wine")).thenReturn(Optional.empty());
+    when(categories.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+    ProductCategoryService service =
+        service(
+            categories,
+            mock(ProductCategoryAssignmentRepository.class),
+            suggestions,
+            mock(PermissionService.class));
+
+    List<CategoryNode> created = service.applySuggestions(OWNER);
+
+    assertThat(created).extracting(CategoryNode::name).containsExactly("Wine");
+    assertThat(created.get(0).groupName()).isNull();
+    verify(suggestions).deleteAll();
+  }
+
+  @Test
+  void applySuggestionsRequiresWritePermission() {
+    PermissionService permissions = mock(PermissionService.class);
+    doThrow(AccessDeniedException.forResource("products.category"))
+        .when(permissions)
+        .require(any(), any(), any());
+    ProductCategoryService service =
+        service(
+            mock(ProductCategoryRepository.class),
+            mock(ProductCategoryAssignmentRepository.class),
+            mock(CategorySuggestionRepository.class),
+            permissions);
+
+    assertThatThrownBy(() -> service.applySuggestions(OWNER))
         .isInstanceOf(AccessDeniedException.class);
 
     verify(permissions)

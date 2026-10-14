@@ -5,8 +5,11 @@ import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.CategoryNode;
+import com.goldys.platform.semantic.CategorySuggestionView;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,14 +30,17 @@ public class ProductCategoryService {
 
   private final ProductCategoryRepository categories;
   private final ProductCategoryAssignmentRepository assignments;
+  private final CategorySuggestionRepository suggestions;
   private final PermissionService permissions;
 
   public ProductCategoryService(
       ProductCategoryRepository categories,
       ProductCategoryAssignmentRepository assignments,
+      CategorySuggestionRepository suggestions,
       PermissionService permissions) {
     this.categories = categories;
     this.assignments = assignments;
+    this.suggestions = suggestions;
     this.permissions = permissions;
   }
 
@@ -102,5 +108,67 @@ public class ProductCategoryService {
     assignments
         .findById(productNameKey)
         .ifPresent(assignment -> assignment.markUnassigned(CLOCK.instant()));
+  }
+
+  /** Adds a staff-authored suggestion (a category the model missed) to the draft. */
+  @Transactional
+  public CategorySuggestionView addSuggestion(UserRole role, String name, String groupName) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    int order = (int) suggestions.count();
+    CategorySuggestion saved =
+        suggestions.save(CategorySuggestion.create(null, name, groupName, order, null));
+    return new CategorySuggestionView(
+        saved.id(),
+        saved.runId(),
+        saved.name(),
+        saved.groupName(),
+        saved.displayOrder(),
+        saved.hint());
+  }
+
+  /** Renames and/or regroups a suggestion. A null field is left unchanged. */
+  @Transactional
+  public void updateSuggestion(UserRole role, UUID id, String name, String groupName) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    CategorySuggestion suggestion =
+        suggestions
+            .findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("No suggestion with id " + id));
+    if (name != null) {
+      suggestion.rename(name);
+    }
+    if (groupName != null) {
+      suggestion.regroup(groupName);
+    }
+  }
+
+  /** Removes a suggestion from the draft. */
+  @Transactional
+  public void deleteSuggestion(UserRole role, UUID id) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    suggestions.deleteById(id);
+  }
+
+  /**
+   * Promotes the draft to confirmed categories: each suggestion whose name is not already a
+   * confirmed category becomes a {@code product_category} row (in {@code display_order}); names
+   * that already exist are skipped. The draft is then cleared. Products are not assigned here — Jev
+   * does that on the next {@code ASSIGN}/{@code FULL} run.
+   */
+  @Transactional
+  public List<CategoryNode> applySuggestions(UserRole role) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    List<CategoryNode> created = new ArrayList<>();
+    for (CategorySuggestion suggestion : suggestions.findAllByOrderByDisplayOrderAsc()) {
+      if (categories.findByName(suggestion.name()).isEmpty()) {
+        ProductCategory category =
+            categories.save(
+                ProductCategory.create(
+                    suggestion.name(), suggestion.groupName(), suggestion.displayOrder(), null));
+        created.add(new CategoryNode(category.id(), category.name(), category.groupName(), 0));
+      }
+    }
+    suggestions.deleteAll();
+    return created;
   }
 }
