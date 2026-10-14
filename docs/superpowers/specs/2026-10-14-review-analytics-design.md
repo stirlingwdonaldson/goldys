@@ -47,8 +47,11 @@ getting praised or dragged on?"*, and *"which reviews need attention?"*.
 3. **The page is the product.** The classifier is the enabler; the analytics page is the
    deliverable. There is no classification-admin UI (no run button, no taxonomy editing).
 4. **Classify on ingest + backfill.** Each review is classified as it canonicalizes; a one-shot
-   runner backfills history. A minimal run record gives observability ("when was history last
-   classified") without a manual trigger.
+   startup runner backfills any *canonical* review missing a classification. Classification reads
+   canonical, never raw: historical raw-only reviews are not backfilled from the raw ledger — an
+   operator re-uploads the reviews CSV, which canonicalizes them and classifies them on the way.
+   A minimal run record gives observability ("when was history last classified") without a manual
+   trigger.
 
 ## 4. Data model
 
@@ -203,7 +206,10 @@ Demo mode (`NEXT_PUBLIC_DEMO_MODE`, default on) requires fixtures for every `Api
   is "revert the deploy".
 - Ingest path: re-uploading the reviews CSV now canonicalizes (close-and-reinsert) and
   classifies on the way; the raw ledger still appends byte-faithfully.
-- Backfill: a one-shot runner classifies the historical reviews already in the raw ledger.
+- Backfill: a one-shot startup runner classifies the *canonical* reviews that are missing a
+  classification. Historical raw-only reviews are not read from the raw ledger: they are
+  canonicalized by re-uploading the reviews CSV (operator action), which then classifies them via
+  the canonicalization event. Classification never reads raw.
 
 ## 11. Open questions
 
