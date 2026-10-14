@@ -6,6 +6,7 @@ import com.goldys.platform.semantic.query.DatasetDescriptor;
 import com.goldys.platform.semantic.query.FieldDescriptor;
 import com.goldys.platform.semantic.query.QueryPlan;
 import com.goldys.platform.semantic.query.QueryResult;
+import com.goldys.platform.semantic.query.RelationshipDescriptor;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -32,5 +33,9 @@ public class RelationalQueryApplicationService {
 
   public List<FieldDescriptor> fields(UserRole role, String datasetId) {
     return queries.fields(role, datasetId);
+  }
+
+  public List<RelationshipDescriptor> relationships(UserRole role) {
+    return queries.relationships(role);
   }
 }

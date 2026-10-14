@@ -36,6 +36,7 @@ import type {
   DashboardRevisionSummary,
   MetricQuery,
   RenderedWidget,
+  SavedQuerySummary,
   SavedWidget,
   Visibility,
 } from "@/lib/api/types";
@@ -46,6 +47,7 @@ const RENDER_TYPE_LABELS: Record<string, string> = {
   "bar-chart": "Bar chart",
   table: "Table",
   "ranked-list": "Ranked list",
+  query: "Saved query",
 };
 
 const COMPARISON_OPTIONS: { value: string; label: string }[] = [
@@ -102,6 +104,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function widgetSummary(widget: SavedWidget): string {
+  if (widget.savedQueryId) return `Saved query ${widget.savedQueryId.slice(0, 8)}…`;
   const metrics = widget.queries.map((q) => q.metric).join(", ");
   return metrics || "no query";
 }
@@ -143,6 +146,12 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
   const [renderTick, setRenderTick] = useState(0);
 
   const [saving, setSaving] = useState(false);
+  const [savedQueries, setSavedQueries] = useState<SavedQuerySummary[]>([]);
+  const [queryToAdd, setQueryToAdd] = useState("");
+
+  useEffect(() => {
+    api.listSavedQueries().then(setSavedQueries).catch(() => setSavedQueries([]));
+  }, [api]);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
@@ -271,6 +280,15 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
     setWidgets((ws) => [...ws, defaultWidget()]);
   }
 
+  function addQueryWidget() {
+    if (!queryToAdd) return;
+    setWidgets((ws) => [
+      ...ws,
+      { id: freshWidgetId(), renderType: "query", queries: [], layout: { w: 12, h: 2 }, savedQueryId: queryToAdd },
+    ]);
+    setQueryToAdd("");
+  }
+
   function removeWidget(id: string) {
     setWidgets((ws) => ws.filter((w) => w.id !== id));
   }
@@ -285,6 +303,7 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
         renderType: src.renderType,
         queries: src.queries.map((q) => ({ ...q, dimensions: [...q.dimensions] })),
         layout: { ...src.layout },
+        savedQueryId: src.savedQueryId,
       };
       return [...ws.slice(0, idx + 1), copy, ...ws.slice(idx + 1)];
     });
@@ -471,10 +490,32 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <Label>Widgets</Label>
-              <Button variant="outline" size="sm" onClick={addWidget}>
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Add widget
-              </Button>
+              <div className="flex items-center gap-2">
+                {savedQueries.length > 0 ? (
+                  <>
+                    <select
+                      aria-label="Add saved query"
+                      value={queryToAdd}
+                      onChange={(e) => setQueryToAdd(e.target.value)}
+                      className="rounded-md border bg-background px-2 py-1 text-sm"
+                    >
+                      <option value="">Saved query…</option>
+                      {savedQueries.map((q) => (
+                        <option key={q.id} value={q.id}>
+                          {q.title}
+                        </option>
+                      ))}
+                    </select>
+                    <Button variant="outline" size="sm" onClick={addQueryWidget} disabled={!queryToAdd}>
+                      Add query
+                    </Button>
+                  </>
+                ) : null}
+                <Button variant="outline" size="sm" onClick={addWidget}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Add widget
+                </Button>
+              </div>
             </div>
             {widgets.length === 0 ? (
               <p className="text-sm text-muted-foreground">No widgets yet. Add one to get started.</p>

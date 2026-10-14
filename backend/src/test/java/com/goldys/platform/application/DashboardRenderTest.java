@@ -25,6 +25,7 @@ import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
 import com.goldys.platform.dashboard.WidgetLayout;
+import com.goldys.platform.query.SavedQueryService;
 import com.goldys.platform.reporting.WidgetRenderer;
 import com.goldys.platform.semantic.FreshnessState;
 import com.goldys.platform.semantic.TrustState;
@@ -77,7 +78,8 @@ class DashboardRenderTest {
           revisions,
           shares,
           metricQueryService,
-          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))));
+          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))),
+          mock(SavedQueryService.class));
 
   @Test
   void deniedMetricRendersExplicitDenialNotPartial() {

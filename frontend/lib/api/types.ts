@@ -640,6 +640,8 @@ export interface SavedWidget {
   renderType: string;
   queries: MetricQuery[];
   layout: WidgetLayout;
+  /** Set (with renderType "query") for an embedded saved relational query; null for metric widgets. */
+  savedQueryId?: string | null;
 }
 
 /** Dashboard-level reusable filters merged into each widget's query at render. */
@@ -1158,6 +1160,24 @@ export interface Api {
   getReviewSources(from: string, to: string): Promise<SourceSummary[]>;
   getReviews(filter: ReviewFilter): Promise<ReviewView[]>;
 
+  /** The datasets the relational query backend exposes (authorized; unauthorized ones are hidden). */
+  listQueryDatasets(): Promise<QueryDataset[]>;
+  /** A dataset's fields (denied explicitly when the role cannot read the dataset). */
+  listQueryFields(dataset: string): Promise<QueryField[]>;
+  /** The relationships the role may join. */
+  listQueryRelationships(): Promise<QueryRelationship[]>;
+  /** Runs a validated, parameterised query plan and returns typed rows + schema metadata. */
+  runQuery(plan: QueryPlan): Promise<QueryResult>;
+  listSavedQueries(): Promise<SavedQuerySummary[]>;
+  getSavedQuery(id: string): Promise<SavedQueryDetail>;
+  createSavedQuery(input: SaveQueryInput): Promise<SavedQueryDetail>;
+  updateSavedQuery(id: string, input: SaveQueryInput): Promise<SavedQueryDetail>;
+  deleteSavedQuery(id: string): Promise<void>;
+  listSavedQueryRevisions(id: string): Promise<SavedQueryRevision[]>;
+  restoreSavedQuery(id: string, revision: number): Promise<SavedQueryDetail>;
+  /** Re-validates and re-authorizes a saved query, then runs it read-only. */
+  runSavedQuery(id: string): Promise<QueryResult>;
+
   /** The pending taxonomy draft, in display order. */
   getCategorySuggestions(): Promise<CategorySuggestion[]>;
   addCategorySuggestion(input: { name: string; groupName?: string | null }): Promise<CategorySuggestion>;
@@ -1286,4 +1306,182 @@ export interface DataPage<T> {
   total: number;
   page: number;
   size: number;
+}
+
+// ---- Relational query backend (Phase 3) ----
+
+/** Native types exposed on dataset fields (mirrors `semantic.query.FieldType`). */
+export type QueryFieldType =
+  | "DATE"
+  | "DECIMAL"
+  | "TEXT"
+  | "BOOLEAN"
+  | "TIMESTAMP"
+  | "UUID"
+  | "INTEGER";
+
+/** Whether a field is a grouping dimension or an aggregatable measure. */
+export type QueryFieldKind = "DIMENSION" | "MEASURE";
+
+/** How a dataset is read. */
+export type QueryReadMode = "RESOLVED" | "CANONICAL_DIRECT";
+
+/** One exposed field of a dataset (mirrors `semantic.query.FieldDescriptor`). */
+export interface QueryField {
+  name: string;
+  column: string;
+  type: QueryFieldType;
+  unit: string | null;
+  nullable: boolean;
+  kind: QueryFieldKind;
+  permission: string | null;
+}
+
+/** A registered dataset (mirrors `semantic.query.DatasetDescriptor`). */
+export interface QueryDataset {
+  id: string;
+  table: string;
+  readMode: QueryReadMode;
+  grain: string;
+  permission: string;
+  currentFact: boolean;
+  fields: QueryField[];
+}
+
+/** Relationship cardinality. */
+export type QueryCardinality =
+  | "ONE_TO_ONE"
+  | "ONE_TO_MANY"
+  | "MANY_TO_ONE"
+  | "MANY_TO_MANY";
+
+/** A registered relationship (mirrors `semantic.query.RelationshipDescriptor`). */
+export interface QueryRelationship {
+  id: string;
+  from: string;
+  to: string;
+  joinKeys: { fromField: string; toField: string }[];
+  cardinality: QueryCardinality;
+  fanoutRisk: boolean;
+  permission: string;
+}
+
+/** Aggregate functions the query layer supports. */
+export type QueryAggregate = "SUM" | "AVG" | "MIN" | "MAX" | "COUNT" | "COUNT_DISTINCT";
+
+/** Filter comparison operators. */
+export type QueryFilterOp =
+  | "EQ"
+  | "NE"
+  | "GT"
+  | "GTE"
+  | "LT"
+  | "LTE"
+  | "BETWEEN"
+  | "IN"
+  | "IS_NULL";
+
+/** Time grain a DATE field may be grouped by. */
+export type QueryGrain = "DAY" | "MONTH";
+
+/** Sort direction. */
+export type QuerySortDirection = "ASC" | "DESC";
+
+/** A scalar value or a list of values for a predicate. */
+export type QueryValue = string | number | boolean | null | (string | number | boolean | null)[];
+
+/** One selected expression (mirrors `semantic.query.SelectItem`). */
+export interface QuerySelectItem {
+  field: string;
+  aggregate?: QueryAggregate | null;
+  distinct?: boolean;
+}
+
+/** A group-by item with optional time grain (mirrors `semantic.query.GroupByItem`). */
+export interface QueryGroupByItem {
+  field: string;
+  grain?: QueryGrain | null;
+}
+
+/** An order-by item (mirrors `semantic.query.OrderByItem`). */
+export interface QueryOrderByItem {
+  field: string;
+  direction: QuerySortDirection;
+}
+
+/** A leaf filter (mirrors `semantic.query.Predicate`). */
+export interface QueryPredicate {
+  field: string;
+  op: QueryFilterOp;
+  value: QueryValue;
+}
+
+/** A filter tree node: an AND/OR/NOT of children, or a leaf predicate. */
+export interface QueryFilterNode {
+  logic?: "AND" | "OR" | "NOT" | null;
+  children?: QueryFilterNode[];
+  predicate?: QueryPredicate | null;
+}
+
+/** A versioned query plan (mirrors `semantic.query.QueryPlan`). */
+export interface QueryPlan {
+  version: number;
+  dataset: string;
+  joins?: string[];
+  select: QuerySelectItem[];
+  filter?: QueryFilterNode | null;
+  groupBy?: QueryGroupByItem[];
+  orderBy?: QueryOrderByItem[];
+  limit: number;
+  offset: number;
+}
+
+/** One result column's schema metadata (mirrors `semantic.query.ResultColumn`). */
+export interface QueryResultColumn {
+  name: string;
+  type: QueryFieldType;
+  unit: string | null;
+}
+
+/** A query result (mirrors `semantic.query.QueryResult`). */
+export interface QueryResult {
+  columns: QueryResultColumn[];
+  rows: (string | number | boolean | null)[][];
+  pagination: { limit: number; offset: number; truncated: boolean };
+  semantics: {
+    currentFact: boolean;
+    grain: string;
+    readMode: QueryReadMode;
+    datasets: string[];
+    asOf: string;
+  };
+}
+
+// ---- Saved query definitions (Phase 4) ----
+
+/** A saved query's list entry (mirrors `semantic.query.SavedQuerySummary`). */
+export interface SavedQuerySummary {
+  id: string;
+  title: string;
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A saved query's full definition (mirrors `semantic.query.SavedQueryDetail`). */
+export interface SavedQueryDetail extends SavedQuerySummary {
+  plan: QueryPlan;
+}
+
+/** One revision snapshot (mirrors `semantic.query.SavedQueryRevisionView`). */
+export interface SavedQueryRevision {
+  revision: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** Body for creating/updating a saved query (mirrors `semantic.query.SaveQueryRequest`). */
+export interface SaveQueryInput {
+  title: string;
+  plan: QueryPlan;
 }

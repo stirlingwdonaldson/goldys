@@ -52,6 +52,15 @@ import type {
   ReviewView,
   SentimentBucket,
   SourceSummary,
+  QueryDataset,
+  QueryField,
+  QueryPlan,
+  QueryRelationship,
+  QueryResult,
+  SavedQueryDetail,
+  SavedQueryRevision,
+  SavedQuerySummary,
+  SaveQueryInput,
 } from "./types";
 
 /** A `?from=…&to=…` suffix, or "" when both bounds are absent. */
@@ -427,6 +436,40 @@ export const liveApi: Api = {
     fetchApi<import("./types").CategoryNode[]>("/api/products/categories/suggestions/apply", {
       method: "POST",
     }),
+  listQueryDatasets: () => fetchApi<QueryDataset[]>("/api/query/datasets"),
+  listQueryFields: (dataset: string) =>
+    fetchApi<QueryField[]>(`/api/query/datasets/${dataset}/fields`),
+  listQueryRelationships: () => fetchApi<QueryRelationship[]>("/api/query/relationships"),
+  runQuery: (plan: QueryPlan) =>
+    fetchApi<QueryResult>("/api/query/plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(plan),
+    }),
+  listSavedQueries: () => fetchApi<SavedQuerySummary[]>("/api/query/saved"),
+  getSavedQuery: (id: string) => fetchApi<SavedQueryDetail>(`/api/query/saved/${id}`),
+  createSavedQuery: (input: SaveQueryInput) =>
+    fetchApi<SavedQueryDetail>("/api/query/saved", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  updateSavedQuery: (id: string, input: SaveQueryInput) =>
+    fetchApi<SavedQueryDetail>(`/api/query/saved/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  deleteSavedQuery: (id: string) =>
+    fetchApi<void>(`/api/query/saved/${id}`, { method: "DELETE" }, { responseType: "void" }),
+  listSavedQueryRevisions: (id: string) =>
+    fetchApi<SavedQueryRevision[]>(`/api/query/saved/${id}/revisions`),
+  restoreSavedQuery: (id: string, revision: number) =>
+    fetchApi<SavedQueryDetail>(`/api/query/saved/${id}/restore?revision=${revision}`, {
+      method: "POST",
+    }),
+  runSavedQuery: (id: string) =>
+    fetchApi<QueryResult>(`/api/query/saved/${id}/run`, { method: "POST" }),
 };
 
 /**

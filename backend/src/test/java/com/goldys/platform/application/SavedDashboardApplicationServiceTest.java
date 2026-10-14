@@ -22,6 +22,7 @@ import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
 import com.goldys.platform.dashboard.WidgetLayout;
+import com.goldys.platform.query.SavedQueryService;
 import com.goldys.platform.reporting.WidgetRenderer;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
@@ -66,7 +67,8 @@ class SavedDashboardApplicationServiceTest {
           revisions,
           shares,
           metricQueryService,
-          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))));
+          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))),
+          mock(SavedQueryService.class));
 
   @org.junit.jupiter.api.BeforeEach
   void stubShares() {
@@ -89,7 +91,8 @@ class SavedDashboardApplicationServiceTest {
             revisions,
             shares,
             metricQueryService,
-            new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))));
+            new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))),
+            mock(SavedQueryService.class));
 
     var input =
         new SavedDashboardApplicationService.DashboardInput(

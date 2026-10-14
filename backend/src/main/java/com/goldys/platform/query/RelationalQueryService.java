@@ -10,6 +10,7 @@ import com.goldys.platform.semantic.query.QueryErrorCode;
 import com.goldys.platform.semantic.query.QueryException;
 import com.goldys.platform.semantic.query.QueryPlan;
 import com.goldys.platform.semantic.query.QueryResult;
+import com.goldys.platform.semantic.query.RelationshipDescriptor;
 import java.time.Instant;
 import java.util.List;
 import org.slf4j.Logger;
@@ -91,6 +92,15 @@ public class RelationalQueryService {
               String resource = f.permission() != null ? f.permission() : d.permission();
               return permissions.isAllowed(role, new ResourceKey(resource), PermissionAction.READ);
             })
+        .toList();
+  }
+
+  /** The relationships the role may join, hiding any it may not. */
+  public List<RelationshipDescriptor> relationships(UserRole role) {
+    return registry.relationships().stream()
+        .filter(
+            r ->
+                permissions.isAllowed(role, new ResourceKey(r.permission()), PermissionAction.READ))
         .toList();
   }
 }

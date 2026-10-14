@@ -8,6 +8,7 @@ import com.goldys.platform.semantic.query.DatasetDescriptor;
 import com.goldys.platform.semantic.query.FieldDescriptor;
 import com.goldys.platform.semantic.query.QueryPlan;
 import com.goldys.platform.semantic.query.QueryResult;
+import com.goldys.platform.semantic.query.RelationshipDescriptor;
 import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +46,12 @@ public class RelationalQueryController {
       @PathVariable String id, @AuthenticationPrincipal AccountUserDetails user) {
     UserRole role = currentUser.roleOf(user);
     return queries.fields(role, id);
+  }
+
+  @GetMapping("/relationships")
+  List<RelationshipDescriptor> relationships(@AuthenticationPrincipal AccountUserDetails user) {
+    UserRole role = currentUser.roleOf(user);
+    return queries.relationships(role);
   }
 
   @PostMapping("/plan")

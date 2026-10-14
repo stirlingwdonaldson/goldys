@@ -88,6 +88,15 @@ import type {
   ReviewView,
   SentimentBucket,
   SourceSummary,
+  QueryDataset,
+  QueryField,
+  QueryPlan,
+  QueryRelationship,
+  QueryResult,
+  SavedQueryDetail,
+  SavedQueryRevision,
+  SavedQuerySummary,
+  SaveQueryInput,
 } from "./types";
 import { demoPlatformMap } from "./demo-platform-map";
 
@@ -2161,7 +2170,203 @@ export const demoApi: Api = {
     demoCategorySuggestions.length = 0;
     return created;
   },
+
+  async listQueryDatasets(): Promise<QueryDataset[]> {
+    await delay(300);
+    return demoQueryDatasets;
+  },
+
+  async listQueryFields(dataset: string): Promise<QueryField[]> {
+    await delay(200);
+    const found = demoQueryDatasets.find((d) => d.id === dataset);
+    return found ? found.fields : [];
+  },
+
+  async listQueryRelationships(): Promise<QueryRelationship[]> {
+    await delay(200);
+    return demoQueryRelationships;
+  },
+
+  async runQuery(plan: QueryPlan): Promise<QueryResult> {
+    await delay(400);
+    return buildDemoQueryResult(plan);
+  },
+
+  async listSavedQueries(): Promise<SavedQuerySummary[]> {
+    await delay(300);
+    return demoSavedQueries.map(({ id, title, revision, createdAt, updatedAt }) => ({
+      id,
+      title,
+      revision,
+      createdAt,
+      updatedAt,
+    }));
+  },
+
+  async getSavedQuery(id: string): Promise<SavedQueryDetail> {
+    await delay(300);
+    const found = demoSavedQueries.find((q) => q.id === id);
+    if (!found) throw new ApiError("NOT_FOUND", "Saved query not found");
+    return found;
+  },
+
+  async createSavedQuery(input: SaveQueryInput): Promise<SavedQueryDetail> {
+    await delay(400);
+    const created: SavedQueryDetail = {
+      id: `sq-${demoSavedQueries.length + 1}`,
+      title: input.title,
+      plan: input.plan,
+      revision: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    demoSavedQueries.unshift(created);
+    return created;
+  },
+
+  async updateSavedQuery(id: string, input: SaveQueryInput): Promise<SavedQueryDetail> {
+    await delay(400);
+    const index = demoSavedQueries.findIndex((q) => q.id === id);
+    if (index < 0) throw new ApiError("NOT_FOUND", "Saved query not found");
+    demoSavedQueries[index] = {
+      ...demoSavedQueries[index],
+      title: input.title,
+      plan: input.plan,
+      revision: demoSavedQueries[index].revision + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    return demoSavedQueries[index];
+  },
+
+  async deleteSavedQuery(id: string): Promise<void> {
+    await delay(300);
+    const index = demoSavedQueries.findIndex((q) => q.id === id);
+    if (index >= 0) demoSavedQueries.splice(index, 1);
+  },
+
+  async listSavedQueryRevisions(id: string): Promise<SavedQueryRevision[]> {
+    await delay(300);
+    const found = demoSavedQueries.find((q) => q.id === id);
+    if (!found) return [];
+    return Array.from({ length: found.revision }, (_, i) => ({
+      revision: found.revision - i,
+      createdBy: "owner@goldys.example",
+      createdAt: found.updatedAt,
+    }));
+  },
+
+  async restoreSavedQuery(id: string, revision: number): Promise<SavedQueryDetail> {
+    await delay(400);
+    const found = demoSavedQueries.find((q) => q.id === id);
+    if (!found) throw new ApiError("NOT_FOUND", "Saved query not found");
+    return { ...found, revision: revision };
+  },
+
+  async runSavedQuery(id: string): Promise<QueryResult> {
+    await delay(400);
+    const found = demoSavedQueries.find((q) => q.id === id);
+    if (!found) throw new ApiError("NOT_FOUND", "Saved query not found");
+    return buildDemoQueryResult(found.plan);
+  },
 };
+
+const demoQueryDatasets: QueryDataset[] = [
+  {
+    id: "resolved_daily_sales",
+    table: "resolved_daily_sales",
+    readMode: "RESOLVED",
+    grain: "one trading day",
+    permission: "reconciliation.sales",
+    currentFact: false,
+    fields: [
+      field("trading_date", "trading_date", "DATE", null, "DIMENSION"),
+      field("total_sales", "total_sales", "DECIMAL", "AUD", "MEASURE"),
+      field("net_sales", "net_sales", "DECIMAL", "AUD", "MEASURE"),
+      field("gst", "gst", "DECIMAL", "AUD", "MEASURE"),
+      field("authoritative_source", "authoritative_source", "TEXT", null, "DIMENSION"),
+      field("has_conflict", "has_conflict", "BOOLEAN", null, "DIMENSION"),
+    ],
+  },
+  {
+    id: "invoice",
+    table: "canonical_invoice",
+    readMode: "CANONICAL_DIRECT",
+    grain: "one invoice header",
+    permission: "inventory.cost",
+    currentFact: true,
+    fields: [
+      field("invoice_number", "invoice_number", "TEXT", null, "DIMENSION"),
+      field("supplier_name", "supplier_name", "TEXT", null, "DIMENSION"),
+      field("invoice_date", "invoice_date", "DATE", null, "DIMENSION"),
+      field("total_amount", "total_amount", "DECIMAL", "AUD", "MEASURE"),
+      field("amount_ex_tax", "amount_ex_tax", "DECIMAL", "AUD", "MEASURE"),
+    ],
+  },
+  {
+    id: "invoice_line",
+    table: "canonical_invoice_line",
+    readMode: "CANONICAL_DIRECT",
+    grain: "one invoice line item",
+    permission: "inventory.cost",
+    currentFact: true,
+    fields: [
+      field("product_name_key", "product_name_key", "TEXT", null, "DIMENSION"),
+      field("stock_code", "stock_code", "TEXT", null, "DIMENSION"),
+      field("quantity", "quantity", "DECIMAL", "each", "MEASURE"),
+      field("unit_cost", "unit_cost", "DECIMAL", "AUD", "MEASURE"),
+      field("line_total", "line_total", "DECIMAL", "AUD", "MEASURE"),
+    ],
+  },
+];
+
+function field(
+  name: string,
+  column: string,
+  type: QueryField["type"],
+  unit: string | null,
+  kind: QueryField["kind"],
+): QueryField {
+  return { name, column, type, unit, nullable: true, kind, permission: null };
+}
+
+const demoSavedQueries: SavedQueryDetail[] = [];
+
+const demoQueryRelationships: QueryRelationship[] = [
+  {
+    id: "invoice_lines",
+    from: "invoice",
+    to: "invoice_line",
+    joinKeys: [{ fromField: "logical_entity_id", toField: "invoice_logical_id" }],
+    cardinality: "ONE_TO_MANY",
+    fanoutRisk: true,
+    permission: "inventory.cost",
+  },
+];
+
+/** Shared synthetic result builder for both `runQuery` and `runSavedQuery`. */
+async function buildDemoQueryResult(plan: QueryPlan): Promise<QueryResult> {
+  const dataset = demoQueryDatasets.find((d) => d.id === plan.dataset);
+  const columns = plan.select.map((s) => {
+    const field = dataset?.fields.find((f) => f.name === s.field);
+    return { name: s.field, type: field?.type ?? "TEXT", unit: field?.unit ?? null };
+  });
+  const rows: QueryResult["rows"] = [
+    columns.map((c) => (c.type === "DECIMAL" ? 1234.5 : c.type === "TEXT" ? "sample" : null)),
+    columns.map((c) => (c.type === "DECIMAL" ? 890.25 : c.type === "TEXT" ? "sample" : null)),
+  ];
+  return {
+    columns,
+    rows,
+    pagination: { limit: plan.limit, offset: plan.offset, truncated: false },
+    semantics: {
+      currentFact: dataset?.currentFact ?? false,
+      grain: dataset?.grain ?? "n/a",
+      readMode: dataset?.readMode ?? "RESOLVED",
+      datasets: [plan.dataset, ...(plan.joins ?? [])],
+      asOf: new Date().toISOString(),
+    },
+  };
+}
 
 let savedDashboards: DashboardDocument[] = [];
 
