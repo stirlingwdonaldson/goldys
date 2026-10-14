@@ -5,12 +5,12 @@ import Link from "next/link";
 import { Activity, AlertTriangle, LogIn, RefreshCw, Timer, Upload, Wrench } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
 import { useApi } from "@/lib/demo-mode";
-import { isApiError, type ConnectorStatus, type ConnectorRunStatus } from "@/lib/api";
+import { isApiError, type ConnectorStatus } from "@/lib/api";
 import { useToast } from "@/components/feedback/toast";
 import { useShellStatus } from "@/components/app-shell/shell-status";
 import { PageHeader } from "@/components/layout/page-header";
 import { SourceTile } from "@/components/sources/source-tile";
-import { connectorDisplayName, isLegacyCsvDrop, opentableDatasetLabel, sourceIdentity } from "@/lib/sources";
+import { connectorDisplayName, groupConnectors, opentableDatasetLabel, sourceIdentity, type SourceGroup } from "@/lib/sources";
 import { formatAgo, formatDateTime } from "@/lib/format";
 import { InlineError } from "@/components/states/inline-error";
 import { Section } from "@/components/layout/section";
@@ -31,60 +31,6 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
-
-/** How bad a run status is, for aggregating several connectors under one source. */
-const STATUS_SEVERITY: Record<ConnectorRunStatus, number> = {
-  success: 0,
-  no_new_data: 1,
-  never_run: 1,
-  running: 2,
-  partial: 3,
-  failed: 4,
-};
-
-/** Connectors grouped under one source system, with an aggregate status. */
-interface SourceGroup {
-  source: string;
-  connectors: ConnectorStatus[];
-  status: ConnectorRunStatus;
-  lastRunAt: string | null;
-  failureCount: number;
-  failure: ConnectorStatus["failure"];
-  runnable: boolean;
-  syncable: boolean;
-}
-
-/**
- * Groups connectors by source system so each source is one card (OpenTable's several
- * exports and Lightspeed's two feeds collapse into one), dropping the deprecated thin
- * OpenTable CSV drop. The card's status is the worst of its members.
- */
-function groupConnectors(connectors: ConnectorStatus[]): SourceGroup[] {
-  const bySource = new Map<string, ConnectorStatus[]>();
-  for (const c of connectors) {
-    if (isLegacyCsvDrop(c.connectorName)) continue;
-    const key = c.source.toUpperCase();
-    const list = bySource.get(key) ?? [];
-    list.push(c);
-    bySource.set(key, list);
-  }
-  return [...bySource.entries()].map(([, members]) => ({
-    source: members[0].source,
-    connectors: members,
-    status: members.reduce<ConnectorRunStatus>(
-      (worst, m) => (STATUS_SEVERITY[m.status] > STATUS_SEVERITY[worst] ? m.status : worst),
-      "success",
-    ),
-    lastRunAt: members.reduce<string | null>((latest, m) => {
-      if (m.lastRunAt == null) return latest;
-      return latest == null || m.lastRunAt > latest ? m.lastRunAt : latest;
-    }, null),
-    failureCount: members.reduce((sum, m) => sum + m.failureCount, 0),
-    failure: members.find((m) => m.failure)?.failure ?? null,
-    runnable: members.some((m) => m.runnable),
-    syncable: members[0].source.toUpperCase() === "OPENTABLE",
-  }));
-}
 
 export default function DataHealthPage() {
   const api = useApi();
