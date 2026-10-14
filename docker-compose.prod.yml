@@ -129,6 +129,10 @@ services:
       APP_LIGHTSPEED_SALE_ITEMS_REPLAY: ${APP_LIGHTSPEED_SALE_ITEMS_REPLAY:-false}
       APP_LIGHTSPEED_PAYMENTS_REPLAY: ${APP_LIGHTSPEED_PAYMENTS_REPLAY:-false}
       APP_LIGHTSPEED_DAILY_SALES_DERIVATION: ${APP_LIGHTSPEED_DAILY_SALES_DERIVATION:-false}
+      # OpenTable reviews canonicalization (one-off, off by default). Replays the
+      # already-stored opentable-reviews raw records (from the assisted-session JSON pull)
+      # into canonical_review, populating canonical_guest.
+      APP_OPENTABLE_REVIEWS_CANONICALIZE: ${APP_OPENTABLE_REVIEWS_CANONICALIZE:-false}
       # Forecasting (TimesFM). The feature is off until the timesfm service is wired and
       # FORECASTING_TIMESFM_ENABLED=true is set in .env.prod.
       FORECASTING_TIMESFM_ENABLED: ${FORECASTING_TIMESFM_ENABLED:-false}

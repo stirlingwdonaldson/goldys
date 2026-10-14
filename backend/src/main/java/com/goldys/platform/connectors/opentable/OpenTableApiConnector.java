@@ -3,8 +3,11 @@ package com.goldys.platform.connectors.opentable;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.goldys.platform.canonical.CanonicalGuestIngest;
 import com.goldys.platform.canonical.CanonicalReservationIngest;
+import com.goldys.platform.canonical.CanonicalReviewIngest;
 import com.goldys.platform.canonical.ReservationInput;
+import com.goldys.platform.canonical.ReviewInput;
 import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.connectors.opentable.session.BrowserResponse;
 import com.goldys.platform.ingestion.FetchMethod;
@@ -29,8 +32,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Pulls reservations, reviews and menu items from GuestCenter's JSON endpoints through the browser
  * an owner signed in to (see {@code OpenTableSessionService}). Every response is handed to the sink
- * byte-for-byte before parsing; reservations are then canonicalized, while reviews and menu items
- * stay raw-only until their domains exist.
+ * byte-for-byte before parsing; reservations and reviews are then canonicalized, while menu items
+ * stay raw-only until their domain exists.
  *
  * <p>The watermark carries the sync mode: {@code FULL} pulls all history from {@code backfillFrom};
  * anything else is incremental (recent and upcoming reservations, last 120 days of reviews).
@@ -65,7 +68,10 @@ public class OpenTableApiConnector implements SourceConnector {
 
   private final OpenTableApiClient client;
   private final OpenTableReservationJsonParser parser;
+  private final OpenTableReviewJsonParser reviewParser;
   private final CanonicalReservationIngest canonical;
+  private final CanonicalReviewIngest reviewIngest;
+  private final CanonicalGuestIngest guestIngest;
   private final ObjectMapper json;
   private final VenueClock venueClock;
   private final String restaurantId;
@@ -75,7 +81,10 @@ public class OpenTableApiConnector implements SourceConnector {
   public OpenTableApiConnector(
       OpenTableApiClient client,
       OpenTableReservationJsonParser parser,
+      OpenTableReviewJsonParser reviewParser,
       CanonicalReservationIngest canonical,
+      CanonicalReviewIngest reviewIngest,
+      CanonicalGuestIngest guestIngest,
       ObjectMapper json,
       VenueClock venueClock,
       String restaurantId,
@@ -83,7 +92,10 @@ public class OpenTableApiConnector implements SourceConnector {
       StoredPayloads stored) {
     this.client = client;
     this.parser = parser;
+    this.reviewParser = reviewParser;
     this.canonical = canonical;
+    this.reviewIngest = reviewIngest;
+    this.guestIngest = guestIngest;
     this.json = json;
     this.venueClock = venueClock;
     this.restaurantId = restaurantId;
@@ -216,7 +228,13 @@ public class OpenTableApiConnector implements SourceConnector {
       if (data.isEmpty()) {
         return;
       }
-      store(body, "opentable-reviews", range + "#p" + page, sink);
+      UUID rawId = store(body, "opentable-reviews", range + "#p" + page, sink);
+      for (ReviewInput review : reviewParser.parse(body, rawId)) {
+        if (review.guestId() != null) {
+          guestIngest.ensure(review.guestId(), review.guestName(), rawId);
+        }
+        reviewIngest.record(review);
+      }
       fetched += data.size();
       if (fetched >= total) {
         return;

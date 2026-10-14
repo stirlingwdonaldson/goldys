@@ -1,7 +1,9 @@
 package com.goldys.platform.connectors.opentable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.canonical.CanonicalGuestIngest;
 import com.goldys.platform.canonical.CanonicalReservationIngest;
+import com.goldys.platform.canonical.CanonicalReviewIngest;
 import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.connectors.opentable.cdp.CdpTargets;
 import com.goldys.platform.connectors.opentable.session.CdpOpenTableBrowser;
@@ -44,6 +46,9 @@ public class OpenTableApiConfig {
       OpenTableBrowser browser,
       ObjectMapper json,
       CanonicalReservationIngest canonical,
+      CanonicalReviewIngest reviewIngest,
+      CanonicalGuestIngest guestIngest,
+      OpenTableReviewJsonParser reviewParser,
       VenueClock venueClock,
       @Value("${opentable.timezone:Australia/Melbourne}") String zone,
       @Value("${opentable.restaurant-id:140126}") String restaurantId,
@@ -62,7 +67,10 @@ public class OpenTableApiConfig {
     return new OpenTableApiConnector(
         client,
         new OpenTableReservationJsonParser(json, ZoneId.of(zone)),
+        reviewParser,
         canonical,
+        reviewIngest,
+        guestIngest,
         json,
         venueClock,
         restaurantId,
