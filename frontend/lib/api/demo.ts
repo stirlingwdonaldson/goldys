@@ -80,6 +80,13 @@ import type {
   OpenTableSessionHandlers,
   OpenTableSessionState,
   OpenTableSyncMode,
+  AspectSentimentSummary,
+  RatingBucket,
+  ReviewFilter,
+  ReviewOverview,
+  ReviewView,
+  SentimentBucket,
+  SourceSummary,
 } from "./types";
 import { demoPlatformMap } from "./demo-platform-map";
 
@@ -894,6 +901,93 @@ function demoOpenTableSignedIn() {
     setDemoOpenTable({ state: "DONE", runStatus: "SUCCESS", detail: "Reservations, reviews and menu items are up to date." });
   }, 2500);
 }
+
+// Review-analytics demo fixtures: a handful of reviews with mixed sentiment/aspects, including a
+// Google row with no star rating (and one with a null guest name), so the reviews screen renders
+// without a backend. Demo data only.
+const demoReviews: ReviewView[] = [
+  {
+    reviewId: "rv-1001",
+    source: "GOOGLE",
+    reviewedAt: "2026-10-05T12:30:00Z",
+    overallRating: null,
+    sentiment: "POSITIVE",
+    sentimentConfidence: 0.92,
+    predictedRating: 4.4,
+    comment: "Lovely dinner and the staff were great.",
+    guestName: "Sarah M.",
+    aspects: [
+      { aspect: "service", label: "POSITIVE", confidence: 0.91 },
+      { aspect: "food", label: "NEUTRAL", confidence: 0.62 },
+    ],
+  },
+  {
+    reviewId: "rv-1002",
+    source: "OPENTABLE",
+    reviewedAt: "2026-10-04T19:10:00Z",
+    overallRating: 5,
+    sentiment: "POSITIVE",
+    sentimentConfidence: 0.97,
+    predictedRating: 4.8,
+    comment: "Faultless service from start to finish.",
+    guestName: "James T.",
+    aspects: [
+      { aspect: "service", label: "POSITIVE", confidence: 0.96 },
+      { aspect: "ambience", label: "POSITIVE", confidence: 0.88 },
+    ],
+  },
+  {
+    reviewId: "rv-1003",
+    source: "OPENTABLE",
+    reviewedAt: "2026-10-03T20:05:00Z",
+    overallRating: 4,
+    sentiment: "NEUTRAL",
+    sentimentConfidence: 0.71,
+    predictedRating: 3.9,
+    comment: "Food was decent, nothing special.",
+    guestName: "Priya K.",
+    aspects: [{ aspect: "food", label: "NEUTRAL", confidence: 0.7 }],
+  },
+  {
+    reviewId: "rv-1004",
+    source: "OPENTABLE",
+    reviewedAt: "2026-10-02T18:45:00Z",
+    overallRating: 3,
+    sentiment: "NEGATIVE",
+    sentimentConfidence: 0.84,
+    predictedRating: 3.1,
+    comment: "Slow service and a long wait for mains.",
+    guestName: "Dave R.",
+    aspects: [{ aspect: "service", label: "NEGATIVE", confidence: 0.85 }],
+  },
+  {
+    reviewId: "rv-1005",
+    source: "GOOGLE",
+    reviewedAt: "2026-10-01T13:20:00Z",
+    overallRating: 2,
+    sentiment: "NEGATIVE",
+    sentimentConfidence: 0.9,
+    predictedRating: 2.6,
+    comment: "Overpriced and the staff ignored us.",
+    guestName: null,
+    aspects: [
+      { aspect: "service", label: "NEGATIVE", confidence: 0.89 },
+      { aspect: "value", label: "NEGATIVE", confidence: 0.93 },
+    ],
+  },
+  {
+    reviewId: "rv-1006",
+    source: "TRIPADVISOR",
+    reviewedAt: "2026-09-30T21:00:00Z",
+    overallRating: 4,
+    sentiment: "POSITIVE",
+    sentimentConfidence: 0.88,
+    predictedRating: 4.1,
+    comment: "Great atmosphere, will be back.",
+    guestName: "Liam O.",
+    aspects: [{ aspect: "ambience", label: "POSITIVE", confidence: 0.9 }],
+  },
+];
 
 export const demoApi: Api = {
   async getDashboardBootstrap(): Promise<DashboardBootstrap> {
@@ -1879,6 +1973,78 @@ export const demoApi: Api = {
       }
     }
     return [...demoClassificationRuns];
+  },
+
+  async getReviewOverview(_from: string, _to: string): Promise<ReviewOverview> {
+    await delay(300);
+    void _from;
+    void _to;
+    return { total: 6, averageRating: 3.6, positive: 3, neutral: 1, negative: 2, wouldRecommendPct: 83.3 };
+  },
+
+  async getReviewSentimentTrend(_from: string, _to: string): Promise<SentimentBucket[]> {
+    await delay(300);
+    void _from;
+    void _to;
+    return [
+      { periodStart: "2026-09-29", positive: 2, neutral: 1, negative: 1 },
+      { periodStart: "2026-10-06", positive: 1, neutral: 0, negative: 1 },
+    ];
+  },
+
+  async getReviewAspects(_from: string, _to: string): Promise<AspectSentimentSummary[]> {
+    await delay(300);
+    void _from;
+    void _to;
+    return [
+      { aspect: "service", mentions: 4, positive: 2, neutral: 0, negative: 2 },
+      { aspect: "food", mentions: 2, positive: 0, neutral: 2, negative: 0 },
+      { aspect: "ambience", mentions: 2, positive: 2, neutral: 0, negative: 0 },
+      { aspect: "value", mentions: 1, positive: 0, neutral: 0, negative: 1 },
+    ];
+  },
+
+  async getReviewRatings(_from: string, _to: string): Promise<RatingBucket[]> {
+    await delay(300);
+    void _from;
+    void _to;
+    return [
+      { stars: 1, given: 0, predicted: 0 },
+      { stars: 2, given: 1, predicted: 0 },
+      { stars: 3, given: 1, predicted: 1 },
+      { stars: 4, given: 2, predicted: 3 },
+      { stars: 5, given: 1, predicted: 1 },
+    ];
+  },
+
+  async getReviewSources(_from: string, _to: string): Promise<SourceSummary[]> {
+    await delay(300);
+    void _from;
+    void _to;
+    return [
+      { source: "GOOGLE", total: 2, averageRating: 2.0, positive: 1, negative: 1 },
+      { source: "OPENTABLE", total: 3, averageRating: 4.0, positive: 1, negative: 1 },
+      { source: "TRIPADVISOR", total: 1, averageRating: 4.0, positive: 1, negative: 0 },
+    ];
+  },
+
+  async getReviews(filter: ReviewFilter): Promise<ReviewView[]> {
+    await delay(300);
+    // Hoist the nullable filter fields so the closures below narrow them to strings/numbers.
+    const q = filter.query?.trim().toLowerCase();
+    const aspect = filter.aspect?.toLowerCase();
+    const sentiment = filter.sentiment?.toLowerCase();
+    return demoReviews.filter((r) => {
+      const day = r.reviewedAt.slice(0, 10);
+      if (filter.from && day < filter.from) return false;
+      if (filter.to && day > filter.to) return false;
+      if (filter.source && r.source !== filter.source) return false;
+      if (sentiment && (r.sentiment ?? "").toLowerCase() !== sentiment) return false;
+      if (aspect && !r.aspects.some((a) => a.aspect.toLowerCase() === aspect)) return false;
+      if (filter.minRating != null && (r.overallRating == null || r.overallRating < filter.minRating)) return false;
+      if (q && !(r.comment ?? "").toLowerCase().includes(q) && !(r.guestName ?? "").toLowerCase().includes(q)) return false;
+      return true;
+    });
   },
 };
 

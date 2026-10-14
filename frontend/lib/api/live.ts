@@ -45,6 +45,13 @@ import type {
   SaveResolutionRuleInput,
   SavedDashboardSummary,
   UpdateCategoryInput,
+  AspectSentimentSummary,
+  RatingBucket,
+  ReviewFilter,
+  ReviewOverview,
+  ReviewView,
+  SentimentBucket,
+  SourceSummary,
 } from "./types";
 
 /** A `?from=…&to=…` suffix, or "" when both bounds are absent. */
@@ -363,6 +370,29 @@ export const liveApi: Api = {
     ),
   listClassificationRuns: () =>
     fetchApi<import("./types").ClassificationRun[]>("/api/products/categories/runs"),
+  getReviewOverview: (from: string, to: string) =>
+    fetchApi<ReviewOverview>(`/api/reviews/overview?from=${from}&to=${to}`),
+  getReviewSentimentTrend: (from: string, to: string) =>
+    fetchApi<SentimentBucket[]>(`/api/reviews/sentiment-trend?from=${from}&to=${to}`),
+  getReviewAspects: (from: string, to: string) =>
+    fetchApi<AspectSentimentSummary[]>(`/api/reviews/aspects?from=${from}&to=${to}`),
+  getReviewRatings: (from: string, to: string) =>
+    fetchApi<RatingBucket[]>(`/api/reviews/ratings?from=${from}&to=${to}`),
+  getReviewSources: (from: string, to: string) =>
+    fetchApi<SourceSummary[]>(`/api/reviews/sources?from=${from}&to=${to}`),
+  getReviews: (filter: ReviewFilter) => {
+    // The list lives at the collection root; `query` maps to the endpoint's `q` param.
+    const q = new URLSearchParams();
+    if (filter.from) q.set("from", filter.from);
+    if (filter.to) q.set("to", filter.to);
+    if (filter.source) q.set("source", filter.source);
+    if (filter.sentiment) q.set("sentiment", filter.sentiment);
+    if (filter.aspect) q.set("aspect", filter.aspect);
+    if (filter.minRating != null) q.set("minRating", String(filter.minRating));
+    if (filter.query) q.set("q", filter.query);
+    const qs = q.toString();
+    return fetchApi<ReviewView[]>(`/api/reviews${qs ? `?${qs}` : ""}`);
+  },
 };
 
 /**
