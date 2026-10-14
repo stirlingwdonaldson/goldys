@@ -40,6 +40,14 @@ it's stale.
 description of current code. New design work goes there as
 `specs/YYYY-MM-DD-<topic>-design.md` then `plans/YYYY-MM-DD-<topic>.md`.
 
+## Real data before design
+
+Before writing a spec or connector for any ingestion/integration, get a real sample
+(or its exact schema) and prove the access path end-to-end in a few calls. If you
+can't, say so and stop — never invent a fixture and call it "discovery". A
+parser/extractor task is done only with a hit-rate report on real samples. Where each
+source is reached is documented in `docs/connectors/source-access.md`.
+
 ## Repo skills
 
 Skills in `.claude/skills/` encode this repo's recipes and are loaded by both opencode
@@ -54,8 +62,9 @@ and Claude Code. Use them instead of re-deriving the pattern:
 | `add-migration` | Any schema change |
 | `frontend-api-method` | A new backend call from the frontend (live + demo) |
 
-Generic engineering and design skills live in `.opencode/skills/` (opencode only).
-Where a generic skill conflicts with this repo's docs, the repo docs win.
+Generic methodology (brainstorming, TDD, spec/plan, review) comes from the pinned
+Superpowers plugin, not from repo skills. Where a skill conflicts with these docs, the
+docs win.
 
 ## Open questions
 
@@ -108,6 +117,11 @@ Before finishing a task, run the full gate for what you touched:
 `./gradlew test spotlessCheck` and/or
 `bun run typecheck && bun run lint && bun run test && bun run build`.
 
+Done means verified: run those gates locally, push, then `gh pr checks --watch` until
+green. The completion report lists only what you actually ran and saw — branch, SHA,
+PR, CI result, and untested areas. Never say "all green" or "everything merged"
+without the command output from this session.
+
 Local stack: `docker compose up -d` starts Postgres 16 on host port **5433**. See
 `docs/operations/testing.md` and `docs/operations/deployment.md`.
 
@@ -149,9 +163,20 @@ The agent VM hosts the production Docker stack (`docker-compose.prod.yml`, proje
 - `opencode.jsonc` denies the most destructive of these commands; the rules above apply
   regardless.
 
+## Session start and state
+
+This repo is a shared, multi-agent checkout; its git state moves between sessions.
+Before branching, merging, or answering any "what's the current state" question, run:
+
+```bash
+git fetch --prune && git status -sb && git log --oneline -5 origin/main && gh pr list --state all -L 10
+```
+
 ## Git
 
 - Never commit directly to main; create a task-specific branch.
+- `main` requires a pull request before merging; all merge types are allowed. Never
+  offer or run "merge locally".
 - Keep commits atomic. Do not force push.
 - Do not push, merge, deploy, or delete infrastructure without explicit approval.
 
