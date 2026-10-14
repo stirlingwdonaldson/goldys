@@ -94,7 +94,7 @@ plus parser + flag-gated canonicalization runner replaying the existing raw ledg
 
 Mirrors the recipe-ingredient slice's canonical leg and the invoice header+line pattern.
 
-### Migration `V67__stock_wastage_canonical.sql`
+### Migration `V68__stock_wastage_canonical.sql`
 
 - **Create `canonical_stocktake`** (bitemporal: id, logical_entity_id, source_system,
   source_record_ref, raw_record_id, valid_from/to, recorded_at, superseded_at) plus:

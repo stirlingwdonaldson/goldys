@@ -36,10 +36,10 @@ A sixth, lower-risk condition — a malformed `stocktakeDate`/`recordDate` — i
 
 ---
 
-### Task 1: Migration (V67) + stocktake header entity
+### Task 1: Migration (V68) + stocktake header entity
 
 **Files:**
-- Create: `backend/src/main/resources/db/migration/V67__stock_wastage_canonical.sql`
+- Create: `backend/src/main/resources/db/migration/V68__stock_wastage_canonical.sql`
 - Create: `backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktake.java`
 - Create: `backend/src/main/java/com/goldys/platform/canonical/StocktakeInput.java`
 - Create: `backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktakeRepository.java`
@@ -53,7 +53,7 @@ A sixth, lower-risk condition — a malformed `stocktakeDate`/`recordDate` — i
   - `CanonicalStocktakeIngest.record(StocktakeInput input)` (public `@Service` facade)
   - package-private `CanonicalStocktake` with accessors `stocktakeId()`, `stocktakeDate()`, `description()`, `outletName()`, `totalStockValue()`, `isPartial()`, `isLocked()`
 
-- [ ] **Step 1: Write the migration** `V67__stock_wastage_canonical.sql` — the whole schema in one file (all three tables; Tasks 2–3 only map columns):
+- [ ] **Step 1: Write the migration** `V68__stock_wastage_canonical.sql` — the whole schema in one file (all three tables; Tasks 2–3 only map columns):
 
 ```sql
 CREATE TABLE canonical_stocktake (
@@ -148,8 +148,8 @@ Expected: green.
 - [ ] **Step 10: Commit**
 
 ```bash
-git add backend/src/main/resources/db/migration/V67__stock_wastage_canonical.sql backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktake.java backend/src/main/java/com/goldys/platform/canonical/StocktakeInput.java backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktakeRepository.java backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktakeService.java backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktakeIngest.java backend/src/test/java/com/goldys/platform/canonical/CanonicalStocktakeServiceTest.java
-git commit -m "feat: canonical stocktake header entity (V67)"
+git add backend/src/main/resources/db/migration/V68__stock_wastage_canonical.sql backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktake.java backend/src/main/java/com/goldys/platform/canonical/StocktakeInput.java backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktakeRepository.java backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktakeService.java backend/src/main/java/com/goldys/platform/canonical/CanonicalStocktakeIngest.java backend/src/test/java/com/goldys/platform/canonical/CanonicalStocktakeServiceTest.java
+git commit -m "feat: canonical stocktake header entity (V68)"
 ```
 
 ---
