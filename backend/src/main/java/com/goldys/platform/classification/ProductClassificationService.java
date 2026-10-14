@@ -11,6 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +42,11 @@ public class ProductClassificationService {
 
   /** How many product feature texts a single cluster contributes to the naming prompt. */
   private static final int NAMING_SAMPLE_LIMIT = 15;
+
+  /**
+   * Concurrent hosted-classifier calls during assignment; the per-product call is the bottleneck.
+   */
+  private static final int CLASSIFY_PARALLELISM = 16;
 
   private static final String INTERRUPTED_MESSAGE = "service restarted before completion";
 
@@ -341,13 +350,24 @@ public class ProductClassificationService {
       return products.size();
     }
 
+    // Collect the products to classify, skipping MANUAL overrides.
+    List<String> toClassify = new ArrayList<>();
     for (String key : products) {
       ProductCategoryAssignment existing = assignments.findById(key).orElse(null);
       if (existing != null && existing.source() == AssignmentSource.MANUAL) {
         continue;
       }
-      ProductClassification classification =
-          classifier.classify(new ProductClassificationRequest(texts.get(key), options));
+      toClassify.add(key);
+    }
+
+    // Classify concurrently (the slow hosted call), then apply the results on this thread so the
+    // JPA reads/writes stay single-threaded.
+    List<ProductClassification> classifications = classifyInParallel(toClassify, texts, options);
+
+    for (int i = 0; i < toClassify.size(); i++) {
+      String key = toClassify.get(i);
+      ProductClassification classification = classifications.get(i);
+      ProductCategoryAssignment existing = assignments.findById(key).orElse(null);
       ProductCategoryAssignment assignment =
           existing != null ? existing : ProductCategoryAssignment.create(key, now);
       if (classification.confidence().compareTo(ASSIGN_CONFIDENCE) >= 0) {
@@ -359,6 +379,43 @@ public class ProductClassificationService {
       assignments.save(assignment);
     }
     return products.size();
+  }
+
+  /** Classifies the products concurrently with a bounded pool, preserving input order. */
+  private List<ProductClassification> classifyInParallel(
+      List<String> products, Map<String, String> texts, List<CategoryOption> options) {
+    ExecutorService pool = Executors.newFixedThreadPool(CLASSIFY_PARALLELISM);
+    try {
+      List<Future<ProductClassification>> futures = new ArrayList<>(products.size());
+      for (String key : products) {
+        String text = texts.get(key);
+        futures.add(
+            pool.submit(
+                () -> classifier.classify(new ProductClassificationRequest(text, options))));
+      }
+      List<ProductClassification> results = new ArrayList<>(products.size());
+      for (Future<ProductClassification> future : futures) {
+        results.add(awaitClassification(future));
+      }
+      return results;
+    } finally {
+      pool.shutdown();
+    }
+  }
+
+  private static ProductClassification awaitClassification(Future<ProductClassification> future) {
+    try {
+      return future.get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new JevException("Interrupted while classifying products", e);
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException runtimeException) {
+        throw runtimeException;
+      }
+      throw new JevException("Classifying a product failed", cause);
+    }
   }
 
   private String failureMessage(RuntimeException e) {
