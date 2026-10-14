@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.goldys.platform.auth.AuthService;
 import com.goldys.platform.support.PostgresContainerConfiguration;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +18,12 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 /**
  * Permission boundary for the product categorisation screen: an {@code ALL × OWNER} account (seeded
- * {@code products.category} in V54) reads the taxonomy, while a fresh account with no grant is
- * explicitly denied (403) rather than served an empty list.
+ * {@code products.category} in V62) reads and edits the taxonomy and suggestions, while a fresh
+ * account with no grant is explicitly denied (403) rather than served an empty list.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -41,32 +43,66 @@ class ProductCategoryPermissionBoundaryTest {
   void ownerReadsTaxonomy() throws Exception {
     authService.signup("owner@example.com", "Owner", "password123");
     jdbc.update("update user_account set seniority = 'OWNER' where email = 'owner@example.com'");
-    MockHttpSession session = login("owner@example.com", "password123");
+    Login owner = login("owner@example.com", "password123");
 
     // An empty taxonomy is a valid 200 for a freshly migrated database.
-    mvc.perform(get("/api/products/categories/taxonomy").session(session))
+    mvc.perform(get("/api/products/categories/taxonomy").session(owner.session()))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void ownerReadsAndAddsSuggestions() throws Exception {
+    authService.signup("owner@example.com", "Owner", "password123");
+    jdbc.update("update user_account set seniority = 'OWNER' where email = 'owner@example.com'");
+    Login owner = login("owner@example.com", "password123");
+
+    mvc.perform(get("/api/products/categories/suggestions").session(owner.session()))
+        .andExpect(status().isOk());
+
+    mvc.perform(
+            post("/api/products/categories/suggestions")
+                .session(owner.session())
+                .cookie(owner.xsrf())
+                .header("X-XSRF-TOKEN", owner.xsrf().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Beer\",\"groupName\":\"Drinks\"}"))
         .andExpect(status().isOk());
   }
 
   @Test
   void userWithoutProductCategoryGrantIsDenied() throws Exception {
     authService.signup("staff@example.com", "Staff", "password123");
-    MockHttpSession session = login("staff@example.com", "password123");
+    Login staff = login("staff@example.com", "password123");
 
-    mvc.perform(get("/api/products/categories/taxonomy").session(session))
+    mvc.perform(get("/api/products/categories/taxonomy").session(staff.session()))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("NOT_PERMITTED"));
   }
 
-  private MockHttpSession login(String email, String password) throws Exception {
-    MockHttpSession session = new MockHttpSession();
-    mvc.perform(
-            post("/api/auth/login")
-                .session(session)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("email", email)
-                .param("password", password))
-        .andExpect(status().isOk());
-    return session;
+  @Test
+  void userWithoutProductCategoryGrantIsDeniedSuggestions() throws Exception {
+    authService.signup("staff@example.com", "Staff", "password123");
+    Login staff = login("staff@example.com", "password123");
+
+    mvc.perform(get("/api/products/categories/suggestions").session(staff.session()))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("NOT_PERMITTED"));
   }
+
+  private Login login(String email, String password) throws Exception {
+    MockHttpSession session = new MockHttpSession();
+    MvcResult result =
+        mvc.perform(
+                post("/api/auth/login")
+                    .session(session)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .param("email", email)
+                    .param("password", password))
+            .andExpect(status().isOk())
+            .andReturn();
+    Cookie xsrf = result.getResponse().getCookie("XSRF-TOKEN");
+    return new Login(session, xsrf);
+  }
+
+  private record Login(MockHttpSession session, Cookie xsrf) {}
 }
