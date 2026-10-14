@@ -143,6 +143,9 @@ services:
       CLASSIFICATION_JEV_ENABLED: ${CLASSIFICATION_JEV_ENABLED:-false}
       CLASSIFICATION_JEV_BASE_URL: ${CLASSIFICATION_JEV_BASE_URL:-https://api.typesafe.ai}
       CLASSIFICATION_JEV_API_KEY: ${CLASSIFICATION_JEV_API_KEY:-}
+      # LLM taxonomy suggestions (uses the OpenAI ChatModel above). Off by default; set
+      # CLASSIFICATION_NAMING_ENABLED=true to draft a taxonomy after each clustering run.
+      CLASSIFICATION_NAMING_ENABLED: ${CLASSIFICATION_NAMING_ENABLED:-false}
       # Sentry (ops-sentry). Unset DSN = SDK off. SENTRY_RELEASE is the deployed git SHA.
       SENTRY_DSN: ${SENTRY_BACKEND_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
