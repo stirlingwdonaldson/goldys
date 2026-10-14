@@ -976,6 +976,13 @@ export interface SentimentBucket {
   negative: number;
 }
 
+/** One weekly bucket of average rating and % who would recommend (mirrors `semantic.RatingTrendBucket`). */
+export interface RatingTrendBucket {
+  periodStart: string;
+  avgRating: number | null;
+  recommendPercent: number | null;
+}
+
 /** Mentions and sentiment totals for one review aspect (mirrors `semantic.AspectSentimentSummary`). */
 export interface AspectSentimentSummary {
   aspect: string;
@@ -1169,6 +1176,7 @@ export interface Api {
   listClassificationRuns(): Promise<ClassificationRun[]>;
   getReviewOverview(from: string, to: string): Promise<ReviewOverview>;
   getReviewSentimentTrend(from: string, to: string): Promise<SentimentBucket[]>;
+  getReviewRatingTrend(from: string, to: string): Promise<RatingTrendBucket[]>;
   getReviewAspects(from: string, to: string): Promise<AspectSentimentSummary[]>;
   getReviewRatings(from: string, to: string): Promise<RatingBucket[]>;
   getReviewSources(from: string, to: string): Promise<SourceSummary[]>;

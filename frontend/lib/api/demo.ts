@@ -83,6 +83,7 @@ import type {
   OpenTableSyncMode,
   AspectSentimentSummary,
   RatingBucket,
+  RatingTrendBucket,
   ReviewFilter,
   ReviewOverview,
   ReviewView,
@@ -2049,6 +2050,16 @@ export const demoApi: Api = {
     return [
       { periodStart: "2026-09-29", positive: 2, neutral: 1, negative: 1 },
       { periodStart: "2026-10-06", positive: 1, neutral: 0, negative: 1 },
+    ];
+  },
+
+  async getReviewRatingTrend(_from: string, _to: string): Promise<RatingTrendBucket[]> {
+    await delay(300);
+    void _from;
+    void _to;
+    return [
+      { periodStart: "2026-09-29", avgRating: 3.5, recommendPercent: 66.7 },
+      { periodStart: "2026-10-06", avgRating: 4.0, recommendPercent: 100.0 },
     ];
   },
 

@@ -102,6 +102,7 @@ export type {
   ProductPoint,
   Provenance,
   RatingBucket,
+  RatingTrendBucket,
   RecipeCosting,
   RecipeIngredient,
   RecomputeState,

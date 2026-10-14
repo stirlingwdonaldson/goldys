@@ -14,6 +14,7 @@ import { TimeRangeSelector, defaultRange } from "@/components/ui/time-range-sele
 import { humanizeKey } from "@/lib/format";
 import { OverviewStrip } from "@/components/reviews/overview-strip";
 import { SentimentTrend } from "@/components/reviews/sentiment-trend";
+import { RatingTrend } from "@/components/reviews/rating-trend";
 import { AspectBreakdown } from "@/components/reviews/aspect-breakdown";
 import { RatingDistribution } from "@/components/reviews/rating-distribution";
 import { SourceComparison, reviewSourceLabel } from "@/components/reviews/source-comparison";
@@ -35,6 +36,7 @@ export default function ReviewsPage() {
 
   const overview = useApiData((api) => api.getReviewOverview(range.from, range.to), [range.from, range.to]);
   const trend = useApiData((api) => api.getReviewSentimentTrend(range.from, range.to), [range.from, range.to]);
+  const ratingTrend = useApiData((api) => api.getReviewRatingTrend(range.from, range.to), [range.from, range.to]);
   const aspects = useApiData((api) => api.getReviewAspects(range.from, range.to), [range.from, range.to]);
   const ratings = useApiData((api) => api.getReviewRatings(range.from, range.to), [range.from, range.to]);
   const sources = useApiData((api) => api.getReviewSources(range.from, range.to), [range.from, range.to]);
@@ -182,6 +184,13 @@ export default function ReviewsPage() {
         description="Positive, neutral and negative reviews over time, stacked per week."
       >
         <SentimentTrend buckets={trend.data ?? []} />
+      </Section>
+
+      <Section
+        title="Rating & recommend"
+        description="Average star rating and the share of guests who would recommend, over time."
+      >
+        <RatingTrend buckets={ratingTrend.data ?? []} />
       </Section>
 
       <Section
