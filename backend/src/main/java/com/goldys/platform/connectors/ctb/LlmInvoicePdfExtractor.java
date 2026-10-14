@@ -53,7 +53,8 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
           + "{\"invoiceNumber\": string|null, \"lines\": [{\"stockCode\": string|null, "
           + "\"description\": string|null, \"quantity\": number|null, \"uom\": string|null, "
           + "\"unitQuantity\": number|null, \"packSize\": number|null, \"wetAmount\": number|null, "
-          + "\"amountExTax\": number|null}]}\n"
+          + "\"amountExTax\": number|null, \"amountIncTax\": number|null, "
+          + "\"gstAmount\": number|null, \"taxRate\": number|null, \"incGst\": boolean|null}]}\n"
           + "Rules:\n"
           + "- invoiceNumber: the invoice number value printed on the invoice (e.g. 758262), "
           + "never a label such as 'Tax Invoice No'; null if absent.\n"
@@ -67,7 +68,20 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
           + "- packSize: the pack/carton size (e.g. 4 in '4 CTN'), or null.\n"
           + "- wetAmount: the Wine Equalisation Tax amount for the line (liquor only), or null.\n"
           + "- amountExTax: the line total excluding tax, or null if the text does not state it.\n"
+          + "- amountIncTax: the line total including tax, or null if the text does not state it.\n"
+          + "- gstAmount: the line's GST amount, or null if the text does not state it.\n"
+          + "- taxRate: the tax percentage applied to the line (e.g. 10 for \"10%\"), or null if "
+          + "not stated.\n"
+          + "- incGst: true when the line's price includes GST, false when it does not, null when "
+          + "not stated.\n"
           + "Never invent a value. When a field is not present in the text, emit null for it.";
+
+  /**
+   * Bump this whenever the LLM extraction schema changes (new/changed JSON-contract fields), so a
+   * re-enrich replay re-extracts already-cached PDFs with the new schema instead of serving stale
+   * extractions that predate it. Part of the cache key.
+   */
+  private static final String SCHEMA_VERSION = "v2";
 
   private static final Clock CLOCK = Clock.systemUTC();
 
@@ -94,15 +108,17 @@ public class LlmInvoicePdfExtractor implements InvoicePdfExtractor {
       // an AI key don't fill the flag list.
       return new PdfExtractedInvoice(null, List.of());
     }
-    String textSha256 = sha256Hex(text);
-    Optional<PdfExtractedInvoice> cached = cache.findById(textSha256).flatMap(this::readCached);
+    // The cache key is the text hash salted with the schema version, so a schema change (e.g. the
+    // tax-treatment fields) invalidates old entries and forces re-extraction on replay.
+    String cacheKey = sha256Hex(SCHEMA_VERSION + "\n" + text);
+    Optional<PdfExtractedInvoice> cached = cache.findById(cacheKey).flatMap(this::readCached);
     if (cached.isPresent()) {
       return cached.get();
     }
     PdfExtractedInvoice result = callLlm(model, text);
     // Cache only successful extractions: a transient model failure must be retried, not locked in.
     if (result.extractionError() == null) {
-      cache.save(LlmExtractionCache.create(textSha256, toJson(result), Instant.now(CLOCK)));
+      cache.save(LlmExtractionCache.create(cacheKey, toJson(result), Instant.now(CLOCK)));
     }
     return result;
   }

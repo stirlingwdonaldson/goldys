@@ -95,6 +95,9 @@ public class CanonicalInvoiceQuery {
         i.dueDate(),
         i.totalAmount(),
         i.purchaseNumber(),
-        i.pdfFilename());
+        i.pdfFilename(),
+        i.amountExTax(),
+        i.gstAmount(),
+        i.freightAmount());
   }
 }

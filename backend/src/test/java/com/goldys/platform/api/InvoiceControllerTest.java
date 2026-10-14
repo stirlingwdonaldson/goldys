@@ -96,6 +96,9 @@ class InvoiceControllerTest {
                 new BigDecimal("10.00"),
                 "PO-1",
                 true,
+                null,
+                null,
+                null,
                 List.of()));
 
     mvc.perform(get("/api/invoices/INV-1").with(authenticated(owner())))
@@ -190,6 +193,9 @@ class InvoiceControllerTest {
                 new BigDecimal("10.00"),
                 null,
                 false,
+                null,
+                null,
+                null,
                 List.of()));
 
     mvc.perform(get("/api/invoices/{invoiceNumber}", "INV 1042").with(authenticated(owner())))

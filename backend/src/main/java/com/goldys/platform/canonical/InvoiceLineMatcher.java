@@ -1,5 +1,7 @@
 package com.goldys.platform.canonical;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -18,8 +20,9 @@ import java.util.regex.Pattern;
  *
  * <p>This selector tries progressively looser keys, all scoped to one invoice (the caller fetches
  * the invoice's current lines), and refuses to guess: if more than one candidate wins a tier it
- * returns {@link Result#AMBIGUOUS}. That keeps "one CSV line, one PDF line" honest in both
- * directions.
+ * returns {@link Result#AMBIGUOUS} — unless a single one of the tied candidates agrees with the PDF
+ * line on quantity (then on amount), which is enough to break the tie without guessing. That keeps
+ * "one CSV line, one PDF line" honest in both directions.
  */
 public final class InvoiceLineMatcher {
 
@@ -31,8 +34,15 @@ public final class InvoiceLineMatcher {
     AMBIGUOUS
   }
 
-  /** A current canonical line, reduced to the two fields matching keys on. */
-  public record Candidate(String stockCode, String productNameKey) {}
+  /** A current canonical line, reduced to the fields matching keys on. */
+  public record Candidate(
+      String stockCode, String productNameKey, BigDecimal quantity, BigDecimal amount) {
+
+    /** Convenience constructor for callers that do not disambiguate on quantity/amount. */
+    public Candidate(String stockCode, String productNameKey) {
+      this(stockCode, productNameKey, null, null);
+    }
+  }
 
   /**
    * The selection outcome: {@code index} is the winning candidate index (only meaningful on MATCH).
@@ -74,15 +84,28 @@ public final class InvoiceLineMatcher {
   private static final int MIN_SHARED_SIGNIFICANT_TOKENS = 2;
 
   public static Selection select(
-      String pdfStockCode, String pdfDescription, List<Candidate> candidates) {
+      String pdfStockCode,
+      String pdfDescription,
+      BigDecimal pdfQuantity,
+      BigDecimal pdfAmount,
+      List<Candidate> candidates) {
     String pdfCode = normalizeCode(pdfStockCode);
     if (pdfCode != null) {
-      Selection exact = unique(candidates, c -> pdfCode.equals(normalizeCode(c.stockCode())));
+      Selection exact =
+          unique(
+              candidates,
+              c -> pdfCode.equals(normalizeCode(c.stockCode())),
+              pdfQuantity,
+              pdfAmount);
       if (exact != null) {
         return exact;
       }
       Selection variant =
-          unique(candidates, c -> isCodeVariant(pdfCode, normalizeCode(c.stockCode())));
+          unique(
+              candidates,
+              c -> isCodeVariant(pdfCode, normalizeCode(c.stockCode())),
+              pdfQuantity,
+              pdfAmount);
       if (variant != null) {
         return variant;
       }
@@ -90,17 +113,27 @@ public final class InvoiceLineMatcher {
 
     String pdfDescriptionKey = ProductNameKey.normalize(pdfDescription);
     if (!pdfDescriptionKey.isEmpty()) {
-      Selection exact = unique(candidates, c -> pdfDescriptionKey.equals(c.productNameKey()));
+      Selection exact =
+          unique(
+              candidates,
+              c -> pdfDescriptionKey.equals(c.productNameKey()),
+              pdfQuantity,
+              pdfAmount);
       if (exact != null) {
         return exact;
       }
       Set<String> pdfTokens = tokenSet(pdfDescriptionKey);
       Selection contained =
-          unique(candidates, c -> contains(pdfTokens, tokenSet(c.productNameKey())));
+          unique(
+              candidates,
+              c -> contains(pdfTokens, tokenSet(c.productNameKey())),
+              pdfQuantity,
+              pdfAmount);
       if (contained != null) {
         return contained;
       }
-      Selection overlap = bestTokenOverlap(significant(pdfTokens), candidates);
+      Selection overlap =
+          bestTokenOverlap(significant(pdfTokens), candidates, pdfQuantity, pdfAmount);
       if (overlap != null) {
         return overlap;
       }
@@ -117,19 +150,28 @@ public final class InvoiceLineMatcher {
 
   /**
    * The single candidate a predicate selects, {@link Selection#ambiguous()} for several, else null.
+   * When several candidates tie on a key, a unique agreement on quantity (then amount) breaks the
+   * tie; otherwise it stays ambiguous rather than guessing.
    */
   private static Selection unique(
-      List<Candidate> candidates, java.util.function.Predicate<Candidate> p) {
-    int found = -1;
+      List<Candidate> candidates,
+      java.util.function.Predicate<Candidate> p,
+      BigDecimal pdfQuantity,
+      BigDecimal pdfAmount) {
+    List<Integer> matches = new ArrayList<>();
     for (int i = 0; i < candidates.size(); i++) {
       if (p.test(candidates.get(i))) {
-        if (found >= 0) {
-          return Selection.ambiguous();
-        }
-        found = i;
+        matches.add(i);
       }
     }
-    return found >= 0 ? Selection.match(found) : null;
+    if (matches.isEmpty()) {
+      return null;
+    }
+    if (matches.size() == 1) {
+      return Selection.match(matches.get(0));
+    }
+    Integer resolved = disambiguate(matches, candidates, pdfQuantity, pdfAmount);
+    return resolved != null ? Selection.match(resolved) : Selection.ambiguous();
   }
 
   /**
@@ -156,13 +198,16 @@ public final class InvoiceLineMatcher {
 
   /**
    * The candidate sharing the most significant tokens with the PDF line, when at least {@value
-   * #MIN_SHARED_SIGNIFICANT_TOKENS} tokens overlap and it is the unique best (a tie is ambiguous).
+   * #MIN_SHARED_SIGNIFICANT_TOKENS} tokens overlap and it is the unique best (a tie is ambiguous,
+   * unless quantity/amount breaks it).
    */
   private static Selection bestTokenOverlap(
-      Set<String> pdfSignificant, List<Candidate> candidates) {
-    int bestIndex = -1;
+      Set<String> pdfSignificant,
+      List<Candidate> candidates,
+      BigDecimal pdfQuantity,
+      BigDecimal pdfAmount) {
     int bestScore = 0;
-    int bestTies = 0;
+    List<Integer> best = new ArrayList<>();
     for (int i = 0; i < candidates.size(); i++) {
       int score = 0;
       for (String token : significant(tokenSet(candidates.get(i).productNameKey()))) {
@@ -175,16 +220,78 @@ public final class InvoiceLineMatcher {
       }
       if (score > bestScore) {
         bestScore = score;
-        bestIndex = i;
-        bestTies = 1;
+        best = new ArrayList<>(List.of(i));
       } else if (score == bestScore) {
-        bestTies++;
+        best.add(i);
       }
     }
-    if (bestIndex < 0) {
+    if (best.isEmpty()) {
       return null;
     }
-    return bestTies == 1 ? Selection.match(bestIndex) : Selection.ambiguous();
+    if (best.size() == 1) {
+      return Selection.match(best.get(0));
+    }
+    Integer resolved = disambiguate(best, candidates, pdfQuantity, pdfAmount);
+    return resolved != null ? Selection.match(resolved) : Selection.ambiguous();
+  }
+
+  /**
+   * Among tied candidates, the unique one agreeing with the PDF line on quantity, else on amount;
+   * null when neither field can single one out (no agreement, or more than one agrees).
+   */
+  private static Integer disambiguate(
+      List<Integer> indices,
+      List<Candidate> candidates,
+      BigDecimal pdfQuantity,
+      BigDecimal pdfAmount) {
+    Integer byQuantity = agreeOnQuantity(indices, candidates, pdfQuantity);
+    if (byQuantity != null) {
+      return byQuantity;
+    }
+    return agreeOnAmount(indices, candidates, pdfAmount);
+  }
+
+  /** The unique tied candidate whose quantity equals {@code pdfQuantity}, else null. */
+  private static Integer agreeOnQuantity(
+      List<Integer> indices, List<Candidate> candidates, BigDecimal pdfQuantity) {
+    if (pdfQuantity == null) {
+      return null;
+    }
+    Integer found = null;
+    for (int i : indices) {
+      if (sameAmount(candidates.get(i).quantity(), pdfQuantity)) {
+        if (found != null) {
+          return null;
+        }
+        found = i;
+      }
+    }
+    return found;
+  }
+
+  /** The unique tied candidate whose amount equals {@code pdfAmount}, else null. */
+  private static Integer agreeOnAmount(
+      List<Integer> indices, List<Candidate> candidates, BigDecimal pdfAmount) {
+    if (pdfAmount == null) {
+      return null;
+    }
+    Integer found = null;
+    for (int i : indices) {
+      if (sameAmount(candidates.get(i).amount(), pdfAmount)) {
+        if (found != null) {
+          return null;
+        }
+        found = i;
+      }
+    }
+    return found;
+  }
+
+  private static boolean sameAmount(BigDecimal a, BigDecimal b) {
+    if (a == null || b == null) {
+      return false;
+    }
+    return a.compareTo(b) == 0;
   }
 
   private static Set<String> tokenSet(String normalizedDescription) {

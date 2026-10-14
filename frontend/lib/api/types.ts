@@ -273,6 +273,11 @@ export interface LineGraphNode {
   unitCost: number;
   lineTotal: number;
   uom: string | null;
+  /** PDF-parsed tax treatment; absent/null when the PDF didn't print it. */
+  lineTotalIncTax?: number | null;
+  lineGstAmount?: number | null;
+  lineTaxRate?: number | null;
+  incGst?: boolean | null;
 }
 
 /**
@@ -292,6 +297,10 @@ export interface InvoiceSummary {
 
 /** One invoice header plus its line graph nodes (mirrors the backend `InvoiceDetail`). */
 export interface InvoiceDetail extends InvoiceSummary {
+  /** The invoice's ex-tax goods total, against which line totals are reconciled. */
+  amountExTax: number | null;
+  gstAmount: number | null;
+  freightAmount: number | null;
   lines: LineGraphNode[];
 }
 

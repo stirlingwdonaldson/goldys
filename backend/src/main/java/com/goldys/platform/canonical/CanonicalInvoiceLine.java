@@ -59,6 +59,26 @@ class CanonicalInvoiceLine extends BitemporalEntity {
   private BigDecimal wetAmount;
 
   /**
+   * The line's tax-inclusive total, parsed from the PDF (nullable — the CSV does not supply it).
+   */
+  @Column(name = "line_total_inc_tax", updatable = false, precision = 14, scale = 4)
+  private BigDecimal lineTotalIncTax;
+
+  /** The line's GST amount, parsed from the PDF (nullable). */
+  @Column(name = "line_gst_amount", updatable = false, precision = 14, scale = 4)
+  private BigDecimal lineGstAmount;
+
+  /**
+   * The tax percentage applied to the line ({@code 10.0} = 10%), parsed from the PDF (nullable).
+   */
+  @Column(name = "line_tax_rate", updatable = false, precision = 14, scale = 4)
+  private BigDecimal lineTaxRate;
+
+  /** Whether the line is priced GST-inclusive, parsed from the PDF (null = not stated). */
+  @Column(name = "inc_gst", updatable = false)
+  private Boolean incGst;
+
+  /**
    * {@code "CSV"} for export-sourced lines, {@code "PDF"} for PDF-derived; null = legacy CSV row.
    */
   @Column(name = "origin", updatable = false, length = 16)
@@ -85,6 +105,10 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       BigDecimal unitQuantity,
       BigDecimal packSize,
       BigDecimal wetAmount,
+      BigDecimal lineTotalIncTax,
+      BigDecimal lineGstAmount,
+      BigDecimal lineTaxRate,
+      Boolean incGst,
       String origin) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.invoiceNumber = invoiceNumber;
@@ -99,6 +123,10 @@ class CanonicalInvoiceLine extends BitemporalEntity {
     this.unitQuantity = unitQuantity;
     this.packSize = packSize;
     this.wetAmount = wetAmount;
+    this.lineTotalIncTax = lineTotalIncTax;
+    this.lineGstAmount = lineGstAmount;
+    this.lineTaxRate = lineTaxRate;
+    this.incGst = incGst;
     this.origin = origin;
   }
 
@@ -121,6 +149,10 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       BigDecimal unitQuantity,
       BigDecimal packSize,
       BigDecimal wetAmount,
+      BigDecimal lineTotalIncTax,
+      BigDecimal lineGstAmount,
+      BigDecimal lineTaxRate,
+      Boolean incGst,
       String origin) {
     return new CanonicalInvoiceLine(
         logicalEntityId,
@@ -141,6 +173,10 @@ class CanonicalInvoiceLine extends BitemporalEntity {
         unitQuantity,
         packSize,
         wetAmount,
+        lineTotalIncTax,
+        lineGstAmount,
+        lineTaxRate,
+        incGst,
         origin);
   }
 
@@ -208,6 +244,22 @@ class CanonicalInvoiceLine extends BitemporalEntity {
 
   BigDecimal wetAmount() {
     return wetAmount;
+  }
+
+  BigDecimal lineTotalIncTax() {
+    return lineTotalIncTax;
+  }
+
+  BigDecimal lineGstAmount() {
+    return lineGstAmount;
+  }
+
+  BigDecimal lineTaxRate() {
+    return lineTaxRate;
+  }
+
+  Boolean incGst() {
+    return incGst;
   }
 
   String origin() {

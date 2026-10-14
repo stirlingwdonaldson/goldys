@@ -65,6 +65,32 @@ class LlmInvoicePdfExtractorTest {
   }
 
   @Test
+  void parsesTaxTreatmentFields() {
+    ChatModel model = mock(ChatModel.class);
+    when(model.call(any(Prompt.class)))
+        .thenReturn(
+            new ChatResponse(
+                List.of(
+                    new Generation(
+                        new AssistantMessage(
+                            "{\"invoiceNumber\":\"INV-9\",\"lines\":["
+                                + "{\"stockCode\":\"BEEF025\",\"description\":\"BEEF RUMP CAP\","
+                                + "\"quantity\":3.25,\"uom\":\"KG\","
+                                + "\"amountExTax\":102.38,\"amountIncTax\":112.62,"
+                                + "\"gstAmount\":10.24,\"taxRate\":10,\"incGst\":true}"
+                                + "]}")))));
+
+    PdfExtractedInvoice out = extractor(model).extract("Tax Invoice\nBEEF RUMP CAP ...");
+
+    PdfExtractedLine line = out.lines().get(0);
+    assertThat(line.amountExTax()).isEqualByComparingTo("102.38");
+    assertThat(line.amountIncTax()).isEqualByComparingTo("112.62");
+    assertThat(line.gstAmount()).isEqualByComparingTo("10.24");
+    assertThat(line.taxRate()).isEqualByComparingTo("10");
+    assertThat(line.incGst()).isTrue();
+  }
+
+  @Test
   void stripsMarkdownFencesAroundTheJson() {
     ChatModel model = mock(ChatModel.class);
     when(model.call(any(Prompt.class)))
