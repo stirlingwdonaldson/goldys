@@ -170,18 +170,50 @@ so a second source can be added later without re-deriving these decisions.
 - **Manual resolution path:** `InventoryOverrideService.save(...)` sets an override for a
   `trading_date`, replacing the computed purchases (COGS).
 
+## Stocktake header (`canonical_stocktake`)
+
+- **Source:** `CTB` (`ctb-stocktakes` header list, pulled daily by `CtbConnector`).
+- **Logical identity:** `UUID.nameUUIDFromBytes("stocktake:" + stocktakeId)`.
+- **Source identity:** `(source_system = CTB, source_record_ref = "stocktake:<id>")`.
+- **Matching strategy:** deterministic single source; re-pull supersedes on
+  `(source_system, source_record_ref)` (unchanged → no-op).
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not wired.
+- The header carries the stocktake's `stocktakeDate`; the detail payload does not, so
+  `canonical_stock_count.counted_date` is resolved from this entity.
+
 ## Stock count (`canonical_stock_count`)
 
-- **Source:** `CTB` (stocktake detail — **ingested raw** via `ctb-stocktake-detail`, under the
-  one-off `ctb-detail-backfill` run).
-- **Logical identity / matching:** to be finalized when the canonical source is confirmed. Model is
-  in place; identity is deferred with the source.
+- **Source:** `CTB` (stocktake detail via `ctb-stocktake-detail`, backfilled by the one-off
+  `ctb-detail-backfill` run).
+- **Logical identity:** `UUID.nameUUIDFromBytes("stock-count:" + stocktakeId + ":" + lineId)`.
+- **Source identity:** `(source_system = CTB, source_record_ref = "stocktake:<stocktakeId>:<lineId>")`.
+- **Line id ruling:** `stocktakeDetailId` is **not** a line id (only 4 distinct values across all
+  lines); the per-line id is the source `id` field, which is unique only within a stocktake. The
+  parent `stocktakeId` therefore anchors identity — the same "owner-scoped line id" problem the
+  recipe-ingredient slice solved.
+- **Date:** `counted_date` is resolved from the canonical stocktake header via `stocktake_id` (the
+  detail payload carries no date). A line whose header is absent fails the canonicalization run, never
+  silently skipped.
+- **Matching strategy:** deterministic single source; re-record supersedes on
+  `(source_system, source_record_ref)`.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not wired.
 
 ## Wastage (`canonical_wastage`)
 
-- **Source:** `CTB` (wastage detail — **ingested raw** via `ctb-wastage-detail`, under the one-off
+- **Source:** `CTB` (wastage detail via `ctb-wastage-detail`, backfilled by the one-off
   `ctb-detail-backfill` run).
-- **Logical identity / matching:** deferred with the source, as above.
+- **Logical identity:** `UUID.nameUUIDFromBytes("wastage:" + wastageRecordId + ":" + lineId)`.
+- **Source identity:** `(source_system = CTB, source_record_ref = "wastage:<recordId>:<detailId>")`,
+  where `lineId` is the source's globally unique `wastageRecordDetailId`.
+- **No stock code:** wastage has no `stockCode` in the source — product identity is `product_name_key`
+  from `stockDesc` only (a documented limitation).
+- **Date:** self-contained (`recordDate`); no header entity is needed.
+- **Matching strategy:** deterministic single source; re-record supersedes on
+  `(source_system, source_record_ref)`.
+- **Confidence:** n/a (single source).
+- **Manual resolution path:** not wired.
 
 ## Recipe composition
 
