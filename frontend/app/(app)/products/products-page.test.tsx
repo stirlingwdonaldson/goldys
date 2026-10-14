@@ -206,13 +206,12 @@ describe("ProductsPage", () => {
     expect(screen.getByRole("region", { name: /pipeline/i })).toBeInTheDocument();
   });
 
-  it("moves a product to another category from the assignment queue", () => {
+  it("moves a product to another category from the assignment queue", async () => {
     seed();
     render(<ProductsPage />);
 
-    fireEvent.change(screen.getByLabelText("Move parma to a category"), {
-      target: { value: "cat-beer" },
-    });
+    fireEvent.click(screen.getByLabelText("Move parma to a category"));
+    fireEvent.click(await screen.findByRole("option", { name: "Beer" }));
     expect(state.api.moveProduct).toHaveBeenCalledWith("parma", "cat-beer");
   });
 

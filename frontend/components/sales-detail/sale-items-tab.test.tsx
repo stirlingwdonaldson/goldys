@@ -103,7 +103,8 @@ describe("SaleItemsTab", () => {
     );
 
     await screen.findByText("pint carlton draught");
-    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "Food" } });
+    fireEvent.click(screen.getByLabelText("Category"));
+    fireEvent.click(await screen.findByRole("option", { name: "Food" }));
 
     await waitFor(() =>
       expect(screen.queryByText("pint carlton draught")).not.toBeInTheDocument(),

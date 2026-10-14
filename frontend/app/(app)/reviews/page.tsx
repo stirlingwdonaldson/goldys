@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/states/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { humanizeKey } from "@/lib/format";
 import { OverviewStrip } from "@/components/reviews/overview-strip";
 import { SentimentTrend } from "@/components/reviews/sentiment-trend";
@@ -98,52 +99,49 @@ export default function ReviewsPage() {
         />
       </Field>
       <Field label="Source" htmlFor="reviews-source">
-        <select
-          id="reviews-source"
-          aria-label="Source"
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-2 text-sm"
-        >
-          <option value="">All sources</option>
-          {sourceOptions.map((s) => (
-            <option key={s.source} value={s.source}>
-              {reviewSourceLabel(s.source)}
-            </option>
-          ))}
-        </select>
+        <Select value={source || "all"} onValueChange={(v) => setSource(v === "all" ? "" : v)}>
+          <SelectTrigger id="reviews-source" aria-label="Source" className="w-44">
+            <SelectValue placeholder="All sources" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All sources</SelectItem>
+            {sourceOptions.map((s) => (
+              <SelectItem key={s.source} value={s.source}>
+                {reviewSourceLabel(s.source)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <Field label="Sentiment" htmlFor="reviews-sentiment">
-        <select
-          id="reviews-sentiment"
-          aria-label="Sentiment"
-          value={sentiment}
-          onChange={(e) => setSentiment(e.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-2 text-sm"
-        >
-          <option value="">All sentiments</option>
-          {SENTIMENTS.map((s) => (
-            <option key={s} value={s}>
-              {sentimentLabel(s)}
-            </option>
-          ))}
-        </select>
+        <Select value={sentiment || "all"} onValueChange={(v) => setSentiment(v === "all" ? "" : v)}>
+          <SelectTrigger id="reviews-sentiment" aria-label="Sentiment" className="w-44">
+            <SelectValue placeholder="All sentiments" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All sentiments</SelectItem>
+            {SENTIMENTS.map((s) => (
+              <SelectItem key={s} value={s}>
+                {sentimentLabel(s)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <Field label="Aspect" htmlFor="reviews-aspect">
-        <select
-          id="reviews-aspect"
-          aria-label="Aspect"
-          value={aspect}
-          onChange={(e) => setAspect(e.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-2 text-sm"
-        >
-          <option value="">All aspects</option>
-          {aspectOptions.map((a) => (
-            <option key={a.aspect} value={a.aspect}>
-              {humanizeKey(a.aspect)}
-            </option>
-          ))}
-        </select>
+        <Select value={aspect || "all"} onValueChange={(v) => setAspect(v === "all" ? "" : v)}>
+          <SelectTrigger id="reviews-aspect" aria-label="Aspect" className="w-44">
+            <SelectValue placeholder="All aspects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All aspects</SelectItem>
+            {aspectOptions.map((a) => (
+              <SelectItem key={a.aspect} value={a.aspect}>
+                {humanizeKey(a.aspect)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <Field label="Search" htmlFor="reviews-search">
         <Input
