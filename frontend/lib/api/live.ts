@@ -363,6 +363,33 @@ export const liveApi: Api = {
     ),
   listClassificationRuns: () =>
     fetchApi<import("./types").ClassificationRun[]>("/api/products/categories/runs"),
+  getCategorySuggestions: () =>
+    fetchApi<import("./types").CategorySuggestion[]>("/api/products/categories/suggestions"),
+  addCategorySuggestion: (input: { name: string; groupName?: string | null }) =>
+    fetchApi<import("./types").CategorySuggestion>("/api/products/categories/suggestions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  updateCategorySuggestion: (
+    id: string,
+    input: { name?: string | null; groupName?: string | null },
+  ) =>
+    fetchApi<void>(
+      `/api/products/categories/suggestions/${id}`,
+      { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) },
+      { responseType: "void" },
+    ),
+  deleteCategorySuggestion: (id: string) =>
+    fetchApi<void>(
+      `/api/products/categories/suggestions/${id}`,
+      { method: "DELETE" },
+      { responseType: "void" },
+    ),
+  applyCategorySuggestions: () =>
+    fetchApi<import("./types").CategoryNode[]>("/api/products/categories/suggestions/apply", {
+      method: "POST",
+    }),
 };
 
 /**

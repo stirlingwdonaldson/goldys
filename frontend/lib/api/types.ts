@@ -439,6 +439,19 @@ export interface ClassificationRun {
   errorMessage: string | null;
 }
 
+/**
+ * One taxonomy suggestion awaiting review (mirrors `semantic.CategorySuggestionView`). `runId` is
+ * null for staff-added suggestions; `groupName`/`hint` are null when absent.
+ */
+export interface CategorySuggestion {
+  id: string;
+  runId: string | null;
+  name: string;
+  groupName: string | null;
+  displayOrder: number;
+  hint: string | null;
+}
+
 /** One invoice-ingestion anomaly, read-only (mirrors the backend `InvoiceIngestFlagView`). */
 export interface InvoiceIngestFlag {
   flagType: string;
@@ -1037,6 +1050,17 @@ export interface Api {
   runClassification(kind: ClassificationRunKind): Promise<void>;
   /** Recent classification runs, newest first. */
   listClassificationRuns(): Promise<ClassificationRun[]>;
+  /** The pending taxonomy draft, in display order. */
+  getCategorySuggestions(): Promise<CategorySuggestion[]>;
+  addCategorySuggestion(input: { name: string; groupName?: string | null }): Promise<CategorySuggestion>;
+  /** Renames and/or regroups a suggestion; a null field is left unchanged. */
+  updateCategorySuggestion(
+    id: string,
+    input: { name?: string | null; groupName?: string | null },
+  ): Promise<void>;
+  deleteCategorySuggestion(id: string): Promise<void>;
+  /** Applies the draft: promotes its suggestions to confirmed categories and clears it. */
+  applyCategorySuggestions(): Promise<CategoryNode[]>;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */

@@ -6,6 +6,7 @@ import type {
   Api,
   AssignmentRow,
   CategoryNode,
+  CategorySuggestion,
   ClassificationRun,
   ClassificationRunKind,
   ConnectorStatus,
@@ -835,6 +836,20 @@ const demoClassificationRuns: ClassificationRun[] = [
     finishedAt: "2026-10-06T02:01:00Z",
     errorMessage: null,
   },
+];
+
+// A pending taxonomy draft: two suggested categories (one grouped, one flat with a merge hint) that
+// staff can rename/delete, plus an "Apply taxonomy" action that promotes them into the taxonomy.
+const demoCategorySuggestions: CategorySuggestion[] = [
+  {
+    id: "sg-1",
+    runId: "cls-1",
+    name: "Craft Beer",
+    groupName: "Beer",
+    displayOrder: 0,
+    hint: "merges 'pint carlton draught' and 'pale ale' clusters",
+  },
+  { id: "sg-2", runId: "cls-1", name: "House Wines", groupName: null, displayOrder: 1, hint: null },
 ];
 
 // Invoice browse fixtures: realistic current headers covering the hard states — a linked PDF, one
@@ -1879,6 +1894,64 @@ export const demoApi: Api = {
       }
     }
     return [...demoClassificationRuns];
+  },
+
+  async getCategorySuggestions(): Promise<CategorySuggestion[]> {
+    await delay(300);
+    return [...demoCategorySuggestions];
+  },
+
+  async addCategorySuggestion(input: {
+    name: string;
+    groupName?: string | null;
+  }): Promise<CategorySuggestion> {
+    await delay(300);
+    const suggestion: CategorySuggestion = {
+      id: `sg-${Date.now()}`,
+      runId: null,
+      name: input.name,
+      groupName: input.groupName ?? null,
+      displayOrder: demoCategorySuggestions.length,
+      hint: null,
+    };
+    demoCategorySuggestions.push(suggestion);
+    return suggestion;
+  },
+
+  async updateCategorySuggestion(
+    id: string,
+    input: { name?: string | null; groupName?: string | null },
+  ): Promise<void> {
+    await delay(300);
+    const suggestion = demoCategorySuggestions.find((s) => s.id === id);
+    if (!suggestion) return;
+    if (input.name != null) suggestion.name = input.name;
+    if (input.groupName != null) suggestion.groupName = input.groupName;
+  },
+
+  async deleteCategorySuggestion(id: string): Promise<void> {
+    await delay(300);
+    const index = demoCategorySuggestions.findIndex((s) => s.id === id);
+    if (index >= 0) demoCategorySuggestions.splice(index, 1);
+  },
+
+  async applyCategorySuggestions(): Promise<CategoryNode[]> {
+    await delay(400);
+    const created: CategoryNode[] = [];
+    for (const suggestion of [...demoCategorySuggestions]) {
+      if (!demoCategoryTaxonomy.some((c) => c.name === suggestion.name)) {
+        const category: CategoryNode = {
+          id: `cat-${suggestion.name.toLowerCase().replace(/\s+/g, "-")}`,
+          name: suggestion.name,
+          groupName: suggestion.groupName,
+          productCount: 0,
+        };
+        demoCategoryTaxonomy.push(category);
+        created.push(category);
+      }
+    }
+    demoCategorySuggestions.length = 0;
+    return created;
   },
 };
 
