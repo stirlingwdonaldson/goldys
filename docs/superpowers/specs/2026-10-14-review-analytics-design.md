@@ -67,7 +67,7 @@ supersedes and an unchanged re-upload is a no-op):
 | Column | Type | Notes |
 |---|---|---|
 | `source` | varchar(16) | `OpenTable` / `Google` (sub-source within `OPENTABLE`) |
-| `guest_id` | uuid FK `canonical_guest` | populated this slice |
+| `guest_id` | uuid | populated this slice; no FK — linkage by logical id (mirrors `canonical_reservation.guest_id`) |
 | `guest_name` | varchar | denormalized from `Guest Name` (mirrors `canonical_reservation`'s guest name columns) |
 | `reviewed_at` | timestamptz | `Review Date` |
 | `visited_at` | timestamptz | `Visit Date` |
