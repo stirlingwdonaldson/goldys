@@ -1781,6 +1781,7 @@ export const demoApi: Api = {
       { recipeId: 4, name: "Sticky Date Pudding", folder: "Dessert", portionSize: "6", costPerPortion: 1.9, actualCost: 2.1, costGap: 0.2, menuPrice: 11.0, margin: 9.1, gpPercent: 0.8273, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
       { recipeId: 5, name: "Eggplant Parmigiana", folder: "Mains", portionSize: "1", costPerPortion: 4.2, actualCost: null, costGap: 0.6, menuPrice: null, margin: 12.8, gpPercent: 0.7529, menuState: "OFF_MENU", priceSource: "HISTORICAL", lastSoldPrice: 17.0, lastSoldCost: 4.8, lastSoldDate: "2026-09-14" },
       { recipeId: 6, name: "Pickle Brine", folder: "Prep", portionSize: "1", costPerPortion: 0.8, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+      { recipeId: 7, name: "", folder: "", portionSize: "1", costPerPortion: 0, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
     ];
   },
 

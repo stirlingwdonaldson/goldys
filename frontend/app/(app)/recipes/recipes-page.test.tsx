@@ -94,6 +94,37 @@ describe("RecipesPage", () => {
     expect(screen.getByText("Awaiting Cooking the Books recipe data.")).toBeInTheDocument();
   });
 
+  it("labels a recipe with no name instead of leaving the cell blank", () => {
+    state.recipes = [
+      {
+        recipeId: 7,
+        name: "",
+        folder: "",
+        portionSize: "1",
+        costPerPortion: 0,
+        actualCost: null,
+        costGap: null,
+        menuPrice: null,
+        margin: null,
+        gpPercent: null,
+        menuState: "UNKNOWN",
+        priceSource: "NONE",
+        lastSoldPrice: null,
+        lastSoldCost: null,
+        lastSoldDate: null,
+      },
+    ];
+    render(<RecipesPage />);
+    expect(screen.getByText("Unnamed recipe")).toBeInTheDocument();
+    expect(screen.getByText("Not on menu")).toBeInTheDocument();
+  });
+
+  it("gives a negative margin the amber needs-attention tone", () => {
+    state.recipes = [{ ...parma, recipeId: 9, margin: -14.24, gpPercent: -1.999 }];
+    render(<RecipesPage />);
+    expect(screen.getByText("-$14.24").className).toContain("text-status-conflict");
+  });
+
   it("renders the ingredient breakdown with sub-recipe grouping", () => {
     state.recipes = [parma];
     state.ingredients = [
