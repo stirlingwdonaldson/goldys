@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -273,7 +274,7 @@ class ProductClassificationServiceTest {
 
     assertThat(classifier.requests())
         .extracting(ProductClassificationRequest::featureText)
-        .containsExactly("beef burger", "house salad");
+        .containsExactlyInAnyOrder("beef burger", "house salad");
     assertThat(manual.source()).isEqualTo(AssignmentSource.MANUAL);
     assertThat(manual.status()).isEqualTo(AssignmentStatus.ASSIGNED);
     assertThat(assignmentStore.get("beef burger").status()).isEqualTo(AssignmentStatus.ASSIGNED);
@@ -586,7 +587,7 @@ class ProductClassificationServiceTest {
 
   /** A fake classifier that records each request it sees and delegates to a handler. */
   private static final class FakeClassifier implements ProductClassifier {
-    private final List<ProductClassificationRequest> requests = new ArrayList<>();
+    private final List<ProductClassificationRequest> requests = new CopyOnWriteArrayList<>();
     private final Function<ProductClassificationRequest, ProductClassification> handler;
 
     FakeClassifier(Function<ProductClassificationRequest, ProductClassification> handler) {
