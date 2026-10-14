@@ -31,11 +31,17 @@ class JevReviewClassifierTest {
           + "\"rating\":{\"type\":\"score\",\"score\":0.8,\"confidence\":0.70,"
           + "\"probabilities\":{\"0\":0.2,\"1\":0.8,\"2\":0.0,\"3\":0.0,\"4\":0.0}},"
           + "\"food\":{\"type\":\"choice\",\"choice\":\"NEGATIVE\",\"confidence\":0.71},"
+          + "\"food_mentioned\":{\"type\":\"noul\",\"noul\":0.9},"
           + "\"service\":{\"type\":\"choice\",\"choice\":\"NEGATIVE\",\"confidence\":0.97},"
+          + "\"service_mentioned\":{\"type\":\"noul\",\"noul\":0.95},"
           + "\"ambience\":{\"type\":\"choice\",\"choice\":\"NEUTRAL\",\"confidence\":0.62},"
+          + "\"ambience_mentioned\":{\"type\":\"noul\",\"noul\":0.1},"
           + "\"value\":{\"type\":\"choice\",\"choice\":\"POSITIVE\",\"confidence\":0.55},"
+          + "\"value_mentioned\":{\"type\":\"noul\",\"noul\":0.2},"
           + "\"noise\":{\"type\":\"choice\",\"choice\":\"NEUTRAL\",\"confidence\":0.80},"
-          + "\"wait_time\":{\"type\":\"choice\",\"choice\":\"NEGATIVE\",\"confidence\":0.66}"
+          + "\"noise_mentioned\":{\"type\":\"noul\",\"noul\":0.05},"
+          + "\"wait_time\":{\"type\":\"choice\",\"choice\":\"NEGATIVE\",\"confidence\":0.66},"
+          + "\"wait_time_mentioned\":{\"type\":\"noul\",\"noul\":0.85}"
           + "},"
           + "\"usage\":{\"input_tokens\":300,\"output_tokens\":40}"
           + "}";
@@ -73,13 +79,15 @@ class JevReviewClassifierTest {
       // The rating is a 0-based Jev score over the five star levels, shifted onto 1..5.
       assertThat(result.predictedRating()).isEqualByComparingTo("1.8");
 
-      assertThat(result.aspects()).hasSize(6);
+      // Sparse aspects: ambience, value and noise fall below the 0.5 presence threshold and are
+      // dropped even though their sentiment was also asked.
+      assertThat(result.aspects()).hasSize(3);
       assertThat(result.aspects())
           .extracting(AspectSentiment::aspect)
-          .containsExactly("food", "service", "ambience", "value", "noise", "wait_time");
+          .containsExactly("food", "service", "wait_time");
       assertThat(result.aspects())
           .extracting(AspectSentiment::label)
-          .containsExactly("NEGATIVE", "NEGATIVE", "NEUTRAL", "POSITIVE", "NEUTRAL", "NEGATIVE");
+          .containsExactly("NEGATIVE", "NEGATIVE", "NEGATIVE");
       assertThat(result.aspects().get(1).confidence()).isEqualByComparingTo("0.97");
 
       // The request must follow the System One envelope: the state is the feature text and the
@@ -88,9 +96,11 @@ class JevReviewClassifierTest {
       assertThat(body.get("state").asText())
           .isEqualTo("Disinterested wait staff. Plonked food down");
       assertThat(body.get("model").asText()).isEqualTo("jev-latest");
-      assertThat(body.path("questions")).hasSize(8); // sentiment + rating + 6 aspects
+      assertThat(body.path("questions")).hasSize(14); // sentiment + rating + 6 aspects + 6 presence
       assertThat(body.path("questions").path("rating").path("type").asText()).isEqualTo("score");
       assertThat(body.path("questions").path("food").path("type").asText()).isEqualTo("choice");
+      assertThat(body.path("questions").path("food_mentioned").path("type").asText())
+          .isEqualTo("noul");
       assertThat(capturedAuth.get()).isEqualTo("Bearer test-api-key");
     } finally {
       server.stop(0);
