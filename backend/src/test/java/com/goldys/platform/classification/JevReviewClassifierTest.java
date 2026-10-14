@@ -9,6 +9,7 @@ import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +53,7 @@ class JevReviewClassifierTest {
       JevReviewClassifier classifier =
           new JevReviewClassifier(
               new JevProperties(
-                  false, "http://localhost:" + server.getAddress().getPort(), "test-api-key"),
+                  true, "http://localhost:" + server.getAddress().getPort(), "test-api-key"),
               MAPPER);
 
       ReviewClassification result = classifier.classify(request());
@@ -96,7 +97,7 @@ class JevReviewClassifierTest {
       JevReviewClassifier classifier =
           new JevReviewClassifier(
               new JevProperties(
-                  false, "http://localhost:" + server.getAddress().getPort(), "test-api-key"),
+                  true, "http://localhost:" + server.getAddress().getPort(), "test-api-key"),
               MAPPER);
 
       JevException ex = (JevException) catchThrowable(() -> classifier.classify(request()));
@@ -132,7 +133,7 @@ class JevReviewClassifierTest {
       JevReviewClassifier classifier =
           new JevReviewClassifier(
               new JevProperties(
-                  false, "http://localhost:" + server.getAddress().getPort(), "test-api-key"),
+                  true, "http://localhost:" + server.getAddress().getPort(), "test-api-key"),
               MAPPER);
 
       ReviewClassification result = classifier.classify(request());
@@ -141,6 +142,38 @@ class JevReviewClassifierTest {
       assertThat(result.predictedRating()).isNull();
       assertThat(result.aspects()).hasSize(1);
       assertThat(result.aspects().get(0).aspect()).isEqualTo("service");
+    } finally {
+      server.stop(0);
+    }
+  }
+
+  @Test
+  void disabled_classifier_refuses_without_any_request() throws Exception {
+    AtomicInteger requests = new AtomicInteger();
+    HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+    server.createContext(
+        "/v1/systemone",
+        exchange -> {
+          requests.incrementAndGet();
+          byte[] response = "{}".getBytes(StandardCharsets.UTF_8);
+          exchange.sendResponseHeaders(200, response.length);
+          exchange.getResponseBody().write(response);
+          exchange.close();
+        });
+    server.start();
+    try {
+      JevReviewClassifier classifier =
+          new JevReviewClassifier(
+              new JevProperties(
+                  false, "http://localhost:" + server.getAddress().getPort(), "test-api-key"),
+              MAPPER);
+
+      JevException ex = (JevException) catchThrowable(() -> classifier.classify(request()));
+
+      assertThat(ex).isNotNull();
+      assertThat(ex.getMessage()).contains("CLASSIFICATION_JEV_ENABLED=true");
+      assertThat(ex.getMessage()).doesNotContain("test-api-key").doesNotContain("Disinterested");
+      assertThat(requests.get()).isZero();
     } finally {
       server.stop(0);
     }

@@ -63,12 +63,14 @@ public class JevReviewClassifier implements ReviewClassifier {
           "4 stars: a good experience",
           "5 stars: an excellent experience");
 
+  private final boolean enabled;
   private final String baseUrl;
   private final String apiKey;
   private final ObjectMapper mapper;
   private final HttpClient http;
 
   public JevReviewClassifier(JevProperties properties, ObjectMapper mapper) {
+    this.enabled = properties.enabled();
     this.baseUrl = properties.baseUrl();
     this.apiKey = properties.apiKey();
     this.mapper = mapper;
@@ -79,6 +81,13 @@ public class JevReviewClassifier implements ReviewClassifier {
 
   @Override
   public ReviewClassification classify(ReviewClassificationRequest request) {
+    // Defensive backstop: the orchestrator skips classification when Jev is disabled, but a direct
+    // adapter caller must never reach the network either. Refuse before any request is built/sent.
+    if (!enabled) {
+      throw new JevException(
+          "Review Jev classification is disabled; set CLASSIFICATION_JEV_ENABLED=true and"
+              + " CLASSIFICATION_JEV_API_KEY");
+    }
     JsonNode response = post("/v1/systemone", buildBody(request));
     return map(response);
   }
