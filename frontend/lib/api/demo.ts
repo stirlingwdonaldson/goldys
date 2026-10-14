@@ -1055,6 +1055,8 @@ export const demoApi: Api = {
         { name: "parma", quantitySold: 132, amount: 3696, hasConflict: false },
         { name: "house red", quantitySold: 98, amount: 1078, hasConflict: false },
       ],
+      coversToday: { covers: 132, bookings: 98, noShows: 4 },
+      foodCost: { foodCostPercent: 0.3125, purchases: 15842.6, wastage: 214.5 },
     };
   },
 

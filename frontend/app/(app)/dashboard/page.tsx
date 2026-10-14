@@ -59,6 +59,9 @@ export default function DashboardPage() {
         seniority={user?.seniority}
         latestSales={data.latestSales}
         salesTrend={data.salesTrend}
+        coversToday={data.coversToday}
+        foodCost={data.foodCost}
+        topSellers={data.topSellers}
       />
 
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">

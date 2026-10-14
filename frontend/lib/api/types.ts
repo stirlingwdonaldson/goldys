@@ -485,6 +485,22 @@ export interface DashboardBootstrap {
   salesTrend: SalesTrendPoint[];
   activity: ActivityPoint[];
   topSellers: TopSeller[];
+  coversToday: CoversToday;
+  foodCost: FoodCost;
+}
+
+/** Today's resolved reservation figures. Each is null when there is no data yet. */
+export interface CoversToday {
+  covers: number | null;
+  bookings: number | null;
+  noShows: number | null;
+}
+
+/** Food-cost over the trailing window. `foodCostPercent` is a ratio (e.g. 0.3125). */
+export interface FoodCost {
+  foodCostPercent: number | null;
+  purchases: number | null;
+  wastage: number | null;
 }
 
 /** A top-selling product over a recent window. `quantitySold`/`amount` are null when unresolved. */
