@@ -5,9 +5,9 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * One resolved review as read by the analytics page, including its per-aspect sentiment.
- * Nullable fields: {@code overallRating}, {@code sentiment}, {@code predictedRating},
- * {@code comment}, {@code guestName}.
+ * One resolved review as read by the analytics page, including its per-aspect sentiment. Nullable
+ * fields: {@code overallRating}, {@code sentiment}, {@code predictedRating}, {@code comment},
+ * {@code guestName}.
  */
 public record ReviewView(
     String reviewId,
