@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { TimeRangeSelector, presetRange, type DateRange } from "@/components/ui/time-range-selector";
 import { InvoiceSheet } from "@/components/invoices/invoice-sheet";
 import { formatDay } from "@/lib/format";
 import type { InvoiceSummary } from "@/lib/api/types";
@@ -86,8 +87,9 @@ function InvoicesContent() {
   const pathname = usePathname();
   const params = useSearchParams();
   const [supplier, setSupplier] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  // Defaults to the trailing year: invoices are historical documents, and the CTB
+  // ledger (which starts late Oct 2025) fits within it.
+  const [range, setRange] = useState<DateRange>(() => presetRange("year"));
   const [page, setPage] = useState(0);
   // Invoice numbers in the order the table currently shows them (follows column sorting).
   const [order, setOrder] = useState<string[]>([]);
@@ -132,11 +134,11 @@ function InvoicesContent() {
   const invoices = useApiData(
     (api) =>
       api.listInvoices(
-        { supplier: supplier || undefined, from: from || undefined, to: to || undefined },
+        { supplier: supplier || undefined, from: range.from, to: range.to },
         page,
         PAGE_SIZE,
       ),
-    [supplier, from, to, page],
+    [supplier, range.from, range.to, page],
   );
 
   if (invoices.loading) return <LoadingState rows={6} />;
@@ -162,7 +164,7 @@ function InvoicesContent() {
       />
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Input
             aria-label="Supplier"
             placeholder="Filter by supplier"
@@ -173,25 +175,12 @@ function InvoicesContent() {
             }}
             className="w-56"
           />
-          <Input
-            aria-label="From"
-            type="date"
-            value={from}
-            onChange={(e) => {
-              setFrom(e.target.value);
+          <TimeRangeSelector
+            value={range}
+            onChange={(r) => {
+              setRange(r);
               setPage(0);
             }}
-            className="w-44"
-          />
-          <Input
-            aria-label="To"
-            type="date"
-            value={to}
-            onChange={(e) => {
-              setTo(e.target.value);
-              setPage(0);
-            }}
-            className="w-44"
           />
         </div>
 

@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TimeRangeSelector, defaultRange } from "@/components/ui/time-range-selector";
 import { humanizeKey } from "@/lib/format";
 import { OverviewStrip } from "@/components/reviews/overview-strip";
 import { SentimentTrend } from "@/components/reviews/sentiment-trend";
@@ -17,13 +18,6 @@ import { AspectBreakdown } from "@/components/reviews/aspect-breakdown";
 import { RatingDistribution } from "@/components/reviews/rating-distribution";
 import { SourceComparison, reviewSourceLabel } from "@/components/reviews/source-comparison";
 import { ReviewExplorer, sentimentLabel } from "@/components/reviews/review-explorer";
-
-/** Trailing 30-day window, so the screen renders without the operator touching a date input. */
-function defaultRange(): { from: string; to: string } {
-  const to = new Date();
-  const from = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate() - 29));
-  return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
-}
 
 const SENTIMENTS = ["POSITIVE", "NEUTRAL", "NEGATIVE"] as const;
 
@@ -78,26 +72,7 @@ export default function ReviewsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3">
-      <Field label="From" htmlFor="reviews-from">
-        <Input
-          id="reviews-from"
-          type="date"
-          value={range.from}
-          max={range.to}
-          onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
-          className="w-44"
-        />
-      </Field>
-      <Field label="To" htmlFor="reviews-to">
-        <Input
-          id="reviews-to"
-          type="date"
-          value={range.to}
-          min={range.from}
-          onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
-          className="w-44"
-        />
-      </Field>
+      <TimeRangeSelector value={range} onChange={setRange} />
       <Field label="Source" htmlFor="reviews-source">
         <Select value={source || "all"} onValueChange={(v) => setSource(v === "all" ? "" : v)}>
           <SelectTrigger id="reviews-source" aria-label="Source" className="w-44">

@@ -16,13 +16,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { InlineError } from "@/components/states/inline-error";
 import { formatCurrency, formatPercent } from "@/lib/format";
-
-/** Trailing 30-day window, so the screen renders without any date inputs. */
-function defaultRange(): { from: string; to: string } {
-  const to = new Date();
-  const from = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate() - 29));
-  return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
-}
+import { defaultRange } from "@/components/ui/time-range-selector";
 
 const uomColumns: ColumnDef<UomUnitCost>[] = [
   {
