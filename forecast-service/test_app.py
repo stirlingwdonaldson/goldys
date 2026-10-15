@@ -268,3 +268,23 @@ def test_splitFutureUsesWrittenBackShareForNextDayLag():
     # By day 8 the written-back shares have compounded into the lag, so the
     # share has moved (and would not, if the write-back were missing).
     assert shares[7] > shares[0]
+
+
+def test_buildInternalComputesShareOverFoodPlusBev():
+    # Gross food/bev (inc-GST) do not sum to net (ex-GST): 60.5 + 49.5 = 110,
+    # but net is 100. The share target must be the food fraction of food+bev
+    # (0.55), not food/net (0.605), so net_forecast x share sums to net.
+    request = app_module.ForecastRequest(
+        dates=["2026-10-01", "2026-10-02"],
+        net=[100.0, None],
+        food=[60.5, None],
+        bev=[49.5, None],
+        horizon=1,
+        quantiles=QUANTILES,
+    )
+
+    frame = app_module._build_internal(request)
+
+    assert frame["food_share"].iloc[0] == pytest.approx(60.5 / (60.5 + 49.5))
+    # The second day has no food/bev, so its share degrades to NaN rather than 0.
+    assert pd.isna(frame["food_share"].iloc[1])

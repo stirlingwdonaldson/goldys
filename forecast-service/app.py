@@ -218,10 +218,14 @@ def _build_internal(request: ForecastRequest) -> pd.DataFrame:
     if request.bookings is not None:
         frame["bookings"] = [_nan_if_none(value) for value in request.bookings]
 
-    net = frame[TARGET_NET]
+    # The share target is the food fraction of food+bev, both gross (inc-GST),
+    # so it is internally consistent. food / net would be ~1.1x off once the
+    # target is net (ex-GST), and net_forecast x share would not sum to net.
     food = frame["food_revenue"]
+    bev = frame["bev_revenue"]
+    denom = food + bev
     with np.errstate(divide="ignore", invalid="ignore"):
-        frame[TARGET_SHARE] = (food / net).where(net.notna() & (net != 0))
+        frame[TARGET_SHARE] = (food / denom).where(denom.notna() & (denom != 0))
     return frame
 
 
