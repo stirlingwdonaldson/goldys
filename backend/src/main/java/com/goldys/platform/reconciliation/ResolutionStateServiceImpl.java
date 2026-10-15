@@ -61,6 +61,7 @@ public class ResolutionStateServiceImpl implements ResolutionStateQuery {
       case RESERVATIONS_BOOKINGS,
           RESERVATIONS_ATTENDED,
           RESERVATIONS_COVERS,
+          RESERVATIONS_BOOKED_COVERS,
           RESERVATIONS_NO_SHOWS ->
           reservations
               .findByTradingDateBetweenOrderByTradingDateAscServicePeriodAsc(from, to)

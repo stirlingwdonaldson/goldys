@@ -173,6 +173,38 @@ class ResolutionStateQueryTest {
   }
 
   @Test
+  void reservationsBookedCoversMapsResolvedReservationDayRows() {
+    ResolvedReservationDay row =
+        new ResolvedReservationDay(
+            LocalDate.of(2026, 9, 15),
+            "DINNER",
+            120,
+            118,
+            180,
+            2,
+            0,
+            5,
+            0,
+            "rule",
+            "reservation-source",
+            false,
+            Instant.parse("2026-09-15T23:00:00Z"));
+    when(reservations.findByTradingDateBetweenOrderByTradingDateAscServicePeriodAsc(FROM, TO))
+        .thenReturn(List.of(row));
+
+    List<ResolutionState> states = query.states(MetricId.RESERVATIONS_BOOKED_COVERS, FROM, TO);
+
+    assertThat(states).hasSize(1);
+    assertThat(states.get(0))
+        .isEqualTo(
+            new ResolutionState(
+                LocalDate.of(2026, 9, 15),
+                "rule",
+                "reservation-source",
+                Instant.parse("2026-09-15T23:00:00Z")));
+  }
+
+  @Test
   void labourCostMapsResolvedLabourDayRows() {
     ResolvedLabourDay row =
         new ResolvedLabourDay(
