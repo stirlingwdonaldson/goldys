@@ -235,7 +235,8 @@ public class ForecastingApplicationService {
         run.createdAt(),
         series,
         run.errorMessage(),
-        run.modelVersion());
+        run.modelVersion(),
+        ForecastDiagnosticsDto.fromJson(run.diagnostics()));
   }
 
   private ForecastSeriesPointDto toSeriesPoint(ForecastDay day) {
@@ -243,7 +244,23 @@ public class ForecastingApplicationService {
     // A missing/NaN decile is surfaced as null (not a number) so the chart can gap the point
     // rather than the whole run failing; the DTO's BigDecimal fields accept null.
     return new ForecastSeriesPointDto(
-        day.date(), quantiles.get("0.5"), quantiles.get("0.1"), quantiles.get("0.9"));
+        day.date(),
+        quantiles.get("0.5"),
+        quantiles.get("0.1"),
+        quantiles.get("0.9"),
+        day.food(),
+        day.bev(),
+        day.baseline(),
+        day.bookedCovers(),
+        day.publicHoliday(),
+        day.publicHolidayName(),
+        day.publicHolidayEve(),
+        day.dayAfterPublicHoliday(),
+        day.schoolHoliday(),
+        day.uniInSession(),
+        day.serviceTempMaxC(),
+        day.serviceRainMm(),
+        day.weatherSource());
   }
 
   private static MetricSeries singleSeries(MetricResult result) {

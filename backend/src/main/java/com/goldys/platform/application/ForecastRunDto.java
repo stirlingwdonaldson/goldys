@@ -8,7 +8,8 @@ import java.util.UUID;
 /**
  * The public shape of a forecast run. {@code series} is populated only once the run has {@code
  * SUCCEEDED}; until then it is {@code null} so a client cannot mistake an empty forecast for a
- * successful one.
+ * successful one. {@code diagnostics} is the parsed model diagnostic payload (also only present on
+ * a succeeded run) and {@code null} when absent or unparseable.
  */
 public record ForecastRunDto(
     UUID id,
@@ -21,4 +22,5 @@ public record ForecastRunDto(
     Instant createdAt,
     List<ForecastSeriesPointDto> series,
     String errorMessage,
-    String modelVersion) {}
+    String modelVersion,
+    ForecastDiagnosticsDto diagnostics) {}
