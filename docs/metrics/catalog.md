@@ -58,10 +58,16 @@ post-reconciliation value: `sales.gross` / `sales.net` *are* the reconciled figu
 
 - `sales.gross`, `sales.net`, `sales.gst` — `resolved_daily_sales`, no dimensions, day/week/month.
 - `sales.food`, `sales.bev` — `resolved_product_sales`, no dimensions, day/week/month; the food/beverage
-  split is derived from the product classification (`group` `"Food"` → food, every other non-null
-  group → beverage, null group / `"Uncategorised"` excluded), so it is **approximate by design** — a
-  proper second-level food/bev classifier is the eventual fix (see §8 of the forecasting refactor
-  design).
+  split is derived from curated product classification. Group `Food` (or a flat `Food` category)
+  maps to food. Recognised beverage groups **or flat category names** map to beverage: Beverage,
+  Beverages, Drinks, Beer, Wine, Spirits, Liqueurs, Cocktails, Soft Drinks, Non-Alcoholic
+  (case-insensitive). A missing parent alone does not exclude a drink. Merchandise, cash-out,
+  raffle tickets and donations are excluded from eligible sales. Other categories are unclassified;
+  both daily values are missing when less than 95% of eligible absolute product revenue is mapped,
+  an unclassified amount is unresolved, or no products are mapped. Genuine zero mapped sales stay zero.
+  Forecast share training additionally requires 28 classified days and 80% coverage of revenue days;
+  otherwise the split is unavailable with a diagnostic warning. Product values include GST; the
+  forecast applies their food/(food+beverage) share to net revenue. The split remains approximate.
 - `reservations.bookings`, `reservations.attended`, `reservations.covers`,
   `reservations.booked_covers`, `reservations.no_shows` — `resolved_reservation_day`, dimension `service_period`, day/week/month.
 - `labour.scheduled_hours`, `labour.actual_hours`, `labour.cost` — `resolved_labour_day`,

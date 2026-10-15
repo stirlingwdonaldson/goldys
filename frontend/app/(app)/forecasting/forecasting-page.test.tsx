@@ -18,6 +18,8 @@ const metrics: ForecastMetric[] = [
 /** A diagnostics payload whose model beats the baseline, with importance and a backtest. */
 const diagnostics: ForecastDiagnostics = {
   modelVersion: "timesfm-3.0 + xgboost-twin",
+  diagnosticModel: "xgboost",
+  validationMethod: "recursive-holdout-v1",
   trainedRows: 287,
   reliable: true,
   warnings: [],
@@ -61,8 +63,8 @@ const succeededRun: ForecastRun = {
   horizonDays: 7,
   createdAt: "2026-10-06T02:00:00Z",
   series: [
-    { date: "2026-10-06", median: 10000, p10: 9400, p90: 10600, food: 4500, bev: 5500, baseline: 9700, bookedCovers: 120, publicHoliday: false, publicHolidayEve: false, dayAfterPublicHoliday: false, schoolHoliday: true, uniInSession: false, publicHolidayName: null, weatherSource: "open-meteo", serviceTempMaxC: 21, serviceRainMm: 0 },
-    { date: "2026-10-07", median: 10500, p10: 9900, p90: 11100, food: 4725, bev: 5775, baseline: 10185, bookedCovers: 135, publicHoliday: true, publicHolidayEve: false, dayAfterPublicHoliday: false, schoolHoliday: false, uniInSession: true, publicHolidayName: "Melbourne Cup", weatherSource: null, serviceTempMaxC: null, serviceRainMm: null },
+    { date: "2026-10-06", median: 10000, p10: 9400, p90: 10600, food: 4500, bev: 5500, baseline: 9700, bookedCovers: 120, observedBookedCovers: 60, publicHoliday: false, publicHolidayEve: false, dayAfterPublicHoliday: false, schoolHoliday: true, uniInSession: false, publicHolidayName: null, weatherSource: "open-meteo", serviceTempMaxC: 21, serviceRainMm: 0 },
+    { date: "2026-10-07", median: 10500, p10: 9900, p90: 11100, food: 4725, bev: 5775, baseline: 10185, bookedCovers: 135, observedBookedCovers: null, publicHoliday: true, publicHolidayEve: false, dayAfterPublicHoliday: false, schoolHoliday: false, uniInSession: true, publicHolidayName: "Melbourne Cup", weatherSource: null, serviceTempMaxC: null, serviceRainMm: null },
   ],
   errorMessage: null,
   modelVersion: "timesfm-3.0 + xgboost-twin",
@@ -93,7 +95,7 @@ const queuedRun: ForecastRun = {
 
 const comparison: ForecastComparison = {
   runId: "fc-2",
-  mape: 4.12,
+  mape: 0.0412,
   mae: 512.4,
   points: [
     { date: "2026-10-06", predictedMedian: 10000, actual: 9254.1 },
@@ -192,7 +194,9 @@ describe("ForecastingPage", () => {
     // The day-by-day list renders with driver chips: booked covers, school hols, public holiday
     // with its name, uni in session, and weather.
     const dayByDay = screen.getByTestId("day-by-day");
-    expect(within(dayByDay).getByText("120 booked covers")).toBeInTheDocument();
+    expect(within(dayByDay).getByText("60 booked covers")).toBeInTheDocument();
+    expect(within(dayByDay).getByText("120 estimated final covers")).toBeInTheDocument();
+    expect(within(dayByDay).queryByText("135 booked covers")).not.toBeInTheDocument();
     expect(within(dayByDay).getByText("School holidays")).toBeInTheDocument();
     expect(within(dayByDay).getByText("Public holiday · Melbourne Cup")).toBeInTheDocument();
     expect(within(dayByDay).getByText("Uni in session")).toBeInTheDocument();
@@ -209,9 +213,33 @@ describe("ForecastingPage", () => {
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Model" }), { button: 0 });
 
     expect(await screen.findByTestId("feature-importance-chart")).toBeInTheDocument();
-    expect(screen.getByText(/Does not beat the seasonal-naive baseline/)).toBeInTheDocument();
+    expect(screen.getByText(/XGBoost does not beat the seasonal-naive baseline/)).toBeInTheDocument();
     // The accuracy-vs-baseline table is present too.
     expect(screen.getByText("Accuracy vs baseline")).toBeInTheDocument();
+    expect(screen.getByText(/these scores and feature importances do not measure TimesFM accuracy/)).toBeInTheDocument();
+  });
+
+  it("explains an unavailable split without displaying an empty split chart", async () => {
+    mocks.api.getForecastRun.mockResolvedValue({
+      ...succeededRun,
+      series: succeededRun.series!.map((day) => ({ ...day, food: null, bev: null })),
+    });
+    await renderLoaded();
+    await runForecast();
+    expect(screen.getByText(/Food\/beverage split unavailable/)).toBeInTheDocument();
+    expect(screen.queryByTestId("food-bev-split-chart")).not.toBeInTheDocument();
+  });
+
+  it("labels legacy fitted diagnostics and withholds the baseline endorsement", async () => {
+    mocks.api.getForecastRun.mockResolvedValue({
+      ...succeededRun,
+      diagnostics: { ...diagnostics, validationMethod: null, diagnosticModel: null },
+    });
+    await renderLoaded();
+    await runForecast();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Model" }), { button: 0 });
+    expect(await screen.findByText(/Historical diagnostics use fitted predictions/)).toBeInTheDocument();
+    expect(screen.queryByText(/XGBoost beats the seasonal-naive baseline/)).not.toBeInTheDocument();
   });
 
   it("shows weekday error and worst misses on the Backtest tab", async () => {

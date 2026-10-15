@@ -26,4 +26,5 @@ public record ForecastSeriesPointDto(
     Boolean uniInSession,
     BigDecimal serviceTempMaxC,
     BigDecimal serviceRainMm,
-    String weatherSource) {}
+    String weatherSource,
+    BigDecimal observedBookedCovers) {}

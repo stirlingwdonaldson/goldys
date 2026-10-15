@@ -37,7 +37,44 @@ public record ForecastDay(
     Boolean uniInSession,
     BigDecimal serviceTempMaxC,
     BigDecimal serviceRainMm,
-    String weatherSource) {
+    String weatherSource,
+    BigDecimal observedBookedCovers) {
+
+  /** Compatibility constructor for stored runs/callers without an observed snapshot. */
+  public ForecastDay(
+      LocalDate date,
+      Map<String, BigDecimal> quantiles,
+      BigDecimal food,
+      BigDecimal bev,
+      BigDecimal baseline,
+      BigDecimal bookedCovers,
+      Boolean publicHoliday,
+      String publicHolidayName,
+      Boolean publicHolidayEve,
+      Boolean dayAfterPublicHoliday,
+      Boolean schoolHoliday,
+      Boolean uniInSession,
+      BigDecimal serviceTempMaxC,
+      BigDecimal serviceRainMm,
+      String weatherSource) {
+    this(
+        date,
+        quantiles,
+        food,
+        bev,
+        baseline,
+        bookedCovers,
+        publicHoliday,
+        publicHolidayName,
+        publicHolidayEve,
+        dayAfterPublicHoliday,
+        schoolHoliday,
+        uniInSession,
+        serviceTempMaxC,
+        serviceRainMm,
+        weatherSource,
+        null);
+  }
 
   public ForecastDay {
     Objects.requireNonNull(date, "date");

@@ -277,11 +277,22 @@ def build_future_frame(
 
     frame = add_calendar_features(frame)
 
-    curve = estimate_pickup_curve(frame, cutoff)
+    # Preserve the actual snapshot separately: maturity-adjusted covers are an
+    # estimate and must never be displayed as reservations already on the book.
+    frame["observed_booked_covers"] = frame["booked_covers"]
+
+    # The snapshot is taken now, not at the last revenue date (which may be stale).
+    # Missing books still receive the weekday fallback below; the observed snapshot
+    # remains missing rather than being relabelled as an actual booking count.
+    today = pd.Timestamp.now(
+        tz=config.get("venue.timezone", "Australia/Melbourne")
+    ).normalize().tz_localize(None)
+    snapshot = max(today, cutoff + pd.Timedelta(days=1))
+    curve = estimate_pickup_curve(frame, snapshot)
     if simulate_maturity:
         frame = simulate_book_maturity(frame, cutoff, curve)
     else:
-        frame = apply_maturity(frame, cutoff, curve=curve)
+        frame = apply_maturity(frame, snapshot, curve=curve)
 
     # Any future date with nothing on the book still falls back to the
     # same-weekday average, exactly as before.
@@ -385,40 +396,13 @@ def forecast(
 
 
 # ---------------------------------------------------------------------------
-# Backtest (fitted vs actual on the historical rows)
+# Backtest (held-out recursive XGBoost predictions)
 # ---------------------------------------------------------------------------
 
 
 def backtest(frame: pd.DataFrame, models: TrainedModels) -> pd.DataFrame:
-    """Fitted vs actual on the historical rows, for eyeballing the model."""
-    labelled = frame[frame[TARGET_NET].notna()].copy()
-    if labelled.empty:
-        return pd.DataFrame()
-
-    net = np.expm1(models.net_model.predict(prepare_matrix(labelled, models.features)))
-    share = np.clip(
-        models.share_model.predict(prepare_matrix(labelled, models.share_features)),
-        0.05,
-        0.95,
-    )
-
-    return pd.DataFrame(
-        {
-            "date": labelled["date"].to_numpy(),
-            "day": labelled["date"].dt.day_name().to_numpy(),
-            "actual_net_revenue": labelled[TARGET_NET].to_numpy(),
-            "predicted_net_revenue": net,
-            "error": net - labelled[TARGET_NET].to_numpy(),
-            "abs_pct_error": np.abs(net - labelled[TARGET_NET].to_numpy())
-            / np.where(labelled[TARGET_NET] == 0, np.nan, labelled[TARGET_NET])
-            * 100,
-            "actual_food_revenue": labelled["food_revenue"].to_numpy(),
-            "predicted_food_revenue": net * share,
-            "actual_bev_revenue": labelled["bev_revenue"].to_numpy(),
-            "predicted_bev_revenue": net * (1 - share),
-            "baseline_net_revenue": labelled["net_revenue_dow_mean_4"].to_numpy(),
-        }
-    )
+    """Only held-out recursive predictions, never fitted training predictions."""
+    return models.validation_rows.copy()
 
 
 def backtest_summary(backtest: pd.DataFrame) -> dict:

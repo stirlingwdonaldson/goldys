@@ -260,7 +260,8 @@ public class ForecastingApplicationService {
         day.uniInSession(),
         day.serviceTempMaxC(),
         day.serviceRainMm(),
-        day.weatherSource());
+        day.weatherSource(),
+        day.observedBookedCovers());
   }
 
   private static MetricSeries singleSeries(MetricResult result) {

@@ -98,7 +98,8 @@ class ForecastRunTest {
                 true,
                 new BigDecimal("22.5"),
                 new BigDecimal("0.0"),
-                "open-meteo"));
+                "open-meteo",
+                new BigDecimal("60")));
     String diagnosticsJson = "{\"modelVersion\":\"timesfm-3.0\",\"beatsBaseline\":true}";
 
     run.markSucceeded(series, diagnosticsJson, "timesfm-3.0", 42L);
@@ -113,6 +114,7 @@ class ForecastRunTest {
     assertThat(day.bev()).isEqualByComparingTo("62.0");
     assertThat(day.baseline()).isEqualByComparingTo("115.0");
     assertThat(day.bookedCovers()).isEqualByComparingTo("142");
+    assertThat(day.observedBookedCovers()).isEqualByComparingTo("60");
     assertThat(day.publicHoliday()).isTrue();
     assertThat(day.publicHolidayName()).isEqualTo("Melbourne Cup");
     assertThat(day.publicHolidayEve()).isFalse();

@@ -909,8 +909,10 @@ export interface ForecastDayRow extends ForecastSeriesPoint {
   bev: number | null;
   /** The seasonal-naive baseline (mean of the last four same-weekdays). */
   baseline: number | null;
-  /** Covers already on the book for this date (Σ party size of non-cancelled reservations). */
+  /** Estimated final covers after maturity adjustment or weekday fallback. */
   bookedCovers: number | null;
+  /** Unadjusted reservation snapshot; null for historical runs without this field. */
+  observedBookedCovers: number | null;
   publicHoliday: boolean | null;
   publicHolidayEve: boolean | null;
   dayAfterPublicHoliday: boolean | null;
@@ -987,6 +989,8 @@ export interface ForecastBacktest {
  */
 export interface ForecastDiagnostics {
   modelVersion: string;
+  diagnosticModel: string | null;
+  validationMethod: string | null;
   trainedRows: number | null;
   reliable: boolean | null;
   warnings: string[] | null;

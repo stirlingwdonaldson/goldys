@@ -32,7 +32,9 @@ public record ForecastDiagnosticsDto(
     AccuracyMetric cvNetBaseline,
     Boolean beatsBaseline,
     List<Importance> importance,
-    Backtest backtest) {
+    Backtest backtest,
+    String diagnosticModel,
+    String validationMethod) {
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -65,7 +67,9 @@ public record ForecastDiagnosticsDto(
           accuracy(root.get("cvNetBaseline")),
           bool(root.get("beatsBaseline")),
           importance(root.get("importance")),
-          backtest(root.get("backtest")));
+          backtest(root.get("backtest")),
+          text(root.get("diagnosticModel")),
+          text(root.get("validationMethod")));
     } catch (Exception malformed) {
       return null;
     }

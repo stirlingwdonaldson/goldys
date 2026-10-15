@@ -173,7 +173,7 @@ class ResolvedProductCategoryQueryTest {
                     FROM,
                     "unassigned thing",
                     new BigDecimal("1"),
-                    new BigDecimal("5"),
+                    new BigDecimal("1"),
                     "ctb",
                     false)));
     when(categories.findAll()).thenReturn(List.of(mains, beer, cocktails));
@@ -182,7 +182,7 @@ class ResolvedProductCategoryQueryTest {
     List<FoodBevSplit> result = query.dailyFoodBev(FROM, TO);
 
     assertThat(result)
-        .containsExactly(new FoodBevSplit(FROM, new BigDecimal("40"), new BigDecimal("20")));
+        .containsExactly(new FoodBevSplit(FROM, new BigDecimal("40"), new BigDecimal("32")));
   }
 
   @Test
@@ -233,5 +233,64 @@ class ResolvedProductCategoryQueryTest {
     assertThat(result)
         .containsExactly(
             new CategorySales(null, "Uncategorised", BigDecimal.ZERO, BigDecimal.ZERO));
+  }
+
+  @Test
+  void dailyFoodBev_includes_all_flat_drink_categories_from_live_taxonomy() {
+    var names = List.of("Beer", "Wine", "Spirits", "Cocktails", "Soft Drinks", "Non-Alcoholic");
+    var taxonomy = new java.util.ArrayList<ProductCategory>();
+    var assigned = new java.util.ArrayList<ProductCategoryAssignment>();
+    var sales = new java.util.ArrayList<ProductSalesMetric>();
+    for (String name : names) {
+      ProductCategory category = ProductCategory.create(name, null, 0, null);
+      ProductCategoryAssignment assignment = ProductCategoryAssignment.create(name, NOW);
+      assignment.markAssigned(category.id(), BigDecimal.ONE, AssignmentSource.JEV, NOW);
+      taxonomy.add(category);
+      assigned.add(assignment);
+      sales.add(new ProductSalesMetric(FROM, name, BigDecimal.ONE, BigDecimal.TEN, "ctb", false));
+    }
+    when(categories.findAll()).thenReturn(taxonomy);
+    when(assignments.findAll()).thenReturn(assigned);
+    when(productMetrics.productSales(FROM, TO)).thenReturn(sales);
+    assertThat(query.dailyFoodBev(FROM, TO))
+        .containsExactly(new FoodBevSplit(FROM, BigDecimal.ZERO, new BigDecimal("60")));
+  }
+
+  @Test
+  void dailyFoodBev_withholds_incomplete_classification_instead_of_zero_drinks() {
+    ProductCategory mains = ProductCategory.create("Mains", "Food", 0, null);
+    ProductCategoryAssignment beef = ProductCategoryAssignment.create("beef burger", NOW);
+    beef.markAssigned(mains.id(), BigDecimal.ONE, AssignmentSource.JEV, NOW);
+    when(categories.findAll()).thenReturn(List.of(mains));
+    when(assignments.findAll()).thenReturn(List.of(beef));
+    when(productMetrics.productSales(FROM, TO))
+        .thenReturn(
+            List.of(
+                new ProductSalesMetric(
+                    FROM, "beef burger", BigDecimal.ONE, new BigDecimal("40"), "ctb", false),
+                new ProductSalesMetric(
+                    FROM, "unknown drink", BigDecimal.ONE, new BigDecimal("60"), "ctb", false)));
+    assertThat(query.dailyFoodBev(FROM, TO)).containsExactly(new FoodBevSplit(FROM, null, null));
+  }
+
+  @Test
+  void dailyFoodBev_excludes_non_sales_even_when_they_have_a_parent() {
+    ProductCategory merch = ProductCategory.create("Merchandise", "Other", 0, null);
+    ProductCategory beer = ProductCategory.create("Beer", null, 1, null);
+    ProductCategoryAssignment shirt = ProductCategoryAssignment.create("shirt", NOW);
+    shirt.markAssigned(merch.id(), BigDecimal.ONE, AssignmentSource.JEV, NOW);
+    ProductCategoryAssignment lager = ProductCategoryAssignment.create("lager", NOW);
+    lager.markAssigned(beer.id(), BigDecimal.ONE, AssignmentSource.JEV, NOW);
+    when(categories.findAll()).thenReturn(List.of(merch, beer));
+    when(assignments.findAll()).thenReturn(List.of(shirt, lager));
+    when(productMetrics.productSales(FROM, TO))
+        .thenReturn(
+            List.of(
+                new ProductSalesMetric(
+                    FROM, "shirt", BigDecimal.ONE, new BigDecimal("100"), "ctb", false),
+                new ProductSalesMetric(
+                    FROM, "lager", BigDecimal.ONE, BigDecimal.TEN, "ctb", false)));
+    assertThat(query.dailyFoodBev(FROM, TO))
+        .containsExactly(new FoodBevSplit(FROM, BigDecimal.ZERO, BigDecimal.TEN));
   }
 }

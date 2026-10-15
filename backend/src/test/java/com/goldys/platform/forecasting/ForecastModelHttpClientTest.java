@@ -22,7 +22,7 @@ class ForecastModelHttpClientTest {
   private static final String RESPONSE_JSON =
       "{\"forecast\":["
           + "{\"date\":\"2026-10-16\",\"median\":4200.5,\"p10\":3900.0,\"p90\":4600.0,"
-          + "\"food\":1900.0,\"bev\":2300.5,\"baseline\":4100.0,\"bookedCovers\":85.0,"
+          + "\"food\":1900.0,\"bev\":2300.5,\"baseline\":4100.0,\"bookedCovers\":85.0,\"observedBookedCovers\":40.0,"
           + "\"publicHoliday\":0,\"publicHolidayName\":null,\"publicHolidayEve\":0,"
           + "\"dayAfterPublicHoliday\":1,\"schoolHoliday\":0,\"uniInSession\":1,"
           + "\"serviceTempMaxC\":21.4,\"serviceRainMm\":0.0,\"weatherSource\":\"open-meteo\"},"
@@ -79,6 +79,7 @@ class ForecastModelHttpClientTest {
       assertThat(first.bev()).isEqualByComparingTo("2300.5");
       assertThat(first.baseline()).isEqualByComparingTo("4100.0");
       assertThat(first.bookedCovers()).isEqualByComparingTo("85.0");
+      assertThat(first.observedBookedCovers()).isEqualByComparingTo("40.0");
       assertThat(first.publicHoliday()).isZero();
       assertThat(first.publicHolidayName()).isNull();
       assertThat(first.dayAfterPublicHoliday()).isEqualTo(1);

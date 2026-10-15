@@ -707,6 +707,7 @@ function demoForecastSeries(historyTo: string, horizonDays: number): ForecastDay
       bev: Math.round(median * 0.55),
       baseline: Math.round(median * 0.97),
       bookedCovers: 120 + (i % 5) * 15,
+      observedBookedCovers: i === 2 ? null : 60 + (i % 5) * 10,
       publicHoliday,
       publicHolidayEve: i === 2,
       dayAfterPublicHoliday: i === 4,
@@ -728,6 +729,8 @@ function demoForecastSeries(historyTo: string, horizonDays: number): ForecastDay
  */
 const demoForecastDiagnostics: ForecastDiagnostics = {
   modelVersion: "timesfm-3.0 + xgboost-twin",
+  diagnosticModel: "xgboost",
+  validationMethod: "recursive-holdout-v1",
   trainedRows: 287,
   reliable: true,
   warnings: [],
@@ -854,7 +857,7 @@ const demoForecastRuns: ForecastRun[] = [
 
 const demoForecastComparison: ForecastComparison = {
   runId: "fc-2",
-  mape: 4.12,
+  mape: 0.0412,
   mae: 512.4,
   points: [
     { date: "2026-10-06", predictedMedian: 9600, actual: 9254.1 },

@@ -138,7 +138,7 @@ public class MetricCatalog {
                 base(
                     MetricId.SALES_BEV,
                     "Beverage sales",
-                    "Resolved beverage sales (non-food product groups)",
+                    "Resolved beverage sales (recognised beverage groups or flat categories)",
                     "bev",
                     "AUD",
                     "resolved_product_sales",

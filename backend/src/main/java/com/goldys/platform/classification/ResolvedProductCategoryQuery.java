@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,24 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
 
   private static final String UNCATEGORISED = "Uncategorised";
   private static final String FOOD_GROUP = "Food";
+  // Flat beverage categories are valid curated assignments too. A null parent does not mean
+  // that Wine/Beer sales are unclassified. Never treat an arbitrary non-food group as beverage.
+  private static final Set<String> BEVERAGE_CATEGORIES =
+      Set.of(
+          "beverage",
+          "beverages",
+          "drinks",
+          "beer",
+          "wine",
+          "spirits",
+          "liqueurs",
+          "cocktails",
+          "soft drinks",
+          "non-alcoholic",
+          "non alcoholic");
+  private static final Set<String> EXCLUDED_CATEGORIES =
+      Set.of(
+          "merchandise", "merch", "cash-out", "cash out", "cashout", "raffle tickets", "donations");
 
   private final ProductMetricsQuery productMetrics;
   private final ProductCategoryRepository categories;
@@ -87,11 +107,25 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
     Map<LocalDate, MutableSplit> byDay = new LinkedHashMap<>();
     for (ProductSalesMetric metric : productMetrics.productSales(from, to)) {
       MutableSplit split = byDay.computeIfAbsent(metric.tradingDate(), d -> new MutableSplit());
-      String group = classification.groupForProduct(metric.productName());
-      if (group == null || UNCATEGORISED.equals(group)) {
+      ProductCategory category = classification.leafFor(metric.productName());
+      String group = category == null ? "" : normalise(category.groupName());
+      String name = category == null ? "" : normalise(category.name());
+      if (EXCLUDED_CATEGORIES.contains(name) || EXCLUDED_CATEGORIES.contains(group)) {
         continue;
       }
-      boolean food = FOOD_GROUP.equals(group);
+      boolean food = normalise(FOOD_GROUP).equals(group) || "food".equals(name);
+      boolean beverage = BEVERAGE_CATEGORIES.contains(group) || BEVERAGE_CATEGORIES.contains(name);
+      if (!food && !beverage) {
+        // Unknown revenue cannot become a zero-drinks training observation. Retain its
+        // magnitude so the daily classification coverage can be checked below.
+        if (metric.amount() == null) {
+          split.unknownAmount = true;
+        } else {
+          split.unclassified = split.unclassified.add(metric.amount().abs());
+        }
+        continue;
+      }
+      split.hasMappedProducts = true;
       if (metric.amount() == null) {
         if (food) {
           split.foodUnresolved = true;
@@ -103,14 +137,27 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
       } else {
         split.bev = split.bev.add(metric.amount());
       }
+      if (metric.amount() != null) {
+        split.classified = split.classified.add(metric.amount().abs());
+      }
     }
 
     List<FoodBevSplit> out = new ArrayList<>(byDay.size());
     for (Map.Entry<LocalDate, MutableSplit> entry : byDay.entrySet()) {
       MutableSplit s = entry.getValue();
+      // Require at least 95% of eligible product revenue to be classified. Known non-sales
+      // categories above are outside this denominator. No mapped sales is missing, not 0/0.
+      boolean incomplete =
+          s.unknownAmount
+              || !s.hasMappedProducts
+              || s.classified.compareTo(
+                      s.classified.add(s.unclassified).multiply(new BigDecimal("0.95")))
+                  < 0;
       out.add(
           new FoodBevSplit(
-              entry.getKey(), s.foodUnresolved ? null : s.food, s.bevUnresolved ? null : s.bev));
+              entry.getKey(),
+              incomplete || s.foodUnresolved ? null : s.food,
+              incomplete || s.bevUnresolved ? null : s.bev));
     }
     return out;
   }
@@ -142,6 +189,10 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
       return add == null ? BigDecimal.ZERO : add;
     }
     return add == null ? current : current.add(add);
+  }
+
+  private static String normalise(String value) {
+    return value == null ? "" : value.strip().toLowerCase(Locale.ROOT);
   }
 
   /** The resolved product → category/group mapping for one query. */
@@ -177,5 +228,9 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
     BigDecimal bev = BigDecimal.ZERO;
     boolean foodUnresolved;
     boolean bevUnresolved;
+    BigDecimal classified = BigDecimal.ZERO;
+    BigDecimal unclassified = BigDecimal.ZERO;
+    boolean unknownAmount;
+    boolean hasMappedProducts;
   }
 }

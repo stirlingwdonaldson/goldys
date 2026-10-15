@@ -74,3 +74,36 @@ def test_holdoutMetricsCompareToBaseline():
     for key in ("holdout_net_xgboost", "holdout_net_baseline"):
         metrics = models.metrics[key]
         assert {"mae", "rmse", "mape", "n"} <= set(metrics)
+
+
+def test_validation_predictions_do_not_depend_on_future_actuals_or_snapshots():
+    frame = _frame()
+    frame["service_temp_max_c"] = np.arange(len(frame)) % 15 + 15
+    history, future = frame.iloc[:120].copy(), frame.iloc[120:134].copy()
+    original = model_module.evaluate_window(history, future, Config())
+    poisoned = future.copy()
+    poisoned["net_revenue"] *= 100
+    poisoned["food_share"] = 0.99
+    poisoned["food_revenue"] *= 100
+    poisoned["bev_revenue"] *= 100
+    poisoned["booked_covers"] *= 100
+    poisoned["service_temp_max_c"] *= 100
+    changed = model_module.evaluate_window(history, poisoned, Config())
+    for column in ("predicted_net_revenue", "predicted_food_revenue", "predicted_bev_revenue", "baseline_net_revenue"):
+        np.testing.assert_allclose(original[column], changed[column])
+    assert not original["actual_net_revenue"].equals(changed["actual_net_revenue"])
+
+
+def test_backtest_contains_only_held_out_dates():
+    frame = _frame()
+    models = model_module.train(frame, Config())
+    assert models.validation_rows["date"].min() > frame.iloc[119]["date"]
+    assert len(models.validation_rows) == 40
+
+
+def test_sparse_classification_does_not_produce_a_food_split():
+    frame = _frame()
+    frame.loc[frame.index[10:], "food_share"] = np.nan
+    models = model_module.train(frame, Config())
+    assert models.share_model is None
+    assert any("insufficient classified sales" in w for w in models.warnings)
