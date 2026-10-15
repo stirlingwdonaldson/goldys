@@ -40,8 +40,8 @@ Six concrete outcomes:
 
 | # | Decision | Choice |
 |---|---|---|
-| A | Forecast engine | **TimesFM 3.0 stays** as the forward net-revenue quantile forecast (keeps the uncertainty band; no retraining, zero-shot). |
-| B | Transparency model | A **diagnostic XGBoost twin** (in the same Python service) provides feature importance, baseline comparison, backtest, and the **food/bev share** model. It is *not* the headline forecast — TimesFM is. |
+| A | Forecast engine | **TimesFM 3.0 stays** as the forward net-revenue quantile forecast. TimesFM 3.0 conditions on **future-known covariates** via `past_future_covariates` (booked covers, holidays, weather, school/uni), so future bookings *do* drive the headline number. TimesFM is the more accurate model; the twin is the more transparent one. |
+| B | Transparency model | A **diagnostic XGBoost twin** (in the same Python service) provides feature importance, baseline comparison, backtest, and the **food/bev share** model. It is *not* the headline forecast — TimesFM is. It shares the same feature matrix TimesFM receives. |
 | C | External drivers | **All of them now**: public holidays + school terms (DataVic), university terms (manual YAML), trading-hours weather (Open-Meteo). Fetched and disk-cached in the Python service (Approach A — see §3). |
 | D | Target | **Net revenue + food/bev split.** TimesFM forecasts net; the XGBoost share model splits net into food/bev (the reference's "forecast net, then split" finding: bev is ~3× as volatile as food, so modelling them separately drags the stable series around). |
 | E | Future bookings | A new resolved quantity **`reservations.booked_covers`** (Σ party size over non-cancelled reservations for a date) feeds the model. For future dates it is the book right now; for past dates the settled book. See §7. |
@@ -105,7 +105,11 @@ Port, in spirit, the reference's `external.py`, `features.py`, `model.py`, `fore
   handled by a **measured** pickup model (Goldy's `createdAt` timestamps), not a guessed curve.
 - **Contract** — a single `POST /forecast` replacing the thin TimesFM payload: request = internal daily
   series (`dates`, `net`, `booked_covers`, `bookings`, `food`, `bev`) + `horizon` + `quantiles`;
-  response = `{forecast: per-day rows, diagnostics}` (§5 shapes). `GET /health` unchanged.
+  response = `{forecast: per-day rows, diagnostics}` (§5 shapes). `GET /health` unchanged. The service
+  builds the full feature matrix (calendar + external + `booked_covers`) across **history + horizon**,
+  feeds the future-known columns to TimesFM as `past_future_covariates` (extending `predictor.py`, which
+  today only passes `past_only_covariates`), and feeds the same matrix to the XGBoost twin as tabular
+  features.
 
 Config lives in env vars (mirroring the current `forecasting.timesfm.*` keys): feature toggles
 (`include_weather`/`include_school`/`include_university`), coverage bars for `booked_covers`, labour
