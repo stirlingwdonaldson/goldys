@@ -1,29 +1,59 @@
-"""Tests for the FastAPI TimesFM inference service using a fake predictor.
+"""Tests for the FastAPI forecasting runtime using a fake predictor.
 
-The real model (``TimesFmPredictor``) imports ``torch``/``timesfm`` lazily, so this
-suite runs with only ``fastapi``, ``httpx``, ``pydantic``, and ``pytest`` installed.
-Each test swaps the app's module-level ``predictor`` for a fake so the model is never
-exercised.
+The real model (``TimesFmPredictor``) imports ``torch``/``timesfm`` lazily, so
+this suite runs with only ``fastapi``, ``httpx``, ``pydantic``, ``pytest``,
+``pandas`` and ``xgboost`` installed. Each test swaps the app's module-level
+``predictor`` for a fake so TimesFM is never exercised, and monkeypatches
+``build_external_features`` to a schema-only stub so no network is hit.
 """
 
 import datetime as dt
-import math
 
+import numpy as np
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
 import app as app_module
+import forecast as forecast_module
+from external import (
+    PUBLIC_HOLIDAY_COLUMNS,
+    SCHOOL_COLUMNS,
+    UNIVERSITY_COLUMNS,
+    WEATHER_COLUMNS,
+)
 
-QUANTILES = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9"]
+QUANTILES = ["0.1", "0.5", "0.9"]
 
-FORECAST_BODY = {
-    "dates": ["2026-09-01", "2026-09-02", "2026-09-03"],
-    "target": [1234.5, None, 1250.0],
-    "covariates": {"covers": [85, None, 90]},
-    "horizon": 2,
-    "freq": "D",
-    "quantiles": QUANTILES,
-}
+
+def _stub_external(config, start, end, force_refresh=False):
+    """Schema-only stand-in for ``build_external_features`` (no network)."""
+    columns = (
+        PUBLIC_HOLIDAY_COLUMNS + SCHOOL_COLUMNS + UNIVERSITY_COLUMNS + WEATHER_COLUMNS
+    )
+    frame = pd.DataFrame({"date": pd.date_range(start, end, freq="D")})
+    for column in columns:
+        frame[column] = pd.NA
+    return frame
+
+
+def _body(n: int = 60, horizon: int = 7) -> dict:
+    """A continuous daily series with a weekly rhythm in revenue and covers."""
+    dates = pd.date_range("2026-03-02", periods=n, freq="D")
+    dow = dates.dayofweek
+    net = 1000.0 + 200.0 * np.sin(2 * np.pi * dow / 7)
+    share = np.clip(0.5 + 0.04 * np.sin(2 * np.pi * dow / 7), 0.05, 0.95)
+    covers = 50.0 + 10.0 * dow
+    return {
+        "dates": [d.strftime("%Y-%m-%d") for d in dates],
+        "net": [round(float(v), 2) for v in net],
+        "booked_covers": [round(float(v), 2) for v in covers],
+        "bookings": [float(i % 31) for i in range(n)],
+        "food": [round(float(net[i] * share[i]), 2) for i in range(n)],
+        "bev": [round(float(net[i] * (1 - share[i])), 2) for i in range(n)],
+        "horizon": horizon,
+        "quantiles": QUANTILES,
+    }
 
 
 class FakePredictor:
@@ -38,22 +68,29 @@ class FakePredictor:
     def warmup(self):
         self.warmup_calls += 1
 
-    def predict(self, dates, target, covariates, horizon, freq, quantiles):
-        self.last_call = (dates, target, covariates, horizon, freq, quantiles)
+    def predict(
+        self,
+        dates,
+        target,
+        covariates,
+        horizon,
+        freq,
+        quantiles,
+        *,
+        past_future_covariates=None,
+    ):
+        self.last_call = {
+            "dates": dates,
+            "target": target,
+            "covariates": covariates,
+            "horizon": horizon,
+            "freq": freq,
+            "quantiles": quantiles,
+            "past_future_covariates": past_future_covariates,
+        }
         last = dt.date.fromisoformat(dates[-1])
         future = [(last + dt.timedelta(days=i + 1)).isoformat() for i in range(horizon)]
         return future, {q: [float(i + 1) for i in range(horizon)] for q in quantiles}
-
-
-class NanPredictor:
-    """Returns NaN so the response null-conversion can be pinned."""
-
-    warm = True
-
-    def predict(self, dates, target, covariates, horizon, freq, quantiles):
-        last = dt.date.fromisoformat(dates[-1])
-        future = [(last + dt.timedelta(days=i + 1)).isoformat() for i in range(horizon)]
-        return future, {q: [float("nan") for _ in range(horizon)] for q in quantiles}
 
 
 @pytest.fixture
@@ -69,38 +106,60 @@ def test_health(client):
     assert response.json() == {"status": "ok", "model": "timesfm-3.0", "warm": True}
 
 
-def test_forecast_shape(client):
-    response = client.post("/forecast", json=FORECAST_BODY)
+def test_forecastReturnsDiagnosticsAndSplit(client, monkeypatch):
+    monkeypatch.setattr(forecast_module, "build_external_features", _stub_external)
+
+    response = client.post("/forecast", json=_body())
 
     assert response.status_code == 200
     body = response.json()
-    assert len(body["dates"]) == 2
-    assert list(body["quantiles"].keys()) == QUANTILES
-    for values in body["quantiles"].values():
-        assert len(values) == 2
-    # JSON nulls in the request reach the model as NaN, not None or a dropped element.
-    _, target, covariates, _, _, _ = app_module.predictor.last_call
-    assert math.isnan(target[1])
-    assert math.isnan(covariates["covers"][1])
+
+    rows = body["forecast"]
+    assert len(rows) == 7
+    first = rows[0]
+    for key in ("date", "median", "p10", "p90", "food", "bev", "baseline"):
+        assert key in first, f"missing forecast field {key!r}"
+    assert first["median"] == 1.0
+    assert first["food"] is not None
+    assert first["bev"] is not None
+    assert first["baseline"] is not None
+
+    diagnostics = body["diagnostics"]
+    assert diagnostics is not None
+    assert diagnostics["modelVersion"] == "timesfm-3.0"
+    assert diagnostics["importance"], "importance should be non-empty"
+    assert diagnostics["holdoutNetXgboost"], "holdoutNetXgboost should be present"
+    assert diagnostics["backtest"]["rows"], "backtest rows should be non-empty"
 
 
-def test_target_length_mismatch_is_422(client):
-    body = {**FORECAST_BODY, "target": [1.0, 2.0]}
+def test_xgboostFailureStillReturnsForecast(client, monkeypatch):
+    monkeypatch.setattr(forecast_module, "build_external_features", _stub_external)
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("xgboost exploded")
+
+    monkeypatch.setattr(app_module, "train", boom)
+
+    response = client.post("/forecast", json=_body())
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["forecast"], "forecast must be non-null when the twin fails"
+    assert body["diagnostics"] is None
+    assert body["warnings"], "a warning must be surfaced when the twin fails"
+
+
+def test_pastFutureCovariatesArePassed(client, monkeypatch):
+    monkeypatch.setattr(forecast_module, "build_external_features", _stub_external)
+    body = _body()
 
     response = client.post("/forecast", json=body)
 
-    assert response.status_code == 422
-
-
-def test_nan_serializes_as_null():
-    app_module.predictor = NanPredictor()
-    client = TestClient(app_module.app)
-
-    response = client.post("/forecast", json=FORECAST_BODY)
-
     assert response.status_code == 200
-    body = response.json()
-    assert body["quantiles"]["0.1"] == [None, None]
+    covariates = app_module.predictor.last_call["past_future_covariates"]
+    assert covariates is not None
+    assert covariates.ndim == 2
+    assert covariates.shape[1] == len(body["dates"]) + body["horizon"]
 
 
 def test_prewarm_enabled_parses_env(monkeypatch):
