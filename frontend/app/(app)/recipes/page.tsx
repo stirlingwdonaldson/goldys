@@ -110,37 +110,50 @@ function groupSubRecipes(lines: RecipeIngredient[]): [string, RecipeIngredient[]
   return [...groups.entries()];
 }
 
+const ingredientColumns: ColumnDef<RecipeIngredient>[] = [
+  {
+    accessorKey: "stockDescription",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Ingredient" />,
+    cell: ({ getValue }) => (getValue<string | null>() ?? "—"),
+    meta: { title: "Ingredient" },
+  },
+  {
+    accessorKey: "portionWeight",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Qty" />,
+    cell: ({ getValue }) => formatNumber(getValue<number | null>(), 4),
+    meta: { title: "Qty", align: "right" },
+  },
+  {
+    accessorKey: "unitOfMeasurement",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Unit" />,
+    cell: ({ getValue }) => (getValue<string | null>() ?? "—"),
+    meta: { title: "Unit" },
+  },
+  {
+    accessorKey: "costPerQty",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Cost" />,
+    cell: ({ getValue }) => formatCurrency(getValue<number | null>()),
+    meta: { title: "Cost", align: "right" },
+  },
+  {
+    accessorKey: "supplierName",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Supplier" />,
+    cell: ({ getValue }) => (getValue<string | null>() ?? "—"),
+    meta: { title: "Supplier" },
+  },
+];
+
 function IngredientLinesTable({ label, lines }: { label: string; lines: RecipeIngredient[] }) {
   if (lines.length === 0) return null;
   return (
     <div className="flex flex-col gap-2">
       <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-            <th className="py-1.5 pr-4 font-medium">Ingredient</th>
-            <th className="py-1.5 pr-4 text-right font-medium">Qty</th>
-            <th className="py-1.5 pr-4 font-medium">Unit</th>
-            <th className="py-1.5 pr-4 text-right font-medium">Cost</th>
-            <th className="py-1.5 font-medium">Supplier</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map((line) => (
-            <tr key={line.recipeDetailId} className="border-b border-muted">
-              <td className="py-1.5 pr-4">{line.stockDescription ?? "—"}</td>
-              <td className="py-1.5 pr-4 text-right tabular-nums">
-                {formatNumber(line.portionWeight, 4)}
-              </td>
-              <td className="py-1.5 pr-4">{line.unitOfMeasurement ?? "—"}</td>
-              <td className="py-1.5 pr-4 text-right tabular-nums">
-                {formatCurrency(line.costPerQty)}
-              </td>
-              <td className="py-1.5">{line.supplierName ?? "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <DataTable
+        columns={ingredientColumns}
+        data={lines}
+        pageSize={false}
+        getRowId={(r) => String(r.recipeDetailId)}
+      />
     </div>
   );
 }

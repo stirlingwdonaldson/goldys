@@ -1,5 +1,8 @@
 "use client";
 
+import type { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { EmptyState } from "@/components/states/empty-state";
 import { SourceTile } from "@/components/sources/source-tile";
 import { formatNumber } from "@/lib/format";
@@ -19,6 +22,47 @@ export function reviewSourceLabel(source: string): string {
   return known[source] ?? source;
 }
 
+const columns: ColumnDef<SourceSummary>[] = [
+  {
+    accessorKey: "source",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Source" />,
+    cell: ({ getValue }) => {
+      const source = getValue<string>();
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          <SourceTile source={source} />
+          {reviewSourceLabel(source)}
+        </span>
+      );
+    },
+    meta: { title: "Source" },
+  },
+  {
+    accessorKey: "total",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Reviews" />,
+    cell: ({ getValue }) => <span className="tabular-nums">{getValue<number>()}</span>,
+    meta: { title: "Reviews", align: "right" },
+  },
+  {
+    accessorKey: "averageRating",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Avg rating" />,
+    cell: ({ getValue }) => formatNumber(getValue<number>(), 1),
+    meta: { title: "Avg rating", align: "right" },
+  },
+  {
+    accessorKey: "positive",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Positive" />,
+    cell: ({ getValue }) => <span className="tabular-nums">{getValue<number>()}</span>,
+    meta: { title: "Positive", align: "right" },
+  },
+  {
+    accessorKey: "negative",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Negative" />,
+    cell: ({ getValue }) => <span className="tabular-nums">{getValue<number>()}</span>,
+    meta: { title: "Negative", align: "right" },
+  },
+];
+
 /** OpenTable vs Google vs TripAdvisor: volume, average rating, and the sentiment split. */
 export function SourceComparison({ sources }: { sources: SourceSummary[] }) {
   if (sources.length === 0) {
@@ -29,33 +73,5 @@ export function SourceComparison({ sources }: { sources: SourceSummary[] }) {
       />
     );
   }
-  return (
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-          <th className="py-1.5 pr-4 font-medium">Source</th>
-          <th className="py-1.5 pr-4 text-right font-medium">Reviews</th>
-          <th className="py-1.5 pr-4 text-right font-medium">Avg rating</th>
-          <th className="py-1.5 pr-4 text-right font-medium">Positive</th>
-          <th className="py-1.5 text-right font-medium">Negative</th>
-        </tr>
-      </thead>
-      <tbody>
-        {sources.map((s) => (
-          <tr key={s.source} className="border-b border-muted">
-            <td className="py-1.5 pr-4">
-              <span className="inline-flex items-center gap-1.5">
-                <SourceTile source={s.source} />
-                {reviewSourceLabel(s.source)}
-              </span>
-            </td>
-            <td className="py-1.5 pr-4 text-right tabular-nums">{s.total}</td>
-            <td className="py-1.5 pr-4 text-right tabular-nums">{formatNumber(s.averageRating, 1)}</td>
-            <td className="py-1.5 pr-4 text-right tabular-nums">{s.positive}</td>
-            <td className="py-1.5 text-right tabular-nums">{s.negative}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
+  return <DataTable columns={columns} data={sources} pageSize={false} getRowId={(r) => r.source} />;
 }
