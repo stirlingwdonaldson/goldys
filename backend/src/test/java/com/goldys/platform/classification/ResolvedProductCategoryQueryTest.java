@@ -186,6 +186,42 @@ class ResolvedProductCategoryQueryTest {
   }
 
   @Test
+  void dailyFoodBev_food_only_day_has_zero_bev() {
+    ProductCategory mains = ProductCategory.create("Mains", "Food", 0, null);
+    ProductCategoryAssignment beef = ProductCategoryAssignment.create("beef burger", NOW);
+    beef.markAssigned(mains.id(), new BigDecimal("0.9"), AssignmentSource.JEV, NOW);
+
+    when(productMetrics.productSales(FROM, TO))
+        .thenReturn(
+            List.of(
+                new ProductSalesMetric(
+                    FROM, "beef burger", new BigDecimal("1"), new BigDecimal("40"), "ctb", false)));
+    when(categories.findAll()).thenReturn(List.of(mains));
+    when(assignments.findAll()).thenReturn(List.of(beef));
+
+    List<FoodBevSplit> result = query.dailyFoodBev(FROM, TO);
+
+    assertThat(result)
+        .containsExactly(new FoodBevSplit(FROM, new BigDecimal("40"), BigDecimal.ZERO));
+  }
+
+  @Test
+  void dailyFoodBev_null_amount_row_is_unresolved() {
+    ProductCategory mains = ProductCategory.create("Mains", "Food", 0, null);
+    ProductCategoryAssignment beef = ProductCategoryAssignment.create("beef burger", NOW);
+    beef.markAssigned(mains.id(), new BigDecimal("0.9"), AssignmentSource.JEV, NOW);
+
+    when(productMetrics.productSales(FROM, TO))
+        .thenReturn(List.of(new ProductSalesMetric(FROM, "beef burger", null, null, "ctb", false)));
+    when(categories.findAll()).thenReturn(List.of(mains));
+    when(assignments.findAll()).thenReturn(List.of(beef));
+
+    List<FoodBevSplit> result = query.dailyFoodBev(FROM, TO);
+
+    assertThat(result).containsExactly(new FoodBevSplit(FROM, null, BigDecimal.ZERO));
+  }
+
+  @Test
   void all_null_quantities_surface_as_zero() {
     when(productMetrics.productSales(FROM, TO))
         .thenReturn(List.of(new ProductSalesMetric(FROM, "kids fish", null, null, "ctb", false)));

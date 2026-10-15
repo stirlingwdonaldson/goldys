@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.semantic.FoodBevSplit;
+import com.goldys.platform.semantic.MissingDataStatus;
 import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -53,5 +54,49 @@ class FoodBevMetricExecutorTest {
     assertThat(bev.series()).hasSize(1);
     assertThat(bev.series().get(0).points().get(0).value()).isEqualByComparingTo("200.00");
     assertThat(bev.series().get(0).points().get(1).value()).isEqualByComparingTo("250.00");
+  }
+
+  @Test
+  void zeroSideIsNotUnresolved() {
+    ProductCategoryMetricsQuery q = mock(ProductCategoryMetricsQuery.class);
+    when(q.dailyFoodBev(SEP_13, SEP_13))
+        .thenReturn(List.of(new FoodBevSplit(SEP_13, new BigDecimal("300.00"), BigDecimal.ZERO)));
+
+    FoodBevMetricExecutor executor = new FoodBevMetricExecutor(q, new MetricCatalog());
+    TimeSeriesResult bev =
+        (TimeSeriesResult)
+            executor.evaluate(
+                new MetricQuery(
+                    MetricId.SALES_BEV,
+                    new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                    TimeGrain.DAY,
+                    Set.of(),
+                    null));
+
+    assertThat(bev.series().get(0).points().get(0).value()).isEqualByComparingTo("0");
+    assertThat(bev.notices()).isEmpty();
+  }
+
+  @Test
+  void nullSideSurfacesUnresolved() {
+    ProductCategoryMetricsQuery q = mock(ProductCategoryMetricsQuery.class);
+    when(q.dailyFoodBev(SEP_13, SEP_13))
+        .thenReturn(List.of(new FoodBevSplit(SEP_13, null, new BigDecimal("200.00"))));
+
+    FoodBevMetricExecutor executor = new FoodBevMetricExecutor(q, new MetricCatalog());
+    TimeSeriesResult food =
+        (TimeSeriesResult)
+            executor.evaluate(
+                new MetricQuery(
+                    MetricId.SALES_FOOD,
+                    new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                    TimeGrain.DAY,
+                    Set.of(),
+                    null));
+
+    assertThat(food.series().get(0).points().get(0).value()).isNull();
+    assertThat(food.series().get(0).points().get(0).status())
+        .isEqualTo(MissingDataStatus.UNRESOLVED);
+    assertThat(food.notices()).containsExactly("1 day(s) unresolved");
   }
 }
