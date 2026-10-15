@@ -28,7 +28,14 @@ import numpy as np
 import pandas as pd
 
 from external import Config
-from features import TARGET_NET, TARGET_SHARE, feature_columns, prepare_matrix
+from features import (
+    TARGET_NET,
+    TARGET_SHARE,
+    WEATHER_FEATURE_COLUMNS,
+    add_lag_features,
+    feature_columns,
+    prepare_matrix,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,6 +68,7 @@ class TrainedModels:
     trained_rows: int = 0
     reliable: bool = False
     config_snapshot: dict[str, Any] = field(default_factory=dict)
+    validation_rows: pd.DataFrame = field(default_factory=pd.DataFrame)
 
 
 def score(actual: pd.Series, predicted: pd.Series) -> Metrics:
@@ -115,6 +123,13 @@ def _fit_target(
     log_target: bool,
 ):
     usable = frame[frame[target].notna()]
+    if target == TARGET_SHARE:
+        usable = usable[usable[TARGET_NET].notna()]
+        minimum = int(config.get("model.min_share_rows", 28))
+        coverage = float(config.get("model.min_share_coverage", 0.8))
+        labelled = frame[TARGET_NET].notna().sum()
+        if len(usable) < minimum or len(usable) < labelled * coverage:
+            return None, usable
     if usable.empty:
         return None, usable
 
@@ -135,15 +150,88 @@ def _predict_target(model, frame: pd.DataFrame, columns: list[str], *, log_targe
     return pd.Series(values, index=frame.index)
 
 
+def evaluate_window(
+    history: pd.DataFrame, future: pd.DataFrame, config: Config
+) -> pd.DataFrame:
+    """Evaluate a fixed forecast origin without reading future actuals as features.
+
+    We have no historical booking snapshots or archived weather forecasts. Future
+    bookings therefore use the training weekday average; observed future weather is
+    withheld. This is a conservative diagnostic, not a reconstruction of TimesFM.
+    """
+    history = add_lag_features(history, config)
+    columns = feature_columns(history, config)
+    if not columns or future.empty:
+        return pd.DataFrame()
+    share_columns = [c for c in columns if "net_revenue" not in c]
+    net_model, _ = _fit_target(history, columns, TARGET_NET, config, log_target=True)
+    share_model, _ = _fit_target(
+        history, share_columns, TARGET_SHARE, config, log_target=False
+    )
+    if net_model is None:
+        return pd.DataFrame()
+
+    unseen = future.copy()
+    unknown_columns = [
+        TARGET_NET, TARGET_SHARE, "food_revenue", "bev_revenue", *WEATHER_FEATURE_COLUMNS
+    ]
+    for column in unknown_columns:
+        if column in unseen:
+            unseen[column] = np.nan
+    if "booked_covers" in unseen:
+        by_dow = history.groupby("day_of_week")["booked_covers"].mean()
+        unseen["booked_covers"] = unseen["day_of_week"].map(by_dow)
+    working = pd.concat([history, unseen], ignore_index=True)
+    baseline = history.groupby("day_of_week")[TARGET_NET].apply(
+        lambda s: s.dropna().tail(4).mean()
+    )
+    rows = []
+    for _, actual in future.sort_values("date").iterrows():
+        featured = add_lag_features(working, config)
+        row = featured[featured["date"] == actual["date"]]
+        net = max(
+            float(_predict_target(net_model, row, columns, log_target=True).iloc[0]), 0.0
+        )
+        share = float(
+            _predict_target(share_model, row, share_columns, log_target=False)
+            .clip(0.05, 0.95).iloc[0]
+        )
+        mask = working["date"] == actual["date"]
+        working.loc[mask, TARGET_NET] = net
+        working.loc[mask, TARGET_SHARE] = share
+        working.loc[mask, "food_revenue"] = net * share
+        working.loc[mask, "bev_revenue"] = net * (1 - share)
+        truth = actual[TARGET_NET]
+        error = net - truth
+        # Product amounts are gross; split actual net using the same share as live
+        # predictions, so food/beverage accuracy compares like with like.
+        rows.append({
+            "date": actual["date"],
+            "day": actual["date"].day_name(),
+            "actual_net_revenue": truth,
+            "predicted_net_revenue": net,
+            "error": error,
+            "abs_pct_error": (
+                abs(error / truth) * 100 if pd.notna(truth) and truth != 0 else np.nan
+            ),
+            "actual_food_revenue": truth * actual[TARGET_SHARE],
+            "predicted_food_revenue": net * share,
+            "actual_bev_revenue": truth * (1 - actual[TARGET_SHARE]),
+            "predicted_bev_revenue": net * (1 - share),
+            "baseline_net_revenue": baseline.get(actual["day_of_week"], np.nan),
+        })
+    return pd.DataFrame(rows)
+
+
 def _expanding_cv(
     frame: pd.DataFrame,
-    columns: list[str],
     config: Config,
 ) -> tuple[Metrics | None, Metrics | None]:
     """Expanding-window CV: always train on the past, test on the future."""
     folds = int(config.get("model.cv_folds", 4))
     horizon = int(config.get("model.cv_horizon_days", 7))
-    labelled = frame[frame[TARGET_NET].notna()].reset_index(drop=True)
+    last_actual = frame.loc[frame[TARGET_NET].notna(), "date"].max()
+    labelled = frame[frame["date"] <= last_actual].reset_index(drop=True)
 
     min_train = max(horizon * 2, 14)
     if len(labelled) < min_train + horizon:
@@ -164,10 +252,12 @@ def _expanding_cv(
         train = labelled.iloc[:test_start]
         test = labelled.iloc[test_start:test_end]
 
-        model, _ = _fit_target(train, columns, TARGET_NET, config, log_target=True)
-        model_pred.append(_predict_target(model, test, columns, log_target=True))
-        base_pred.append(test["net_revenue_dow_mean_4"])
-        truth.append(test[TARGET_NET])
+        evaluated = evaluate_window(train, test, config)
+        if evaluated.empty:
+            continue
+        model_pred.append(evaluated["predicted_net_revenue"])
+        base_pred.append(evaluated["baseline_net_revenue"])
+        truth.append(evaluated["actual_net_revenue"])
 
     if not truth:
         return None, None
@@ -209,35 +299,28 @@ def train(frame: pd.DataFrame, config: Config) -> TrainedModels:
     else:
         test_days = int(config.get("model.test_days", 7))
     if n_rows > test_days * 2:
-        train_frame = labelled.iloc[:-test_days]
-        test_frame = labelled.iloc[-test_days:]
+        first_test_date = labelled.iloc[-test_days]["date"]
+        train_frame = frame[frame["date"] < first_test_date]
+        test_frame = frame[
+            (frame["date"] >= first_test_date)
+            & (frame["date"] <= labelled["date"].max())
+        ]
+        validation = evaluate_window(train_frame, test_frame, config)
     else:
-        warnings.append("Too little data for a holdout test set; metrics are in-sample")
-        train_frame, test_frame = labelled, labelled
+        warnings.append("Too little data for a holdout; no backtest accuracy is available")
+        validation = pd.DataFrame()
 
-    net_model, _ = _fit_target(train_frame, columns, TARGET_NET, config, log_target=True)
-    share_model, _ = _fit_target(
-        train_frame, share_columns, TARGET_SHARE, config, log_target=False
-    )
+    metrics: dict[str, Any] = {}
+    if not validation.empty:
+        for key, actual, predicted in (
+            ("holdout_net_xgboost", "actual_net_revenue", "predicted_net_revenue"),
+            ("holdout_net_baseline", "actual_net_revenue", "baseline_net_revenue"),
+            ("holdout_food", "actual_food_revenue", "predicted_food_revenue"),
+            ("holdout_bev", "actual_bev_revenue", "predicted_bev_revenue"),
+        ):
+            metrics[key] = score(validation[actual], validation[predicted]).as_dict()
 
-    net_pred = _predict_target(net_model, test_frame, columns, log_target=True)
-    share_pred = _predict_target(
-        share_model, test_frame, share_columns, log_target=False
-    ).clip(0.05, 0.95)
-    baseline_pred = test_frame["net_revenue_dow_mean_4"]
-
-    metrics: dict[str, Any] = {
-        "holdout_net_xgboost": score(test_frame[TARGET_NET], net_pred).as_dict(),
-        "holdout_net_baseline": score(test_frame[TARGET_NET], baseline_pred).as_dict(),
-        "holdout_food": score(
-            test_frame["food_revenue"], net_pred * share_pred
-        ).as_dict(),
-        "holdout_bev": score(
-            test_frame["bev_revenue"], net_pred * (1 - share_pred)
-        ).as_dict(),
-    }
-
-    cv_model, cv_baseline = _expanding_cv(frame, columns, config)
+    cv_model, cv_baseline = _expanding_cv(frame, config)
     if cv_model and cv_baseline:
         metrics["cv_net_xgboost"] = cv_model.as_dict()
         metrics["cv_net_baseline"] = cv_baseline.as_dict()
@@ -255,6 +338,13 @@ def train(frame: pd.DataFrame, config: Config) -> TrainedModels:
     share_model, _ = _fit_target(
         labelled, share_columns, TARGET_SHARE, config, log_target=False
     )
+    if share_model is None:
+        minimum = int(config.get("model.min_share_rows", 28))
+        coverage = float(config.get("model.min_share_coverage", 0.8))
+        warnings.append(
+            "Food/beverage split unavailable: insufficient classified sales history "
+            f"(need {minimum} days and {coverage:.0%} coverage)."
+        )
 
     return TrainedModels(
         net_model=net_model,
@@ -265,6 +355,7 @@ def train(frame: pd.DataFrame, config: Config) -> TrainedModels:
         warnings=warnings,
         trained_rows=n_rows,
         reliable=reliable,
+        validation_rows=validation,
         config_snapshot={
             "target_transform": config.get("model.target_transform", "log1p"),
             "xgboost": config.get("model.xgboost", {}),

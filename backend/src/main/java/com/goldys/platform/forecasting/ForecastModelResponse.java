@@ -38,5 +38,45 @@ public record ForecastModelResponse(List<Day> forecast, String diagnostics, List
       Integer uniInSession,
       BigDecimal serviceTempMaxC,
       BigDecimal serviceRainMm,
-      String weatherSource) {}
+      String weatherSource,
+      BigDecimal observedBookedCovers) {
+    public Day(
+        LocalDate date,
+        BigDecimal median,
+        BigDecimal p10,
+        BigDecimal p90,
+        BigDecimal food,
+        BigDecimal bev,
+        BigDecimal baseline,
+        BigDecimal bookedCovers,
+        Integer publicHoliday,
+        String publicHolidayName,
+        Integer publicHolidayEve,
+        Integer dayAfterPublicHoliday,
+        Integer schoolHoliday,
+        Integer uniInSession,
+        BigDecimal serviceTempMaxC,
+        BigDecimal serviceRainMm,
+        String weatherSource) {
+      this(
+          date,
+          median,
+          p10,
+          p90,
+          food,
+          bev,
+          baseline,
+          bookedCovers,
+          publicHoliday,
+          publicHolidayName,
+          publicHolidayEve,
+          dayAfterPublicHoliday,
+          schoolHoliday,
+          uniInSession,
+          serviceTempMaxC,
+          serviceRainMm,
+          weatherSource,
+          null);
+    }
+  }
 }

@@ -28,6 +28,7 @@ from external import (
     Config,
 )
 from model import TrainedModels
+from model import evaluate_window
 
 
 class _StubModel:
@@ -127,7 +128,7 @@ def test_backtestEmitsWorstDays():
     frame = forecast_module.add_calendar_features(frame)
     frame = forecast_module.add_lag_features(frame, Config())
     models = _stub_models()
-
+    models.validation_rows = evaluate_window(frame.iloc[:110], frame.iloc[110:], Config())
     backtest = forecast_module.backtest(frame, models)
     summary = forecast_module.backtest_summary(backtest)
 
@@ -139,3 +140,14 @@ def test_backtestEmitsWorstDays():
     assert not worst.empty
     errors = worst["abs_pct_error"].to_numpy(dtype=float)
     assert (errors[:-1] >= errors[1:]).all()
+
+
+def test_future_frame_preserves_observed_book_separately(monkeypatch):
+    internal = _history_frame()
+    future = internal["date"].max() + pd.Timedelta(days=1)
+    internal = pd.concat([internal, pd.DataFrame({"date": [future], "booked_covers": [np.nan]})], ignore_index=True)
+    monkeypatch.setattr(forecast_module, "build_external_features", _stub_external)
+    frame, _ = forecast_module.build_future_frame(internal, Config(), horizon=1)
+    row = frame[frame.date == future].iloc[0]
+    assert pd.isna(row.observed_booked_covers)
+    assert row.booked_covers > 0

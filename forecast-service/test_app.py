@@ -151,6 +151,8 @@ def test_forecastReturnsDiagnosticsAndSplit(client, monkeypatch):
     diagnostics = body["diagnostics"]
     assert diagnostics is not None
     assert diagnostics["modelVersion"] == "timesfm-3.0"
+    assert diagnostics["diagnosticModel"] == "xgboost"
+    assert diagnostics["validationMethod"] == "recursive-holdout-v1"
     assert diagnostics["importance"], "importance should be non-empty"
     assert diagnostics["holdoutNetXgboost"], "holdoutNetXgboost should be present"
     assert diagnostics["backtest"]["rows"], "backtest rows should be non-empty"

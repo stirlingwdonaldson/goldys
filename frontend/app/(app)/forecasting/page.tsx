@@ -69,7 +69,8 @@ function oneYearAgoISO(): string {
  */
 function driverChips(day: ForecastDayRow): string[] {
   const chips: string[] = [];
-  if (day.bookedCovers != null) chips.push(`${day.bookedCovers} booked covers`);
+  if (day.observedBookedCovers != null) chips.push(`${formatNumber(day.observedBookedCovers)} booked covers`);
+  if (day.bookedCovers != null) chips.push(`${formatNumber(day.bookedCovers)} estimated final covers`);
   if (day.publicHoliday) {
     chips.push(day.publicHolidayName ? `Public holiday · ${day.publicHolidayName}` : "Public holiday");
   }
@@ -125,6 +126,7 @@ function ForecastTable({ rows }: { rows: ForecastDayRow[] }) {
             <th className="font-medium">Beverage</th>
             <th className="font-medium">Baseline</th>
             <th className="font-medium">Booked covers</th>
+            <th className="font-medium">Estimated final covers</th>
           </tr>
         </thead>
         <tbody>
@@ -138,6 +140,7 @@ function ForecastTable({ rows }: { rows: ForecastDayRow[] }) {
               <td className="py-1.5">{formatNumber(d.food)}</td>
               <td className="py-1.5">{formatNumber(d.bev)}</td>
               <td className="py-1.5">{formatNumber(d.baseline)}</td>
+              <td className="py-1.5">{formatNumber(d.observedBookedCovers)}</td>
               <td className="py-1.5">{formatNumber(d.bookedCovers)}</td>
             </tr>
           ))}
@@ -159,9 +162,9 @@ function AccuracyComparisonTable({ diagnostics }: { diagnostics: ForecastDiagnos
       <thead>
         <tr className="text-left text-muted-foreground">
           <th className="font-medium">Set</th>
-          <th className="font-medium">Model MAE</th>
+          <th className="font-medium">XGBoost MAE</th>
           <th className="font-medium">Baseline MAE</th>
-          <th className="font-medium">Model MAPE</th>
+          <th className="font-medium">XGBoost MAPE</th>
           <th className="font-medium">Baseline MAPE</th>
         </tr>
       </thead>
@@ -185,14 +188,14 @@ function BeatsBaselineBanner({ beatsBaseline }: { beatsBaseline: boolean | null 
   if (beatsBaseline == null) return null;
   return beatsBaseline ? (
     <div className="rounded-xl bg-status-success-soft p-3 text-sm font-medium text-status-success">
-      Beats the seasonal-naive baseline on holdout accuracy.
+      XGBoost beats the seasonal-naive baseline in diagnostic validation.
     </div>
   ) : (
     <div
       role="status"
       className="rounded-xl bg-status-conflict-soft p-3 text-sm font-medium text-status-conflict"
     >
-      Does not beat the seasonal-naive baseline — the baseline was more accurate on holdout.
+      XGBoost does not beat the seasonal-naive baseline in diagnostic validation.
     </div>
   );
 }
@@ -501,7 +504,14 @@ export default function ForecastingPage() {
                   </CardHeader>
                   <CardContent className="flex flex-col gap-6">
                     <ForecastVsBaselineChart rows={series} />
-                    <FoodBevSplitChart rows={series} />
+                    {series.some((day) => day.food != null && day.bev != null) ? (
+                      <FoodBevSplitChart rows={series} />
+                    ) : (
+                      <p role="status" className="text-sm text-muted-foreground">
+                        Food/beverage split unavailable. There is insufficient usable classification
+                        history or the share model could not be trained. See Model diagnostics for details.
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Food/bev split is approximate — pending category refinement.
                     </p>
@@ -537,12 +547,22 @@ export default function ForecastingPage() {
         <TabsContent value="model">
           {diagnostics ? (
             <div className="flex flex-col gap-6">
-              <BeatsBaselineBanner beatsBaseline={diagnostics.beatsBaseline} />
+              <p className="text-sm text-muted-foreground">
+                These diagnostics describe the separate XGBoost model. The headline revenue forecast
+                uses TimesFM; these scores and feature importances do not measure TimesFM accuracy.
+              </p>
+              {diagnostics.validationMethod === "recursive-holdout-v1" ? (
+                <BeatsBaselineBanner beatsBaseline={diagnostics.beatsBaseline} />
+              ) : (
+                <p role="status" className="text-sm text-muted-foreground">
+                  Historical diagnostics use fitted predictions and hindsight inputs. Run a new forecast for held-out validation.
+                </p>
+              )}
 
               <Card>
                 <CardHeader>
                   <CardTitle>Accuracy vs baseline</CardTitle>
-                  <CardDescription>Holdout and cross-validation error against the seasonal-naive baseline.</CardDescription>
+                  <CardDescription>XGBoost holdout and cross-validation against the seasonal-naive baseline. Future booking snapshots and weather forecasts cannot be reconstructed; validation uses weekday booking estimates and withholds future weather.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <AccuracyComparisonTable diagnostics={diagnostics} />
@@ -552,7 +572,7 @@ export default function ForecastingPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Feature importance</CardTitle>
-                  <CardDescription>How much each feature contributes to the net-revenue model.</CardDescription>
+                  <CardDescription>Feature importance in the separate XGBoost net-revenue model.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <FeatureImportanceChart rows={diagnostics.importance ?? []} />
@@ -562,7 +582,7 @@ export default function ForecastingPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Features</CardTitle>
-                  <CardDescription>The covariates the model was trained on.</CardDescription>
+                  <CardDescription>The covariates the XGBoost diagnostic model was trained on.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                   <div className="flex flex-wrap gap-1.5">
@@ -598,8 +618,12 @@ export default function ForecastingPage() {
             <div className="flex flex-col gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Actual vs model vs baseline</CardTitle>
-                  <CardDescription>Fitted model against actuals over the training history.</CardDescription>
+                    <CardTitle>Actual vs XGBoost vs baseline</CardTitle>
+                  <CardDescription>
+                    {diagnostics?.validationMethod === "recursive-holdout-v1"
+                      ? "Held-out recursive XGBoost predictions. Each window uses only history available at its forecast origin. This does not evaluate TimesFM."
+                      : "Historical fitted XGBoost predictions over training data; these do not measure forecast accuracy. Run a new forecast for held-out validation."}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <BacktestChart rows={backtest.rows ?? []} />
@@ -707,7 +731,7 @@ export default function ForecastingPage() {
                   ) : comparison.data ? (
                     <>
                       <div className="flex gap-2">
-                        <Badge variant="info">MAPE {comparison.data.mape == null ? "—" : `${formatNumber(comparison.data.mape, 1)}%`}</Badge>
+                        <Badge variant="info">MAPE {comparison.data.mape == null ? "—" : `${formatNumber(comparison.data.mape * 100, 1)}%`}</Badge>
                         <Badge variant="info">MAE {formatNumber(comparison.data.mae, 1)}</Badge>
                       </div>
                       {comparison.data.points.length === 0 ? (

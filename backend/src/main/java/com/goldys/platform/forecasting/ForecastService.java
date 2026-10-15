@@ -246,7 +246,8 @@ public class ForecastService {
               flag(day.uniInSession()),
               day.serviceTempMaxC(),
               day.serviceRainMm(),
-              day.weatherSource()));
+              day.weatherSource(),
+              day.observedBookedCovers()));
     }
     return days;
   }

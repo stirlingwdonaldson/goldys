@@ -25,6 +25,7 @@ function day(date: string, overrides: Partial<ForecastDayRow> = {}): ForecastDay
     bev: 5000,
     baseline: 11800,
     bookedCovers: 120,
+    observedBookedCovers: 60,
     publicHoliday: false,
     publicHolidayEve: false,
     dayAfterPublicHoliday: false,

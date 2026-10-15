@@ -109,6 +109,7 @@ class ForecastDay(BaseModel):
     bev: float | None = None
     baseline: float | None = None
     bookedCovers: float | None = None
+    observedBookedCovers: float | None = None
     publicHoliday: int | None = None
     publicHolidayName: str | None = None
     publicHolidayEve: int | None = None
@@ -318,6 +319,7 @@ def _build_day(
         bev=bev,
         baseline=_num(_field(row, "net_revenue_dow_mean_4")),
         bookedCovers=_num(_field(row, "booked_covers")),
+        observedBookedCovers=_num(_field(row, "observed_booked_covers")),
         publicHoliday=_flag(_field(row, "public_holiday")),
         publicHolidayName=_string(_field(row, "public_holiday_name")),
         publicHolidayEve=_flag(_field(row, "public_holiday_eve")),
@@ -358,6 +360,8 @@ def _build_diagnostics(models, importance: pd.DataFrame, bt: pd.DataFrame, summa
     metrics = models.metrics
     return {
         "modelVersion": MODEL_VERSION,
+        "diagnosticModel": "xgboost",
+        "validationMethod": "recursive-holdout-v1",
         "trainedRows": models.trained_rows,
         "reliable": models.reliable,
         "warnings": list(models.warnings),

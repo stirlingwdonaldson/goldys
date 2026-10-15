@@ -21,7 +21,7 @@ import { formatNumber } from "@/lib/format";
 import type { BacktestRow } from "@/lib/api/types";
 
 /**
- * Backtest: fitted model vs actual over the history, with the seasonal-naive baseline behind
+ * Backtest: held-out XGBoost vs actual, with the seasonal-naive baseline behind
  * both. A `null` value gaps that line (Recharts leaves `connectNulls` off), so a missing
  * baseline reads as a gap rather than a fabricated zero.
  */
@@ -82,7 +82,7 @@ export function BacktestChart({ rows }: { rows: BacktestRow[] }) {
           <Line
             type="monotone"
             dataKey="predictedNet"
-            name="Model"
+            name="XGBoost"
             stroke="hsl(var(--chart-1))"
             strokeWidth={1.6}
             dot={false}
