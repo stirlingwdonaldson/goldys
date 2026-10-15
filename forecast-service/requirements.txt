@@ -5,6 +5,7 @@ fastapi
 uvicorn[standard]
 pydantic
 numpy
+pandas
 pyyaml
 scipy
 xgboost
