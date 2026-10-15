@@ -144,8 +144,9 @@ fetcher identities `ctb-stocktake-detail`, `ctb-wastage-detail`, `ctb-recipe-ing
 `ctb-recipe-cost`. Recipe cost (`ctb-recipe-cost`) is canonicalized by the recipe-composition slice
 (D); recipe ingredients (`ctb-recipe-ingredients`) are canonicalized by the recipe-ingredients
 slice, replayed from the existing raw ledger by a flag-gated runner
-(`app.recipe-ingredients-canonicalize=true`). Stocktake and wastage detail remain raw-only (slices
-B–C).
+(`app.recipe-ingredients-canonicalize=true`). Stocktake and wastage detail are canonicalised by a
+flag-gated runner (`app.stock-wastage-canonicalize=true`, `StockWastageCanonicalizationRunner`),
+replayed from the existing raw ledger; they have no resolved projection yet (slices B–C).
 
 | Domain | Endpoint | Params | Returns |
 |---|---|---|---|

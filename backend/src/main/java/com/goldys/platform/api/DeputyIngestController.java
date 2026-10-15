@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * <p>Deputy's schema is unconfirmed, so this endpoint deliberately does no canonicalization: it
  * accepts any {@code content-type} and any body, recording it in the raw ledger for later parsing
- * once the first payload is observed. Public (no OIDC session), gated by a shared token in the
+ * once the first payload is observed. Public (no user session), gated by a shared token in the
  * {@code X-Webhook-Token} header or {@code token} query param. Set {@code deputy.drop-token} in
  * production; while unset the endpoint rejects every request (fail closed).
  */

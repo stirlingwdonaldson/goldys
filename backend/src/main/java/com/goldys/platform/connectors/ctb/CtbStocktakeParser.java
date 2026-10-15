@@ -6,6 +6,7 @@ import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.StockCountInput;
 import com.goldys.platform.canonical.StocktakeInput;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
+import com.goldys.platform.util.Nulls;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -65,7 +66,7 @@ public class CtbStocktakeParser {
               requiredInt(n.get("id"), "id"),
               countedDate,
               ProductNameKey.normalize(sanitize(n.get("stockDesc"))),
-              nz(decimal(n.get("qtyCount"))),
+              Nulls.zeroIfNull(decimal(n.get("qtyCount"))),
               integer(n.get("stockId")),
               sanitize(n.get("stockCode")),
               sanitize(n.get("stockUnitOfMeasurementName")),
@@ -166,9 +167,5 @@ public class CtbStocktakeParser {
       return null;
     }
     return n.asText().replace("\u0000", "");
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }

@@ -13,6 +13,7 @@ import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.ingestion.port.FetchedPayload;
 import com.goldys.platform.ingestion.port.IngestionSink;
 import com.goldys.platform.ingestion.port.SourceConnector;
+import com.goldys.platform.util.Nulls;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -364,13 +365,9 @@ public class CtbConnector implements SourceConnector {
     BigDecimal net = BigDecimal.ZERO;
 
     void add(CtbRevenue revenue) {
-      total = total.add(nz(revenue.totalSales()));
-      gst = gst.add(nz(revenue.gstTotal()));
-      net = net.add(nz(revenue.kitchenRevenueTotal()));
+      total = total.add(Nulls.zeroIfNull(revenue.totalSales()));
+      gst = gst.add(Nulls.zeroIfNull(revenue.gstTotal()));
+      net = net.add(Nulls.zeroIfNull(revenue.kitchenRevenueTotal()));
     }
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }

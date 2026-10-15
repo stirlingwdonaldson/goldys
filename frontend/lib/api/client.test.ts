@@ -162,8 +162,6 @@ describe("API response boundary", () => {
   });
   it.each([
     ["http://localhost:3000/login", "AUTH_REQUIRED"],
-    ["http://localhost:3000/oauth2/authorization/fixture", "AUTH_REQUIRED"],
-    ["http://localhost:3000/login/oauth2/code/fixture", "AUTH_REQUIRED"],
     ["http://localhost:3000/unexpected", "UNEXPECTED_REDIRECT"],
     ["https://external.invalid/login", "UNEXPECTED_REDIRECT"],
   ])("diagnoses followed redirect to %s", async (url, code) => {

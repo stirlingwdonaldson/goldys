@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Receives the Lightspeed Insights scheduled-report webhook and ingests it.
  *
- * <p>The webhook is a server-to-server push with no OIDC session, so the endpoint is public and
+ * <p>The webhook is a server-to-server push with no user session, so the endpoint is public and
  * gated by a shared token in the {@code X-Webhook-Token} header. Set {@code
  * lightspeed.webhook-token} in production; while unset the endpoint rejects every request (fail
  * closed).

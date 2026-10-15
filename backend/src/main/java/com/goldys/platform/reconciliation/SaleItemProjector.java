@@ -2,6 +2,7 @@ package com.goldys.platform.reconciliation;
 
 import com.goldys.platform.canonical.CanonicalSaleItemQuery;
 import com.goldys.platform.canonical.SaleItemView;
+import com.goldys.platform.util.Nulls;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -58,7 +59,7 @@ public class SaleItemProjector {
 
     Map<Key, Mutable> buckets = new HashMap<>();
     for (SaleItemView v : saleItems.currentSaleItemsForDates(dates)) {
-      Key key = new Key(v.tradingDate(), nz(v.categoryName()));
+      Key key = new Key(v.tradingDate(), Nulls.valueIfBlank(v.categoryName(), "Uncategorised"));
       buckets.computeIfAbsent(key, k -> new Mutable()).add(v);
     }
 
@@ -79,10 +80,6 @@ public class SaleItemProjector {
               now));
     }
     resolved.saveAll(rows);
-  }
-
-  private static String nz(String v) {
-    return v == null || v.isBlank() ? "Uncategorised" : v;
   }
 
   private record Key(LocalDate date, String category) {}
