@@ -10,6 +10,8 @@ data is unresolved ("display + note": a figure always shows when any resolved da
 | `sales.gross` | Gross sales | Resolved gross sales incl. GST | totalSales | AUD | resolved_daily_sales | — | day, week, month | reconciliation.sales | displays resolved sum; unresolved days noted |
 | `sales.net` | Net sales | Resolved net sales = gross − GST | netTotal | AUD | resolved_daily_sales | — | day, week, month | reconciliation.sales | displays resolved sum; unresolved days noted |
 | `sales.gst` | GST | Resolved GST | gstTotal | AUD | resolved_daily_sales | — | day, week, month | reconciliation.sales | displays resolved sum; unresolved days noted |
+| `sales.food` | Food sales | Resolved food sales (product group "Food") | food | AUD | resolved_product_sales | — | day, week, month | reconciliation.sales | sum of food-group product sales; approximate (see below) |
+| `sales.bev` | Beverage sales | Resolved beverage sales (non-food product groups) | bev | AUD | resolved_product_sales | — | day, week, month | reconciliation.sales | sum of non-food product sales; approximate (see below) |
 | `reservations.bookings` | Bookings | Resolved bookings | bookings | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum (absent day = no row, not zero, unless projected) |
 | `reservations.attended` | Attended parties | Resolved attended | attended | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
 | `reservations.covers` | Covers | Resolved covers (guests) | covers | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
@@ -32,6 +34,7 @@ data is unresolved ("display + note": a figure always shows when any resolved da
 | `reservations.booking_to_cover_conversion` | Booking-to-cover conversion | attended ÷ bookings | attended ÷ bookings | % | derived | — | day, week, month | reservations.metrics | null when bookings = 0 |
 | `reservations.avg_party_size` | Average party size | covers ÷ attended | covers ÷ attended | ratio | derived | — | day, week, month | reservations.metrics | null when attended = 0 |
 | `sales.average_spend_per_cover` | Average spend per cover | sales.gross ÷ reservations.covers | sales.gross ÷ reservations.covers | AUD | derived | — | day, week, month | reconciliation.sales | null when covers = 0 or gross unresolved |
+| `sales.food_share` | Food share | sales.food ÷ sales.net | sales.food ÷ sales.net | % | derived | — | day, week, month | reconciliation.sales | null when net = 0/unresolved |
 | `labour.hours_per_cover` | Hours per cover | labour.actual_hours ÷ reservations.covers | labour.actual_hours ÷ reservations.covers | hours/cover | derived | — | day, week, month | labour.hours | null when covers = 0 |
 | `labour.cost_per_cover` | Cost per cover | labour.cost ÷ reservations.covers | labour.cost ÷ reservations.covers | AUD/cover | derived | — | day, week, month | labour.cost | null when covers = 0 or cost unknown |
 | `labour.hours_variance` | Hours variance | labour.scheduled_hours − labour.actual_hours | labour.scheduled_hours − labour.actual_hours | hours | derived | — | day, week, month | labour.hours | — |
@@ -54,6 +57,11 @@ Base metrics read resolved projections. They are live today and are the authorit
 post-reconciliation value: `sales.gross` / `sales.net` *are* the reconciled figure.
 
 - `sales.gross`, `sales.net`, `sales.gst` — `resolved_daily_sales`, no dimensions, day/week/month.
+- `sales.food`, `sales.bev` — `resolved_product_sales`, no dimensions, day/week/month; the food/beverage
+  split is derived from the product classification (`group` `"Food"` → food, every other non-null
+  group → beverage, null group / `"Uncategorised"` excluded), so it is **approximate by design** — a
+  proper second-level food/bev classifier is the eventual fix (see §8 of the forecasting refactor
+  design).
 - `reservations.bookings`, `reservations.attended`, `reservations.covers`,
   `reservations.booked_covers`, `reservations.no_shows` — `resolved_reservation_day`, dimension `service_period`, day/week/month.
 - `labour.scheduled_hours`, `labour.actual_hours`, `labour.cost` — `resolved_labour_day`,

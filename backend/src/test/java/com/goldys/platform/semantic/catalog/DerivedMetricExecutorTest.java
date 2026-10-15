@@ -5,11 +5,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.semantic.DailySalesMetric;
+import com.goldys.platform.semantic.FoodBevSplit;
 import com.goldys.platform.semantic.InventoryMetric;
 import com.goldys.platform.semantic.InventoryMetricsQuery;
 import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.MissingDataStatus;
+import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.goldys.platform.semantic.ReservationSummary;
@@ -33,6 +35,8 @@ class DerivedMetricExecutorTest {
   private final LabourMetricsQuery labour = mock(LabourMetricsQuery.class);
   private final InventoryMetricsQuery inventory = mock(InventoryMetricsQuery.class);
   private final ProductMetricsQuery product = mock(ProductMetricsQuery.class);
+  private final ProductCategoryMetricsQuery productCategory =
+      mock(ProductCategoryMetricsQuery.class);
 
   private DerivedMetricExecutor executor() {
     MetricCatalog catalog = new MetricCatalog();
@@ -42,13 +46,14 @@ class DerivedMetricExecutorTest {
         new LabourMetricExecutor(labour, catalog),
         new InventoryMetricExecutor(inventory, catalog),
         new ProductMetricExecutor(product, catalog),
+        new FoodBevMetricExecutor(productCategory, catalog),
         labour,
         product,
         catalog);
   }
 
   @Test
-  void exposesAllElevenDerivedIds() {
+  void exposesAllTwelveDerivedIds() {
     assertThat(executor().ids())
         .containsExactlyInAnyOrder(
             MetricId.RESERVATIONS_NO_SHOW_RATE,
@@ -61,7 +66,8 @@ class DerivedMetricExecutorTest {
             MetricId.LABOUR_FOH_PERCENT,
             MetricId.LABOUR_BOH_PERCENT,
             MetricId.INVENTORY_FOOD_COST_PERCENT,
-            MetricId.PRODUCT_TOP_SELLERS);
+            MetricId.PRODUCT_TOP_SELLERS,
+            MetricId.SALES_FOOD_SHARE);
   }
 
   @Test
@@ -240,6 +246,64 @@ class DerivedMetricExecutorTest {
                         null));
 
     assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("0.2000");
+  }
+
+  @Test
+  void foodShareIsFoodOverNet() {
+    when(productCategory.dailyFoodBev(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(new FoodBevSplit(SEP_13, new BigDecimal("300.00"), new BigDecimal("200.00"))));
+    when(sales.dailySales(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new DailySalesMetric(
+                    SEP_13,
+                    new BigDecimal("500.00"),
+                    new BigDecimal("450.00"),
+                    null,
+                    "agreed",
+                    false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.SALES_FOOD_SHARE,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("0.6667");
+    assertThat(ts.notices()).isEmpty();
+  }
+
+  @Test
+  void foodShareIsNullWhenNetIsZero() {
+    when(productCategory.dailyFoodBev(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(new FoodBevSplit(SEP_13, new BigDecimal("300.00"), new BigDecimal("200.00"))));
+    when(sales.dailySales(SEP_13, SEP_13))
+        .thenReturn(
+            List.of(
+                new DailySalesMetric(
+                    SEP_13, new BigDecimal("500.00"), BigDecimal.ZERO, null, "agreed", false)));
+
+    TimeSeriesResult ts =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.SALES_FOOD_SHARE,
+                        new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+                        TimeGrain.DAY,
+                        Set.of(),
+                        null));
+
+    assertThat(ts.series().get(0).points().get(0).value()).isNull();
+    assertThat(ts.series().get(0).points().get(0).status()).isEqualTo(MissingDataStatus.UNRESOLVED);
+    assertThat(ts.notices()).isNotEmpty();
   }
 
   @Test
