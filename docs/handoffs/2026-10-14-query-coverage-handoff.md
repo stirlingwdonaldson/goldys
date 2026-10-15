@@ -1,17 +1,17 @@
 # Handoff — Data-Foundation Query Coverage (updated 2026-10-15)
 
-**Status:** query-coverage breadth gap **CLOSED**. `DatasetRegistry` now registers **11 datasets**
-(9 resolved projections + 2 single-source canonical facts), up from 3. The generic relational query
-engine is unchanged; only the allowlist and its tests grew. **Verified facts** are stated plainly;
-**historical audit findings** are labelled and must be re-checked against current code before acting
-on them.
+**Status:** query-coverage breadth gap **CLOSED**, and the **G3 product-sales source-field
+recovery** is **DONE**. `DatasetRegistry` now registers **12 datasets** (9 resolved projections +
+3 single-source canonical facts), up from 3. The generic relational query engine is unchanged;
+only the allowlist and its tests grew. **Verified facts** are stated plainly; **historical audit
+findings** are labelled and must be re-checked against current code before acting on them.
 
 ---
 
 ## 1. Git state
 
 - **Branch:** `feat/data-foundation`
-- **HEAD:** `9c6e0df` — `feat(canonical): backfill legacy invoice_logical_id for the invoice-line join`
+- **HEAD:** `35bff2d` — `feat(canonical): recover CTB product-sale source fields into source_product_sale_fact`
 - **Milestone commits (oldest → newest):**
   1. `5cd39e7` — Phase 1 data completeness & query-readiness audit (docs + probe harness)
   2. `c5bea04` — Phase 2 entity identity, referential integrity, source-fact preservation
@@ -20,6 +20,7 @@ on them.
   5. `5c3c7cc` — Phase 5 versioned connector output contract (CTB invoice CSV pilot)
   6. `9a24605` — register the eight eligible resolved projections (Batches A + B)
   7. `9c6e0df` — backfill legacy `invoice_logical_id` so the `invoice→line` join resolves
+  8. `35bff2d` — G3: recover CTB product-sale source fields into `source_product_sale_fact`
 
 ## 2. Completed architecture
 
@@ -47,17 +48,18 @@ all eight populated resolved projections registered as queryable datasets.
 - **Tests:** `backend/src/test/java/com/goldys/platform/query/{RelationalQueryIntegrationTest,ResolvedDatasetQueryIntegrationTest,ResolvedDomainBatchBQueryIntegrationTest,SavedQueryIntegrationTest}.java`, `application/DashboardQueryWidgetRenderTest.java`, `connectors/ctb/CtInvoiceCsvContractTest.java`
 - **Frontend:** `frontend/components/query-builder/query-builder.tsx`, `frontend/app/(app)/data/page.tsx`, `frontend/components/dashboards/dashboard-editor.tsx`, `frontend/lib/api/{types,live,demo}.ts`
 - **Source contract:** `backend/src/main/resources/connectors/ctb-invoice-csv.contract.json` + `backend/src/main/java/com/goldys/platform/ingestion/contract/`
-- **Migrations:** `V74…V79` (additive)
+- **Migrations:** `V74…V80` (additive)
 
-## 4. Currently registered datasets (11)
+## 4. Currently registered datasets (12)
 
 Resolved projections (9): `resolved_daily_sales`, `resolved_product_sales`,
 `resolved_reservation_day`, `resolved_payment_day`, `resolved_sale_item_day`,
 `resolved_deleted_sale_day`, `resolved_recipe`, `resolved_recipe_ingredient`,
 `resolved_inventory_day`.
 
-Single-source canonical-direct (2): `invoice` (`canonical_invoice`),
-`invoice_line` (`canonical_invoice_line`).
+Single-source canonical-direct (3): `invoice` (`canonical_invoice`),
+`invoice_line` (`canonical_invoice_line`), `source_product_sale_fact`
+(`source_product_sale_fact`, G3).
 
 One relationship: `invoice → invoice_line` (on `logical_entity_id = invoice_logical_id`).
 
@@ -70,8 +72,8 @@ One relationship: `invoice → invoice_line` (on `logical_entity_id = invoice_lo
 - **Stocktake / stock_count / wastage** — canonical tables empty (DF-03 backfill not run).
 - **Raw-only masters** — stocks/suppliers/orders/statements/reference, menu_items/menus, invoice
   AJAX/PDFs, recipes-master, z-report (never register as resolved business truth).
-- **Identity hubs (V75)** — `source_product`/`product`/`stock_item`/`product_mapping`/
-  `source_product_sale_fact` (0 rows).
+- **Identity hubs (V75)** — `source_product`/`product`/`stock_item`/`product_mapping` (0 rows;
+  `source_product_sale_fact` is now populated by G3 and registered as a dataset).
 - **`recipe → recipe_ingredient` join** — real composition reference but not approved; deferred.
 
 ## 6. Remaining limitations
@@ -88,21 +90,31 @@ One relationship: `invoice → invoice_line` (on `logical_entity_id = invoice_lo
 
 ## 7. Verification commands and known results
 
-- Backend: `cd backend && ./gradlew test spotlessCheck` → **BUILD SUCCESSFUL**, **1,493 tests / 0 failures**.
+- Backend: `cd backend && ./gradlew test spotlessCheck` → **BUILD SUCCESSFUL**, **1,513 tests / 0 failures**.
 - Frontend: `cd frontend && bun run typecheck && bun run lint && bun run test && bun run build` → **582 tests / 0 failures**, build succeeds.
 
 ## 8. Pending migrations, uncommitted changes, unresolved defects
 
-- **Migrations:** V74–V79 are committed and additive. V78/V79 extend the dormant `goldys_ro`
-  read-only grant to the eight newly registered resolved tables.
+- **Migrations:** V74–V80 are committed and additive. V78/V79 extend the dormant `goldys_ro`
+  read-only grant to the eight newly registered resolved tables; V80 extends
+  `source_product_sale_fact` (`food_cost`, `profit`, `unique_group_id`) and grants `goldys_ro`
+  SELECT on it.
 - **Deferred backfills (implemented, not yet enabled in production):** the legacy
   `canonical_invoice_line.invoice_logical_id` re-key is now implemented as a flag-gated runner
   (`app.invoice-logical-id-backfill=true`, idempotent, bitemporal close-and-reinsert); it must be
-  enabled in production to make the `invoice→line` join resolve for pre-V74 lines. Still deferred:
-  stock/wastage canonicalization (DF-03).
-- **Historical audit findings to re-verify against current code (not acted on):** DF-04 (CTB product
-  cost/tax/discount — now partially preserved in `source_product_sale_fact`), DF-06 (invoice
+  enabled in production to make the `invoice→line` join resolve for pre-V74 lines. The G3
+  source-product-sale-fact replay (`app.source-product-sale-fact-backfill=true`, idempotent,
+  streaming, off by default) must be enabled in production to recover retained CTB product
+  cost/tax/discount into `source_product_sale_fact`. Still deferred: stock/wastage
+  canonicalization (DF-03).
+- **Historical audit findings to re-verify against current code (not acted on):** DF-06 (invoice
   header/line mismatch), DF-07 (valid-time unimplemented), DF-11 (product name↔code ambiguity).
+  DF-04 (CTB product cost/tax/discount) is **addressed by G3**: the fields are recovered into
+  `source_product_sale_fact` for the forward path and, via the durable
+  `canonical_product_sales.raw_record_id → trading_date` provenance, for retained sale-item pages
+  that have a canonical date. Retained sale-item pages whose date was never persisted on the raw
+  record (no `sale-items:<day>` reference and no canonical mapping) are reported **ambiguous**, never
+  assigned a guessed date.
 - **Noted metadata caveat:** count columns (`payment_count`, `deleted_count`, reservation counts) are
   `bigint` mapped to the engine's only integer type `FieldType.INTEGER`; filter coercion is 32-bit.
   `resolved_recipe_ingredient.id` is a surrogate UUID regenerated on reprojection (not a stable key).
@@ -122,8 +134,10 @@ One relationship: `invoice → invoice_line` (on `logical_entity_id = invoice_lo
    (`app.invoice-logical-id-backfill=true`); enable in production to resolve the join for legacy rows.
 2. **Canonicalize stock/wastage** (DF-03) once source delivery is confirmed, then register
    `canonical_stocktake`/`stock_count`/`wastage` as canonical-direct datasets.
-3. **Replay `ctb-revenue` raw into `source_product_sale_fact`** (DF-04: product cost/tax/discount) —
-   unblocks margin analysis; highest remaining financial-data-loss risk.
+3. ~~Replay `ctb-revenue` raw into `source_product_sale_fact`~~ **DONE** (G3) — recovered CTB
+   product cost/tax/discount/unit-price/food-cost/profit/group into `source_product_sale_fact`,
+   registered it as a canonical-direct dataset; enable `app.source-product-sale-fact-backfill=true`
+   in production to backfill retained records.
 4. **Backfill product/supplier identity hubs** (DF-11) — stable product identity + cross-domain joins.
 5. **Resolve the reviews domain** (projection or owner-approved canonical-direct + PII boundary).
 6. **Add calculated expressions + additional relationships** to the query language (Phase-3 deferred).
