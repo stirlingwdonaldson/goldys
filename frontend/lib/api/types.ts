@@ -897,8 +897,107 @@ export interface ForecastSeriesPoint {
 }
 
 /**
- * The public shape of a forecast run (mirrors `application.ForecastRunDto`). `series` is
- * populated only once the run has `SUCCEEDED`; until then it is `null`.
+ * One enriched forecast day: the quantiles plus the food/bev split, the seasonal-naive baseline,
+ * the booked covers on the book, and the external driver flags known at forecast time. Every field
+ * beyond `date` is nullable — a missing decile or a driver whose source was unavailable degrades to
+ * `null`, never a failed point (mirrors the enriched `ForecastSeriesPointDto`).
+ */
+export interface ForecastDayRow extends ForecastSeriesPoint {
+  /** Net revenue attributable to food. */
+  food: number | null;
+  /** Net revenue attributable to beverage. */
+  bev: number | null;
+  /** The seasonal-naive baseline (mean of the last four same-weekdays). */
+  baseline: number | null;
+  /** Covers already on the book for this date (Σ party size of non-cancelled reservations). */
+  bookedCovers: number | null;
+  publicHoliday: boolean | null;
+  publicHolidayEve: boolean | null;
+  dayAfterPublicHoliday: boolean | null;
+  schoolHoliday: boolean | null;
+  uniInSession: boolean | null;
+  publicHolidayName: string | null;
+  weatherSource: string | null;
+  serviceTempMaxC: number | null;
+  serviceRainMm: number | null;
+}
+
+/** Holdout/CV accuracy for one model: mean-absolute-error, RMSE, MAPE, and the sample size. */
+export interface ForecastAccuracyMetric {
+  mae: number;
+  rmse: number;
+  mape: number;
+  n: number;
+}
+
+/** One feature's gain-based importance in the net model. */
+export interface ForecastImportanceRow {
+  feature: string;
+  importance: number;
+}
+
+/** One backtest day: actual vs predicted net, the error, and the food/bev split. */
+export interface BacktestRow {
+  /** YYYY-MM-DD. */
+  date: string;
+  /** Weekday name, e.g. "Monday". */
+  day: string;
+  actualNet: number;
+  predictedNet: number;
+  error: number;
+  absPctError: number | null;
+  actualFood: number | null;
+  predictedFood: number | null;
+  actualBev: number | null;
+  predictedBev: number | null;
+  baselineNet: number | null;
+}
+
+/** One weekday's aggregated backtest error. */
+export interface WeekdayErrorRow {
+  day: string;
+  n: number;
+  mae: number;
+  mape: number;
+  meanActual: number;
+  meanPredicted: number;
+}
+
+/** The walk-forward backtest: per-day rows, weekday error summary, residuals, and worst days. */
+export interface ForecastBacktest {
+  rows: BacktestRow[];
+  byWeekday: WeekdayErrorRow[];
+  residualMean: number | null;
+  residualStd: number | null;
+  worstDays: BacktestRow[];
+}
+
+/**
+ * The parsed diagnostic payload of a succeeded forecast run (mirrors `ForecastDiagnosticsDto`).
+ * The accuracy blocks are nullable when that model could not be trained; `beatsBaseline` is null
+ * when the comparison could not be made.
+ */
+export interface ForecastDiagnostics {
+  modelVersion: string;
+  trainedRows: number;
+  reliable: boolean;
+  warnings: string[];
+  features: string[];
+  shareFeatures: string[];
+  holdoutNetXgboost: ForecastAccuracyMetric | null;
+  holdoutNetBaseline: ForecastAccuracyMetric | null;
+  holdoutFood: ForecastAccuracyMetric | null;
+  holdoutBev: ForecastAccuracyMetric | null;
+  cvNetXgboost: ForecastAccuracyMetric | null;
+  cvNetBaseline: ForecastAccuracyMetric | null;
+  beatsBaseline: boolean | null;
+  importance: ForecastImportanceRow[];
+  backtest: ForecastBacktest;
+}
+
+/**
+ * The public shape of a forecast run (mirrors `application.ForecastRunDto`). `series` and
+ * `diagnostics` are populated only once the run has `SUCCEEDED`; until then they are `null`.
  */
 export interface ForecastRun {
   id: string;
@@ -912,9 +1011,10 @@ export interface ForecastRun {
   horizonDays: number;
   /** ISO-8601 instant. */
   createdAt: string;
-  series: ForecastSeriesPoint[] | null;
+  series: ForecastDayRow[] | null;
   errorMessage: string | null;
   modelVersion: string | null;
+  diagnostics: ForecastDiagnostics | null;
 }
 
 /** Body for `POST /api/forecasting/runs` (mirrors `application.CreateForecastRequest`). */

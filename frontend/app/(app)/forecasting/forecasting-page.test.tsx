@@ -20,11 +20,12 @@ const succeededRun: ForecastRun = {
   horizonDays: 7,
   createdAt: "2026-10-06T02:00:00Z",
   series: [
-    { date: "2026-10-06", median: 10000, p10: 9400, p90: 10600 },
-    { date: "2026-10-07", median: 10500, p10: 9900, p90: 11100 },
+    { date: "2026-10-06", median: 10000, p10: 9400, p90: 10600, food: 4500, bev: 5500, baseline: 9700, bookedCovers: 120, publicHoliday: false, publicHolidayEve: false, dayAfterPublicHoliday: false, schoolHoliday: false, uniInSession: false, publicHolidayName: null, weatherSource: "open-meteo", serviceTempMaxC: 21, serviceRainMm: 0 },
+    { date: "2026-10-07", median: 10500, p10: 9900, p90: 11100, food: 4725, bev: 5775, baseline: 10185, bookedCovers: 135, publicHoliday: false, publicHolidayEve: false, dayAfterPublicHoliday: false, schoolHoliday: false, uniInSession: false, publicHolidayName: null, weatherSource: "open-meteo", serviceTempMaxC: 22, serviceRainMm: 2.5 },
   ],
   errorMessage: null,
   modelVersion: "timesfm-1.0",
+  diagnostics: null,
 };
 
 const queuedRun: ForecastRun = {
@@ -39,6 +40,7 @@ const queuedRun: ForecastRun = {
   series: null,
   errorMessage: null,
   modelVersion: null,
+  diagnostics: null,
 };
 
 const comparison: ForecastComparison = {

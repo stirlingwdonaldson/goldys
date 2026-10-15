@@ -20,9 +20,10 @@ import type {
   DendrogramNode,
   EntityDescriptor,
   ForecastComparison,
+  ForecastDayRow,
+  ForecastDiagnostics,
   ForecastMetric,
   ForecastRun,
-  ForecastSeriesPoint,
   GenericRow,
   RawRecordDetail,
   RawRecordFilter,
@@ -681,9 +682,14 @@ const demoForecastMetrics: ForecastMetric[] = [
   { metric: "inventory.food_cost_percent", name: "Food cost %", unit: "%", sourceDomain: "derived", requiredPermission: "inventory.cost" },
 ];
 
-/** A deterministic median/p10/p90 series: p10 < median < p90 on every day. */
-function demoForecastSeries(historyTo: string, horizonDays: number): ForecastSeriesPoint[] {
-  const points: ForecastSeriesPoint[] = [];
+/**
+ * A deterministic enriched median/p10/p90 series: p10 < median < p90 on every day, split into a
+ * 45/55 food/bev pair, a slightly-lower seasonal-naive baseline, booked covers, and a couple of
+ * external-driver flags (one public holiday with its eve and day-after) so the day-by-day
+ * breakdown renders without a backend.
+ */
+function demoForecastSeries(historyTo: string, horizonDays: number): ForecastDayRow[] {
+  const points: ForecastDayRow[] = [];
   const start = new Date(`${historyTo}T00:00:00Z`);
   for (let i = 0; i < horizonDays; i++) {
     const day = new Date(start);
@@ -691,10 +697,98 @@ function demoForecastSeries(historyTo: string, horizonDays: number): ForecastSer
     const date = day.toISOString().slice(0, 10);
     const median = Math.round(9600 + 400 * Math.sin(i * 0.9) + i * 120);
     const spread = Math.round(median * 0.06);
-    points.push({ date, median, p10: median - spread, p90: median + spread });
+    const publicHoliday = i === 3;
+    points.push({
+      date,
+      median,
+      p10: median - spread,
+      p90: median + spread,
+      food: Math.round(median * 0.45),
+      bev: Math.round(median * 0.55),
+      baseline: Math.round(median * 0.97),
+      bookedCovers: 120 + (i % 5) * 15,
+      publicHoliday,
+      publicHolidayEve: i === 2,
+      dayAfterPublicHoliday: i === 4,
+      schoolHoliday: false,
+      uniInSession: false,
+      publicHolidayName: publicHoliday ? "Melbourne Cup" : null,
+      weatherSource: "open-meteo",
+      serviceTempMaxC: 18 + (i % 7),
+      serviceRainMm: i % 3 === 0 ? 2.5 : 0,
+    });
   }
   return points;
 }
+
+/**
+ * The diagnostic payload for the succeeded demo run, mirroring the forecast runtime's snapshot
+ * shape: accuracy vs baseline (holdout + CV), feature importance, and a walk-forward backtest
+ * with weekday error summary and worst misses. Demo data only.
+ */
+const demoForecastDiagnostics: ForecastDiagnostics = {
+  modelVersion: "timesfm-3.0 + xgboost-twin",
+  trainedRows: 287,
+  reliable: true,
+  warnings: [],
+  features: [
+    "day_of_week",
+    "is_weekend",
+    "is_friday",
+    "is_saturday",
+    "day_of_month",
+    "booked_covers",
+    "net_revenue_lag_7",
+    "net_revenue_lag_14",
+    "net_revenue_roll_mean_7",
+    "net_revenue_roll_mean_28",
+    "public_holiday",
+    "service_temp_max_c",
+    "service_rain_mm",
+  ],
+  shareFeatures: ["day_of_week", "is_weekend", "is_friday", "booked_covers", "service_temp_max_c"],
+  holdoutNetXgboost: { mae: 421.5, rmse: 512.8, mape: 0.0412, n: 72 },
+  holdoutNetBaseline: { mae: 640.0, rmse: 780.0, mape: 0.0625, n: 72 },
+  holdoutFood: { mae: 205.0, rmse: 260.0, mape: 0.047, n: 72 },
+  holdoutBev: { mae: 280.0, rmse: 350.0, mape: 0.058, n: 72 },
+  cvNetXgboost: { mae: 445.0, rmse: 540.0, mape: 0.043, n: 215 },
+  cvNetBaseline: { mae: 655.0, rmse: 800.0, mape: 0.064, n: 215 },
+  beatsBaseline: true,
+  importance: [
+    { feature: "booked_covers", importance: 0.38 },
+    { feature: "net_revenue_lag_7", importance: 0.21 },
+    { feature: "net_revenue_dow_mean_4", importance: 0.14 },
+    { feature: "is_friday", importance: 0.09 },
+    { feature: "is_saturday", importance: 0.08 },
+    { feature: "public_holiday", importance: 0.05 },
+    { feature: "service_temp_max_c", importance: 0.03 },
+    { feature: "day_of_month", importance: 0.02 },
+  ],
+  backtest: {
+    rows: [
+      { date: "2026-09-26", day: "Saturday", actualNet: 11820, predictedNet: 11240, error: 580, absPctError: 4.9, actualFood: 5320, predictedFood: 5060, actualBev: 6500, predictedBev: 6180, baselineNet: 10980 },
+      { date: "2026-09-27", day: "Sunday", actualNet: 10450, predictedNet: 10780, error: -330, absPctError: 3.2, actualFood: 4700, predictedFood: 4850, actualBev: 5750, predictedBev: 5930, baselineNet: 10200 },
+      { date: "2026-09-28", day: "Monday", actualNet: 7850, predictedNet: 7620, error: 230, absPctError: 2.9, actualFood: 3530, predictedFood: 3430, actualBev: 4320, predictedBev: 4190, baselineNet: 7400 },
+      { date: "2026-09-29", day: "Tuesday", actualNet: 8100, predictedNet: 8420, error: -320, absPctError: 4.0, actualFood: 3645, predictedFood: 3790, actualBev: 4455, predictedBev: 4630, baselineNet: 7950 },
+      { date: "2026-09-30", day: "Wednesday", actualNet: 11200, predictedNet: 10850, error: 350, absPctError: 3.1, actualFood: 5040, predictedFood: 4880, actualBev: 6160, predictedBev: 5970, baselineNet: 10400 },
+    ],
+    byWeekday: [
+      { day: "Monday", n: 41, mae: 342.0, mape: 4.3, meanActual: 7950, meanPredicted: 7820 },
+      { day: "Tuesday", n: 41, mae: 318.0, mape: 4.0, meanActual: 8230, meanPredicted: 8120 },
+      { day: "Wednesday", n: 41, mae: 290.0, mape: 3.6, meanActual: 8100, meanPredicted: 8050 },
+      { day: "Thursday", n: 41, mae: 305.0, mape: 3.8, meanActual: 8420, meanPredicted: 8310 },
+      { day: "Friday", n: 41, mae: 380.0, mape: 4.2, meanActual: 9180, meanPredicted: 8950 },
+      { day: "Saturday", n: 41, mae: 470.0, mape: 4.1, meanActual: 11850, meanPredicted: 11400 },
+      { day: "Sunday", n: 41, mae: 440.0, mape: 4.2, meanActual: 10620, meanPredicted: 10300 },
+    ],
+    residualMean: 12.5,
+    residualStd: 480.2,
+    worstDays: [
+      { date: "2026-10-03", day: "Saturday", actualNet: 12540, predictedNet: 11480, error: 1060, absPctError: 8.5, actualFood: 5640, predictedFood: 5170, actualBev: 6900, predictedBev: 6310, baselineNet: 11100 },
+      { date: "2026-10-02", day: "Friday", actualNet: 9740, predictedNet: 9020, error: 720, absPctError: 7.4, actualFood: 4380, predictedFood: 4060, actualBev: 5360, predictedBev: 4960, baselineNet: 9300 },
+    ],
+  },
+};
 
 /**
  * The deterministic SUCCEEDED run the create-forecast flow returns. The demo has no background
@@ -719,6 +813,7 @@ function buildCreatedForecastRun(input: CreateForecastInput): ForecastRun {
     series: demoForecastSeries(historyTo, input.horizonDays),
     errorMessage: null,
     modelVersion: "timesfm-1.0",
+    diagnostics: demoForecastDiagnostics,
   };
 }
 
@@ -739,6 +834,7 @@ const demoForecastRuns: ForecastRun[] = [
     series: demoForecastSeries("2026-10-05", 7),
     errorMessage: null,
     modelVersion: "timesfm-1.0",
+    diagnostics: demoForecastDiagnostics,
   },
   {
     id: "fc-1",
@@ -752,6 +848,7 @@ const demoForecastRuns: ForecastRun[] = [
     series: null,
     errorMessage: null,
     modelVersion: null,
+    diagnostics: null,
   },
 ];
 
