@@ -2,6 +2,8 @@ package com.goldys.platform.forecasting;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -21,6 +23,7 @@ class ForecastRunRepositoryIntegrationTest {
 
   private static final Instant NOW = Instant.parse("2026-10-12T10:15:30Z");
   private static final String CREATED_BY = "owner@example.com";
+  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   @Autowired JdbcTemplate jdbc;
   @Autowired ForecastRunRepository repository;
@@ -66,6 +69,60 @@ class ForecastRunRepositoryIntegrationTest {
     assertThat(reloaded.series()).containsExactlyElementsOf(series);
     assertThat(reloaded.modelVersion()).isEqualTo("timesfm-3.0");
     assertThat(reloaded.elapsedMs()).isEqualTo(1L);
+  }
+
+  @Test
+  void savesAndReloadsRunWithDiagnosticsAndEnrichedSeries() throws Exception {
+    String diagnosticsJson = "{\"modelVersion\":\"timesfm-3.0\",\"beatsBaseline\":true}";
+    List<ForecastDay> series =
+        List.of(
+            new ForecastDay(
+                LocalDate.of(2026, 10, 12),
+                Map.of("0.5", new BigDecimal("120.0")),
+                new BigDecimal("58.0"),
+                new BigDecimal("62.0"),
+                new BigDecimal("115.0"),
+                new BigDecimal("142"),
+                true,
+                "Melbourne Cup",
+                false,
+                false,
+                false,
+                true,
+                new BigDecimal("22.5"),
+                new BigDecimal("0.0"),
+                "open-meteo"));
+    ForecastRun run =
+        ForecastRun.create(
+            "sales.gross",
+            List.of(),
+            LocalDate.of(2026, 8, 1),
+            LocalDate.of(2026, 10, 11),
+            30,
+            CREATED_BY,
+            NOW);
+    run.markSucceeded(series, diagnosticsJson, "timesfm-3.0", 2L);
+
+    repository.save(run);
+    ForecastRun reloaded = repository.findById(run.id()).orElseThrow();
+
+    assertThat((JsonNode) MAPPER.readTree(reloaded.diagnostics()))
+        .isEqualTo(MAPPER.readTree(diagnosticsJson));
+    assertThat(reloaded.series()).containsExactlyElementsOf(series);
+    ForecastDay day = reloaded.series().get(0);
+    assertThat(day.food()).isEqualByComparingTo("58.0");
+    assertThat(day.bev()).isEqualByComparingTo("62.0");
+    assertThat(day.baseline()).isEqualByComparingTo("115.0");
+    assertThat(day.bookedCovers()).isEqualByComparingTo("142");
+    assertThat(day.publicHoliday()).isTrue();
+    assertThat(day.publicHolidayName()).isEqualTo("Melbourne Cup");
+    assertThat(day.publicHolidayEve()).isFalse();
+    assertThat(day.dayAfterPublicHoliday()).isFalse();
+    assertThat(day.schoolHoliday()).isFalse();
+    assertThat(day.uniInSession()).isTrue();
+    assertThat(day.serviceTempMaxC()).isEqualByComparingTo("22.5");
+    assertThat(day.serviceRainMm()).isEqualByComparingTo("0.0");
+    assertThat(day.weatherSource()).isEqualTo("open-meteo");
   }
 
   @Test
