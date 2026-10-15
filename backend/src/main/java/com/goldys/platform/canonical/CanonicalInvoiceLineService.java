@@ -29,11 +29,15 @@ class CanonicalInvoiceLineService {
   private static final Clock CLOCK = Clock.systemUTC();
 
   private final CanonicalInvoiceLineRepository repository;
+  private final CanonicalInvoiceQuery invoiceQuery;
   private final ApplicationEventPublisher publisher;
 
   CanonicalInvoiceLineService(
-      CanonicalInvoiceLineRepository repository, ApplicationEventPublisher publisher) {
+      CanonicalInvoiceLineRepository repository,
+      CanonicalInvoiceQuery invoiceQuery,
+      ApplicationEventPublisher publisher) {
     this.repository = repository;
+    this.invoiceQuery = invoiceQuery;
     this.publisher = publisher;
   }
 
@@ -90,6 +94,36 @@ class CanonicalInvoiceLineService {
   private static UUID logicalIdFor(String sourceRecordRef) {
     return UUID.nameUUIDFromBytes(
         ("invoice-line:" + sourceRecordRef).getBytes(StandardCharsets.UTF_8));
+  }
+
+  /**
+   * One-off re-key: resolves the parent invoice reference for every current line whose {@code
+   * invoiceLogicalId} is still null (legacy rows ingested before the column existed). Each such
+   * line is closed and re-inserted with its parent id via {@code reparented}, so the bitemporal
+   * "close-and-reinsert, never UPDATE" invariant holds. Lines whose invoice number resolves to zero
+   * current invoices (orphans) or to more than one distinct current invoice (ambiguous) are left
+   * null — an explicit unresolved relationship, never a guess. No projection event is published:
+   * re-parenting changes only the structural join key, never a fact, so COGS is unaffected.
+   *
+   * @return the number of lines re-keyed.
+   */
+  @Transactional
+  int backfillInvoiceLogicalId() {
+    Instant now = CLOCK.instant();
+    List<CanonicalInvoiceLine> lines = repository.findCurrentWithNullInvoiceLogicalId();
+    int migrated = 0;
+    for (CanonicalInvoiceLine line : lines) {
+      Optional<UUID> parent =
+          invoiceQuery.unambiguousInvoiceLogicalIdForInvoiceNumber(line.invoiceNumber());
+      if (parent.isEmpty()) {
+        continue;
+      }
+      line.supersede(now);
+      repository.saveAndFlush(line);
+      repository.save(line.reparented(parent.get(), now));
+      migrated++;
+    }
+    return migrated;
   }
 
   /**

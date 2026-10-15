@@ -19,6 +19,15 @@ public class CanonicalInvoiceLineIngest {
   }
 
   /**
+   * One-off re-key: resolves the parent invoice reference for every current line whose {@code
+   * invoiceLogicalId} is null (legacy rows). Orphans and ambiguous invoice numbers are left null.
+   * Returns the number of lines re-keyed.
+   */
+  public int backfillInvoiceLogicalId() {
+    return service.backfillInvoiceLogicalId();
+  }
+
+  /**
    * Closes the current CSV-sourced lines of one invoice whose {@code sourceRecordRef} is not in
    * {@code currentSourceRefs} (lines the re-ingested export no longer carries). Returns the number
    * of lines closed.

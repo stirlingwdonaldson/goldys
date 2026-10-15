@@ -91,6 +91,21 @@ public class CanonicalInvoiceQuery {
     return repository.currentLogicalIdsByInvoiceNumber(invoiceNumber).stream().findFirst();
   }
 
+  /**
+   * The current invoice's stable logical id for an invoice number, but only when that number maps
+   * to exactly one current invoice entity. Zero current rows (an orphan line) and more than one
+   * distinct current invoice (a supplier-scoped collision not yet disambiguated) both return empty,
+   * so callers leave the relationship unresolved rather than guessing.
+   */
+  public Optional<UUID> unambiguousInvoiceLogicalIdForInvoiceNumber(String invoiceNumber) {
+    if (invoiceNumber == null) {
+      return Optional.empty();
+    }
+    List<UUID> ids =
+        repository.currentLogicalIdsByInvoiceNumber(invoiceNumber).stream().distinct().toList();
+    return ids.size() == 1 ? Optional.of(ids.get(0)) : Optional.empty();
+  }
+
   /** All current invoice metadata, so modules outside this package can read invoices. */
   public List<InvoiceMetadataView> currentInvoices() {
     return repository.findAllCurrent().stream().map(CanonicalInvoiceQuery::toView).toList();

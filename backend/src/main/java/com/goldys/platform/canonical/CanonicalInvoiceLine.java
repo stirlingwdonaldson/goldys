@@ -187,6 +187,42 @@ class CanonicalInvoiceLine extends BitemporalEntity {
         origin);
   }
 
+  /**
+   * A successor version of this line identical in every fact but with the parent invoice reference
+   * resolved to {@code invoiceLogicalId}. Used by the one-off legacy re-key backfill: the original
+   * row (which predates the parent-reference column) is closed and this row becomes current. Fact
+   * and identity fields are copied verbatim, so COGS and provenance are unchanged — only the
+   * structural parentage is added. {@code validFrom} and {@code recordedAt} both take {@code at},
+   * matching the established valid-time convention (validFrom == recordedAt).
+   */
+  CanonicalInvoiceLine reparented(UUID invoiceLogicalId, Instant at) {
+    return new CanonicalInvoiceLine(
+        logicalEntityId(),
+        sourceSystem(),
+        sourceRecordRef(),
+        rawRecordId(),
+        at,
+        at,
+        invoiceNumber,
+        invoiceLogicalId,
+        invoiceDate,
+        productNameKey,
+        stockCode,
+        quantity,
+        unitCost,
+        lineTotal,
+        category,
+        uom,
+        unitQuantity,
+        packSize,
+        wetAmount,
+        lineTotalIncTax,
+        lineGstAmount,
+        lineTaxRate,
+        incGst,
+        origin);
+  }
+
   boolean sameFact(InvoiceLineInput input) {
     return Objects.equals(invoiceNumber, input.invoiceNumber())
         && Objects.equals(invoiceDate, input.invoiceDate())

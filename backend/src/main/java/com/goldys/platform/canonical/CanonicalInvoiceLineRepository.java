@@ -17,6 +17,15 @@ interface CanonicalInvoiceLineRepository extends BitemporalRepository<CanonicalI
   @Query("select l from CanonicalInvoiceLine l where l.supersededAt is null")
   List<CanonicalInvoiceLine> findAllCurrent();
 
+  /**
+   * Current lines whose parent invoice reference is still unresolved — legacy rows ingested before
+   * the parent-reference column existed. The one-off backfill resolves these from the invoice
+   * number; orphans and ambiguous cases are left null by the caller.
+   */
+  @Query(
+      "select l from CanonicalInvoiceLine l where l.invoiceLogicalId is null and l.supersededAt is null")
+  List<CanonicalInvoiceLine> findCurrentWithNullInvoiceLogicalId();
+
   /** The current lines of one invoice, locked for enrichment. Row order is not significant. */
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query(
