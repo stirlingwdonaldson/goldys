@@ -44,7 +44,7 @@ Six concrete outcomes:
 | B | Transparency model | A **diagnostic XGBoost twin** (in the same Python service) provides feature importance, baseline comparison, backtest, and the **food/bev share** model. It is *not* the headline forecast — TimesFM is. It shares the same feature matrix TimesFM receives. |
 | C | External drivers | **All of them now**: public holidays + school terms (DataVic), university terms (manual YAML), trading-hours weather (Open-Meteo). Fetched and disk-cached in the Python service (Approach A — see §3). |
 | D | Target | **Net revenue + food/bev split.** TimesFM forecasts net; the XGBoost share model splits net into food/bev (the reference's "forecast net, then split" finding: bev is ~3× as volatile as food, so modelling them separately drags the stable series around). |
-| E | Future bookings | A new resolved quantity **`reservations.booked_covers`** (Σ party size over non-cancelled reservations for a date) feeds the model. For future dates it is the book right now; for past dates the settled book. See §7. |
+| E | Future bookings | A new resolved quantity **`reservations.booked_covers`** (Σ party size over non-cancelled, non-walk-in reservations for a date) feeds the model. For future dates it is the book right now; for past dates the settled book. See §7. |
 | F | Food/bev derivation | Derive from the **product classification** (category `group` = second level), mapped to food/bev by a small configurable rule. **Approximate by design** — documented as an outstanding task and flagged in the UI. See §8. |
 | G | Service boundary | Extend the existing **`forecast-service`** (Python) from "TimesFM inference" into a full forecasting runtime (external features + XGBoost twin). The Java `forecasting` package keeps its current role: read resolved series via the semantic layer, orchestrate, persist. |
 | H | Page structure | **Tabs on the one `/forecasting` page** (Forecast / Model / Backtest / Runs), matching Goldy's tab convention, not five routes. |
@@ -165,8 +165,9 @@ it:
 
 1. **Migration**: add `booked_covers BIGINT` to `resolved_reservation_day`.
 2. **`ReservationProjector`**: in `Mutable.add`, also accumulate `bookedCovers += partySize` for every
-   reservation whose status is not `CANCELLED` (future `BOOKED` + past `SEATED`/`COMPLETED`/`NO_SHOW`/
-   `WALK_IN`). Recompute-all backfills existing rows.
+   reservation whose status is neither `CANCELLED` nor `WALK_IN` (future `BOOKED` + past
+   `SEATED`/`COMPLETED`/`NO_SHOW` — a no-show was still booked, a walk-in was not). Recompute-all
+   backfills existing rows.
 3. **`ReservationSummary`** + `ResolvedReservationDay`: expose `bookedCovers`.
 4. **Metric** `reservations.booked_covers` (count, `reservations.metrics` permission) in the catalogue
    + `ReservationMetricExecutor` + `MetricCatalog`.
