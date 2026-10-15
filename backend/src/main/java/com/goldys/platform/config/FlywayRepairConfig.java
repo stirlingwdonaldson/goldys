@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Configuration;
  * was deployed but never merged; that migration's exact content was later lost in a rebase, so its
  * checksum cannot be reproduced. When a migration on disk no longer byte-matches what was applied
  * (as happened here), {@code repair()} updates {@code flyway_schema_history} checksums to match the
- * files on disk — it never re-runs SQL, so the already-applied schema change is untouched. Validation
- * passes on every subsequent startup, so the repair is a one-time realignment.
+ * files on disk — it never re-runs SQL, so the already-applied schema change is untouched.
+ * Validation passes on every subsequent startup, so the repair is a one-time realignment.
  */
 @Configuration
 public class FlywayRepairConfig {
