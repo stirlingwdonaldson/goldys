@@ -3,23 +3,20 @@
 import { useMemo, useState } from "react";
 import { CircleCheck, Info } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Section } from "@/components/layout/section";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
+import { TablePagination, useClientPagination } from "@/components/data-table/table-pagination";
 import { FocusSwitcher, WorkList } from "@/components/my-work/work-list";
 import { useFocus, useWorkQueue } from "@/components/my-work/use-work-queue";
-import { CATEGORY_LABEL, filterByFocus, type WorkCategory, type WorkSeverity } from "@/lib/work-queue";
+import { CATEGORY_LABEL, filterByFocus, type WorkCategory } from "@/lib/work-queue";
 
 type CategoryFilter = WorkCategory | "all";
 
-const GROUPS: { severity: WorkSeverity; title: string; description: string }[] = [
-  { severity: "high", title: "Urgent", description: "Figures are wrong or missing until these are dealt with." },
-  { severity: "medium", title: "Soon", description: "Worth clearing before the next report goes out." },
-  { severity: "low", title: "When you can", description: "Nothing is wrong yet, but these will matter." },
-];
+/** The work list opens on 25 items, unlike the 10 most tables default to. */
+const PAGE_SIZE = 25;
 
 /**
  * One queue for everything that needs a person: figures sources disagree on, failing
@@ -38,6 +35,9 @@ export default function MyWorkPage() {
     for (const i of inFocus) c[i.category] += 1;
     return c;
   }, [inFocus]);
+
+  // One flat, urgency-ordered list, paginated (the queue is already sorted urgent-first).
+  const { pageRows, pagination } = useClientPagination(visible, `${focus}-${category}`, PAGE_SIZE);
 
   if (loading) return <LoadingState rows={4} />;
   if (error || !data) {
@@ -99,15 +99,10 @@ export default function MyWorkPage() {
           }
         />
       ) : (
-        GROUPS.map((g) => {
-          const items = visible.filter((i) => i.severity === g.severity);
-          if (items.length === 0) return null;
-          return (
-            <Section key={g.severity} title={`${g.title} · ${items.length}`} description={g.description} card>
-              <WorkList items={items} label={`${g.title} items`} />
-            </Section>
-          );
-        })
+        <div className="flex flex-col gap-3">
+          <WorkList items={pageRows} label="Open items" />
+          <TablePagination {...pagination} />
+        </div>
       )}
     </div>
   );

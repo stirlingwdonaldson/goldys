@@ -98,9 +98,9 @@ function PageButton({
  * (a filter, a date range): when it changes the table returns to the first page, otherwise the
  * old page index could point past the new total.
  */
-export function usePageState(resetKey: string) {
+export function usePageState(resetKey: string, defaultPageSize: number = DEFAULT_PAGE_SIZE) {
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSizeState] = useState<number>(DEFAULT_PAGE_SIZE);
+  const [pageSize, setPageSizeState] = useState<number>(defaultPageSize);
   useEffect(() => {
     setPage(0);
   }, [resetKey]);
@@ -112,8 +112,12 @@ export function usePageState(resetKey: string) {
 }
 
 /** Client-side paging over an in-memory list, for plain tables outside {@link DataTable}. */
-export function useClientPagination<T>(rows: T[], resetKey = "") {
-  const state = usePageState(resetKey);
+export function useClientPagination<T>(
+  rows: T[],
+  resetKey = "",
+  defaultPageSize: number = DEFAULT_PAGE_SIZE,
+) {
+  const state = usePageState(resetKey, defaultPageSize);
   const pageCount = Math.max(1, Math.ceil(rows.length / state.pageSize));
   // Clamp rather than trust the stored index: the list can shrink under it.
   const page = Math.min(state.page, pageCount - 1);
