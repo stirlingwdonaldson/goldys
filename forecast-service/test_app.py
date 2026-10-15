@@ -56,6 +56,28 @@ def _body(n: int = 60, horizon: int = 7) -> dict:
     }
 
 
+def _future_book_body(n: int = 60, horizon: int = 7, trailing: int = 3) -> dict:
+    """History plus ``trailing`` future-book days: ``net``/``food``/``bev`` are
+    null after the last labelled date, but ``booked_covers`` is already known —
+    the normal shape Goldy's sends (the future book has no revenue yet)."""
+    dates = pd.date_range("2026-03-02", periods=n + trailing, freq="D")
+    dow = dates.dayofweek
+    net = 1000.0 + 200.0 * np.sin(2 * np.pi * dow / 7)
+    share = np.clip(0.5 + 0.04 * np.sin(2 * np.pi * dow / 7), 0.05, 0.95)
+    covers = 50.0 + 10.0 * dow
+    return {
+        "dates": [d.strftime("%Y-%m-%d") for d in dates],
+        "net": [round(float(v), 2) for v in net[:n]] + [None] * trailing,
+        "booked_covers": [round(float(v), 2) for v in covers],
+        "bookings": [float(i % 31) for i in range(n + trailing)],
+        "food": [round(float(net[i] * share[i]), 2) for i in range(n)] + [None] * trailing,
+        "bev": [round(float(net[i] * (1 - share[i])), 2) for i in range(n)]
+        + [None] * trailing,
+        "horizon": horizon,
+        "quantiles": QUANTILES,
+    }
+
+
 class FakePredictor:
     """Deterministic stand-in: records its call and returns a fixed forecast."""
 
@@ -160,6 +182,32 @@ def test_pastFutureCovariatesArePassed(client, monkeypatch):
     assert covariates is not None
     assert covariates.ndim == 2
     assert covariates.shape[1] == len(body["dates"]) + body["horizon"]
+
+
+def test_forecastAnchorsAtLastLabelledNetDate(client, monkeypatch):
+    monkeypatch.setattr(forecast_module, "build_external_features", _stub_external)
+    body = _future_book_body(n=60, horizon=7, trailing=3)
+
+    response = client.post("/forecast", json=body)
+
+    assert response.status_code == 200
+    result = response.json()
+
+    rows = result["forecast"]
+    assert len(rows) == 7, "forecast should have exactly horizon rows, not trailing book days"
+
+    # The forecast starts the day after the last labelled net date (2026-04-30),
+    # not after the last request date (2026-05-03).
+    cutoff = dt.date(2026, 4, 30)
+    expected = [(cutoff + dt.timedelta(days=i + 1)).isoformat() for i in range(7)]
+    assert [r["date"] for r in rows] == expected
+
+    # TimesFM's context is trimmed to the labelled history, and the future-known
+    # covariates span exactly that history plus the horizon.
+    last_call = app_module.predictor.last_call
+    assert len(last_call["dates"]) == 60
+    covariates = last_call["past_future_covariates"]
+    assert covariates.shape[1] == len(last_call["dates"]) + body["horizon"]
 
 
 def test_prewarm_enabled_parses_env(monkeypatch):

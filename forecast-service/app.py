@@ -143,11 +143,18 @@ def forecast(request: ForecastRequest) -> ForecastResponse:
     lagged = add_lag_features(frame, config)
 
     # The headline forecast: TimesFM net-revenue quantiles conditioned on the
-    # future-known covariates.
-    target = [_nan_if_none(value) for value in request.net]
+    # future-known covariates. TimesFM is anchored at the last labelled net date
+    # (``cutoff``): trailing null-net dates are the future book, not context.
+    # Dropping them keeps the context length consistent with the covariate time
+    # dimension and anchors ``forecast_dates`` at ``cutoff``, so the forecast
+    # rows and the frame's future rows stay date-aligned.
+    # (``build_future_frame`` above guarantees at least one labelled date.)
+    cutoff_index = max(i for i, value in enumerate(request.net) if value is not None)
+    history_dates = request.dates[: cutoff_index + 1]
+    target = [_nan_if_none(value) for value in request.net[: cutoff_index + 1]]
     past_future = _future_known_covariates(frame)
     future_dates, quantiles = predictor.predict(
-        request.dates,
+        history_dates,
         target,
         None,
         request.horizon,
