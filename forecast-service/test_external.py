@@ -72,6 +72,14 @@ def test_weather_aggregates_over_trading_hours_only():
     assert row["service_temp_mean_c"] == 17.5  # mean(12..23)
     assert row["service_temp_max_c"] == 23.0
 
+    # Friday (dayofweek 4) -> weekend-style early open 12:00 (Fri-Sun).
+    friday = _hourly_frame("2026-09-04", range(6, 24))
+    row = external_module.aggregate_service_weather(config, friday).iloc[0]
+    assert row["service_temp_mean_c"] == 17.5  # mean(12..23), not 19.0 (15:00 open)
+    assert row["service_temp_max_c"] == 23.0
+    # Rain only at 06:00 is pre-open on a Friday too, so still excluded.
+    assert row["service_rain_mm"] == 0.0
+
 
 def test_holiday_eve_and_day_after_are_derived():
     dates = pd.DataFrame(
@@ -96,6 +104,22 @@ def test_holiday_eve_and_day_after_are_derived():
     # Days not adjacent to the holiday stay clear.
     assert by_date.loc[pd.Timestamp("2026-11-01"), "public_holiday_eve"] == 0
     assert by_date.loc[pd.Timestamp("2026-11-05"), "day_after_public_holiday"] == 0
+
+
+def test_missing_rain_probability_column_degrades_to_na():
+    config = external_module.Config()
+    hourly = _hourly_frame("2026-08-31", range(6, 24)).drop(
+        columns=["precipitation_probability"]
+    )
+
+    # A frame without the precipitation_probability column must still
+    # aggregate without raising, and the probability feature degrades to NA.
+    result = external_module.aggregate_service_weather(config, hourly)
+    row = result.iloc[0]
+
+    assert pd.isna(row["service_rain_probability_max_pct"])
+    # Everything else aggregates normally.
+    assert row["service_temp_mean_c"] == 19.0
 
 
 def test_source_outage_degrades_to_na(monkeypatch):

@@ -674,6 +674,10 @@ def aggregate_service_weather(config: Config, hourly: pd.DataFrame) -> pd.DataFr
     """Collapse hourly weather to one row per day, over trading hours only.
 
     Rain at 6am is irrelevant to a pub. Rain at 7pm on a Friday is not.
+
+    Trading hours are venue-specific: Fri-Sun are weekend-style early-open
+    days (``weekend_open``, 12:00), while Mon-Thu open later (``weekday_open``,
+    15:00); every day closes at ``closing`` (23:00).
     """
     if hourly.empty:
         return pd.DataFrame(columns=["date", *WEATHER_COLUMNS])
@@ -684,6 +688,7 @@ def aggregate_service_weather(config: Config, hourly: pd.DataFrame) -> pd.DataFr
 
     rows: list[dict[str, Any]] = []
     for day, group in hourly.groupby("date"):
+        # dayofweek 4 == Friday, so Fri-Sun (>= 4) get the weekend early open.
         opening = weekend_open if day.dayofweek >= 4 else weekday_open
         service = group[(group["hour"] >= opening) & (group["hour"] <= closing)]
         if service.empty:
@@ -693,9 +698,19 @@ def aggregate_service_weather(config: Config, hourly: pd.DataFrame) -> pd.DataFr
         rain = pd.to_numeric(service["precipitation"], errors="coerce")
         cloud = pd.to_numeric(service["cloud_cover"], errors="coerce")
         gusts = pd.to_numeric(service["wind_gusts_10m"], errors="coerce")
-        rain_probability = pd.to_numeric(
-            service.get("precipitation_probability"), errors="coerce"
-        )
+
+        # precipitation_probability is forecast-only; observed archive rows
+        # carry it as all-NA and some callers omit it entirely. A missing
+        # column must degrade to NA, not crash `pd.to_numeric(None)`.
+        if "precipitation_probability" in service.columns:
+            rain_probability = pd.to_numeric(
+                service["precipitation_probability"], errors="coerce"
+            )
+            rain_probability_max = (
+                rain_probability.max() if rain_probability.notna().any() else pd.NA
+            )
+        else:
+            rain_probability_max = pd.NA
 
         rows.append(
             {
@@ -703,9 +718,7 @@ def aggregate_service_weather(config: Config, hourly: pd.DataFrame) -> pd.DataFr
                 "service_temp_mean_c": temperature.mean(),
                 "service_temp_max_c": temperature.max(),
                 "service_rain_mm": rain.sum(min_count=1),
-                "service_rain_probability_max_pct": (
-                    rain_probability.max() if rain_probability.notna().any() else pd.NA
-                ),
+                "service_rain_probability_max_pct": rain_probability_max,
                 "service_sunny_hours": (
                     int((cloud <= 30).sum()) if cloud.notna().any() else pd.NA
                 ),
