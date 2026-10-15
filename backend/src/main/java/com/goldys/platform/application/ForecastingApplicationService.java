@@ -95,6 +95,12 @@ public class ForecastingApplicationService {
     for (String covariate : request.covariates()) {
       requireMetricRead(role, covariate);
     }
+    // The forecast also reads these internal series regardless of the requested covariates, so a
+    // caller who cannot read them is denied before the run is created (never silently dropped).
+    requireMetricRead(role, MetricId.RESERVATIONS_BOOKED_COVERS.value());
+    requireMetricRead(role, MetricId.RESERVATIONS_BOOKINGS.value());
+    requireMetricRead(role, MetricId.SALES_FOOD.value());
+    requireMetricRead(role, MetricId.SALES_BEV.value());
     ForecastRun run =
         forecasts.submit(
             request.target(),

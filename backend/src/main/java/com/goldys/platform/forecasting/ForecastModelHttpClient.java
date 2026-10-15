@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
  * (rather than serialising the record directly) so the wire key stays {@code booked_covers} rather
  * than the record's {@code bookedCovers}.
  *
- * <p>Failures — non-2xx, IO, or an unparseable body — surface as {@link TimesFmException} with an
- * operator-facing message that never carries the request payload, credentials, or tokens.
+ * <p>Failures — non-2xx, IO, or an unparseable body — surface as {@link ForecastModelException}
+ * with an operator-facing message that never carries the request payload, credentials, or tokens.
  */
 @Component
 public class ForecastModelHttpClient implements ForecastModelClient {
@@ -57,14 +57,15 @@ public class ForecastModelHttpClient implements ForecastModelClient {
     try {
       response = http.send(httpRequest, HttpResponse.BodyHandlers.ofString());
     } catch (IOException e) {
-      throw new TimesFmException("forecasting service request failed", e);
+      throw new ForecastModelException("forecasting service request failed", e);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new TimesFmException("Interrupted while calling the forecasting service", e);
+      throw new ForecastModelException("Interrupted while calling the forecasting service", e);
     }
 
     if (response.statusCode() < 200 || response.statusCode() >= 300) {
-      throw new TimesFmException("forecasting service returned HTTP " + response.statusCode());
+      throw new ForecastModelException(
+          "forecasting service returned HTTP " + response.statusCode());
     }
 
     try {
@@ -81,7 +82,7 @@ public class ForecastModelHttpClient implements ForecastModelClient {
           mapper.treeToValue(root.get("warnings"), new TypeReference<List<String>>() {});
       return new ForecastModelResponse(forecast, diagnostics, warnings);
     } catch (IOException | IllegalArgumentException e) {
-      throw new TimesFmException("forecasting service returned an unparseable response", e);
+      throw new ForecastModelException("forecasting service returned an unparseable response", e);
     }
   }
 
@@ -98,7 +99,7 @@ public class ForecastModelHttpClient implements ForecastModelClient {
       body.set("quantiles", mapper.valueToTree(request.quantiles()));
       return mapper.writeValueAsString(body);
     } catch (IOException e) {
-      throw new TimesFmException("Failed to build the forecasting request", e);
+      throw new ForecastModelException("Failed to build the forecasting request", e);
     }
   }
 }

@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Bridges the semantic layer's {@link MetricPoint} rows onto the daily date axis the TimesFM model
- * expects, and builds the {@link TimesFmRequest} payload. Pure and stateless: no Spring wiring, no
- * I/O.
+ * Bridges the semantic layer's {@link MetricPoint} rows onto the daily date axis the forecasting
+ * runtime expects, and builds the {@link ForecastModelRequest} payload. Pure and stateless: no
+ * Spring wiring, no I/O.
  *
  * <p>The alignment rules are deliberate:
  *
@@ -54,20 +54,28 @@ public final class ForecastSeriesAssembler {
   }
 
   /**
-   * Builds the model payload: the target aligned to {@code axis}, each covariate aligned the same
-   * way, and {@code horizonDays}/{@code quantiles} passed through unchanged.
+   * Builds the model payload: each internal daily series aligned to {@code axis} (null where
+   * missing), with {@code horizon}/{@code quantiles} passed through unchanged. {@code net} is the
+   * required target; {@code bookedCovers}/{@code bookings}/{@code food}/{@code bev} are the
+   * optional covariates, each aligned the same way.
    */
-  public static TimesFmRequest request(
+  public static ForecastModelRequest request(
       List<LocalDate> axis,
-      List<MetricPoint> target,
-      List<CovariateSeries> covariates,
-      int horizonDays,
+      List<MetricPoint> net,
+      List<MetricPoint> bookedCovers,
+      List<MetricPoint> bookings,
+      List<MetricPoint> food,
+      List<MetricPoint> bev,
+      int horizon,
       List<String> quantiles) {
-    List<TimesFmRequest.Covariate> alignedCovariates = new ArrayList<>(covariates.size());
-    for (CovariateSeries covariate : covariates) {
-      alignedCovariates.add(
-          new TimesFmRequest.Covariate(covariate.name(), align(axis, covariate.points())));
-    }
-    return new TimesFmRequest(axis, align(axis, target), alignedCovariates, horizonDays, quantiles);
+    return new ForecastModelRequest(
+        axis,
+        align(axis, net),
+        align(axis, bookedCovers),
+        align(axis, bookings),
+        align(axis, food),
+        align(axis, bev),
+        horizon,
+        quantiles);
   }
 }

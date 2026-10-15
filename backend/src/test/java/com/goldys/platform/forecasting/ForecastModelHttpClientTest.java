@@ -232,7 +232,8 @@ class ForecastModelHttpClientTest {
     try {
       ForecastModelHttpClient client = client("http://localhost:" + server.getAddress().getPort());
 
-      TimesFmException ex = (TimesFmException) catchThrowable(() -> client.forecast(request()));
+      ForecastModelException ex =
+          (ForecastModelException) catchThrowable(() -> client.forecast(request()));
 
       assertThat(ex).isNotNull();
       assertThat(ex.getMessage()).isEqualTo("forecasting service returned HTTP 500");

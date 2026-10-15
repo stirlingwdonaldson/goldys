@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.data.Offset.offset;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -97,9 +98,9 @@ class ForecastingApplicationServiceTest {
             new CreateForecastRequest("sales.gross", List.of("reservations.covers"), SEP_01, 7));
 
     verify(permissions).require(role(), new ResourceKey("forecasting"), PermissionAction.READ);
-    verify(permissions)
+    verify(permissions, atLeastOnce())
         .require(role(), new ResourceKey("reconciliation.sales"), PermissionAction.READ);
-    verify(permissions)
+    verify(permissions, atLeastOnce())
         .require(role(), new ResourceKey("reservations.metrics"), PermissionAction.READ);
     verify(forecasts).submit("sales.gross", List.of("reservations.covers"), SEP_01, 7, EMAIL);
 
@@ -117,6 +118,27 @@ class ForecastingApplicationServiceTest {
                             "sales.gross", List.of("reservations.covers"), SEP_01, 7)))
         .isInstanceOf(AccessDeniedException.class);
     verify(forecasts, times(1)).submit(any(), any(), any(), anyInt(), any());
+  }
+
+  @Test
+  void submitRequiresMetricPermission() {
+    // The forecast reads reservations.booked_covers/bookings (reservations.metrics) as implicit
+    // inputs regardless of the requested covariates; a caller who can read the target but not
+    // those inputs is denied before the run is created.
+    doThrow(AccessDeniedException.forResource("reservations.metrics"))
+        .when(permissions)
+        .require(role(), new ResourceKey("reservations.metrics"), PermissionAction.READ);
+
+    assertThatThrownBy(
+            () ->
+                service()
+                    .create(
+                        role(),
+                        EMAIL,
+                        new CreateForecastRequest("sales.gross", List.of(), SEP_01, 7)))
+        .isInstanceOf(AccessDeniedException.class);
+
+    verify(forecasts, never()).submit(any(), any(), any(), anyInt(), any());
   }
 
   @Test

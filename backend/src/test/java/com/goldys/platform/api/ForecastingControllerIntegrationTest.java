@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.goldys.platform.auth.AuthService;
-import com.goldys.platform.forecasting.TimesFmClient;
+import com.goldys.platform.forecasting.ForecastModelClient;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricPoint;
@@ -57,7 +57,7 @@ class ForecastingControllerIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired AuthService authService;
 
-  @MockitoBean TimesFmClient client;
+  @MockitoBean ForecastModelClient client;
   @MockitoBean MetricQueryService queries;
 
   @BeforeEach

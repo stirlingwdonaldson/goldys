@@ -37,8 +37,9 @@ public class EmbeddingServiceHttpClient implements EmbeddingClient {
   public EmbeddingServiceHttpClient(EmbeddingProperties properties, ObjectMapper mapper) {
     this.baseUrl = properties.baseUrl();
     this.mapper = mapper;
-    // Pin HTTP/1.1 for the same reason as TimesFmHttpClient: the default builder sends HTTP/2
-    // cleartext upgrade headers that the FastAPI/uvicorn service behind this port does not accept.
+    // Pin HTTP/1.1 for the same reason as ForecastModelHttpClient: the default builder sends
+    // HTTP/2 cleartext upgrade headers that the FastAPI/uvicorn service behind this port does not
+    // accept.
     this.http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
   }
 

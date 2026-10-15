@@ -44,7 +44,7 @@ class ForecastServiceTest {
   private final ForecastRunRepository runs = mock(ForecastRunRepository.class);
   private final MetricQueryService queries = mock(MetricQueryService.class);
   private final MetricCatalog catalog = new MetricCatalog();
-  private final TimesFmClient client = mock(TimesFmClient.class);
+  private final ForecastModelClient client = mock(ForecastModelClient.class);
   // A no-op executor: submit persists QUEUED and returns before the async execute runs, so the
   // QUEUED state is observable. The execute tests call execute(...) directly, synchronously.
   private final TaskExecutor executor = task -> {};
@@ -77,26 +77,24 @@ class ForecastServiceTest {
 
   @Test
   void submitPersistsQueuedWithHistoryToToday() {
-    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_GROSS, 20, SEP_01));
+    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_NET, 20, SEP_01));
 
-    ForecastRun run =
-        service.submit("sales.gross", List.of("reservations.covers"), SEP_01, 7, EMAIL);
+    ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, EMAIL);
 
     assertThat(run.status()).isEqualTo(ForecastRunStatus.QUEUED);
     assertThat(run.historyTo()).isEqualTo(TODAY);
     assertThat(run.historyFrom()).isEqualTo(SEP_01);
     assertThat(run.horizonDays()).isEqualTo(7);
-    assertThat(run.targetMetric()).isEqualTo("sales.gross");
-    assertThat(run.covariates()).containsExactly("reservations.covers");
+    assertThat(run.targetMetric()).isEqualTo("sales.net");
     assertThat(run.createdBy()).isEqualTo(EMAIL);
     assertThat(store).containsKey(run.id());
   }
 
   @Test
   void horizonValidated() {
-    assertThatThrownBy(() -> service.submit("sales.gross", List.of(), SEP_01, 0, EMAIL))
+    assertThatThrownBy(() -> service.submit("sales.net", List.of(), SEP_01, 0, EMAIL))
         .isInstanceOf(IllegalArgumentException.class);
-    assertThatThrownBy(() -> service.submit("sales.gross", List.of(), SEP_01, 91, EMAIL))
+    assertThatThrownBy(() -> service.submit("sales.net", List.of(), SEP_01, 91, EMAIL))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -105,16 +103,16 @@ class ForecastServiceTest {
     assertThatThrownBy(() -> service.submit(null, List.of(), SEP_01, 7, EMAIL))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("targetMetric");
-    assertThatThrownBy(() -> service.submit("sales.gross", List.of(), null, 7, EMAIL))
+    assertThatThrownBy(() -> service.submit("sales.net", List.of(), null, 7, EMAIL))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("historyFrom");
   }
 
   @Test
   void submitRejectsInsufficientHistory() {
-    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_GROSS, 3, SEP_01));
+    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_NET, 3, SEP_01));
 
-    assertThatThrownBy(() -> service.submit("sales.gross", List.of(), SEP_01, 7, EMAIL))
+    assertThatThrownBy(() -> service.submit("sales.net", List.of(), SEP_01, 7, EMAIL))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("insufficient history");
   }
@@ -127,55 +125,110 @@ class ForecastServiceTest {
 
   @Test
   void submitRejectsHistoryAfterToday() {
-    assertThatThrownBy(() -> service.submit("sales.gross", List.of(), TODAY.plusDays(1), 7, EMAIL))
+    assertThatThrownBy(() -> service.submit("sales.net", List.of(), TODAY.plusDays(1), 7, EMAIL))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void executeMarksSucceeded() {
-    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_GROSS, 20, SEP_01));
+    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_NET, 20, SEP_01));
     when(client.forecast(any()))
         .thenReturn(
-            new TimesFmForecast(
-                List.of(TODAY, TODAY.plusDays(1)),
-                Map.of(
-                    "0.1", List.of(new BigDecimal("10.1"), new BigDecimal("11.1")),
-                    "0.5", List.of(new BigDecimal("10.5"), new BigDecimal("11.5")),
-                    "0.9", List.of(new BigDecimal("10.9"), new BigDecimal("11.9")))));
+            new ForecastModelResponse(
+                List.of(
+                    new ForecastModelResponse.Day(
+                        TODAY.plusDays(1),
+                        new BigDecimal("10.5"),
+                        new BigDecimal("10.1"),
+                        new BigDecimal("10.9"),
+                        new BigDecimal("5.0"),
+                        new BigDecimal("5.5"),
+                        new BigDecimal("10.0"),
+                        new BigDecimal("50"),
+                        1,
+                        "Grand Final Friday",
+                        1,
+                        0,
+                        0,
+                        1,
+                        new BigDecimal("21.4"),
+                        new BigDecimal("0.0"),
+                        "open-meteo"),
+                    new ForecastModelResponse.Day(
+                        TODAY.plusDays(2),
+                        new BigDecimal("11.5"),
+                        new BigDecimal("11.1"),
+                        new BigDecimal("11.9"),
+                        null,
+                        null,
+                        null,
+                        new BigDecimal("60"),
+                        0,
+                        null,
+                        0,
+                        0,
+                        0,
+                        0,
+                        null,
+                        null,
+                        null)),
+                "{\"modelVersion\":\"timesfm-3.0\"}",
+                List.of()));
 
-    ForecastRun run =
-        service.submit("sales.gross", List.of("reservations.covers"), SEP_01, 7, EMAIL);
+    ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, EMAIL);
     service.execute(run.id());
 
     assertThat(run.status()).isEqualTo(ForecastRunStatus.SUCCEEDED);
     assertThat(run.modelVersion()).isEqualTo("timesfm-3.0");
+    assertThat(run.diagnostics()).isEqualTo("{\"modelVersion\":\"timesfm-3.0\"}");
     assertThat(run.series()).hasSize(2);
-    assertThat(run.series().get(0).date()).isEqualTo(TODAY);
-    assertThat(run.series().get(0).quantiles())
+
+    ForecastDay first = run.series().get(0);
+    assertThat(first.date()).isEqualTo(TODAY.plusDays(1));
+    assertThat(first.quantiles())
         .containsEntry("0.1", new BigDecimal("10.1"))
         .containsEntry("0.5", new BigDecimal("10.5"))
         .containsEntry("0.9", new BigDecimal("10.9"));
-    assertThat(run.series().get(1).quantiles())
-        .containsEntry("0.1", new BigDecimal("11.1"))
-        .containsEntry("0.5", new BigDecimal("11.5"))
-        .containsEntry("0.9", new BigDecimal("11.9"));
+    assertThat(first.food()).isEqualByComparingTo("5.0");
+    assertThat(first.bev()).isEqualByComparingTo("5.5");
+    assertThat(first.baseline()).isEqualByComparingTo("10.0");
+    assertThat(first.bookedCovers()).isEqualByComparingTo("50");
+    assertThat(first.publicHoliday()).isTrue();
+    assertThat(first.publicHolidayName()).isEqualTo("Grand Final Friday");
+    assertThat(first.publicHolidayEve()).isTrue();
+    assertThat(first.dayAfterPublicHoliday()).isFalse();
+    assertThat(first.schoolHoliday()).isFalse();
+    assertThat(first.uniInSession()).isTrue();
+    assertThat(first.serviceTempMaxC()).isEqualByComparingTo("21.4");
+    assertThat(first.weatherSource()).isEqualTo("open-meteo");
 
-    ArgumentCaptor<TimesFmRequest> request = ArgumentCaptor.forClass(TimesFmRequest.class);
+    ForecastDay second = run.series().get(1);
+    assertThat(second.publicHoliday()).isFalse();
+    assertThat(second.publicHolidayName()).isNull();
+    assertThat(second.food()).isNull();
+    assertThat(second.bookedCovers()).isEqualByComparingTo("60");
+
+    ArgumentCaptor<ForecastModelRequest> request =
+        ArgumentCaptor.forClass(ForecastModelRequest.class);
     verify(client).forecast(request.capture());
-    assertThat(request.getValue().quantiles()).containsExactlyElementsOf(ForecastService.QUANTILES);
+    assertThat(request.getValue().quantiles()).containsExactly("0.1", "0.5", "0.9");
+    assertThat(request.getValue().horizon()).isEqualTo(7);
+    assertThat(request.getValue().dates())
+        .hasSameSizeAs(request.getValue().net())
+        .hasSameSizeAs(request.getValue().bookedCovers());
   }
 
   @Test
   void executeMarksFailedOnClientError() {
-    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_GROSS, 20, SEP_01));
+    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_NET, 20, SEP_01));
     when(client.forecast(any()))
-        .thenThrow(new TimesFmException("TimesFM service returned HTTP 500"));
+        .thenThrow(new ForecastModelException("forecasting service returned HTTP 500"));
 
-    ForecastRun run = service.submit("sales.gross", List.of(), SEP_01, 7, EMAIL);
+    ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, EMAIL);
     service.execute(run.id());
 
     assertThat(run.status()).isEqualTo(ForecastRunStatus.FAILED);
-    assertThat(run.errorMessage()).isEqualTo("TimesFM service returned HTTP 500");
+    assertThat(run.errorMessage()).isEqualTo("forecasting service returned HTTP 500");
     assertThat(run.series()).isEmpty();
   }
 
@@ -183,7 +236,7 @@ class ForecastServiceTest {
   void failInterruptedRunsMarksRunningFailed() {
     ForecastRun run =
         ForecastRun.create(
-            "sales.gross", List.of(), SEP_01, LocalDate.of(2026, 10, 11), 7, EMAIL, NOW);
+            "sales.net", List.of(), SEP_01, LocalDate.of(2026, 10, 11), 7, EMAIL, NOW);
     run.markRunning();
     store.put(run.id(), run);
 
