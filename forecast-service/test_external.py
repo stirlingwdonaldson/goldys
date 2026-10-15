@@ -153,3 +153,36 @@ def test_source_outage_degrades_to_na(monkeypatch):
         + external_module.WEATHER_COLUMNS
     ):
         assert result[column].isna().all()
+
+
+def test_feature_config_env_map(monkeypatch):
+    """The advertised feature-selection overrides are env-reachable through
+    ``Config``, not just the venue/weather/school/university toggles."""
+    monkeypatch.setenv("FORECAST_INCLUDE_BOOKED_COVERS", "force")
+    monkeypatch.setenv("FORECAST_BOOKED_COVERS_MIN_COVERAGE", "0.6")
+    monkeypatch.setenv("FORECAST_REVENUE_LAGS", "3,7,14")
+    monkeypatch.setenv("FORECAST_REVENUE_ROLLING_WINDOWS", "7,14")
+    monkeypatch.setenv("FORECAST_FEATURE_EXCLUDE", "is_friday,service_rain_mm")
+    monkeypatch.setenv("FORECAST_HISTORY_START", "2024-06-01")
+
+    config = external_module.Config()
+
+    assert config.get("features.include_booked_covers") == "force"
+    assert config.get("features.booked_covers_min_coverage") == 0.6
+    assert config.get("features.revenue_lags") == [3, 7, 14]
+    assert config.get("features.revenue_rolling_windows") == [7, 14]
+    assert config.get("features.exclude") == ["is_friday", "service_rain_mm"]
+    assert config.get("data.history_start") == "2024-06-01"
+
+
+def test_include_booked_covers_env_accepts_bool_and_force(monkeypatch):
+    for value in ("true", "1", "yes", "on", "TRUE"):
+        monkeypatch.setenv("FORECAST_INCLUDE_BOOKED_COVERS", value)
+        assert external_module.Config().get("features.include_booked_covers") is True
+
+    for value in ("false", "0", "no", "off"):
+        monkeypatch.setenv("FORECAST_INCLUDE_BOOKED_COVERS", value)
+        assert external_module.Config().get("features.include_booked_covers") is False
+
+    monkeypatch.setenv("FORECAST_INCLUDE_BOOKED_COVERS", "force")
+    assert external_module.Config().get("features.include_booked_covers") == "force"

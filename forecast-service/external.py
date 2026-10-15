@@ -13,6 +13,11 @@ Configuration comes from environment variables (``FORECAST_*``) rather than a
   the trading-hours window used to aggregate weather;
 * ``FORECAST_INCLUDE_WEATHER`` / ``FORECAST_INCLUDE_SCHOOL`` /
   ``FORECAST_INCLUDE_UNIVERSITY`` — feature toggles;
+* ``FORECAST_INCLUDE_BOOKED_COVERS`` (``true``/``false``/``force``) and
+  ``FORECAST_BOOKED_COVERS_MIN_COVERAGE`` — the booked-covers coverage gate;
+* ``FORECAST_REVENUE_LAGS`` / ``FORECAST_REVENUE_ROLLING_WINDOWS`` /
+  ``FORECAST_FEATURE_EXCLUDE`` — comma-separated feature-selection overrides;
+* ``FORECAST_HISTORY_START`` — the earliest history date;
 * ``FORECAST_CACHE_DIR`` — where HTTP responses are cached on disk.
 """
 
@@ -88,6 +93,23 @@ def _as_bool(value: str) -> bool:
     return value.strip().lower() in ("1", "true", "yes", "on")
 
 
+def _as_include_booked_covers(value: str) -> bool | str:
+    """``true``/``false`` as a bool, ``force`` as the string the coverage gate
+    treats as "always use, however sparse"."""
+    stripped = value.strip().lower()
+    if stripped == "force":
+        return "force"
+    return stripped in ("1", "true", "yes", "on")
+
+
+def _as_int_list(value: str) -> list[int]:
+    return [int(part) for part in value.split(",") if part.strip()]
+
+
+def _as_str_list(value: str) -> list[str]:
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
 # Defaults match the reference repo's ``config.yaml`` venue block.
 _CONFIG_DEFAULTS: dict[str, Any] = {
     "venue.latitude": -37.79653,
@@ -111,6 +133,12 @@ _ENV_MAP: dict[str, tuple[str, Any]] = {
     "FORECAST_INCLUDE_WEATHER": ("features.include_weather", _as_bool),
     "FORECAST_INCLUDE_SCHOOL": ("features.include_school", _as_bool),
     "FORECAST_INCLUDE_UNIVERSITY": ("features.include_university", _as_bool),
+    "FORECAST_INCLUDE_BOOKED_COVERS": ("features.include_booked_covers", _as_include_booked_covers),
+    "FORECAST_BOOKED_COVERS_MIN_COVERAGE": ("features.booked_covers_min_coverage", float),
+    "FORECAST_REVENUE_LAGS": ("features.revenue_lags", _as_int_list),
+    "FORECAST_REVENUE_ROLLING_WINDOWS": ("features.revenue_rolling_windows", _as_int_list),
+    "FORECAST_FEATURE_EXCLUDE": ("features.exclude", _as_str_list),
+    "FORECAST_HISTORY_START": ("data.history_start", str),
 }
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
