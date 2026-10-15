@@ -49,35 +49,45 @@ class ForecastSeriesAssemblerTest {
   }
 
   @Test
-  void requestAlignsCovariates() {
+  void requestCarriesBookedCoversAndFoodBev() {
     List<LocalDate> axis =
         List.of(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 2), LocalDate.of(2026, 10, 3));
-    List<MetricPoint> target =
+    List<MetricPoint> net =
         List.of(
             new MetricPoint(LocalDate.of(2026, 10, 1), new BigDecimal("100.0")),
             new MetricPoint(LocalDate.of(2026, 10, 3), new BigDecimal("120.0")));
-    List<CovariateSeries> covariates =
+    List<MetricPoint> bookedCovers =
         List.of(
-            new CovariateSeries(
-                "reservations.covers",
-                List.of(
-                    new MetricPoint(LocalDate.of(2026, 10, 1), new BigDecimal("50")),
-                    new MetricPoint(LocalDate.of(2026, 10, 2), new BigDecimal("55")))));
-    int horizonDays = 30;
+            new MetricPoint(LocalDate.of(2026, 10, 1), new BigDecimal("50")),
+            new MetricPoint(LocalDate.of(2026, 10, 2), new BigDecimal("55")),
+            new MetricPoint(LocalDate.of(2026, 10, 3), new BigDecimal("60")));
+    List<MetricPoint> bookings =
+        List.of(
+            new MetricPoint(LocalDate.of(2026, 10, 1), new BigDecimal("30")),
+            new MetricPoint(LocalDate.of(2026, 10, 2), new BigDecimal("32")));
+    List<MetricPoint> food =
+        List.of(new MetricPoint(LocalDate.of(2026, 10, 1), new BigDecimal("45.0")));
+    List<MetricPoint> bev =
+        List.of(
+            new MetricPoint(LocalDate.of(2026, 10, 1), new BigDecimal("55.0")),
+            new MetricPoint(LocalDate.of(2026, 10, 3), new BigDecimal("65.0")));
+    int horizon = 30;
     List<String> quantiles = List.of("0.1", "0.5", "0.9");
 
-    TimesFmRequest request =
-        ForecastSeriesAssembler.request(axis, target, covariates, horizonDays, quantiles);
+    ForecastModelRequest request =
+        ForecastSeriesAssembler.request(
+            axis, net, bookedCovers, bookings, food, bev, horizon, quantiles);
 
     assertThat(request.dates()).isEqualTo(axis);
-    assertThat(request.target())
+    assertThat(request.net())
         .containsExactly(new BigDecimal("100.0"), null, new BigDecimal("120.0"));
-    assertThat(request.covariates()).hasSize(1);
-    TimesFmRequest.Covariate covariate = request.covariates().get(0);
-    assertThat(covariate.name()).isEqualTo("reservations.covers");
-    assertThat(covariate.values())
-        .containsExactly(new BigDecimal("50"), new BigDecimal("55"), null);
-    assertThat(request.horizonDays()).isEqualTo(30);
+    assertThat(request.bookedCovers())
+        .containsExactly(new BigDecimal("50"), new BigDecimal("55"), new BigDecimal("60"));
+    assertThat(request.bookings())
+        .containsExactly(new BigDecimal("30"), new BigDecimal("32"), null);
+    assertThat(request.food()).containsExactly(new BigDecimal("45.0"), null, null);
+    assertThat(request.bev()).containsExactly(new BigDecimal("55.0"), null, new BigDecimal("65.0"));
+    assertThat(request.horizon()).isEqualTo(30);
     assertThat(request.quantiles()).containsExactly("0.1", "0.5", "0.9");
   }
 }

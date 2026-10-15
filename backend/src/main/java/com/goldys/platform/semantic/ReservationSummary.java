@@ -15,6 +15,7 @@ public record ReservationSummary(
     long cancelled,
     long noShows,
     long walkIns,
+    long bookedCovers,
     BigDecimal avgPartySize,
     BigDecimal noShowRate,
     BigDecimal bookingToCoverConversion) {}

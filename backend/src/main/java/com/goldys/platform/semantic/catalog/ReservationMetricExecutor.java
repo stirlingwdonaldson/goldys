@@ -29,6 +29,7 @@ public class ReservationMetricExecutor implements MetricExecutor {
         MetricId.RESERVATIONS_BOOKINGS,
         MetricId.RESERVATIONS_ATTENDED,
         MetricId.RESERVATIONS_COVERS,
+        MetricId.RESERVATIONS_BOOKED_COVERS,
         MetricId.RESERVATIONS_NO_SHOWS);
   }
 
@@ -39,6 +40,7 @@ public class ReservationMetricExecutor implements MetricExecutor {
           case RESERVATIONS_BOOKINGS -> ReservationSummary::bookings;
           case RESERVATIONS_ATTENDED -> ReservationSummary::attended;
           case RESERVATIONS_COVERS -> ReservationSummary::covers;
+          case RESERVATIONS_BOOKED_COVERS -> ReservationSummary::bookedCovers;
           case RESERVATIONS_NO_SHOWS -> ReservationSummary::noShows;
           default ->
               throw new IllegalArgumentException("Not a reservation metric: " + query.metric());

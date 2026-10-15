@@ -46,7 +46,7 @@ public class ResolutionStateServiceImpl implements ResolutionStateQuery {
                           r.authoritativeSource(),
                           r.resolvedAt()))
               .toList();
-      case PRODUCT_SALES_AMOUNT, PRODUCT_SALES_QUANTITY ->
+      case PRODUCT_SALES_AMOUNT, PRODUCT_SALES_QUANTITY, SALES_FOOD, SALES_BEV ->
           productSales
               .findByTradingDateBetweenOrderByTradingDateAscProductNameKeyAsc(from, to)
               .stream()

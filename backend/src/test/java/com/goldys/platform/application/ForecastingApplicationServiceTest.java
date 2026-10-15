@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.data.Offset.offset;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -97,9 +98,9 @@ class ForecastingApplicationServiceTest {
             new CreateForecastRequest("sales.gross", List.of("reservations.covers"), SEP_01, 7));
 
     verify(permissions).require(role(), new ResourceKey("forecasting"), PermissionAction.READ);
-    verify(permissions)
+    verify(permissions, atLeastOnce())
         .require(role(), new ResourceKey("reconciliation.sales"), PermissionAction.READ);
-    verify(permissions)
+    verify(permissions, atLeastOnce())
         .require(role(), new ResourceKey("reservations.metrics"), PermissionAction.READ);
     verify(forecasts).submit("sales.gross", List.of("reservations.covers"), SEP_01, 7, EMAIL);
 
@@ -117,6 +118,27 @@ class ForecastingApplicationServiceTest {
                             "sales.gross", List.of("reservations.covers"), SEP_01, 7)))
         .isInstanceOf(AccessDeniedException.class);
     verify(forecasts, times(1)).submit(any(), any(), any(), anyInt(), any());
+  }
+
+  @Test
+  void submitRequiresMetricPermission() {
+    // The forecast reads reservations.booked_covers/bookings (reservations.metrics) as implicit
+    // inputs regardless of the requested covariates; a caller who can read the target but not
+    // those inputs is denied before the run is created.
+    doThrow(AccessDeniedException.forResource("reservations.metrics"))
+        .when(permissions)
+        .require(role(), new ResourceKey("reservations.metrics"), PermissionAction.READ);
+
+    assertThatThrownBy(
+            () ->
+                service()
+                    .create(
+                        role(),
+                        EMAIL,
+                        new CreateForecastRequest("sales.gross", List.of(), SEP_01, 7)))
+        .isInstanceOf(AccessDeniedException.class);
+
+    verify(forecasts, never()).submit(any(), any(), any(), anyInt(), any());
   }
 
   @Test
@@ -172,6 +194,94 @@ class ForecastingApplicationServiceTest {
     verify(queries, never()).query(any());
   }
 
+  @Test
+  void getReturnsDiagnosticsAndSplit() {
+    ForecastRun run = succeededRunWithSplit();
+    when(runs.findById(run.id())).thenReturn(Optional.of(run));
+
+    ForecastRunDto dto = service().get(role(), run.id());
+
+    assertThat(dto.diagnostics()).isNotNull();
+    ForecastDiagnosticsDto diagnostics = dto.diagnostics();
+    assertThat(diagnostics.modelVersion()).isEqualTo("timesfm-3.0");
+    assertThat(diagnostics.trainedRows()).isEqualTo(365);
+    assertThat(diagnostics.reliable()).isTrue();
+    assertThat(diagnostics.warnings()).isEmpty();
+    assertThat(diagnostics.features()).containsExactly("bookedCovers", "dow");
+    assertThat(diagnostics.shareFeatures()).containsExactly("bookedCovers");
+    assertThat(diagnostics.holdoutNetXgboost().mae()).isEqualByComparingTo("42.5");
+    assertThat(diagnostics.holdoutNetXgboost().rmse()).isEqualByComparingTo("60.0");
+    assertThat(diagnostics.holdoutNetXgboost().mape()).isEqualByComparingTo("0.13");
+    assertThat(diagnostics.holdoutNetXgboost().n()).isEqualTo(120);
+    assertThat(diagnostics.holdoutNetBaseline().mae()).isEqualByComparingTo("50.0");
+    assertThat(diagnostics.holdoutFood()).isNull();
+    assertThat(diagnostics.cvNetBaseline()).isNull();
+    assertThat(diagnostics.beatsBaseline()).isTrue();
+    assertThat(diagnostics.importance()).hasSize(2);
+    assertThat(diagnostics.importance().get(0).feature()).isEqualTo("bookedCovers");
+    assertThat(diagnostics.importance().get(0).importance()).isEqualByComparingTo("0.62");
+
+    ForecastDiagnosticsDto.Backtest backtest = diagnostics.backtest();
+    assertThat(backtest).isNotNull();
+    assertThat(backtest.rows()).hasSize(2);
+    assertThat(backtest.rows().get(0).date()).isEqualTo(LocalDate.of(2026, 10, 5));
+    assertThat(backtest.rows().get(0).day()).isEqualTo("Monday");
+    assertThat(backtest.rows().get(0).actualNet()).isEqualByComparingTo("4100.0");
+    assertThat(backtest.rows().get(0).predictedNet()).isEqualByComparingTo("4050.0");
+    assertThat(backtest.rows().get(0).absPctError()).isEqualByComparingTo("0.012");
+    assertThat(backtest.rows().get(0).actualFood()).isEqualByComparingTo("1800.0");
+    assertThat(backtest.byWeekday()).hasSize(1);
+    assertThat(backtest.byWeekday().get(0).day()).isEqualTo("Monday");
+    assertThat(backtest.byWeekday().get(0).n()).isEqualTo(2);
+    assertThat(backtest.byWeekday().get(0).mae()).isEqualByComparingTo("47.5");
+    assertThat(backtest.residualMean()).isEqualByComparingTo("3.2");
+    assertThat(backtest.residualStd()).isEqualByComparingTo("12.1");
+    assertThat(backtest.worstDays()).hasSize(1);
+
+    assertThat(dto.series()).hasSize(1);
+    ForecastSeriesPointDto point = dto.series().get(0);
+    assertThat(point.median()).isEqualByComparingTo("4200.5");
+    assertThat(point.p10()).isEqualByComparingTo("3900.0");
+    assertThat(point.p90()).isEqualByComparingTo("4600.0");
+    assertThat(point.food()).isEqualByComparingTo("1900.0");
+    assertThat(point.bev()).isEqualByComparingTo("2300.5");
+    assertThat(point.baseline()).isEqualByComparingTo("4100.0");
+    assertThat(point.bookedCovers()).isEqualByComparingTo("85.0");
+    assertThat(point.publicHoliday()).isFalse();
+    assertThat(point.publicHolidayName()).isNull();
+    assertThat(point.publicHolidayEve()).isFalse();
+    assertThat(point.dayAfterPublicHoliday()).isTrue();
+    assertThat(point.schoolHoliday()).isFalse();
+    assertThat(point.uniInSession()).isTrue();
+    assertThat(point.serviceTempMaxC()).isEqualByComparingTo("21.4");
+    assertThat(point.serviceRainMm()).isEqualByComparingTo("0.0");
+    assertThat(point.weatherSource()).isEqualTo("open-meteo");
+  }
+
+  @Test
+  void getMapsNullDiagnosticsToNull() {
+    // succeededRun() marks the run with the 3-arg markSucceeded, which leaves diagnostics null.
+    ForecastRun run = succeededRun();
+    when(runs.findById(run.id())).thenReturn(Optional.of(run));
+
+    ForecastRunDto dto = service().get(role(), run.id());
+
+    assertThat(dto.diagnostics()).isNull();
+    assertThat(dto.series()).isNotNull();
+  }
+
+  @Test
+  void getMapsUnparseableDiagnosticsToNull() {
+    ForecastRun run = succeededRun();
+    run.markSucceeded(run.series(), "not-json", "timesfm-3.0", 10L);
+    when(runs.findById(run.id())).thenReturn(Optional.of(run));
+
+    ForecastRunDto dto = service().get(role(), run.id());
+
+    assertThat(dto.diagnostics()).isNull();
+    assertThat(dto.series()).isNotNull();
+  }
+
   private static ForecastRun queuedRun(String target, List<String> covariates) {
     return ForecastRun.create(target, covariates, SEP_01, LocalDate.of(2026, 10, 9), 4, EMAIL, NOW);
   }
@@ -204,6 +314,62 @@ class ForecastingApplicationServiceTest {
         10L);
     return run;
   }
+
+  private static ForecastRun succeededRunWithSplit() {
+    ForecastRun run = queuedRun("sales.gross", List.of());
+    run.markSucceeded(
+        List.of(
+            new ForecastDay(
+                LocalDate.of(2026, 10, 16),
+                Map.of(
+                    "0.5", new BigDecimal("4200.5"),
+                    "0.1", new BigDecimal("3900.0"),
+                    "0.9", new BigDecimal("4600.0")),
+                new BigDecimal("1900.0"),
+                new BigDecimal("2300.5"),
+                new BigDecimal("4100.0"),
+                new BigDecimal("85.0"),
+                false,
+                null,
+                false,
+                true,
+                false,
+                true,
+                new BigDecimal("21.4"),
+                new BigDecimal("0.0"),
+                "open-meteo")),
+        DIAGNOSTICS_JSON,
+        "timesfm-3.0",
+        10L);
+    return run;
+  }
+
+  private static final String DIAGNOSTICS_JSON =
+      "{\"modelVersion\":\"timesfm-3.0\",\"trainedRows\":365,\"reliable\":true,"
+          + "\"warnings\":[],\"features\":[\"bookedCovers\",\"dow\"],"
+          + "\"shareFeatures\":[\"bookedCovers\"],"
+          + "\"holdoutNetXgboost\":{\"mae\":42.5,\"rmse\":60.0,\"mape\":0.13,\"n\":120},"
+          + "\"holdoutNetBaseline\":{\"mae\":50.0,\"rmse\":68.0,\"mape\":0.15,\"n\":120},"
+          + "\"holdoutFood\":null,\"holdoutBev\":null,"
+          + "\"cvNetXgboost\":null,\"cvNetBaseline\":null,\"beatsBaseline\":true,"
+          + "\"importance\":[{\"feature\":\"bookedCovers\",\"importance\":0.62},"
+          + "{\"feature\":\"dow\",\"importance\":0.21}],"
+          + "\"backtest\":{\"rows\":["
+          + "{\"date\":\"2026-10-05\",\"day\":\"Monday\",\"actualNet\":4100.0,"
+          + "\"predictedNet\":4050.0,\"error\":-50.0,\"absPctError\":0.012,"
+          + "\"actualFood\":1800.0,\"predictedFood\":1780.0,\"actualBev\":2300.0,"
+          + "\"predictedBev\":2270.0,\"baselineNet\":4000.0},"
+          + "{\"date\":\"2026-10-06\",\"day\":\"Tuesday\",\"actualNet\":3900.0,"
+          + "\"predictedNet\":3950.0,\"error\":50.0,\"absPctError\":0.013,"
+          + "\"actualFood\":1700.0,\"predictedFood\":1720.0,\"actualBev\":2200.0,"
+          + "\"predictedBev\":2230.0,\"baselineNet\":3850.0}],"
+          + "\"byWeekday\":[{\"day\":\"Monday\",\"n\":2,\"mae\":47.5,\"mape\":0.013,"
+          + "\"meanActual\":4050.0,\"meanPredicted\":4000.0}],"
+          + "\"residualMean\":3.2,\"residualStd\":12.1,"
+          + "\"worstDays\":[{\"date\":\"2026-10-05\",\"day\":\"Monday\",\"actualNet\":4100.0,"
+          + "\"predictedNet\":4050.0,\"error\":-50.0,\"absPctError\":0.012,"
+          + "\"actualFood\":1800.0,\"predictedFood\":1780.0,\"actualBev\":2300.0,"
+          + "\"predictedBev\":2270.0,\"baselineNet\":4000.0}]}}";
 
   private static TimeSeriesResult actuals() {
     return new TimeSeriesResult(

@@ -48,8 +48,8 @@ public class JevProductClassifier implements ProductClassifier {
     this.baseUrl = properties.baseUrl();
     this.apiKey = properties.apiKey();
     this.mapper = mapper;
-    // Pin HTTP/1.1 for the same reason as TimesFmHttpClient: the default builder sends HTTP/2
-    // cleartext upgrade headers that some upstream front proxies reject.
+    // Pin HTTP/1.1 for the same reason as ForecastModelHttpClient: the default builder sends
+    // HTTP/2 cleartext upgrade headers that some upstream front proxies reject.
     this.http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
   }
 

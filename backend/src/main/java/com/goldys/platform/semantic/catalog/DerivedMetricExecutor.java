@@ -33,6 +33,7 @@ public class DerivedMetricExecutor implements MetricExecutor {
       LabourMetricExecutor labourExec,
       InventoryMetricExecutor inventory,
       ProductMetricExecutor productExec,
+      FoodBevMetricExecutor foodBev,
       LabourMetricsQuery labour,
       ProductMetricsQuery product,
       MetricCatalog catalog) {
@@ -40,16 +41,18 @@ public class DerivedMetricExecutor implements MetricExecutor {
     this.product = product;
     this.catalog = catalog;
     this.base =
-        Map.of(
-            MetricId.RESERVATIONS_BOOKINGS, reservations,
-            MetricId.RESERVATIONS_ATTENDED, reservations,
-            MetricId.RESERVATIONS_COVERS, reservations,
-            MetricId.RESERVATIONS_NO_SHOWS, reservations,
-            MetricId.SALES_GROSS, sales,
-            MetricId.LABOUR_SCHEDULED_HOURS, labourExec,
-            MetricId.LABOUR_ACTUAL_HOURS, labourExec,
-            MetricId.LABOUR_COST, labourExec,
-            MetricId.INVENTORY_PURCHASES, inventory);
+        Map.ofEntries(
+            Map.entry(MetricId.RESERVATIONS_BOOKINGS, reservations),
+            Map.entry(MetricId.RESERVATIONS_ATTENDED, reservations),
+            Map.entry(MetricId.RESERVATIONS_COVERS, reservations),
+            Map.entry(MetricId.RESERVATIONS_NO_SHOWS, reservations),
+            Map.entry(MetricId.SALES_GROSS, sales),
+            Map.entry(MetricId.SALES_NET, sales),
+            Map.entry(MetricId.SALES_FOOD, foodBev),
+            Map.entry(MetricId.LABOUR_SCHEDULED_HOURS, labourExec),
+            Map.entry(MetricId.LABOUR_ACTUAL_HOURS, labourExec),
+            Map.entry(MetricId.LABOUR_COST, labourExec),
+            Map.entry(MetricId.INVENTORY_PURCHASES, inventory));
   }
 
   @Override
@@ -59,6 +62,7 @@ public class DerivedMetricExecutor implements MetricExecutor {
         MetricId.RESERVATIONS_BOOKING_TO_COVER_CONVERSION,
         MetricId.RESERVATIONS_AVG_PARTY_SIZE,
         MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+        MetricId.SALES_FOOD_SHARE,
         MetricId.LABOUR_HOURS_PER_COVER,
         MetricId.LABOUR_COST_PER_COVER,
         MetricId.LABOUR_HOURS_VARIANCE,
@@ -79,6 +83,7 @@ public class DerivedMetricExecutor implements MetricExecutor {
           ratio(query, MetricId.RESERVATIONS_COVERS, MetricId.RESERVATIONS_ATTENDED);
       case SALES_AVERAGE_SPEND_PER_COVER ->
           ratio(query, MetricId.SALES_GROSS, MetricId.RESERVATIONS_COVERS);
+      case SALES_FOOD_SHARE -> ratio(query, MetricId.SALES_FOOD, MetricId.SALES_NET);
       case LABOUR_HOURS_PER_COVER ->
           ratio(query, MetricId.LABOUR_ACTUAL_HOURS, MetricId.RESERVATIONS_COVERS);
       case LABOUR_COST_PER_COVER ->

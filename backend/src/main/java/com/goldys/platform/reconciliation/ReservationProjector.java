@@ -102,6 +102,7 @@ public class ReservationProjector {
                 m.cancelled,
                 m.noShows,
                 m.walkIns,
+                m.bookedCovers,
                 "override",
                 "manual",
                 false,
@@ -117,6 +118,7 @@ public class ReservationProjector {
                 m.cancelled,
                 m.noShows,
                 m.walkIns,
+                m.bookedCovers,
                 "single",
                 "OPENTABLE",
                 false,
@@ -135,9 +137,13 @@ public class ReservationProjector {
     long cancelled;
     long noShows;
     long walkIns;
+    long bookedCovers;
 
     void add(ReservationView v) {
       bookings++;
+      if (!v.status().equals("CANCELLED") && !v.status().equals("WALK_IN")) {
+        bookedCovers += v.partySize();
+      }
       switch (v.status()) {
         case "SEATED", "COMPLETED" -> {
           attended++;

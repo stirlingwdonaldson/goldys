@@ -260,12 +260,27 @@ describe("demoApi forecasting", () => {
     }
   });
 
+  it("getForecastRunReturnsDiagnosticsAndSplit", async () => {
+    const run = await demoApi.getForecastRun("fc-2");
+    expect(run.diagnostics).not.toBeNull();
+    expect(run.diagnostics!.importance!.length).toBeGreaterThan(0);
+    expect(run.diagnostics!.backtest!.byWeekday!.length).toBeGreaterThan(0);
+    expect(run.diagnostics!.backtest!.rows!.length).toBeGreaterThan(0);
+    expect(run.diagnostics!.holdoutNetXgboost).not.toBeNull();
+    expect(run.series).not.toBeNull();
+    for (const p of run.series!) {
+      expect(p.food).toBeTypeOf("number");
+      expect(p.bev).toBeTypeOf("number");
+      expect(p.baseline).toBeTypeOf("number");
+    }
+  });
+
   it("returns a comparison with a small MAPE/MAE and actuals on past dates", async () => {
     const comparison = await demoApi.getForecastComparison("fc-2");
     expect(comparison.runId).toBe("fc-2");
     expect(comparison.mape).not.toBeNull();
     expect(comparison.mae).not.toBeNull();
-    expect(comparison.mape!).toBeLessThan(0.1);
+    expect(comparison.mape!).toBeLessThan(10); // percent, matching the live score()
     expect(comparison.points.length).toBeGreaterThan(0);
     for (const p of comparison.points) {
       expect(p.predictedMedian).toBeTypeOf("number");

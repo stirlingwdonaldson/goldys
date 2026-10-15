@@ -61,6 +61,10 @@ public class ForecastRun {
   @Column(name = "error_message")
   private String errorMessage;
 
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "diagnostics", columnDefinition = "jsonb")
+  private String diagnostics;
+
   @Column(name = "model_version")
   private String modelVersion;
 
@@ -86,6 +90,7 @@ public class ForecastRun {
       String grain,
       ForecastRunStatus status,
       String errorMessage,
+      String diagnostics,
       String modelVersion,
       Long elapsedMs,
       List<ForecastDay> series) {
@@ -101,6 +106,7 @@ public class ForecastRun {
     this.grain = Objects.requireNonNull(grain, "grain");
     this.status = Objects.requireNonNull(status, "status");
     this.errorMessage = errorMessage;
+    this.diagnostics = diagnostics;
     this.modelVersion = modelVersion;
     this.elapsedMs = elapsedMs;
     this.series = series == null ? List.of() : List.copyOf(series);
@@ -129,6 +135,7 @@ public class ForecastRun {
         null,
         null,
         null,
+        null,
         List.of());
   }
 
@@ -139,8 +146,19 @@ public class ForecastRun {
 
   /** Records a successful forecast: the quantile series plus the model and timing metadata. */
   public void markSucceeded(List<ForecastDay> series, String modelVersion, long elapsedMs) {
+    markSucceeded(series, null, modelVersion, elapsedMs);
+  }
+
+  /**
+   * Records a successful forecast: the quantile series, the model's diagnostic payload (nullable —
+   * absent when the XGBoost twin failed, which never loses the headline forecast), and the model
+   * and timing metadata.
+   */
+  public void markSucceeded(
+      List<ForecastDay> series, String diagnostics, String modelVersion, long elapsedMs) {
     this.status = ForecastRunStatus.SUCCEEDED;
     this.series = List.copyOf(series);
+    this.diagnostics = diagnostics;
     this.modelVersion = Objects.requireNonNull(modelVersion, "modelVersion");
     this.elapsedMs = elapsedMs;
   }
@@ -197,6 +215,10 @@ public class ForecastRun {
 
   public String errorMessage() {
     return errorMessage;
+  }
+
+  public String diagnostics() {
+    return diagnostics;
   }
 
   public String modelVersion() {

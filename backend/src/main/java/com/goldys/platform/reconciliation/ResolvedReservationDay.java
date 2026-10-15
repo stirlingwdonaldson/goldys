@@ -45,6 +45,9 @@ class ResolvedReservationDay {
   @Column(name = "walk_ins", nullable = false)
   private long walkIns;
 
+  @Column(name = "booked_covers", nullable = false)
+  private long bookedCovers;
+
   @Column(name = "resolution_type", nullable = false)
   private String resolutionType;
 
@@ -68,6 +71,7 @@ class ResolvedReservationDay {
       long cancelled,
       long noShows,
       long walkIns,
+      long bookedCovers,
       String resolutionType,
       String authoritativeSource,
       boolean hasConflict,
@@ -80,6 +84,7 @@ class ResolvedReservationDay {
     this.cancelled = cancelled;
     this.noShows = noShows;
     this.walkIns = walkIns;
+    this.bookedCovers = bookedCovers;
     this.resolutionType = resolutionType;
     this.authoritativeSource = authoritativeSource;
     this.hasConflict = hasConflict;
@@ -116,6 +121,10 @@ class ResolvedReservationDay {
 
   long walkIns() {
     return walkIns;
+  }
+
+  long bookedCovers() {
+    return bookedCovers;
   }
 
   String resolutionType() {

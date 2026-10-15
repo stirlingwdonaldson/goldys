@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.semantic.CategorySales;
+import com.goldys.platform.semantic.FoodBevSplit;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.ProductSalesMetric;
 import java.math.BigDecimal;
@@ -139,6 +140,85 @@ class ResolvedProductCategoryQueryTest {
     assertThat(result)
         .containsExactly(
             new CategorySales("Food", "Mains", new BigDecimal("2"), new BigDecimal("30")));
+  }
+
+  @Test
+  void dailyFoodBev_splits_food_and_beverage_and_excludes_uncategorised() {
+    ProductCategory mains = ProductCategory.create("Mains", "Food", 0, null);
+    ProductCategory beer = ProductCategory.create("Beer", "Beverage", 1, null);
+    ProductCategory cocktails = ProductCategory.create("Cocktails", null, 2, null);
+
+    ProductCategoryAssignment beef = ProductCategoryAssignment.create("beef burger", NOW);
+    beef.markAssigned(mains.id(), new BigDecimal("0.9"), AssignmentSource.JEV, NOW);
+    ProductCategoryAssignment lager = ProductCategoryAssignment.create("lager", NOW);
+    lager.markAssigned(beer.id(), new BigDecimal("0.9"), AssignmentSource.JEV, NOW);
+    ProductCategoryAssignment martini = ProductCategoryAssignment.create("espresso martini", NOW);
+    martini.markAssigned(cocktails.id(), new BigDecimal("0.9"), AssignmentSource.JEV, NOW);
+
+    when(productMetrics.productSales(FROM, TO))
+        .thenReturn(
+            List.of(
+                new ProductSalesMetric(
+                    FROM, "beef burger", new BigDecimal("1"), new BigDecimal("40"), "ctb", false),
+                new ProductSalesMetric(
+                    FROM, "lager", new BigDecimal("2"), new BigDecimal("20"), "ctb", false),
+                new ProductSalesMetric(
+                    FROM,
+                    "espresso martini",
+                    new BigDecimal("1"),
+                    new BigDecimal("12"),
+                    "ctb",
+                    false),
+                new ProductSalesMetric(
+                    FROM,
+                    "unassigned thing",
+                    new BigDecimal("1"),
+                    new BigDecimal("5"),
+                    "ctb",
+                    false)));
+    when(categories.findAll()).thenReturn(List.of(mains, beer, cocktails));
+    when(assignments.findAll()).thenReturn(List.of(beef, lager, martini));
+
+    List<FoodBevSplit> result = query.dailyFoodBev(FROM, TO);
+
+    assertThat(result)
+        .containsExactly(new FoodBevSplit(FROM, new BigDecimal("40"), new BigDecimal("20")));
+  }
+
+  @Test
+  void dailyFoodBev_food_only_day_has_zero_bev() {
+    ProductCategory mains = ProductCategory.create("Mains", "Food", 0, null);
+    ProductCategoryAssignment beef = ProductCategoryAssignment.create("beef burger", NOW);
+    beef.markAssigned(mains.id(), new BigDecimal("0.9"), AssignmentSource.JEV, NOW);
+
+    when(productMetrics.productSales(FROM, TO))
+        .thenReturn(
+            List.of(
+                new ProductSalesMetric(
+                    FROM, "beef burger", new BigDecimal("1"), new BigDecimal("40"), "ctb", false)));
+    when(categories.findAll()).thenReturn(List.of(mains));
+    when(assignments.findAll()).thenReturn(List.of(beef));
+
+    List<FoodBevSplit> result = query.dailyFoodBev(FROM, TO);
+
+    assertThat(result)
+        .containsExactly(new FoodBevSplit(FROM, new BigDecimal("40"), BigDecimal.ZERO));
+  }
+
+  @Test
+  void dailyFoodBev_null_amount_row_is_unresolved() {
+    ProductCategory mains = ProductCategory.create("Mains", "Food", 0, null);
+    ProductCategoryAssignment beef = ProductCategoryAssignment.create("beef burger", NOW);
+    beef.markAssigned(mains.id(), new BigDecimal("0.9"), AssignmentSource.JEV, NOW);
+
+    when(productMetrics.productSales(FROM, TO))
+        .thenReturn(List.of(new ProductSalesMetric(FROM, "beef burger", null, null, "ctb", false)));
+    when(categories.findAll()).thenReturn(List.of(mains));
+    when(assignments.findAll()).thenReturn(List.of(beef));
+
+    List<FoodBevSplit> result = query.dailyFoodBev(FROM, TO);
+
+    assertThat(result).containsExactly(new FoodBevSplit(FROM, null, BigDecimal.ZERO));
   }
 
   @Test

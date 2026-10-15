@@ -5,6 +5,10 @@ fastapi
 uvicorn[standard]
 pydantic
 numpy
+pyyaml
+scipy
+xgboost
+scikit-learn
 torch
 # TimesFM 3.0 is installed from the google-research git repo (provides the `timesfm3` module
 # and the `TimesFM3Forecaster` API); the PyPI `timesfm` package only ships the old 1.x API.
