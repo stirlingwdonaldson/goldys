@@ -23,3 +23,6 @@ Claude outputs/
 
 # Local scratch/state (state_store.db, stream_store); never commit.
 data/
+
+# forecast-service ships static calendar/event fixtures (unlike local scratch `data/` dirs).
+!forecast-service/data/

@@ -1,0 +1,102 @@
+# University teaching calendars for campuses within student-catchment
+# distance of Collingwood. Melbourne CBD/Parkville students are a real
+# demand driver for Smith St venues, and there is no public API for
+# academic calendars, so this file is the source of truth.
+#
+# HOW TO UPDATE (takes ~5 minutes each December):
+#   RMIT     https://www.rmit.edu.au/students/my-course/important-dates
+#   UniMelb  https://www.unimelb.edu.au/dates
+# Copy the teaching-period, break and assessment dates into the structure
+# below. `verified: true` means the dates were read off the official page.
+# The pipeline warns on any year it has to fall back on.
+#
+# Dates are inclusive on both ends. Format: YYYY-MM-DD.
+
+universities:
+  rmit:
+    name: RMIT University (City campus)
+    # Weight reflects rough student volume within walking/tram distance.
+    weight: 1.0
+    years:
+      2026:
+        verified: true
+        source: https://www.rmit.edu.au/students/my-course/important-dates/2026/he
+        semesters:
+          - name: Semester 1
+            teaching_start: "2026-03-02"
+            teaching_end: "2026-06-07"
+            breaks:
+              - ["2026-04-03", "2026-04-12"]
+            assessment: ["2026-06-09", "2026-06-26"]
+          - name: Semester 2
+            teaching_start: "2026-07-20"
+            teaching_end: "2026-10-25"
+            breaks:
+              - ["2026-08-31", "2026-09-06"]
+            assessment: ["2026-10-26", "2026-11-13"]
+      2025:
+        verified: false   # approximate — verify against RMIT before relying on it
+        source: approximate
+        semesters:
+          - name: Semester 1
+            teaching_start: "2025-03-03"
+            teaching_end: "2025-06-01"
+            breaks:
+              - ["2025-04-18", "2025-04-27"]
+            assessment: ["2025-06-02", "2025-06-20"]
+          - name: Semester 2
+            teaching_start: "2025-07-21"
+            teaching_end: "2025-10-19"
+            breaks:
+              - ["2025-09-01", "2025-09-07"]
+            assessment: ["2025-10-27", "2025-11-14"]
+
+  unimelb:
+    name: University of Melbourne (Parkville)
+    weight: 1.0
+    years:
+      2026:
+        verified: true
+        source: https://students.unimelb.edu.au/course-admin/key-dates
+        semesters:
+          - name: Semester 1
+            teaching_start: "2026-03-02"
+            teaching_end: "2026-05-31"
+            breaks:
+              - ["2026-04-03", "2026-04-12"]
+            assessment: ["2026-06-08", "2026-06-26"]
+          - name: Semester 2
+            teaching_start: "2026-07-27"
+            teaching_end: "2026-10-25"
+            breaks:
+              - ["2026-09-28", "2026-10-04"]
+            assessment: ["2026-11-02", "2026-11-20"]
+      2025:
+        verified: false   # approximate — verify against UniMelb before relying on it
+        source: approximate
+        semesters:
+          - name: Semester 1
+            teaching_start: "2025-03-03"
+            teaching_end: "2025-06-01"
+            breaks:
+              - ["2025-04-18", "2025-04-27"]
+            assessment: ["2025-06-09", "2025-06-27"]
+          - name: Semester 2
+            teaching_start: "2025-07-28"
+            teaching_end: "2025-10-26"
+            breaks:
+              - ["2025-09-22", "2025-09-28"]
+            assessment: ["2025-11-03", "2025-11-21"]
+
+# Used for any year with no entry above. Rough Melbourne norms, so the
+# pipeline degrades to something sensible rather than dropping the feature.
+fallback:
+  semesters:
+    - name: Semester 1 (fallback)
+      teaching_start_md: "03-02"
+      teaching_end_md: "06-01"
+      assessment_md: ["06-08", "06-27"]
+    - name: Semester 2 (fallback)
+      teaching_start_md: "07-27"
+      teaching_end_md: "10-25"
+      assessment_md: ["11-02", "11-21"]
