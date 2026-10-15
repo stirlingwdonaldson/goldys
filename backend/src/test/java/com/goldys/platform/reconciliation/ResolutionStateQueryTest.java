@@ -90,6 +90,57 @@ class ResolutionStateQueryTest {
   }
 
   @Test
+  void salesFoodMapsResolvedProductSalesRows() {
+    ResolvedProductSales row =
+        new ResolvedProductSales(
+            LocalDate.of(2026, 9, 14),
+            "beef-burger",
+            new BigDecimal("2"),
+            new BigDecimal("40.00"),
+            "agreed",
+            "pos",
+            false,
+            Instant.parse("2026-09-14T08:00:00Z"));
+    when(productSales.findByTradingDateBetweenOrderByTradingDateAscProductNameKeyAsc(FROM, TO))
+        .thenReturn(List.of(row));
+
+    List<ResolutionState> states = query.states(MetricId.SALES_FOOD, FROM, TO);
+
+    assertThat(states).hasSize(1);
+    assertThat(states.get(0))
+        .isEqualTo(
+            new ResolutionState(
+                LocalDate.of(2026, 9, 14), "agreed", "pos", Instant.parse("2026-09-14T08:00:00Z")));
+  }
+
+  @Test
+  void salesBevMapsResolvedProductSalesRows() {
+    ResolvedProductSales row =
+        new ResolvedProductSales(
+            LocalDate.of(2026, 9, 14),
+            "house-lager",
+            new BigDecimal("1"),
+            new BigDecimal("12.00"),
+            "override",
+            "pos",
+            false,
+            Instant.parse("2026-09-14T08:05:00Z"));
+    when(productSales.findByTradingDateBetweenOrderByTradingDateAscProductNameKeyAsc(FROM, TO))
+        .thenReturn(List.of(row));
+
+    List<ResolutionState> states = query.states(MetricId.SALES_BEV, FROM, TO);
+
+    assertThat(states).hasSize(1);
+    assertThat(states.get(0))
+        .isEqualTo(
+            new ResolutionState(
+                LocalDate.of(2026, 9, 14),
+                "override",
+                "pos",
+                Instant.parse("2026-09-14T08:05:00Z")));
+  }
+
+  @Test
   void reservationsCoversMapsResolvedReservationDayRows() {
     ResolvedReservationDay row =
         new ResolvedReservationDay(
@@ -182,6 +233,7 @@ class ResolutionStateQueryTest {
     List<MetricId> derived =
         List.of(
             MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+            MetricId.SALES_FOOD_SHARE,
             MetricId.RESERVATIONS_NO_SHOW_RATE,
             MetricId.RESERVATIONS_BOOKING_TO_COVER_CONVERSION,
             MetricId.RESERVATIONS_AVG_PARTY_SIZE,
