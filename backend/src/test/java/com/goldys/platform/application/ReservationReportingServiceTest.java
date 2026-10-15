@@ -46,7 +46,7 @@ class ReservationReportingServiceTest {
   void summaryReturnsTheResolvedSummary() {
     ReservationMetricsQuery metrics = mock(ReservationMetricsQuery.class);
     ReservationSummary expected =
-        new ReservationSummary(SEP_20, 10, 8, 32, 1, 1, 2, new BigDecimal("4.0000"), null, null);
+        new ReservationSummary(SEP_20, 10, 8, 32, 1, 1, 2, 0, new BigDecimal("4.0000"), null, null);
     when(metrics.summary(SEP_20)).thenReturn(Optional.of(expected));
     PermissionService permissions = mock(PermissionService.class);
     ReservationReportingService service = new ReservationReportingService(metrics, permissions);

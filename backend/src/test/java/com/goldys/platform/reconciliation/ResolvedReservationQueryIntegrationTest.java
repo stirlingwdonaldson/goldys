@@ -112,6 +112,7 @@ class ResolvedReservationQueryIntegrationTest {
         cancelled,
         noShows,
         walkIns,
+        0,
         "single",
         "OPENTABLE",
         false,

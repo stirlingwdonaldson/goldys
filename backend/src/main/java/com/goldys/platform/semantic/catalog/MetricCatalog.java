@@ -157,6 +157,17 @@ public class MetricCatalog {
                     "reservations.metrics",
                     null),
                 base(
+                    MetricId.RESERVATIONS_BOOKED_COVERS,
+                    "Booked covers",
+                    "Resolved booked covers (party size excluding cancelled and walk-ins)",
+                    "bookedCovers",
+                    "count",
+                    "resolved_reservation_day",
+                    DAY_WEEK_MONTH,
+                    Set.of(Dimension.SERVICE_PERIOD),
+                    "reservations.metrics",
+                    null),
+                base(
                     MetricId.RESERVATIONS_NO_SHOWS,
                     "No-shows",
                     "Resolved no-shows",

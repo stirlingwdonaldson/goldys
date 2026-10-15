@@ -428,7 +428,7 @@ class DerivedMetricExecutorTest {
   private static ReservationSummary summary(
       LocalDate date, long bookings, long attended, long covers, long noShows) {
     return new ReservationSummary(
-        date, bookings, attended, covers, 0, noShows, 0, null, null, null);
+        date, bookings, attended, covers, 0, noShows, 0, 0, null, null, null);
   }
 
   @Test

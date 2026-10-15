@@ -11,6 +11,7 @@ public enum MetricId {
   RESERVATIONS_BOOKINGS("reservations.bookings"),
   RESERVATIONS_ATTENDED("reservations.attended"),
   RESERVATIONS_COVERS("reservations.covers"),
+  RESERVATIONS_BOOKED_COVERS("reservations.booked_covers"),
   RESERVATIONS_NO_SHOWS("reservations.no_shows"),
   LABOUR_SCHEDULED_HOURS("labour.scheduled_hours"),
   LABOUR_ACTUAL_HOURS("labour.actual_hours"),

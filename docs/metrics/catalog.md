@@ -13,6 +13,7 @@ data is unresolved ("display + note": a figure always shows when any resolved da
 | `reservations.bookings` | Bookings | Resolved bookings | bookings | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum (absent day = no row, not zero, unless projected) |
 | `reservations.attended` | Attended parties | Resolved attended | attended | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
 | `reservations.covers` | Covers | Resolved covers (guests) | covers | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
+| `reservations.booked_covers` | Booked covers | Resolved booked covers (party size excluding cancelled and walk-ins) | bookedCovers | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
 | `reservations.no_shows` | No-shows | Resolved no-shows | noShows | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
 | `labour.scheduled_hours` | Scheduled hours | Resolved scheduled hours | scheduledHours | hours | resolved_labour_day | department | day, week, month | labour.hours | sum of non-null |
 | `labour.actual_hours` | Actual hours | Resolved actual hours | actualHours | hours | resolved_labour_day | department | day, week, month | labour.hours | sum of non-null |
@@ -54,7 +55,7 @@ post-reconciliation value: `sales.gross` / `sales.net` *are* the reconciled figu
 
 - `sales.gross`, `sales.net`, `sales.gst` — `resolved_daily_sales`, no dimensions, day/week/month.
 - `reservations.bookings`, `reservations.attended`, `reservations.covers`,
-  `reservations.no_shows` — `resolved_reservation_day`, dimension `service_period`, day/week/month.
+  `reservations.booked_covers`, `reservations.no_shows` — `resolved_reservation_day`, dimension `service_period`, day/week/month.
 - `labour.scheduled_hours`, `labour.actual_hours`, `labour.cost` — `resolved_labour_day`,
   dimension `department`, day/week/month.
 - `inventory.purchases`, `inventory.wastage` — `resolved_inventory_day`, no dimensions,

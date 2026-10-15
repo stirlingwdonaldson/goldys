@@ -101,6 +101,7 @@ class ResolutionStateQueryTest {
             2,
             0,
             5,
+            0,
             "rule",
             "reservation-source",
             false,
