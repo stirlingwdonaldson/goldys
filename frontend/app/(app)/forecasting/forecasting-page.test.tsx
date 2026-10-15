@@ -9,7 +9,7 @@ import type {
 } from "@/lib/api/types";
 
 const metrics: ForecastMetric[] = [
-  { metric: "sales.gross", name: "Gross sales", unit: "AUD", sourceDomain: "resolved_daily_sales", requiredPermission: "reconciliation.sales" },
+  { metric: "sales.net", name: "Net sales", unit: "AUD", sourceDomain: "resolved_daily_sales", requiredPermission: "reconciliation.sales" },
   { metric: "reservations.bookings", name: "Bookings", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
   { metric: "reservations.covers", name: "Covers", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
   { metric: "labour.scheduled_hours", name: "Scheduled hours", unit: "hours", sourceDomain: "resolved_labour_day", requiredPermission: "labour.hours" },
@@ -54,7 +54,7 @@ const diagnostics: ForecastDiagnostics = {
 const succeededRun: ForecastRun = {
   id: "fc-2",
   status: "SUCCEEDED",
-  targetMetric: "sales.gross",
+  targetMetric: "sales.net",
   covariates: [],
   historyFrom: "2025-10-05",
   historyTo: "2026-10-05",
@@ -79,7 +79,7 @@ const losingRun: ForecastRun = {
 const queuedRun: ForecastRun = {
   id: "fc-1",
   status: "QUEUED",
-  targetMetric: "sales.gross",
+  targetMetric: "sales.net",
   covariates: [],
   historyFrom: "2025-10-06",
   historyTo: "2026-10-06",
@@ -120,7 +120,7 @@ vi.mock("@/lib/demo-mode", () => ({
 // driving the run flow. The tab bar renders immediately.
 async function renderLoaded() {
   render(<ForecastingPage />);
-  await screen.findByText("Gross sales — resolved_daily_sales · AUD");
+  await screen.findByText("Net sales — resolved_daily_sales · AUD");
 }
 
 /** Drives the run flow to a succeeded run (create returns QUEUED, the poll resolves to SUCCEEDED). */
@@ -155,7 +155,7 @@ describe("ForecastingPage", () => {
     await renderLoaded();
 
     // The target is locked to revenue and shown read-only.
-    expect(screen.getByText("Gross sales — resolved_daily_sales · AUD")).toBeInTheDocument();
+    expect(screen.getByText("Net sales — resolved_daily_sales · AUD")).toBeInTheDocument();
     // The model's covariate set is fixed, described but not selectable.
     expect(
       screen.getByText(/A fixed set of internal covariates — net revenue, booked covers, bookings, food/),
@@ -179,7 +179,7 @@ describe("ForecastingPage", () => {
     await runForecast();
 
     expect(mocks.api.createForecastRun).toHaveBeenCalledWith(
-      expect.objectContaining({ target: "sales.gross", covariates: [], horizonDays: 7 }),
+      expect.objectContaining({ target: "sales.net", covariates: [], horizonDays: 7 }),
     );
 
     // The forecast-vs-baseline and food/bev split charts render.

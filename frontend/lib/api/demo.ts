@@ -825,7 +825,7 @@ const demoForecastRuns: ForecastRun[] = [
   {
     id: "fc-2",
     status: "SUCCEEDED",
-    targetMetric: "sales.gross",
+    targetMetric: "sales.net",
     covariates: ["reservations.covers"],
     historyFrom: "2026-09-26",
     historyTo: "2026-10-05",

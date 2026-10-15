@@ -46,7 +46,7 @@ type Tab = (typeof TABS)[number]["value"];
  * runtime trains on a fixed internal set (`net`, `booked_covers`, `bookings`, `food`, `bev`), so
  * every run uses the same, sensible model.
  */
-const TARGET_METRIC = "sales.gross";
+const TARGET_METRIC = "sales.net";
 
 const STATUS_VARIANT: Record<ForecastRun["status"], "success" | "failed" | "info" | "neutral"> = {
   SUCCEEDED: "success",
