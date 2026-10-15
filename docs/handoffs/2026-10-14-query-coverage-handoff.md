@@ -11,7 +11,7 @@ on them.
 ## 1. Git state
 
 - **Branch:** `feat/data-foundation`
-- **HEAD:** `9a24605` — `feat(query): register all eligible resolved projections`
+- **HEAD:** `9c6e0df` — `feat(canonical): backfill legacy invoice_logical_id for the invoice-line join`
 - **Milestone commits (oldest → newest):**
   1. `5cd39e7` — Phase 1 data completeness & query-readiness audit (docs + probe harness)
   2. `c5bea04` — Phase 2 entity identity, referential integrity, source-fact preservation
@@ -19,6 +19,7 @@ on them.
   4. `49a2319` — Phase 4 query builder UI, saved queries, dashboard reuse
   5. `5c3c7cc` — Phase 5 versioned connector output contract (CTB invoice CSV pilot)
   6. `9a24605` — register the eight eligible resolved projections (Batches A + B)
+  7. `9c6e0df` — backfill legacy `invoice_logical_id` so the `invoice→line` join resolves
 
 ## 2. Completed architecture
 
@@ -87,15 +88,18 @@ One relationship: `invoice → invoice_line` (on `logical_entity_id = invoice_lo
 
 ## 7. Verification commands and known results
 
-- Backend: `cd backend && ./gradlew test spotlessCheck` → **BUILD SUCCESSFUL**, **1,489 tests / 0 failures**.
+- Backend: `cd backend && ./gradlew test spotlessCheck` → **BUILD SUCCESSFUL**, **1,493 tests / 0 failures**.
 - Frontend: `cd frontend && bun run typecheck && bun run lint && bun run test && bun run build` → **582 tests / 0 failures**, build succeeds.
 
 ## 8. Pending migrations, uncommitted changes, unresolved defects
 
 - **Migrations:** V74–V79 are committed and additive. V78/V79 extend the dormant `goldys_ro`
   read-only grant to the eight newly registered resolved tables.
-- **Deferred backfills (not run, not in production):** legacy `canonical_invoice_line.invoice_logical_id`
-  re-key (Phase 2); stock/wastage canonicalization (DF-03).
+- **Deferred backfills (implemented, not yet enabled in production):** the legacy
+  `canonical_invoice_line.invoice_logical_id` re-key is now implemented as a flag-gated runner
+  (`app.invoice-logical-id-backfill=true`, idempotent, bitemporal close-and-reinsert); it must be
+  enabled in production to make the `invoice→line` join resolve for pre-V74 lines. Still deferred:
+  stock/wastage canonicalization (DF-03).
 - **Historical audit findings to re-verify against current code (not acted on):** DF-04 (CTB product
   cost/tax/discount — now partially preserved in `source_product_sale_fact`), DF-06 (invoice
   header/line mismatch), DF-07 (valid-time unimplemented), DF-11 (product name↔code ambiguity).
@@ -114,12 +118,18 @@ One relationship: `invoice → invoice_line` (on `logical_entity_id = invoice_lo
 
 ## 10. Recommended next slices (ordered by dependency and risk)
 
-1. **Backfill legacy `invoice_logical_id`** (Phase-2 deferred) so the `invoice→line` join is complete.
-2. **Canonicalize stock/wastage** (DF-03) once source delivery is confirmed, then register.
-3. **Resolve the reviews domain** (projection or owner-approved canonical-direct + PII boundary).
-4. **Add calculated expressions + additional relationships** to the query language (Phase-3 deferred).
-5. **Source feeds** (Deputy, Lightspeed products/catalog/z-report, hour grain) — external dependencies.
-6. **Modelling** (product margin, guest↔reservation linkage, recipe↔ingredient join).
+1. ~~Backfill legacy `invoice_logical_id`~~ **DONE** — implemented as a flag-gated runner
+   (`app.invoice-logical-id-backfill=true`); enable in production to resolve the join for legacy rows.
+2. **Canonicalize stock/wastage** (DF-03) once source delivery is confirmed, then register
+   `canonical_stocktake`/`stock_count`/`wastage` as canonical-direct datasets.
+3. **Replay `ctb-revenue` raw into `source_product_sale_fact`** (DF-04: product cost/tax/discount) —
+   unblocks margin analysis; highest remaining financial-data-loss risk.
+4. **Backfill product/supplier identity hubs** (DF-11) — stable product identity + cross-domain joins.
+5. **Resolve the reviews domain** (projection or owner-approved canonical-direct + PII boundary).
+6. **Add calculated expressions + additional relationships** to the query language (Phase-3 deferred).
+7. **Source feeds** (Deputy, Lightspeed products/catalog/z-report, hour grain) — external dependencies.
+8. **Modelling** (guest↔reservation linkage, recipe↔ingredient join, PDF enrichment DF-10, invoice
+   category/account/tax DF-05).
 
 ---
 
