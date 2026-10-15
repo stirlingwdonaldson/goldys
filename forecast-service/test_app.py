@@ -21,7 +21,9 @@ from external import (
     SCHOOL_COLUMNS,
     UNIVERSITY_COLUMNS,
     WEATHER_COLUMNS,
+    Config,
 )
+from model import TrainedModels
 
 QUANTILES = ["0.1", "0.5", "0.9"]
 
@@ -221,3 +223,48 @@ def test_prewarm_enabled_parses_env(monkeypatch):
 
     monkeypatch.delenv("TIMESFM_PREWARM", raising=False)
     assert app_module._prewarm_enabled() is False
+
+
+def test_splitFutureUsesWrittenBackShareForNextDayLag():
+    """The recursive split writes ``food_share`` back before the next day's lag
+    features are computed. A share model that keys off ``food_share_roll_mean_7``
+    must therefore see its own prior-day predictions compounding into that lag:
+    day 8's share diverges from day 1's. If the write-back were dropped, every
+    future day's lag would stay at the constant history share and all eight
+    shares would be identical, so this catches a write-back regression."""
+    history_n = 40
+    dates = pd.date_range("2026-01-05", periods=history_n + 8, freq="D")
+    frame = pd.DataFrame({"date": dates})
+    frame["net_revenue"] = np.nan
+    frame.loc[: history_n - 1, "net_revenue"] = 1000.0
+    frame["food_share"] = np.nan
+    frame.loc[: history_n - 1, "food_share"] = 0.5
+    frame["food_revenue"] = np.nan
+    frame.loc[: history_n - 1, "food_revenue"] = 500.0
+    frame["bev_revenue"] = np.nan
+    frame.loc[: history_n - 1, "bev_revenue"] = 500.0
+    frame["booked_covers"] = 50.0
+    frame = forecast_module.add_calendar_features(frame)
+    cutoff = frame["date"].iloc[history_n - 1]
+
+    class LagShareModel:
+        def predict(self, matrix):
+            return np.clip(
+                matrix["food_share_roll_mean_7"].to_numpy(dtype=float) + 0.2, 0.05, 0.95
+            )
+
+    models = TrainedModels(
+        net_model=None,
+        share_model=LagShareModel(),
+        features=["day_of_week"],
+        share_features=["food_share_roll_mean_7"],
+    )
+
+    shares = app_module._split_future(frame, cutoff, models, [1000.0] * 8, Config())
+
+    assert len(shares) == 8
+    # Day 1 sees only the constant history share (0.5) -> 0.7.
+    assert shares[0] == pytest.approx(0.7)
+    # By day 8 the written-back shares have compounded into the lag, so the
+    # share has moved (and would not, if the write-back were missing).
+    assert shares[7] > shares[0]
