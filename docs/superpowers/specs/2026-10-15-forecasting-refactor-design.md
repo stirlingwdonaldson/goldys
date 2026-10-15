@@ -276,8 +276,8 @@ page is fully browsable in demo mode.
 
 1. **Second-level food/bev classifier** — the durable fix for §8. Outstanding, documented; approximate
    group-mapping ships first.
-2. **`GET .../diagnostics` endpoint shape** — fold diagnostics into the run DTO vs a sibling endpoint;
-   decide in the plan (leaning sibling, so the runs list stays light).
+2. **Diagnostics endpoint shape** — resolved: diagnostics fold into the run DTO
+   (`GET /api/forecasting/runs/{id}` carries a nullable `diagnostics`), no sibling endpoint.
 3. **Book-maturity curve** — now *measured* from `canonical_reservation.created_at` (§7) rather than
    ported as a single-snapshot fit. Two things to confirm during implementation: (a) `created_at` is
    actually populated across historical reservations (not null), and (b) how much late party-size
