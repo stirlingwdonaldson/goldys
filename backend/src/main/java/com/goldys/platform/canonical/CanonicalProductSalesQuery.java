@@ -3,6 +3,7 @@ package com.goldys.platform.canonical;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /**
@@ -40,6 +41,15 @@ public class CanonicalProductSalesQuery {
   /** The distinct, sorted product name keys that currently have canonical product sales. */
   public List<String> distinctProductNameKeys() {
     return repository.findDistinctCurrentProductNameKeys();
+  }
+
+  /**
+   * The trading dates of canonical product-sales rows that cite this raw record (any version). One
+   * sale-item page belongs to a single trading day, so this returns at most one distinct date; an
+   * empty or multi-date result means the record's day cannot be durably recovered.
+   */
+  public List<LocalDate> tradingDatesForRawRecord(UUID rawRecordId) {
+    return repository.findTradingDatesByRawRecordId(rawRecordId);
   }
 
   private ProductSalesView toView(CanonicalProductSales s) {

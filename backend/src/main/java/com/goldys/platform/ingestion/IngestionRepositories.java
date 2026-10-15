@@ -101,6 +101,22 @@ interface RawRecordRepository
   List<UUID> findIdsByFetcherIdentity(@Param("fetcherIdentity") String fetcherIdentity);
 
   /**
+   * One fetcher's records as lightweight references (id, source-record ref, fetch time) in
+   * ascending {@code fetched_at} order (then id), deliberately excluding {@code payload_bytes}.
+   * Used by the source-product-sale-fact replay to stream bytes one record at a time, so a large
+   * re-pulled dataset is never materialised as one list.
+   */
+  @Query(
+      """
+      select r.id as id, r.sourceRecordRef as sourceRecordRef, r.fetchedAt as fetchedAt
+      from RawRecord r
+      where r.sourceSystem = :source and r.fetcherIdentity = :fetcher
+      order by r.fetchedAt, r.id
+      """)
+  List<RawRecordRefRow> findRefsBySourceSystemAndFetcherIdentity(
+      @Param("source") String source, @Param("fetcher") String fetcher);
+
+  /**
    * Paged metadata list, deliberately selecting the summary columns only. Never loads {@code
    * payload_bytes}: some source payloads are hundreds of MB, and fetching them into a list query
    * OOMs both the JDBC result set and the JVM heap.
@@ -139,4 +155,13 @@ interface RawRecordDigest {
   UUID getId();
 
   String getPayloadSha256();
+}
+
+/** Id, source-record ref and fetch time of one stored raw payload, without its bytes. */
+interface RawRecordRefRow {
+  UUID getId();
+
+  String getSourceRecordRef();
+
+  Instant getFetchedAt();
 }

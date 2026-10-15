@@ -284,6 +284,29 @@ so a second source can be added later without re-deriving these decisions.
 - **Manual resolution path:** not yet wired.
 - **Important:** the report must be scheduled **without** the `Product Salelines → Product ID` field; that join silently drops ~92% of rows (see the 2026-10-10 design spec).
 
+## Source product-sale fact (`source_product_sale_fact`)
+
+- **Source:** `CTB` (`Sale/SearchSaleItemsByDateRange`, pages ingested under the shared
+  `ctb-revenue` fetcher identity). A source observation of the product-day measures CTB supplies
+  (cost, food cost, discount, tax, unit price, profit) that have no universal canonical home. It is
+  written by the live connector and the flag-gated `SourceProductSaleFactBackfillRunner`, and is
+  never projected into a resolved view.
+- **Logical identity:** `UUID.nameUUIDFromBytes("source-product-sale-fact:" + sourceSystem + ":" +
+  sourceRecordRef)`.
+- **Source identity:** `(source_system = CTB, source_record_ref =
+  "<stockCode>@<tradingDate>[@<uniqueGroupId>]")`. `uniqueGroupId` is the source's grouping
+  namespace (documented in `field-preservation.csv` as previously dropped); it is included so
+  distinct rows that share a stock code and day remain distinct. This assumes `uniqueGroupId` is
+  stable across re-pulls of the same product-day — unverified against production data, so revisit
+  the identity if it proves unstable.
+- **Trading date:** the request window, recovered from the `sale-items:<day>` raw-record reference
+  or the `canonical_product_sales.raw_record_id → trading_date` provenance — never derived from
+  `fetched_at` or record ordering.
+- **Matching strategy:** deterministic single source; a re-record supersedes on
+  `(source_system, source_record_ref)`.
+- **Confidence:** n/a (single source). The cost fields are source-estimated (CTB recipe costing),
+  distinct from purchasing COGS (`canonical_invoice_line`).
+
 ## Unmatched / missing data
 
 Where a second source is absent or has no record for an entity, the resolved layer surfaces

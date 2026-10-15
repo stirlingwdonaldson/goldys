@@ -75,6 +75,19 @@ public class RawLedgerQuery {
   }
 
   /**
+   * Lightweight references (id, source-record ref, fetch time) of one source and fetcher identity,
+   * ascending by {@code fetched_at} then id, without loading any {@code payload_bytes}. Used by the
+   * source-product-sale-fact replay to stream bytes one record at a time.
+   */
+  public List<RawRecordRef> rawRecordRefsForFetcher(String sourceSystem, String fetcherIdentity) {
+    return rawRecords
+        .findRefsBySourceSystemAndFetcherIdentity(sourceSystem, fetcherIdentity)
+        .stream()
+        .map(r -> new RawRecordRef(r.getId(), r.getSourceRecordRef(), r.getFetchedAt()))
+        .toList();
+  }
+
+  /**
    * The latest stored payload's id and SHA-256 for one dataset window ({@code source_record_ref}),
    * without loading its bytes; empty when that window was never stored. Lets a connector skip
    * re-storing a byte-identical response.
@@ -99,4 +112,9 @@ public class RawLedgerQuery {
   /** A stored raw payload plus its source-record reference and fetch time. */
   public record RawPayloadWithRefAndTime(
       UUID id, byte[] bytes, String sourceRecordRef, Instant fetchedAt) {}
+
+  /**
+   * A lightweight raw-record reference: id, source-record ref and fetch time, without its bytes.
+   */
+  public record RawRecordRef(UUID id, String sourceRecordRef, Instant fetchedAt) {}
 }

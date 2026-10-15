@@ -230,7 +230,9 @@ public class CtbConnector implements SourceConnector {
     while (pages < MAX_PAGES) {
       CtbClient.CtbPage page =
           client.searchSaleItems(day.toString(), day.toString(), start, PAGE_SIZE);
-      UUID rawId = writeRaw(page.json(), "ctb-revenue", sink);
+      // The sale-item payload carries no date (saleDate is null on every row); the trading day is
+      // the request window. Persist it out-of-band so a later replay can recover the date durably.
+      UUID rawId = writeRaw(page.json(), "ctb-revenue", "sale-items:" + day, sink);
 
       for (CtbSaleItem item : saleItemParser.parse(page.json().getBytes(StandardCharsets.UTF_8))) {
         String key = ProductNameKey.normalize(item.stockDescription());
@@ -310,7 +312,9 @@ public class CtbConnector implements SourceConnector {
   }
 
   /**
-   * Records the source-native product-day measures (cost, food cost, discount, tax, unit price).
+   * Records the source-native product-day measures (cost, food cost, discount, tax, unit price,
+   * profit), keyed by (stock code, trading date, source group) so distinct rows that share a code
+   * and day are preserved.
    */
   private void recordSourceSaleFact(CtbSaleItem item, LocalDate day, UUID rawId) {
     String code = item.stockCode();
@@ -320,14 +324,17 @@ public class CtbConnector implements SourceConnector {
     sourceSaleFact.record(
         new SourceProductSaleFactInput(
             "CTB",
-            code + "@" + day,
+            SourceProductSaleFactInput.sourceRecordRef(code, day, item.uniqueGroupId()),
             day,
             code,
             item.costPerUnit(),
+            item.foodCost(),
             item.totalFoodCost(),
+            item.profit(),
             item.discountedAmount(),
             item.taxAmount(),
             item.unitPrice(),
+            item.uniqueGroupId(),
             rawId));
   }
 
@@ -405,6 +412,15 @@ public class CtbConnector implements SourceConnector {
 
   /** Store one raw page byte-faithfully and return its ledger id. */
   private UUID writeRaw(String json, String fetcherIdentity, IngestionSink sink) {
+    return writeRaw(json, fetcherIdentity, null, sink);
+  }
+
+  /**
+   * Store one raw page byte-faithfully with an out-of-band source-record reference (e.g. the
+   * sale-items request day), and return its ledger id.
+   */
+  private UUID writeRaw(
+      String json, String fetcherIdentity, String sourceRecordRef, IngestionSink sink) {
     byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
     return sink.accept(
         new FetchedPayload(
@@ -413,7 +429,7 @@ public class CtbConnector implements SourceConnector {
             bytes,
             StandardCharsets.UTF_8.name(),
             fetcherIdentity,
-            null));
+            sourceRecordRef));
   }
 
   private LocalDate watermarkDate(String watermark) {

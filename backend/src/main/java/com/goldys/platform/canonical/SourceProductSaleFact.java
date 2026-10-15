@@ -11,9 +11,9 @@ import java.util.UUID;
 
 /**
  * One version of a source-native product-day measure: fields CTB supplies (source cost, food cost,
- * discount, tax, unit price) that have no universal canonical home. Keyed by (source, stock code,
- * trading date). Never projected into a resolved view — it is a source observation, not a
- * reconciled business fact.
+ * discount, tax, unit price, profit) that have no universal canonical home. Keyed by (source, stock
+ * code, trading date, source group). Never projected into a resolved view — it is a source
+ * observation, not a reconciled business fact.
  */
 @Entity
 @Table(name = "source_product_sale_fact")
@@ -27,8 +27,14 @@ class SourceProductSaleFact extends BitemporalEntity {
   @Column(name = "cost_per_unit", updatable = false, precision = 14, scale = 4)
   private BigDecimal costPerUnit;
 
+  @Column(name = "food_cost", updatable = false, precision = 14, scale = 4)
+  private BigDecimal foodCost;
+
   @Column(name = "total_food_cost", updatable = false, precision = 14, scale = 4)
   private BigDecimal totalFoodCost;
+
+  @Column(name = "profit", updatable = false, precision = 14, scale = 4)
+  private BigDecimal profit;
 
   @Column(name = "discounted_amount", updatable = false, precision = 14, scale = 4)
   private BigDecimal discountedAmount;
@@ -38,6 +44,9 @@ class SourceProductSaleFact extends BitemporalEntity {
 
   @Column(name = "unit_price", updatable = false, precision = 14, scale = 4)
   private BigDecimal unitPrice;
+
+  @Column(name = "unique_group_id", updatable = false)
+  private String uniqueGroupId;
 
   protected SourceProductSaleFact() {}
 
@@ -51,18 +60,24 @@ class SourceProductSaleFact extends BitemporalEntity {
       LocalDate tradingDate,
       String stockCode,
       BigDecimal costPerUnit,
+      BigDecimal foodCost,
       BigDecimal totalFoodCost,
+      BigDecimal profit,
       BigDecimal discountedAmount,
       BigDecimal taxAmount,
-      BigDecimal unitPrice) {
+      BigDecimal unitPrice,
+      String uniqueGroupId) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.tradingDate = tradingDate;
     this.stockCode = stockCode;
     this.costPerUnit = costPerUnit;
+    this.foodCost = foodCost;
     this.totalFoodCost = totalFoodCost;
+    this.profit = profit;
     this.discountedAmount = discountedAmount;
     this.taxAmount = taxAmount;
     this.unitPrice = unitPrice;
+    this.uniqueGroupId = uniqueGroupId;
   }
 
   static SourceProductSaleFact create(
@@ -75,10 +90,13 @@ class SourceProductSaleFact extends BitemporalEntity {
       LocalDate tradingDate,
       String stockCode,
       BigDecimal costPerUnit,
+      BigDecimal foodCost,
       BigDecimal totalFoodCost,
+      BigDecimal profit,
       BigDecimal discountedAmount,
       BigDecimal taxAmount,
-      BigDecimal unitPrice) {
+      BigDecimal unitPrice,
+      String uniqueGroupId) {
     return new SourceProductSaleFact(
         logicalEntityId,
         sourceSystem,
@@ -89,16 +107,22 @@ class SourceProductSaleFact extends BitemporalEntity {
         tradingDate,
         stockCode,
         costPerUnit,
+        foodCost,
         totalFoodCost,
+        profit,
         discountedAmount,
         taxAmount,
-        unitPrice);
+        unitPrice,
+        uniqueGroupId);
   }
 
   boolean sameFact(SourceProductSaleFactInput input) {
     return Objects.equals(stockCode, input.stockCode())
+        && Objects.equals(uniqueGroupId, input.uniqueGroupId())
         && same(costPerUnit, input.costPerUnit())
+        && same(foodCost, input.foodCost())
         && same(totalFoodCost, input.totalFoodCost())
+        && same(profit, input.profit())
         && same(discountedAmount, input.discountedAmount())
         && same(taxAmount, input.taxAmount())
         && same(unitPrice, input.unitPrice());
@@ -123,8 +147,16 @@ class SourceProductSaleFact extends BitemporalEntity {
     return costPerUnit;
   }
 
+  BigDecimal foodCost() {
+    return foodCost;
+  }
+
   BigDecimal totalFoodCost() {
     return totalFoodCost;
+  }
+
+  BigDecimal profit() {
+    return profit;
   }
 
   BigDecimal discountedAmount() {
@@ -137,5 +169,9 @@ class SourceProductSaleFact extends BitemporalEntity {
 
   BigDecimal unitPrice() {
     return unitPrice;
+  }
+
+  String uniqueGroupId() {
+    return uniqueGroupId;
   }
 }

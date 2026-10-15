@@ -714,6 +714,51 @@ public class DatasetRegistry {
                     FieldKind.MEASURE),
                 f("origin", "origin", FieldType.TEXT, null, true, FieldKind.DIMENSION))));
 
+    datasets.put(
+        "source_product_sale_fact",
+        new DatasetDescriptor(
+            "source_product_sale_fact",
+            "source_product_sale_fact",
+            ReadMode.CANONICAL_DIRECT,
+            "one product per trading day per source group",
+            "reconciliation.sales",
+            true,
+            List.of(
+                f("trading_date", "trading_date", FieldType.DATE, null, false, FieldKind.DIMENSION),
+                f("stock_code", "stock_code", FieldType.TEXT, null, true, FieldKind.DIMENSION),
+                f(
+                    "unique_group_id",
+                    "unique_group_id",
+                    FieldType.TEXT,
+                    null,
+                    true,
+                    FieldKind.DIMENSION),
+                f(
+                    "cost_per_unit",
+                    "cost_per_unit",
+                    FieldType.DECIMAL,
+                    "AUD",
+                    true,
+                    FieldKind.MEASURE),
+                f("food_cost", "food_cost", FieldType.DECIMAL, "AUD", true, FieldKind.MEASURE),
+                f(
+                    "total_food_cost",
+                    "total_food_cost",
+                    FieldType.DECIMAL,
+                    "AUD",
+                    true,
+                    FieldKind.MEASURE),
+                f("profit", "profit", FieldType.DECIMAL, "AUD", true, FieldKind.MEASURE),
+                f(
+                    "discounted_amount",
+                    "discounted_amount",
+                    FieldType.DECIMAL,
+                    "AUD",
+                    true,
+                    FieldKind.MEASURE),
+                f("tax_amount", "tax_amount", FieldType.DECIMAL, "AUD", true, FieldKind.MEASURE),
+                f("unit_price", "unit_price", FieldType.DECIMAL, "AUD", true, FieldKind.MEASURE))));
+
     // invoice -> invoice_line on the supplier-scoped identity (Phase 2), never the ambiguous
     // invoice_number. 1:N: summing an invoice-header measure across this join would double-count.
     relationships.put(

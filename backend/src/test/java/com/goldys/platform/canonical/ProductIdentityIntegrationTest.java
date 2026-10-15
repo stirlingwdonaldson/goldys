@@ -146,18 +146,87 @@ class ProductIdentityIntegrationTest {
             java.time.LocalDate.of(2026, 9, 14),
             "STK-1",
             new java.math.BigDecimal("12.50"),
+            new java.math.BigDecimal("11.00"),
             new java.math.BigDecimal("250.00"),
+            new java.math.BigDecimal("48.00"),
             new java.math.BigDecimal("10.00"),
             new java.math.BigDecimal("22.73"),
             new java.math.BigDecimal("13.75"),
+            null,
             raw));
 
     assertThat(
             jdbc.queryForObject(
                 "select unit_price || '|' || cost_per_unit || '|' || total_food_cost "
+                    + "|| '|' || food_cost || '|' || profit "
                     + "from source_product_sale_fact where source_record_ref='STK-1@2026-09-14'",
                 String.class))
-        .isEqualTo("13.7500|12.5000|250.0000");
+        .isEqualTo("13.7500|12.5000|250.0000|11.0000|48.0000");
+  }
+
+  @Test
+  void distinctSourceGroupsArePreservedEvenWhenCodeAndDayCoincide() {
+    UUID raw = rawRecord();
+    sourceSaleFact.record(
+        new SourceProductSaleFactInput(
+            "CTB",
+            SourceProductSaleFactInput.sourceRecordRef(
+                "STK-1", java.time.LocalDate.of(2026, 9, 14), "G-1"),
+            java.time.LocalDate.of(2026, 9, 14),
+            "STK-1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            new java.math.BigDecimal("13.75"),
+            "G-1",
+            raw));
+    sourceSaleFact.record(
+        new SourceProductSaleFactInput(
+            "CTB",
+            SourceProductSaleFactInput.sourceRecordRef(
+                "STK-1", java.time.LocalDate.of(2026, 9, 14), "G-2"),
+            java.time.LocalDate.of(2026, 9, 14),
+            "STK-1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            new java.math.BigDecimal("15.00"),
+            "G-2",
+            raw));
+
+    assertThat(
+            count(
+                "select count(*) from source_product_sale_fact where stock_code='STK-1' "
+                    + "and superseded_at is null"))
+        .isEqualTo(2);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from source_product_sale_fact "
+                    + "where source_record_ref='STK-1@2026-09-14@G-1' and superseded_at is null",
+                Integer.class))
+        .isEqualTo(1);
+  }
+
+  @Test
+  void sourceRecordRefOmitsBlankGroup() {
+    assertThat(
+            SourceProductSaleFactInput.sourceRecordRef(
+                "STK-1", java.time.LocalDate.of(2026, 9, 14), null))
+        .isEqualTo("STK-1@2026-09-14");
+    assertThat(
+            SourceProductSaleFactInput.sourceRecordRef(
+                "STK-1", java.time.LocalDate.of(2026, 9, 14), "  "))
+        .isEqualTo("STK-1@2026-09-14");
+    assertThat(
+            SourceProductSaleFactInput.sourceRecordRef(
+                "STK-1", java.time.LocalDate.of(2026, 9, 14), "G-1"))
+        .isEqualTo("STK-1@2026-09-14@G-1");
   }
 
   private static SourceProductInput source(String sourceSystem, String ref, String name, UUID raw) {

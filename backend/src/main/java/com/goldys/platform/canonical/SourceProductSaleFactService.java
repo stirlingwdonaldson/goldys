@@ -3,6 +3,7 @@ package com.goldys.platform.canonical;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,14 @@ class SourceProductSaleFactService {
   @Transactional
   void record(SourceProductSaleFactInput input) {
     recordAt(input, CLOCK.instant());
+  }
+
+  /** Batch record for replay: one transaction, each input deduped/superseded on its source ref. */
+  @Transactional
+  void recordAll(List<SourceProductSaleFactInput> inputs) {
+    for (SourceProductSaleFactInput input : inputs) {
+      recordAt(input, CLOCK.instant());
+    }
   }
 
   @Transactional
@@ -54,9 +63,12 @@ class SourceProductSaleFactService {
             input.tradingDate(),
             input.stockCode(),
             input.costPerUnit(),
+            input.foodCost(),
             input.totalFoodCost(),
+            input.profit(),
             input.discountedAmount(),
             input.taxAmount(),
-            input.unitPrice()));
+            input.unitPrice(),
+            input.uniqueGroupId()));
   }
 }
