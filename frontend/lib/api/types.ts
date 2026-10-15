@@ -922,29 +922,36 @@ export interface ForecastDayRow extends ForecastSeriesPoint {
   serviceRainMm: number | null;
 }
 
-/** Holdout/CV accuracy for one model: mean-absolute-error, RMSE, MAPE, and the sample size. */
+/**
+ * Holdout/CV accuracy for one model: mean-absolute-error, RMSE, MAPE, and the sample size. Every
+ * member is nullable: the backend `ForecastDiagnosticsDto` wraps each in `BigDecimal`/`Integer` and
+ * a metric block is `null` when that model could not be trained.
+ */
 export interface ForecastAccuracyMetric {
-  mae: number;
-  rmse: number;
-  mape: number;
-  n: number;
+  mae: number | null;
+  rmse: number | null;
+  mape: number | null;
+  n: number | null;
 }
 
-/** One feature's gain-based importance in the net model. */
+/** One feature's gain-based importance in the net model. Both members are nullable on the wire. */
 export interface ForecastImportanceRow {
-  feature: string;
-  importance: number;
+  feature: string | null;
+  importance: number | null;
 }
 
-/** One backtest day: actual vs predicted net, the error, and the food/bev split. */
+/**
+ * One backtest day: actual vs predicted net, the error, and the food/bev split. Every member is
+ * nullable — a missing split or a missing baseline degrades to `null`, never a fabricated zero.
+ */
 export interface BacktestRow {
   /** YYYY-MM-DD. */
-  date: string;
+  date: string | null;
   /** Weekday name, e.g. "Monday". */
-  day: string;
-  actualNet: number;
-  predictedNet: number;
-  error: number;
+  day: string | null;
+  actualNet: number | null;
+  predictedNet: number | null;
+  error: number | null;
   absPctError: number | null;
   actualFood: number | null;
   predictedFood: number | null;
@@ -953,37 +960,38 @@ export interface BacktestRow {
   baselineNet: number | null;
 }
 
-/** One weekday's aggregated backtest error. */
+/** One weekday's aggregated backtest error. Every member is nullable on the wire. */
 export interface WeekdayErrorRow {
-  day: string;
-  n: number;
-  mae: number;
-  mape: number;
-  meanActual: number;
-  meanPredicted: number;
+  day: string | null;
+  n: number | null;
+  mae: number | null;
+  mape: number | null;
+  meanActual: number | null;
+  meanPredicted: number | null;
 }
 
 /** The walk-forward backtest: per-day rows, weekday error summary, residuals, and worst days. */
 export interface ForecastBacktest {
-  rows: BacktestRow[];
-  byWeekday: WeekdayErrorRow[];
+  rows: BacktestRow[] | null;
+  byWeekday: WeekdayErrorRow[] | null;
   residualMean: number | null;
   residualStd: number | null;
-  worstDays: BacktestRow[];
+  worstDays: BacktestRow[] | null;
 }
 
 /**
  * The parsed diagnostic payload of a succeeded forecast run (mirrors `ForecastDiagnosticsDto`).
- * The accuracy blocks are nullable when that model could not be trained; `beatsBaseline` is null
- * when the comparison could not be made.
+ * The backend DTO is explicit that every field beyond `modelVersion` is nullable (nullable
+ * wrappers throughout), so `live.ts`'s unvalidated JSON pass-through may hand `null` for any of
+ * them — consumers must null-check. `modelVersion` is the only non-null field.
  */
 export interface ForecastDiagnostics {
   modelVersion: string;
-  trainedRows: number;
-  reliable: boolean;
-  warnings: string[];
-  features: string[];
-  shareFeatures: string[];
+  trainedRows: number | null;
+  reliable: boolean | null;
+  warnings: string[] | null;
+  features: string[] | null;
+  shareFeatures: string[] | null;
   holdoutNetXgboost: ForecastAccuracyMetric | null;
   holdoutNetBaseline: ForecastAccuracyMetric | null;
   holdoutFood: ForecastAccuracyMetric | null;
@@ -991,8 +999,8 @@ export interface ForecastDiagnostics {
   cvNetXgboost: ForecastAccuracyMetric | null;
   cvNetBaseline: ForecastAccuracyMetric | null;
   beatsBaseline: boolean | null;
-  importance: ForecastImportanceRow[];
-  backtest: ForecastBacktest;
+  importance: ForecastImportanceRow[] | null;
+  backtest: ForecastBacktest | null;
 }
 
 /**

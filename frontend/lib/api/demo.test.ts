@@ -263,9 +263,9 @@ describe("demoApi forecasting", () => {
   it("getForecastRunReturnsDiagnosticsAndSplit", async () => {
     const run = await demoApi.getForecastRun("fc-2");
     expect(run.diagnostics).not.toBeNull();
-    expect(run.diagnostics!.importance.length).toBeGreaterThan(0);
-    expect(run.diagnostics!.backtest.byWeekday.length).toBeGreaterThan(0);
-    expect(run.diagnostics!.backtest.rows.length).toBeGreaterThan(0);
+    expect(run.diagnostics!.importance!.length).toBeGreaterThan(0);
+    expect(run.diagnostics!.backtest!.byWeekday!.length).toBeGreaterThan(0);
+    expect(run.diagnostics!.backtest!.rows!.length).toBeGreaterThan(0);
     expect(run.diagnostics!.holdoutNetXgboost).not.toBeNull();
     expect(run.series).not.toBeNull();
     for (const p of run.series!) {
