@@ -747,12 +747,12 @@ const demoForecastDiagnostics: ForecastDiagnostics = {
     "service_rain_mm",
   ],
   shareFeatures: ["day_of_week", "is_weekend", "is_friday", "booked_covers", "service_temp_max_c"],
-  holdoutNetXgboost: { mae: 421.5, rmse: 512.8, mape: 0.0412, n: 72 },
-  holdoutNetBaseline: { mae: 640.0, rmse: 780.0, mape: 0.0625, n: 72 },
-  holdoutFood: { mae: 205.0, rmse: 260.0, mape: 0.047, n: 72 },
-  holdoutBev: { mae: 280.0, rmse: 350.0, mape: 0.058, n: 72 },
-  cvNetXgboost: { mae: 445.0, rmse: 540.0, mape: 0.043, n: 215 },
-  cvNetBaseline: { mae: 655.0, rmse: 800.0, mape: 0.064, n: 215 },
+  holdoutNetXgboost: { mae: 421.5, rmse: 512.8, mape: 4.12, n: 72 },
+  holdoutNetBaseline: { mae: 640.0, rmse: 780.0, mape: 6.25, n: 72 },
+  holdoutFood: { mae: 205.0, rmse: 260.0, mape: 4.7, n: 72 },
+  holdoutBev: { mae: 280.0, rmse: 350.0, mape: 5.8, n: 72 },
+  cvNetXgboost: { mae: 445.0, rmse: 540.0, mape: 4.3, n: 215 },
+  cvNetBaseline: { mae: 655.0, rmse: 800.0, mape: 6.4, n: 215 },
   beatsBaseline: true,
   importance: [
     { feature: "booked_covers", importance: 0.38 },
@@ -854,7 +854,7 @@ const demoForecastRuns: ForecastRun[] = [
 
 const demoForecastComparison: ForecastComparison = {
   runId: "fc-2",
-  mape: 0.0412,
+  mape: 4.12,
   mae: 512.4,
   points: [
     { date: "2026-10-06", predictedMedian: 9600, actual: 9254.1 },

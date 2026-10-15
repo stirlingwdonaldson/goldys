@@ -23,12 +23,12 @@ const diagnostics: ForecastDiagnostics = {
   warnings: [],
   features: ["day_of_week", "booked_covers", "net_revenue_lag_7"],
   shareFeatures: ["day_of_week", "booked_covers"],
-  holdoutNetXgboost: { mae: 421.5, rmse: 512.8, mape: 0.0412, n: 72 },
-  holdoutNetBaseline: { mae: 640.0, rmse: 780.0, mape: 0.0625, n: 72 },
+  holdoutNetXgboost: { mae: 421.5, rmse: 512.8, mape: 4.12, n: 72 },
+  holdoutNetBaseline: { mae: 640.0, rmse: 780.0, mape: 6.25, n: 72 },
   holdoutFood: null,
   holdoutBev: null,
-  cvNetXgboost: { mae: 445.0, rmse: 540.0, mape: 0.043, n: 215 },
-  cvNetBaseline: { mae: 655.0, rmse: 800.0, mape: 0.064, n: 215 },
+  cvNetXgboost: { mae: 445.0, rmse: 540.0, mape: 4.3, n: 215 },
+  cvNetBaseline: { mae: 655.0, rmse: 800.0, mape: 6.4, n: 215 },
   beatsBaseline: true,
   importance: [
     { feature: "booked_covers", importance: 0.38 },
@@ -93,7 +93,7 @@ const queuedRun: ForecastRun = {
 
 const comparison: ForecastComparison = {
   runId: "fc-2",
-  mape: 0.0412,
+  mape: 4.12,
   mae: 512.4,
   points: [
     { date: "2026-10-06", predictedMedian: 10000, actual: 9254.1 },

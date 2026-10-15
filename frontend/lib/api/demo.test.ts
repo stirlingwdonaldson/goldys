@@ -280,7 +280,7 @@ describe("demoApi forecasting", () => {
     expect(comparison.runId).toBe("fc-2");
     expect(comparison.mape).not.toBeNull();
     expect(comparison.mae).not.toBeNull();
-    expect(comparison.mape!).toBeLessThan(0.1);
+    expect(comparison.mape!).toBeLessThan(10); // percent, matching the live score()
     expect(comparison.points.length).toBeGreaterThan(0);
     for (const p of comparison.points) {
       expect(p.predictedMedian).toBeTypeOf("number");

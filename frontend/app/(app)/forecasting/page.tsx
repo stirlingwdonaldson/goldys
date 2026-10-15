@@ -12,7 +12,7 @@ import { LoadingState } from "@/components/states/loading-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApi } from "@/lib/demo-mode";
 import { useApiData } from "@/lib/use-api-data";
-import { formatDateTime, formatDay, formatNumber, formatPercent } from "@/lib/format";
+import { formatDateTime, formatDay, formatNumber } from "@/lib/format";
 import { ForecastVsBaselineChart } from "@/components/forecasting/forecast-vs-baseline-chart";
 import { FoodBevSplitChart } from "@/components/forecasting/food-bev-split-chart";
 import { FeatureImportanceChart } from "@/components/forecasting/feature-importance-chart";
@@ -171,8 +171,8 @@ function AccuracyComparisonTable({ diagnostics }: { diagnostics: ForecastDiagnos
             <td className="py-1.5 font-medium">{r.label}</td>
             <td className="py-1.5">{formatNumber(r.model?.mae, 1)}</td>
             <td className="py-1.5">{formatNumber(r.baseline?.mae, 1)}</td>
-            <td className="py-1.5">{formatPercent(r.model?.mape)}</td>
-            <td className="py-1.5">{formatPercent(r.baseline?.mape)}</td>
+            <td className="py-1.5">{r.model?.mape == null ? "—" : `${formatNumber(r.model.mape, 1)}%`}</td>
+            <td className="py-1.5">{r.baseline?.mape == null ? "—" : `${formatNumber(r.baseline.mape, 1)}%`}</td>
           </tr>
         ))}
       </tbody>
@@ -707,7 +707,7 @@ export default function ForecastingPage() {
                   ) : comparison.data ? (
                     <>
                       <div className="flex gap-2">
-                        <Badge variant="info">MAPE {formatPercent(comparison.data.mape)}</Badge>
+                        <Badge variant="info">MAPE {comparison.data.mape == null ? "—" : `${formatNumber(comparison.data.mape, 1)}%`}</Badge>
                         <Badge variant="info">MAE {formatNumber(comparison.data.mae, 1)}</Badge>
                       </div>
                       {comparison.data.points.length === 0 ? (
