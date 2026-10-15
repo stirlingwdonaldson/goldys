@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable } from "@/components/data-table/data-table";
 import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -133,22 +134,25 @@ export function SaleItemsTab({ from, to, onViewSale, apiOverride }: SaleItemsTab
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">Category</span>
-          <select
-            aria-label="Category"
-            className="rounded-md border bg-background px-2 py-1 text-sm"
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
+          <Select
+            value={category || "all"}
+            onValueChange={(v) => {
+              setCategory(v === "all" ? "" : v);
               setPage(0);
             }}
           >
-            <option value="">All categories</option>
-            {categories.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label="Category" className="w-44">
+              <SelectValue placeholder="All categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All categories</SelectItem>
+              {categories.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {rows.loading ? <LoadingState rows={4} /> : null}

@@ -11,7 +11,6 @@ import { LoadingState } from "@/components/states/loading-state";
 import { InlineError } from "@/components/states/inline-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
   checkTotals,
@@ -337,8 +336,10 @@ export function InvoicePdfActions({ invoice }: { invoice: Pick<InvoiceDetail, "i
 }
 
 /**
- * The body shared by the slide-over and the full page. `layout="sheet"` puts lines and PDF on
- * tabs (the sheet is too narrow for both); `layout="page"` sets them side by side on wide screens.
+ * The body shared by the slide-over and the full page. The extracted invoice data (header
+ * figures, then line items, with any ingestion issues at the bottom) sits next to the original
+ * PDF so the two can be read side by side; on narrow screens they stack instead. `layout` only
+ * tunes the PDF height for the two containers.
  */
 export function InvoiceDetailBody({
   data,
@@ -359,49 +360,26 @@ export function InvoiceDetailBody({
     );
   }
   const invoice = detail.data;
-  const lines = <InvoiceLinesTable invoice={invoice} flags={flags} previous={previous} />;
 
-  if (layout === "page") {
-    // Without a PDF there's nothing to set alongside, so keep one readable column.
-    if (!invoice.hasPdf) {
-      return (
-        <div className="flex max-w-4xl flex-col gap-5">
-          <InvoiceSummaryGrid invoice={invoice} />
-          <InvoiceFlags flags={flags} />
-          {lines}
-        </div>
-      );
-    }
-    return (
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
-        <div className="flex min-w-0 flex-col gap-5">
-          <InvoiceSummaryGrid invoice={invoice} />
-          <InvoiceFlags flags={flags} />
-          {lines}
-        </div>
-        <div className="lg:sticky lg:top-6">
-          <InvoicePdf invoice={invoice} className="h-[80vh]" />
-        </div>
-      </div>
-    );
+  const extracted = (
+    <div className="flex min-w-0 flex-col gap-5">
+      <InvoiceSummaryGrid invoice={invoice} />
+      <InvoiceLinesTable invoice={invoice} flags={flags} previous={previous} />
+      <InvoiceFlags flags={flags} />
+    </div>
+  );
+
+  // Without a PDF there's nothing to set alongside, so keep one readable column.
+  if (!invoice.hasPdf) {
+    return <div className="flex max-w-4xl flex-col gap-5">{extracted}</div>;
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <InvoiceSummaryGrid invoice={invoice} />
-      <InvoiceFlags flags={flags} />
-      <Tabs defaultValue="lines">
-        <TabsList>
-          <TabsTrigger value="lines">Lines ({invoice.lines.length})</TabsTrigger>
-          <TabsTrigger value="pdf">PDF</TabsTrigger>
-        </TabsList>
-        <TabsContent value="lines" className="mt-3">
-          {lines}
-        </TabsContent>
-        <TabsContent value="pdf" className="mt-3">
-          <InvoicePdf invoice={invoice} className="h-[70vh]" />
-        </TabsContent>
-      </Tabs>
+    <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
+      {extracted}
+      <div className="md:sticky md:top-6">
+        <InvoicePdf invoice={invoice} className={layout === "page" ? "h-[80vh]" : "h-[70vh]"} />
+      </div>
     </div>
   );
 }

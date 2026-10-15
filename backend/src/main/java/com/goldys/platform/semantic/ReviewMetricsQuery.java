@@ -15,6 +15,9 @@ public interface ReviewMetricsQuery {
   /** Weekly sentiment buckets over the inclusive range. */
   List<SentimentBucket> sentimentTrend(LocalDate from, LocalDate to);
 
+  /** Weekly average rating and % who would recommend over the inclusive range. */
+  List<RatingTrendBucket> ratingTrend(LocalDate from, LocalDate to);
+
   /** Mentions and sentiment per aspect over the inclusive range. */
   List<AspectSentimentSummary> aspectBreakdown(LocalDate from, LocalDate to);
 

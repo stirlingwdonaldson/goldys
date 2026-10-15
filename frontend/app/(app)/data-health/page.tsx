@@ -10,7 +10,7 @@ import { useToast } from "@/components/feedback/toast";
 import { useShellStatus } from "@/components/app-shell/shell-status";
 import { PageHeader } from "@/components/layout/page-header";
 import { SourceTile } from "@/components/sources/source-tile";
-import { connectorDisplayName, isLegacyCsvDrop, sourceIdentity, uploadTargetFor } from "@/lib/sources";
+import { connectorDisplayName, groupConnectors, opentableDatasetLabel, sourceIdentity, type SourceGroup } from "@/lib/sources";
 import { formatAgo, formatDateTime } from "@/lib/format";
 import { InlineError } from "@/components/states/inline-error";
 import { Section } from "@/components/layout/section";
@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ConnectorStatusBadge } from "@/components/connectors/connector-status-badge";
 import { OpenTableSyncDialog } from "@/components/connectors/opentable-sync-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { StatCard } from "@/components/data-display/stat-card";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { PipelineMap } from "@/components/pipeline/pipeline-map";
@@ -161,6 +162,7 @@ export default function DataHealthPage() {
   }
 
   const failing = connectors.data.filter((c) => c.status === "failed").length;
+  const groups = groupConnectors(connectors.data);
 
   return (
     <>
@@ -197,26 +199,21 @@ export default function DataHealthPage() {
         />
 
         <section className="grid gap-4 lg:grid-cols-2" aria-label="Sources">
-          {connectors.data.map((c) => {
-            const target = uploadTargetFor(c.connectorName);
-            const syncable = c.source.toUpperCase() === "OPENTABLE" && !isLegacyCsvDrop(c.connectorName);
+          {groups.map((group) => {
+            const anyRunning = group.connectors.some((c) => c.status === "running");
             return (
               <ConnectorCard
-                key={c.connectorName}
-                connector={c}
-                running={running === c.source || c.status === "running"}
-                busy={running !== null || c.status === "running"}
-                uploading={uploading === c.connectorName}
-                onRun={() => run(c.source)}
-                onUpload={
-                  target
-                    ? () => {
-                        setUploadTarget(target);
-                        fileInputRef.current?.click();
-                      }
-                    : undefined
-                }
-                onSync={syncable ? () => setSyncOpen(true) : undefined}
+                key={group.source}
+                group={group}
+                running={running === group.source || anyRunning}
+                busy={running !== null || anyRunning}
+                uploading={group.connectors.some((c) => uploading === c.connectorName)}
+                onRun={() => run(group.source)}
+                onUpload={(connectorName) => {
+                  setUploadTarget(connectorName);
+                  fileInputRef.current?.click();
+                }}
+                onSync={group.syncable ? () => setSyncOpen(true) : undefined}
               />
             );
           })}
@@ -294,12 +291,12 @@ function runOutcomeToast(c: ConnectorStatus) {
 }
 
 /**
- * One source. A failure states what happened and puts the fix next to it
+ * One source system. A failure states what happened and puts the fix next to it
  * (heuristic 9); "No new data" stays neutral because it is an expected state,
  * not a fault (docs/design/design-system.md).
  */
 function ConnectorCard({
-  connector: c,
+  group,
   running,
   busy,
   uploading,
@@ -307,37 +304,43 @@ function ConnectorCard({
   onUpload,
   onSync,
 }: {
-  connector: ConnectorStatus;
+  group: SourceGroup;
   running: boolean;
   busy: boolean;
   uploading: boolean;
   onRun: () => void;
-  onUpload: (() => void) | undefined;
+  onUpload: (connectorName: string) => void;
   onSync: (() => void) | undefined;
 }) {
-  const failed = c.status === "failed";
-  const isUpload = onUpload !== undefined;
+  const failed = group.status === "failed";
   const isSync = onSync !== undefined;
-  const legacy = isLegacyCsvDrop(c.connectorName);
-  // Sources arrive as codes ("LIGHTSPEED"); the OpenTable datasets get distinct names.
-  const name = connectorDisplayName(c.source, c.connectorName);
-  // OpenTable datasets: sign in through the live view to sync, or fall back to a CSV export.
+  // Sources arrive as codes ("LIGHTSPEED"); the card is named by the source system.
+  const name = sourceIdentity(group.source).label;
+
+  // OpenTable: sign in through the live view to sync, or drop one of the three CSV exports.
   const action = isSync ? (
     <>
       <Button variant={failed ? "default" : "outline"} size="sm" onClick={onSync}>
         <LogIn aria-hidden="true" />
         Sync OpenTable
       </Button>
-      {isUpload && (
-        <Button variant="ghost" size="sm" onClick={onUpload} disabled={uploading}>
-          <Upload aria-hidden="true" />
-          {uploading ? "Uploading…" : "Upload CSV"}
-        </Button>
-      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" disabled={uploading}>
+            <Upload aria-hidden="true" />
+            {uploading ? "Uploading…" : "Upload CSV"}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {group.connectors.map((c) => (
+            <DropdownMenuItem key={c.connectorName} onSelect={() => onUpload(c.connectorName)}>
+              {opentableDatasetLabel(c.connectorName)}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </>
-  ) : legacy ? (
-    <span className="text-xs text-muted-foreground">Deprecated — use the exports below</span>
-  ) : c.runnable ? (
+  ) : group.runnable ? (
     <Button variant={failed ? "default" : "outline"} size="sm" onClick={onRun} disabled={busy}>
       <RefreshCw className={running ? "animate-spin" : undefined} aria-hidden="true" />
       {running ? "Running…" : failed ? "Run again" : "Run now"}
@@ -353,24 +356,26 @@ function ConnectorCard({
       aria-label={name}
     >
       <div className="flex items-center gap-3">
-        <SourceTile source={c.source} size="lg" />
+        <SourceTile source={group.source} size="lg" />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{name}</p>
-          <p className="truncate text-xs text-muted-foreground">{c.connectorName}</p>
+          {isSync ? (
+            <p className="truncate text-xs text-muted-foreground">Reservations · Reviews · Menu</p>
+          ) : null}
         </div>
         <div className="ml-auto">
-          <ConnectorStatusBadge status={c.status} />
+          <ConnectorStatusBadge status={group.status} />
         </div>
       </div>
 
-      {c.failure ? (
+      {group.failure ? (
         <Alert variant="destructive" className="border-0 bg-destructive-soft">
           <AlertTriangle aria-hidden="true" />
           <AlertTitle className="text-foreground">
-            {c.failure.type} at {formatDateTime(c.failure.at)}
+            {group.failure.type} at {formatDateTime(group.failure.at)}
           </AlertTitle>
           <AlertDescription className="text-muted-foreground">
-            {c.failure.message ?? "The source didn't say why."} Figures from {name} after this run
+            {group.failure.message ?? "The source didn't say why."} Figures from {name} after this run
             are missing until it succeeds. Check the connection, then run it again.
           </AlertDescription>
         </Alert>
@@ -383,25 +388,21 @@ function ConnectorCard({
             <Link href="/logs" className="font-medium text-foreground underline underline-offset-2">
               Check the logs
             </Link>{" "}
-            for the cause{c.runnable ? ", then run it again" : ""}.
+            for the cause{group.runnable ? ", then run it again" : ""}.
           </AlertDescription>
         </Alert>
       ) : null}
 
-      <dl className="grid grid-cols-2 gap-3 text-xs">
+      <dl className="grid gap-3 text-xs">
         <div>
           <dt className="text-muted-foreground">Last run</dt>
           <dd className="mt-0.5 text-sm font-medium">
-            {c.lastRunAt ? (
-              <span title={formatDateTime(c.lastRunAt)}>{formatAgo(c.lastRunAt)}</span>
+            {group.lastRunAt ? (
+              <span title={formatDateTime(group.lastRunAt)}>{formatAgo(group.lastRunAt)}</span>
             ) : (
               "Never"
             )}
           </dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Recent failures</dt>
-          <dd className="mt-0.5 text-sm font-medium tabular-nums">{c.failureCount}</dd>
         </div>
       </dl>
 

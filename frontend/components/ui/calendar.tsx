@@ -52,6 +52,11 @@ function Calendar({
         ),
         selected:
           "rounded-md [&>button]:bg-primary [&>button]:text-primary-foreground [&>button:hover]:bg-primary [&>button:hover]:text-primary-foreground",
+        range_start:
+          "[&>button]:rounded-l-md [&>button]:bg-primary [&>button]:text-primary-foreground [&>button:hover]:bg-primary [&>button:hover]:text-primary-foreground",
+        range_end:
+          "[&>button]:rounded-r-md [&>button]:bg-primary [&>button]:text-primary-foreground [&>button:hover]:bg-primary [&>button:hover]:text-primary-foreground",
+        range_middle: "[&>button]:rounded-none [&>button]:bg-primary/15 [&>button]:text-foreground",
         today: "rounded-md [&>button]:bg-accent [&>button]:text-accent-foreground",
         outside: cn("text-muted-foreground opacity-50", defaults.outside),
         disabled: cn("text-muted-foreground opacity-50", defaults.disabled),

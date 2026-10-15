@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable } from "@/components/data-table/data-table";
 import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -125,22 +126,25 @@ export function PaymentsTab({ from, to, onViewSale, apiOverride }: PaymentsTabPr
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">Payment type</span>
-          <select
-            aria-label="Payment type"
-            className="rounded-md border bg-background px-2 py-1 text-sm"
-            value={paymentType}
-            onChange={(e) => {
-              setPaymentType(e.target.value);
+          <Select
+            value={paymentType || "all"}
+            onValueChange={(v) => {
+              setPaymentType(v === "all" ? "" : v);
               setPage(0);
             }}
           >
-            <option value="">All payment types</option>
-            {paymentTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label="Payment type" className="w-44">
+              <SelectValue placeholder="All payment types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All payment types</SelectItem>
+              {paymentTypes.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {rows.loading ? <LoadingState rows={4} /> : null}

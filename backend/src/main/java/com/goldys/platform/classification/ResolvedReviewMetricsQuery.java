@@ -8,12 +8,14 @@ import com.goldys.platform.canonical.ReviewFact;
 import com.goldys.platform.semantic.AspectSentimentSummary;
 import com.goldys.platform.semantic.AspectSentimentView;
 import com.goldys.platform.semantic.RatingBucket;
+import com.goldys.platform.semantic.RatingTrendBucket;
 import com.goldys.platform.semantic.ReviewFilter;
 import com.goldys.platform.semantic.ReviewMetricsQuery;
 import com.goldys.platform.semantic.ReviewOverview;
 import com.goldys.platform.semantic.ReviewView;
 import com.goldys.platform.semantic.SentimentBucket;
 import com.goldys.platform.semantic.SourceSummary;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -114,6 +116,45 @@ public class ResolvedReviewMetricsQuery implements ReviewMetricsQuery {
     for (Map.Entry<LocalDate, long[]> entry : byWeek.entrySet()) {
       long[] b = entry.getValue();
       out.add(new SentimentBucket(entry.getKey(), b[0], b[1], b[2]));
+    }
+    return out;
+  }
+
+  @Override
+  public List<RatingTrendBucket> ratingTrend(LocalDate from, LocalDate to) {
+    List<ReviewFact> facts = reviews.currentReviews(start(from), end(to));
+
+    // Week start (ISO Monday) -> [ratingSum, ratingCount, recommend, recommendKnown].
+    Map<LocalDate, long[]> byWeek = new TreeMap<>();
+    for (ReviewFact fact : facts) {
+      LocalDate day = fact.reviewedAt().atZone(zone).toLocalDate();
+      LocalDate week = day.minusDays(day.getDayOfWeek().getValue() - 1);
+      long[] bucket = byWeek.computeIfAbsent(week, k -> new long[4]);
+      if (fact.overallRating() != null) {
+        bucket[0] += fact.overallRating();
+        bucket[1]++;
+      }
+      if (fact.wouldRecommend() != null) {
+        bucket[3]++;
+        if (fact.wouldRecommend()) {
+          bucket[2]++;
+        }
+      }
+    }
+
+    List<RatingTrendBucket> out = new ArrayList<>(byWeek.size());
+    for (Map.Entry<LocalDate, long[]> entry : byWeek.entrySet()) {
+      long[] b = entry.getValue();
+      BigDecimal avgRating =
+          b[1] == 0
+              ? null
+              : BigDecimal.valueOf(b[0]).divide(BigDecimal.valueOf(b[1]), 2, RoundingMode.HALF_UP);
+      BigDecimal recommendPercent =
+          b[3] == 0
+              ? null
+              : BigDecimal.valueOf(100L * b[2])
+                  .divide(BigDecimal.valueOf(b[3]), 1, RoundingMode.HALF_UP);
+      out.add(new RatingTrendBucket(entry.getKey(), avgRating, recommendPercent));
     }
     return out;
   }

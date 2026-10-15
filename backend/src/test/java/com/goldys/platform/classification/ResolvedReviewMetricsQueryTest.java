@@ -10,6 +10,7 @@ import com.goldys.platform.canonical.ReviewFact;
 import com.goldys.platform.semantic.AspectSentimentSummary;
 import com.goldys.platform.semantic.AspectSentimentView;
 import com.goldys.platform.semantic.RatingBucket;
+import com.goldys.platform.semantic.RatingTrendBucket;
 import com.goldys.platform.semantic.ReviewFilter;
 import com.goldys.platform.semantic.ReviewOverview;
 import com.goldys.platform.semantic.ReviewView;
@@ -172,6 +173,30 @@ class ResolvedReviewMetricsQueryTest {
     assertThat(view.valueRating()).isEqualTo(5);
   }
 
+  @Test
+  void rating_trend_buckets_average_and_recommend_percent() {
+    ReviewFact w1a = rated("OT-1", "2026-10-05T00:00:00Z", 4, true);
+    ReviewFact w1b = rated("OT-2", "2026-10-06T00:00:00Z", 2, false);
+    ReviewFact w2 = rated("OT-3", "2026-10-12T00:00:00Z", 5, true);
+    ReviewFact unanswered = rated("OT-4", "2026-10-12T00:00:00Z", null, null);
+
+    when(reviews.currentReviews(any(Instant.class), any(Instant.class)))
+        .thenReturn(List.of(w1a, w1b, w2, unanswered));
+    when(classifications.findAll()).thenReturn(List.of());
+
+    List<RatingTrendBucket> trend = query.ratingTrend(FROM, TO);
+
+    assertThat(trend).hasSize(2);
+    // Week 1 (Mon 5 Oct): avg (4+2)/2 = 3.0, recommend 1/2 = 50%.
+    assertThat(trend.get(0).periodStart()).isEqualTo(LocalDate.of(2026, 10, 5));
+    assertThat(trend.get(0).avgRating()).isEqualByComparingTo("3.00");
+    assertThat(trend.get(0).recommendPercent()).isEqualByComparingTo("50.0");
+    // Week 2 (Mon 12 Oct): the unanswered review is excluded from both figures.
+    assertThat(trend.get(1).periodStart()).isEqualTo(LocalDate.of(2026, 10, 12));
+    assertThat(trend.get(1).avgRating()).isEqualByComparingTo("5.00");
+    assertThat(trend.get(1).recommendPercent()).isEqualByComparingTo("100.0");
+  }
+
   private static RatingBucket bucket(List<RatingBucket> buckets, int stars) {
     return buckets.stream().filter(b -> b.stars() == stars).findFirst().orElseThrow();
   }
@@ -189,6 +214,28 @@ class ResolvedReviewMetricsQueryTest {
         null,
         null,
         null,
+        null,
+        null,
+        List.of(),
+        List.of(),
+        null);
+  }
+
+  private static ReviewFact rated(
+      String reviewId, String reviewedAt, Integer overallRating, Boolean wouldRecommend) {
+    Instant at = Instant.parse(reviewedAt);
+    return new ReviewFact(
+        reviewId,
+        "OpenTable",
+        at,
+        at,
+        overallRating,
+        null,
+        null,
+        null,
+        null,
+        null,
+        wouldRecommend,
         null,
         null,
         List.of(),

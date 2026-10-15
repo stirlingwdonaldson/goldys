@@ -39,6 +39,8 @@ public class DashboardApplicationService {
 
   private final SalesMetricsQuery salesMetrics;
   private final ProductMetricsQuery productMetrics;
+  private final ReservationReportingService reservationReporting;
+  private final InventoryReportingService inventoryReporting;
   private final IngestionService ingestion;
   private final OverrideUsageService overrideUsage;
   private final PermissionService permissions;
@@ -48,6 +50,8 @@ public class DashboardApplicationService {
   public DashboardApplicationService(
       SalesMetricsQuery salesMetrics,
       ProductMetricsQuery productMetrics,
+      ReservationReportingService reservationReporting,
+      InventoryReportingService inventoryReporting,
       IngestionService ingestion,
       OverrideUsageService overrideUsage,
       PermissionService permissions,
@@ -55,6 +59,8 @@ public class DashboardApplicationService {
       VenueClock venueClock) {
     this.salesMetrics = salesMetrics;
     this.productMetrics = productMetrics;
+    this.reservationReporting = reservationReporting;
+    this.inventoryReporting = inventoryReporting;
     this.ingestion = ingestion;
     this.overrideUsage = overrideUsage;
     this.permissions = permissions;
@@ -93,7 +99,9 @@ public class DashboardApplicationService {
         latestTradingDayInternal(),
         salesTrendInternal(null, null),
         activityInternal(null, null),
-        topSellersInternal(null, null, null));
+        topSellersInternal(null, null, null),
+        coversToday(role),
+        foodCost(role));
   }
 
   private Summary summaryInternal() {
@@ -157,12 +165,30 @@ public class DashboardApplicationService {
         .orElseGet(() -> new LatestSales(null, null, null));
   }
 
+  /** Today's resolved reservation figures, or nulls when there is no data yet. */
+  private CoversToday coversToday(UserRole role) {
+    return reservationReporting
+        .summary(role, venueClock.today())
+        .map(s -> new CoversToday(s.covers(), s.bookings(), s.noShows()))
+        .orElseGet(() -> new CoversToday(null, null, null));
+  }
+
+  /** Food-cost over the trailing window, as purchases ÷ resolved gross sales. */
+  private FoodCost foodCost(UserRole role) {
+    TimeRange range = defaultRange(null, null, TOP_SELLERS_WINDOW_DAYS);
+    InventoryReportingService.InventorySummary s =
+        inventoryReporting.summary(role, range.from(), range.to());
+    return new FoodCost(s.foodCostPercent(), s.purchases(), s.wastage());
+  }
+
   public record Bootstrap(
       Summary summary,
       LatestSales latestSales,
       List<SalesTrend> salesTrend,
       List<ActivityPoint> activity,
-      List<TopSeller> topSellers) {}
+      List<TopSeller> topSellers,
+      CoversToday coversToday,
+      FoodCost foodCost) {}
 
   public record Summary(
       Integer ingestionCompleteness,
@@ -178,4 +204,8 @@ public class DashboardApplicationService {
   public record ActivityPoint(String date, int clean, int failed) {}
 
   public record LatestSales(String date, BigDecimal total, String authoritativeSource) {}
+
+  public record CoversToday(Long covers, Long bookings, Long noShows) {}
+
+  public record FoodCost(BigDecimal foodCostPercent, BigDecimal purchases, BigDecimal wastage) {}
 }

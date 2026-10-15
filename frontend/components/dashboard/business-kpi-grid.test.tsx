@@ -45,4 +45,20 @@ describe("BusinessKpiGrid", () => {
     expect(screen.getByText(/needs decision/i)).toBeInTheDocument();
     expect(screen.queryByText(/\$10,?865/)).not.toBeInTheDocument();
   });
+
+  it("shows resolved covers, top seller, and food cost once data lands", () => {
+    render(
+      <BusinessKpiGrid
+        seniority="OWNER"
+        coversToday={{ covers: 132, bookings: 98, noShows: 4 }}
+        foodCost={{ foodCostPercent: 0.3125, purchases: 15842.6, wastage: 214.5 }}
+        topSellers={[{ name: "chicken schnitzel", quantitySold: 211, amount: 5591.5, hasConflict: false }]}
+      />,
+    );
+    expect(screen.getByText("132")).toBeInTheDocument();
+    expect(screen.getByText(/98 bookings/)).toBeInTheDocument();
+    expect(screen.getByText("31.3%")).toBeInTheDocument();
+    expect(screen.getByText("$5,591.50")).toBeInTheDocument();
+    expect(screen.getByText("chicken schnitzel")).toBeInTheDocument();
+  });
 });

@@ -5,6 +5,7 @@ import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.semantic.AspectSentimentSummary;
 import com.goldys.platform.semantic.RatingBucket;
+import com.goldys.platform.semantic.RatingTrendBucket;
 import com.goldys.platform.semantic.ReviewFilter;
 import com.goldys.platform.semantic.ReviewOverview;
 import com.goldys.platform.semantic.ReviewView;
@@ -48,6 +49,14 @@ public class ReviewController {
       @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
       @AuthenticationPrincipal AccountUserDetails user) {
     return reporting.sentimentTrend(currentUser.roleOf(user), from, to);
+  }
+
+  @GetMapping("/rating-trend")
+  List<RatingTrendBucket> ratingTrend(
+      @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return reporting.ratingTrend(currentUser.roleOf(user), from, to);
   }
 
   @GetMapping("/aspects")

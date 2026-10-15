@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "./data-table";
@@ -60,5 +60,27 @@ describe("DataTable", () => {
 
     fireEvent.change(screen.getByLabelText("Filter…"), { target: { value: "zzz" } });
     expect(screen.getByText("No suppliers match.")).toBeInTheDocument();
+  });
+
+  it("renders a checkbox column and reports the selection", () => {
+    const onSelected = vi.fn();
+    render(
+      <DataTable
+        columns={columns}
+        data={data}
+        selectable
+        getRowId={(r) => r.name}
+        onSelectedRowsChange={onSelected}
+      />,
+    );
+
+    expect(screen.getByRole("checkbox", { name: "Select all" })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("checkbox", { name: "Select row" })[0]);
+    expect(onSelected).toHaveBeenCalledWith([{ name: "Acme", amount: 20 }]);
+  });
+
+  it("renders a row-actions button per row", () => {
+    render(<DataTable columns={columns} data={data} rowActions={() => <div>act</div>} />);
+    expect(screen.getAllByRole("button", { name: "Row actions" })).toHaveLength(3);
   });
 });

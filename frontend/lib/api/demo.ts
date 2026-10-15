@@ -83,6 +83,7 @@ import type {
   OpenTableSyncMode,
   AspectSentimentSummary,
   RatingBucket,
+  RatingTrendBucket,
   ReviewFilter,
   ReviewOverview,
   ReviewView,
@@ -158,8 +159,9 @@ const records: Record<string, ReconciliationRecord> = {
 };
 
 const connectorStatuses: ConnectorStatus[] = [
-  { source: "LIGHTSPEED", connectorName: "lightspeed-scrape", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0, runnable: false },
-  { source: "CTB", connectorName: "ctb-export", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1, runnable: true },
+  { source: "LIGHTSPEED", connectorName: "lightspeed-insights", lastRunAt: "2026-09-20T09:05:00Z", status: "success", failureCount: 0, runnable: false },
+  { source: "LIGHTSPEED", connectorName: "lightspeed-product-catalog", lastRunAt: "2026-09-19T08:00:00Z", status: "success", failureCount: 0, runnable: false },
+  { source: "CTB", connectorName: "ctb-revenue", lastRunAt: "2026-09-20T09:00:00Z", status: "partial", failureCount: 1, runnable: true },
   { source: "OPENTABLE", connectorName: "opentable-csv-drop", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
   { source: "OPENTABLE", connectorName: "opentable-reservations", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
   { source: "OPENTABLE", connectorName: "opentable-reviews", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
@@ -1054,6 +1056,8 @@ export const demoApi: Api = {
         { name: "parma", quantitySold: 132, amount: 3696, hasConflict: false },
         { name: "house red", quantitySold: 98, amount: 1078, hasConflict: false },
       ],
+      coversToday: { covers: 132, bookings: 98, noShows: 4 },
+      foodCost: { foodCostPercent: 0.3125, purchases: 15842.6, wastage: 214.5 },
     };
   },
 
@@ -2046,6 +2050,16 @@ export const demoApi: Api = {
     return [
       { periodStart: "2026-09-29", positive: 2, neutral: 1, negative: 1 },
       { periodStart: "2026-10-06", positive: 1, neutral: 0, negative: 1 },
+    ];
+  },
+
+  async getReviewRatingTrend(_from: string, _to: string): Promise<RatingTrendBucket[]> {
+    await delay(300);
+    void _from;
+    void _to;
+    return [
+      { periodStart: "2026-09-29", avgRating: 3.5, recommendPercent: 66.7 },
+      { periodStart: "2026-10-06", avgRating: 4.0, recommendPercent: 100.0 },
     ];
   },
 

@@ -53,18 +53,15 @@ export default function DashboardPage() {
         actions={<FocusSwitcher value={focus} onChange={setFocus} />}
       />
 
-      <AttentionPanel
-        items={queue.data ? filterByFocus(queue.data.items, focus) : null}
-        loading={queue.loading}
-        openConflicts={data.summary.openConflicts}
-      />
-
       <FocusShortcuts focus={focus} />
 
       <BusinessKpiGrid
         seniority={user?.seniority}
         latestSales={data.latestSales}
         salesTrend={data.salesTrend}
+        coversToday={data.coversToday}
+        foodCost={data.foodCost}
+        topSellers={data.topSellers}
       />
 
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
@@ -73,6 +70,14 @@ export default function DashboardPage() {
       </section>
 
       <TopSellers items={data.topSellers} />
+
+      {/* Below the fold: the attention queue sits under the headline numbers so the
+          dashboard reads top-down as "how is the business, then what needs doing". */}
+      <AttentionPanel
+        items={queue.data ? filterByFocus(queue.data.items, focus) : null}
+        loading={queue.loading}
+        openConflicts={data.summary.openConflicts}
+      />
     </div>
   );
 }

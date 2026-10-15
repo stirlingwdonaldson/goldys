@@ -134,7 +134,10 @@ class DashboardControllerTest {
                 List.of(new DashboardApplicationService.ActivityPoint("2026-10-05", 5, 1)),
                 List.of(
                     new DashboardApplicationService.TopSeller(
-                        "garlic aioli", new BigDecimal("150"), new BigDecimal("380.88"), true))));
+                        "garlic aioli", new BigDecimal("150"), new BigDecimal("380.88"), true)),
+                new DashboardApplicationService.CoversToday(34L, 12L, 2L),
+                new DashboardApplicationService.FoodCost(
+                    new BigDecimal("0.3125"), new BigDecimal("5000"), new BigDecimal("120"))));
 
     mvc.perform(get("/api/dashboard/bootstrap").with(authenticated(owner())))
         .andExpect(status().isOk())
@@ -142,7 +145,9 @@ class DashboardControllerTest {
         .andExpect(jsonPath("$.latestSales.total").value(10865.72))
         .andExpect(jsonPath("$.salesTrend[0].date").value("2026-10-05"))
         .andExpect(jsonPath("$.activity[0].clean").value(5))
-        .andExpect(jsonPath("$.topSellers[0].name").value("garlic aioli"));
+        .andExpect(jsonPath("$.topSellers[0].name").value("garlic aioli"))
+        .andExpect(jsonPath("$.coversToday.covers").value(34))
+        .andExpect(jsonPath("$.foodCost.foodCostPercent").value(0.3125));
   }
 
   private static AccountUserDetails owner() {

@@ -32,7 +32,7 @@ export function InvoiceSheet({ invoiceNumber, order, onNavigate, onClose }: Invo
       <SheetContent
         side="right"
         hideClose
-        className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl"
+        className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-5xl"
       >
         {invoiceNumber ? (
           <InvoiceSheetContent

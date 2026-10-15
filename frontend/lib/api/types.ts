@@ -485,6 +485,22 @@ export interface DashboardBootstrap {
   salesTrend: SalesTrendPoint[];
   activity: ActivityPoint[];
   topSellers: TopSeller[];
+  coversToday: CoversToday;
+  foodCost: FoodCost;
+}
+
+/** Today's resolved reservation figures. Each is null when there is no data yet. */
+export interface CoversToday {
+  covers: number | null;
+  bookings: number | null;
+  noShows: number | null;
+}
+
+/** Food-cost over the trailing window. `foodCostPercent` is a ratio (e.g. 0.3125). */
+export interface FoodCost {
+  foodCostPercent: number | null;
+  purchases: number | null;
+  wastage: number | null;
 }
 
 /** A top-selling product over a recent window. `quantitySold`/`amount` are null when unresolved. */
@@ -960,6 +976,13 @@ export interface SentimentBucket {
   negative: number;
 }
 
+/** One weekly bucket of average rating and % who would recommend (mirrors `semantic.RatingTrendBucket`). */
+export interface RatingTrendBucket {
+  periodStart: string;
+  avgRating: number | null;
+  recommendPercent: number | null;
+}
+
 /** Mentions and sentiment totals for one review aspect (mirrors `semantic.AspectSentimentSummary`). */
 export interface AspectSentimentSummary {
   aspect: string;
@@ -1153,6 +1176,7 @@ export interface Api {
   listClassificationRuns(): Promise<ClassificationRun[]>;
   getReviewOverview(from: string, to: string): Promise<ReviewOverview>;
   getReviewSentimentTrend(from: string, to: string): Promise<SentimentBucket[]>;
+  getReviewRatingTrend(from: string, to: string): Promise<RatingTrendBucket[]>;
   getReviewAspects(from: string, to: string): Promise<AspectSentimentSummary[]>;
   getReviewRatings(from: string, to: string): Promise<RatingBucket[]>;
   getReviewSources(from: string, to: string): Promise<SourceSummary[]>;
