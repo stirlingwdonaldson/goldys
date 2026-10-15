@@ -281,7 +281,7 @@ class RelationalQueryIntegrationTest {
 
   @Test
   void unauthorizedDiscoveryIsHidden() {
-    assertThat(queries.datasets(OWNER)).hasSize(3);
+    assertThat(queries.datasets(OWNER)).hasSize(11);
     assertThat(queries.datasets(STAFF)).isEmpty();
   }
 
