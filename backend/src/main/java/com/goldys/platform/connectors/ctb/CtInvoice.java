@@ -10,8 +10,12 @@ import java.util.List;
  * {@code pdfFilenames} is the distinct, first-seen set of {@code PDF} column values across the
  * invoice's rows — usually one, empty for a PDF-less invoice, and more than one for an ambiguous
  * invoice whose rows reference different PDFs.
+ *
+ * <p>{@code supplierCode} is the source's own supplier identifier (CTB "SupplierCode"); it is the
+ * supplier identity, whereas {@code supplierName} is display text that may change.
  */
 public record CtInvoice(
+    String supplierCode, // SupplierCode — source supplier identity (nullable)
     String supplierName, // Supplier
     String purchaseNumber, // PONumber
     LocalDate invoiceDate, // Date

@@ -252,15 +252,9 @@ public class TrustService implements TrustQuery {
         .anyMatch(c -> "FAILED".equals(c.status()) || "PARTIAL".equals(c.status()))) {
       return FreshnessState.SOURCE_FAILURE;
     }
-    Instant freshest =
-        domainHealth.stream()
-            .map(ConnectorHealth::lastRunAt)
-            .filter(Objects::nonNull)
-            .max(Comparator.naturalOrder())
-            .orElse(null);
-    if (freshest == null) return FreshnessState.UNKNOWN;
-    Instant now = Instant.now();
-    return now.isAfter(freshest.plus(threshold)) ? FreshnessState.STALE : FreshnessState.FRESH;
+    // A successful recent fetch does not establish the covered business interval or decision
+    // fitness. Keep historical data usable; context-specific recency policies remain unadopted.
+    return FreshnessState.UNKNOWN;
   }
 
   private static Instant lastIngestionFor(List<String> sources, List<ConnectorHealth> health) {

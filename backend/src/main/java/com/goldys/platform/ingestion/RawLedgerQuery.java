@@ -58,19 +58,15 @@ public class RawLedgerQuery {
   }
 
   /**
-   * Stored payloads of one source and fetcher identity with each record's {@code fetched_at},
-   * ascending. Used by replays of re-pulled datasets (e.g. the daily stocktake header list) that
-   * must keep the most recent version per id rather than the first.
+   * Lightweight references (id, source-record ref, fetch time) of one source and fetcher identity,
+   * ascending by {@code fetched_at} then id, without loading any {@code payload_bytes}. Used by the
+   * source-product-sale-fact replay to stream bytes one record at a time.
    */
-  public List<RawPayloadWithRefAndTime> rawPayloadsForFetcherWithFetchedAt(
-      String sourceSystem, String fetcherIdentity) {
+  public List<RawRecordRef> rawRecordRefsForFetcher(String sourceSystem, String fetcherIdentity) {
     return rawRecords
-        .findBySourceSystemAndFetcherIdentityOrderByFetchedAtAsc(sourceSystem, fetcherIdentity)
+        .findRefsBySourceSystemAndFetcherIdentity(sourceSystem, fetcherIdentity)
         .stream()
-        .map(
-            r ->
-                new RawPayloadWithRefAndTime(
-                    r.id(), r.payloadBytes(), r.sourceRecordRef(), r.fetchedAt()))
+        .map(r -> new RawRecordRef(r.getId(), r.getSourceRecordRef(), r.getFetchedAt()))
         .toList();
   }
 
@@ -96,7 +92,8 @@ public class RawLedgerQuery {
   /** A stored raw payload plus its source-record reference. */
   public record RawPayloadWithRef(UUID id, byte[] bytes, String sourceRecordRef) {}
 
-  /** A stored raw payload plus its source-record reference and fetch time. */
-  public record RawPayloadWithRefAndTime(
-      UUID id, byte[] bytes, String sourceRecordRef, Instant fetchedAt) {}
+  /**
+   * A lightweight raw-record reference: id, source-record ref and fetch time, without its bytes.
+   */
+  public record RawRecordRef(UUID id, String sourceRecordRef, Instant fetchedAt) {}
 }

@@ -54,12 +54,12 @@ function SummaryStats({ s }: { s: ReservationSummary }) {
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
       <StatCard label="Bookings" value={formatNumber(s.bookings)} />
-      <StatCard label="Covers" value={formatNumber(s.covers)} />
+      <StatCard label="Attendance proxy" value={formatNumber(s.covers)} />
       <StatCard label="No-shows" value={formatNumber(s.noShows)} />
       <StatCard label="Avg party size" value={formatNumber(s.avgPartySize, 2)} />
       <StatCard label="Walk-ins" value={formatNumber(s.walkIns)} />
       <StatCard label="Cancelled" value={formatNumber(s.cancelled)} />
-      <StatCard label="No-show rate" value={formatPercent(s.noShowRate)} />
+      <StatCard label="Declared no-show rate" value={formatPercent(s.noShowRate)} />
       <StatCard label="Booking→cover" value={formatPercent(s.bookingToCoverConversion)} />
     </div>
   );
@@ -91,7 +91,7 @@ export default function ReservationsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Reservations" description="Covers, bookings, and no-shows." />
+      <PageHeader title="Reservations" description="Booking size rarely reflects actual arrivals; attendance measures are proxies. Covers, bookings, and no-shows." />
 
       {summary.data ? (
         <SummaryStats s={summary.data} />

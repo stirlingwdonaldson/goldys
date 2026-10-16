@@ -25,7 +25,43 @@ public record EnrichedInvoiceLine(
     BigDecimal lineTotalIncTax,
     BigDecimal lineGstAmount,
     BigDecimal lineTaxRate,
-    Boolean incGst) {
+    Boolean incGst,
+    java.util.UUID invoiceId) {
+
+  public EnrichedInvoiceLine(
+      String invoiceNumber,
+      LocalDate invoiceDate,
+      String productNameKey,
+      String stockCode,
+      BigDecimal quantity,
+      BigDecimal unitCost,
+      BigDecimal lineTotal,
+      String uom,
+      BigDecimal unitQuantity,
+      BigDecimal packSize,
+      BigDecimal wetAmount,
+      BigDecimal lineTotalIncTax,
+      BigDecimal lineGstAmount,
+      BigDecimal lineTaxRate,
+      Boolean incGst) {
+    this(
+        invoiceNumber,
+        invoiceDate,
+        productNameKey,
+        stockCode,
+        quantity,
+        unitCost,
+        lineTotal,
+        uom,
+        unitQuantity,
+        packSize,
+        wetAmount,
+        lineTotalIncTax,
+        lineGstAmount,
+        lineTaxRate,
+        incGst,
+        null);
+  }
 
   /** Convenience constructor for callers that do not carry tax treatment. */
   public EnrichedInvoiceLine(

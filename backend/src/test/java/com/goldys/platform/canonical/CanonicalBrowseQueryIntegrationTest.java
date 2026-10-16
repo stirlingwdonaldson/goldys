@@ -68,6 +68,7 @@ class CanonicalBrowseQueryIntegrationTest {
             "CTB",
             "INV-1",
             "Acme Supplies",
+            null,
             LocalDate.of(2026, 9, 1),
             null,
             bd("250.50"),

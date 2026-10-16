@@ -34,5 +34,11 @@ public enum InvoiceIngestFlagType {
    * header to reconcile against, the line sums do not reconcile, or the PDF-only lines would push
    * the invoice total past the header).
    */
-  INVOICE_EXPORT_INCOMPLETE
+  INVOICE_EXPORT_INCOMPLETE,
+  /**
+   * The CSV carried columns the source contract does not declare (an additive source change). The
+   * run still succeeds and the unknown columns are preserved in the raw ledger, but the drift is
+   * surfaced here so a source change is never silently absorbed.
+   */
+  SCHEMA_DRIFT
 }

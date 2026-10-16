@@ -39,8 +39,42 @@ class SalesMetricExecutorTest {
     assertThat(ts.series().get(0).points().get(0).status()).isNull();
     assertThat(ts.series().get(0).points().get(1).value()).isNull();
     assertThat(ts.series().get(0).points().get(1).status()).isEqualTo(MissingDataStatus.UNRESOLVED);
-    assertThat(ts.notices()).containsExactly("1 day(s) unresolved");
+    assertThat(ts.notices())
+        .anySatisfy(
+            note -> assertThat(note).contains("Incomplete subtotal", "1 unresolved day(s)"));
     assertThat(ts.provenance().missingPeriods()).containsExactly(SEP_14);
+  }
+
+  @Test
+  void historicalSubtotalRetainsDistinctMissingReasonsAndExplicitZero() {
+    LocalDate day = LocalDate.of(2020, 1, 6);
+    SalesMetricsQuery q = mock(SalesMetricsQuery.class);
+    when(q.dailySales(day, day.plusDays(3)))
+        .thenReturn(
+            List.of(
+                metric(day, "100", "100", "0"),
+                metric(day.plusDays(1), "0", "0", "0"),
+                metric(day.plusDays(2), null, null, null)));
+    TimeSeriesResult result =
+        (TimeSeriesResult)
+            new SalesMetricExecutor(q, new MetricCatalog())
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.SALES_NET,
+                        new TimeRange(day, day.plusDays(3), Calendar.CALENDAR),
+                        TimeGrain.TOTAL,
+                        java.util.Set.of(),
+                        null));
+    assertThat(result.series().getFirst().points().getFirst().value()).isEqualByComparingTo("100");
+    assertThat(result.provenance().coverage().observedDates())
+        .containsExactly(day, day.plusDays(1));
+    assertThat(result.provenance().coverage().unresolvedDates()).containsExactly(day.plusDays(2));
+    assertThat(result.provenance().coverage().absentDates()).containsExactly(day.plusDays(3));
+    assertThat(result.notices())
+        .anySatisfy(
+            note ->
+                assertThat(note)
+                    .contains("Incomplete subtotal", "1 unresolved", "1 day(s) without"));
   }
 
   private static DailySalesMetric metric(LocalDate d, String gross, String net, String gst) {

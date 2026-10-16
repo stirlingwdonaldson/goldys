@@ -129,7 +129,7 @@ class ConversationalEvalTest {
     assertThat(steps.get(0).succeeded()).isTrue();
     TimeSeriesWidgetSpec widget = (TimeSeriesWidgetSpec) steps.get(0).result().widget();
     assertThat(sum(widget.series())).isEqualByComparingTo("600.00");
-    assertThat(steps.get(0).result().notices()).isEmpty();
+    assertThat(steps.get(0).result().notices()).anyMatch(n -> n.contains("includes GST"));
     schema.assertValid(widget);
   }
 

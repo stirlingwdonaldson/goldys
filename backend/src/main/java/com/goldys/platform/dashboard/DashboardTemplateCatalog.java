@@ -31,7 +31,7 @@ public class DashboardTemplateCatalog {
                 "daily",
                 "Daily Management",
                 "Today's sales, covers, labour and conflicts.",
-                ts("w1", MetricId.SALES_GROSS),
+                ts("w1", MetricId.SALES_NET),
                 ts("w2", MetricId.RESERVATIONS_COVERS),
                 ts("w3", MetricId.LABOUR_COST)),
             t(
@@ -54,7 +54,7 @@ public class DashboardTemplateCatalog {
                 "sales",
                 "Sales Performance",
                 "Gross and net sales trend.",
-                ts("w1", MetricId.SALES_GROSS),
+                ts("w1", MetricId.SALES_NET),
                 ts("w2", MetricId.SALES_NET)),
             t(
                 "labour",
@@ -73,16 +73,16 @@ public class DashboardTemplateCatalog {
                 ts("w1", MetricId.RESERVATIONS_BOOKINGS)),
             t(
                 "food-cost",
-                "Food Cost",
+                "Invoice Purchases",
                 "Purchases and wastage.",
                 table("w1", MetricId.INVENTORY_PURCHASES, MetricId.INVENTORY_WASTAGE)),
             t(
                 "owner",
                 "Owner Overview",
-                "Headline sales, labour % and food cost %.",
-                ts("w1", MetricId.SALES_GROSS),
+                "Net sales, wages-only labour % and invoice purchases.",
+                ts("w1", MetricId.SALES_NET),
                 ts("w2", MetricId.LABOUR_FOH_PERCENT),
-                ts("w3", MetricId.INVENTORY_FOOD_COST_PERCENT)));
+                ts("w3", MetricId.INVENTORY_PURCHASES)));
   }
 
   public List<DashboardTemplate> templates() {

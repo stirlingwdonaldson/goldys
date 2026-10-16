@@ -38,10 +38,10 @@ export function formatNumber(v: Numeric, maxDecimals = 0): string {
   return n == null ? EMPTY : n.toLocaleString(LOCALE, { maximumFractionDigits: maxDecimals });
 }
 
-/** A ratio (0.141) as "14.1%". */
+/** A ratio (0.141) as "14%". */
 export function formatPercent(ratio: Numeric): string {
   const n = toNumber(ratio);
-  return n == null ? EMPTY : `${(n * 100).toFixed(1)}%`;
+  return n == null ? EMPTY : `${(n * 100).toFixed(0)}%`;
 }
 
 /** "1,231.5 h". */

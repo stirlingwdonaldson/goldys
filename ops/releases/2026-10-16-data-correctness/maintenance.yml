@@ -1,0 +1,6 @@
+# Temporary overlay. Remove after validation to restore the existing configured pull schedules.
+services:
+  backend:
+    environment:
+      CTB_SFTP_ENABLED: "false"
+      APP_SCHEDULING_CTB_ENABLED: "false"

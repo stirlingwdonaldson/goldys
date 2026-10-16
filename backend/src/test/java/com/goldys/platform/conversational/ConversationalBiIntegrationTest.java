@@ -67,7 +67,7 @@ class ConversationalBiIntegrationTest {
     assertThat(raw).contains("27650.66");
     assertThat(context.toAnswerPayload().widgets()).hasSize(1);
     assertThat(context.toAnswerPayload().widgets().get(0)).isInstanceOf(TimeSeriesWidgetSpec.class);
-    assertThat(context.toAnswerPayload().notices()).isEmpty();
+    assertThat(context.toAnswerPayload().notices()).anyMatch(n -> n.contains("includes GST"));
   }
 
   private UUID rawRecord() {

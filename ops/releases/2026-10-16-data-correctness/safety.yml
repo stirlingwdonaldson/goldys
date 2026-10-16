@@ -1,0 +1,19 @@
+# Keep during this release and subsequent restarts. No historical raw replay or snapshot deletion.
+services:
+  backend:
+    environment:
+      APP_LIGHTSPEED_BACKFILL: "false"
+      APP_LIGHTSPEED_SALE_ITEMS_REPLAY: "false"
+      APP_LIGHTSPEED_PAYMENTS_REPLAY: "false"
+      APP_LIGHTSPEED_DAILY_SALES_DERIVATION: "false"
+      APP_CTB_INVOICE_REENRICH: "false"
+      APP_CTB_INVOICE_GAP_RECOVERY: "false"
+      APP_CTB_INVOICE_PDF_LINK_BACKFILL: "false"
+      APP_CTB_DETAIL_BACKFILL: "false"
+      APP_RECIPE_COST_CANONICALIZE: "false"
+      APP_RECIPE_INGREDIENTS_CANONICALIZE: "false"
+      APP_OPENTABLE_REVIEWS_CANONICALIZE: "false"
+      APP_INVOICE_LOGICAL_ID_BACKFILL: "false"
+      APP_SOURCE_PRODUCT_SALE_FACT_BACKFILL: "false"
+      APP_STOCK_WASTAGE_CANONICALIZE: "false"
+      APP_CTB_INVOICE_CSV_COMPLETE_INVOICE_SNAPSHOTS: "false"

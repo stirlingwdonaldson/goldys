@@ -93,8 +93,8 @@ function gpColumn(): ColumnDef<RecipeCosting> {
 
 /** A menu status in venue-friendly language for the "Menu price" cell. */
 function menuStateLabel(menuState: string): string {
-  if (menuState === "OFF_MENU") return "Off menu";
-  if (menuState === "UNKNOWN") return "Not on menu";
+  if (menuState === "OFF_MENU") return "No current catalogue match";
+  if (menuState === "UNKNOWN") return "Availability unknown";
   return "No price matched";
 }
 
@@ -323,7 +323,7 @@ export default function RecipesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Recipes"
-        description="Per-dish cost, margin and gross profit."
+        description="Recipe costs are estimates; sold prices do not prove current menu terms. GP and cost comparisons await matching tax and cost bases. Per-dish cost, margin and gross profit."
       />
 
       {rows.length === 0 ? (

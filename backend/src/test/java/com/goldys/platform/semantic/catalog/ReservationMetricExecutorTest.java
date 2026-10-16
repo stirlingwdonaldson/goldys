@@ -61,7 +61,14 @@ class ReservationMetricExecutorTest {
     assertThat(ts.series().get(0).points().get(1).value()).isNull();
     assertThat(ts.series().get(0).points().get(1).status())
         .isEqualTo(MissingDataStatus.NOT_RECEIVED);
-    assertThat(ts.notices()).containsExactly("1 day(s) unresolved");
+    assertThat(ts.notices())
+        .anySatisfy(
+            note ->
+                assertThat(note)
+                    .contains(
+                        "Incomplete subtotal",
+                        "0 unresolved day(s)",
+                        "1 day(s) without a resolved record"));
   }
 
   @Test

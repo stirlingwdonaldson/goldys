@@ -36,7 +36,9 @@ public class ToolDispatcher {
     // Per-metric data gate: authorize every metric this tool will read, before execution.
     for (MetricQuery q : tool.toMetricQueries(input)) {
       String required = catalog.definition(q.metric()).requiredPermission();
-      permissions.require(role, new ResourceKey(required), PermissionAction.READ);
+      for (String resource : catalog.requiredPermissions(q.metric())) {
+        permissions.require(role, new ResourceKey(resource), PermissionAction.READ);
+      }
     }
     Timer.Sample sample = metrics.start();
     try {

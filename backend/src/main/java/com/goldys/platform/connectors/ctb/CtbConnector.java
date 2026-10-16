@@ -3,10 +3,12 @@ package com.goldys.platform.connectors.ctb;
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
-import com.goldys.platform.canonical.ProductNameKey;
-import com.goldys.platform.canonical.ProductSalesInput;
+import com.goldys.platform.canonical.ProductMappingIngest;
 import com.goldys.platform.canonical.SaleRecipeLinkIngest;
 import com.goldys.platform.canonical.SaleRecipeLinkInput;
+import com.goldys.platform.canonical.SourceProductInput;
+import com.goldys.platform.canonical.SourceProductSaleFactIngest;
+import com.goldys.platform.canonical.SourceProductSaleFactInput;
 import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
@@ -51,6 +53,8 @@ public class CtbConnector implements SourceConnector {
   private final CanonicalProductSalesIngest productSales;
   private final CtbSaleRecipeLinkParser saleRecipeLinkParser;
   private final SaleRecipeLinkIngest saleRecipeLinkIngest;
+  private final ProductMappingIngest productMapping;
+  private final SourceProductSaleFactIngest sourceSaleFact;
   private final VenueClock venueClock;
 
   public CtbConnector(
@@ -63,6 +67,8 @@ public class CtbConnector implements SourceConnector {
       CanonicalProductSalesIngest productSales,
       CtbSaleRecipeLinkParser saleRecipeLinkParser,
       SaleRecipeLinkIngest saleRecipeLinkIngest,
+      ProductMappingIngest productMapping,
+      SourceProductSaleFactIngest sourceSaleFact,
       VenueClock venueClock) {
     this.client = client;
     this.email = email;
@@ -73,6 +79,8 @@ public class CtbConnector implements SourceConnector {
     this.productSales = productSales;
     this.saleRecipeLinkParser = saleRecipeLinkParser;
     this.saleRecipeLinkIngest = saleRecipeLinkIngest;
+    this.productMapping = productMapping;
+    this.sourceSaleFact = sourceSaleFact;
     this.venueClock = venueClock;
   }
 
@@ -216,25 +224,18 @@ public class CtbConnector implements SourceConnector {
     int start = 0;
     int pages = 0;
     int total = -1;
-    Map<String, ProductSalesInput> byProduct = new LinkedHashMap<>();
+    CtbProductSalesBatch batch = new CtbProductSalesBatch(day);
     while (pages < MAX_PAGES) {
       CtbClient.CtbPage page =
           client.searchSaleItems(day.toString(), day.toString(), start, PAGE_SIZE);
-      UUID rawId = writeRaw(page.json(), "ctb-revenue", sink);
+      // The sale-item payload carries no date (saleDate is null on every row); the trading day is
+      // the request window. Persist it out-of-band so a later replay can recover the date durably.
+      UUID rawId = writeRaw(page.json(), "ctb-revenue", "sale-items:" + day, sink);
 
       for (CtbSaleItem item : saleItemParser.parse(page.json().getBytes(StandardCharsets.UTF_8))) {
-        String key = ProductNameKey.normalize(item.stockDescription());
-        byProduct.merge(
-            key,
-            new ProductSalesInput("CTB", day, key, item.quantitySold(), item.amount(), rawId),
-            (a, b) ->
-                new ProductSalesInput(
-                    "CTB",
-                    day,
-                    key,
-                    a.quantitySold().add(b.quantitySold()),
-                    a.amount().add(b.amount()),
-                    a.rawRecordId()));
+        batch.add(item, rawId);
+        recordSourceProduct(item, rawId);
+        recordSourceSaleFact(item, day, rawId);
       }
 
       total = page.totalCount();
@@ -247,9 +248,7 @@ public class CtbConnector implements SourceConnector {
 
     throwIfTruncated("sale-items for " + day, pages, start, total);
 
-    for (ProductSalesInput input : byProduct.values()) {
-      productSales.record(input);
-    }
+    productSales.recordAll(batch.totals());
   }
 
   /** Page the sale-item→recipe links, writing each page raw and recording canonical links once. */
@@ -269,7 +268,62 @@ public class CtbConnector implements SourceConnector {
       }
       start += PAGE_SIZE;
     }
+    throwIfTruncated("ctb-sale-recipe-links", pages, start, total);
     saleRecipeLinkIngest.recordAll(all);
+    for (SaleRecipeLinkInput link : all) {
+      if (link.saleItemStockCode() != null && !link.saleItemStockCode().isBlank()) {
+        productMapping.mapSourceProduct(
+            new SourceProductInput(
+                "CTB",
+                link.saleItemStockCode(),
+                null,
+                link.saleItemStockDescription(),
+                null,
+                null,
+                link.rawRecordId()));
+      }
+    }
+  }
+
+  /** Records the CTB sale product's source-scoped identity and maps it to the business hub. */
+  private void recordSourceProduct(CtbSaleItem item, UUID rawId) {
+    String code = item.stockCode();
+    if (code == null || code.isBlank()) {
+      return;
+    }
+    productMapping.mapSourceProduct(
+        new SourceProductInput("CTB", code, null, item.stockDescription(), null, null, rawId));
+  }
+
+  /**
+   * Records the source-native product-day measures (cost, food cost, discount, tax, unit price,
+   * profit), keyed by (stock code, trading date, source group) so distinct rows that share a code
+   * and day are preserved.
+   */
+  private void recordSourceSaleFact(CtbSaleItem item, LocalDate day, UUID rawId) {
+    String code = item.stockCode();
+    if (code == null || code.isBlank()) {
+      return;
+    }
+    sourceSaleFact.record(
+        new SourceProductSaleFactInput(
+            "CTB",
+            SourceProductSaleFactInput.sourceRecordRef(code, day, item.uniqueGroupId()),
+            day,
+            code,
+            item.costPerUnit(),
+            item.foodCost(),
+            item.totalFoodCost(),
+            item.profit(),
+            item.discountedAmount(),
+            item.taxAmount(),
+            item.unitPrice(),
+            item.uniqueGroupId(),
+            rawId,
+            item.quantitySold(),
+            item.amount(),
+            item.stockDescription(),
+            item.siteNumber()));
   }
 
   /**
@@ -336,6 +390,15 @@ public class CtbConnector implements SourceConnector {
 
   /** Store one raw page byte-faithfully and return its ledger id. */
   private UUID writeRaw(String json, String fetcherIdentity, IngestionSink sink) {
+    return writeRaw(json, fetcherIdentity, null, sink);
+  }
+
+  /**
+   * Store one raw page byte-faithfully with an out-of-band source-record reference (e.g. the
+   * sale-items request day), and return its ledger id.
+   */
+  private UUID writeRaw(
+      String json, String fetcherIdentity, String sourceRecordRef, IngestionSink sink) {
     byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
     return sink.accept(
         new FetchedPayload(
@@ -344,7 +407,7 @@ public class CtbConnector implements SourceConnector {
             bytes,
             StandardCharsets.UTF_8.name(),
             fetcherIdentity,
-            null));
+            sourceRecordRef));
   }
 
   private LocalDate watermarkDate(String watermark) {

@@ -49,4 +49,14 @@ public final class VenueClock {
   public LocalDate today() {
     return LocalDate.now(clock);
   }
+
+  /**
+   * Simplified all-days 02:00 cutoff, adopted by the owner; never apply to date-only aggregates.
+   */
+  public LocalDate salesTradingDate(Instant closedAt) {
+    var local = closedAt.atZone(zone);
+    return local.toLocalTime().isBefore(java.time.LocalTime.of(2, 0))
+        ? local.toLocalDate().minusDays(1)
+        : local.toLocalDate();
+  }
 }

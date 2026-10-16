@@ -4,23 +4,38 @@ import com.goldys.platform.canonical.CanonicalInventoryQuery;
 import com.goldys.platform.canonical.CanonicalInvoiceIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceLineIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
+import com.goldys.platform.canonical.InvoiceIdentity;
 import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
 import com.goldys.platform.canonical.ProductNameKey;
+import com.goldys.platform.canonical.StockItemIngest;
+import com.goldys.platform.canonical.StockItemInput;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /**
  * Manual CSV-drop pipeline for CTB supplier invoices: persist the dropped CSV byte-faithfully, then
  * canonicalize the invoice header and each line item. Line items come from the CSV itself (the
- * export carries both header and line columns), so COGS is available without the PDF path.
+ * export carries both header and line columns), so invoice purchase amounts are available without
+ * the PDF path.
+ *
+ * <p>Line identity is content-based, not ordinal: each line's source reference is derived from its
+ * content (stock code, description, quantity, unit cost, line total), so a re-ordered export keeps
+ * line identities stable and a re-ingested export is idempotent. Missing lines are retained by
+ * default because export completeness is unconfirmed. Only explicitly confirmed complete snapshots
+ * supersede absent CSV lines.
  */
 @Service
 public class CtInvoiceCsvIngestService {
@@ -31,10 +46,15 @@ public class CtInvoiceCsvIngestService {
    */
   private static final BigDecimal TOLERANCE = new BigDecimal("0.02");
 
+  @org.springframework.beans.factory.annotation.Value(
+      "${app.ctb-invoice-csv.complete-invoice-snapshots:false}")
+  private boolean completeInvoiceSnapshots;
+
   private final IngestionService ingestion;
   private final CtInvoiceCsvParser parser;
   private final CanonicalInvoiceIngest canonical;
   private final CanonicalInvoiceLineIngest lineCanonical;
+  private final StockItemIngest stockItems;
   private final InvoiceIngestFlagService flags;
   private final CanonicalInvoiceQuery invoiceQuery;
   private final CanonicalInventoryQuery inventoryQuery;
@@ -44,6 +64,7 @@ public class CtInvoiceCsvIngestService {
       CtInvoiceCsvParser parser,
       CanonicalInvoiceIngest canonical,
       CanonicalInvoiceLineIngest lineCanonical,
+      StockItemIngest stockItems,
       InvoiceIngestFlagService flags,
       CanonicalInvoiceQuery invoiceQuery,
       CanonicalInventoryQuery inventoryQuery) {
@@ -51,6 +72,7 @@ public class CtInvoiceCsvIngestService {
     this.parser = parser;
     this.canonical = canonical;
     this.lineCanonical = lineCanonical;
+    this.stockItems = stockItems;
     this.flags = flags;
     this.invoiceQuery = invoiceQuery;
     this.inventoryQuery = inventoryQuery;
@@ -69,7 +91,18 @@ public class CtInvoiceCsvIngestService {
 
     List<CtInvoice> invoices;
     try {
-      invoices = parser.parse(csv);
+      ParseResult result = parser.parse(csv);
+      invoices = result.invoices();
+      // Surface additive schema drift (unknown source columns) as a first-class flag, never a
+      // silent discard; the bytes remain byte-faithful in the raw ledger.
+      if (!result.unknownColumns().isEmpty()) {
+        flags.flag(
+            InvoiceIngestFlagType.SCHEMA_DRIFT,
+            null,
+            null,
+            null,
+            "unknown columns: " + String.join(", ", result.unknownColumns()));
+      }
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
       throw e;
@@ -81,49 +114,33 @@ public class CtInvoiceCsvIngestService {
 
     try {
       for (CtInvoice invoice : invoices) {
-        canonical.record(
-            new InvoiceInput(
-                "CTB",
-                invoice.invoiceNumber(),
-                invoice.supplierName(),
-                invoice.invoiceDate(),
-                invoice.dueDate(),
-                invoice.incTaxAmount(),
-                invoice.purchaseNumber(),
-                null, // account number — not in the current export
-                null, // tax code — not in the current export
-                invoice.amountExTax(),
-                invoice.gstAmount(),
-                invoice.freightAmount(),
-                null, // freight GST — not a direct column in the current export
-                firstPdfFilename(invoice),
-                rawId));
+        InvoiceIdentity identity =
+            canonical.recordCsv(
+                new InvoiceInput(
+                    "CTB",
+                    invoice.invoiceNumber(),
+                    invoice.supplierName(),
+                    invoice.supplierCode(),
+                    invoice.invoiceDate(),
+                    invoice.dueDate(),
+                    invoice.incTaxAmount(),
+                    invoice.purchaseNumber(),
+                    null, // account number — not in the current export
+                    null, // tax code — not in the current export
+                    invoice.amountExTax(),
+                    invoice.gstAmount(),
+                    invoice.freightAmount(),
+                    null, // freight GST — not a direct column in the current export
+                    firstPdfFilename(invoice),
+                    rawId),
+                prepareLines(invoice, rawId),
+                completeInvoiceSnapshots);
         flagPdfAnomalies(invoice);
 
-        int seq = 0;
-        for (CtInvoiceLine line : invoice.lines()) {
-          seq++;
-          lineCanonical.record(
-              new InvoiceLineInput(
-                  "CTB",
-                  invoice.invoiceNumber() + ":" + seq,
-                  invoice.invoiceNumber(),
-                  invoice.invoiceDate(),
-                  ProductNameKey.normalize(line.description()),
-                  line.stockCode(),
-                  quantity(line.rawQuantity()),
-                  line.unitCostExTax() == null ? BigDecimal.ZERO : line.unitCostExTax(),
-                  line.lineTotalExTax(),
-                  null, // category — PDF-only, not in the CSV
-                  null, // uom — PDF enrichment
-                  null, // unitQuantity — PDF enrichment
-                  null, // packSize — PDF enrichment
-                  null, // wetAmount — PDF enrichment
-                  rawId,
-                  "CSV"));
-        }
-
-        convergePdfLinesAfterCsvIngest(invoice.invoiceNumber());
+        for (CtInvoiceLine line : invoice.lines())
+          recordStockItem(
+              identity, line.stockCode(), ProductNameKey.normalize(line.description()), rawId);
+        convergePdfLinesAfterCsvIngest(identity.logicalEntityId(), invoice.invoiceNumber());
       }
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
@@ -133,6 +150,85 @@ public class CtInvoiceCsvIngestService {
         rawId,
         IngestionStageKind.CANONICALIZED,
         invoices.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
+  }
+
+  /** Records one invoice's lines with content-based identity, then closes any removed CSV lines. */
+  private List<InvoiceLineInput> prepareLines(CtInvoice invoice, UUID rawId) {
+    List<InvoiceLineInput> inputs = new java.util.ArrayList<>();
+
+    Map<String, Integer> signatureCounts = new HashMap<>();
+    for (CtInvoiceLine line : invoice.lines()) {
+      String productNameKey = ProductNameKey.normalize(line.description());
+      String stockCode = line.stockCode();
+      BigDecimal quantity = quantity(line.rawQuantity());
+      BigDecimal unitCost = line.unitCostExTax();
+      BigDecimal lineTotal = line.lineTotalExTax();
+
+      String signature = lineSignature(stockCode, productNameKey, quantity, unitCost, lineTotal);
+      // A repeated identical line within one invoice gets a discriminator so exact duplicates stay
+      // distinct (never silently merged); unique lines keep a clean, position-free reference.
+      int occurrence = signatureCounts.merge(signature, 1, Integer::sum);
+      String lineRef = signature + (occurrence > 1 ? "#" + occurrence : "");
+
+      inputs.add(
+          new InvoiceLineInput(
+              "CTB",
+              lineRef,
+              invoice.invoiceNumber(),
+              null,
+              invoice.invoiceDate(),
+              productNameKey,
+              stockCode,
+              quantity,
+              unitCost,
+              lineTotal,
+              null, // category — PDF-only, not in the CSV
+              null, // uom — PDF enrichment
+              null, // unitQuantity — PDF enrichment
+              null, // packSize — PDF enrichment
+              null, // wetAmount — PDF enrichment
+              rawId,
+              "CSV"));
+    }
+
+    return List.copyOf(inputs);
+  }
+
+  /** Records the supplier-scoped stock item a line references (a purchased ingredient). */
+  private void recordStockItem(
+      InvoiceIdentity identity, String stockCode, String productNameKey, UUID rawId) {
+    if (stockCode == null || stockCode.isBlank()) {
+      return;
+    }
+    stockItems.record(
+        new StockItemInput(
+            "CTB",
+            identity.supplierSourceRef() + "::" + stockCode,
+            identity.supplierLogicalId(),
+            stockCode,
+            productNameKey,
+            null,
+            rawId));
+  }
+
+  /**
+   * A content signature for one line over its canonical fields, so identity is independent of line
+   * order. Uses the same values {@code sameFact} compares; for identical CSV content the signature
+   * is identical, making re-ingest idempotent.
+   */
+  private static String lineSignature(
+      String stockCode,
+      String productNameKey,
+      BigDecimal quantity,
+      BigDecimal unitCost,
+      BigDecimal lineTotal) {
+    String code = stockCode == null ? "" : stockCode.trim();
+    String name = productNameKey == null ? "" : productNameKey;
+    String q = quantity == null ? "" : quantity.stripTrailingZeros().toPlainString();
+    String cost = unitCost == null ? "" : unitCost.stripTrailingZeros().toPlainString();
+    String total = lineTotal == null ? "" : lineTotal.stripTrailingZeros().toPlainString();
+    return sha256Hex(
+        (code + "|" + name + "|" + q + "|" + cost + "|" + total).getBytes(StandardCharsets.UTF_8));
   }
 
   /** The invoice's PDF filename (first-seen), or null when the CSV references none. */
@@ -161,18 +257,18 @@ public class CtInvoiceCsvIngestService {
    * used, not the all-lines total: the PDF gap lines are still current at this point, and summing
    * them too would both mask a still-short CSV and wrongly keep stale PDF lines.
    */
-  private void convergePdfLinesAfterCsvIngest(String invoiceNumber) {
-    BigDecimal header = invoiceQuery.amountExTaxForInvoiceNumber(invoiceNumber).orElse(null);
+  private void convergePdfLinesAfterCsvIngest(UUID invoiceId, String invoiceNumber) {
+    BigDecimal header = invoiceQuery.amountExTaxForInvoiceId(invoiceId).orElse(null);
     if (header == null) {
       return;
     }
-    BigDecimal csvSum = inventoryQuery.currentCsvLineTotalForInvoice(invoiceNumber);
+    BigDecimal csvSum = inventoryQuery.currentCsvLineTotalForInvoiceId(invoiceId);
     BigDecimal remaining = header.subtract(csvSum);
     if (remaining.compareTo(TOLERANCE) <= 0) {
-      lineCanonical.supersedePdfOriginLines(invoiceNumber);
+      lineCanonical.supersedePdfOriginLines(invoiceId);
       return;
     }
-    int pruned = lineCanonical.prunePdfOriginLines(invoiceNumber, remaining, TOLERANCE);
+    int pruned = lineCanonical.prunePdfOriginLines(invoiceId, remaining, TOLERANCE);
     if (pruned > 0) {
       flags.flag(
           InvoiceIngestFlagType.INVOICE_EXPORT_INCOMPLETE,
@@ -208,17 +304,21 @@ public class CtInvoiceCsvIngestService {
     }
   }
 
-  /** Best-effort quantity: the first number in the coarse LineQuantity; 1 when unparseable. */
+  /** Retains a supplied leading quantity; absent/unrecognised quantity remains unknown. */
   private static BigDecimal quantity(String rawQuantity) {
-    if (rawQuantity != null) {
-      for (String token : rawQuantity.trim().split("\\s+")) {
-        try {
-          return new BigDecimal(token);
-        } catch (NumberFormatException ignored) {
-          // keep scanning for the first number
-        }
-      }
+    if (rawQuantity == null || rawQuantity.isBlank()) return null;
+    try {
+      return new BigDecimal(rawQuantity.trim().split("\\s+", 2)[0]);
+    } catch (NumberFormatException e) {
+      return null;
     }
-    return BigDecimal.ONE;
+  }
+
+  private static String sha256Hex(byte[] bytes) {
+    try {
+      return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 unavailable", e);
+    }
   }
 }

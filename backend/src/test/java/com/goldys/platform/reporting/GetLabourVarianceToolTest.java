@@ -127,7 +127,7 @@ class GetLabourVarianceToolTest {
             id,
             "1",
             new TimeRange(FROM, TO, Calendar.CALENDAR),
-            TimeGrain.DAY,
+            TimeGrain.TOTAL,
             "resolved_labour_day",
             Instant.EPOCH,
             List.of(),

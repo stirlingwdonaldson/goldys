@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Download, ExternalLink } from "lucide-react";
 import { useApiData } from "@/lib/use-api-data";
 import { useToast } from "@/components/feedback/toast";
@@ -30,7 +32,7 @@ export function invoicePdfUrl(invoiceNumber: string): string {
 
 /** Full-page route for one invoice; also what "Copy link" copies. */
 export function invoiceHref(invoiceNumber: string): string {
-  return `/invoices/${encodeURIComponent(invoiceNumber)}`;
+  return invoiceNumber.startsWith("id:") ? `/invoices/id/${encodeURIComponent(invoiceNumber.slice(3))}` : `/invoices/${encodeURIComponent(invoiceNumber.replace(/^number:/, ""))}`;
 }
 
 /** Copies the invoice's full-page link to the clipboard, with a toast either way. */
@@ -59,7 +61,8 @@ export interface InvoiceData {
  * they're never compared against each other.
  */
 export function useInvoiceData(invoiceNumber: string): InvoiceData {
-  const detail = useApiData((api) => api.getInvoice(invoiceNumber), [invoiceNumber]);
+  const detail = useApiData((api) => invoiceNumber.startsWith("id:")
+    ? api.getInvoiceById(invoiceNumber.slice(3)) : api.getInvoice(invoiceNumber.replace(/^number:/, "")), [invoiceNumber]);
   const allFlags = useApiData((api) => api.listInvoiceFlags());
 
   const supplier = detail.data?.supplierName ?? null;
@@ -68,16 +71,16 @@ export function useInvoiceData(invoiceNumber: string): InvoiceData {
     async (api) => {
       if (!supplier || !invoiceDate) return null;
       const page = await api.listInvoices({ supplier, to: dayBefore(invoiceDate) }, 0, 1);
-      const prev = page.items[0];
-      return prev ? api.getInvoice(prev.invoiceNumber) : null;
+      const prev = page.items.find(i => detail.data?.supplierId ? i.supplierId === detail.data.supplierId : true);
+      return prev ? prev.invoiceId ? api.getInvoiceById(prev.invoiceId) : api.getInvoice(prev.invoiceNumber) : null;
     },
-    [supplier, invoiceDate],
+    [supplier, invoiceDate, detail.data?.supplierId],
   );
 
   return {
     detail,
     // Flags and the price comparison are annotations: if they fail, the invoice still shows.
-    flags: (allFlags.data ?? []).filter((f) => f.invoiceNumber === invoiceNumber),
+    flags: detail.data?.numberAmbiguous ? [] : (allFlags.data ?? []).filter((f) => f.invoiceNumber === detail.data?.invoiceNumber),
     previous: previous.data ?? null,
   };
 }
@@ -85,7 +88,7 @@ export function useInvoiceData(invoiceNumber: string): InvoiceData {
 /** Header figures: total, issue and due dates, purchase number. */
 export function InvoiceSummaryGrid({ invoice }: { invoice: InvoiceDetail }) {
   return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+    <div><DataQualifications notices={invoice.notices} /><dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
       <div className="col-span-2 sm:col-span-1">
         <dt className="text-xs text-muted-foreground">Total</dt>
         <dd className="text-2xl font-semibold tabular-nums">{formatCurrency(invoice.totalAmount)}</dd>
@@ -117,7 +120,7 @@ export function InvoiceSummaryGrid({ invoice }: { invoice: InvoiceDetail }) {
         <dt className="text-xs text-muted-foreground">Purchase no.</dt>
         <dd className="break-all text-sm">{invoice.purchaseNumber ?? "—"}</dd>
       </div>
-    </dl>
+    </dl></div>
   );
 }
 
@@ -293,10 +296,11 @@ export function InvoicePdf({
   invoice,
   className,
 }: {
-  invoice: Pick<InvoiceDetail, "invoiceNumber" | "hasPdf">;
+  invoice: Pick<InvoiceDetail, "invoiceNumber" | "hasPdf" | "invoiceId" | "canReadDocuments" | "pdfStatus">;
   className?: string;
 }) {
   const { demo } = useDemoMode();
+  if (invoice.invoiceId) return <QualifiedInvoicePdf key={invoice.invoiceId} invoice={invoice} className={className} />;
   if (!invoice.hasPdf) {
     return <p className="text-sm text-muted-foreground">No PDF was received for this invoice.</p>;
   }
@@ -314,9 +318,9 @@ export function InvoicePdf({
 }
 
 /** Download and open-in-new-tab buttons; nothing when there's no PDF or in demo mode. */
-export function InvoicePdfActions({ invoice }: { invoice: Pick<InvoiceDetail, "invoiceNumber" | "hasPdf"> }) {
+export function InvoicePdfActions({ invoice }: { invoice: Pick<InvoiceDetail, "invoiceNumber" | "hasPdf" | "invoiceId"> }) {
   const { demo } = useDemoMode();
-  if (!invoice.hasPdf || demo) return null;
+  if (invoice.invoiceId || !invoice.hasPdf || demo) return null;
   const url = invoicePdfUrl(invoice.invoiceNumber);
   return (
     <>
@@ -354,7 +358,7 @@ export function InvoiceDetailBody({
       <InlineError>
         {detail.error?.code === "NOT_FOUND"
           ? "This invoice doesn't exist, or is no longer current."
-          : "Couldn't load this invoice. Refresh the page to try again."}
+          : detail.error?.code === "NOT_PERMITTED" ? "Not permitted to view this invoice." : detail.error?.message ?? "Couldn't load this invoice. Refresh the page to try again."}
       </InlineError>
     );
   }
@@ -363,7 +367,7 @@ export function InvoiceDetailBody({
 
   if (layout === "page") {
     // Without a PDF there's nothing to set alongside, so keep one readable column.
-    if (!invoice.hasPdf) {
+    if (!invoice.hasPdf && !invoice.invoiceId) {
       return (
         <div className="flex max-w-4xl flex-col gap-5">
           <InvoiceSummaryGrid invoice={invoice} />
@@ -404,4 +408,30 @@ export function InvoiceDetailBody({
       </Tabs>
     </div>
   );
+}
+
+
+/** Explicit selection keeps filename, bytes and invoice relationship on the same source link. */
+function QualifiedInvoicePdf({ invoice, className }: {
+  invoice: Pick<InvoiceDetail, "invoiceId" | "canReadDocuments" | "pdfStatus">;
+  className?: string;
+}) {
+  const { demo } = useDemoMode();
+  const docs = useApiData(api => invoice.canReadDocuments
+    ? api.getInvoiceDocuments(invoice.invoiceId!) : Promise.resolve([]), [invoice.invoiceId, invoice.canReadDocuments]);
+  const [selected, setSelected] = useState<string>("");
+  if (!invoice.canReadDocuments) return <p role="status">Not permitted to view original source documents.</p>;
+  if (docs.loading) return <LoadingState rows={2} />;
+  if (docs.error) return <InlineError>{docs.error.code === "NOT_PERMITTED" ? "Not permitted to view original source documents." : docs.error.message}</InlineError>;
+  const documents = docs.data ?? [];
+  if (!documents.length) return <p role="status">No attributable PDF link. Source documents may still be unresolved.</p>;
+  const documentId = documents.length === 1 ? documents[0].documentId : documents.some(d => d.documentId === selected) ? selected : "";
+  const url = documentId ? `/api/invoices/by-id/${encodeURIComponent(invoice.invoiceId!)}/documents/${encodeURIComponent(documentId)}/pdf` : null;
+  return <div className="flex flex-col gap-3">
+    {documents.length > 1 ? <label>Choose source document<select aria-label="Choose source document" value={selected} onChange={e => setSelected(e.target.value)}>
+      <option value="">Select a document</option>{documents.map(d => <option key={d.documentId} value={d.documentId}>{d.filename ?? "Invoice PDF"} — received link {d.linkedAt}</option>)}
+    </select></label> : null}
+    {demo ? <p>PDF preview unavailable in demo mode</p> : url ? <><div className="flex gap-3"><a href={`${url}?disposition=attachment`}>Download</a><a href={url} target="_blank" rel="noreferrer">Open PDF</a></div>
+    <iframe data-testid="invoice-pdf-preview" title="Invoice PDF preview" src={url} className={cn("w-full rounded-lg border", className)} /></> : <p>Select a document to view its original contents.</p>}
+  </div>;
 }

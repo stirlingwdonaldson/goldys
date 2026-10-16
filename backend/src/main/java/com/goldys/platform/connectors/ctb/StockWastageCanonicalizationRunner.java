@@ -3,14 +3,10 @@ package com.goldys.platform.connectors.ctb;
 import com.goldys.platform.canonical.CanonicalStockCountIngest;
 import com.goldys.platform.canonical.CanonicalStocktakeIngest;
 import com.goldys.platform.canonical.CanonicalWastageIngest;
-import com.goldys.platform.canonical.StockCountInput;
 import com.goldys.platform.canonical.StocktakeInput;
-import com.goldys.platform.canonical.WastageInput;
 import com.goldys.platform.ingestion.RawLedgerQuery;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +25,7 @@ import org.springframework.stereotype.Component;
  * ctb-wastage-detail} raw records already in the ledger (from the CTB scheduled pull and the detail
  * backfill) into {@code canonical_stocktake}, {@code canonical_stock_count} and {@code
  * canonical_wastage}. Runs only when {@code app.stock-wastage-canonicalize=true}, and is idempotent
- * — the canonical services dedupe on {@code source_record_ref}.
+ * — canonical services track processed raw receipts and reject regressive replay.
  *
  * <p>Stocktake detail carries no date, so a line's {@code counted_date} is resolved from the
  * canonical header. A line whose stocktake has no header is a hard failure (never a silent skip),
@@ -66,67 +62,73 @@ public class StockWastageCanonicalizationRunner implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) {
-    // 1. Latest header per stocktake id. Records arrive in ascending fetched_at order, so the last
-    // one seen for an id is the most recent (headers are re-pulled daily, append-only).
-    Map<Integer, StocktakeInput> latest = new HashMap<>();
-    for (RawLedgerQuery.RawPayloadWithRefAndTime payload :
-        rawLedger.rawPayloadsForFetcherWithFetchedAt("CTB", "ctb-stocktakes")) {
-      for (StocktakeInput header : stocktakeParser.parseStocktakes(payload.bytes(), payload.id())) {
-        latest.put(header.stocktakeId(), header);
-      }
-    }
+    Map<Integer, StocktakeInput> latest = latestHeaders();
+    List<RawLedgerQuery.RawRecordRef> detailRefs =
+        rawLedger.rawRecordRefsForFetcher("CTB", "ctb-stocktake-detail");
+    // Validate date dependencies before writing any headers/counts for this replay pass.
+    validateHeaders(detailRefs, latest);
+    for (StocktakeInput header : latest.values()) stocktakeIngest.record(header);
 
-    // 2. Record headers and build the stocktake-id → date map the lines need.
-    Map<Integer, LocalDate> dates = new HashMap<>();
-    for (StocktakeInput header : latest.values()) {
-      stocktakeIngest.record(header);
-      dates.put(header.stocktakeId(), header.stocktakeDate());
-    }
-
-    // 3. Stock-count lines, resolving each line's date from the header map.
-    List<StockCountInput> counts = new ArrayList<>();
-    Set<Integer> missing = new LinkedHashSet<>();
-    for (RawLedgerQuery.RawPayloadWithRef payload :
-        rawLedger.rawPayloadsForFetcherWithRef("CTB", "ctb-stocktake-detail")) {
-      Integer stocktakeId = stocktakeId(payload.sourceRecordRef());
-      if (stocktakeId == null) {
+    int counts = 0;
+    for (RawLedgerQuery.RawRecordRef ref : detailRefs) {
+      Integer id = stocktakeId(ref.sourceRecordRef());
+      if (id == null) {
         log.warn(
-            "Skipping ctb-stocktake-detail record {} with unparseable source_record_ref {}",
-            payload.id(),
-            payload.sourceRecordRef());
+            "Skipping ctb-stocktake-detail record {} with unparseable source reference", ref.id());
         continue;
       }
-      LocalDate countedDate = dates.get(stocktakeId);
-      if (countedDate == null) {
-        missing.add(stocktakeId);
-        continue;
-      }
-      counts.addAll(
+      var rows =
           stocktakeParser.parseStocktakeLines(
-              payload.bytes(), payload.id(), stocktakeId, countedDate));
+              payload(ref), ref.id(), id, latest.get(id).stocktakeDate());
+      // One payload/transaction, never a whole-ledger batch. Receipt and version writes are atomic.
+      stockCountIngest.recordAll(rows);
+      counts += rows.size();
     }
-
-    // 4. Wastage lines (self-contained: each line carries its own record date).
-    List<WastageInput> wastages = new ArrayList<>();
-    for (RawLedgerQuery.RawPayloadWithRef payload :
-        rawLedger.rawPayloadsForFetcherWithRef("CTB", "ctb-wastage-detail")) {
-      wastages.addAll(wastageParser.parse(payload.bytes(), payload.id()));
+    int wastages = 0;
+    for (RawLedgerQuery.RawRecordRef ref :
+        rawLedger.rawRecordRefsForFetcher("CTB", "ctb-wastage-detail")) {
+      var rows = wastageParser.parse(payload(ref), ref.id());
+      wastageIngest.recordAll(rows);
+      wastages += rows.size();
     }
+    log.info(
+        "Stock/wastage replay processed {} headers, {} count rows, {} wastage rows",
+        latest.size(),
+        counts,
+        wastages);
+  }
 
-    // 5. Fail fast before any count write when a detail's header date is missing.
-    if (!missing.isEmpty()) {
+  private Map<Integer, StocktakeInput> latestHeaders() {
+    Map<Integer, StocktakeInput> latest = new LinkedHashMap<>();
+    // References are ordered by fetched_at then UUID, matching the canonical receipt guard.
+    // Only the latest header per stocktake is selected, preserving the existing backfill behaviour.
+    for (RawLedgerQuery.RawRecordRef ref :
+        rawLedger.rawRecordRefsForFetcher("CTB", "ctb-stocktakes")) {
+      for (StocktakeInput header : stocktakeParser.parseStocktakes(payload(ref), ref.id()))
+        latest.put(header.stocktakeId(), header);
+    }
+    return latest;
+  }
+
+  private void validateHeaders(
+      List<RawLedgerQuery.RawRecordRef> refs, Map<Integer, StocktakeInput> headers) {
+    Set<Integer> missing = new LinkedHashSet<>();
+    for (RawLedgerQuery.RawRecordRef ref : refs) {
+      Integer id = stocktakeId(ref.sourceRecordRef());
+      if (id != null && !headers.containsKey(id)) missing.add(id);
+    }
+    if (!missing.isEmpty())
       throw new ConnectorFetchException(
           "CONNECTOR_SCHEMA_MISMATCH",
           "stocktake detail missing header date for stocktakes: " + missing);
-    }
+  }
 
-    stockCountIngest.recordAll(counts);
-    wastageIngest.recordAll(wastages);
-    log.info(
-        "Stock/wastage canonicalization recorded {} headers, {} counts, {} wastage lines",
-        latest.size(),
-        counts.size(),
-        wastages.size());
+  private byte[] payload(RawLedgerQuery.RawRecordRef ref) {
+    byte[] bytes = rawLedger.payloadBytes(ref.id());
+    if (bytes == null)
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Stored inventory payload is unavailable");
+    return bytes;
   }
 
   private static Integer stocktakeId(String sourceRecordRef) {

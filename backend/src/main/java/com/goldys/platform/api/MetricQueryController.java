@@ -50,7 +50,9 @@ public class MetricQueryController {
       @RequestBody MetricQuery body, @AuthenticationPrincipal AccountUserDetails user) {
     String requiredPermission = catalog.definition(body.metric()).requiredPermission();
     UserRole role = currentUser.roleOf(user);
-    permissions.require(role, new ResourceKey(requiredPermission), PermissionAction.READ);
+    for (String resource : catalog.requiredPermissions(body.metric())) {
+      permissions.require(role, new ResourceKey(resource), PermissionAction.READ);
+    }
     return queries.query(body);
   }
 }

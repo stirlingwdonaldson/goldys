@@ -23,4 +23,5 @@ public record ForecastRunDto(
     List<ForecastSeriesPointDto> series,
     String errorMessage,
     String modelVersion,
-    ForecastDiagnosticsDto diagnostics) {}
+    ForecastDiagnosticsDto diagnostics,
+    List<String> notices) {}

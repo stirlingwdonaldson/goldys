@@ -15,8 +15,11 @@ public class InvoiceNoteService {
 
   private final InvoiceNoteRepository repository;
 
-  public InvoiceNoteService(InvoiceNoteRepository repository) {
+  private final CanonicalInvoiceQuery invoices;
+
+  public InvoiceNoteService(InvoiceNoteRepository repository, CanonicalInvoiceQuery invoices) {
     this.repository = repository;
+    this.invoices = invoices;
   }
 
   /** Records {@code note} for {@code invoiceNumber}, overwriting an older, different note. */
@@ -25,6 +28,7 @@ public class InvoiceNoteService {
     if (invoiceNumber == null || note == null || note.isBlank()) {
       return;
     }
+    invoices.requireUnambiguousNumber(invoiceNumber);
     InvoiceNote existing = repository.findById(invoiceNumber).orElse(null);
     if (existing != null && existing.note().equals(note)) {
       return;

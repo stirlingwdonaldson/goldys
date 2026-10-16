@@ -265,4 +265,30 @@ class ForecastServiceTest {
             List.of(),
             "1"));
   }
+
+  @Test
+  void executeUsesOriginalCheckedSnapshotEvenAfterResolvedInputsChange() {
+    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_NET, 20, SEP_01));
+    when(client.forecast(any())).thenReturn(new ForecastModelResponse(List.of(), null, List.of()));
+    ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, EMAIL);
+    ForecastModelRequest original = run.inputSnapshot().request();
+    org.mockito.Mockito.clearInvocations(queries);
+    when(queries.query(any()))
+        .thenThrow(new IllegalStateException("new inputs must not be queried"));
+    service.execute(run.id());
+    assertThat(run.status()).isEqualTo(ForecastRunStatus.SUCCEEDED);
+    verify(client).forecast(original);
+    org.mockito.Mockito.verifyNoInteractions(queries);
+    assertThat(run.inputSnapshot().capturedAt()).isEqualTo(NOW);
+  }
+
+  @Test
+  void legacyQueuedRunDoesNotInventOriginalInputs() {
+    ForecastRun run = ForecastRun.create("sales.net", List.of(), SEP_01, TODAY, 7, EMAIL, NOW);
+    runs.save(run);
+    service.execute(run.id());
+    assertThat(run.status()).isEqualTo(ForecastRunStatus.FAILED);
+    assertThat(run.errorMessage()).contains("Original input snapshot unavailable");
+    org.mockito.Mockito.verifyNoInteractions(client);
+  }
 }

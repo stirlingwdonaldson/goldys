@@ -11,9 +11,12 @@ import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
 import com.goldys.platform.semantic.ProductMetricsQuery;
+import com.goldys.platform.semantic.ProductRanking;
 import com.goldys.platform.semantic.SalesMetricsQuery;
 import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricCoverage;
 import com.goldys.platform.semantic.catalog.MetricId;
+import com.goldys.platform.semantic.catalog.MetricProvenance;
 import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
 import com.goldys.platform.semantic.catalog.TimeGrain;
@@ -34,7 +37,7 @@ public class DashboardApplicationService {
   private static final ResourceKey RESOURCE = new ResourceKey("reconciliation.sales");
   private static final int TOP_SELLERS_WINDOW_DAYS = 30;
   private static final int TOP_SELLERS_LIMIT = 5;
-  private static final int TREND_DAYS = 13; // trailing 14 days inclusive
+  private static final int TREND_DAYS = 14;
   private static final int ACTIVITY_DAYS = 14;
 
   private final SalesMetricsQuery salesMetrics;
@@ -72,12 +75,12 @@ public class DashboardApplicationService {
     return activityInternal(from, to);
   }
 
-  public List<TopSeller> topSellers(UserRole role, LocalDate from, LocalDate to, Integer limit) {
+  public TopSellersResult topSellers(UserRole role, LocalDate from, LocalDate to, Integer limit) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     return topSellersInternal(from, to, limit);
   }
 
-  public List<SalesTrend> salesTrend(UserRole role, LocalDate from, LocalDate to) {
+  public SalesTrendResult salesTrend(UserRole role, LocalDate from, LocalDate to) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     return salesTrendInternal(from, to);
   }
@@ -116,34 +119,41 @@ public class DashboardApplicationService {
     return points.stream().map(p -> new ActivityPoint(p.date(), p.clean(), p.failed())).toList();
   }
 
-  private List<TopSeller> topSellersInternal(LocalDate from, LocalDate to, Integer limit) {
+  private TopSellersResult topSellersInternal(LocalDate from, LocalDate to, Integer limit) {
     // Read the resolved product metric directly rather than through the PRODUCT_TOP_SELLERS
     // catalogue metric: the catalogue path has no per-call limit (its executor hardcodes 5), while
-    // this screen read needs a caller-controlled window and limit. The resolved values are the
-    // same.
+    // this screen read needs a caller-controlled window and limit. Both retain the shared
+    // qualified ranking, including coverage computed before the limit.
     TimeRange range = defaultRange(from, to, TOP_SELLERS_WINDOW_DAYS);
     int n = limit != null ? limit : TOP_SELLERS_LIMIT;
-    return productMetrics.topSellers(range.from(), range.to(), n).stream()
-        .map(t -> new TopSeller(t.productName(), t.quantitySold(), t.amount(), t.hasConflict()))
-        .toList();
+    ProductRanking ranking = productMetrics.qualifiedTopSellers(range.from(), range.to(), n);
+    return new TopSellersResult(
+        ranking.items().stream()
+            .map(t -> new TopSeller(t.productName(), t.quantitySold(), t.amount(), t.hasConflict()))
+            .toList(),
+        ranking.notices(),
+        ranking.coverage());
   }
 
-  private List<SalesTrend> salesTrendInternal(LocalDate from, LocalDate to) {
+  private SalesTrendResult salesTrendInternal(LocalDate from, LocalDate to) {
     TimeRange range = defaultRange(from, to, TREND_DAYS);
     TimeSeriesResult result =
         (TimeSeriesResult)
             metrics.query(
-                new MetricQuery(MetricId.SALES_GROSS, range, TimeGrain.DAY, Set.of(), null));
-    return result.series().stream()
-        .flatMap(s -> s.points().stream())
-        .map(p -> new SalesTrend(p.bucketStart().toString(), p.value()))
-        .toList();
+                new MetricQuery(MetricId.SALES_NET, range, TimeGrain.DAY, Set.of(), null));
+    return new SalesTrendResult(
+        result.series().stream()
+            .flatMap(s -> s.points().stream())
+            .map(p -> new SalesTrend(p.bucketStart().toString(), p.value()))
+            .toList(),
+        result.notices(),
+        result.provenance());
   }
 
   /** An explicit range when supplied, otherwise the trailing {@code trailingDays} ending today. */
   private TimeRange defaultRange(LocalDate from, LocalDate to, int trailingDays) {
     LocalDate end = to != null ? to : venueClock.today();
-    LocalDate start = from != null ? from : end.minusDays(trailingDays);
+    LocalDate start = from != null ? from : end.minusDays(trailingDays - 1L);
     return new TimeRange(start, end, Calendar.CALENDAR);
   }
 
@@ -151,18 +161,16 @@ public class DashboardApplicationService {
     return salesMetrics
         .latestTradingDay()
         .map(
-            v ->
-                new LatestSales(
-                    v.tradingDate().toString(), v.grossSales(), v.authoritativeSource()))
+            v -> new LatestSales(v.tradingDate().toString(), v.netSales(), v.authoritativeSource()))
         .orElseGet(() -> new LatestSales(null, null, null));
   }
 
   public record Bootstrap(
       Summary summary,
       LatestSales latestSales,
-      List<SalesTrend> salesTrend,
+      SalesTrendResult salesTrend,
       List<ActivityPoint> activity,
-      List<TopSeller> topSellers) {}
+      TopSellersResult topSellers) {}
 
   public record Summary(
       Integer ingestionCompleteness,
@@ -174,6 +182,12 @@ public class DashboardApplicationService {
       String name, BigDecimal quantitySold, BigDecimal amount, boolean hasConflict) {}
 
   public record SalesTrend(String date, BigDecimal total) {}
+
+  public record SalesTrendResult(
+      List<SalesTrend> points, List<String> notices, MetricProvenance provenance) {}
+
+  public record TopSellersResult(
+      List<TopSeller> items, List<String> notices, MetricCoverage coverage) {}
 
   public record ActivityPoint(String date, int clean, int failed) {}
 

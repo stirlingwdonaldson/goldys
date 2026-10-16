@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.goldys.platform.canonical.ProductIngest;
 import com.goldys.platform.canonical.ProductInput;
+import com.goldys.platform.canonical.ProductMappingIngest;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import java.math.BigDecimal;
@@ -27,10 +28,12 @@ class LightspeedProductCatalogIngestServiceTest {
   @Mock IngestionService ingestion;
   @Mock LightspeedProductCatalogParser parser;
   @Mock ProductIngest productIngest;
+  @Mock ProductMappingIngest productMapping;
   @Mock RecipeProductMatcher matcher;
 
   private LightspeedProductCatalogIngestService service() {
-    return new LightspeedProductCatalogIngestService(ingestion, parser, productIngest, matcher);
+    return new LightspeedProductCatalogIngestService(
+        ingestion, parser, productIngest, productMapping, matcher);
   }
 
   private static byte[] csv() {

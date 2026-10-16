@@ -60,7 +60,7 @@ export default function SalesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="Sales" description="Daily sales totals across your sources." />
 
-      <SalesTrend points={trend.data ?? []} />
+      <SalesTrend points={trend.data?.points ?? []} notices={trend.data?.notices} provenance={trend.data?.provenance} />
 
       {total === 0 ? (
         <EmptyState

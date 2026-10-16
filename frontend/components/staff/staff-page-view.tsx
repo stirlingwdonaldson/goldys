@@ -5,6 +5,7 @@ import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import type { ApiError, LabourSummary } from "@/lib/api";
 import { isOwner } from "@/lib/roles";
+import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { StatCard } from "@/components/data-display/stat-card";
@@ -44,7 +45,7 @@ function isEmpty(s: LabourSummary): boolean {
  * returned cost figures.
  */
 export function StaffPageView({ seniority, labour }: StaffPageViewProps) {
-  const isOwnerRole = isOwner(seniority);
+  const canSeeWageTotals = isOwner(seniority) || seniority?.trim().toUpperCase() === "MANAGER";
   const header = <PageHeader title="Staff & labour" description="Roster, hours, and labour cost." />;
 
   if (labour?.loading) return <LoadingState rows={3} />;
@@ -70,6 +71,8 @@ export function StaffPageView({ seniority, labour }: StaffPageViewProps) {
   return (
     <div className="flex flex-col gap-6">
       {header}
+      <p className="text-sm text-muted-foreground">Wages only; super and other employment costs excluded pending confirmation. Per-cover figures use booking-size attendance proxies.</p>
+      <DataQualifications notices={s?.notices} />
 
       {s ? (
         <Section title="Hours, last 30 days">
@@ -77,7 +80,7 @@ export function StaffPageView({ seniority, labour }: StaffPageViewProps) {
             <StatCard label="Scheduled" value={formatHours(s.scheduledHours)} />
             <StatCard label="Actual" value={formatHours(s.actualHours)} />
             <StatCard label="Over / under roster" value={formatHours(s.variance)} />
-            <StatCard label="Hours per cover" value={formatNumber(s.hoursPerCover, 2)} />
+            <StatCard label="Hours per attendance proxy" value={formatNumber(s.hoursPerCover, 2)} />
           </div>
         </Section>
       ) : (
@@ -89,13 +92,13 @@ export function StaffPageView({ seniority, labour }: StaffPageViewProps) {
         />
       )}
 
-      {!isOwnerRole ? (
+      {!canSeeWageTotals ? (
         <OwnerOnlyTile label="Labour cost %" />
       ) : s ? (
         <Section title="Labour cost, last 30 days">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatCard label="Labour cost" value={formatCurrency(s.labourCost)} />
-            <StatCard label="Cost per cover" value={formatCurrency(s.labourCostPerCover)} />
+            <StatCard label="Labour cost (wages only)" value={formatCurrency(s.labourCost)} />
+            <StatCard label="Wages per attendance proxy" value={formatCurrency(s.labourCostPerCover)} />
             <StatCard label="FOH, % of sales" value={formatPercent(s.fohLabourCostPercent)} />
             <StatCard label="BOH, % of sales" value={formatPercent(s.bohLabourCostPercent)} />
           </div>

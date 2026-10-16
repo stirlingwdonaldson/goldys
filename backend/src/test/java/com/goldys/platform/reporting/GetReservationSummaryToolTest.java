@@ -102,7 +102,7 @@ class GetReservationSummaryToolTest {
             id,
             "1",
             new TimeRange(SEP_20, SEP_20, Calendar.CALENDAR),
-            TimeGrain.DAY,
+            TimeGrain.TOTAL,
             "resolved_reservation_day",
             Instant.EPOCH,
             List.of(),

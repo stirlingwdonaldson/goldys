@@ -19,9 +19,12 @@ class CanonicalWastageService {
   private static final Clock CLOCK = Clock.systemUTC();
 
   private final CanonicalWastageRepository repository;
+  private final InventoryObservationReceiptRepository receipts;
 
-  CanonicalWastageService(CanonicalWastageRepository repository) {
+  CanonicalWastageService(
+      CanonicalWastageRepository repository, InventoryObservationReceiptRepository receipts) {
     this.repository = repository;
+    this.receipts = receipts;
   }
 
   @Transactional
@@ -43,6 +46,10 @@ class CanonicalWastageService {
     UUID logicalId = logicalIdFor(input.wastageRecordId(), input.lineId());
     Optional<CanonicalWastage> current =
         repository.lockCurrentSourceFact(input.sourceSystem(), ref);
+
+    if (!receipts.accept("WASTE", input.sourceSystem(), ref, input.rawRecordId(), null))
+      return current.orElseThrow(
+          () -> new IllegalStateException("Processed inventory receipt has no current fact"));
 
     if (current.isPresent()) {
       CanonicalWastage existing = current.get();

@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/states/empty-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { ObservationList } from "@/components/inventory/observation-list";
 import { InvoiceGraphView } from "@/components/inventory/invoice-graph-view";
 import type { InventorySummary, SupplierCogs, UomUnitCost, InvoiceIngestFlag } from "@/lib/api";
 import { currencyColumn, numberColumn } from "@/components/data-table/columns";
@@ -15,7 +16,8 @@ import { StatCard } from "@/components/data-display/stat-card";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { InlineError } from "@/components/states/inline-error";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { DataQualifications } from "@/components/data-display/data-qualifications";
+import { formatCurrency } from "@/lib/format";
 
 /** Trailing 30-day window, so the screen renders without any date inputs. */
 function defaultRange(): { from: string; to: string } {
@@ -34,7 +36,7 @@ const uomColumns: ColumnDef<UomUnitCost>[] = [
   },
   currencyColumn("lineTotal", "Line total", (r) => r.lineTotal),
   numberColumn("quantity", "Quantity", (r) => r.quantity, 3),
-  currencyColumn("unitCost", "Unit cost", (r) => r.unitCost),
+  currencyColumn("unitCost", "Comparable unit cost", (r) => r.unitCost),
 ];
 
 const supplierColumns: ColumnDef<SupplierCogs>[] = [
@@ -44,7 +46,7 @@ const supplierColumns: ColumnDef<SupplierCogs>[] = [
     meta: { title: "Supplier" },
     enableHiding: false,
   },
-  currencyColumn("lineTotal", "COGS", (r) => r.lineTotal),
+  currencyColumn("lineTotal", "Invoice purchases", (r) => r.lineTotal),
   currencyColumn("wetAmount", "WET", (r) => r.wetAmount),
 ];
 
@@ -77,14 +79,9 @@ const flagColumns: ColumnDef<InvoiceIngestFlag>[] = [
 
 function SummaryStats({ s }: { s: InventorySummary }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      <StatCard label="Purchases" value={formatCurrency(s.purchases)} hint="Invoiced stock, last 30 days" />
+    <div className="grid gap-4 sm:grid-cols-2">
+      <StatCard label="Invoice purchases" value={formatCurrency(s.purchases)} hint="Invoiced stock, last 30 days" />
       <StatCard label="Wastage" value={formatCurrency(s.wastage)} hint="Recorded waste, last 30 days" />
-      <StatCard
-        label="Food cost"
-        value={formatPercent(s.foodCostPercent)}
-        hint="Purchases as a share of gross sales"
-      />
     </div>
   );
 }
@@ -97,10 +94,10 @@ export default function KitchenPage() {
 
   if (lines.loading) return <LoadingState rows={6} />;
   if (lines.error) {
-    if (lines.error.code === "NOT_PERMITTED") return <PermissionDenied subject="food cost" />;
+    if (lines.error.code === "NOT_PERMITTED") return <PermissionDenied subject="invoice purchases" />;
     return (
       <ErrorState
-        title="Couldn't load food cost"
+        title="Couldn't load invoice purchases"
         message={lines.error.message}
         onRetry={lines.reload}
       />
@@ -109,19 +106,25 @@ export default function KitchenPage() {
   const data = lines.data;
   const uom = data?.unitCostByUom ?? [];
   const suppliers = data?.cogsBySupplier ?? [];
+  const purchaseNotices = [...new Set(suppliers.flatMap(s => s.notices ?? []))];
 
   return (
     <div className="flex flex-col gap-6">
+      <DataQualifications notices={purchaseNotices} />
       <PageHeader
         title="Kitchen"
-        description="Food cost, stock, and wastage — unit cost per measure and spend by supplier."
+        description="Invoice purchases, recorded waste, and supplier spend."
       />
 
+      <p className="text-sm text-muted-foreground">Food cost % is unavailable until consumed cost and valuation are evidenced. Invoice purchases are not COGS. Unit cost is unavailable for mixed items or unknown conversion bases.</p>
+      <DataQualifications notices={summary.data?.notices} />
       {summary.loading ? <LoadingState rows={1} /> : null}
       {summary.error ? (
         <InlineError>Couldn&apos;t load the 30-day totals. Refresh the page to try again.</InlineError>
       ) : null}
       {summary.data ? <SummaryStats s={summary.data} /> : null}
+
+      <Section title="Stock count and waste observations"><ObservationList from={from} to={to} /></Section>
 
       <Section title="Purchase lineage">
         <InvoiceGraphView from={from} to={to} />

@@ -25,7 +25,7 @@ vi.mock("@/lib/use-api-data", () => ({
       };
     }
     if (src.includes("getSalesTrend")) {
-      return { data: [{ date: "2026-10-05", total: 12000 }], loading: false, error: null, reload: async () => {} };
+      return { data: { points: [{ date: "2026-10-05", total: 12000 }], notices: ["Incomplete subtotal"] }, loading: false, error: null, reload: async () => {} };
     }
     return { data: null, loading: false, error: null, reload: async () => {} };
   },

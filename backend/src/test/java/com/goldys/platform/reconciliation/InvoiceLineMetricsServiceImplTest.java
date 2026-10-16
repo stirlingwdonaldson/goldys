@@ -12,7 +12,6 @@ import com.goldys.platform.semantic.UomUnitCost;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class InvoiceLineMetricsServiceImplTest {
@@ -74,8 +73,9 @@ class InvoiceLineMetricsServiceImplTest {
 
   @Test
   void aggregatesCogsAndWetBySupplierDescending() {
-    when(invoices.currentSupplierNames())
-        .thenReturn(Map.of("INV-1", "Paramount Liquor", "INV-2", "Oranges & Lemons"));
+    when(invoices.currentInvoices())
+        .thenReturn(
+            List.of(header("INV-1", "Paramount Liquor"), header("INV-2", "Oranges & Lemons")));
     when(inventory.currentEnrichedLines())
         .thenReturn(
             List.of(
@@ -113,6 +113,33 @@ class InvoiceLineMetricsServiceImplTest {
         uom,
         null,
         null,
-        wetAmount == null ? null : new BigDecimal(wetAmount));
+        wetAmount == null ? null : new BigDecimal(wetAmount),
+        null,
+        null,
+        null,
+        null,
+        id(invoice));
+  }
+
+  private static java.util.UUID id(String value) {
+    return java.util.UUID.nameUUIDFromBytes(
+        value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+  }
+
+  private static com.goldys.platform.canonical.InvoiceMetadataView header(
+      String number, String supplier) {
+    return new com.goldys.platform.canonical.InvoiceMetadataView(
+        supplier,
+        number,
+        LocalDate.of(2026, 9, 1),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        id(number),
+        id(supplier));
   }
 }

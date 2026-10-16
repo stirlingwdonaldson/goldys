@@ -15,8 +15,12 @@ import org.springframework.stereotype.Service;
 public class CanonicalInventoryQuery {
   private final CanonicalInvoiceLineRepository lineRepository;
 
-  public CanonicalInventoryQuery(CanonicalInvoiceLineRepository lineRepository) {
+  private final CanonicalInvoiceQuery invoices;
+
+  public CanonicalInventoryQuery(
+      CanonicalInvoiceLineRepository lineRepository, CanonicalInvoiceQuery invoices) {
     this.lineRepository = lineRepository;
+    this.invoices = invoices;
   }
 
   /** All current invoice lines, mapped to views. */
@@ -30,6 +34,7 @@ public class CanonicalInventoryQuery {
    * against header totals.
    */
   public BigDecimal currentLineTotalForInvoice(String invoiceNumber) {
+    invoices.requireUnambiguousNumber(invoiceNumber);
     if (invoiceNumber == null) {
       return BigDecimal.ZERO;
     }
@@ -46,10 +51,19 @@ public class CanonicalInventoryQuery {
    * still-current PDF gap lines, which would otherwise over-count the CSV shortfall.
    */
   public BigDecimal currentCsvLineTotalForInvoice(String invoiceNumber) {
+    invoices.requireUnambiguousNumber(invoiceNumber);
     if (invoiceNumber == null) {
       return BigDecimal.ZERO;
     }
     return lineRepository.findCurrentCsvByInvoiceNumber(invoiceNumber).stream()
+        .map(CanonicalInvoiceLine::lineTotal)
+        .filter(Objects::nonNull)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+  }
+
+  public BigDecimal currentCsvLineTotalForInvoiceId(java.util.UUID invoiceId) {
+    return lineRepository.findCurrentByInvoiceId(invoiceId).stream()
+        .filter(line -> !"PDF".equals(line.origin()))
         .map(CanonicalInvoiceLine::lineTotal)
         .filter(Objects::nonNull)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -63,6 +77,12 @@ public class CanonicalInventoryQuery {
   /** All current invoice lines with the full enrichment field set (for line-level reporting). */
   public List<EnrichedInvoiceLine> currentEnrichedLines() {
     return lineRepository.findAllCurrent().stream()
+        .map(CanonicalInventoryQuery::toEnriched)
+        .toList();
+  }
+
+  public List<EnrichedInvoiceLine> enrichedLinesForInvoice(java.util.UUID id) {
+    return lineRepository.findCurrentByInvoiceId(id).stream()
         .map(CanonicalInventoryQuery::toEnriched)
         .toList();
   }
@@ -83,7 +103,8 @@ public class CanonicalInventoryQuery {
         l.lineTotalIncTax(),
         l.lineGstAmount(),
         l.lineTaxRate(),
-        l.incGst());
+        l.incGst(),
+        l.invoiceLogicalId());
   }
 
   private static InvoiceLineView toView(CanonicalInvoiceLine l) {

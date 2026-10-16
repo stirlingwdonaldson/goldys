@@ -3,6 +3,7 @@ package com.goldys.platform.semantic.catalog;
 import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
+import com.goldys.platform.semantic.ProductRanking;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -43,8 +44,9 @@ public class RankingService {
   }
 
   private RankedListResult productRank(TimeRange range, int limit) {
+    ProductRanking ranking = products.qualifiedTopSellers(range.from(), range.to(), limit);
     List<MetricRankedItem> items =
-        products.topSellers(range.from(), range.to(), limit).stream()
+        ranking.items().stream()
             .map(
                 t ->
                     new MetricRankedItem(
@@ -53,8 +55,17 @@ public class RankingService {
     return new RankedListResult(
         MetricId.PRODUCT_SALES_AMOUNT,
         items,
-        List.of(),
-        provenance(MetricId.PRODUCT_SALES_AMOUNT, range));
+        ranking.notices(),
+        new MetricProvenance(
+                MetricId.PRODUCT_SALES_AMOUNT,
+                "1",
+                range,
+                TimeGrain.DAY,
+                "product_sales",
+                null,
+                ranking.coverage().missingDates(),
+                "1")
+            .withCoverage(ranking.coverage()));
   }
 
   private RankedListResult labourRank(MetricId metric, TimeRange range, int limit) {

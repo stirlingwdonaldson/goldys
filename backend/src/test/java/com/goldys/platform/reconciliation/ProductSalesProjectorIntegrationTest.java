@@ -30,7 +30,7 @@ class ProductSalesProjectorIntegrationTest {
   @BeforeEach
   void clean() {
     jdbc.update(
-        "truncate table reconciliation_exception, resolved_product_sales, canonical_product_sales, product_sales_override, resolution_rule");
+        "truncate table reconciliation_exception, resolved_product_sales, product_sales_contributor, canonical_product_sales, product_sales_override, resolution_rule");
   }
 
   @Test
@@ -100,7 +100,7 @@ class ProductSalesProjectorIntegrationTest {
 
   private ProductSalesInput input(
       String source, LocalDate date, String key, String qty, String amount) {
-    return new ProductSalesInput(source, date, key, bd(qty), bd(amount), rawRecord());
+    return new ProductSalesInput(source, date, key, bd(qty), bd(amount), null, rawRecord());
   }
 
   private UUID rawRecord() {

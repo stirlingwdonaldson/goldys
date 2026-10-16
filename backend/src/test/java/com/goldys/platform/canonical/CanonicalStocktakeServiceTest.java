@@ -28,7 +28,16 @@ class CanonicalStocktakeServiceTest {
   @BeforeEach
   void setUp() {
     repository = mock(CanonicalStocktakeRepository.class);
-    service = new CanonicalStocktakeService(repository);
+    InventoryObservationReceiptRepository receipts =
+        mock(InventoryObservationReceiptRepository.class);
+    when(receipts.accept(
+            anyString(),
+            anyString(),
+            anyString(),
+            any(),
+            org.mockito.ArgumentMatchers.nullable(UUID.class)))
+        .thenReturn(true);
+    service = new CanonicalStocktakeService(repository, receipts);
   }
 
   private static StocktakeInput input(LocalDate date, Boolean isLocked) {

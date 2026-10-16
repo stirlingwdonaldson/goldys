@@ -41,6 +41,7 @@ class CanonicalInvoiceLineOriginIntegrationTest {
         "CTB",
         sourceRecordRef,
         "INV-7100",
+        null,
         LocalDate.of(2026, 10, 1),
         "item a",
         null,

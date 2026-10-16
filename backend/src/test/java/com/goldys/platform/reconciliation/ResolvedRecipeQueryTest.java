@@ -41,9 +41,9 @@ class ResolvedRecipeQueryTest {
 
     RecipeCosting c = query.costing().get(0);
 
-    assertThat(c.margin()).isEqualByComparingTo("12.50");
-    assertThat(c.gpPercent()).isEqualByComparingTo("0.6757");
-    assertThat(c.costGap()).isEqualByComparingTo("1.20");
+    assertThat(c.margin()).isNull();
+    assertThat(c.gpPercent()).isNull();
+    assertThat(c.costGap()).isNull();
   }
 
   @Test
@@ -65,7 +65,7 @@ class ResolvedRecipeQueryTest {
 
     RecipeCosting c = query.costing().get(0);
 
-    assertThat(c.margin()).isEqualByComparingTo("-6.00");
+    assertThat(c.margin()).isNull();
     assertThat(c.gpPercent()).isNull();
   }
 
@@ -79,6 +79,7 @@ class ResolvedRecipeQueryTest {
     assertThat(c.margin()).isNull();
     assertThat(c.gpPercent()).isNull();
     assertThat(c.costGap()).isNull();
+    assertThat(c.costPerPortion()).isEqualByComparingTo("0");
   }
 
   @Test
@@ -102,9 +103,9 @@ class ResolvedRecipeQueryTest {
 
     RecipeCosting c = query.costing().get(0);
 
-    assertThat(c.margin()).isEqualByComparingTo("12.50");
-    assertThat(c.gpPercent()).isEqualByComparingTo("0.6757");
-    assertThat(c.costGap()).isEqualByComparingTo("1.20");
+    assertThat(c.margin()).isNull();
+    assertThat(c.gpPercent()).isNull();
+    assertThat(c.costGap()).isNull();
   }
 
   @Test
@@ -154,7 +155,7 @@ class ResolvedRecipeQueryTest {
 
     RecipeCosting c = query.costing().get(0);
 
-    assertThat(c.margin()).isEqualByComparingTo("-6.00");
+    assertThat(c.margin()).isNull();
     assertThat(c.gpPercent()).isNull();
     assertThat(c.costGap()).isNull();
   }

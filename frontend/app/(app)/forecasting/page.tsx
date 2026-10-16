@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApi } from "@/lib/demo-mode";
+import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { useApiData } from "@/lib/use-api-data";
 import { formatDateTime, formatDay, formatNumber } from "@/lib/format";
 import { ForecastVsBaselineChart } from "@/components/forecasting/forecast-vs-baseline-chart";
@@ -498,6 +499,7 @@ export default function ForecastingPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>{metricName(activeRun.targetMetric)} forecast</CardTitle>
+                    <DataQualifications notices={activeRun.notices} />
                     <CardDescription>
                       {activeRun.horizonDays}-day forecast from {activeRun.historyTo}.
                     </CardDescription>

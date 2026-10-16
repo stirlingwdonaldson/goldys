@@ -120,7 +120,7 @@ class ResolvedProductCategoryQueryTest {
   }
 
   @Test
-  void null_quantity_days_are_treated_as_zero() {
+  void missing_observation_keeps_category_totals_unresolved() {
     ProductCategory mains = ProductCategory.create("Mains", "Food", 0, null);
     ProductCategoryAssignment assignment = ProductCategoryAssignment.create("kids fish", NOW);
     assignment.markAssigned(mains.id(), new BigDecimal("0.9"), AssignmentSource.JEV, NOW);
@@ -137,9 +137,7 @@ class ResolvedProductCategoryQueryTest {
 
     List<CategorySales> result = query.salesByCategory(FROM, TO);
 
-    assertThat(result)
-        .containsExactly(
-            new CategorySales("Food", "Mains", new BigDecimal("2"), new BigDecimal("30")));
+    assertThat(result).containsExactly(new CategorySales("Food", "Mains", null, null));
   }
 
   @Test
@@ -222,7 +220,7 @@ class ResolvedProductCategoryQueryTest {
   }
 
   @Test
-  void all_null_quantities_surface_as_zero() {
+  void all_null_quantities_remain_unknown() {
     when(productMetrics.productSales(FROM, TO))
         .thenReturn(List.of(new ProductSalesMetric(FROM, "kids fish", null, null, "ctb", false)));
     when(categories.findAll()).thenReturn(List.of());
@@ -230,9 +228,7 @@ class ResolvedProductCategoryQueryTest {
 
     List<CategorySales> result = query.salesByCategory(FROM, TO);
 
-    assertThat(result)
-        .containsExactly(
-            new CategorySales(null, "Uncategorised", BigDecimal.ZERO, BigDecimal.ZERO));
+    assertThat(result).containsExactly(new CategorySales(null, "Uncategorised", null, null));
   }
 
   @Test

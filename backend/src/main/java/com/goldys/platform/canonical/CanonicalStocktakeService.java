@@ -18,9 +18,12 @@ class CanonicalStocktakeService {
   private static final Clock CLOCK = Clock.systemUTC();
 
   private final CanonicalStocktakeRepository repository;
+  private final InventoryObservationReceiptRepository receipts;
 
-  CanonicalStocktakeService(CanonicalStocktakeRepository repository) {
+  CanonicalStocktakeService(
+      CanonicalStocktakeRepository repository, InventoryObservationReceiptRepository receipts) {
     this.repository = repository;
+    this.receipts = receipts;
   }
 
   @Transactional
@@ -34,6 +37,10 @@ class CanonicalStocktakeService {
     UUID logicalId = UUID.nameUUIDFromBytes(ref.getBytes(StandardCharsets.UTF_8));
     Optional<CanonicalStocktake> current =
         repository.lockCurrentSourceFact(input.sourceSystem(), ref);
+
+    if (!receipts.accept("HEADER", input.sourceSystem(), ref, input.rawRecordId(), null))
+      return current.orElseThrow(
+          () -> new IllegalStateException("Processed inventory receipt has no current fact"));
 
     if (current.isPresent()) {
       CanonicalStocktake existing = current.get();

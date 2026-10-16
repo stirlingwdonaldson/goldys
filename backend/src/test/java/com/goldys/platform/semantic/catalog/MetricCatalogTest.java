@@ -32,7 +32,7 @@ class MetricCatalogTest {
   void grossSalesAllowsDayWeekMonthAndNoDimensions() {
     MetricDefinition d = new MetricCatalog().definition(MetricId.SALES_GROSS);
     assertThat(d.allowedGrains())
-        .containsExactlyInAnyOrder(TimeGrain.DAY, TimeGrain.WEEK, TimeGrain.MONTH);
+        .containsExactlyInAnyOrder(TimeGrain.DAY, TimeGrain.WEEK, TimeGrain.MONTH, TimeGrain.TOTAL);
     assertThat(d.validDimensions()).isEmpty();
     assertThat(d.unit()).isEqualTo("AUD");
   }

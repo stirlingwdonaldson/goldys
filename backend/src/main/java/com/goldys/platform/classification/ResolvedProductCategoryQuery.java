@@ -180,15 +180,12 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
     return new Classification(assignmentByProduct, categoryById);
   }
 
-  /**
-   * Adds two possibly-null totals, treating null as zero. A product whose days are all unresolved
-   * (all null) therefore surfaces as zero rather than throwing or dropping the row.
-   */
+  /** Adds compatible known values. Once an input is unknown, the category total remains unknown. */
   private static BigDecimal nullSafeAdd(BigDecimal current, BigDecimal add) {
     if (current == null) {
-      return add == null ? BigDecimal.ZERO : add;
+      return null;
     }
-    return add == null ? current : current.add(add);
+    return add == null ? null : current.add(add);
   }
 
   private static String normalise(String value) {
@@ -219,8 +216,8 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
   private record CategoryKey(String group, String category) {}
 
   private static final class MutableTotal {
-    BigDecimal quantity;
-    BigDecimal amount;
+    BigDecimal quantity = BigDecimal.ZERO;
+    BigDecimal amount = BigDecimal.ZERO;
   }
 
   private static final class MutableSplit {

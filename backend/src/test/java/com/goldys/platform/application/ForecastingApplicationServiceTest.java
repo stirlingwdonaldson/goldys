@@ -75,11 +75,11 @@ class ForecastingApplicationServiceTest {
     assertThat(metrics)
         .extracting(ForecastMetricDto::metric)
         .doesNotContain("product.top_sellers")
-        .hasSize(catalog.ids().size() - 1);
+        .hasSize(1);
 
     ForecastMetricDto sales =
-        metrics.stream().filter(m -> m.metric().equals("sales.gross")).findFirst().orElseThrow();
-    assertThat(sales.name()).isEqualTo("Gross sales");
+        metrics.stream().filter(m -> m.metric().equals("sales.net")).findFirst().orElseThrow();
+    assertThat(sales.name()).isEqualTo("Net sales");
     assertThat(sales.unit()).isEqualTo("AUD");
     assertThat(sales.sourceDomain()).isEqualTo("resolved_daily_sales");
     assertThat(sales.requiredPermission()).isEqualTo("reconciliation.sales");
@@ -121,24 +121,13 @@ class ForecastingApplicationServiceTest {
   }
 
   @Test
-  void submitRequiresMetricPermission() {
-    // The forecast reads reservations.booked_covers/bookings (reservations.metrics) as implicit
-    // inputs regardless of the requested covariates; a caller who can read the target but not
-    // those inputs is denied before the run is created.
-    doThrow(AccessDeniedException.forResource("reservations.metrics"))
-        .when(permissions)
+  void forecastPurposeIncludesAggregateSupportingData() {
+    ForecastRun run = queuedRun("sales.net", List.of());
+    when(forecasts.submit("sales.net", List.of(), SEP_01, 7, EMAIL)).thenReturn(run);
+    service().create(role(), EMAIL, new CreateForecastRequest("sales.net", List.of(), SEP_01, 7));
+    verify(permissions).require(role(), new ResourceKey("forecasting"), PermissionAction.READ);
+    verify(permissions, never())
         .require(role(), new ResourceKey("reservations.metrics"), PermissionAction.READ);
-
-    assertThatThrownBy(
-            () ->
-                service()
-                    .create(
-                        role(),
-                        EMAIL,
-                        new CreateForecastRequest("sales.gross", List.of(), SEP_01, 7)))
-        .isInstanceOf(AccessDeniedException.class);
-
-    verify(forecasts, never()).submit(any(), any(), any(), anyInt(), any());
   }
 
   @Test
@@ -390,5 +379,15 @@ class ForecastingApplicationServiceTest {
             NOW,
             List.of(),
             "1"));
+  }
+
+  @Test
+  void listRechecksLegacyTargetAndCovariatePermissionsBeforeReturningPayload() {
+    ForecastRun run = queuedRun("labour.cost", List.of());
+    when(runs.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(run));
+    doThrow(AccessDeniedException.forResource("labour.cost"))
+        .when(permissions)
+        .require(role(), new ResourceKey("labour.cost"), PermissionAction.READ);
+    assertThatThrownBy(() -> service().list(role())).isInstanceOf(AccessDeniedException.class);
   }
 }

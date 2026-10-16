@@ -13,17 +13,20 @@ import java.util.UUID;
  * One version of an invoice line-item fact. Fact fields are immutable; a correction closes this row
  * and inserts a successor sharing the same logical identity.
  *
- * <p>{@code invoiceDate} is denormalized onto the line so COGS can be bucketed by date from lines
- * alone (a line ingested before its invoice metadata still carries its date). {@code invoiceNumber}
- * links the line to its {@link CanonicalInvoice} for audit/matching. The {@code stockCode} / {@code
- * uom} / {@code unitQuantity} / {@code packSize} / {@code wetAmount} fields are PDF enrichment
- * (nullable; CSV stays authoritative for quantity/unitCost/lineTotal).
+ * <p>{@code invoiceDate} is denormalized onto the line so invoice purchases can be bucketed by date
+ * from lines alone (a line ingested before its invoice metadata still carries its date). {@code
+ * invoiceNumber} links the line to its {@link CanonicalInvoice} for audit/matching. The {@code
+ * stockCode} / {@code uom} / {@code unitQuantity} / {@code packSize} / {@code wetAmount} fields are
+ * PDF enrichment (nullable; CSV stays authoritative for quantity/unitCost/lineTotal).
  */
 @Entity
 @Table(name = "canonical_invoice_line")
 class CanonicalInvoiceLine extends BitemporalEntity {
   @Column(name = "invoice_number", nullable = false, updatable = false)
   private String invoiceNumber;
+
+  @Column(name = "invoice_logical_id", updatable = false)
+  private UUID invoiceLogicalId;
 
   @Column(name = "invoice_date", nullable = false, updatable = false)
   private LocalDate invoiceDate;
@@ -34,10 +37,10 @@ class CanonicalInvoiceLine extends BitemporalEntity {
   @Column(name = "stock_code", updatable = false)
   private String stockCode;
 
-  @Column(name = "quantity", nullable = false, updatable = false, precision = 14, scale = 4)
+  @Column(name = "quantity", updatable = false, precision = 14, scale = 4)
   private BigDecimal quantity;
 
-  @Column(name = "unit_cost", nullable = false, updatable = false, precision = 14, scale = 4)
+  @Column(name = "unit_cost", updatable = false, precision = 14, scale = 4)
   private BigDecimal unitCost;
 
   @Column(name = "line_total", nullable = false, updatable = false, precision = 14, scale = 4)
@@ -94,6 +97,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       Instant validFrom,
       Instant recordedAt,
       String invoiceNumber,
+      UUID invoiceLogicalId,
       LocalDate invoiceDate,
       String productNameKey,
       String stockCode,
@@ -112,6 +116,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       String origin) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.invoiceNumber = invoiceNumber;
+    this.invoiceLogicalId = invoiceLogicalId;
     this.invoiceDate = invoiceDate;
     this.productNameKey = productNameKey;
     this.stockCode = stockCode;
@@ -138,6 +143,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
       Instant validFrom,
       Instant recordedAt,
       String invoiceNumber,
+      UUID invoiceLogicalId,
       LocalDate invoiceDate,
       String productNameKey,
       String stockCode,
@@ -162,7 +168,81 @@ class CanonicalInvoiceLine extends BitemporalEntity {
         validFrom,
         recordedAt,
         invoiceNumber,
+        invoiceLogicalId,
         invoiceDate,
+        productNameKey,
+        stockCode,
+        quantity,
+        unitCost,
+        lineTotal,
+        category,
+        uom,
+        unitQuantity,
+        packSize,
+        wetAmount,
+        lineTotalIncTax,
+        lineGstAmount,
+        lineTaxRate,
+        incGst,
+        origin);
+  }
+
+  /**
+   * A successor version of this line identical in every fact but with the parent invoice reference
+   * resolved to {@code invoiceLogicalId}. Used by the one-off legacy re-key backfill: the original
+   * row (which predates the parent-reference column) is closed and this row becomes current. Fact
+   * and identity fields are copied verbatim, so COGS and provenance are unchanged — only the
+   * structural parentage is added. Known valid time is retained; {@code recordedAt} takes {@code
+   * at}.
+   */
+  CanonicalInvoiceLine reparented(UUID invoiceLogicalId, Instant at) {
+    return new CanonicalInvoiceLine(
+        logicalEntityId(),
+        sourceSystem(),
+        sourceRecordRef(),
+        rawRecordId(),
+        validFrom(),
+        at,
+        invoiceNumber,
+        invoiceLogicalId,
+        invoiceDate,
+        productNameKey,
+        stockCode,
+        quantity,
+        unitCost,
+        lineTotal,
+        category,
+        uom,
+        unitQuantity,
+        packSize,
+        wetAmount,
+        lineTotalIncTax,
+        lineGstAmount,
+        lineTaxRate,
+        incGst,
+        origin);
+  }
+
+  /** Only source CSV fields participate; retain independent PDF enrichment on a key transition. */
+  boolean sameCsvContent(InvoiceLineInput input) {
+    return Objects.equals(productNameKey, input.productNameKey())
+        && Objects.equals(stockCode, input.stockCode())
+        && sameAmount(quantity, input.quantity())
+        && sameAmount(unitCost, input.unitCost())
+        && sameAmount(lineTotal, input.lineTotal());
+  }
+
+  CanonicalInvoiceLine rekeyed(InvoiceLineInput input, Instant at) {
+    return new CanonicalInvoiceLine(
+        logicalEntityId(),
+        sourceSystem(),
+        input.sourceRecordRef(),
+        input.rawRecordId(),
+        Objects.equals(invoiceDate, input.invoiceDate()) ? validFrom() : at,
+        at,
+        invoiceNumber,
+        input.invoiceLogicalId(),
+        input.invoiceDate(),
         productNameKey,
         stockCode,
         quantity,
@@ -200,6 +280,10 @@ class CanonicalInvoiceLine extends BitemporalEntity {
 
   String invoiceNumber() {
     return invoiceNumber;
+  }
+
+  UUID invoiceLogicalId() {
+    return invoiceLogicalId;
   }
 
   LocalDate invoiceDate() {

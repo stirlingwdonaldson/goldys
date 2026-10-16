@@ -25,6 +25,7 @@ import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
 import com.goldys.platform.dashboard.WidgetLayout;
+import com.goldys.platform.query.SavedQueryService;
 import com.goldys.platform.reporting.WidgetRenderer;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
@@ -70,7 +71,8 @@ class DashboardSharingTest {
           revisions,
           shares,
           metricQueryService,
-          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))));
+          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))),
+          mock(SavedQueryService.class));
 
   private final AtomicReference<SavedDashboard> lastSaved = new AtomicReference<>();
 

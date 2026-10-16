@@ -60,7 +60,7 @@
                     "calendar": { "enum": ["TRADING","CALENDAR"] }
                   }
                 },
-                "grain": { "enum": ["DAY","WEEK","MONTH"] },
+                "grain": { "enum": ["DAY","WEEK","MONTH","TOTAL"] },
                 "dimensions": { "type": "array", "items": { "enum": ["SERVICE_PERIOD","DEPARTMENT","PRODUCT"] } },
                 "comparison": { "enum": ["PREVIOUS_DAY","PREVIOUS_WEEK","SAME_WEEKDAY_LAST_WEEK","SAME_PERIOD_LAST_YEAR","ROLLING_4_WEEKS","ROLLING_12_WEEKS","BUDGET","FORECAST"] }
               }

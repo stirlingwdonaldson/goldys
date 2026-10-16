@@ -3,7 +3,6 @@ package com.goldys.platform.semantic.catalog;
 import com.goldys.platform.semantic.DeletedSaleDay;
 import com.goldys.platform.semantic.DeletedSaleMetricsQuery;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,7 +43,7 @@ public class DeletedSaleMetricExecutor implements MetricExecutor {
             query.range(),
             query.grain(),
             definition.sourceDomain(),
-            Instant.EPOCH,
+            null,
             bucket.missingDays(),
             definition.version());
 
