@@ -9,11 +9,11 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 interface CanonicalInvoiceRepository extends BitemporalRepository<CanonicalInvoice> {
-  @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query(
       "select count(distinct i.logicalEntityId) from CanonicalInvoice i where i.pdfFilename=:filename and i.supersededAt is null")
   long currentInvoiceCountForPdfFilename(String filename);
 
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query(
       "select i from CanonicalInvoice i where i.sourceRecordRef = :ref "
           + "and i.sourceSystem = :source and i.supersededAt is null")
