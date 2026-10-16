@@ -7,6 +7,7 @@ candidate reports are retained locally by the operator and intentionally exclude
 Use the [release runbook](../../operations/data-correctness-release-2026-10-16.md) for migration checks,
 backup/restore rehearsal, deployment and rollback. [Release prerequisites](2026-10-16-release-impact.md)
 explain what is verified and what requires live evidence/approval.
+The [release verification record](2026-10-16-release-verification.md) lists executed gates and limits.
 
 Implementation records:
 

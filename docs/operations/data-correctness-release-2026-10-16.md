@@ -62,7 +62,7 @@ cd "$RELEASE_DIR"
 git diff --exit-code
 REL="$RELEASE_DIR/ops/releases/2026-10-16-data-correctness"
 ENV_FILE=/srv/ai/projects/goldys/.env.prod
-BACKUP_DIR="/srv/ai/backups/goldys/data-correctness-$(date -u +%Y%m%dT%H%M%SZ)"
+BACKUP_DIR="$HOME/goldys-backups/data-correctness-$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR"
 python3 "$REL/preflight.py" --container goldys-prod-postgres-1 --expected-version 82 > "$BACKUP_DIR/preflight-before.json"
@@ -167,8 +167,10 @@ python3 "$REL/preflight.py" --container goldys-release-restore-check --expected-
   > "$BACKUP_DIR/rehearsal-after.json"
 ```
 
-Review before/after aggregates: canonical current/history counts, amounts and business dates should
-not change from this deployment. Structural receipt tables and permissions are expected additions;
+Compare canonical current/history counts in the before/after reports. These screening counts do not
+prove every individual amount/date is unchanged; review the migration SQL and investigate any
+unexpected difference before approval. The migrations add structure and do not rewrite business
+facts. Structural receipt tables and permissions are expected additions;
 resolved results may change according to corrected reconciliation. Legacy parent candidates remain
 until explicit repair. Check new `goldys_ro` SELECT access and denied raw/write access using the
 application tests/SQL in the impact report. The rehearsal cannot certify real login/UI/provider access.
@@ -283,6 +285,15 @@ The new NOLOGIN `goldys_ro` cluster role/membership may remain after a database 
 it blindly; no raw grants should exist, and restored V82 has no analytical executor. Have a DBA
 review it before a future upgrade. Revalidate old UI/account access and only then restore normal
 pull schedules using the rollback image overlay (never accidentally selecting the new images).
+To restore configured pulls on the old images after rollback acceptance:
+
+```bash
+docker compose -p goldys-prod --env-file "$ENV_FILE" \
+  -f "$RELEASE_DIR/docker-compose.prod.yml" -f "$REL/safety.yml" \
+  -f "$BACKUP_DIR/rollback.yml" up -d --no-deps --no-build backend
+curl --fail --silent --show-error https://platform.swd.sh/api/health
+```
+
 Keep all backup/release evidence. Clean up only the two explicitly named rehearsal containers after
 review; their temporary databases contain production data. Never use `down -v` on `goldys-prod`.
 
