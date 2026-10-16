@@ -168,4 +168,27 @@ class ForecastRunRepositoryIntegrationTest {
         CREATED_BY,
         createdAt);
   }
+
+  @Test
+  void exactInputSnapshotRoundTripsWithNullGapsAndQualifications() {
+    var date = LocalDate.of(2026, 10, 11);
+    var request =
+        new ForecastModelRequest(
+            List.of(date, date.plusDays(1)),
+            java.util.Arrays.asList(new BigDecimal("100"), null),
+            null,
+            null,
+            null,
+            null,
+            1,
+            List.of("0.5"));
+    ForecastRun run = ForecastRun.create("sales.net", List.of(), date, date, 1, CREATED_BY, NOW);
+    run.captureInput(
+        new ForecastInputSnapshot(request, Map.of(), List.of("Incomplete: one missing day"), NOW));
+    repository.save(run);
+    var loaded = repository.findById(run.id()).orElseThrow();
+    assertThat(loaded.inputSnapshot().request().net()).containsExactly(new BigDecimal("100"), null);
+    assertThat(loaded.inputSnapshot().notices()).containsExactly("Incomplete: one missing day");
+    assertThat(loaded.inputSnapshot().capturedAt()).isEqualTo(NOW);
+  }
 }

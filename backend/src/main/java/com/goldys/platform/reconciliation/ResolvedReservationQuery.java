@@ -88,7 +88,7 @@ public class ResolvedReservationQuery implements ReservationMetricsQuery {
   public Optional<BigDecimal> noShowRate(LocalDate from, LocalDate to) {
     long bookings = 0, noShows = 0;
     for (ResolvedReservationDay r : rows(from, to)) {
-      bookings += r.bookings();
+      bookings += r.bookings() - r.cancelled() - r.walkIns();
       noShows += r.noShows();
     }
     return Optional.ofNullable(ratio(noShows, bookings));
@@ -138,7 +138,7 @@ public class ResolvedReservationQuery implements ReservationMetricsQuery {
         walkIns,
         bookedCovers,
         ratio(covers, attended),
-        ratio(noShows, bookings),
+        ratio(noShows, bookings - cancelled - walkIns),
         ratio(attended, bookings));
   }
 

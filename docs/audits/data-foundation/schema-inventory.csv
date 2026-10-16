@@ -1,0 +1,924 @@
+table,column,native_type,nullable,first_seen_migration,table_kind
+raw_record,id,uuid,True,V1__baseline_schema,raw
+raw_record,source_system,character varying(255),True,V1__baseline_schema,raw
+raw_record,fetch_method,character varying(255),True,V1__baseline_schema,raw
+raw_record,content_type,character varying(255),True,V1__baseline_schema,raw
+raw_record,fetcher_identity,character varying(255),True,V1__baseline_schema,raw
+raw_record,fetched_at,timestamp(6) with time zone,True,V1__baseline_schema,raw
+ingestion_failure,id,uuid,True,V1__baseline_schema,ingestion
+ingestion_failure,source_system,character varying(255),True,V1__baseline_schema,ingestion
+ingestion_failure,failure_type,character varying(255),True,V1__baseline_schema,ingestion
+ingestion_failure,detail,text,True,V1__baseline_schema,ingestion
+ingestion_failure,occurred_at,timestamp(6) with time zone,True,V1__baseline_schema,ingestion
+permission,id,uuid,True,V1__baseline_schema,auth
+permission,department,character varying(255),True,V1__baseline_schema,auth
+permission,seniority,character varying(255),True,V1__baseline_schema,auth
+permission,resource,character varying(255),True,V1__baseline_schema,auth
+permission,can_read,boolean,True,V1__baseline_schema,auth
+permission,can_write,boolean,True,V1__baseline_schema,auth
+canonical_shift,id,uuid,True,V1__baseline_schema,canonical
+canonical_shift,valid_from,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_shift,valid_to,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_shift,recorded_at,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_shift,superseded_at,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_shift,staff_member_ref,uuid,True,V1__baseline_schema,canonical
+canonical_shift,shift_start,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_shift,shift_end,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_sale_item,id,uuid,True,V1__baseline_schema,canonical
+canonical_sale_item,valid_from,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_sale_item,valid_to,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_sale_item,recorded_at,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_sale_item,superseded_at,timestamp(6) with time zone,True,V1__baseline_schema,canonical
+canonical_sale_item,item_name,character varying(255),True,V1__baseline_schema,canonical
+canonical_sale_item,quantity_sold,integer,True,V1__baseline_schema,canonical
+canonical_sale_item,amount,"numeric(38,2)",True,V1__baseline_schema,canonical
+ingestion_run,id,uuid,True,V2__ingestion_ledger,ingestion
+ingestion_run,source_system,varchar(255),True,V2__ingestion_ledger,ingestion
+ingestion_run,connector_name,varchar(255),True,V2__ingestion_ledger,ingestion
+ingestion_run,status,varchar(32),True,V2__ingestion_ledger,ingestion
+ingestion_run,started_at,timestamp(6) with time zone,True,V2__ingestion_ledger,ingestion
+ingestion_run,completed_at,timestamp(6) with time zone,True,V2__ingestion_ledger,ingestion
+ingestion_run,input_watermark,text,True,V2__ingestion_ledger,ingestion
+ingestion_run,output_watermark,text,True,V2__ingestion_ledger,ingestion
+ingestion_run,fetched_count,bigint,True,V2__ingestion_ledger,ingestion
+ingestion_run,persisted_count,bigint,True,V2__ingestion_ledger,ingestion
+ingestion_run,failure_summary,text,True,V2__ingestion_ledger,ingestion
+raw_record,ingestion_run_id,uuid,True,V2__ingestion_ledger,raw
+raw_record,payload_bytes,bytea,True,V2__ingestion_ledger,raw
+raw_record,payload_sha256,char(64),True,V2__ingestion_ledger,raw
+raw_record,payload_byte_length,bigint,True,V2__ingestion_ledger,raw
+raw_record,character_encoding,varchar(64),True,V2__ingestion_ledger,raw
+ingestion_failure,ingestion_run_id,uuid,True,V2__ingestion_ledger,ingestion
+canonical_shift,logical_entity_id,uuid,True,V4__canonical_provenance,canonical
+canonical_shift,source_system,varchar(255),True,V4__canonical_provenance,canonical
+canonical_shift,source_record_ref,varchar(512),True,V4__canonical_provenance,canonical
+canonical_shift,raw_record_id,uuid,True,V4__canonical_provenance,canonical
+canonical_sale_item,logical_entity_id,uuid,True,V4__canonical_provenance,canonical
+canonical_sale_item,source_system,varchar(255),True,V4__canonical_provenance,canonical
+canonical_sale_item,source_record_ref,varchar(512),True,V4__canonical_provenance,canonical
+canonical_sale_item,raw_record_id,uuid,True,V4__canonical_provenance,canonical
+canonical_daily_sales,id,uuid,True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,logical_entity_id,uuid,True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,trading_date,date,True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,source_system,varchar(255),True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,source_record_ref,varchar(512),True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,raw_record_id,uuid,True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,total_sales,"numeric(14,4)",True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,gst_total,"numeric(14,4)",True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,net_total,"numeric(14,4)",True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,valid_from,timestamp(6) with time zone,True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,valid_to,timestamp(6) with time zone,True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,recorded_at,timestamp(6) with time zone,True,V5__daily_sales_reconciliation,canonical
+canonical_daily_sales,superseded_at,timestamp(6) with time zone,True,V5__daily_sales_reconciliation,canonical
+daily_sales_override,id,uuid,True,V5__daily_sales_reconciliation,reconciliation
+daily_sales_override,trading_date,date,True,V5__daily_sales_reconciliation,reconciliation
+daily_sales_override,authoritative_source,varchar(255),True,V5__daily_sales_reconciliation,reconciliation
+daily_sales_override,reason,text,True,V5__daily_sales_reconciliation,reconciliation
+daily_sales_override,recorded_at,timestamp(6) with time zone,True,V5__daily_sales_reconciliation,reconciliation
+daily_sales_override,superseded_at,timestamp(6) with time zone,True,V5__daily_sales_reconciliation,reconciliation
+user_account,id,uuid,True,V7__user_accounts,auth
+user_account,email,varchar(255),True,V7__user_accounts,auth
+user_account,password_hash,varchar(255),True,V7__user_accounts,auth
+user_account,display_name,varchar(255),True,V7__user_accounts,auth
+user_account,department,varchar(100),True,V7__user_accounts,auth
+user_account,seniority,varchar(100),True,V7__user_accounts,auth
+user_account,active,boolean,True,V7__user_accounts,auth
+user_account,created_at,timestamp(6) with time zone,True,V7__user_accounts,auth
+user_account,updated_at,timestamp(6) with time zone,True,V7__user_accounts,auth
+daily_sales_override,actor_email,varchar(255),True,V8__drop_staff_profile_and_override_actor_email,reconciliation
+canonical_product_sales,id,uuid,True,V9__product_sales,canonical
+canonical_product_sales,logical_entity_id,uuid,True,V9__product_sales,canonical
+canonical_product_sales,trading_date,date,True,V9__product_sales,canonical
+canonical_product_sales,product_name_key,varchar(512),True,V9__product_sales,canonical
+canonical_product_sales,source_system,varchar(255),True,V9__product_sales,canonical
+canonical_product_sales,source_record_ref,varchar(512),True,V9__product_sales,canonical
+canonical_product_sales,raw_record_id,uuid,True,V9__product_sales,canonical
+canonical_product_sales,quantity_sold,"numeric(14,4)",True,V9__product_sales,canonical
+canonical_product_sales,amount,"numeric(14,4)",True,V9__product_sales,canonical
+canonical_product_sales,valid_from,timestamp(6) with time zone,True,V9__product_sales,canonical
+canonical_product_sales,valid_to,timestamp(6) with time zone,True,V9__product_sales,canonical
+canonical_product_sales,recorded_at,timestamp(6) with time zone,True,V9__product_sales,canonical
+canonical_product_sales,superseded_at,timestamp(6) with time zone,True,V9__product_sales,canonical
+product_sales_override,id,uuid,True,V10__product_sales_override,reconciliation
+product_sales_override,trading_date,date,True,V10__product_sales_override,reconciliation
+product_sales_override,product_name_key,varchar(512),True,V10__product_sales_override,reconciliation
+product_sales_override,authoritative_source,varchar(255),True,V10__product_sales_override,reconciliation
+product_sales_override,reason,text,True,V10__product_sales_override,reconciliation
+product_sales_override,actor_email,varchar(255),True,V10__product_sales_override,reconciliation
+product_sales_override,recorded_at,timestamp(6) with time zone,True,V10__product_sales_override,reconciliation
+product_sales_override,superseded_at,timestamp(6) with time zone,True,V10__product_sales_override,reconciliation
+canonical_reservation,id,uuid,True,V11__reservations,canonical
+canonical_reservation,logical_entity_id,uuid,True,V11__reservations,canonical
+canonical_reservation,source_system,varchar(255),True,V11__reservations,canonical
+canonical_reservation,source_record_ref,varchar(512),True,V11__reservations,canonical
+canonical_reservation,raw_record_id,uuid,True,V11__reservations,canonical
+canonical_reservation,reservation_at,timestamp(6) with time zone,True,V11__reservations,canonical
+canonical_reservation,party_size,integer,True,V11__reservations,canonical
+canonical_reservation,status,varchar(64),True,V11__reservations,canonical
+canonical_reservation,table_name,varchar(255),True,V11__reservations,canonical
+canonical_reservation,source_channel,varchar(255),True,V11__reservations,canonical
+canonical_reservation,party_name,varchar(255),True,V11__reservations,canonical
+canonical_reservation,valid_from,timestamp(6) with time zone,True,V11__reservations,canonical
+canonical_reservation,valid_to,timestamp(6) with time zone,True,V11__reservations,canonical
+canonical_reservation,recorded_at,timestamp(6) with time zone,True,V11__reservations,canonical
+canonical_reservation,superseded_at,timestamp(6) with time zone,True,V11__reservations,canonical
+resolution_rule,id,uuid,True,V12__resolution_rule,reconciliation
+resolution_rule,entity_type,varchar(64),True,V12__resolution_rule,reconciliation
+resolution_rule,field_key,varchar(512),True,V12__resolution_rule,reconciliation
+resolution_rule,strategy,varchar(32),True,V12__resolution_rule,reconciliation
+resolution_rule,custom_logic,varchar(32),True,V12__resolution_rule,reconciliation
+resolution_rule,source_priority,jsonb,True,V12__resolution_rule,reconciliation
+resolution_rule,actor_email,varchar(255),True,V12__resolution_rule,reconciliation
+resolution_rule,recorded_at,timestamp(6) with time zone,True,V12__resolution_rule,reconciliation
+resolution_rule,superseded_at,timestamp(6) with time zone,True,V12__resolution_rule,reconciliation
+resolution_rule,superseded_by,varchar(255),True,V12__resolution_rule,reconciliation
+ingestion_failure,stack_trace,text,True,V14__ingestion_failure_stack_trace,ingestion
+resolved_daily_sales,trading_date,date,True,V15__daily_sales_read_model,resolved
+resolved_daily_sales,total_sales,"numeric(14,4)",True,V15__daily_sales_read_model,resolved
+resolved_daily_sales,resolution_type,text,True,V15__daily_sales_read_model,resolved
+resolved_daily_sales,authoritative_source,text,True,V15__daily_sales_read_model,resolved
+resolved_daily_sales,has_conflict,boolean,True,V15__daily_sales_read_model,resolved
+resolved_daily_sales,resolved_at,timestamp(6) with time zone,True,V15__daily_sales_read_model,resolved
+reconciliation_exception,entity_type,text,True,V15__daily_sales_read_model,evidence
+reconciliation_exception,entity_key,text,True,V15__daily_sales_read_model,evidence
+reconciliation_exception,trading_date,date,True,V15__daily_sales_read_model,evidence
+reconciliation_exception,field_key,text,True,V15__daily_sales_read_model,evidence
+reconciliation_exception,status,text,True,V15__daily_sales_read_model,evidence
+reconciliation_exception,detected_at,timestamp(6) with time zone,True,V15__daily_sales_read_model,evidence
+resolved_product_sales,trading_date,date,True,V17__resolved_product_sales,resolved
+resolved_product_sales,product_name_key,varchar(512),True,V17__resolved_product_sales,resolved
+resolved_product_sales,quantity_sold,"numeric(14,4)",True,V17__resolved_product_sales,resolved
+resolved_product_sales,amount,"numeric(14,4)",True,V17__resolved_product_sales,resolved
+resolved_product_sales,resolution_type,text,True,V17__resolved_product_sales,resolved
+resolved_product_sales,authoritative_source,text,True,V17__resolved_product_sales,resolved
+resolved_product_sales,has_conflict,boolean,True,V17__resolved_product_sales,resolved
+resolved_product_sales,resolved_at,timestamp(6) with time zone,True,V17__resolved_product_sales,resolved
+saved_dashboard,id,uuid,True,V18__saved_dashboards,application
+saved_dashboard,title,varchar(200),True,V18__saved_dashboards,application
+saved_dashboard,description,varchar(500),True,V18__saved_dashboards,application
+saved_dashboard,layout,varchar(32),True,V18__saved_dashboards,application
+saved_dashboard,widgets,jsonb,True,V18__saved_dashboards,application
+saved_dashboard,created_by,varchar(255),True,V18__saved_dashboards,application
+saved_dashboard,created_at,timestamp(6) with time zone,True,V18__saved_dashboards,application
+saved_dashboard,updated_at,timestamp(6) with time zone,True,V18__saved_dashboards,application
+resolved_reservation_day,trading_date,date,True,V20__reservation_read_model,resolved
+resolved_reservation_day,service_period,text,True,V20__reservation_read_model,resolved
+resolved_reservation_day,bookings,bigint,True,V20__reservation_read_model,resolved
+resolved_reservation_day,attended,bigint,True,V20__reservation_read_model,resolved
+resolved_reservation_day,covers,bigint,True,V20__reservation_read_model,resolved
+resolved_reservation_day,cancelled,bigint,True,V20__reservation_read_model,resolved
+resolved_reservation_day,no_shows,bigint,True,V20__reservation_read_model,resolved
+resolved_reservation_day,walk_ins,bigint,True,V20__reservation_read_model,resolved
+resolved_reservation_day,resolution_type,text,True,V20__reservation_read_model,resolved
+resolved_reservation_day,authoritative_source,text,True,V20__reservation_read_model,resolved
+resolved_reservation_day,has_conflict,boolean,True,V20__reservation_read_model,resolved
+resolved_reservation_day,resolved_at,timestamp(6) with time zone,True,V20__reservation_read_model,resolved
+reservation_override,id,uuid,True,V20__reservation_read_model,reconciliation
+reservation_override,trading_date,date,True,V20__reservation_read_model,reconciliation
+reservation_override,service_period,text,True,V20__reservation_read_model,reconciliation
+reservation_override,overridden_covers,bigint,True,V20__reservation_read_model,reconciliation
+reservation_override,reason,text,True,V20__reservation_read_model,reconciliation
+reservation_override,actor_email,varchar(255),True,V20__reservation_read_model,reconciliation
+reservation_override,recorded_at,timestamp(6) with time zone,True,V20__reservation_read_model,reconciliation
+reservation_override,superseded_at,timestamp(6) with time zone,True,V20__reservation_read_model,reconciliation
+canonical_labour_entry,id,uuid,True,V21__labour,canonical
+canonical_labour_entry,logical_entity_id,uuid,True,V21__labour,canonical
+canonical_labour_entry,source_system,varchar(255),True,V21__labour,canonical
+canonical_labour_entry,source_record_ref,varchar(512),True,V21__labour,canonical
+canonical_labour_entry,raw_record_id,uuid,True,V21__labour,canonical
+canonical_labour_entry,staff_ref,varchar(255),True,V21__labour,canonical
+canonical_labour_entry,department,varchar(64),True,V21__labour,canonical
+canonical_labour_entry,labour_date,date,True,V21__labour,canonical
+canonical_labour_entry,scheduled_hours,"numeric(10,2)",True,V21__labour,canonical
+canonical_labour_entry,actual_hours,"numeric(10,2)",True,V21__labour,canonical
+canonical_labour_entry,scheduled_cost,"numeric(14,4)",True,V21__labour,canonical
+canonical_labour_entry,actual_cost,"numeric(14,4)",True,V21__labour,canonical
+canonical_labour_entry,shift_start,timestamp(6) with time zone,True,V21__labour,canonical
+canonical_labour_entry,shift_end,timestamp(6) with time zone,True,V21__labour,canonical
+canonical_labour_entry,valid_from,timestamp(6) with time zone,True,V21__labour,canonical
+canonical_labour_entry,valid_to,timestamp(6) with time zone,True,V21__labour,canonical
+canonical_labour_entry,recorded_at,timestamp(6) with time zone,True,V21__labour,canonical
+canonical_labour_entry,superseded_at,timestamp(6) with time zone,True,V21__labour,canonical
+resolved_labour_day,trading_date,date,True,V21__labour,resolved
+resolved_labour_day,department,text,True,V21__labour,resolved
+resolved_labour_day,scheduled_hours,"numeric(14,4)",True,V21__labour,resolved
+resolved_labour_day,actual_hours,"numeric(14,4)",True,V21__labour,resolved
+resolved_labour_day,scheduled_cost,"numeric(14,4)",True,V21__labour,resolved
+resolved_labour_day,actual_cost,"numeric(14,4)",True,V21__labour,resolved
+resolved_labour_day,resolution_type,text,True,V21__labour,resolved
+resolved_labour_day,authoritative_source,text,True,V21__labour,resolved
+resolved_labour_day,has_conflict,boolean,True,V21__labour,resolved
+resolved_labour_day,resolved_at,timestamp(6) with time zone,True,V21__labour,resolved
+labour_override,id,uuid,True,V21__labour,reconciliation
+labour_override,trading_date,date,True,V21__labour,reconciliation
+labour_override,department,text,True,V21__labour,reconciliation
+labour_override,overridden_actual_hours,"numeric(14,4)",True,V21__labour,reconciliation
+labour_override,reason,text,True,V21__labour,reconciliation
+labour_override,actor_email,varchar(255),True,V21__labour,reconciliation
+labour_override,recorded_at,timestamp(6) with time zone,True,V21__labour,reconciliation
+labour_override,superseded_at,timestamp(6) with time zone,True,V21__labour,reconciliation
+canonical_invoice,id,uuid,True,V22__inventory,canonical
+canonical_invoice,logical_entity_id,uuid,True,V22__inventory,canonical
+canonical_invoice,source_system,varchar(255),True,V22__inventory,canonical
+canonical_invoice,source_record_ref,varchar(512),True,V22__inventory,canonical
+canonical_invoice,raw_record_id,uuid,True,V22__inventory,canonical
+canonical_invoice,supplier_name,varchar(255),True,V22__inventory,canonical
+canonical_invoice,invoice_number,varchar(255),True,V22__inventory,canonical
+canonical_invoice,invoice_date,date,True,V22__inventory,canonical
+canonical_invoice,due_date,date,True,V22__inventory,canonical
+canonical_invoice,total_amount,"numeric(14,4)",True,V22__inventory,canonical
+canonical_invoice,valid_from,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_invoice,valid_to,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_invoice,recorded_at,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_invoice,superseded_at,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_invoice_line,id,uuid,True,V22__inventory,canonical
+canonical_invoice_line,logical_entity_id,uuid,True,V22__inventory,canonical
+canonical_invoice_line,source_system,varchar(255),True,V22__inventory,canonical
+canonical_invoice_line,source_record_ref,varchar(512),True,V22__inventory,canonical
+canonical_invoice_line,raw_record_id,uuid,True,V22__inventory,canonical
+canonical_invoice_line,invoice_number,varchar(255),True,V22__inventory,canonical
+canonical_invoice_line,invoice_date,date,True,V22__inventory,canonical
+canonical_invoice_line,product_name_key,varchar(512),True,V22__inventory,canonical
+canonical_invoice_line,quantity,"numeric(14,4)",True,V22__inventory,canonical
+canonical_invoice_line,unit_cost,"numeric(14,4)",True,V22__inventory,canonical
+canonical_invoice_line,line_total,"numeric(14,4)",True,V22__inventory,canonical
+canonical_invoice_line,category,varchar(255),True,V22__inventory,canonical
+canonical_invoice_line,valid_from,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_invoice_line,valid_to,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_invoice_line,recorded_at,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_invoice_line,superseded_at,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_stock_count,id,uuid,True,V22__inventory,canonical
+canonical_stock_count,logical_entity_id,uuid,True,V22__inventory,canonical
+canonical_stock_count,source_system,varchar(255),True,V22__inventory,canonical
+canonical_stock_count,source_record_ref,varchar(512),True,V22__inventory,canonical
+canonical_stock_count,raw_record_id,uuid,True,V22__inventory,canonical
+canonical_stock_count,counted_date,date,True,V22__inventory,canonical
+canonical_stock_count,product_name_key,varchar(512),True,V22__inventory,canonical
+canonical_stock_count,quantity_on_hand,"numeric(14,4)",True,V22__inventory,canonical
+canonical_stock_count,valid_from,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_stock_count,valid_to,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_stock_count,recorded_at,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_stock_count,superseded_at,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_wastage,id,uuid,True,V22__inventory,canonical
+canonical_wastage,logical_entity_id,uuid,True,V22__inventory,canonical
+canonical_wastage,source_system,varchar(255),True,V22__inventory,canonical
+canonical_wastage,source_record_ref,varchar(512),True,V22__inventory,canonical
+canonical_wastage,raw_record_id,uuid,True,V22__inventory,canonical
+canonical_wastage,wastage_date,date,True,V22__inventory,canonical
+canonical_wastage,product_name_key,varchar(512),True,V22__inventory,canonical
+canonical_wastage,quantity,"numeric(14,4)",True,V22__inventory,canonical
+canonical_wastage,reason,varchar(255),True,V22__inventory,canonical
+canonical_wastage,valid_from,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_wastage,valid_to,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_wastage,recorded_at,timestamp(6) with time zone,True,V22__inventory,canonical
+canonical_wastage,superseded_at,timestamp(6) with time zone,True,V22__inventory,canonical
+resolved_inventory_day,trading_date,date,True,V22__inventory,resolved
+resolved_inventory_day,purchases,"numeric(14,4)",True,V22__inventory,resolved
+resolved_inventory_day,wastage,"numeric(14,4)",True,V22__inventory,resolved
+resolved_inventory_day,stock_on_hand,"numeric(14,4)",True,V22__inventory,resolved
+resolved_inventory_day,resolution_type,text,True,V22__inventory,resolved
+resolved_inventory_day,authoritative_source,text,True,V22__inventory,resolved
+resolved_inventory_day,has_conflict,boolean,True,V22__inventory,resolved
+resolved_inventory_day,resolved_at,timestamp(6) with time zone,True,V22__inventory,resolved
+inventory_override,id,uuid,True,V22__inventory,reconciliation
+inventory_override,trading_date,date,True,V22__inventory,reconciliation
+inventory_override,overridden_purchases,"numeric(14,4)",True,V22__inventory,reconciliation
+inventory_override,reason,text,True,V22__inventory,reconciliation
+inventory_override,actor_email,varchar(255),True,V22__inventory,reconciliation
+inventory_override,recorded_at,timestamp(6) with time zone,True,V22__inventory,reconciliation
+inventory_override,superseded_at,timestamp(6) with time zone,True,V22__inventory,reconciliation
+resolved_daily_sales,net_sales,"numeric(14,4)",True,V24__daily_sales_net_gst,resolved
+resolved_daily_sales,gst,"numeric(14,4)",True,V24__daily_sales_net_gst,resolved
+saved_dashboard_revision,id,uuid,True,V25__dashboard_documents_v2,application
+saved_dashboard_revision,dashboard_id,uuid,True,V25__dashboard_documents_v2,application
+saved_dashboard_revision,revision,integer,True,V25__dashboard_documents_v2,application
+saved_dashboard_revision,document,jsonb,True,V25__dashboard_documents_v2,application
+saved_dashboard_revision,created_by,varchar(255),True,V25__dashboard_documents_v2,application
+saved_dashboard_revision,created_at,timestamp(6) with time zone,True,V25__dashboard_documents_v2,application
+saved_dashboard_share,id,uuid,True,V25__dashboard_documents_v2,application
+saved_dashboard_share,dashboard_id,uuid,True,V25__dashboard_documents_v2,application
+saved_dashboard_share,department,varchar(64),True,V25__dashboard_documents_v2,application
+saved_dashboard_share,seniority,varchar(64),True,V25__dashboard_documents_v2,application
+saved_dashboard,filters,jsonb,True,V25__dashboard_documents_v2,application
+saved_dashboard,visibility,varchar(16),True,V25__dashboard_documents_v2,application
+saved_dashboard,pinned,boolean,True,V25__dashboard_documents_v2,application
+saved_dashboard,current_revision,integer,True,V25__dashboard_documents_v2,application
+conversation_thread,id,uuid,True,V27__conversation_threads,application
+conversation_thread,user_account_id,uuid,True,V27__conversation_threads,application
+conversation_thread,title,varchar(200),True,V27__conversation_threads,application
+conversation_thread,summary,text,True,V27__conversation_threads,application
+conversation_thread,created_at,timestamp(6) with time zone,True,V27__conversation_threads,application
+conversation_thread,updated_at,timestamp(6) with time zone,True,V27__conversation_threads,application
+conversation_thread,last_message_at,timestamp(6) with time zone,True,V27__conversation_threads,application
+conversation_message,id,uuid,True,V27__conversation_threads,application
+conversation_message,thread_id,uuid,True,V27__conversation_threads,application
+conversation_message,role,varchar(16),True,V27__conversation_threads,application
+conversation_message,content,text,True,V27__conversation_threads,application
+conversation_message,tool_trace,jsonb,True,V27__conversation_threads,application
+conversation_message,created_at,timestamp(6) with time zone,True,V27__conversation_threads,application
+canonical_invoice,purchase_number,varchar(255),True,V28__invoice_metadata_columns,canonical
+canonical_invoice,account_number,varchar(255),True,V28__invoice_metadata_columns,canonical
+canonical_invoice,tax_code,varchar(64),True,V28__invoice_metadata_columns,canonical
+canonical_invoice,amount_ex_tax,"numeric(14,4)",True,V28__invoice_metadata_columns,canonical
+canonical_invoice,gst_amount,"numeric(14,4)",True,V28__invoice_metadata_columns,canonical
+canonical_invoice,freight_amount,"numeric(14,4)",True,V28__invoice_metadata_columns,canonical
+canonical_invoice,freight_gst_amount,"numeric(14,4)",True,V28__invoice_metadata_columns,canonical
+canonical_invoice_line,stock_code,varchar(255),True,V29__invoice_line_enrichment,canonical
+canonical_invoice_line,uom,varchar(32),True,V29__invoice_line_enrichment,canonical
+canonical_invoice_line,unit_quantity,"numeric(14,4)",True,V29__invoice_line_enrichment,canonical
+canonical_invoice_line,pack_size,"numeric(14,4)",True,V29__invoice_line_enrichment,canonical
+canonical_invoice_line,wet_amount,"numeric(14,4)",True,V29__invoice_line_enrichment,canonical
+invoice_ingest_flag,id,uuid,True,V30__invoice_ingest_flag,evidence
+invoice_ingest_flag,flag_type,character varying(64),True,V30__invoice_ingest_flag,evidence
+invoice_ingest_flag,invoice_number,character varying(255),True,V30__invoice_ingest_flag,evidence
+invoice_ingest_flag,pdf_filename,character varying(512),True,V30__invoice_ingest_flag,evidence
+invoice_ingest_flag,stock_code,character varying(255),True,V30__invoice_ingest_flag,evidence
+invoice_ingest_flag,detail,text,True,V30__invoice_ingest_flag,evidence
+invoice_ingest_flag,occurred_at,timestamp(6) with time zone,True,V30__invoice_ingest_flag,evidence
+canonical_invoice,pdf_filename,varchar(512),True,V31__invoice_pdf_filename,canonical
+ingestion_stage,id,uuid,True,V32__ingestion_stage,ingestion
+ingestion_stage,ingestion_run_id,uuid,True,V32__ingestion_stage,ingestion
+ingestion_stage,source_system,varchar(255),True,V32__ingestion_stage,ingestion
+ingestion_stage,dataset,varchar(255),True,V32__ingestion_stage,ingestion
+ingestion_stage,stage,varchar(32),True,V32__ingestion_stage,ingestion
+ingestion_stage,outcome,varchar(32),True,V32__ingestion_stage,ingestion
+ingestion_stage,occurred_at,timestamp(6) with time zone,True,V32__ingestion_stage,ingestion
+canonical_payment,id,uuid,True,V33__payments,canonical
+canonical_payment,logical_entity_id,uuid,True,V33__payments,canonical
+canonical_payment,source_system,varchar(255),True,V33__payments,canonical
+canonical_payment,source_record_ref,varchar(512),True,V33__payments,canonical
+canonical_payment,raw_record_id,uuid,True,V33__payments,canonical
+canonical_payment,trading_date,date,True,V33__payments,canonical
+canonical_payment,sale_number,varchar(255),True,V33__payments,canonical
+canonical_payment,payment_type_code,varchar(255),True,V33__payments,canonical
+canonical_payment,payment_type_name,varchar(255),True,V33__payments,canonical
+canonical_payment,payment_source_type,varchar(255),True,V33__payments,canonical
+canonical_payment,lspay_payment_mode,varchar(255),True,V33__payments,canonical
+canonical_payment,clearing_account,varchar(255),True,V33__payments,canonical
+canonical_payment,amount,"numeric(14,4)",True,V33__payments,canonical
+canonical_payment,tip,"numeric(14,4)",True,V33__payments,canonical
+canonical_payment,tendered,"numeric(14,4)",True,V33__payments,canonical
+canonical_payment,surcharge,"numeric(14,4)",True,V33__payments,canonical
+canonical_payment,payment_count,integer,True,V33__payments,canonical
+canonical_payment,tip_count,integer,True,V33__payments,canonical
+canonical_payment,reconciled,varchar(64),True,V33__payments,canonical
+canonical_payment,register_code,varchar(255),True,V33__payments,canonical
+canonical_payment,register_name,varchar(255),True,V33__payments,canonical
+canonical_payment,staff_name,varchar(255),True,V33__payments,canonical
+canonical_payment,staff_code,varchar(255),True,V33__payments,canonical
+canonical_payment,site_id,varchar(255),True,V33__payments,canonical
+canonical_payment,customer_name,varchar(255),True,V33__payments,canonical
+canonical_payment,valid_from,timestamp(6) with time zone,True,V33__payments,canonical
+canonical_payment,valid_to,timestamp(6) with time zone,True,V33__payments,canonical
+canonical_payment,recorded_at,timestamp(6) with time zone,True,V33__payments,canonical
+canonical_payment,superseded_at,timestamp(6) with time zone,True,V33__payments,canonical
+canonical_deleted_sale,id,uuid,True,V34__deleted_sales,canonical
+canonical_deleted_sale,logical_entity_id,uuid,True,V34__deleted_sales,canonical
+canonical_deleted_sale,source_system,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,source_record_ref,varchar(512),True,V34__deleted_sales,canonical
+canonical_deleted_sale,raw_record_id,uuid,True,V34__deleted_sales,canonical
+canonical_deleted_sale,trading_date,date,True,V34__deleted_sales,canonical
+canonical_deleted_sale,sale_number,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,order_type,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,note,varchar(512),True,V34__deleted_sales,canonical
+canonical_deleted_sale,total_inc_tax,"numeric(14,4)",True,V34__deleted_sales,canonical
+canonical_deleted_sale,total_ex_tax,"numeric(14,4)",True,V34__deleted_sales,canonical
+canonical_deleted_sale,total_tax,"numeric(14,4)",True,V34__deleted_sales,canonical
+canonical_deleted_sale,total_cost,"numeric(14,4)",True,V34__deleted_sales,canonical
+canonical_deleted_sale,opened_register_code,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,opened_register_name,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,deleted_register_code,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,deleted_register_name,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,staff_name,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,staff_code,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,deleted_by_staff_name,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,deleted_by_staff_code,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,table_number,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,site_id,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,customer_name,varchar(255),True,V34__deleted_sales,canonical
+canonical_deleted_sale,valid_from,timestamp(6) with time zone,True,V34__deleted_sales,canonical
+canonical_deleted_sale,valid_to,timestamp(6) with time zone,True,V34__deleted_sales,canonical
+canonical_deleted_sale,recorded_at,timestamp(6) with time zone,True,V34__deleted_sales,canonical
+canonical_deleted_sale,superseded_at,timestamp(6) with time zone,True,V34__deleted_sales,canonical
+canonical_sale_item,trading_date,date,True,V35__sale_item_line_details,canonical
+canonical_sale_item,sale_number,varchar(255),True,V35__sale_item_line_details,canonical
+canonical_sale_item,product_number,varchar(255),True,V35__sale_item_line_details,canonical
+canonical_sale_item,sku,varchar(255),True,V35__sale_item_line_details,canonical
+canonical_sale_item,category_name,varchar(255),True,V35__sale_item_line_details,canonical
+canonical_sale_item,sold_price_inc_tax,"numeric(14,4)",True,V35__sale_item_line_details,canonical
+canonical_sale_item,total_tax,"numeric(14,4)",True,V35__sale_item_line_details,canonical
+canonical_sale_item,cost_inc_tax,"numeric(14,4)",True,V35__sale_item_line_details,canonical
+canonical_sale_item,order_type,varchar(64),True,V35__sale_item_line_details,canonical
+canonical_sale_item,sale_type,varchar(64),True,V35__sale_item_line_details,canonical
+canonical_sale_item,staff_name,varchar(255),True,V35__sale_item_line_details,canonical
+canonical_sale_item,register_name,varchar(255),True,V35__sale_item_line_details,canonical
+canonical_sale_item,table_number,varchar(255),True,V35__sale_item_line_details,canonical
+resolved_payment_day,trading_date,date,True,V36__payment_read_model,resolved
+resolved_payment_day,payment_type_name,text,True,V36__payment_read_model,resolved
+resolved_payment_day,amount,"numeric(14,4)",True,V36__payment_read_model,resolved
+resolved_payment_day,tip,"numeric(14,4)",True,V36__payment_read_model,resolved
+resolved_payment_day,payment_count,bigint,True,V36__payment_read_model,resolved
+resolved_payment_day,resolution_type,text,True,V36__payment_read_model,resolved
+resolved_payment_day,authoritative_source,text,True,V36__payment_read_model,resolved
+resolved_payment_day,has_conflict,boolean,True,V36__payment_read_model,resolved
+resolved_payment_day,resolved_at,timestamp(6) with time zone,True,V36__payment_read_model,resolved
+resolved_deleted_sale_day,trading_date,date,True,V37__deleted_sale_read_model,resolved
+resolved_deleted_sale_day,deleted_count,bigint,True,V37__deleted_sale_read_model,resolved
+resolved_deleted_sale_day,total_inc_tax,"numeric(14,4)",True,V37__deleted_sale_read_model,resolved
+resolved_deleted_sale_day,total_tax,"numeric(14,4)",True,V37__deleted_sale_read_model,resolved
+resolved_deleted_sale_day,resolution_type,text,True,V37__deleted_sale_read_model,resolved
+resolved_deleted_sale_day,authoritative_source,text,True,V37__deleted_sale_read_model,resolved
+resolved_deleted_sale_day,has_conflict,boolean,True,V37__deleted_sale_read_model,resolved
+resolved_deleted_sale_day,resolved_at,timestamp(6) with time zone,True,V37__deleted_sale_read_model,resolved
+resolved_sale_item_day,trading_date,date,True,V38__sale_item_read_model,resolved
+resolved_sale_item_day,category_name,text,True,V38__sale_item_read_model,resolved
+resolved_sale_item_day,quantity,"numeric(14,4)",True,V38__sale_item_read_model,resolved
+resolved_sale_item_day,amount,"numeric(14,4)",True,V38__sale_item_read_model,resolved
+resolved_sale_item_day,resolution_type,text,True,V38__sale_item_read_model,resolved
+resolved_sale_item_day,authoritative_source,text,True,V38__sale_item_read_model,resolved
+resolved_sale_item_day,has_conflict,boolean,True,V38__sale_item_read_model,resolved
+resolved_sale_item_day,resolved_at,timestamp(6) with time zone,True,V38__sale_item_read_model,resolved
+invoice_ingest_flag,resolved_at,timestamp(6) with time zone,True,V42__invoice_ingest_flag_resolved_at,evidence
+canonical_invoice_line,origin,varchar(16),True,V43__invoice_line_origin,canonical
+forecast_run,id,uuid,True,V44__forecast_run,application
+forecast_run,created_at,timestamptz,True,V44__forecast_run,application
+forecast_run,created_by,varchar(255),True,V44__forecast_run,application
+forecast_run,--,caller email,True,V44__forecast_run,application
+forecast_run,matching,saved_dashboard.created_by target_metric text,True,V44__forecast_run,application
+forecast_run,e.g.,'sales.gross' target_dimension text,True,V44__forecast_run,application
+forecast_run,history_to,date,True,V44__forecast_run,application
+forecast_run,horizon_days,int,True,V44__forecast_run,application
+forecast_run,grain,text,True,V44__forecast_run,application
+forecast_run,status,text,True,V44__forecast_run,application
+forecast_run,model_version,text,True,V44__forecast_run,application
+forecast_run,forecast_series,jsonb,True,V44__forecast_run,application
+forecast_run,"""quantiles"":","{ ""0.1"": … } }]",True,V44__forecast_run,application
+forecast_run,set,on SUCCEEDED,True,V44__forecast_run,application
+raw_record,source_record_ref,varchar(512),True,V46__raw_record_source_record_ref,raw
+canonical_recipe_cost,id,uuid,True,V47__recipe_composition,canonical
+canonical_recipe_cost,logical_entity_id,uuid,True,V47__recipe_composition,canonical
+canonical_recipe_cost,source_system,varchar(255),True,V47__recipe_composition,canonical
+canonical_recipe_cost,source_record_ref,varchar(512),True,V47__recipe_composition,canonical
+canonical_recipe_cost,raw_record_id,uuid,True,V47__recipe_composition,canonical
+canonical_recipe_cost,recipe_id,integer,True,V47__recipe_composition,canonical
+canonical_recipe_cost,recipe_name,varchar(512),True,V47__recipe_composition,canonical
+canonical_recipe_cost,cost_per_portion,"numeric(14,4)",True,V47__recipe_composition,canonical
+canonical_recipe_cost,cost_per_portion_incl_labour,"numeric(14,4)",True,V47__recipe_composition,canonical
+canonical_recipe_cost,total_cost,"numeric(14,4)",True,V47__recipe_composition,canonical
+canonical_recipe_cost,portion_size,varchar(255),True,V47__recipe_composition,canonical
+canonical_recipe_cost,portion_size_value,"numeric(14,4)",True,V47__recipe_composition,canonical
+canonical_recipe_cost,valid_from,timestamp(6) with time zone,True,V47__recipe_composition,canonical
+canonical_recipe_cost,valid_to,timestamp(6) with time zone,True,V47__recipe_composition,canonical
+canonical_recipe_cost,recorded_at,timestamp(6) with time zone,True,V47__recipe_composition,canonical
+canonical_recipe_cost,superseded_at,timestamp(6) with time zone,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,id,uuid,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,logical_entity_id,uuid,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,source_system,varchar(255),True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,source_record_ref,varchar(512),True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,raw_record_id,uuid,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,sale_item_recipe_id,integer,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,sale_item_stock_code,varchar(255),True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,sale_item_stock_description,varchar(512),True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,recipe_id,integer,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,recipe_name,varchar(512),True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,recipe_folder_name,varchar(512),True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,is_recipe_active,boolean,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,valid_from,timestamp(6) with time zone,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,valid_to,timestamp(6) with time zone,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,recorded_at,timestamp(6) with time zone,True,V47__recipe_composition,canonical
+canonical_sale_recipe_link,superseded_at,timestamp(6) with time zone,True,V47__recipe_composition,canonical
+resolved_recipe,recipe_id,integer,True,V47__recipe_composition,resolved
+resolved_recipe,recipe_name,varchar(512),True,V47__recipe_composition,resolved
+resolved_recipe,recipe_folder_name,varchar(512),True,V47__recipe_composition,resolved
+resolved_recipe,cost_per_portion,"numeric(14,4)",True,V47__recipe_composition,resolved
+resolved_recipe,cost_per_portion_incl_labour,"numeric(14,4)",True,V47__recipe_composition,resolved
+resolved_recipe,total_cost,"numeric(14,4)",True,V47__recipe_composition,resolved
+resolved_recipe,portion_size,varchar(255),True,V47__recipe_composition,resolved
+resolved_recipe,portion_size_value,"numeric(14,4)",True,V47__recipe_composition,resolved
+resolved_recipe,menu_price,"numeric(14,4)",True,V47__recipe_composition,resolved
+resolved_recipe,actual_cost,"numeric(14,4)",True,V47__recipe_composition,resolved
+resolved_recipe,resolution_type,text,True,V47__recipe_composition,resolved
+resolved_recipe,authoritative_source,text,True,V47__recipe_composition,resolved
+resolved_recipe,resolved_at,timestamp(6) with time zone,True,V47__recipe_composition,resolved
+canonical_recipe_ingredient,id,uuid,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,logical_entity_id,uuid,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,source_system,varchar(255),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,source_record_ref,varchar(512),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,raw_record_id,uuid,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,parent_recipe_id,integer,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,line_recipe_id,integer,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,line_recipe_name,varchar(512),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,is_sub_recipe,boolean,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,recipe_detail_id,integer,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,stock_id,integer,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,stock_code,varchar(255),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,stock_description,varchar(512),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,ingredient_description,varchar(512),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,supplier_name,varchar(512),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,supplier_stock_code,varchar(255),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,portion_weight,"numeric(14,4)",True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,unit_of_measurement,varchar(64),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,stock_uom_shortname,varchar(32),True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,cost_per_qty,"numeric(14,4)",True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,cost_per_unit,"numeric(14,4)",True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,stock_usable,"numeric(14,4)",True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,stock_wastage,"numeric(14,4)",True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,is_broken_link,boolean,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,valid_from,timestamp(6) with time zone,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,valid_to,timestamp(6) with time zone,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,recorded_at,timestamp(6) with time zone,True,V49__recipe_ingredients,canonical
+canonical_recipe_ingredient,superseded_at,timestamp(6) with time zone,True,V49__recipe_ingredients,canonical
+resolved_recipe_ingredient,id,uuid,True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,parent_recipe_id,integer,True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,line_recipe_id,integer,True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,line_recipe_name,varchar(512),True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,is_sub_recipe,boolean,True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,recipe_detail_id,integer,True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,stock_id,integer,True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,stock_code,varchar(255),True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,stock_description,varchar(512),True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,portion_weight,"numeric(14,4)",True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,unit_of_measurement,varchar(64),True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,cost_per_qty,"numeric(14,4)",True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,cost_per_unit,"numeric(14,4)",True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,supplier_name,varchar(512),True,V49__recipe_ingredients,resolved
+resolved_recipe_ingredient,resolved_at,timestamp(6) with time zone,True,V49__recipe_ingredients,resolved
+llm_extraction_cache,text_sha256,varchar(64),True,V51__llm_extraction_cache,evidence
+llm_extraction_cache,extracted_json,text,True,V51__llm_extraction_cache,evidence
+llm_extraction_cache,created_at,timestamp(6) with time zone,True,V51__llm_extraction_cache,evidence
+canonical_sale_item,sale_closed_time,time without time zone,True,V53__sale_item_deleted_sale_time,canonical
+canonical_deleted_sale,sale_opened_time,time without time zone,True,V53__sale_item_deleted_sale_time,canonical
+canonical_reservation,created_at,timestamp(6) with time zone,True,V54__reservation_detail,canonical
+canonical_reservation,cancelled_at,timestamp(6) with time zone,True,V54__reservation_detail,canonical
+canonical_reservation,no_show_at,timestamp(6) with time zone,True,V54__reservation_detail,canonical
+canonical_reservation,seated_at,timestamp(6) with time zone,True,V54__reservation_detail,canonical
+canonical_reservation,finished_at,timestamp(6) with time zone,True,V54__reservation_detail,canonical
+canonical_reservation,last_updated_at,timestamp(6) with time zone,True,V54__reservation_detail,canonical
+canonical_reservation,total_actual_duration_minutes,integer,True,V54__reservation_detail,canonical
+canonical_reservation,table_type,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,dining_area_assigned,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,dining_area_booked,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,dining_area_id_assigned,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,dining_area_id_booked,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,wait_staff,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,created_by,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,turn_time_setting,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,reservation_type,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,occasion,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,reservation_status,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,online_waitlist,boolean,True,V54__reservation_detail,canonical
+canonical_reservation,is_flex_reso,boolean,True,V54__reservation_detail,canonical
+canonical_reservation,quoted_wait_time,integer,True,V54__reservation_detail,canonical
+canonical_reservation,total_wait_time,integer,True,V54__reservation_detail,canonical
+canonical_reservation,online_channel,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,partner,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,campaign_type,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,campaign_details,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,referrer_name,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,referrer_business,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,restref_source,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,restref_campaign_name,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,restref_id,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,guest_first_name,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,guest_last_name,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,guest_nickname,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,guest_email,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,guest_phone,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,company,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,marketing_opt_in,boolean,True,V54__reservation_detail,canonical
+canonical_reservation,birthday,date,True,V54__reservation_detail,canonical
+canonical_reservation,anniversary,date,True,V54__reservation_detail,canonical
+canonical_reservation,first_visit_date,date,True,V54__reservation_detail,canonical
+canonical_reservation,recent_visit_date,date,True,V54__reservation_detail,canonical
+canonical_reservation,upcoming_visits,integer,True,V54__reservation_detail,canonical
+canonical_reservation,completed_visits,integer,True,V54__reservation_detail,canonical
+canonical_reservation,cancelled_count,integer,True,V54__reservation_detail,canonical
+canonical_reservation,no_show_count,integer,True,V54__reservation_detail,canonical
+canonical_reservation,lifetime_spend,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,lifetime_per_cover_spend,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,guest_id,uuid,True,V54__reservation_detail,canonical
+canonical_reservation,experience_title,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,experience_type,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,experience_type_enum,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,experience_price_type,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,prepayment_method,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,prepayment_status,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,vendor_payout_status,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,currency,varchar(16),True,V54__reservation_detail,canonical
+canonical_reservation,experience_price,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,experience_subtotal,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,addons_subtotal,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,service_charges,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,prepaid_experience_tip,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,prepaid_experience_vat,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,prepaid_experience_total_paid,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,experience_total_sales,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,experience_total_sales_with_tip,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,prepayment_required_total,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,prepayment_paid_total,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,pos_check_ids,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,pos_subtotal,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,pos_tax,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,pos_service_charges,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,pos_tip,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,pos_paid,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,pos_due,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,total_tips,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,total_vat,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,total_income,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,total_income_with_tip,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,total_revenue,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,total_revenue_with_tip,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,total_revenue_without_tip,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,pos_spend,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,pos_refund,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,pos_revenue,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,refund_amount,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,vendor_payout_amount,"numeric(19,4)",True,V54__reservation_detail,canonical
+canonical_reservation,guest_requests,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,visit_notes,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,reservation_tags,varchar(1024),True,V54__reservation_detail,canonical
+canonical_reservation,guest_tags,varchar(1024),True,V54__reservation_detail,canonical
+canonical_guest,id,uuid,True,V55__canonical_guest,canonical
+canonical_guest,logical_entity_id,uuid,True,V55__canonical_guest,canonical
+canonical_guest,source_system,varchar(255),True,V55__canonical_guest,canonical
+canonical_guest,source_record_ref,varchar(512),True,V55__canonical_guest,canonical
+canonical_guest,raw_record_id,uuid,True,V55__canonical_guest,canonical
+canonical_guest,guest_name,varchar(1024),True,V55__canonical_guest,canonical
+canonical_guest,first_name,varchar(1024),True,V55__canonical_guest,canonical
+canonical_guest,last_name,varchar(1024),True,V55__canonical_guest,canonical
+canonical_guest,nickname,varchar(1024),True,V55__canonical_guest,canonical
+canonical_guest,email,varchar(1024),True,V55__canonical_guest,canonical
+canonical_guest,phone,varchar(1024),True,V55__canonical_guest,canonical
+canonical_guest,company,varchar(1024),True,V55__canonical_guest,canonical
+canonical_guest,marketing_opt_in,boolean,True,V55__canonical_guest,canonical
+canonical_guest,first_visit_date,date,True,V55__canonical_guest,canonical
+canonical_guest,recent_visit_date,date,True,V55__canonical_guest,canonical
+canonical_guest,upcoming_visits,integer,True,V55__canonical_guest,canonical
+canonical_guest,completed_visits,integer,True,V55__canonical_guest,canonical
+canonical_guest,cancelled_count,integer,True,V55__canonical_guest,canonical
+canonical_guest,no_show_count,integer,True,V55__canonical_guest,canonical
+canonical_guest,lifetime_spend,"numeric(19,4)",True,V55__canonical_guest,canonical
+canonical_guest,lifetime_per_cover_spend,"numeric(19,4)",True,V55__canonical_guest,canonical
+canonical_guest,valid_from,timestamp(6) with time zone,True,V55__canonical_guest,canonical
+canonical_guest,valid_to,timestamp(6) with time zone,True,V55__canonical_guest,canonical
+canonical_guest,recorded_at,timestamp(6) with time zone,True,V55__canonical_guest,canonical
+canonical_guest,superseded_at,timestamp(6) with time zone,True,V55__canonical_guest,canonical
+resolved_recipe,menu_state,varchar(16),True,V56__recipe_cost_price_provenance,resolved
+resolved_recipe,price_source,varchar(16),True,V56__recipe_cost_price_provenance,resolved
+resolved_recipe,last_sold_price,"numeric(14,4)",True,V56__recipe_cost_price_provenance,resolved
+resolved_recipe,last_sold_cost,"numeric(14,4)",True,V56__recipe_cost_price_provenance,resolved
+resolved_recipe,last_sold_date,date,True,V56__recipe_cost_price_provenance,resolved
+invoice_pdf_link,pdf_raw_record_id,uuid,True,V57__invoice_pdf_link,evidence
+invoice_pdf_link,invoice_number,varchar(255),True,V57__invoice_pdf_link,evidence
+invoice_pdf_link,pdf_filename,varchar(512),True,V57__invoice_pdf_link,evidence
+invoice_pdf_link,link_source,varchar(32),True,V57__invoice_pdf_link,evidence
+invoice_pdf_link,linked_at,timestamp(6) with time zone,True,V57__invoice_pdf_link,evidence
+canonical_product,id,uuid,True,V59__lightspeed_product_catalog,canonical
+canonical_product,logical_entity_id,uuid,True,V59__lightspeed_product_catalog,canonical
+canonical_product,source_system,varchar(255),True,V59__lightspeed_product_catalog,canonical
+canonical_product,source_record_ref,varchar(512),True,V59__lightspeed_product_catalog,canonical
+canonical_product,raw_record_id,uuid,True,V59__lightspeed_product_catalog,canonical
+canonical_product,product_id,integer,True,V59__lightspeed_product_catalog,canonical
+canonical_product,product_name,varchar(512),True,V59__lightspeed_product_catalog,canonical
+canonical_product,category,varchar(255),True,V59__lightspeed_product_catalog,canonical
+canonical_product,sell_price_inc_tax,"numeric(14,4)",True,V59__lightspeed_product_catalog,canonical
+canonical_product,is_modifier,boolean,True,V59__lightspeed_product_catalog,canonical
+canonical_product,reporting_group,varchar(255),True,V59__lightspeed_product_catalog,canonical
+canonical_product,valid_from,timestamp(6) with time zone,True,V59__lightspeed_product_catalog,canonical
+canonical_product,valid_to,timestamp(6) with time zone,True,V59__lightspeed_product_catalog,canonical
+canonical_product,recorded_at,timestamp(6) with time zone,True,V59__lightspeed_product_catalog,canonical
+canonical_product,superseded_at,timestamp(6) with time zone,True,V59__lightspeed_product_catalog,canonical
+product_alias,id,uuid,True,V59__lightspeed_product_catalog,evidence
+product_alias,canonical_name,varchar(512),True,V59__lightspeed_product_catalog,evidence
+product_alias,alias,varchar(512),True,V59__lightspeed_product_catalog,evidence
+product_alias,source,varchar(32),True,V59__lightspeed_product_catalog,evidence
+product_alias,created_at,timestamp(6) with time zone,True,V59__lightspeed_product_catalog,evidence
+canonical_sale_recipe_link,lightspeed_product_id,integer,True,V59__lightspeed_product_catalog,canonical
+product_category,id,uuid,True,V61__product_categorisation,classification
+product_category,name,varchar(128),True,V61__product_categorisation,classification
+product_category,group_name,varchar(128),True,V61__product_categorisation,classification
+product_category,display_order,int,True,V61__product_categorisation,classification
+product_category,description,varchar(512),True,V61__product_categorisation,classification
+product_category,created_at,timestamp(6) with time zone,True,V61__product_categorisation,classification
+product_category,updated_at,timestamp(6) with time zone,True,V61__product_categorisation,classification
+product_category_assignment,product_name_key,varchar(512),True,V61__product_categorisation,classification
+product_category_assignment,product_category_id,uuid,True,V61__product_categorisation,classification
+product_category_assignment,confidence,"numeric(6,4)",True,V61__product_categorisation,classification
+product_category_assignment,source,varchar(16),True,V61__product_categorisation,classification
+product_category_assignment,status,varchar(16),True,V61__product_categorisation,classification
+product_category_assignment,assigned_at,timestamp(6) with time zone,True,V61__product_categorisation,classification
+product_category_assignment,updated_at,timestamp(6) with time zone,True,V61__product_categorisation,classification
+classification_run,id,uuid,True,V61__product_categorisation,classification
+classification_run,kind,varchar(16),True,V61__product_categorisation,classification
+classification_run,status,varchar(16),True,V61__product_categorisation,classification
+classification_run,product_count,int,True,V61__product_categorisation,classification
+classification_run,started_at,timestamp(6) with time zone,True,V61__product_categorisation,classification
+classification_run,finished_at,timestamp(6) with time zone,True,V61__product_categorisation,classification
+classification_run,error_message,text,True,V61__product_categorisation,classification
+classification_cluster,id,uuid,True,V61__product_categorisation,classification
+classification_cluster,run_id,uuid,True,V61__product_categorisation,classification
+classification_cluster,parent_id,uuid,True,V61__product_categorisation,classification
+classification_cluster,is_leaf,boolean,True,V61__product_categorisation,classification
+classification_cluster,product_name_key,varchar(512),True,V61__product_categorisation,classification
+classification_cluster,merge_height,double precision,True,V61__product_categorisation,classification
+classification_cluster,size,int,True,V61__product_categorisation,classification
+classification_projection,run_id,uuid,True,V61__product_categorisation,classification
+classification_projection,product_name_key,varchar(512),True,V61__product_categorisation,classification
+classification_projection,x,double precision,True,V61__product_categorisation,classification
+classification_projection,y,double precision,True,V61__product_categorisation,classification
+classification_cluster,node_order,int,True,V64__classification_cluster_node_order,classification
+invoice_note,invoice_number,varchar(255),True,V65__invoice_note,evidence
+invoice_note,note,text,True,V65__invoice_note,evidence
+invoice_note,recorded_at,timestamp(6) with time zone,True,V65__invoice_note,evidence
+canonical_invoice_line,line_total_inc_tax,"numeric(14,4)",True,V66__invoice_line_tax_fields,canonical
+canonical_invoice_line,line_gst_amount,"numeric(14,4)",True,V66__invoice_line_tax_fields,canonical
+canonical_invoice_line,line_tax_rate,"numeric(14,4)",True,V66__invoice_line_tax_fields,canonical
+canonical_invoice_line,inc_gst,boolean,True,V66__invoice_line_tax_fields,canonical
+category_suggestion,id,uuid,True,V67__category_suggestion,classification
+category_suggestion,run_id,uuid,True,V67__category_suggestion,classification
+category_suggestion,name,varchar(128),True,V67__category_suggestion,classification
+category_suggestion,group_name,varchar(128),True,V67__category_suggestion,classification
+category_suggestion,display_order,int,True,V67__category_suggestion,classification
+category_suggestion,hint,varchar(512),True,V67__category_suggestion,classification
+category_suggestion,created_at,timestamp(6) with time zone,True,V67__category_suggestion,classification
+canonical_stocktake,id,uuid,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,logical_entity_id,uuid,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,source_system,varchar(255),True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,source_record_ref,varchar(512),True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,raw_record_id,uuid,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,stocktake_id,integer,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,stocktake_date,date,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,description,varchar(512),True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,outlet_name,varchar(255),True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,total_stock_value,"numeric(14,4)",True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,is_partial,boolean,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,is_locked,boolean,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,valid_from,timestamp(6) with time zone,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,valid_to,timestamp(6) with time zone,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,recorded_at,timestamp(6) with time zone,True,V68__stock_wastage_canonical,canonical
+canonical_stocktake,superseded_at,timestamp(6) with time zone,True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,stocktake_id,integer,True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,line_id,integer,True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,stock_id,integer,True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,stock_code,varchar(255),True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,unit_of_measurement_name,varchar(64),True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,unit_cost,"numeric(14,4)",True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,line_value,"numeric(14,4)",True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,supplier_name,varchar(512),True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,area_name,varchar(255),True,V68__stock_wastage_canonical,canonical
+canonical_stock_count,recipe_id,integer,True,V68__stock_wastage_canonical,canonical
+canonical_wastage,wastage_record_id,integer,True,V68__stock_wastage_canonical,canonical
+canonical_wastage,line_id,integer,True,V68__stock_wastage_canonical,canonical
+canonical_wastage,cost,"numeric(14,4)",True,V68__stock_wastage_canonical,canonical
+canonical_wastage,supplier_name,varchar(512),True,V68__stock_wastage_canonical,canonical
+canonical_wastage,unit_of_measurement_name,varchar(64),True,V68__stock_wastage_canonical,canonical
+canonical_wastage,unit_size,varchar(64),True,V68__stock_wastage_canonical,canonical
+canonical_wastage,recipe_id,integer,True,V68__stock_wastage_canonical,canonical
+canonical_review,id,uuid,True,V69__canonical_review,canonical
+canonical_review,logical_entity_id,uuid,True,V69__canonical_review,canonical
+canonical_review,source_system,varchar(255),True,V69__canonical_review,canonical
+canonical_review,source_record_ref,varchar(512),True,V69__canonical_review,canonical
+canonical_review,raw_record_id,uuid,True,V69__canonical_review,canonical
+canonical_review,valid_from,timestamp(6) with time zone,True,V69__canonical_review,canonical
+canonical_review,valid_to,timestamp(6) with time zone,True,V69__canonical_review,canonical
+canonical_review,recorded_at,timestamp(6) with time zone,True,V69__canonical_review,canonical
+canonical_review,superseded_at,timestamp(6) with time zone,True,V69__canonical_review,canonical
+canonical_review,source,varchar(16),True,V69__canonical_review,canonical
+canonical_review,guest_id,uuid,True,V69__canonical_review,canonical
+canonical_review,guest_name,varchar(1024),True,V69__canonical_review,canonical
+canonical_review,reviewed_at,timestamp(6) with time zone,True,V69__canonical_review,canonical
+canonical_review,visited_at,timestamp(6) with time zone,True,V69__canonical_review,canonical
+canonical_review,overall_rating,int,True,V69__canonical_review,canonical
+canonical_review,food_rating,int,True,V69__canonical_review,canonical
+canonical_review,service_rating,int,True,V69__canonical_review,canonical
+canonical_review,ambience_rating,int,True,V69__canonical_review,canonical
+canonical_review,value_rating,int,True,V69__canonical_review,canonical
+canonical_review,noise_label,varchar(1024),True,V69__canonical_review,canonical
+canonical_review,would_recommend,boolean,True,V69__canonical_review,canonical
+canonical_review,comment,text,True,V69__canonical_review,canonical
+canonical_review,private_note,text,True,V69__canonical_review,canonical
+canonical_review,tags,text[],True,V69__canonical_review,canonical
+canonical_review,keywords,text[],True,V69__canonical_review,canonical
+review_classification,review_id,varchar(512),True,V70__review_classification,classification
+review_classification,sentiment,varchar(16),True,V70__review_classification,classification
+review_classification,sentiment_confidence,"numeric(6,4)",True,V70__review_classification,classification
+review_classification,predicted_rating,"numeric(3,2)",True,V70__review_classification,classification
+review_classification,aspects,jsonb,True,V70__review_classification,classification
+review_classification,classified_at,timestamp(6) with time zone,True,V70__review_classification,classification
+review_classification_run,id,uuid,True,V70__review_classification,classification
+review_classification_run,kind,varchar(16),True,V70__review_classification,classification
+review_classification_run,status,varchar(16),True,V70__review_classification,classification
+review_classification_run,review_count,int,True,V70__review_classification,classification
+review_classification_run,started_at,timestamp(6) with time zone,True,V70__review_classification,classification
+review_classification_run,finished_at,timestamp(6) with time zone,True,V70__review_classification,classification
+review_classification_run,error_message,text,True,V70__review_classification,classification
+resolved_reservation_day,booked_covers,BIGINT,True,V81__reservation_booked_covers,resolved
+forecast_run,diagnostics,jsonb,True,V82__forecast_run_diagnostics,application
+forecast_run,input_snapshot,jsonb,True,V85__forecast_input_snapshot,application
+canonical_supplier,id,uuid,True,V86__supplier_invoice_identity,canonical
+canonical_supplier,logical_entity_id,uuid,True,V86__supplier_invoice_identity,canonical
+canonical_supplier,source_system,varchar(255),True,V86__supplier_invoice_identity,canonical
+canonical_supplier,source_record_ref,varchar(512),True,V86__supplier_invoice_identity,canonical
+canonical_supplier,supplier_code,varchar(255),True,V86__supplier_invoice_identity,canonical
+canonical_supplier,name,varchar(512),True,V86__supplier_invoice_identity,canonical
+canonical_supplier,valid_from,timestamp(6) with time zone,True,V86__supplier_invoice_identity,canonical
+canonical_supplier,valid_to,timestamp(6) with time zone,True,V86__supplier_invoice_identity,canonical
+canonical_supplier,recorded_at,timestamp(6) with time zone,True,V86__supplier_invoice_identity,canonical
+canonical_supplier,superseded_at,timestamp(6) with time zone,True,V86__supplier_invoice_identity,canonical
+canonical_supplier,raw_record_id,uuid,True,V86__supplier_invoice_identity,canonical
+canonical_invoice,supplier_logical_id,uuid,True,V86__supplier_invoice_identity,canonical
+canonical_invoice,supplier_source_ref,varchar(512),True,V86__supplier_invoice_identity,canonical
+canonical_invoice_line,invoice_logical_id,uuid,True,V86__supplier_invoice_identity,canonical
+source_product,id,uuid,True,V87__product_identity,other
+source_product,logical_entity_id,uuid,True,V87__product_identity,other
+source_product,source_system,varchar(255),True,V87__product_identity,other
+source_product,source_record_ref,varchar(512),True,V87__product_identity,other
+source_product,source_product_id,integer,True,V87__product_identity,other
+source_product,name,varchar(512),True,V87__product_identity,other
+source_product,sku,varchar(255),True,V87__product_identity,other
+source_product,category,varchar(255),True,V87__product_identity,other
+source_product,valid_from,timestamp(6) with time zone,True,V87__product_identity,other
+source_product,valid_to,timestamp(6) with time zone,True,V87__product_identity,other
+source_product,recorded_at,timestamp(6) with time zone,True,V87__product_identity,other
+source_product,superseded_at,timestamp(6) with time zone,True,V87__product_identity,other
+source_product,raw_record_id,uuid,True,V87__product_identity,other
+product,id,uuid,True,V87__product_identity,other
+product,name,varchar(512),True,V87__product_identity,other
+product,created_at,timestamp(6) with time zone,True,V87__product_identity,other
+product_mapping,id,uuid,True,V87__product_identity,other
+product_mapping,logical_entity_id,uuid,True,V87__product_identity,other
+product_mapping,source_system,varchar(255),True,V87__product_identity,other
+product_mapping,source_record_ref,varchar(512),True,V87__product_identity,other
+product_mapping,product_id,uuid,True,V87__product_identity,other
+product_mapping,confidence,varchar(16),True,V87__product_identity,other
+product_mapping,review_status,varchar(16),True,V87__product_identity,other
+product_mapping,valid_from,timestamp(6) with time zone,True,V87__product_identity,other
+product_mapping,valid_to,timestamp(6) with time zone,True,V87__product_identity,other
+product_mapping,recorded_at,timestamp(6) with time zone,True,V87__product_identity,other
+product_mapping,superseded_at,timestamp(6) with time zone,True,V87__product_identity,other
+product_mapping,raw_record_id,uuid,True,V87__product_identity,other
+stock_item,id,uuid,True,V87__product_identity,other
+stock_item,logical_entity_id,uuid,True,V87__product_identity,other
+stock_item,source_system,varchar(255),True,V87__product_identity,other
+stock_item,source_record_ref,varchar(512),True,V87__product_identity,other
+stock_item,supplier_logical_id,uuid,True,V87__product_identity,other
+stock_item,stock_code,varchar(255),True,V87__product_identity,other
+stock_item,name,varchar(512),True,V87__product_identity,other
+stock_item,source_product_id,uuid,True,V87__product_identity,other
+stock_item,valid_from,timestamp(6) with time zone,True,V87__product_identity,other
+stock_item,valid_to,timestamp(6) with time zone,True,V87__product_identity,other
+stock_item,recorded_at,timestamp(6) with time zone,True,V87__product_identity,other
+stock_item,superseded_at,timestamp(6) with time zone,True,V87__product_identity,other
+stock_item,raw_record_id,uuid,True,V87__product_identity,other
+source_product_sale_fact,id,uuid,True,V87__product_identity,other
+source_product_sale_fact,logical_entity_id,uuid,True,V87__product_identity,other
+source_product_sale_fact,source_system,varchar(255),True,V87__product_identity,other
+source_product_sale_fact,source_record_ref,varchar(512),True,V87__product_identity,other
+source_product_sale_fact,trading_date,date,True,V87__product_identity,other
+source_product_sale_fact,stock_code,varchar(255),True,V87__product_identity,other
+source_product_sale_fact,cost_per_unit,"numeric(14,4)",True,V87__product_identity,other
+source_product_sale_fact,total_food_cost,"numeric(14,4)",True,V87__product_identity,other
+source_product_sale_fact,discounted_amount,"numeric(14,4)",True,V87__product_identity,other
+source_product_sale_fact,tax_amount,"numeric(14,4)",True,V87__product_identity,other
+source_product_sale_fact,unit_price,"numeric(14,4)",True,V87__product_identity,other
+source_product_sale_fact,valid_from,timestamp(6) with time zone,True,V87__product_identity,other
+source_product_sale_fact,valid_to,timestamp(6) with time zone,True,V87__product_identity,other
+source_product_sale_fact,recorded_at,timestamp(6) with time zone,True,V87__product_identity,other
+source_product_sale_fact,superseded_at,timestamp(6) with time zone,True,V87__product_identity,other
+source_product_sale_fact,raw_record_id,uuid,True,V87__product_identity,other
+canonical_product_sales,stock_code,varchar(255),True,V87__product_identity,canonical
+saved_query,id,uuid,True,V89__saved_queries,other
+saved_query,created_by,varchar(255),True,V89__saved_queries,other
+saved_query,title,varchar(255),True,V89__saved_queries,other
+saved_query,plan_json,text,True,V89__saved_queries,other
+saved_query,current_revision,integer,True,V89__saved_queries,other
+saved_query,created_at,timestamp(6) with time zone,True,V89__saved_queries,other
+saved_query,updated_at,timestamp(6) with time zone,True,V89__saved_queries,other
+saved_query_revision,id,uuid,True,V89__saved_queries,other
+saved_query_revision,query_id,uuid,True,V89__saved_queries,other
+saved_query_revision,revision,integer,True,V89__saved_queries,other
+saved_query_revision,plan_json,text,True,V89__saved_queries,other
+saved_query_revision,created_by,varchar(255),True,V89__saved_queries,other
+saved_query_revision,created_at,timestamp(6) with time zone,True,V89__saved_queries,other
+source_product_sale_fact,food_cost,"numeric(14,4)",True,V92__source_product_sale_fact_measures,other
+source_product_sale_fact,profit,"numeric(14,4)",True,V92__source_product_sale_fact_measures,other
+source_product_sale_fact,unique_group_id,varchar(255),True,V92__source_product_sale_fact_measures,other
+source_product_sale_observation,source_system,varchar(255),True,V93__source_product_sale_observations,other
+source_product_sale_observation,source_record_ref,varchar(512),True,V93__source_product_sale_observations,other
+source_product_sale_observation,raw_record_id,uuid,True,V93__source_product_sale_observations,other
+invoice_pdf_link,invoice_logical_id,uuid,True,V95__qualified_invoice_pdf_links,evidence
+product_sales_contributor,canonical_version_id,uuid,True,V96__qualified_product_sales,other
+product_sales_contributor,raw_record_id,uuid,True,V96__qualified_product_sales,other
+canonical_product_sales,source_product_ref,varchar(512),True,V96__qualified_product_sales,canonical
+source_product_sale_fact,quantity_sold,"numeric(14,4)",True,V96__qualified_product_sales,other
+source_product_sale_fact,amount,"numeric(14,4)",True,V96__qualified_product_sales,other
+source_product_sale_fact,product_name,varchar(512),True,V96__qualified_product_sales,other
+source_product_sale_fact,site_number,integer,True,V96__qualified_product_sales,other
+inventory_observation_receipt,observation_kind,varchar(16),True,V98__inventory_observation_receipts,other
+inventory_observation_receipt,source_system,varchar(255),True,V98__inventory_observation_receipts,other
+inventory_observation_receipt,source_record_ref,varchar(512),True,V98__inventory_observation_receipts,other
+inventory_observation_receipt,raw_record_id,uuid,True,V98__inventory_observation_receipts,other
+inventory_observation_receipt,header_version_id,uuid,True,V98__inventory_observation_receipts,other
+inventory_observation_receipt,recorded_at,timestamp(6) with time zone,True,V98__inventory_observation_receipts,other
+canonical_stock_count,header_version_id,uuid,True,V98__inventory_observation_receipts,canonical

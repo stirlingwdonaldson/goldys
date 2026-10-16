@@ -2,6 +2,8 @@ package com.goldys.platform.connectors.lightspeed;
 
 import com.goldys.platform.canonical.ProductIngest;
 import com.goldys.platform.canonical.ProductInput;
+import com.goldys.platform.canonical.ProductMappingIngest;
+import com.goldys.platform.canonical.SourceProductInput;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import java.nio.charset.StandardCharsets;
@@ -21,16 +23,19 @@ public class LightspeedProductCatalogIngestService {
   private final IngestionService ingestion;
   private final LightspeedProductCatalogParser parser;
   private final ProductIngest productIngest;
+  private final ProductMappingIngest productMapping;
   private final RecipeProductMatcher matcher;
 
   public LightspeedProductCatalogIngestService(
       IngestionService ingestion,
       LightspeedProductCatalogParser parser,
       ProductIngest productIngest,
+      ProductMappingIngest productMapping,
       RecipeProductMatcher matcher) {
     this.ingestion = ingestion;
     this.parser = parser;
     this.productIngest = productIngest;
+    this.productMapping = productMapping;
     this.matcher = matcher;
   }
 
@@ -62,6 +67,18 @@ public class LightspeedProductCatalogIngestService {
                         rawId))
             .toList();
     productIngest.recordAll(inputs);
+
+    for (LightspeedProduct p : rows) {
+      productMapping.mapSourceProduct(
+          new SourceProductInput(
+              "LIGHTSPEED",
+              "product:" + p.productId(),
+              p.productId(),
+              p.productName(),
+              null,
+              p.category(),
+              rawId));
+    }
 
     Set<Integer> parsedProductIds =
         rows.stream().map(LightspeedProduct::productId).collect(Collectors.toSet());

@@ -59,6 +59,7 @@ public class ResolutionStateServiceImpl implements ResolutionStateQuery {
                           r.resolvedAt()))
               .toList();
       case RESERVATIONS_BOOKINGS,
+          RESERVATIONS_EXPECTED_BOOKINGS,
           RESERVATIONS_ATTENDED,
           RESERVATIONS_COVERS,
           RESERVATIONS_BOOKED_COVERS,

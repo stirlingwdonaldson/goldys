@@ -47,6 +47,12 @@ public class MetricQueryServiceImpl implements MetricQueryService {
     MetricResult result = executor.evaluate(query);
     MetricProvenance enriched =
         result.provenance().withTrust(trustQuery.trustFor(query.metric(), query.range()));
-    return result.withProvenance(enriched);
+    MetricResult enrichedResult = result.withProvenance(enriched);
+    if (enrichedResult instanceof TimeSeriesResult series && !definition.notes().isEmpty()) {
+      List<String> notices = new java.util.ArrayList<>(series.notices());
+      notices.addAll(definition.notes());
+      return new TimeSeriesResult(series.metric(), series.series(), List.copyOf(notices), enriched);
+    }
+    return enrichedResult;
   }
 }

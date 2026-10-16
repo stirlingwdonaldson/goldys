@@ -1,4 +1,5 @@
 "use client";
+import { invoiceReference, selectedInvoice, withSelectedInvoice } from "@/lib/invoice-reference";
 
 import { Suspense, useCallback, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -93,15 +94,13 @@ function InvoicesContent() {
   const [order, setOrder] = useState<string[]>([]);
 
   // The open invoice lives in the URL (?invoice=…) so Back closes it and the link is shareable.
-  const selected = params.get("invoice");
+  const selected = selectedInvoice(params);
   // Whether *we* pushed the open-invoice history entry; if so, closing pops it so Back stays meaningful.
   const pushedInvoice = useRef(false);
 
   const setSelected = useCallback(
     (invoiceNumber: string | null, mode: "push" | "replace") => {
-      const next = new URLSearchParams(params.toString());
-      if (invoiceNumber) next.set("invoice", invoiceNumber);
-      else next.delete("invoice");
+      const next = withSelectedInvoice(new URLSearchParams(params.toString()), invoiceNumber);
       const qs = next.toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
       if (mode === "push") router.push(url, { scroll: false });
@@ -206,10 +205,10 @@ function InvoicesContent() {
             data={items}
             pageSize={false}
             initialSorting={[{ id: "invoiceDate", desc: true }]}
-            getRowId={(r) => r.invoiceNumber}
-            onRowClick={(r) => openInvoice(r.invoiceNumber)}
-            isRowSelected={(r) => r.invoiceNumber === selected}
-            onRowOrderChange={(rows) => setOrder(rows.map((r) => r.invoiceNumber))}
+            getRowId={(r) => r.invoiceId ?? r.invoiceNumber}
+            onRowClick={(r) => openInvoice(invoiceReference(r))}
+            isRowSelected={(r) => (invoiceReference(r)) === selected}
+            onRowOrderChange={(rows) => setOrder(rows.map((r) => invoiceReference(r)))}
             emptyMessage="No invoices match."
           />
         )}

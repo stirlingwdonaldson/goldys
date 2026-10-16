@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import org.springframework.stereotype.Service;
 
 /**
@@ -54,8 +53,8 @@ public class InvoiceReportingService {
   public DataPage<InvoiceSummary> list(
       UserRole role, String supplier, LocalDate from, LocalDate to, int page, int size) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    Set<String> linked = pdfLinks.linkedInvoiceNumbers();
-    List<InvoiceSummary> summaries =
+
+    List<InvoiceMetadataView> summaries =
         invoices.currentInvoices().stream()
             .filter(i -> supplier == null || supplier.equals(i.supplierName()))
             .filter(i -> inRange(i.invoiceDate(), from, to))
@@ -63,33 +62,42 @@ public class InvoiceReportingService {
                 Comparator.comparing(InvoiceMetadataView::invoiceDate)
                     .reversed()
                     .thenComparing(InvoiceMetadataView::invoiceNumber))
-            .map(i -> toSummary(i, linked))
             .toList();
 
     int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
     int safePage = Math.max(page, 0);
     int fromIndex = safePage * safeSize;
-    List<InvoiceSummary> items =
+    List<InvoiceMetadataView> items =
         fromIndex < 0 || fromIndex >= summaries.size()
             ? List.of()
             : summaries.subList(fromIndex, Math.min(fromIndex + safeSize, summaries.size()));
-    return new DataPage<>(items, summaries.size(), safePage, safeSize);
+    return new DataPage<>(
+        items.stream().map(this::toSummary).toList(), summaries.size(), safePage, safeSize);
   }
 
   /** One invoice's header plus its lines (newest line total first), or {@code NOT_FOUND}. */
   public InvoiceDetail detail(UserRole role, String invoiceNumber) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    InvoiceMetadataView header =
-        invoices.currentInvoices().stream()
-            .filter(i -> invoiceNumber.equals(i.invoiceNumber()))
-            .findFirst()
-            .orElseThrow(() -> new NoSuchElementException("Unknown invoice: " + invoiceNumber));
+    invoices.requireUnambiguousNumber(invoiceNumber);
+    java.util.UUID id =
+        invoices
+            .invoiceLogicalIdForInvoiceNumber(invoiceNumber)
+            .orElseThrow(() -> new NoSuchElementException("Unknown invoice"));
+    return detailById(role, id);
+  }
 
-    Set<String> linked = pdfLinks.linkedInvoiceNumbers();
+  public InvoiceDetail detailById(UserRole role, java.util.UUID id) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    InvoiceMetadataView header =
+        invoices
+            .currentInvoice(id)
+            .orElseThrow(() -> new NoSuchElementException("Unknown invoice"));
     List<LineGraphNode> lines =
-        inventory.currentEnrichedLines().stream()
-            .filter(l -> invoiceNumber.equals(l.invoiceNumber()))
-            .sorted(Comparator.comparing(EnrichedInvoiceLine::lineTotal).reversed())
+        inventory.enrichedLinesForInvoice(id).stream()
+            .sorted(
+                Comparator.comparing(
+                    EnrichedInvoiceLine::lineTotal,
+                    Comparator.nullsLast(Comparator.reverseOrder())))
             .map(
                 l ->
                     new LineGraphNode(
@@ -104,7 +112,32 @@ public class InvoiceReportingService {
                         l.lineTaxRate(),
                         l.incGst()))
             .toList();
-
+    String status = pdfLinks.status(id);
+    BigDecimal lineSubtotal =
+        lines.stream()
+            .map(LineGraphNode::lineTotal)
+            .filter(java.util.Objects::nonNull)
+            .reduce(BigDecimal::add)
+            .orElse(null);
+    BigDecimal difference =
+        header.amountExTax() == null || lineSubtotal == null
+            ? null
+            : header.amountExTax().subtract(lineSubtotal);
+    List<String> notices = new java.util.ArrayList<>();
+    notices.add(
+        "Incomplete: known ex-tax invoice-line subtotal; export completeness is unverified");
+    if (lines.isEmpty())
+      notices.add("No attributed line detail; header amount is separate source evidence");
+    if (difference != null && difference.abs().compareTo(new BigDecimal("0.02")) > 0)
+      notices.add("Unreconciled: known lines differ from the source ex-tax header amount");
+    boolean ambiguous = invoices.hasAmbiguousInvoiceNumber(header.invoiceNumber());
+    if (ambiguous)
+      notices.add("Number-only ingestion flags are unscoped because this invoice number is shared");
+    if (!"AVAILABLE".equals(status))
+      notices.add(
+          "PDF relationship "
+              + status.toLowerCase(java.util.Locale.ROOT)
+              + "; this does not establish that no source document exists");
     return new InvoiceDetail(
         header.supplierName(),
         header.invoiceNumber(),
@@ -112,14 +145,23 @@ public class InvoiceReportingService {
         header.dueDate(),
         header.totalAmount(),
         header.purchaseNumber(),
-        linked.contains(invoiceNumber),
+        "AVAILABLE".equals(status),
         header.amountExTax(),
         header.gstAmount(),
         header.freightAmount(),
-        lines);
+        lines,
+        id,
+        header.supplierId(),
+        status,
+        permissions.isAllowed(role, new ResourceKey("connectors"), PermissionAction.READ),
+        ambiguous,
+        lineSubtotal,
+        difference,
+        List.copyOf(notices));
   }
 
-  private static InvoiceSummary toSummary(InvoiceMetadataView i, Set<String> linked) {
+  private InvoiceSummary toSummary(InvoiceMetadataView i) {
+    String status = pdfLinks.status(i.invoiceId());
     return new InvoiceSummary(
         i.supplierName(),
         i.invoiceNumber(),
@@ -127,7 +169,10 @@ public class InvoiceReportingService {
         i.dueDate(),
         i.totalAmount(),
         i.purchaseNumber(),
-        linked.contains(i.invoiceNumber()));
+        "AVAILABLE".equals(status),
+        i.invoiceId(),
+        i.supplierId(),
+        status);
   }
 
   private static boolean inRange(LocalDate date, LocalDate from, LocalDate to) {
@@ -144,7 +189,10 @@ public class InvoiceReportingService {
       LocalDate dueDate,
       BigDecimal totalAmount,
       String purchaseNumber,
-      boolean hasPdf) {}
+      boolean hasPdf,
+      java.util.UUID invoiceId,
+      java.util.UUID supplierId,
+      String pdfStatus) {}
 
   /** One current invoice header plus its line graph nodes, for the detail endpoint. */
   public record InvoiceDetail(
@@ -158,5 +206,13 @@ public class InvoiceReportingService {
       BigDecimal amountExTax,
       BigDecimal gstAmount,
       BigDecimal freightAmount,
-      List<LineGraphNode> lines) {}
+      List<LineGraphNode> lines,
+      java.util.UUID invoiceId,
+      java.util.UUID supplierId,
+      String pdfStatus,
+      boolean canReadDocuments,
+      boolean numberAmbiguous,
+      BigDecimal lineSubtotal,
+      BigDecimal headerDifference,
+      List<String> notices) {}
 }

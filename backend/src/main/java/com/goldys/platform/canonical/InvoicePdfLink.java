@@ -25,6 +25,9 @@ class InvoicePdfLink {
   @Column(name = "pdf_raw_record_id")
   private UUID pdfRawRecordId;
 
+  @Column(name = "invoice_logical_id")
+  private UUID invoiceLogicalId;
+
   @Column(name = "invoice_number", nullable = false)
   private String invoiceNumber;
 
@@ -60,6 +63,22 @@ class InvoicePdfLink {
       InvoicePdfLinkSource linkSource,
       Instant linkedAt) {
     return new InvoicePdfLink(pdfRawRecordId, invoiceNumber, pdfFilename, linkSource, linkedAt);
+  }
+
+  static InvoicePdfLink scoped(
+      UUID invoiceId,
+      UUID rawId,
+      String number,
+      String filename,
+      InvoicePdfLinkSource source,
+      Instant at) {
+    InvoicePdfLink link = create(rawId, number, filename, source, at);
+    link.invoiceLogicalId = Objects.requireNonNull(invoiceId);
+    return link;
+  }
+
+  UUID invoiceLogicalId() {
+    return invoiceLogicalId;
   }
 
   UUID pdfRawRecordId() {

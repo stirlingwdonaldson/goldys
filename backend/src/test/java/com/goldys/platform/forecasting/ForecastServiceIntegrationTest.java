@@ -98,7 +98,7 @@ class ForecastServiceIntegrationTest {
                 null,
                 List.of()));
 
-    ForecastRun run = service.submit("sales.gross", List.of(), SEP_01, 7, "owner@example.com");
+    ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, "owner@example.com");
 
     ForecastRun reloaded = repository.findById(run.id()).orElseThrow();
     assertThat(reloaded.status()).isEqualTo(ForecastRunStatus.SUCCEEDED);

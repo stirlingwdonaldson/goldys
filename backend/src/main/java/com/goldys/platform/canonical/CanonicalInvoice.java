@@ -11,11 +11,24 @@ import java.util.UUID;
 
 /**
  * One version of a supplier-invoice metadata fact. Fact fields are immutable; a correction closes
- * this row and inserts a successor sharing the same logical identity (the invoice number).
+ * this row and inserts a successor sharing the same logical identity.
+ *
+ * <p>The identity is supplier-scoped: {@code sourceRecordRef} is {@code
+ * "<supplierSourceRef>::<invoiceNumber>"} and {@code logicalEntityId} derives from it, so two
+ * suppliers that issue the same invoice number are distinct invoices. {@code supplierLogicalId} is
+ * the stable supplier identity (the supplier's own {@code logicalEntityId}); {@code supplierName}
+ * and {@code supplierSourceRef} are denormalized snapshots kept for compatibility with existing
+ * queries.
  */
 @Entity
 @Table(name = "canonical_invoice")
 class CanonicalInvoice extends BitemporalEntity {
+  @Column(name = "supplier_logical_id", updatable = false)
+  private UUID supplierLogicalId;
+
+  @Column(name = "supplier_source_ref", updatable = false)
+  private String supplierSourceRef;
+
   @Column(name = "supplier_name", updatable = false)
   private String supplierName;
 
@@ -64,6 +77,8 @@ class CanonicalInvoice extends BitemporalEntity {
       UUID rawRecordId,
       Instant validFrom,
       Instant recordedAt,
+      UUID supplierLogicalId,
+      String supplierSourceRef,
       String supplierName,
       String invoiceNumber,
       LocalDate invoiceDate,
@@ -78,6 +93,8 @@ class CanonicalInvoice extends BitemporalEntity {
       BigDecimal freightAmount,
       BigDecimal freightGstAmount) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
+    this.supplierLogicalId = supplierLogicalId;
+    this.supplierSourceRef = supplierSourceRef;
     this.supplierName = supplierName;
     this.invoiceNumber = invoiceNumber;
     this.invoiceDate = invoiceDate;
@@ -100,6 +117,8 @@ class CanonicalInvoice extends BitemporalEntity {
       UUID rawRecordId,
       Instant validFrom,
       Instant recordedAt,
+      UUID supplierLogicalId,
+      String supplierSourceRef,
       String supplierName,
       String invoiceNumber,
       LocalDate invoiceDate,
@@ -120,6 +139,8 @@ class CanonicalInvoice extends BitemporalEntity {
         rawRecordId,
         validFrom,
         recordedAt,
+        supplierLogicalId,
+        supplierSourceRef,
         supplierName,
         invoiceNumber,
         invoiceDate,
@@ -156,6 +177,14 @@ class CanonicalInvoice extends BitemporalEntity {
       return a == b;
     }
     return a.compareTo(b) == 0;
+  }
+
+  UUID supplierLogicalId() {
+    return supplierLogicalId;
+  }
+
+  String supplierSourceRef() {
+    return supplierSourceRef;
   }
 
   String supplierName() {

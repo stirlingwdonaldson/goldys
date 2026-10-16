@@ -40,6 +40,15 @@ public class DashboardWidgetValidator {
    * dimensions, throwing {@link IllegalArgumentException} on the first violation.
    */
   public void validate(SavedWidget widget) {
+    if (widget.savedQueryId() != null) {
+      if (!"query".equals(widget.renderType())) {
+        throw new IllegalArgumentException("A saved-query widget must render as 'query'.");
+      }
+      if (!widget.queries().isEmpty()) {
+        throw new IllegalArgumentException("A saved-query widget carries no metric queries.");
+      }
+      return;
+    }
     if (widget.renderType() == null || !RENDER_TYPES.contains(widget.renderType())) {
       throw new IllegalArgumentException("Unsupported render type: " + widget.renderType());
     }

@@ -119,4 +119,23 @@ class CanonicalDailySalesIntegrationTest {
   private static BigDecimal bd(String s) {
     return new BigDecimal(s);
   }
+
+  @Test
+  void incompleteTaxKeepsInclusiveSalesKnownAndRetryIdempotent() {
+    var input =
+        new DailySalesInput(
+            "LIGHTSPEED",
+            LocalDate.of(2026, 9, 20),
+            bd("110"),
+            null,
+            null,
+            rawRecord("LIGHTSPEED"));
+    CanonicalDailySales first = service.record(input);
+    CanonicalDailySales retry = service.record(input);
+    assertThat(retry.id()).isEqualTo(first.id());
+    var current = repository.findCurrentByDate(input.tradingDate()).getFirst();
+    assertThat(current.totalSales()).isEqualByComparingTo("110");
+    assertThat(current.gstTotal()).isNull();
+    assertThat(current.netTotal()).isNull();
+  }
 }

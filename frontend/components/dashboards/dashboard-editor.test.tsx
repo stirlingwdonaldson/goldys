@@ -89,6 +89,7 @@ function editorApi(overrides: Partial<Api> = {}): Api {
       { revision: 1, createdBy: "You", createdAt: "2026-10-05T00:00:00Z" },
     ],
     restoreDashboardRevision: async () => document(),
+    listSavedQueries: async () => [],
     ...overrides,
   } as Api;
 }

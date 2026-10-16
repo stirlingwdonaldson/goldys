@@ -58,6 +58,7 @@ public class ForecastService {
   private final TimesFmProperties properties;
   private final Clock clock;
 
+  /** The venue-zone clock is supplied by configuration; forecasting stays a leaf. */
   @Autowired
   public ForecastService(
       ForecastRunRepository runs,
@@ -65,19 +66,8 @@ public class ForecastService {
       MetricCatalog catalog,
       ForecastModelClient client,
       @Qualifier("applicationTaskExecutor") TaskExecutor executor,
-      TimesFmProperties properties) {
-    this(runs, queries, catalog, client, executor, properties, Clock.systemUTC());
-  }
-
-  /** Test-friendly constructor: an explicit executor and clock, no qualifier. */
-  ForecastService(
-      ForecastRunRepository runs,
-      MetricQueryService queries,
-      MetricCatalog catalog,
-      ForecastModelClient client,
-      TaskExecutor executor,
       TimesFmProperties properties,
-      Clock clock) {
+      @Qualifier("venueCalendarClock") Clock clock) {
     this.runs = runs;
     this.queries = queries;
     this.catalog = catalog;
@@ -110,14 +100,19 @@ public class ForecastService {
       throw new IllegalArgumentException("horizon must be between 1 and 90 days");
     }
     MetricId target = requireForecastable(targetMetric);
+    if (covariateMetrics == null || !covariateMetrics.isEmpty()) {
+      throw new IllegalArgumentException(
+          "The net-revenue model uses fixed supporting inputs; custom covariates are not supported");
+    }
     LocalDate historyTo = LocalDate.now(clock);
     if (historyFrom.isAfter(historyTo)) {
       throw new IllegalArgumentException(
           "historyFrom must not be after historyTo (" + historyTo + ")");
     }
     TimeRange range = new TimeRange(historyFrom, historyTo, Calendar.CALENDAR);
+    ForecastInputSnapshot snapshot = captureInput(target, range, horizonDays);
     long resolvedPoints =
-        series(target, range).points().stream().filter(p -> p.value() != null).count();
+        snapshot.request().net().stream().filter(java.util.Objects::nonNull).count();
     if (resolvedPoints < MIN_HISTORY_POINTS) {
       throw new IllegalArgumentException(
           "insufficient history for "
@@ -137,6 +132,7 @@ public class ForecastService {
             horizonDays,
             email,
             clock.instant());
+    run.captureInput(snapshot);
     runs.save(run);
     UUID runId = run.id();
     executor.execute(() -> execute(runId));
@@ -153,25 +149,12 @@ public class ForecastService {
 
     long startNanos = System.nanoTime();
     try {
-      MetricId target = MetricId.fromValue(run.targetMetric());
-      LocalDate historyTo = run.historyTo();
-      LocalDate axisTo = historyTo.plusDays(run.horizonDays());
-      // History-only for the revenue series (future food/bev/net are unknown); the future book for
-      // the reservations series — the whole point of the feature is that future bookings are known.
-      TimeRange historyRange = new TimeRange(run.historyFrom(), historyTo, Calendar.CALENDAR);
-      TimeRange futureRange = new TimeRange(run.historyFrom(), axisTo, Calendar.CALENDAR);
-
-      List<MetricPoint> net = series(target, historyRange).points();
-      List<MetricPoint> food = series(MetricId.SALES_FOOD, historyRange).points();
-      List<MetricPoint> bev = series(MetricId.SALES_BEV, historyRange).points();
-      List<MetricPoint> bookedCovers =
-          series(MetricId.RESERVATIONS_BOOKED_COVERS, futureRange).points();
-      List<MetricPoint> bookings = series(MetricId.RESERVATIONS_BOOKINGS, futureRange).points();
-
-      List<LocalDate> axis = ForecastSeriesAssembler.axis(run.historyFrom(), axisTo);
-      ForecastModelRequest request =
-          ForecastSeriesAssembler.request(
-              axis, net, bookedCovers, bookings, food, bev, run.horizonDays(), QUANTILES);
+      if (run.inputSnapshot() == null) {
+        run.markFailed("Original input snapshot unavailable; create a new forecast");
+        runs.save(run);
+        return;
+      }
+      ForecastModelRequest request = run.inputSnapshot().request();
       ForecastModelResponse response = client.forecast(request);
       run.markSucceeded(
           toForecastDays(response), response.diagnostics(), MODEL_VERSION, elapsedMs(startNanos));
@@ -183,19 +166,57 @@ public class ForecastService {
 
   /** Fetches one metric as a single daily series, rejecting ranked-list or multi-series results. */
   MetricSeries series(MetricId id, TimeRange range) {
+    return result(id, range).series().getFirst();
+  }
+
+  private TimeSeriesResult result(MetricId id, TimeRange range) {
     MetricResult result = queries.query(new MetricQuery(id, range, TimeGrain.DAY, Set.of(), null));
-    if (!(result instanceof TimeSeriesResult timeSeries)) {
-      throw new IllegalStateException("metric " + id.value() + " did not return a time series");
-    }
-    if (timeSeries.series().size() != 1) {
+    if (!(result instanceof TimeSeriesResult timeSeries) || timeSeries.series().size() != 1) {
       throw new IllegalStateException(
-          "metric "
-              + id.value()
-              + " returned "
-              + timeSeries.series().size()
-              + " series; expected 1");
+          "metric " + id.value() + " must return exactly one time series");
     }
-    return timeSeries.series().get(0);
+    return timeSeries;
+  }
+
+  private ForecastInputSnapshot captureInput(MetricId target, TimeRange history, int horizon) {
+    Map<String, com.goldys.platform.semantic.catalog.MetricProvenance> provenance =
+        new LinkedHashMap<>();
+    List<String> notices = new ArrayList<>();
+    TimeRange future =
+        new TimeRange(history.from(), history.to().plusDays(horizon), Calendar.CALENDAR);
+    List<MetricPoint> net = captureSeries(target, history, provenance, notices);
+    List<MetricPoint> food = captureSeries(MetricId.SALES_FOOD, history, provenance, notices);
+    List<MetricPoint> bev = captureSeries(MetricId.SALES_BEV, history, provenance, notices);
+    List<MetricPoint> covers =
+        captureSeries(MetricId.RESERVATIONS_BOOKED_COVERS, future, provenance, notices);
+    List<MetricPoint> bookings =
+        captureSeries(MetricId.RESERVATIONS_BOOKINGS, future, provenance, notices);
+    notices.add(
+        "Forecast uses an immutable input snapshot; incomplete inputs remain gaps, not zero");
+    return new ForecastInputSnapshot(
+        ForecastSeriesAssembler.request(
+            ForecastSeriesAssembler.axis(history.from(), future.to()),
+            net,
+            covers,
+            bookings,
+            food,
+            bev,
+            horizon,
+            QUANTILES),
+        provenance,
+        notices,
+        clock.instant());
+  }
+
+  private List<MetricPoint> captureSeries(
+      MetricId id,
+      TimeRange range,
+      Map<String, com.goldys.platform.semantic.catalog.MetricProvenance> provenance,
+      List<String> notices) {
+    TimeSeriesResult result = result(id, range);
+    provenance.put(id.value(), result.provenance());
+    result.notices().forEach(n -> notices.add(id.value() + ": " + n));
+    return result.series().getFirst().points();
   }
 
   /** Flips any run stranded in {@code RUNNING} by a previous shutdown to {@code FAILED}. */
@@ -209,7 +230,7 @@ public class ForecastService {
 
   private MetricId requireForecastable(String metric) {
     MetricId id = MetricId.fromValue(metric); // throws on an unknown id
-    if (id == MetricId.PRODUCT_TOP_SELLERS) {
+    if (!ForecastableMetrics.forecastable(id)) {
       throw new IllegalArgumentException("metric is not forecastable: " + metric);
     }
     // Defence in depth: the catalogue is the source of truth for what a metric is, so a catalogued

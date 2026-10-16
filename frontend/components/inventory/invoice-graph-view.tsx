@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { FlowCanvas } from "@/components/flow/flow-canvas";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,16 +33,12 @@ export function InvoiceGraphView({ from, to, apiOverride }: InvoiceGraphViewProp
     apiOverride,
   );
   const invoices = useApiData(
-    (api) =>
-      focusedSupplier
-        ? api.getInvoiceGraphInvoices(focusedSupplier, from, to)
-        : Promise.resolve(null),
+    (api) => loadSupplierInvoices(api, focusedSupplier, from, to),
     [focusedSupplier, from, to],
     apiOverride,
   );
   const lines = useApiData(
-    (api) =>
-      focusedInvoice ? api.getInvoiceGraphLines(focusedInvoice) : Promise.resolve(null),
+    (api) => loadInvoiceLines(api, focusedInvoice),
     [focusedInvoice],
     apiOverride,
   );
@@ -96,6 +93,8 @@ export function InvoiceGraphView({ from, to, apiOverride }: InvoiceGraphViewProp
           ← Back
         </button>
       ) : null}
+      <DataQualifications notices={[...new Set((suppliers.data ?? []).flatMap(s => s.notices ?? []))]} />
+      {invoices.error || lines.error ? <p role="alert">{invoices.error?.message ?? lines.error?.message}</p> : null}
       <FlowCanvas
         graph={graph}
         onDrill={onDrill}
@@ -104,4 +103,17 @@ export function InvoiceGraphView({ from, to, apiOverride }: InvoiceGraphViewProp
       />
     </div>
   );
+}
+
+
+function loadSupplierInvoices(api: Api, reference: string | null, from: string, to: string) {
+  if (!reference) return Promise.resolve(null);
+  if (reference.startsWith("id:")) return api.getInvoiceGraphInvoicesById(reference.slice(3), from, to);
+  return api.getInvoiceGraphInvoices(reference, from, to);
+}
+
+function loadInvoiceLines(api: Api, reference: string | null) {
+  if (!reference) return Promise.resolve(null);
+  if (reference.startsWith("id:")) return api.getInvoiceGraphLinesById(reference.slice(3));
+  return api.getInvoiceGraphLines(reference);
 }

@@ -21,6 +21,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      - name: Release preflight regression checks
+        run: python3 -m unittest discover -s ops/releases/2026-10-16-data-correctness -p 'test_*.py' -v
+
       - name: Test, format check, and build
         working-directory: backend
         run: ./gradlew test spotlessCheck build

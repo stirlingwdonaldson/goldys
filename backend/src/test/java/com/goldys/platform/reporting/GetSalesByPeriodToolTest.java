@@ -65,6 +65,40 @@ class GetSalesByPeriodToolTest {
   }
 
   @Test
+  void realCalendarCoverageSurvivesToolAndWidgetRendering() {
+    var source = mock(com.goldys.platform.semantic.SalesMetricsQuery.class);
+    LocalDate end = SEP_14.plusDays(1);
+    when(source.dailySales(SEP_13, end))
+        .thenReturn(
+            List.of(
+                new com.goldys.platform.semantic.DailySalesMetric(
+                    SEP_13,
+                    new BigDecimal("100"),
+                    new BigDecimal("100"),
+                    BigDecimal.ZERO,
+                    "single",
+                    false),
+                new com.goldys.platform.semantic.DailySalesMetric(
+                    SEP_14, null, null, null, "conflict", true)));
+    var executor =
+        new com.goldys.platform.semantic.catalog.SalesMetricExecutor(source, new MetricCatalog());
+    MetricQueryService metrics = executor::evaluate;
+    var result =
+        new GetSalesByPeriodTool(metrics, RENDERER)
+            .execute(new GetSalesByPeriodInput(SEP_13, end, MetricId.SALES_NET), OWNER);
+    var widget = (TimeSeriesWidgetSpec) result.widget();
+    assertThat(widget.series().getFirst().points().getFirst().y()).isEqualByComparingTo("100");
+    assertThat(widget.series().getFirst().points().get(1).y()).isNull();
+    assertThat(widget.series().getFirst().points().get(2).y()).isNull();
+    assertThat(result.notices())
+        .anySatisfy(
+            note ->
+                assertThat(note)
+                    .contains("Incomplete subtotal", "1 unresolved", "1 day(s) without"));
+    assertThat(result.provenance().getFirst().coverage().absentDates()).containsExactly(end);
+  }
+
+  @Test
   void treatsMissingDataAsUnresolved() {
     MetricQueryService metrics = mock(MetricQueryService.class);
     when(metrics.query(any()))

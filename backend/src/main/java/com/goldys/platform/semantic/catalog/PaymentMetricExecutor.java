@@ -3,7 +3,6 @@ package com.goldys.platform.semantic.catalog;
 import com.goldys.platform.semantic.PaymentMetricsQuery;
 import com.goldys.platform.semantic.PaymentMix;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,19 +46,20 @@ public class PaymentMetricExecutor implements MetricExecutor {
     MetricDefinition definition = catalog.definition(query.metric());
     MetricProvenance provenance =
         new MetricProvenance(
-            query.metric(),
-            definition.version(),
-            query.range(),
-            query.grain(),
-            definition.sourceDomain(),
-            Instant.EPOCH,
-            bucket.missingDays(),
-            definition.version());
+                query.metric(),
+                definition.version(),
+                query.range(),
+                query.grain(),
+                definition.sourceDomain(),
+                null,
+                bucket.missingDays(),
+                definition.version())
+            .withCoverage(bucket.coverage());
 
     return new TimeSeriesResult(
         query.metric(),
         List.of(new MetricSeries(null, bucket.points())),
-        SalesMetricExecutor.notices(bucket.missingDays()),
+        bucket.coverage().notices(),
         provenance);
   }
 }

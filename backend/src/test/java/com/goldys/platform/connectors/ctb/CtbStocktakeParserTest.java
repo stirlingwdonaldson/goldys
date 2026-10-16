@@ -96,7 +96,7 @@ class CtbStocktakeParserTest {
   }
 
   @Test
-  void nullQtyCountIsZero() {
+  void nullQtyCountRemainsUnknown() {
     String json =
         """
         {"data":[{"id":1,"stockDesc":"Oil"}],"message":{"IsSuccess":true}}
@@ -105,7 +105,7 @@ class CtbStocktakeParserTest {
     List<StockCountInput> out =
         parser.parseStocktakeLines(bytes(json), RAW, 1, LocalDate.parse("2026-10-05"));
 
-    assertThat(out.get(0).quantityOnHand()).isEqualByComparingTo("0");
+    assertThat(out.get(0).quantityOnHand()).isNull();
   }
 
   @Test
@@ -178,5 +178,18 @@ class CtbStocktakeParserTest {
 
   private static byte[] bytes(String s) {
     return s.getBytes(StandardCharsets.UTF_8);
+  }
+
+  @Test
+  void malformedCountIsUnknownWhileAffirmativeZeroStaysZero() {
+    var parser = new CtbStocktakeParser();
+    byte[] data =
+        "{\"data\":[{\"id\":1,\"stockDesc\":\"Oil\",\"qtyCount\":\"not counted\"},{\"id\":2,\"stockDesc\":\"Flour\",\"qtyCount\":0}]}"
+            .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    var lines =
+        parser.parseStocktakeLines(
+            data, java.util.UUID.randomUUID(), 1, java.time.LocalDate.of(2026, 10, 1));
+    assertThat(lines.get(0).quantityOnHand()).isNull();
+    assertThat(lines.get(1).quantityOnHand()).isEqualByComparingTo("0");
   }
 }

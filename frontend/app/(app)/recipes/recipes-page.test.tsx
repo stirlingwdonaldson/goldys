@@ -85,7 +85,7 @@ describe("RecipesPage", () => {
     expect(screen.getAllByText(/Last sold/)).toHaveLength(2);
     expect(screen.getByText("$17.00")).toBeInTheDocument();
     expect(screen.getByText("$4.80")).toBeInTheDocument();
-    expect(screen.getByText("Off menu")).toBeInTheDocument();
+    expect(screen.getByText("No current catalogue match")).toBeInTheDocument();
   });
 
   it("renders empty state when there are no recipes", () => {
@@ -116,7 +116,7 @@ describe("RecipesPage", () => {
     ];
     render(<RecipesPage />);
     expect(screen.getByText("Unnamed recipe")).toBeInTheDocument();
-    expect(screen.getByText("Not on menu")).toBeInTheDocument();
+    expect(screen.getByText("Availability unknown")).toBeInTheDocument();
   });
 
   it("gives a negative margin the amber needs-attention tone", () => {

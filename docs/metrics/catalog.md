@@ -128,3 +128,21 @@ today is on `sales.gross`: **"gross includes GST"**.
   department dimension is a future extension, not this pass.
 - Grafana-style dashboard variables — future extension; the query/panel model accommodates it
   without a rewrite.
+
+## Data-handling corrections (15 October 2026)
+
+`reservations.expected_bookings` counts booking records excluding cancellations and walk-ins.
+`reservations.no_show_rate` uses declared no-shows over that population; pending outcomes remain provisional.
+`reservations.covers` is a stated-party-size attendance proxy, not verified actual arrivals.
+`inventory.purchases` means Invoice purchases, never COGS. `inventory.food_cost_percent` is retained
+for saved-query compatibility but returns unavailable pending valuation evidence.
+`labour.cost` is labelled wages only pending source-basis confirmation; departmental percentages
+retain their explicitly named gross-sales denominator. Displayed percentages round to whole percentages.
+
+`TOTAL` aggregates the exact inclusive requested range, anchored at its first date. Period summaries
+use the same catalogue calculations as series. Missing base values yield labelled known subtotals;
+ratios with incomplete coverage are unavailable until a validated uncertainty estimate can support
+the owner's five-percentage-point allowance. No statistical confidence policy has yet been adopted.
+Sales reporting defaults to evidenced net sales. The simplified all-days trading cutoff is 02:00
+Australia/Melbourne; date-only source reports retain their supplied attribution because no close
+instant is available to shift them safely. Receipt recency is not business-evidence eligibility.

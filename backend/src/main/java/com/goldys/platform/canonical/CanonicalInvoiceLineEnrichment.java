@@ -31,8 +31,12 @@ public class CanonicalInvoiceLineEnrichment {
 
   private final CanonicalInvoiceLineRepository repository;
 
-  public CanonicalInvoiceLineEnrichment(CanonicalInvoiceLineRepository repository) {
+  private final CanonicalInvoiceQuery invoices;
+
+  public CanonicalInvoiceLineEnrichment(
+      CanonicalInvoiceLineRepository repository, CanonicalInvoiceQuery invoices) {
     this.repository = repository;
+    this.invoices = invoices;
   }
 
   @Transactional
@@ -50,6 +54,7 @@ public class CanonicalInvoiceLineEnrichment {
       BigDecimal gstAmount,
       BigDecimal taxRate,
       Boolean incGst) {
+    invoices.requireUnambiguousNumber(invoiceNumber);
     List<CanonicalInvoiceLine> lines = repository.lockCurrentByInvoiceNumber(invoiceNumber);
     InvoiceLineMatcher.Selection selection =
         InvoiceLineMatcher.select(stockCode, description, quantity, amountExTax, candidates(lines));
@@ -77,6 +82,7 @@ public class CanonicalInvoiceLineEnrichment {
    */
   @Transactional(readOnly = true)
   public boolean hasMatch(String invoiceNumber, String stockCode, String description) {
+    invoices.requireUnambiguousNumber(invoiceNumber);
     List<CanonicalInvoiceLine> lines = repository.findCurrentByInvoiceNumber(invoiceNumber);
     return InvoiceLineMatcher.select(stockCode, description, null, null, candidates(lines)).result()
         == InvoiceLineMatcher.Result.MATCH;
@@ -123,6 +129,7 @@ public class CanonicalInvoiceLineEnrichment {
             now,
             now,
             l.invoiceNumber(),
+            l.invoiceLogicalId(),
             l.invoiceDate(),
             l.productNameKey(),
             l.stockCode(),

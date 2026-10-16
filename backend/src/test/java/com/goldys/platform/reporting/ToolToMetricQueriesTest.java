@@ -54,23 +54,20 @@ class ToolToMetricQueriesTest {
             MetricId.LABOUR_FOH_PERCENT,
             MetricId.LABOUR_BOH_PERCENT);
     assertThat(qs.get(0).range().calendar()).isEqualTo(Calendar.CALENDAR);
-    assertThat(qs.get(0).grain()).isEqualTo(TimeGrain.DAY);
+    assertThat(qs.get(0).grain()).isEqualTo(TimeGrain.TOTAL);
   }
 
   @Test
-  void getInventorySummaryBridgesToThreeQueries() {
+  void getInventorySummaryBridgesToPurchasesAndWastage() {
     GetInventorySummaryTool tool =
         new GetInventorySummaryTool(mockMetricQueryService(), renderer());
     var input = new GetInventorySummaryInput(SEP_13, SEP_20);
 
     var qs = tool.toMetricQueries(input);
 
-    assertThat(qs).hasSize(3);
+    assertThat(qs).hasSize(2);
     assertThat(qs.stream().map(MetricQuery::metric).toList())
-        .containsExactly(
-            MetricId.INVENTORY_PURCHASES,
-            MetricId.INVENTORY_WASTAGE,
-            MetricId.INVENTORY_FOOD_COST_PERCENT);
+        .containsExactly(MetricId.INVENTORY_PURCHASES, MetricId.INVENTORY_WASTAGE);
   }
 
   @Test

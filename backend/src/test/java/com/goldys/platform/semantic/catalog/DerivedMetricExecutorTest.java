@@ -13,6 +13,7 @@ import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.MissingDataStatus;
 import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
+import com.goldys.platform.semantic.ProductRanking;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.goldys.platform.semantic.ReservationSummary;
 import com.goldys.platform.semantic.SalesMetricsQuery;
@@ -222,7 +223,7 @@ class DerivedMetricExecutorTest {
   }
 
   @Test
-  void foodCostPercentDividesPurchasesByGross() {
+  void foodCostPercentIsUnavailableWithoutValuation() {
     when(sales.dailySales(SEP_13, SEP_13))
         .thenReturn(
             List.of(
@@ -245,7 +246,7 @@ class DerivedMetricExecutorTest {
                         Set.of(),
                         null));
 
-    assertThat(ts.series().get(0).points().get(0).value()).isEqualByComparingTo("0.2000");
+    assertThat(ts.series().get(0).points().get(0).value()).isNull();
   }
 
   @Test
@@ -467,9 +468,13 @@ class DerivedMetricExecutorTest {
 
   @Test
   void topSellersReturnsRankedList() {
-    when(product.topSellers(SEP_13, SEP_13, 5))
+    when(product.qualifiedTopSellers(SEP_13, SEP_13, 5))
         .thenReturn(
-            List.of(new TopSeller("Burger", new BigDecimal("10"), new BigDecimal("300.00"), true)));
+            new ProductRanking(
+                List.of(
+                    new TopSeller("Burger", new BigDecimal("10"), new BigDecimal("300.00"), true)),
+                new MetricCoverage(SEP_13, SEP_13, List.of(), List.of(SEP_13), List.of()),
+                List.of("Incomplete subtotal")));
 
     RankedListResult result =
         (RankedListResult)
@@ -482,6 +487,8 @@ class DerivedMetricExecutorTest {
                         Set.of(),
                         null));
 
+    assertThat(result.notices()).containsExactly("Incomplete subtotal");
+    assertThat(result.provenance().coverage().unresolvedDates()).isNotEmpty();
     assertThat(result.items()).hasSize(1);
     assertThat(result.items().get(0).label()).isEqualTo("Burger");
     assertThat(result.items().get(0).primary()).isEqualByComparingTo("300.00");
@@ -496,7 +503,7 @@ class DerivedMetricExecutorTest {
   }
 
   @Test
-  void spendPerCoverUsesOnlySharedDaysWithinWeekBucket() {
+  void spendPerCoverIsUnavailableWithoutBoundOnMissingInputs() {
     LocalDate monday = SEP_13.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
     LocalDate sunday = monday.plusDays(6);
     List<DailySalesMetric> gross = new ArrayList<>();
@@ -520,7 +527,7 @@ class DerivedMetricExecutorTest {
                         null));
 
     MetricPoint p = ts.series().get(0).points().get(0);
-    assertThat(p.value()).isEqualByComparingTo("10.0000");
+    assertThat(p.value()).isNull();
     assertThat(ts.notices()).anyMatch(n -> n.contains("excluded days"));
   }
 

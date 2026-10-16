@@ -26,4 +26,9 @@ public class PermissionService {
       throw AccessDeniedException.forResource(resource.value());
     }
   }
+
+  /** True when the role is granted the action on the resource (a query, not an enforcement). */
+  public boolean isAllowed(UserRole role, ResourceKey resource, PermissionAction action) {
+    return lookup.isAllowed(role, resource, action);
+  }
 }

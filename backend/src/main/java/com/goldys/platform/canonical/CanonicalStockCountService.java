@@ -3,6 +3,7 @@ package com.goldys.platform.canonical;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,9 +20,16 @@ class CanonicalStockCountService {
   private static final Clock CLOCK = Clock.systemUTC();
 
   private final CanonicalStockCountRepository repository;
+  private final CanonicalStocktakeRepository headers;
+  private final InventoryObservationReceiptRepository receipts;
 
-  CanonicalStockCountService(CanonicalStockCountRepository repository) {
+  CanonicalStockCountService(
+      CanonicalStockCountRepository repository,
+      CanonicalStocktakeRepository headers,
+      InventoryObservationReceiptRepository receipts) {
     this.repository = repository;
+    this.headers = headers;
+    this.receipts = receipts;
   }
 
   @Transactional
@@ -39,21 +47,32 @@ class CanonicalStockCountService {
 
   @Transactional
   CanonicalStockCount recordAt(StockCountInput input, Instant recordedAt) {
+    // Lock the date dependency first. Details have no date: a caller's old header snapshot must
+    // not move a count back after a header correction. Headerless legacy inputs remain qualified.
+    Optional<CanonicalStocktake> header =
+        headers.lockCurrentSourceFact(input.sourceSystem(), "stocktake:" + input.stocktakeId());
+    UUID headerVersion = header.map(CanonicalStocktake::id).orElse(null);
+    LocalDate effectiveDate =
+        header.map(CanonicalStocktake::stocktakeDate).orElse(input.countedDate());
     String ref = sourceRef(input.stocktakeId(), input.lineId());
     UUID logicalId = logicalIdFor(input.stocktakeId(), input.lineId());
     Optional<CanonicalStockCount> current =
         repository.lockCurrentSourceFact(input.sourceSystem(), ref);
 
+    if (!receipts.accept("COUNT", input.sourceSystem(), ref, input.rawRecordId(), headerVersion))
+      return current.orElseThrow(
+          () -> new IllegalStateException("Processed inventory receipt has no current fact"));
+
     if (current.isPresent()) {
       CanonicalStockCount existing = current.get();
-      if (existing.sameFact(input)) {
+      if (existing.sameFact(input, effectiveDate)) {
         return existing;
       }
       existing.supersede(recordedAt);
       repository.saveAndFlush(existing);
     }
 
-    return repository.save(
+    CanonicalStockCount row =
         CanonicalStockCount.create(
             logicalId,
             input.sourceSystem(),
@@ -63,7 +82,7 @@ class CanonicalStockCountService {
             recordedAt,
             input.stocktakeId(),
             input.lineId(),
-            input.countedDate(),
+            effectiveDate,
             input.productNameKey(),
             input.quantityOnHand(),
             input.stockId(),
@@ -73,7 +92,9 @@ class CanonicalStockCountService {
             input.lineValue(),
             input.supplierName(),
             input.areaName(),
-            input.recipeId()));
+            input.recipeId());
+    row.captureHeaderVersion(headerVersion);
+    return repository.save(row);
   }
 
   private static String sourceRef(int stocktakeId, int lineId) {

@@ -73,14 +73,9 @@ interface RawRecordRepository
 
   List<RawRecord> findBySourceSystemAndContentType(String sourceSystem, String contentType);
 
+  @org.springframework.data.jpa.repository.Query(
+      "select r from RawRecord r where r.sourceSystem = :sourceSystem and r.fetcherIdentity = :fetcherIdentity order by r.fetchedAt asc, r.id asc")
   List<RawRecord> findBySourceSystemAndFetcherIdentity(String sourceSystem, String fetcherIdentity);
-
-  /**
-   * One fetcher's payloads in ascending {@code fetched_at} order, so a replay that must pick the
-   * latest version of a re-pulled dataset can keep the last-seen (most recent) record per id.
-   */
-  List<RawRecord> findBySourceSystemAndFetcherIdentityOrderByFetchedAtAsc(
-      String sourceSystem, String fetcherIdentity);
 
   /**
    * Id and hash of the latest payload for one dataset window. A closed interface projection, so
@@ -99,6 +94,22 @@ interface RawRecordRepository
   @Query(
       "select r.id from RawRecord r where r.fetcherIdentity = :fetcherIdentity order by r.fetchedAt")
   List<UUID> findIdsByFetcherIdentity(@Param("fetcherIdentity") String fetcherIdentity);
+
+  /**
+   * One fetcher's records as lightweight references (id, source-record ref, fetch time) in
+   * ascending {@code fetched_at} order (then id), deliberately excluding {@code payload_bytes}.
+   * Used by the source-product-sale-fact replay to stream bytes one record at a time, so a large
+   * re-pulled dataset is never materialised as one list.
+   */
+  @Query(
+      """
+      select r.id as id, r.sourceRecordRef as sourceRecordRef, r.fetchedAt as fetchedAt
+      from RawRecord r
+      where r.sourceSystem = :source and r.fetcherIdentity = :fetcher
+      order by r.fetchedAt, r.id
+      """)
+  List<RawRecordRefRow> findRefsBySourceSystemAndFetcherIdentity(
+      @Param("source") String source, @Param("fetcher") String fetcher);
 
   /**
    * Paged metadata list, deliberately selecting the summary columns only. Never loads {@code
@@ -139,4 +150,13 @@ interface RawRecordDigest {
   UUID getId();
 
   String getPayloadSha256();
+}
+
+/** Id, source-record ref and fetch time of one stored raw payload, without its bytes. */
+interface RawRecordRefRow {
+  UUID getId();
+
+  String getSourceRecordRef();
+
+  Instant getFetchedAt();
 }

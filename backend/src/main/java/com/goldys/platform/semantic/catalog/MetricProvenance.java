@@ -16,7 +16,35 @@ public record MetricProvenance(
     Instant dataFreshness,
     List<LocalDate> missingPeriods,
     String calculationVersion,
-    TrustSummary trust) {
+    TrustSummary trust,
+    MetricCoverage coverage) {
+
+  public MetricProvenance(
+      MetricId metric,
+      String version,
+      TimeRange range,
+      TimeGrain grain,
+      String domain,
+      Instant freshness,
+      List<LocalDate> missing,
+      String calculation,
+      TrustSummary trust) {
+    this(metric, version, range, grain, domain, freshness, missing, calculation, trust, null);
+  }
+
+  public MetricProvenance withCoverage(MetricCoverage value) {
+    return new MetricProvenance(
+        metric,
+        definitionVersion,
+        range,
+        grain,
+        sourceDomain,
+        dataFreshness,
+        missingPeriods,
+        calculationVersion,
+        trust,
+        value);
+  }
 
   /** Convenience constructor for executors, which build provenance without trust. */
   public MetricProvenance(
@@ -52,7 +80,7 @@ public record MetricProvenance(
   /** Returns a copy carrying {@code trust}, with {@code dataFreshness} derived from it. */
   public MetricProvenance withTrust(TrustSummary trust) {
     Objects.requireNonNull(trust, "trust");
-    Instant freshness = trust.resolvedAt() != null ? trust.resolvedAt() : trust.lastIngestionAt();
+    Instant freshness = trust.resolvedAt();
     return new MetricProvenance(
         metric,
         definitionVersion,
@@ -62,6 +90,7 @@ public record MetricProvenance(
         freshness,
         missingPeriods,
         calculationVersion,
-        trust);
+        trust,
+        coverage);
   }
 }

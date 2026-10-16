@@ -10,8 +10,13 @@ import java.util.Optional;
  */
 public interface ProductMetricsQuery {
 
-  /** Top products by summed resolved amount over the inclusive range, descending. */
-  List<TopSeller> topSellers(LocalDate from, LocalDate to, int limit);
+  /** Legacy values-only adapter. User-facing reads must retain qualifiedTopSellers evidence. */
+  default List<TopSeller> topSellers(LocalDate from, LocalDate to, int limit) {
+    return qualifiedTopSellers(from, to, limit).items();
+  }
+
+  /** Coverage is computed before limiting; an absent product row never implies zero sales. */
+  ProductRanking qualifiedTopSellers(LocalDate from, LocalDate to, int limit);
 
   /** Resolved product-sales metrics for the inclusive range, ordered by date then product. */
   List<ProductSalesMetric> productSales(LocalDate from, LocalDate to);

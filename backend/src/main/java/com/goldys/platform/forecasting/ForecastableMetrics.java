@@ -7,16 +7,17 @@ import java.util.List;
 
 /**
  * Which catalogue metrics can be fed to TimesFM. Forecasting targets a single daily time series, so
- * the ranked-list metric ({@link MetricId#PRODUCT_TOP_SELLERS}) is excluded; everything else is
- * forecastable today. The list is sorted by id so the API returns a stable order.
+ * the current runtime models net revenue with a food/beverage split. Other targets cannot be
+ * substituted without changing its units and business meaning. The list is sorted by id so the API
+ * returns a stable order.
  */
 public final class ForecastableMetrics {
 
   private ForecastableMetrics() {}
 
-  /** Whether a metric can be forecast: a single daily series rather than a ranked list. */
+  /** Whether the runtime supports the metric as its net-revenue target. */
   public static boolean forecastable(MetricId id) {
-    return id != MetricId.PRODUCT_TOP_SELLERS;
+    return id == MetricId.SALES_NET;
   }
 
   /** Every forecastable metric in the catalogue, sorted by id. */

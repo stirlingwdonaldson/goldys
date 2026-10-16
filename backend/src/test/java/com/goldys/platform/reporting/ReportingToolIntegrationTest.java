@@ -57,7 +57,7 @@ class ReportingToolIntegrationTest {
     var widget = (TimeSeriesWidgetSpec) result.widget();
     assertThat(widget.series()).hasSize(1);
     assertThat(widget.series().get(0).points().get(0).y()).isEqualByComparingTo("27650.66");
-    assertThat(result.notices()).isEmpty();
+    assertThat(result.notices()).anyMatch(n -> n.contains("includes GST"));
   }
 
   private UUID rawRecord() {

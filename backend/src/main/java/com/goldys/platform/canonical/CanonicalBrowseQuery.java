@@ -143,9 +143,9 @@ public class CanonicalBrowseQuery {
   private static Map<String, String> dailySalesColumns(CanonicalDailySales s) {
     Map<String, String> c = new LinkedHashMap<>();
     c.put("trading_date", s.tradingDate().toString());
-    c.put("total_sales", s.totalSales().toPlainString());
-    c.put("gst_total", s.gstTotal().toPlainString());
-    c.put("net_total", s.netTotal().toPlainString());
+    c.put("total_sales", s.totalSales() == null ? null : s.totalSales().toPlainString());
+    c.put("gst_total", s.gstTotal() == null ? null : s.gstTotal().toPlainString());
+    c.put("net_total", s.netTotal() == null ? null : s.netTotal().toPlainString());
     return c;
   }
 
@@ -214,8 +214,8 @@ public class CanonicalBrowseQuery {
     if (l.stockCode() != null) {
       c.put("stock_code", l.stockCode());
     }
-    c.put("quantity", l.quantity().toPlainString());
-    c.put("unit_cost", l.unitCost().toPlainString());
+    c.put("quantity", l.quantity() == null ? null : l.quantity().toPlainString());
+    c.put("unit_cost", l.unitCost() == null ? null : l.unitCost().toPlainString());
     c.put("line_total", l.lineTotal().toPlainString());
     if (l.category() != null) {
       c.put("category", l.category());
@@ -263,7 +263,8 @@ public class CanonicalBrowseQuery {
     Map<String, String> c = new LinkedHashMap<>();
     c.put("counted_date", s.countedDate().toString());
     c.put("product_name_key", s.productNameKey());
-    c.put("quantity_on_hand", s.quantityOnHand().toPlainString());
+    c.put(
+        "quantity_on_hand", s.quantityOnHand() == null ? null : s.quantityOnHand().toPlainString());
     return c;
   }
 

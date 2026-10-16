@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class MetricCatalog {
   private static final Set<TimeGrain> DAY_WEEK_MONTH =
-      Set.of(TimeGrain.DAY, TimeGrain.WEEK, TimeGrain.MONTH);
+      Set.of(TimeGrain.DAY, TimeGrain.WEEK, TimeGrain.MONTH, TimeGrain.TOTAL);
   private static final Set<TimeGrain> DAY_ONLY = Set.of(TimeGrain.DAY);
   private static final Map<MetricId, Set<MetricId>> RELATED =
       Map.of(
@@ -55,7 +55,7 @@ public class MetricCatalog {
       Map.ofEntries(
           Map.entry(
               MetricId.RESERVATIONS_NO_SHOW_RATE,
-              Set.of(MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_BOOKINGS)),
+              Set.of(MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_EXPECTED_BOOKINGS)),
           Map.entry(
               MetricId.RESERVATIONS_BOOKING_TO_COVER_CONVERSION,
               Set.of(MetricId.RESERVATIONS_ATTENDED, MetricId.RESERVATIONS_BOOKINGS)),
@@ -101,7 +101,7 @@ public class MetricCatalog {
                     DAY_WEEK_MONTH,
                     Set.of(),
                     "reconciliation.sales",
-                    "gross includes GST"),
+                    "Gross includes GST. Trading policy: 02:00 Australia/Melbourne every day (simplified); date-only source reports retain supplied attribution until close-time evidence is available"),
                 base(
                     MetricId.SALES_NET,
                     "Net sales",
@@ -112,7 +112,7 @@ public class MetricCatalog {
                     DAY_WEEK_MONTH,
                     Set.of(),
                     "reconciliation.sales",
-                    null),
+                    "Excludes evidenced GST. Trading policy: 02:00 Australia/Melbourne every day (simplified); date-only source reports cannot be reattributed without close times"),
                 base(
                     MetricId.SALES_GST,
                     "GST",
@@ -158,6 +158,17 @@ public class MetricCatalog {
                     "reservations.metrics",
                     null),
                 base(
+                    MetricId.RESERVATIONS_EXPECTED_BOOKINGS,
+                    "Expected bookings",
+                    "Bookings excluding cancellations and walk-ins",
+                    "bookings - cancelled - walkIns",
+                    "count",
+                    "resolved_reservation_day",
+                    DAY_WEEK_MONTH,
+                    Set.of(Dimension.SERVICE_PERIOD),
+                    "reservations.metrics",
+                    "Pending attendance outcomes are provisional; no-show requires a business declaration"),
+                base(
                     MetricId.RESERVATIONS_ATTENDED,
                     "Attended parties",
                     "Resolved attended",
@@ -170,8 +181,8 @@ public class MetricCatalog {
                     null),
                 base(
                     MetricId.RESERVATIONS_COVERS,
-                    "Covers",
-                    "Resolved covers (guests)",
+                    "Attendance proxy",
+                    "Stated party size of attended reservations; actual arrivals are rarely updated",
                     "covers",
                     "count",
                     "resolved_reservation_day",
@@ -225,8 +236,8 @@ public class MetricCatalog {
                     null),
                 base(
                     MetricId.LABOUR_COST,
-                    "Labour cost",
-                    "Resolved actual cost",
+                    "Labour cost (wages only)",
+                    "Reported wage cost; excludes super and other employment costs pending source confirmation",
                     "actualCost",
                     "AUD",
                     "resolved_labour_day",
@@ -236,8 +247,8 @@ public class MetricCatalog {
                     null),
                 base(
                     MetricId.INVENTORY_PURCHASES,
-                    "Purchases (COGS)",
-                    "Resolved purchases",
+                    "Invoice purchases",
+                    "Invoiced purchases; not consumed cost or inventory valuation",
                     "purchases",
                     "AUD",
                     "resolved_inventory_day",
@@ -347,7 +358,7 @@ public class MetricCatalog {
                 derived(
                     MetricId.RESERVATIONS_NO_SHOW_RATE,
                     "No-show rate",
-                    "no_shows ÷ bookings",
+                    "declared no_shows ÷ expected_bookings (excluding cancellations and walk-ins)",
                     "%",
                     "reservations.metrics",
                     null),
@@ -416,8 +427,8 @@ public class MetricCatalog {
                     null),
                 derived(
                     MetricId.INVENTORY_FOOD_COST_PERCENT,
-                    "Food cost %",
-                    "inventory.purchases ÷ sales.gross",
+                    "Food cost % (unavailable)",
+                    "Withdrawn: invoice purchases do not establish COGS",
                     "%",
                     "inventory.cost",
                     null),
@@ -453,6 +464,30 @@ public class MetricCatalog {
     return CONSTITUENTS.getOrDefault(id, Set.of());
   }
 
+  /** All permission resources contributing to a metric, including transitive operands. */
+  public Set<String> requiredPermissions(MetricId id) {
+    Set<String> resources = new java.util.LinkedHashSet<>();
+    collectPermissions(id, resources, new java.util.HashSet<>());
+    return Set.copyOf(resources);
+  }
+
+  private void collectPermissions(MetricId id, Set<String> resources, Set<MetricId> visited) {
+    if (!visited.add(id)) return;
+    resources.add(definition(id).requiredPermission());
+    for (MetricId operand : constituents(id)) collectPermissions(operand, resources, visited);
+  }
+
+  private static String definitionVersion(MetricId id) {
+    return Set.of(
+                MetricId.RESERVATIONS_NO_SHOW_RATE,
+                MetricId.INVENTORY_FOOD_COST_PERCENT,
+                MetricId.RESERVATIONS_COVERS,
+                MetricId.LABOUR_COST)
+            .contains(id)
+        ? "2"
+        : "1";
+  }
+
   private static MetricDefinition base(
       MetricId id,
       String name,
@@ -475,7 +510,7 @@ public class MetricCatalog {
         grains,
         permission,
         note == null ? List.of() : List.of(note),
-        "1");
+        definitionVersion(id));
   }
 
   private static MetricDefinition derived(
@@ -491,6 +526,6 @@ public class MetricCatalog {
         DAY_WEEK_MONTH,
         permission,
         note == null ? List.of() : List.of(note),
-        "1");
+        definitionVersion(id));
   }
 }

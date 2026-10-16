@@ -2,6 +2,7 @@ package com.goldys.platform.connectors.ctb;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -14,8 +15,10 @@ import com.goldys.platform.canonical.CanonicalInventoryQuery;
 import com.goldys.platform.canonical.CanonicalInvoiceIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceLineIngest;
 import com.goldys.platform.canonical.CanonicalInvoiceQuery;
+import com.goldys.platform.canonical.InvoiceIdentity;
 import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
+import com.goldys.platform.canonical.StockItemIngest;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
@@ -23,6 +26,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -35,9 +39,18 @@ class CtInvoiceCsvIngestServiceTest {
   @Mock IngestionService ingestion;
   @Mock CanonicalInvoiceIngest canonical;
   @Mock CanonicalInvoiceLineIngest lineCanonical;
+  @Mock StockItemIngest stockItems;
   @Mock InvoiceIngestFlagService flags;
   @Mock CanonicalInvoiceQuery invoiceQuery;
   @Mock CanonicalInventoryQuery inventoryQuery;
+
+  private static final UUID INVOICE_ID = UUID.randomUUID();
+
+  @BeforeEach
+  void stubInvoiceIdentity() {
+    when(canonical.recordCsv(any(InvoiceInput.class), anyList(), eq(false)))
+        .thenReturn(new InvoiceIdentity(INVOICE_ID, "BRUNO::TEST", UUID.randomUUID(), "BRUNO"));
+  }
 
   private CtInvoiceCsvIngestService service() {
     return new CtInvoiceCsvIngestService(
@@ -45,6 +58,7 @@ class CtInvoiceCsvIngestServiceTest {
         new CtInvoiceCsvParser(),
         canonical,
         lineCanonical,
+        stockItems,
         flags,
         invoiceQuery,
         inventoryQuery);
@@ -63,15 +77,14 @@ class CtInvoiceCsvIngestServiceTest {
     service().ingest(csv);
 
     ArgumentCaptor<InvoiceInput> inv = ArgumentCaptor.forClass(InvoiceInput.class);
-    verify(canonical).record(inv.capture());
+    verify(canonical).recordCsv(inv.capture(), anyList(), eq(false));
     assertThat(inv.getValue().invoiceNumber()).isEqualTo("INV-1");
     assertThat(inv.getValue().supplierName()).isEqualTo("Bruno's");
 
-    ArgumentCaptor<InvoiceLineInput> line = ArgumentCaptor.forClass(InvoiceLineInput.class);
-    verify(lineCanonical, times(2)).record(line.capture());
-    assertThat(line.getAllValues().get(0).productNameKey()).isEqualTo("beer");
-    assertThat(line.getAllValues().get(0).lineTotal())
-        .isEqualByComparingTo(new BigDecimal("120.00"));
+    var lines = recordedLines();
+    assertThat(lines).hasSize(2);
+    assertThat(lines.get(0).productNameKey()).isEqualTo("beer");
+    assertThat(lines.get(0).lineTotal()).isEqualByComparingTo(new BigDecimal("120.00"));
   }
 
   @Test
@@ -86,8 +99,8 @@ class CtInvoiceCsvIngestServiceTest {
 
     service().ingest(csv);
 
-    verify(canonical, times(2)).record(any(InvoiceInput.class));
-    verify(lineCanonical, times(2)).record(any(InvoiceLineInput.class));
+    verify(canonical, times(2)).recordCsv(any(InvoiceInput.class), anyList(), eq(false));
+    assertThat(recordedLines()).hasSize(2);
   }
 
   @Test
@@ -102,7 +115,7 @@ class CtInvoiceCsvIngestServiceTest {
     service().ingest(csv);
 
     ArgumentCaptor<InvoiceInput> inv = ArgumentCaptor.forClass(InvoiceInput.class);
-    verify(canonical).record(inv.capture());
+    verify(canonical).recordCsv(inv.capture(), anyList(), eq(false));
     assertThat(inv.getValue().pdfFilename()).isEqualTo("bruno-1.pdf");
   }
 
@@ -159,9 +172,9 @@ class CtInvoiceCsvIngestServiceTest {
   void supersedesPdfLinesWhenTheCsvNowReconciles() {
     when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(UUID.randomUUID());
-    when(invoiceQuery.amountExTaxForInvoiceNumber("INV-1"))
+    when(invoiceQuery.amountExTaxForInvoiceId(INVOICE_ID))
         .thenReturn(Optional.of(new BigDecimal("130.00")));
-    when(inventoryQuery.currentCsvLineTotalForInvoice("INV-1"))
+    when(inventoryQuery.currentCsvLineTotalForInvoiceId(INVOICE_ID))
         .thenReturn(new BigDecimal("130.00"));
     byte[] csv =
         ("Invoice,Supplier,Date,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
@@ -171,17 +184,18 @@ class CtInvoiceCsvIngestServiceTest {
 
     service().ingest(csv);
 
-    verify(lineCanonical).supersedePdfOriginLines("INV-1");
+    verify(lineCanonical).supersedePdfOriginLines(INVOICE_ID);
   }
 
   @Test
   void prunesOnlyTheExcessPdfLinesWhenTheCsvPartiallyCatchesUp() {
     when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(UUID.randomUUID());
-    when(invoiceQuery.amountExTaxForInvoiceNumber("INV-1"))
+    when(invoiceQuery.amountExTaxForInvoiceId(INVOICE_ID))
         .thenReturn(Optional.of(new BigDecimal("100.00")));
-    when(inventoryQuery.currentCsvLineTotalForInvoice("INV-1")).thenReturn(new BigDecimal("70.00"));
-    when(lineCanonical.prunePdfOriginLines(eq("INV-1"), any(), any())).thenReturn(1);
+    when(inventoryQuery.currentCsvLineTotalForInvoiceId(INVOICE_ID))
+        .thenReturn(new BigDecimal("70.00"));
+    when(lineCanonical.prunePdfOriginLines(eq(INVOICE_ID), any(), any())).thenReturn(1);
     byte[] csv =
         ("Invoice,Supplier,Date,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
                 + "INV-1,Bruno's,2026-09-20,STK-7,Beer,1 EACH,70.00\n")
@@ -189,10 +203,10 @@ class CtInvoiceCsvIngestServiceTest {
 
     service().ingest(csv);
 
-    verify(lineCanonical, never()).supersedePdfOriginLines(any());
+    verify(lineCanonical, never()).supersedePdfOriginLines(any(UUID.class));
     verify(lineCanonical)
         .prunePdfOriginLines(
-            eq("INV-1"),
+            eq(INVOICE_ID),
             argThat(v -> v.compareTo(new BigDecimal("30.00")) == 0),
             argThat(v -> v.compareTo(new BigDecimal("0.02")) == 0));
     verify(flags)
@@ -202,5 +216,14 @@ class CtInvoiceCsvIngestServiceTest {
             isNull(),
             isNull(),
             any());
+  }
+
+  @SuppressWarnings("unchecked")
+  private java.util.List<InvoiceLineInput> recordedLines() {
+    return org.mockito.Mockito.mockingDetails(canonical).getInvocations().stream()
+        .filter(invocation -> invocation.getMethod().getName().equals("recordCsv"))
+        .flatMap(
+            invocation -> ((java.util.List<InvoiceLineInput>) invocation.getArgument(1)).stream())
+        .toList();
   }
 }

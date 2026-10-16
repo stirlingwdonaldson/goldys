@@ -3,7 +3,6 @@ package com.goldys.platform.semantic.catalog;
 import com.goldys.platform.semantic.DailySalesMetric;
 import com.goldys.platform.semantic.SalesMetricsQuery;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,21 +47,22 @@ public class SalesMetricExecutor implements MetricExecutor {
     MetricDefinition definition = catalog.definition(query.metric());
     MetricProvenance provenance =
         new MetricProvenance(
-            query.metric(),
-            definition.version(),
-            query.range(),
-            query.grain(),
-            definition.sourceDomain(),
-            // TODO(provenance): plumb max(resolved_at) from the *MetricsQuery read, not
-            // Instant.EPOCH
-            Instant.EPOCH,
-            bucket.missingDays(),
-            definition.version());
+                query.metric(),
+                definition.version(),
+                query.range(),
+                query.grain(),
+                definition.sourceDomain(),
+                // TODO(provenance): plumb max(resolved_at) from the *MetricsQuery read, not
+                // Instant.EPOCH
+                null,
+                bucket.missingDays(),
+                definition.version())
+            .withCoverage(bucket.coverage());
 
     return new TimeSeriesResult(
         query.metric(),
         List.of(new MetricSeries(null, bucket.points())),
-        notices(bucket.missingDays()),
+        bucket.coverage().notices(),
         provenance);
   }
 

@@ -115,7 +115,7 @@ public class LightspeedPaymentIngestService {
               p.paymentSourceType(),
               p.lspayPaymentMode(),
               p.clearingAccount(),
-              nz(p.amount()),
+              requiredAmount(p.amount()),
               nz(p.tip()),
               nz(p.tendered()),
               nz(p.surcharge()),
@@ -144,6 +144,12 @@ public class LightspeedPaymentIngestService {
     } catch (IOException e) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON webhook payload", e);
     }
+  }
+
+  private static BigDecimal requiredAmount(BigDecimal value) {
+    if (value == null)
+      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Payment amount is missing");
+    return value;
   }
 
   private static BigDecimal nz(BigDecimal v) {

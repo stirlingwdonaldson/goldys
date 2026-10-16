@@ -21,6 +21,7 @@ import com.goldys.platform.dashboard.SavedDashboardShare;
 import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
+import com.goldys.platform.query.SavedQueryService;
 import com.goldys.platform.reporting.WidgetRenderer;
 import com.goldys.platform.semantic.FreshnessState;
 import com.goldys.platform.semantic.TrustState;
@@ -32,11 +33,17 @@ import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
 import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.semantic.catalog.TimeRange;
+import com.goldys.platform.semantic.query.QueryResult;
+import com.goldys.platform.semantic.query.ResultColumn;
+import com.goldys.platform.widget.Column;
+import com.goldys.platform.widget.TableWidgetSpec;
 import com.goldys.platform.widget.WidgetSpec;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -66,6 +73,7 @@ public class SavedDashboardApplicationService {
   private final SavedDashboardShareRepository shares;
   private final MetricQueryService metricQueryService;
   private final DashboardTemplateCatalog templateCatalog;
+  private final SavedQueryService savedQueries;
 
   public SavedDashboardApplicationService(
       SavedDashboardRepository repository,
@@ -77,7 +85,8 @@ public class SavedDashboardApplicationService {
       SavedDashboardRevisionRepository revisionsRepository,
       SavedDashboardShareRepository shares,
       MetricQueryService metricQueryService,
-      DashboardTemplateCatalog templateCatalog) {
+      DashboardTemplateCatalog templateCatalog,
+      SavedQueryService savedQueries) {
     this.repository = repository;
     this.catalog = catalog;
     this.widgetValidator = widgetValidator;
@@ -88,6 +97,7 @@ public class SavedDashboardApplicationService {
     this.shares = shares;
     this.metricQueryService = metricQueryService;
     this.templateCatalog = templateCatalog;
+    this.savedQueries = savedQueries;
   }
 
   public List<DashboardSummary> list(UserRole role, String email) {
@@ -248,20 +258,85 @@ public class SavedDashboardApplicationService {
   }
 
   private RenderedWidget renderWidget(UserRole role, SavedWidget w, DashboardFilters filters) {
+    if (w.savedQueryId() != null) {
+      return renderQueryWidget(role, w, filters);
+    }
     List<MetricResult> results = new ArrayList<>();
     for (MetricQuery q : w.queries()) {
       MetricQuery merged = merge(q, filters, catalog);
+      if ((w.renderType().equals("stat") || w.renderType().equals("table"))
+          && catalog
+              .definition(merged.metric())
+              .allowedGrains()
+              .contains(com.goldys.platform.semantic.catalog.TimeGrain.TOTAL)) {
+        merged =
+            new MetricQuery(
+                merged.metric(),
+                merged.range(),
+                com.goldys.platform.semantic.catalog.TimeGrain.TOTAL,
+                merged.dimensions(),
+                merged.comparison());
+      }
       String perm = catalog.definition(merged.metric()).requiredPermission();
       try {
-        permissions.require(role, new ResourceKey(perm), PermissionAction.READ);
+        for (String resource : catalog.requiredPermissions(merged.metric())) {
+          permissions.require(role, new ResourceKey(resource), PermissionAction.READ);
+        }
         results.add(metricQueryService.query(merged));
       } catch (AccessDeniedException e) {
-        return new RenderedWidget(w.id(), null, perm, null);
+        return new RenderedWidget(w.id(), null, perm, null, List.of("Not permitted: " + perm));
       }
     }
     WidgetSpec spec = renderer.render(w.id(), w.renderType(), results);
     TrustSummary trust = aggregateTrust(results);
-    return new RenderedWidget(w.id(), spec, null, trust);
+    return new RenderedWidget(
+        w.id(),
+        spec,
+        null,
+        trust,
+        results.stream().flatMap(result -> result.notices().stream()).distinct().toList());
+  }
+
+  /** Runs an embedded saved query, re-authorizing its operands, and renders it as a table. */
+  private RenderedWidget renderQueryWidget(UserRole role, SavedWidget w, DashboardFilters filters) {
+    try {
+      QueryResult result = savedQueries.runForViewer(role, w.savedQueryId());
+      List<String> notices = new ArrayList<>(result.notices());
+      if (filters.dateRange() != null
+          || filters.comparison() != null
+          || !filters.dimensions().isEmpty())
+        notices.add(
+            "Saved query uses its saved filters; dashboard period and dimension filters do not apply");
+      return new RenderedWidget(w.id(), toTableWidget(w.id(), result), null, null, notices);
+    } catch (AccessDeniedException e) {
+      return new RenderedWidget(
+          w.id(), null, "query", null, List.of("Saved query unavailable or not permitted"));
+    } catch (IllegalArgumentException e) {
+      return new RenderedWidget(
+          w.id(), null, "query", null, List.of("Saved query unavailable or not permitted"));
+    }
+  }
+
+  private TableWidgetSpec toTableWidget(String id, QueryResult result) {
+    List<Column> columns = new ArrayList<>();
+    for (ResultColumn c : result.columns()) {
+      columns.add(new Column(c.name(), c.name(), unitFormat(c.unit())));
+    }
+    List<Map<String, Object>> rows = new ArrayList<>();
+    for (List<Object> row : result.rows()) {
+      Map<String, Object> map = new LinkedHashMap<>();
+      for (int i = 0; i < result.columns().size(); i++) {
+        map.put(result.columns().get(i).name(), row.get(i));
+      }
+      rows.add(map);
+    }
+    return new TableWidgetSpec(id, "Saved query", null, columns, rows, null);
+  }
+
+  private static String unitFormat(String unit) {
+    if ("AUD".equals(unit)) return "currency";
+    if ("%".equals(unit)) return "percent";
+    return null;
   }
 
   /**
@@ -489,7 +564,11 @@ public class SavedDashboardApplicationService {
 
   /** One widget's render outcome: a resolved spec, or the metric that denied it. */
   public record RenderedWidget(
-      String widgetId, WidgetSpec widget, String deniedResource, TrustSummary trust) {}
+      String widgetId,
+      WidgetSpec widget,
+      String deniedResource,
+      TrustSummary trust,
+      List<String> notices) {}
 
   /**
    * A revision snapshot: the document plus the share roles in force when the revision was written.

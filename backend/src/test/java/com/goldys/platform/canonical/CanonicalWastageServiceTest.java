@@ -29,7 +29,16 @@ class CanonicalWastageServiceTest {
   @BeforeEach
   void setUp() {
     repository = mock(CanonicalWastageRepository.class);
-    service = new CanonicalWastageService(repository);
+    InventoryObservationReceiptRepository receipts =
+        mock(InventoryObservationReceiptRepository.class);
+    when(receipts.accept(
+            anyString(),
+            anyString(),
+            anyString(),
+            any(),
+            org.mockito.ArgumentMatchers.nullable(UUID.class)))
+        .thenReturn(true);
+    service = new CanonicalWastageService(repository, receipts);
   }
 
   private static WastageInput input(int recordId, int lineId, String cost) {

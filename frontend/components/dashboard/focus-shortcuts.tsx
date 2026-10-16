@@ -36,10 +36,10 @@ export const SHORTCUTS: Record<Focus, Shortcut[]> = {
     { title: "Sales", description: "Today and this week", href: "/sales", icon: TrendingUp },
     { title: "Reservations", description: "Covers and bookings ahead", href: "/reservations", icon: CalendarDays },
     { title: "Staff & labour", description: "Who's on and hours worked", href: "/staff", icon: Users },
-    { title: "Kitchen", description: "Food cost and invoices", href: "/kitchen", icon: ChefHat },
+    { title: "Kitchen", description: "Invoice purchases", href: "/kitchen", icon: ChefHat },
   ],
   kitchen: [
-    { title: "Kitchen", description: "Food cost, suppliers, invoices", href: "/kitchen", icon: ChefHat },
+    { title: "Kitchen", description: "Purchases, suppliers, invoices", href: "/kitchen", icon: ChefHat },
     { title: "Sales detail", description: "What sold, item by item", href: "/sales-detail", icon: ReceiptText },
     { title: "Reservations", description: "Covers to prep for", href: "/reservations", icon: CalendarDays },
     { title: "Flow lab", description: "Ingredient and supplier impact", href: "/flow-lab?d=recipe-impact", icon: Workflow },

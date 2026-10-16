@@ -25,4 +25,20 @@ public record ForecastModelRequest(
     List<BigDecimal> food,
     List<BigDecimal> bev,
     int horizon,
-    List<String> quantiles) {}
+    List<String> quantiles) {
+  public ForecastModelRequest {
+    dates = java.util.List.copyOf(dates);
+    net = freeze(net);
+    bookedCovers = freeze(bookedCovers);
+    bookings = freeze(bookings);
+    food = freeze(food);
+    bev = freeze(bev);
+    quantiles = java.util.List.copyOf(quantiles);
+  }
+
+  private static List<BigDecimal> freeze(List<BigDecimal> values) {
+    return values == null
+        ? null
+        : java.util.Collections.unmodifiableList(new java.util.ArrayList<>(values));
+  }
+}

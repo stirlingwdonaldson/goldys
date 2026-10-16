@@ -58,7 +58,7 @@ export function WeekdayErrorChart({ rows }: { rows: WeekdayErrorRow[] }) {
           />
           <Tooltip
             {...CHART_TOOLTIP_PROPS}
-            formatter={(v: number) => `${Number(v).toFixed(1)}%`}
+            formatter={(v: number) => `${Number(v).toFixed(0)}%`}
           />
           <Bar
             dataKey="mape"

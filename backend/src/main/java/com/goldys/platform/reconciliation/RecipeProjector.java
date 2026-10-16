@@ -34,7 +34,6 @@ public class RecipeProjector {
   private static final Clock CLOCK = Clock.systemUTC();
 
   private static final String ON_MENU = "ON_MENU";
-  private static final String OFF_MENU = "OFF_MENU";
   private static final String UNKNOWN = "UNKNOWN";
   private static final String CURRENT = "CURRENT";
   private static final String HISTORICAL = "HISTORICAL";
@@ -66,12 +65,10 @@ public class RecipeProjector {
 
     Map<String, PriceInfo> byName = priceIndex();
 
-    // Sellable Lightspeed product ids, computed once: a current product counts as on-menu when it
-    // is
-    // not a modifier and carries a positive tax-inclusive sell price.
+    // Catalogue association only: zero price is valid and absence does not prove unavailability.
     Set<Integer> sellableProductIds = new HashSet<>();
     for (ProductView p : products.currentProducts()) {
-      if (!p.isModifier() && p.sellPriceIncTax() != null && p.sellPriceIncTax().signum() > 0) {
+      if (!p.isModifier() && p.sellPriceIncTax() != null && p.sellPriceIncTax().signum() >= 0) {
         sellableProductIds.add(p.productId());
       }
     }
@@ -106,11 +103,7 @@ public class RecipeProjector {
                   l ->
                       l.lightspeedProductId() != null
                           && sellableProductIds.contains(l.lightspeedProductId()));
-      boolean allHaveId = recipeLinks.stream().allMatch(l -> l.lightspeedProductId() != null);
-      String menuState =
-          anyPresent
-              ? ON_MENU
-              : (recipeLinks.isEmpty() ? UNKNOWN : (allHaveId ? OFF_MENU : UNKNOWN));
+      String menuState = anyPresent ? ON_MENU : UNKNOWN;
 
       // The active/inactive split (by isRecipeActive) still drives the folder, current price/cost,
       // and last-sold enrichment below; it is independent of the presence-based menu_state.

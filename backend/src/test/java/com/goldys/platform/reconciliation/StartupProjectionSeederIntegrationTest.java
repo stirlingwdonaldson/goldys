@@ -44,7 +44,7 @@ class StartupProjectionSeederIntegrationTest {
   }
 
   @Test
-  void doesNotRecomputeWhenProjectionIsAlreadyPopulated() {
+  void removesStaleProjectionRowsWhenCanonicalFactsAreAbsent() {
     repository.save(
         new ResolvedDailySales(
             LocalDate.of(2026, 9, 13),
@@ -59,10 +59,8 @@ class StartupProjectionSeederIntegrationTest {
 
     seeder.run(mockApplicationArguments());
 
-    // Projection untouched because it was not empty.
-    assertThat(repository.count()).isEqualTo(1);
-    assertThat(repository.findTopByOrderByTradingDateDesc().get().resolutionType())
-        .isEqualTo("agreed");
+    // Disposable rows without a current canonical fact must not survive a deployment rebuild.
+    assertThat(repository.count()).isZero();
   }
 
   // canonical_daily_sales.raw_record_id is a NOT NULL FK to raw_record(id) — insert real rows.

@@ -18,8 +18,8 @@ import {
  * slide-over ("Expand") or a copied link.
  */
 export default function InvoicePage() {
-  const params = useParams<{ invoiceNumber: string }>();
-  const invoiceNumber = decodeURIComponent(params.invoiceNumber);
+  const params = useParams<{ invoiceNumber?: string; invoiceId?: string }>();
+  const invoiceNumber = params.invoiceId ? `id:${params.invoiceId}` : `number:${decodeURIComponent(params.invoiceNumber ?? "")}`;
   const copyLink = useCopyInvoiceLink(invoiceNumber);
   const data = useInvoiceData(invoiceNumber);
   const invoice = data.detail.data;
@@ -34,7 +34,7 @@ export default function InvoicePage() {
         </Link>
       </Button>
       <PageHeader
-        title={`Invoice ${invoiceNumber}`}
+        title={`Invoice ${invoice?.invoiceNumber ?? (params.invoiceNumber ?? "")}`}
         description={invoice?.supplierName}
         actions={
           <>

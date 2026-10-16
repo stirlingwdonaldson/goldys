@@ -74,7 +74,12 @@ class FoodBevMetricExecutorTest {
                     null));
 
     assertThat(bev.series().get(0).points().get(0).value()).isEqualByComparingTo("0");
-    assertThat(bev.notices()).isEmpty();
+    assertThat(bev.notices())
+        .anySatisfy(
+            note ->
+                assertThat(note)
+                    .contains("Calendar coverage", "within-day completeness are unverified"));
+    assertThat(bev.provenance().coverage().expectedTradingPopulationKnown()).isFalse();
   }
 
   @Test
@@ -97,6 +102,8 @@ class FoodBevMetricExecutorTest {
     assertThat(food.series().get(0).points().get(0).value()).isNull();
     assertThat(food.series().get(0).points().get(0).status())
         .isEqualTo(MissingDataStatus.UNRESOLVED);
-    assertThat(food.notices()).containsExactly("1 day(s) unresolved");
+    assertThat(food.notices())
+        .anySatisfy(
+            note -> assertThat(note).contains("Incomplete subtotal", "1 unresolved day(s)"));
   }
 }

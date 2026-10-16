@@ -75,6 +75,21 @@ public class ForecastRun {
   @Column(name = "forecast_series", columnDefinition = "jsonb")
   private List<ForecastDay> series;
 
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "input_snapshot", columnDefinition = "jsonb", updatable = false)
+  private ForecastInputSnapshot inputSnapshot;
+
+  public void captureInput(ForecastInputSnapshot snapshot) {
+    if (inputSnapshot != null || status != ForecastRunStatus.QUEUED) {
+      throw new IllegalStateException("Forecast input can only be captured once, before execution");
+    }
+    inputSnapshot = Objects.requireNonNull(snapshot);
+  }
+
+  public ForecastInputSnapshot inputSnapshot() {
+    return inputSnapshot;
+  }
+
   protected ForecastRun() {}
 
   private ForecastRun(

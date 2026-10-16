@@ -29,7 +29,18 @@ class CanonicalStockCountServiceTest {
   @BeforeEach
   void setUp() {
     repository = mock(CanonicalStockCountRepository.class);
-    service = new CanonicalStockCountService(repository);
+    InventoryObservationReceiptRepository receipts =
+        mock(InventoryObservationReceiptRepository.class);
+    when(receipts.accept(
+            anyString(),
+            anyString(),
+            anyString(),
+            any(),
+            org.mockito.ArgumentMatchers.nullable(UUID.class)))
+        .thenReturn(true);
+    service =
+        new CanonicalStockCountService(
+            repository, mock(CanonicalStocktakeRepository.class), receipts);
   }
 
   private static StockCountInput input(int stocktakeId, int lineId, String quantity) {

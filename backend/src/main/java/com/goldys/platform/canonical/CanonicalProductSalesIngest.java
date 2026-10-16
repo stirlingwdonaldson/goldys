@@ -11,6 +11,11 @@ public class CanonicalProductSalesIngest {
     this.service = service;
   }
 
+  @org.springframework.transaction.annotation.Transactional
+  public void recordAll(java.util.List<ProductSalesInput> inputs) {
+    service.recordAll(inputs);
+  }
+
   public void record(ProductSalesInput input) {
     service.record(input);
   }

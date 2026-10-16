@@ -30,3 +30,10 @@ export async function getInvoiceGraphLines(
     `/api/inventory/graph/invoices/${encodeURIComponent(invoiceNumber)}/lines`,
   );
 }
+
+export async function getInvoiceGraphInvoicesById(supplierId: string, from: string, to: string): Promise<InvoiceGraphNode[]> {
+  return fetchApi<InvoiceGraphNode[]>(`/api/inventory/graph/suppliers/by-id/${encodeURIComponent(supplierId)}/invoices?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+}
+export async function getInvoiceGraphLinesById(invoiceId: string): Promise<LineGraphNode[]> {
+  return fetchApi<LineGraphNode[]>(`/api/inventory/graph/invoices/by-id/${encodeURIComponent(invoiceId)}/lines`);
+}

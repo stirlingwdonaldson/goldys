@@ -11,6 +11,7 @@ public enum MetricId {
   SALES_FOOD("sales.food"),
   SALES_BEV("sales.bev"),
   RESERVATIONS_BOOKINGS("reservations.bookings"),
+  RESERVATIONS_EXPECTED_BOOKINGS("reservations.expected_bookings"),
   RESERVATIONS_ATTENDED("reservations.attended"),
   RESERVATIONS_COVERS("reservations.covers"),
   RESERVATIONS_BOOKED_COVERS("reservations.booked_covers"),

@@ -184,6 +184,7 @@ export interface LabourSummary {
   labourCostPerCover: number | null;
   fohLabourCostPercent: number | null;
   bohLabourCostPercent: number | null;
+  notices?: string[];
 }
 
 /**
@@ -195,22 +196,27 @@ export interface InventorySummary {
   to: string;
   purchases: number | null;
   wastage: number | null;
+  /** Withdrawn until consumed cost/valuation evidence is available. */
   foodCostPercent: number | null;
+  notices?: string[];
 }
 
 /** Blended unit cost for one unit-of-measure over a period (mirrors `semantic.UomUnitCost`). */
 export interface UomUnitCost {
   uom: string | null;
   lineTotal: number;
-  quantity: number;
+  quantity: number | null;
   unitCost: number | null;
 }
 
 /** Purchases and WET grouped by supplier over a period (mirrors `semantic.SupplierCogs`). */
 export interface SupplierCogs {
+  supplierId?: string | null;
+  invoicesWithoutLines?: number;
+  notices?: string[];
   supplier: string;
-  lineTotal: number;
-  wetAmount: number;
+  lineTotal: number | null;
+  wetAmount: number | null;
 }
 
 /** Line-level inventory enrichment breakdown for the Kitchen screen. */
@@ -251,6 +257,9 @@ export interface NetworkGraphDto {
 
 /** One supplier in the invoice node graph (mirrors `semantic.SupplierGraphNode`). */
 export interface SupplierGraphNode {
+  supplierId?: string | null;
+  invoicesWithoutLines?: number;
+  notices?: string[];
   name: string;
   invoiceCount: number;
   totalSpend: number | null;
@@ -258,6 +267,8 @@ export interface SupplierGraphNode {
 
 /** One invoice header in the invoice node graph (mirrors `semantic.InvoiceGraphNode`). */
 export interface InvoiceGraphNode {
+  invoiceId?: string | null;
+  amountExTax?: number | null;
   invoiceNumber: string;
   invoiceDate: string;
   totalAmount: number | null;
@@ -269,8 +280,8 @@ export interface InvoiceGraphNode {
 export interface LineGraphNode {
   productNameKey: string;
   stockCode: string | null;
-  quantity: number;
-  unitCost: number;
+  quantity: number | null;
+  unitCost: number | null;
   lineTotal: number;
   uom: string | null;
   /** PDF-parsed tax treatment; absent/null when the PDF didn't print it. */
@@ -286,6 +297,9 @@ export interface LineGraphNode {
  * nullable fields stay `| null` and are never defaulted.
  */
 export interface InvoiceSummary {
+  invoiceId?: string | null;
+  supplierId?: string | null;
+  pdfStatus?: "AVAILABLE" | "NOT_LINKED" | "UNRESOLVED";
   supplierName: string;
   invoiceNumber: string;
   invoiceDate: string;
@@ -296,7 +310,14 @@ export interface InvoiceSummary {
 }
 
 /** One invoice header plus its line graph nodes (mirrors the backend `InvoiceDetail`). */
+export interface InvoiceDocument { documentId: string; filename: string | null; linkedAt: string; }
+
 export interface InvoiceDetail extends InvoiceSummary {
+  canReadDocuments?: boolean;
+  numberAmbiguous?: boolean;
+  lineSubtotal?: number | null;
+  headerDifference?: number | null;
+  notices?: string[];
   /** The invoice's ex-tax goods total, against which line totals are reconciled. */
   amountExTax: number | null;
   gstAmount: number | null;
@@ -482,9 +503,9 @@ export interface DashboardSummary {
 export interface DashboardBootstrap {
   summary: DashboardSummary;
   latestSales: LatestSales;
-  salesTrend: SalesTrendPoint[];
+  salesTrend: SalesTrendResult;
   activity: ActivityPoint[];
-  topSellers: TopSeller[];
+  topSellers: TopSellersResult;
 }
 
 /** A top-selling product over a recent window. `quantitySold`/`amount` are null when unresolved. */
@@ -496,6 +517,27 @@ export interface TopSeller {
 }
 
 /** One day of resolved daily sales for the dashboard trend. */
+export interface MetricCoverage {
+  from: string;
+  to: string;
+  observedDates: string[];
+  unresolvedDates: string[];
+  absentDates: string[];
+  expectedTradingPopulationKnown: boolean;
+}
+
+export interface SalesTrendResult {
+  points: SalesTrendPoint[];
+  notices: string[];
+  provenance: MetricResultProvenance;
+}
+
+export interface TopSellersResult {
+  items: TopSeller[];
+  notices: string[];
+  coverage: MetricCoverage;
+}
+
 export interface SalesTrendPoint {
   date: string;
   total: number | string | null;
@@ -570,7 +612,7 @@ export interface ReconciliationAuditEntry {
 export interface MetricQuery {
   metric: string;
   range: { from: string; to: string; calendar: "TRADING" | "CALENDAR" };
-  grain: "DAY" | "WEEK" | "MONTH";
+  grain: "DAY" | "WEEK" | "MONTH" | "TOTAL";
   dimensions: string[];
   comparison: string | null;
 }
@@ -595,7 +637,7 @@ export interface MetricSeries {
 export interface MetricRankedItem {
   label: string;
   primary: number | string;
-  secondary: number | string;
+  secondary: number | string | null;
   hasConflict: boolean;
 }
 
@@ -604,11 +646,12 @@ export interface MetricResultProvenance {
   metric: string;
   definitionVersion: string;
   range: { from: string; to: string; calendar: "TRADING" | "CALENDAR" };
-  grain: "DAY" | "WEEK" | "MONTH";
+  grain: "DAY" | "WEEK" | "MONTH" | "TOTAL";
   sourceDomain: string;
   dataFreshness: string | null;
   missingPeriods: string[];
   calculationVersion: string;
+  coverage?: MetricCoverage | null;
   trust: TrustSummary | null;
 }
 
@@ -640,6 +683,8 @@ export interface SavedWidget {
   renderType: string;
   queries: MetricQuery[];
   layout: WidgetLayout;
+  /** Set (with renderType "query") for an embedded saved relational query; null for metric widgets. */
+  savedQueryId?: string | null;
 }
 
 /** Dashboard-level reusable filters merged into each widget's query at render. */
@@ -695,6 +740,7 @@ export interface RenderedWidget {
   widgetId: string;
   widget: import("@/components/widgets/types").WidgetSpec | null;
   deniedResource: string | null;
+  notices?: string[];
   /** Trust + freshness summary for the widget's metric; null when denied or unresolved. */
   trust: TrustSummary | null;
 }
@@ -1027,6 +1073,7 @@ export interface ForecastRun {
   errorMessage: string | null;
   modelVersion: string | null;
   diagnostics: ForecastDiagnostics | null;
+  notices?: string[];
 }
 
 /** Body for `POST /api/forecasting/runs` (mirrors `application.CreateForecastRequest`). */
@@ -1178,6 +1225,7 @@ export interface Api {
   listDailySales(filter: SalesFilter, page: number, size: number): Promise<DataPage<DailySales>>;
   getLatestSales(): Promise<LatestSales>;
   getReservationSummary(date: string): Promise<ReservationSummary | undefined>;
+  getInventoryObservations(from: string, to: string, kind: "ALL" | "COUNT" | "WASTE", page: number, size: number): Promise<InventoryObservationPage>;
   getInventoryLines(from: string, to: string): Promise<InventoryLineBreakdown>;
   getInventorySummary(from: string, to: string): Promise<InventorySummary>;
   getInvoiceGraphSuppliers(from: string, to: string): Promise<SupplierGraphNode[]>;
@@ -1187,20 +1235,24 @@ export interface Api {
     to: string,
   ): Promise<InvoiceGraphNode[]>;
   getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]>;
+  getInvoiceGraphInvoicesById(supplierId: string, from: string, to: string): Promise<InvoiceGraphNode[]>;
+  getInvoiceGraphLinesById(invoiceId: string): Promise<LineGraphNode[]>;
   listInvoices(
     filter: InvoiceFilter,
     page: number,
     size: number,
   ): Promise<DataPage<InvoiceSummary>>;
   getInvoice(invoiceNumber: string): Promise<InvoiceDetail>;
+  getInvoiceById(invoiceId: string): Promise<InvoiceDetail>;
+  getInvoiceDocuments(invoiceId: string): Promise<InvoiceDocument[]>;
   listInvoiceFlags(): Promise<InvoiceIngestFlag[]>;
   /** Sources → domains → metrics → dashboards; requires `connectors` READ. */
   getPlatformMap(): Promise<NetworkGraphDto>;
   getLabourSummary(from: string, to: string): Promise<LabourSummary>;
   listDailyCovers(from: string, to: string): Promise<DailyCovers[]>;
   getProvenance(metricId: string, date: string): Promise<Provenance>;
-  getTopSellers(from?: string, to?: string, limit?: number): Promise<TopSeller[]>;
-  getSalesTrend(from?: string, to?: string): Promise<SalesTrendPoint[]>;
+  getTopSellers(from?: string, to?: string, limit?: number): Promise<TopSellersResult>;
+  getSalesTrend(from?: string, to?: string): Promise<SalesTrendResult>;
   /** Runs a bounded catalogue query and returns the raw metric result (time-series or ranked list). */
   queryMetrics(query: MetricQuery): Promise<MetricResult>;
   listDashboards(): Promise<SavedDashboardSummary[]>;
@@ -1269,6 +1321,24 @@ export interface Api {
   getReviewRatings(from: string, to: string): Promise<RatingBucket[]>;
   getReviewSources(from: string, to: string): Promise<SourceSummary[]>;
   getReviews(filter: ReviewFilter): Promise<ReviewView[]>;
+
+  /** The datasets the relational query backend exposes (authorized; unauthorized ones are hidden). */
+  listQueryDatasets(): Promise<QueryDataset[]>;
+  /** A dataset's fields (denied explicitly when the role cannot read the dataset). */
+  listQueryFields(dataset: string): Promise<QueryField[]>;
+  /** The relationships the role may join. */
+  listQueryRelationships(): Promise<QueryRelationship[]>;
+  /** Runs a validated, parameterised query plan and returns typed rows + schema metadata. */
+  runQuery(plan: QueryPlan): Promise<QueryResult>;
+  listSavedQueries(): Promise<SavedQuerySummary[]>;
+  getSavedQuery(id: string): Promise<SavedQueryDetail>;
+  createSavedQuery(input: SaveQueryInput): Promise<SavedQueryDetail>;
+  updateSavedQuery(id: string, input: SaveQueryInput): Promise<SavedQueryDetail>;
+  deleteSavedQuery(id: string): Promise<void>;
+  listSavedQueryRevisions(id: string): Promise<SavedQueryRevision[]>;
+  restoreSavedQuery(id: string, revision: number): Promise<SavedQueryDetail>;
+  /** Re-validates and re-authorizes a saved query, then runs it read-only. */
+  runSavedQuery(id: string): Promise<QueryResult>;
 
   /** The pending taxonomy draft, in display order. */
   getCategorySuggestions(): Promise<CategorySuggestion[]>;
@@ -1398,4 +1468,196 @@ export interface DataPage<T> {
   total: number;
   page: number;
   size: number;
+}
+
+// ---- Relational query backend (Phase 3) ----
+
+/** Native types exposed on dataset fields (mirrors `semantic.query.FieldType`). */
+export type QueryFieldType =
+  | "DATE"
+  | "DECIMAL"
+  | "TEXT"
+  | "BOOLEAN"
+  | "TIMESTAMP"
+  | "UUID"
+  | "INTEGER";
+
+/** Whether a field is a grouping dimension or an aggregatable measure. */
+export type QueryFieldKind = "DIMENSION" | "MEASURE";
+
+/** How a dataset is read. */
+export type QueryReadMode = "RESOLVED" | "CANONICAL_DIRECT";
+
+/** One exposed field of a dataset (mirrors `semantic.query.FieldDescriptor`). */
+export interface QueryField {
+  name: string;
+  column: string;
+  type: QueryFieldType;
+  unit: string | null;
+  nullable: boolean;
+  kind: QueryFieldKind;
+  permission: string | null;
+}
+
+/** A registered dataset (mirrors `semantic.query.DatasetDescriptor`). */
+export interface QueryDataset {
+  id: string;
+  table: string;
+  readMode: QueryReadMode;
+  grain: string;
+  permission: string;
+  currentFact: boolean;
+  fields: QueryField[];
+}
+
+/** Relationship cardinality. */
+export type QueryCardinality =
+  | "ONE_TO_ONE"
+  | "ONE_TO_MANY"
+  | "MANY_TO_ONE"
+  | "MANY_TO_MANY";
+
+/** A registered relationship (mirrors `semantic.query.RelationshipDescriptor`). */
+export interface QueryRelationship {
+  id: string;
+  from: string;
+  to: string;
+  joinKeys: { fromField: string; toField: string }[];
+  cardinality: QueryCardinality;
+  fanoutRisk: boolean;
+  permission: string;
+}
+
+/** Aggregate functions the query layer supports. */
+export type QueryAggregate = "SUM" | "AVG" | "MIN" | "MAX" | "COUNT" | "COUNT_DISTINCT";
+
+/** Filter comparison operators. */
+export type QueryFilterOp =
+  | "EQ"
+  | "NE"
+  | "GT"
+  | "GTE"
+  | "LT"
+  | "LTE"
+  | "BETWEEN"
+  | "IN"
+  | "IS_NULL";
+
+/** Time grain a DATE field may be grouped by. */
+export type QueryGrain = "DAY" | "MONTH";
+
+/** Sort direction. */
+export type QuerySortDirection = "ASC" | "DESC";
+
+/** A scalar value or a list of values for a predicate. */
+export type QueryValue = string | number | boolean | null | (string | number | boolean | null)[];
+
+/** One selected expression (mirrors `semantic.query.SelectItem`). */
+export interface QuerySelectItem {
+  field: string;
+  aggregate?: QueryAggregate | null;
+  distinct?: boolean;
+}
+
+/** A group-by item with optional time grain (mirrors `semantic.query.GroupByItem`). */
+export interface QueryGroupByItem {
+  field: string;
+  grain?: QueryGrain | null;
+}
+
+/** An order-by item (mirrors `semantic.query.OrderByItem`). */
+export interface QueryOrderByItem {
+  field: string;
+  direction: QuerySortDirection;
+}
+
+/** A leaf filter (mirrors `semantic.query.Predicate`). */
+export interface QueryPredicate {
+  field: string;
+  op: QueryFilterOp;
+  value: QueryValue;
+}
+
+/** A filter tree node: an AND/OR/NOT of children, or a leaf predicate. */
+export interface QueryFilterNode {
+  logic?: "AND" | "OR" | "NOT" | null;
+  children?: QueryFilterNode[];
+  predicate?: QueryPredicate | null;
+}
+
+/** A versioned query plan (mirrors `semantic.query.QueryPlan`). */
+export interface QueryPlan {
+  version: number;
+  dataset: string;
+  joins?: string[];
+  select: QuerySelectItem[];
+  filter?: QueryFilterNode | null;
+  groupBy?: QueryGroupByItem[];
+  orderBy?: QueryOrderByItem[];
+  limit: number;
+  offset: number;
+}
+
+/** One result column's schema metadata (mirrors `semantic.query.ResultColumn`). */
+export interface QueryResultColumn {
+  name: string;
+  type: QueryFieldType;
+  unit: string | null;
+}
+
+/** A query result (mirrors `semantic.query.QueryResult`). */
+export interface QueryResult {
+  notices?: string[];
+  columns: QueryResultColumn[];
+  rows: (string | number | boolean | null)[][];
+  pagination: { limit: number; offset: number; truncated: boolean };
+  semantics: {
+    currentFact: boolean;
+    grain: string;
+    readMode: QueryReadMode;
+    datasets: string[];
+    asOf: string;
+  };
+}
+
+// ---- Saved query definitions (Phase 4) ----
+
+/** A saved query's list entry (mirrors `semantic.query.SavedQuerySummary`). */
+export interface SavedQuerySummary {
+  id: string;
+  title: string;
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A saved query's full definition (mirrors `semantic.query.SavedQueryDetail`). */
+export interface SavedQueryDetail extends SavedQuerySummary {
+  plan: QueryPlan;
+}
+
+/** One revision snapshot (mirrors `semantic.query.SavedQueryRevisionView`). */
+export interface SavedQueryRevision {
+  revision: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** Body for creating/updating a saved query (mirrors `semantic.query.SaveQueryRequest`). */
+export interface SaveQueryInput {
+  title: string;
+  plan: QueryPlan;
+}
+
+/** Dated source observation, not a current balance or comparable valuation. */
+export interface InventoryObservation {
+  kind: "COUNT" | "WASTE"; sourceSystem: string; sourceRecordRef: string;
+  logicalId: string; date: string; productName: string; stockCode: string | null;
+  quantity: number; unit: string | null; unitSize: string | null;
+  unitCost: number | null; sourceValue: number | null; area: string | null;
+  stocktakePartial: boolean | null; stocktakeLocked: boolean | null;
+  parentSourceId: number; recordedAt: string;
+}
+export interface InventoryObservationPage {
+  observations: InventoryObservation[]; page: number; size: number; hasMore: boolean; notices: string[];
 }

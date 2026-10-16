@@ -9,4 +9,11 @@ public record InvoiceGraphNode(
     LocalDate invoiceDate,
     BigDecimal totalAmount,
     String purchaseNumber,
-    String pdfFilename) {}
+    String pdfFilename,
+    java.util.UUID invoiceId,
+    BigDecimal amountExTax) {
+  public InvoiceGraphNode(
+      String number, LocalDate date, BigDecimal amount, String purchase, String pdf) {
+    this(number, date, amount, purchase, pdf, null, null);
+  }
+}

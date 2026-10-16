@@ -8,6 +8,8 @@ import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
+import com.goldys.platform.ingestion.IngestionStageKind;
+import com.goldys.platform.ingestion.IngestionStageOutcome;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -66,10 +68,21 @@ public class LightspeedAllSalesIngestService {
   }
 
   private void parseAndRecord(byte[] body, UUID rawId) {
-    List<LightspeedAllSale> sales = parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+    List<LightspeedAllSale> sales;
+    try {
+      sales = parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+    } catch (RuntimeException e) {
+      ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
+      throw e;
+    }
+    ingestion.recordStage(
+        rawId,
+        IngestionStageKind.PARSED,
+        sales.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
 
     if (sales.isEmpty()) {
       log.warn("Lightspeed all-sales webhook delivered an empty report (no data rows)");
+      ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.EMPTY);
       return;
     }
 
@@ -78,12 +91,23 @@ public class LightspeedAllSalesIngestService {
       byDate.computeIfAbsent(sale.saleDate(), d -> new Totals()).add(sale);
     }
 
-    for (Map.Entry<LocalDate, Totals> entry : byDate.entrySet()) {
-      Totals t = entry.getValue();
-      canonical.record(
-          new DailySalesInput(
-              "LIGHTSPEED", entry.getKey(), t.total, t.gst, t.total.subtract(t.gst), rawId));
+    try {
+      for (Map.Entry<LocalDate, Totals> entry : byDate.entrySet()) {
+        Totals t = entry.getValue();
+        canonical.record(
+            new DailySalesInput(
+                "LIGHTSPEED",
+                entry.getKey(),
+                t.total,
+                t.gst,
+                t.gst == null || t.total == null ? null : t.total.subtract(t.gst),
+                rawId));
+      }
+    } catch (RuntimeException e) {
+      ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
+      throw e;
     }
+    ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.SUCCESS);
   }
 
   private static String extractCsv(byte[] body) {
@@ -105,12 +129,8 @@ public class LightspeedAllSalesIngestService {
     BigDecimal gst = BigDecimal.ZERO;
 
     void add(LightspeedAllSale sale) {
-      total = total.add(nz(sale.totalIncTax()));
-      gst = gst.add(nz(sale.totalTax()));
+      total = total == null || sale.totalIncTax() == null ? null : total.add(sale.totalIncTax());
+      gst = gst == null || sale.totalTax() == null ? null : gst.add(sale.totalTax());
     }
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }

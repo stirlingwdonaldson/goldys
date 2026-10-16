@@ -12,8 +12,10 @@ import static org.mockito.Mockito.when;
 
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
+import com.goldys.platform.canonical.ProductMappingIngest;
 import com.goldys.platform.canonical.SaleRecipeLinkIngest;
 import com.goldys.platform.canonical.SaleRecipeLinkInput;
+import com.goldys.platform.canonical.SourceProductSaleFactIngest;
 import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.time.ZoneId;
@@ -181,6 +183,8 @@ class CtbConnectorTest {
         mock(CanonicalProductSalesIngest.class),
         saleRecipeLinkParser,
         saleRecipeLinkIngest,
+        mock(ProductMappingIngest.class),
+        mock(SourceProductSaleFactIngest.class),
         VenueClock.system(ZoneId.of("Australia/Melbourne")));
   }
 

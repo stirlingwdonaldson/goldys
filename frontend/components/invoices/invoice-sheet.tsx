@@ -1,5 +1,6 @@
 "use client";
 
+import { invoiceLabel } from "@/lib/invoice-reference";
 import Link from "next/link";
 import type { KeyboardEvent } from "react";
 import { ChevronDown, ChevronUp, Link2, Maximize2, X } from "lucide-react";
@@ -145,7 +146,7 @@ function InvoiceSheetContent({
             <SheetDescription className="text-sm text-muted-foreground">
               {invoice?.supplierName ?? "Invoice"}
             </SheetDescription>
-            <SheetTitle className="text-xl font-semibold">Invoice {invoiceNumber}</SheetTitle>
+            <SheetTitle className="text-xl font-semibold">Invoice {invoiceLabel(invoice?.invoiceNumber, invoiceNumber)}</SheetTitle>
           </div>
           {invoice ? (
             <div className="ml-auto flex items-center gap-1">
