@@ -24,12 +24,12 @@ class SavedDashboardMigrationTest {
   void migrationAddsColumnsAndTables() {
     List<String> cols =
         jdbc.queryForList(
-            "select column_name from information_schema.columns where table_name='saved_dashboard'",
+            "select column_name from information_schema.columns where table_schema=current_schema() and table_name='saved_dashboard'",
             String.class);
     assertThat(cols).contains("filters", "visibility", "pinned", "current_revision");
     Integer n =
         jdbc.queryForObject(
-            "select count(*) from information_schema.tables where table_name in ('saved_dashboard_revision','saved_dashboard_share')",
+            "select count(*) from information_schema.tables where table_schema=current_schema() and table_name in ('saved_dashboard_revision','saved_dashboard_share')",
             Integer.class);
     assertThat(n).isEqualTo(2);
   }

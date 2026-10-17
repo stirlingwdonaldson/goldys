@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @SpringBootTest
 @Import(PostgresContainerConfiguration.class)
@@ -84,6 +85,40 @@ class InvoiceReadIntegrationTest {
             });
     assertThat(graph.invoicesForSupplierId(owner, headers.getFirst().supplierId(), day, day))
         .allSatisfy(n -> assertThat(n.invoiceId()).isNotNull());
+  }
+
+  @Test
+  void legacyPdfAvailabilityCanBeReadWithoutAWriteTransaction() {
+    // HTTP reads have no enclosing write transaction; a PDF filename must not require one.
+    assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+    ingest.ingest(
+        ("Invoice,Supplier,SupplierCode,Date,PDF,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
+                + "PDF-1,A,SUP-A,2026-10-01,invoice.pdf,A,Item A,1,100\n")
+            .getBytes(StandardCharsets.UTF_8));
+    UUID raw = jdbc.queryForObject("select raw_record_id from canonical_invoice", UUID.class);
+    jdbc.update(
+        "insert into invoice_pdf_link(pdf_raw_record_id,invoice_number,pdf_filename,link_source,linked_at) values (?, 'PDF-1','invoice.pdf','BACKFILL',now())",
+        raw);
+
+    var header = headers().getFirst();
+    assertThat(header.pdfStatus()).isEqualTo("AVAILABLE");
+    assertThat(reporting.detailById(owner, header.invoiceId()).hasPdf()).isTrue();
+    assertThat(documents.documents(owner, header.invoiceId()))
+        .singleElement()
+        .satisfies(document -> assertThat(document.filename()).isEqualTo("invoice.pdf"));
+
+    // A filename shared by different suppliers does not qualify a legacy number-only PDF link.
+    ingest.ingest(
+        ("Invoice,Supplier,SupplierCode,Date,PDF,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
+                + "PDF-2,B,SUP-B,2026-10-01,invoice.pdf,B,Item B,1,200\n")
+            .getBytes(StandardCharsets.UTF_8));
+    var ambiguous =
+        headers().stream()
+            .filter(h -> h.invoiceId().equals(header.invoiceId()))
+            .findFirst()
+            .orElseThrow();
+    assertThat(ambiguous.pdfStatus()).isEqualTo("UNRESOLVED");
+    assertThat(documents.documents(owner, header.invoiceId())).isEmpty();
   }
 
   @Test
