@@ -126,6 +126,10 @@ services:
       # Recipe-ingredient canonicalization (one-off, off by default). Runs only after the
       # ctb-detail-backfill has populated the ctb-recipe-ingredients raw records.
       APP_RECIPE_INGREDIENTS_CANONICALIZE: ${APP_RECIPE_INGREDIENTS_CANONICALIZE:-false}
+      # Stocktake/wastage canonicalization (one-off, off by default). Replays the stored
+      # ctb-stocktakes, ctb-stocktake-detail and ctb-wastage-detail raw records into
+      # canonical_stocktake/stock_count/wastage. Run after ctb-detail-backfill, in a separate restart.
+      APP_STOCK_WASTAGE_CANONICALIZE: ${APP_STOCK_WASTAGE_CANONICALIZE:-false}
       APP_LIGHTSPEED_SALE_ITEMS_REPLAY: ${APP_LIGHTSPEED_SALE_ITEMS_REPLAY:-false}
       APP_LIGHTSPEED_PAYMENTS_REPLAY: ${APP_LIGHTSPEED_PAYMENTS_REPLAY:-false}
       APP_LIGHTSPEED_DAILY_SALES_DERIVATION: ${APP_LIGHTSPEED_DAILY_SALES_DERIVATION:-false}
