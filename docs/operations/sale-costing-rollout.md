@@ -198,8 +198,9 @@ the generic root-checkout Compose command from the initial rollout instructions.
    curl -fsS https://platform.swd.sh/api/health
    ```
 
-   Expect health `UP`, a completed startup projection rebuild, and the previous run recorded with
-   `RUN_INTERRUPTED` (normally terminal `PARTIAL` because it already has stored payloads).
+   Expect health `UP` and a completed startup projection rebuild. If the previous run was still
+   `RUNNING` at shutdown, expect `RUN_INTERRUPTED` (normally terminal `PARTIAL` because it already
+   has stored payloads); a run that finished before shutdown keeps its actual terminal result.
    Health alone is insufficient: HTTP serving starts before startup runners finish.
 6. Resume upstream delivery. In Data health, run CTB once and wait for terminal status. Verify
    fresh complete recipe observations including recipe 722 and then sale SP-100 1021082623.
