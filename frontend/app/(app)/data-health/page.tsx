@@ -1,9 +1,11 @@
 "use client";
 
+import { invalidateBusinessReads } from "@/lib/query/invalidation";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Activity, AlertTriangle, LogIn, RefreshCw, Timer, Upload, Wrench } from "lucide-react";
-import { useApiData } from "@/lib/use-api-data";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useApi } from "@/lib/demo-mode";
 import { isApiError, type ConnectorStatus } from "@/lib/api";
 import { useToast } from "@/components/feedback/toast";
@@ -33,10 +35,14 @@ import { LoadingState } from "@/components/states/loading-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 
 export default function DataHealthPage() {
+  const queryApi = useApi();
   const api = useApi();
-  const connectors = useApiData((api) => api.listConnectorStatuses());
-  const summary = useApiData((api) => api.getDashboardSummary());
-  const activity = useApiData((api) => api.getDashboardActivity());
+  const queryClient = useQueryClient();
+  const runMutation = useMutation({ mutationFn: api.runConnector });
+  const uploadMutation = useMutation({ mutationFn: ({ connectorName, file }: { connectorName: string; file: File }) => api.uploadConnectorCsv(connectorName, file) });
+  const connectors = useQuery({ queryKey: ["listConnectorStatuses"], queryFn: ({ signal }) => queryApi.listConnectorStatuses({ signal }) });
+  const summary = useQuery({ queryKey: ["getDashboardSummary"], queryFn: ({ signal }) => queryApi.getDashboardSummary({ signal }) });
+  const activity = useQuery({ queryKey: ["getDashboardActivity", undefined, undefined], queryFn: ({ signal }) => queryApi.getDashboardActivity(undefined, undefined, { signal }) });
   const [running, setRunning] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
@@ -44,7 +50,7 @@ export default function DataHealthPage() {
   const shell = useShellStatus();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [syncOpen, setSyncOpen] = useState(false);
-  const reloadConnectors = connectors.reload;
+  const reloadConnectors = connectors.refetch;
   const refreshShell = shell.refresh;
   const onOpenTableSynced = useCallback(() => {
     void reloadConnectors();
@@ -56,7 +62,7 @@ export default function DataHealthPage() {
   // until the run actually finishes (whoever started it: this tab, another tab, or the
   // schedule), then announce the outcome of runs started from this page.
   const anyRunning = connectors.data?.some((c) => c.status === "running") ?? false;
-  const refreshConnectors = connectors.refresh;
+  const refreshConnectors = connectors.refetch;
   const startedHere = useRef(new Set<string>());
   useEffect(() => {
     if (!anyRunning) return;
@@ -67,15 +73,16 @@ export default function DataHealthPage() {
     for (const c of connectors.data ?? []) {
       if (c.status === "running" || !startedHere.current.has(c.source)) continue;
       startedHere.current.delete(c.source);
+      void invalidateBusinessReads(queryClient);
       refreshShell();
       toast(runOutcomeToast(c));
     }
-  }, [connectors.data, refreshShell, toast]);
+  }, [connectors.data, refreshShell, toast, queryClient]);
 
   async function run(source: string) {
     setRunning(source);
     try {
-      const result = await api.runConnector(source);
+      const result = await runMutation.mutateAsync(source);
       if (result.status === "running") {
         startedHere.current.add(source);
         toast({
@@ -83,9 +90,9 @@ export default function DataHealthPage() {
           description: "This can take a few minutes. We'll let you know when it finishes.",
           tone: "info",
         });
-        await connectors.refresh();
+        await invalidateBusinessReads(queryClient);
       } else {
-        await connectors.reload();
+        await invalidateBusinessReads(queryClient);
         shell.refresh();
         toast(runOutcomeToast(result));
       }
@@ -103,13 +110,13 @@ export default function DataHealthPage() {
   async function uploadCsv(connectorName: string, file: File) {
     setUploading(connectorName);
     try {
-      await api.uploadConnectorCsv(connectorName, file);
+      await uploadMutation.mutateAsync({ connectorName, file });
       toast({
         title: `${connectorDisplayName("OPENTABLE", connectorName)} imported`,
         description: file.name,
         tone: "success",
       });
-      await connectors.reload();
+      await invalidateBusinessReads(queryClient);
       shell.refresh();
     } catch (e) {
       toast({
@@ -130,9 +137,9 @@ export default function DataHealthPage() {
   );
 
   let placeholder: React.ReactNode = null;
-  if (connectors.loading) {
+  if (connectors.isPending) {
     placeholder = <LoadingState rows={4} />;
-  } else if (connectors.error) {
+  } else if (connectors.isLoadingError) {
     placeholder =
       connectors.error.code === "NOT_PERMITTED" ? (
         <PermissionDenied subject="connector status" />
@@ -141,7 +148,7 @@ export default function DataHealthPage() {
           title="Couldn't load data health"
           message={connectors.error.message}
           correlationId={connectors.error.correlationId}
-          onRetry={connectors.reload}
+          onRetry={connectors.refetch}
         />
       );
   } else if (!connectors.data || connectors.data.length === 0) {
@@ -220,7 +227,7 @@ export default function DataHealthPage() {
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Ingestion summary">
-          {summary.loading ? (
+          {summary.isPending ? (
             <Skeleton className="h-28 w-full rounded-xl" />
           ) : summary.error ? (
             <InlineError>Couldn&apos;t load the ingestion summary. Refresh the page to try again.</InlineError>
@@ -263,7 +270,7 @@ export default function DataHealthPage() {
         <DependenciesSection />
 
         <section className="flex flex-col gap-3">
-          {activity.loading ? (
+          {activity.isPending ? (
             <Skeleton className="h-40 w-full rounded-xl" />
           ) : activity.error ? (
             <InlineError>Couldn&apos;t load run activity. Refresh the page to try again.</InlineError>

@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import InvoicePage from "./page";
 
 vi.mock("@/lib/demo-mode", () => ({
+  useApi: () => ({}),
   useDemoMode: () => ({ demo: false, setDemo: () => {} }),
 }));
 
@@ -10,10 +11,11 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({ invoiceNumber: "INV%2F1042" }),
 }));
 
-const ok = (data: unknown) => ({ data, loading: false, error: null, reload: async () => {} });
+const ok = (data: unknown) => ({ data, isPending: false, error: null, refetch: async () => {} });
 
-vi.mock("@/lib/use-api-data", () => ({
-  useApiData: (fetcher: (api: unknown) => Promise<unknown>) => {
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@tanstack/react-query")>(),
+  useQuery: ({ queryFn: fetcher }: { queryFn: (context: unknown) => Promise<unknown> }) => {
     const src = String(fetcher);
     if (src.includes("listInvoiceFlags") || src.includes("page.items")) return ok(null);
     return ok({

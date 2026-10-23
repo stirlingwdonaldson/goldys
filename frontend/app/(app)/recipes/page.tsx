@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { BookOpen } from "lucide-react";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import type { RecipeCosting, RecipeIngredient } from "@/lib/api";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -111,6 +112,10 @@ function groupSubRecipes(lines: RecipeIngredient[]): [string, RecipeIngredient[]
 }
 
 const ingredientColumns: ColumnDef<RecipeIngredient>[] = [
+  { accessorKey: "isBrokenLink", header: "Source link", cell: ({ getValue }) => getValue() === true ? "Broken link" : getValue() === false ? "Linked" : "Unknown" },
+  { accessorKey: "stockUomShortname", header: "Stock unit", cell: ({ getValue }) => getValue<string | null>() ?? "Unknown" },
+  { accessorKey: "stockUsable", header: "Source usable qty", cell: ({ getValue }) => formatNumber(getValue<number | null>(), 4) },
+  { accessorKey: "stockWastage", header: "Source wastage", cell: ({ getValue }) => formatNumber(getValue<number | null>(), 4) },
   {
     accessorKey: "stockDescription",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Ingredient" />,
@@ -148,6 +153,7 @@ function IngredientLinesTable({ label, lines }: { label: string; lines: RecipeIn
   return (
     <div className="flex flex-col gap-2">
       <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
+      <p className="text-xs text-muted-foreground">Source recipe quantities and units; these do not establish current stock or consumption.</p>
       <DataTable
         columns={ingredientColumns}
         data={lines}
@@ -159,15 +165,16 @@ function IngredientLinesTable({ label, lines }: { label: string; lines: RecipeIn
 }
 
 function RecipeIngredientsPanel({ recipe }: { recipe: RecipeCosting }) {
-  const lines = useApiData((api) => api.getRecipeIngredients(recipe.recipeId), [recipe.recipeId]);
+  const queryApi = useApi();
+  const lines = useQuery({ queryKey: ["getRecipeIngredients", recipe.recipeId], queryFn: ({ signal }) => queryApi.getRecipeIngredients(recipe.recipeId, { signal }) });
 
-  if (lines.loading) return <LoadingState rows={3} />;
-  if (lines.error) {
+  if (lines.isPending) return <LoadingState rows={3} />;
+  if (lines.isLoadingError) {
     return (
       <ErrorState
         title="Couldn't load ingredients"
         message={lines.error.message}
-        onRetry={lines.reload}
+        onRetry={lines.refetch}
       />
     );
   }
@@ -196,7 +203,8 @@ function RecipeIngredientsPanel({ recipe }: { recipe: RecipeCosting }) {
 }
 
 export default function RecipesPage() {
-  const recipes = useApiData((api) => api.getRecipes());
+  const queryApi = useApi();
+  const recipes = useQuery({ queryKey: ["getRecipes"], queryFn: ({ signal }) => queryApi.getRecipes({ signal }) });
   const [selected, setSelected] = useState<RecipeCosting | null>(null);
 
   const columns = useMemo<ColumnDef<RecipeCosting>[]>(
@@ -310,13 +318,13 @@ export default function RecipesPage() {
     [],
   );
 
-  if (recipes.loading) return <LoadingState rows={5} />;
-  if (recipes.error) {
+  if (recipes.isPending) return <LoadingState rows={5} />;
+  if (recipes.isLoadingError) {
     return (
       <ErrorState
         title="Couldn't load recipes"
         message={recipes.error.message}
-        onRetry={recipes.reload}
+        onRetry={recipes.refetch}
       />
     );
   }

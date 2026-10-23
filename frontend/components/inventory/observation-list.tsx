@@ -1,7 +1,8 @@
 "use client";
 import type { Api, InventoryObservation } from "@/lib/api";
 import { useState } from "react";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -10,11 +11,12 @@ import { EmptyState } from "@/components/states/empty-state";
 import { Button } from "@/components/ui/button";
 
 export function ObservationList({ from: initialFrom, to: initialTo, apiOverride }: { from: string; to: string; apiOverride?: Api }) {
+  const queryApi = useApi();
   const [from, setFrom] = useState(initialFrom);
   const [to, setTo] = useState(initialTo);
   const [kind, setKind] = useState<"ALL" | "COUNT" | "WASTE">("ALL");
   const [page, setPage] = useState(0);
-  const result = useApiData(api => api.getInventoryObservations(from, to, kind, page, 50), [from, to, kind, page], apiOverride);
+  const result = useQuery({ queryKey: ["getInventoryObservations", from, to, kind, page, 50], queryFn: ({ signal }) => (apiOverride ?? queryApi).getInventoryObservations(from, to, kind, page, 50, { signal }) });
   return <div className="flex flex-col gap-3">
     <p className="text-sm text-muted-foreground">Counts and waste retain source units and dates. Quantities are not added across units. Source values have an unverified currency, tax and valuation basis.</p>
     <div className="flex flex-wrap gap-3">
@@ -22,9 +24,9 @@ export function ObservationList({ from: initialFrom, to: initialTo, apiOverride 
       <label>To <input aria-label="Observation to" type="date" value={to} onChange={e => { setTo(e.target.value); setPage(0); }} /></label>
       <label>Kind <select aria-label="Observation kind" value={kind} onChange={e => { setKind(e.target.value as typeof kind); setPage(0); }}><option value="ALL">All</option><option value="COUNT">Counts</option><option value="WASTE">Waste</option></select></label>
     </div>
-    {result.loading ? <LoadingState rows={3} /> : result.error ? result.error.code === "NOT_PERMITTED"
+    {result.isPending ? <LoadingState rows={3} /> : result.error ? result.error.code === "NOT_PERMITTED"
       ? <PermissionDenied subject="stock and waste observations" />
-      : <ErrorState title="Couldn't load observations" message={result.error.message} onRetry={result.reload} />
+      : <ErrorState title="Couldn't load observations" message={result.error.message} onRetry={result.refetch} />
       : result.data ? <>
         <DataQualifications notices={result.data.notices} />
         {result.data.observations.length === 0 ? <EmptyState title="No recorded observations" description="No observations match this range and kind; this does not establish zero stock or waste." /> :

@@ -6,8 +6,10 @@ const state = vi.hoisted(() => ({ documents: [
   { documentId: "doc-a", filename: "a.pdf", linkedAt: "2026-10-01T00:00:00Z" },
   { documentId: "doc-b", filename: "b.pdf", linkedAt: "2026-10-02T00:00:00Z" },
 ] }));
-vi.mock("@/lib/demo-mode", () => ({ useDemoMode: () => ({ demo: false }) }));
-vi.mock("@/lib/use-api-data", () => ({ useApiData: () => ({ data: state.documents, loading: false, error: null }) }));
+vi.mock("@/lib/demo-mode", () => ({
+  useApi: () => ({}), useDemoMode: () => ({ demo: false }) }));
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@tanstack/react-query")>(), useQuery: () => ({ data: state.documents, isPending: false, error: null }) }));
 const invoice = { invoiceNumber: "SHARED", invoiceId: "invoice-a", hasPdf: true, canReadDocuments: true };
 
 describe("qualified invoice documents", () => {

@@ -6,7 +6,8 @@ import { FlowCanvas } from "@/components/flow/flow-canvas";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Api } from "@/lib/api";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { buildInvoiceGraph } from "./invoice-graph";
 
 const SUPPLIER_PREFIX = "supplier:";
@@ -24,31 +25,20 @@ interface InvoiceGraphViewProps {
  * `onDrill` handler decodes the `supplier:`/`invoice:` ids the builder stamps on nodes.
  */
 export function InvoiceGraphView({ from, to, apiOverride }: InvoiceGraphViewProps) {
+  const queryApi = useApi();
   const [focusedSupplier, setFocusedSupplier] = useState<string | null>(null);
   const [focusedInvoice, setFocusedInvoice] = useState<string | null>(null);
 
-  const suppliers = useApiData(
-    (api) => api.getInvoiceGraphSuppliers(from, to),
-    [from, to],
-    apiOverride,
-  );
-  const invoices = useApiData(
-    (api) => loadSupplierInvoices(api, focusedSupplier, from, to),
-    [focusedSupplier, from, to],
-    apiOverride,
-  );
-  const lines = useApiData(
-    (api) => loadInvoiceLines(api, focusedInvoice),
-    [focusedInvoice],
-    apiOverride,
-  );
+  const suppliers = useQuery({ queryKey: ["getInvoiceGraphSuppliers", from, to], queryFn: ({ signal }) => (apiOverride ?? queryApi).getInvoiceGraphSuppliers(from, to, { signal }) });
+  const invoices = useQuery({ queryKey: ["invoice-graph-view", focusedSupplier, from, to], queryFn: ({ signal }) => loadSupplierInvoices(apiOverride ?? queryApi, focusedSupplier, from, to, signal) });
+  const lines = useQuery({ queryKey: ["invoice-graph-view", focusedInvoice], queryFn: ({ signal }) => loadInvoiceLines(apiOverride ?? queryApi, focusedInvoice, signal) });
 
   const graph = useMemo(
     () =>
       buildInvoiceGraph({
         suppliers: suppliers.data ?? [],
-        invoices: invoices.data,
-        lines: lines.data,
+        invoices: invoices.data ?? null,
+        lines: lines.data ?? null,
         focusedSupplier,
         focusedInvoice,
       }),
@@ -69,9 +59,9 @@ export function InvoiceGraphView({ from, to, apiOverride }: InvoiceGraphViewProp
     else setFocusedSupplier(null);
   }
 
-  if (suppliers.loading) return <Skeleton className="h-[360px] w-full" />;
+  if (suppliers.isPending) return <Skeleton className="h-[360px] w-full" />;
 
-  if (suppliers.error) {
+  if (suppliers.isLoadingError) {
     if (suppliers.error.code === "NOT_PERMITTED") {
       return <PermissionDenied subject="purchase lineage" />;
     }
@@ -106,14 +96,14 @@ export function InvoiceGraphView({ from, to, apiOverride }: InvoiceGraphViewProp
 }
 
 
-function loadSupplierInvoices(api: Api, reference: string | null, from: string, to: string) {
+function loadSupplierInvoices(api: Api, reference: string | null, from: string, to: string, signal?: AbortSignal) {
   if (!reference) return Promise.resolve(null);
-  if (reference.startsWith("id:")) return api.getInvoiceGraphInvoicesById(reference.slice(3), from, to);
-  return api.getInvoiceGraphInvoices(reference, from, to);
+  if (reference.startsWith("id:")) return api.getInvoiceGraphInvoicesById(reference.slice(3), from, to, { signal });
+  return api.getInvoiceGraphInvoices(reference, from, to, { signal });
 }
 
-function loadInvoiceLines(api: Api, reference: string | null) {
+function loadInvoiceLines(api: Api, reference: string | null, signal?: AbortSignal) {
   if (!reference) return Promise.resolve(null);
-  if (reference.startsWith("id:")) return api.getInvoiceGraphLinesById(reference.slice(3));
-  return api.getInvoiceGraphLines(reference);
+  if (reference.startsWith("id:")) return api.getInvoiceGraphLinesById(reference.slice(3), { signal });
+  return api.getInvoiceGraphLines(reference, { signal });
 }

@@ -34,7 +34,9 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
   const isOwnerRole = isOwner(seniority);
   const [open, setOpen] = useState(false);
   const api = useApi();
-  const { summary, answer, error, working, ask } = useAskGoldys();
+  const { summary, answer, error, working, ask, reset } = useAskGoldys();
+
+  useEffect(() => { if (!open) reset(); }, [open, reset]);
 
   // ⌘J toggles the drawer (⌘K belongs to the command palette, which can also
   // open this drawer by dispatching OPEN_ASK_EVENT).

@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import type { Api } from "@/lib/api";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { FlowCanvas } from "@/components/flow/flow-canvas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/states/empty-state";
@@ -11,11 +12,11 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { buildSettlementGraph, buildSettlementInput, type SettlementInput } from "./settlement-graph";
 
 /** Loads the three mix/totals endpoints and aggregates them into the graph's input. */
-async function loadSettlement(api: Api, from: string, to: string): Promise<SettlementInput> {
+async function loadSettlement(api: Api, from: string, to: string, signal?: AbortSignal): Promise<SettlementInput> {
   const [saleItemMix, paymentMix, deletedSaleTotals] = await Promise.all([
-    api.getSaleItemMix(from, to),
-    api.getPaymentMix(from, to),
-    api.getDeletedSaleTotals(from, to),
+    api.getSaleItemMix(from, to, { signal }),
+    api.getPaymentMix(from, to, { signal }),
+    api.getDeletedSaleTotals(from, to, { signal }),
   ]);
   return buildSettlementInput({ saleItemMix, paymentMix, deletedSaleTotals });
 }
@@ -35,17 +36,18 @@ export function SettlementFlowView({
   to: string;
   apiOverride?: Api;
 }) {
-  const input = useApiData((api) => loadSettlement(api, from, to), [from, to], apiOverride);
+  const queryApi = useApi();
+  const input = useQuery({ queryKey: ["settlement-flow-view", from, to], queryFn: ({ signal }) => loadSettlement(apiOverride ?? queryApi, from, to, signal) });
   const graph = useMemo(() => (input.data ? buildSettlementGraph(input.data) : null), [input.data]);
 
-  if (input.loading) return <Skeleton className="h-[360px] w-full" />;
-  if (input.error) {
+  if (input.isPending) return <Skeleton className="h-[360px] w-full" />;
+  if (input.isLoadingError) {
     if (input.error.code === "NOT_PERMITTED") return <PermissionDenied subject="settlement" />;
     return (
       <ErrorState
         title="Couldn't load the settlement"
         message={input.error.message}
-        onRetry={input.reload}
+        onRetry={input.refetch}
       />
     );
   }

@@ -1,14 +1,15 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { RESOLVED_SCREENS } from "@/lib/data-layers";
 import type { DataPage, GenericRow, RawRecordSummary } from "@/lib/api/types";
 import { GenericTable } from "@/components/data-explorer/generic-table";
 import { QueryBuilder } from "@/components/query-builder/query-builder";
-import { DEFAULT_PAGE_SIZE, TablePagination, usePageState } from "@/components/data-table/table-pagination";
+import { DEFAULT_PAGE_SIZE, TablePagination } from "@/components/data-table/table-pagination";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
@@ -16,6 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/layout/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { explorerPage, explorerUrl, rawScope, validRawPeriod } from "@/components/data-explorer/url-state";
+import { Button } from "@/components/ui/button";
 
 type Section = "raw" | "canonical" | "resolved" | "query";
 
@@ -30,21 +34,30 @@ export default function DataPage() {
   );
 }
 
-function DataExplorer() {
-  const searchParams = useSearchParams();
-  const layer = searchParams.get("layer");
-  const deepLinkId = searchParams.get("id");
-  // `entity` deep-links a canonical entity or resolved domain (e.g. from the Data health pipeline map).
-  const deepLinkEntity = searchParams.get("entity");
-  const [section, setSection] = useState<Section>(
-    layer === "canonical" ? "canonical" : layer === "resolved" ? "resolved" : "raw",
-  );
+function useExplorerUrl() {
+  const search = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = new URLSearchParams(search.toString());
+  const update = (patch: Record<string, string | null>) => router.push(`${pathname}?${explorerUrl(params, patch)}`, { scroll: false });
+  const { page, pageSize } = explorerPage(params);
+  return { params, update, page, pageSize,
+    setPage: (value: number) => update({ page: String(value) }),
+    setPageSize: (value: number) => update({ size: String(value), page: "0" }),
+  };
+}
 
+function DataExplorer() {
+  const { params, update } = useExplorerUrl();
+  const layer = params.get("layer");
+  const section: Section = layer === "canonical" || layer === "resolved" || layer === "query" ? layer : "raw";
+  const deepLinkId = params.get("id");
+  const deepLinkEntity = params.get("entity");
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Data explorer" description="Browse raw ingested records, canonical entities, and resolved views." />
 
-      <Tabs value={section} onValueChange={(v) => setSection(v as Section)}>
+      <Tabs value={section} onValueChange={(v) => update({ layer: v, page: "0", entity: null, id: null })}>
         <TabsList aria-label="Data layer">
           <TabsTrigger value="raw">Raw</TabsTrigger>
           <TabsTrigger value="canonical">Canonical</TabsTrigger>
@@ -66,30 +79,35 @@ function DataExplorer() {
 }
 
 function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }) {
-  const [source, setSource] = useState("");
-  const [fetcher, setFetcher] = useState("");
-  const [method, setMethod] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  // Any filter change starts a new result set, so it returns to the first page.
-  const { page, setPage, pageSize, setPageSize } = usePageState([source, fetcher, method, from, to].join("|"));
+  const queryApi = useApi();
+  const { params, update, page, setPage, pageSize, setPageSize } = useExplorerUrl();
+  const { source, fetcher, method, from, to } = rawScope(params);
+  const [draft, setDraft] = useState({ source, fetcher, method, from, to });
+  useEffect(() => { setDraft({ source, fetcher, method, from, to }); }, [source, fetcher, method, from, to]);
+  const [filterError, setFilterError] = useState<string | null>(null);
+  function apply() {
+    if (!validRawPeriod(draft)) {
+      setFilterError("Use valid ISO date-times with From before To."); return;
+    }
+    setFilterError(null);
+    update({ ...draft, page: "0" });
+  }
   const [expandedId, setExpandedId] = useState<string | null>(initialExpandedId ?? null);
 
-  const rows = useApiData(
-    (api) =>
-      api.listRawRecords(
-        {
+  const rows = useQuery({ queryKey: ["listRawRecords", {
           source: source || undefined,
           fetcher: fetcher || undefined,
           method: method || undefined,
           from: from || undefined,
           to: to || undefined,
-        },
-        page,
-        pageSize,
-      ),
-    [source, fetcher, method, from, to, page, pageSize],
-  );
+        }, page, pageSize], queryFn: ({ signal }) => queryApi.listRawRecords({
+          source: source || undefined,
+          fetcher: fetcher || undefined,
+          method: method || undefined,
+          from: from || undefined,
+          to: to || undefined,
+        }, page, pageSize, { signal }
+      ) });
 
   return (
     <div className="flex flex-col gap-4">
@@ -97,18 +115,18 @@ function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }
         <Input
           aria-label="Source"
           placeholder="Source (e.g. CTB)"
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
+          value={draft.source}
+          onChange={(e) => setDraft({ ...draft, source: e.target.value })}
           className="w-44"
         />
         <Input
           aria-label="Fetcher"
           placeholder="Fetcher (e.g. ctb-invoices-ajax)"
-          value={fetcher}
-          onChange={(e) => setFetcher(e.target.value)}
+          value={draft.fetcher}
+          onChange={(e) => setDraft({ ...draft, fetcher: e.target.value })}
           className="w-60"
         />
-        <Select value={method || "all"} onValueChange={(v) => setMethod(v === "all" ? "" : v)}>
+        <Select value={draft.method || "all"} onValueChange={(v) => setDraft({ ...draft, method: v === "all" ? "" : v })}>
           <SelectTrigger aria-label="Method" className="w-40">
             <SelectValue placeholder="All methods" />
           </SelectTrigger>
@@ -123,25 +141,27 @@ function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }
         <Input
           aria-label="From"
           placeholder="From (ISO, e.g. 2026-10-01T00:00:00Z)"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
+          value={draft.from}
+          onChange={(e) => setDraft({ ...draft, from: e.target.value })}
           className="w-56"
         />
         <Input
           aria-label="To"
           placeholder="To (ISO)"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
+          value={draft.to}
+          onChange={(e) => setDraft({ ...draft, to: e.target.value })}
           className="w-56"
         />
       </div>
 
-      {rows.loading ? <LoadingState rows={4} /> : null}
+      {filterError ? <p role="alert">{filterError}</p> : null}
+      <Button onClick={apply} className="w-fit">Apply filters</Button>
+      {rows.isPending ? <LoadingState rows={4} /> : null}
       {rows.error ? (
         <ErrorState
           title="Couldn't load raw records"
           message={rows.error.message}
-          onRetry={rows.reload}
+          onRetry={rows.refetch}
         />
       ) : null}
 
@@ -220,9 +240,10 @@ function RawRow({
 }
 
 function RawPayload({ id }: { id: string }) {
-  const detail = useApiData((api) => api.getRawRecord(id), [id]);
-  if (detail.loading) return <p className="text-xs text-muted-foreground">Loading payload…</p>;
-  if (detail.error) return <p className="text-xs text-destructive">{detail.error.message}</p>;
+  const queryApi = useApi();
+  const detail = useQuery({ queryKey: ["getRawRecord", id], queryFn: ({ signal }) => queryApi.getRawRecord(id, { signal }) });
+  if (detail.isPending) return <p className="text-xs text-muted-foreground">Loading payload…</p>;
+  if (detail.isLoadingError) return <p className="text-xs text-destructive">{detail.error.message}</p>;
   if (!detail.data) return null;
   const body = detail.data.isJson ? pretty(detail.data.payload) : detail.data.payload;
   return (
@@ -239,23 +260,21 @@ function RawPayload({ id }: { id: string }) {
 }
 
 function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) {
-  const entities = useApiData((api) => api.listCanonicalEntities(), []);
-  const [entity, setEntity] = useState(initialEntity ?? "");
+  const queryApi = useApi();
+  const entities = useQuery({ queryKey: ["listCanonicalEntities"], queryFn: ({ signal }) => queryApi.listCanonicalEntities({ signal }) });
+  const { params, update, page, setPage, pageSize, setPageSize } = useExplorerUrl();
+  const entity = params.get("entity") ?? initialEntity ?? "";
   const selected = entity || entities.data?.[0]?.id || "";
-  const { page, setPage, pageSize, setPageSize } = usePageState(selected);
-  const rows = useApiData(
-    (api) => (selected ? api.listCanonicalRows(selected, page, pageSize) : Promise.resolve(emptyPage())),
-    [selected, page, pageSize],
-  );
+  const rows = useQuery({ queryKey: ["listCanonicalRows", selected, page, pageSize], queryFn: ({ signal }) => (selected ? queryApi.listCanonicalRows(selected, page, pageSize, { signal }) : Promise.resolve(emptyPage())) });
   const descriptor = entities.data?.find((e) => e.id === selected);
 
-  if (entities.loading) return <LoadingState rows={3} />;
-  if (entities.error) {
+  if (entities.isPending) return <LoadingState rows={3} />;
+  if (entities.isLoadingError) {
     return (
       <ErrorState
         title="Couldn't load entities"
         message={entities.error.message}
-        onRetry={entities.reload}
+        onRetry={entities.refetch}
       />
     );
   }
@@ -267,8 +286,7 @@ function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) 
         <Select
           value={selected}
           onValueChange={(v) => {
-            setEntity(v);
-            setPage(0);
+            update({ entity: v, page: "0" });
           }}
         >
           <SelectTrigger aria-label="Entity" className="ml-2 w-56">
@@ -284,9 +302,9 @@ function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) 
         </Select>
       </label>
 
-      {rows.loading ? <LoadingState rows={4} /> : null}
+      {rows.isPending ? <LoadingState rows={4} /> : null}
       {rows.error ? (
-        <ErrorState title="Couldn't load rows" message={rows.error.message} onRetry={rows.reload} />
+        <ErrorState title="Couldn't load rows" message={rows.error.message} onRetry={rows.refetch} />
       ) : null}
 
       {rows.data && rows.data.items.length === 0 ? (
@@ -316,23 +334,21 @@ function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) 
 }
 
 function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
-  const domains = useApiData((api) => api.listResolvedDomains(), []);
-  const [domain, setDomain] = useState(initialDomain ?? "");
+  const queryApi = useApi();
+  const domains = useQuery({ queryKey: ["listResolvedDomains"], queryFn: ({ signal }) => queryApi.listResolvedDomains({ signal }) });
+  const { params, update, page, setPage, pageSize, setPageSize } = useExplorerUrl();
+  const domain = params.get("entity") ?? initialDomain ?? "";
   const selected = domain || domains.data?.[0]?.id || "";
-  const { page, setPage, pageSize, setPageSize } = usePageState(selected);
-  const rows = useApiData(
-    (api) => (selected ? api.listResolvedRows(selected, page, pageSize) : Promise.resolve(emptyPage())),
-    [selected, page, pageSize],
-  );
+  const rows = useQuery({ queryKey: ["listResolvedRows", selected, page, pageSize], queryFn: ({ signal }) => (selected ? queryApi.listResolvedRows(selected, page, pageSize, { signal }) : Promise.resolve(emptyPage())) });
   const screen = RESOLVED_SCREENS[selected]?.href;
 
-  if (domains.loading) return <LoadingState rows={3} />;
-  if (domains.error) {
+  if (domains.isPending) return <LoadingState rows={3} />;
+  if (domains.isLoadingError) {
     return (
       <ErrorState
         title="Couldn't load domains"
         message={domains.error.message}
-        onRetry={domains.reload}
+        onRetry={domains.refetch}
       />
     );
   }
@@ -345,8 +361,7 @@ function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
           <Select
             value={selected}
             onValueChange={(v) => {
-              setDomain(v);
-              setPage(0);
+              update({ entity: v, page: "0" });
             }}
           >
             <SelectTrigger aria-label="Domain" className="ml-2 w-56">
@@ -371,9 +386,9 @@ function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
         ) : null}
       </div>
 
-      {rows.loading ? <LoadingState rows={4} /> : null}
+      {rows.isPending ? <LoadingState rows={4} /> : null}
       {rows.error ? (
-        <ErrorState title="Couldn't load rows" message={rows.error.message} onRetry={rows.reload} />
+        <ErrorState title="Couldn't load rows" message={rows.error.message} onRetry={rows.refetch} />
       ) : null}
 
       {rows.data && rows.data.items.length === 0 ? (

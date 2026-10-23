@@ -5,8 +5,9 @@ import type { SalesTrendPoint } from "@/lib/api";
 
 // Two sources share a date; summing them would double-count to $20,000.
 // The resolved trend must instead show the reconciled $12,000 (audit F01).
-vi.mock("@/lib/use-api-data", () => ({
-  useApiData: (fetcher: (api: unknown) => Promise<unknown>) => {
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@tanstack/react-query")>(),
+  useQuery: ({ queryFn: fetcher }: { queryFn: (context: unknown) => Promise<unknown> }) => {
     const src = String(fetcher);
     if (src.includes("listDailySales")) {
       return {
@@ -19,15 +20,15 @@ vi.mock("@/lib/use-api-data", () => ({
           page: 0,
           size: 10,
         },
-        loading: false,
+        isPending: false,
         error: null,
-        reload: async () => {},
+        refetch: async () => {},
       };
     }
     if (src.includes("getSalesTrend")) {
-      return { data: { points: [{ date: "2026-10-05", total: 12000 }], notices: ["Incomplete subtotal"] }, loading: false, error: null, reload: async () => {} };
+      return { data: { points: [{ date: "2026-10-05", total: 12000 }], notices: ["Incomplete subtotal"] }, isPending: false, error: null, refetch: async () => {} };
     }
-    return { data: null, loading: false, error: null, reload: async () => {} };
+    return { data: null, isPending: false, error: null, refetch: async () => {} };
   },
 }));
 
@@ -54,3 +55,5 @@ describe("SalesPage", () => {
     expect(screen.getByText("$8,000.00")).toBeInTheDocument();
   });
 });
+
+vi.mock("@/lib/demo-mode", () => ({ useApi: () => ({}), useDemoMode: () => ({ demo: true }) }));

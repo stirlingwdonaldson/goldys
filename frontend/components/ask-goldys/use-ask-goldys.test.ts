@@ -91,3 +91,25 @@ describe("useAskGoldys", () => {
     expect(second).not.toBe(first);
   });
 });
+
+it("ignores late callbacks and completion from a reset/replaced turn", async () => {
+  let finish!: () => void;
+  let oldHandlers!: Parameters<typeof streamChat>[2];
+  vi.mocked(streamChat).mockImplementationOnce((_id, _message, handlers) => {
+    oldHandlers = handlers;
+    return new Promise(resolve => { finish = resolve; });
+  }).mockImplementationOnce(() => new Promise(() => {}));
+  const { result, unmount } = renderHook(() => useAskGoldys());
+  act(() => result.current.ask("Old"));
+  act(() => result.current.reset());
+  expect(oldHandlers.signal?.aborted).toBe(true);
+  act(() => result.current.ask("New"));
+  await act(async () => { oldHandlers.onText("stale"); oldHandlers.onError("stale"); finish(); });
+  expect(result.current.summary).toBe("");
+  expect(result.current.error).toBeNull();
+  expect(result.current.working).toBe(true);
+  expect(result.current.messages).toEqual([{ role: "user", content: "New" }]);
+  const active = vi.mocked(streamChat).mock.calls.at(-1)![2].signal;
+  unmount();
+  expect(active?.aborted).toBe(true);
+});

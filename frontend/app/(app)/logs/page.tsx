@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Copy } from "lucide-react";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ConnectorStatusBadge } from "@/components/connectors/connector-status-badge";
 import { LoadingState } from "@/components/states/loading-state";
@@ -21,16 +22,17 @@ async function copy(text: string) {
 }
 
 export default function LogsPage() {
-  const connectors = useApiData((api) => api.listConnectorStatuses());
+  const queryApi = useApi();
+  const connectors = useQuery({ queryKey: ["listConnectorStatuses"], queryFn: ({ signal }) => queryApi.listConnectorStatuses({ signal }) });
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  if (connectors.loading) return <LoadingState rows={4} />;
-  if (connectors.error) {
+  if (connectors.isPending) return <LoadingState rows={4} />;
+  if (connectors.isLoadingError) {
     return (
       <ErrorState
         title="Couldn't load logs"
         message={connectors.error.message}
-        onRetry={connectors.reload}
+        onRetry={connectors.refetch}
       />
     );
   }

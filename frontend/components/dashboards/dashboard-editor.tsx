@@ -1,7 +1,8 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataQualifications } from "@/components/data-display/data-qualifications";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowLeft,
@@ -34,11 +35,9 @@ import type {
   Api,
   DashboardDocument,
   DashboardFilters,
-  DashboardRevisionSummary,
   MetricQuery,
-  RenderedWidget,
-  SavedQuerySummary,
   SavedWidget,
+  SaveDashboardInput,
   Visibility,
 } from "@/lib/api/types";
 
@@ -121,6 +120,27 @@ interface DashboardEditorProps {
   onDeleted?: () => void;
 }
 
+function editableFields(d: DashboardDocument) {
+  return { title: d.title, description: d.description ?? "", visibility: d.visibility,
+    fromDate: d.filters.dateRange?.from ?? "", toDate: d.filters.dateRange?.to ?? "", calendar: d.filters.dateRange?.calendar ?? "CALENDAR",
+    comparison: d.filters.comparison ?? NO_COMPARISON, dimensions: d.filters.dimensions, widgets: d.widgets };
+}
+
+function useDirtyDashboardGuard(dirty: boolean) {
+  useEffect(() => {
+    if (!dirty) return;
+    const unload = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    const navigate = (event: MouseEvent) => {
+      const link = (event.target as Element).closest?.("a[href]");
+      if (!link || event.defaultPrevented || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      if (!window.confirm("Discard unsaved dashboard changes?")) { event.preventDefault(); event.stopPropagation(); }
+    };
+    window.addEventListener("beforeunload", unload);
+    document.addEventListener("click", navigate, true);
+    return () => { window.removeEventListener("beforeunload", unload); document.removeEventListener("click", navigate, true); };
+  }, [dirty]);
+}
+
 /**
  * The dashboard editor: a form over the persisted {@link DashboardDocument} (title/description/
  * filters/visibility), a widget list with add/remove/duplicate/reorder/resize, a live render
@@ -129,8 +149,16 @@ interface DashboardEditorProps {
  */
 export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDeleted }: DashboardEditorProps) {
   const [doc, setDoc] = useState<DashboardDocument | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const update = useMutation({ mutationFn: (input: SaveDashboardInput) => api.updateDashboard(dashboardId, input) });
+  const remove = useMutation({ mutationFn: () => api.deleteDashboard(dashboardId) });
+  const restoreRevision = useMutation({ mutationFn: (revision: number) => api.restoreDashboardRevision(dashboardId, revision) });
+  const detail = useQuery({ queryKey: ["getDashboard", dashboardId], queryFn: ({ signal }) => api.getDashboard(dashboardId, { signal }) });
+  const preview = useQuery({ queryKey: ["renderDashboard", dashboardId], queryFn: ({ signal }) => api.renderDashboard(dashboardId, { signal }) });
+  const queryList = useQuery({ queryKey: ["listSavedQueries"], queryFn: ({ signal }) => api.listSavedQueries({ signal }) });
+  const history = useQuery({ queryKey: ["listDashboardRevisions", dashboardId], queryFn: ({ signal }) => api.listDashboardRevisions(dashboardId, { signal }), enabled: false });
+  const baseline = useRef("");
+  const loadedId = useRef<string | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -142,74 +170,44 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
   const [dimensions, setDimensions] = useState<string[]>([]);
   const [widgets, setWidgets] = useState<SavedWidget[]>([]);
 
-  const [rendered, setRendered] = useState<RenderedWidget[] | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [renderTick, setRenderTick] = useState(0);
-
-  const [saving, setSaving] = useState(false);
-  const [savedQueries, setSavedQueries] = useState<SavedQuerySummary[]>([]);
+  const rendered = preview.data ?? null;
+  const previewLoading = preview.isPending;
+  const savedQueries = queryList.data ?? [];
   const [queryToAdd, setQueryToAdd] = useState("");
-
-  useEffect(() => {
-    api.listSavedQueries().then(setSavedQueries).catch(() => setSavedQueries([]));
-  }, [api]);
+  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
-  const [revisions, setRevisions] = useState<DashboardRevisionSummary[] | null>(null);
+  const revisions = history.data ?? null;
   const [revisionsOpen, setRevisionsOpen] = useState(false);
 
   function applyDocument(d: DashboardDocument) {
+    const fields = editableFields(d);
     setDoc(d);
-    setTitle(d.title);
-    setDescription(d.description ?? "");
-    setVisibility(d.visibility);
-    setFromDate(d.filters.dateRange?.from ?? "");
-    setToDate(d.filters.dateRange?.to ?? "");
-    setCalendar(d.filters.dateRange?.calendar ?? "CALENDAR");
-    setComparison(d.filters.comparison ?? NO_COMPARISON);
-    setDimensions(d.filters.dimensions ?? []);
-    setWidgets(d.widgets);
+    setTitle(fields.title);
+    setDescription(fields.description);
+    setVisibility(fields.visibility);
+    setFromDate(fields.fromDate);
+    setToDate(fields.toDate);
+    setCalendar(fields.calendar);
+    setComparison(fields.comparison);
+    setDimensions(fields.dimensions);
+    setWidgets(fields.widgets);
+    baseline.current = JSON.stringify(fields);
   }
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setLoadError(null);
-    api
-      .getDashboard(dashboardId)
-      .then((d) => {
-        if (!cancelled) applyDocument(d);
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError("Couldn't load this dashboard.");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [api, dashboardId]);
+    if (detail.data && loadedId.current !== dashboardId) {
+      loadedId.current = dashboardId;
+      applyDocument(detail.data);
+    }
+  }, [detail.data, dashboardId]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setPreviewLoading(true);
-    api
-      .renderDashboard(dashboardId)
-      .then((r) => {
-        if (!cancelled) setRendered(r);
-      })
-      .catch(() => {
-        if (!cancelled) setRendered(null);
-      })
-      .finally(() => {
-        if (!cancelled) setPreviewLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [api, dashboardId, renderTick]);
+  const edits = JSON.stringify({ title, description, visibility, fromDate, toDate, calendar, comparison, dimensions, widgets });
+  const latestEdits = useRef(edits);
+  latestEdits.current = edits;
+  const dirty = baseline.current !== "" && edits !== baseline.current;
+  useDirtyDashboardGuard(dirty);
 
   const layoutByWidgetId = new Map(widgets.map((w) => [w.id, w.layout]));
 
@@ -223,11 +221,13 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
   }
 
   async function save() {
+    if (saving) return;
+    const submitted = latestEdits.current;
     setSaving(true);
     setSaveError(null);
     setSavedAt(null);
     try {
-      const updated = await api.updateDashboard(dashboardId, {
+      const updated = await update.mutateAsync({
         title,
         description: description || null,
         layout: "grid",
@@ -235,9 +235,11 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
         visibility,
         widgets,
       });
-      applyDocument(updated);
+      if (latestEdits.current === submitted) applyDocument(updated);
+      else { setDoc(updated); baseline.current = submitted; }
+      queryClient.setQueryData(["getDashboard", dashboardId], updated);
       setSavedAt(new Date().toISOString());
-      setRenderTick((t) => t + 1);
+      void queryClient.invalidateQueries({ queryKey: ["renderDashboard", dashboardId] });
       onChanged?.(updated);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Couldn't save the dashboard.");
@@ -247,28 +249,30 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
   }
 
   async function deleteDashboard() {
-    await api.deleteDashboard(dashboardId);
-    onDeleted?.();
+    if (saving || !window.confirm("Delete this dashboard? This cannot be undone.")) return;
+    setSaving(true);
+    setSaveError(null);
+    try { await remove.mutateAsync(); onDeleted?.(); }
+    catch (error) { setSaveError(error instanceof Error ? error.message : "Couldn't delete the dashboard."); }
+    finally { setSaving(false); }
   }
 
-  async function openRevisions() {
-    setRevisionsOpen((open) => {
-      const next = !open;
-      if (next) {
-        setRevisions(null);
-        api.listDashboardRevisions(dashboardId).then(setRevisions).catch(() => setRevisions([]));
-      }
-      return next;
-    });
+  function openRevisions() {
+    setRevisionsOpen(!revisionsOpen);
+    if (!revisionsOpen) void history.refetch();
   }
 
   async function restore(revision: number) {
+    if (saving || !window.confirm(dirty ? "Discard your unsaved changes and restore this revision?" : "Restore this revision?")) return;
+    const submitted = latestEdits.current;
     setSaving(true);
     setSaveError(null);
     try {
-      const restored = await api.restoreDashboardRevision(dashboardId, revision);
-      applyDocument(restored);
-      setRenderTick((t) => t + 1);
+      const restored = await restoreRevision.mutateAsync(revision);
+      if (latestEdits.current === submitted) applyDocument(restored);
+      else { setDoc(restored); baseline.current = submitted; }
+      queryClient.setQueryData(["getDashboard", dashboardId], restored);
+      void queryClient.invalidateQueries({ queryKey: ["renderDashboard", dashboardId] });
       onChanged?.(restored);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Couldn't restore that revision.");
@@ -334,26 +338,15 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
     );
   }
 
-  if (loading) return <LoadingState rows={3} />;
-  if (loadError) {
-    return (
-      <ErrorState
-        title="Couldn't load dashboard"
-        message={loadError}
-        onRetry={() => {
-          setLoading(true);
-          api.getDashboard(dashboardId).then(applyDocument).catch(() => setLoadError(loadError)).finally(() => setLoading(false));
-        }}
-      />
-    );
-  }
+  if (detail.isPending) return <LoadingState rows={3} />;
+  if (detail.isLoadingError) return <ErrorState title="Couldn't load dashboard" message={detail.error.message} onRetry={() => { void detail.refetch(); }} />;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {onClose ? (
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={() => { if (!dirty || window.confirm("Discard unsaved dashboard changes?")) onClose?.(); }}>
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Library
             </Button>
@@ -366,7 +359,7 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
             Revisions
           </Button>
           {onDeleted ? (
-            <Button variant="outline" size="sm" onClick={deleteDashboard}>
+            <Button variant="outline" size="sm" onClick={deleteDashboard} disabled={saving}>
               <Trash2 className="h-4 w-4" aria-hidden="true" />
               Delete
             </Button>
@@ -378,6 +371,9 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
         </div>
       </div>
 
+      {preview.error ? <ErrorState title="Preview unavailable" message={preview.error.message} onRetry={() => { void preview.refetch(); }} /> : null}
+      {history.error ? <ErrorState title="Revision history unavailable" message={history.error.message} onRetry={() => { void history.refetch(); }} /> : null}
+      {queryList.error ? <ErrorState title="Saved queries unavailable" message={queryList.error.message} onRetry={() => { void queryList.refetch(); }} /> : null}
       {saveError ? (
         <div role="alert" className="rounded-md border border-destructive bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {saveError}
@@ -613,7 +609,7 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
                       {r.createdBy} · {r.createdAt}
                     </span>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => restore(r.revision)}>
+                  <Button variant="outline" size="sm" onClick={() => restore(r.revision)} disabled={saving}>
                     <RotateCcw className="h-4 w-4" aria-hidden="true" />
                     Restore
                   </Button>

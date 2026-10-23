@@ -29,7 +29,17 @@ class GetRecipeIngredientsToolTest {
     assertThat(widget.columns())
         .extracting(c -> c.key())
         .containsExactly(
-            "recipe", "ingredient", "qty", "unit", "cost", "supplier", "is_sub_recipe");
+            "recipe",
+            "ingredient",
+            "qty",
+            "unit",
+            "cost",
+            "supplier",
+            "stock_unit",
+            "usable",
+            "wastage",
+            "broken_link",
+            "is_sub_recipe");
     assertThat(widget.rows()).hasSize(1);
     Map<String, Object> row = widget.rows().get(0);
     assertThat(row.get("recipe")).isEqualTo("Cheese Burger");
@@ -79,6 +89,10 @@ class GetRecipeIngredientsToolTest {
         "grams",
         new BigDecimal("6.00"),
         new BigDecimal("2.00"),
-        "Acme");
+        "Acme",
+        null,
+        null,
+        null,
+        null);
   }
 }

@@ -51,6 +51,10 @@ public class RecipeIngredientProjector {
         v.costPerQty(),
         v.costPerUnit(),
         v.supplierName(),
-        now);
+        now,
+        v.stockUomShortname(),
+        v.stockUsable(),
+        v.stockWastage(),
+        v.isBrokenLink());
   }
 }

@@ -12,7 +12,7 @@ import { LoadingState } from "@/components/states/loading-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApi } from "@/lib/demo-mode";
 import { DataQualifications } from "@/components/data-display/data-qualifications";
-import { useApiData } from "@/lib/use-api-data";
+import { useQuery } from "@tanstack/react-query";
 import { formatDateTime, formatDay, formatNumber } from "@/lib/format";
 import { ForecastVsBaselineChart } from "@/components/forecasting/forecast-vs-baseline-chart";
 import { FoodBevSplitChart } from "@/components/forecasting/food-bev-split-chart";
@@ -293,9 +293,10 @@ function ComparisonTable({ points }: { points: ComparisonPoint[] }) {
 }
 
 export default function ForecastingPage() {
+  const queryApi = useApi();
   const api = useApi();
-  const metricsQuery = useApiData((a) => a.listForecastMetrics());
-  const runsQuery = useApiData((a) => a.listForecastRuns());
+  const metricsQuery = useQuery({ queryKey: ["listForecastMetrics"], queryFn: ({ signal }) => queryApi.listForecastMetrics({ signal }) });
+  const runsQuery = useQuery({ queryKey: ["listForecastRuns"], queryFn: ({ signal }) => queryApi.listForecastRuns({ signal }) });
 
   const [tab, setTab] = useState<Tab>("forecast");
   const [horizon, setHorizon] = useState<number>(7);
@@ -330,7 +331,7 @@ export default function ForecastingPage() {
           void pollRun(id);
         }, 2000);
       } else {
-        void runsQuery.reload();
+        void runsQuery.refetch();
       }
     } catch {
       // The run stays at its last known status; a later refresh of the runs list recovers it.
@@ -353,7 +354,7 @@ export default function ForecastingPage() {
       if (run.status === "QUEUED" || run.status === "RUNNING") {
         void pollRun(run.id);
       } else {
-        void runsQuery.reload();
+        void runsQuery.refetch();
       }
     } catch (e) {
       setCreateError(e instanceof Error ? e.message : "Couldn't start the forecast.");
@@ -387,14 +388,14 @@ export default function ForecastingPage() {
     }
   }
 
-  if (metricsQuery.loading) return <LoadingState rows={3} />;
-  if (metricsQuery.error) {
+  if (metricsQuery.isPending) return <LoadingState rows={3} />;
+  if (metricsQuery.isLoadingError) {
     return (
       <ErrorState
         title="Couldn't load forecast metrics"
         message={metricsQuery.error.message}
         correlationId={metricsQuery.error.correlationId}
-        onRetry={metricsQuery.reload}
+        onRetry={metricsQuery.refetch}
       />
     );
   }
@@ -689,7 +690,7 @@ export default function ForecastingPage() {
                 <CardDescription>Recent forecast runs and their status.</CardDescription>
               </CardHeader>
               <CardContent>
-                {runsQuery.loading ? (
+                {runsQuery.isPending ? (
                   <p className="text-sm text-muted-foreground">Loading runs…</p>
                 ) : runs.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No runs yet.</p>

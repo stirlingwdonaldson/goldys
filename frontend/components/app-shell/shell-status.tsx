@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import type { ConnectorStatus } from "@/lib/api";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * App-wide status shown in the chrome on every page (heuristic 1): how many
@@ -26,25 +27,17 @@ export function useShellStatus(): ShellStatus {
 }
 
 export function ShellStatusProvider({ children }: { children: ReactNode }) {
-  const summary = useApiData((api) => api.getDashboardSummary());
-  const connectors = useApiData((api) => api.listConnectorStatuses());
-  const reloadSummary = summary.reload;
-  const reloadConnectors = connectors.reload;
-
-  useEffect(() => {
-    const onFocus = () => {
-      reloadSummary();
-      reloadConnectors();
-    };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [reloadSummary, reloadConnectors]);
+  const queryApi = useApi();
+  const summary = useQuery({ queryKey: ["getDashboardSummary"], queryFn: ({ signal }) => queryApi.getDashboardSummary({ signal }) });
+  const connectors = useQuery({ queryKey: ["listConnectorStatuses"], queryFn: ({ signal }) => queryApi.listConnectorStatuses({ signal }) });
+  const reloadSummary = summary.refetch;
+  const reloadConnectors = connectors.refetch;
 
   const value: ShellStatus = {
     // Permission errors or outages leave these null; the chrome then shows nothing
     // rather than a misleading zero.
     openConflicts: summary.data?.openConflicts ?? null,
-    connectors: connectors.data,
+    connectors: connectors.data ?? null,
     refresh: () => {
       reloadSummary();
       reloadConnectors();

@@ -40,6 +40,10 @@ class RecipeIngredientProjectorTest {
     assertThat(main.isSubRecipe()).isFalse();
     assertThat(main.stockDescription()).isEqualTo("Brioche bun");
     assertThat(main.portionWeight()).isEqualByComparingTo("1.0000");
+    assertThat(main.stockUomShortname()).isEqualTo("kg");
+    assertThat(main.stockUsable()).isEqualByComparingTo("0");
+    assertThat(main.stockWastage()).isNull();
+    assertThat(main.isBrokenLink()).isTrue();
 
     ResolvedRecipeIngredient sub = rows.get(1);
     assertThat(sub.lineRecipeId()).isEqualTo(900);
@@ -88,6 +92,10 @@ class RecipeIngredientProjectorTest {
         "grams",
         new BigDecimal("6.00"),
         new BigDecimal("2.00"),
-        "Acme");
+        "Acme",
+        "kg",
+        BigDecimal.ZERO,
+        null,
+        true);
   }
 }

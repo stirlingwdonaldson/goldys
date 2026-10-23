@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { FlowCanvas } from "@/components/flow/flow-canvas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PermissionDenied } from "@/components/states/permission-denied";
@@ -20,10 +21,11 @@ interface ProvenanceViewProps {
 
 /** Fetches and draws one metric/date's provenance: the node graph plus its raw-record evidence. */
 export function ProvenanceView({ metricId, metricLabel, date }: ProvenanceViewProps) {
-  const result = useApiData((api) => api.getProvenance(metricId, date), [metricId, date]);
+  const queryApi = useApi();
+  const result = useQuery({ queryKey: ["getProvenance", metricId, date], queryFn: ({ signal }) => queryApi.getProvenance(metricId, date, { signal }) });
 
-  if (result.loading) return <Skeleton className="h-[280px] w-full" />;
-  if (result.error) {
+  if (result.isPending) return <Skeleton className="h-[280px] w-full" />;
+  if (result.isLoadingError) {
     if (result.error.code === "NOT_PERMITTED") return <PermissionDenied subject="this figure's sources" />;
     return (
       <p role="alert" className="text-sm text-destructive">

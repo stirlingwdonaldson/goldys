@@ -2,7 +2,8 @@
 
 import { useCurrentUser } from "@/components/app-shell/current-user-provider";
 import { StaffPageView } from "@/components/staff/staff-page-view";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 
 /** The 30 days ending today, as local calendar dates. */
 function last30Days(): { from: string; to: string } {
@@ -12,8 +13,9 @@ function last30Days(): { from: string; to: string } {
 }
 
 export default function StaffPage() {
+  const queryApi = useApi();
   const { user } = useCurrentUser();
   const { from, to } = last30Days();
-  const labour = useApiData((api) => api.getLabourSummary(from, to), [from, to]);
-  return <StaffPageView seniority={user?.seniority} labour={labour} />;
+  const labour = useQuery({ queryKey: ["getLabourSummary", from, to], queryFn: ({ signal }) => queryApi.getLabourSummary(from, to, { signal }) });
+  return <StaffPageView seniority={user?.seniority} labour={{ data: labour.data ?? null, loading: labour.isPending, error: labour.error, reload: () => { void labour.refetch(); } }} />;
 }

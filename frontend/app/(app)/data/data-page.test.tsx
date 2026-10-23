@@ -2,9 +2,17 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import DataPage from "./page";
 
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(),
-}));
+vi.mock("next/navigation", async () => {
+  const { useSyncExternalStore } = await import("react");
+  return {
+    usePathname: () => "/data",
+    useSearchParams: () => new URLSearchParams(useSyncExternalStore(
+      (listener) => { window.addEventListener("popstate", listener); return () => window.removeEventListener("popstate", listener); },
+      () => window.location.search,
+    )),
+    useRouter: () => ({ push: (url: string) => { window.history.pushState(null, "", url); window.dispatchEvent(new PopStateEvent("popstate")); } }),
+  };
+});
 
 const rawSummary = {
   id: "raw-1",
@@ -18,23 +26,24 @@ const rawSummary = {
   sha256: "0".repeat(64),
 };
 
-vi.mock("@/lib/use-api-data", () => ({
-  useApiData: (fetcher: (api: unknown) => Promise<unknown>) => {
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@tanstack/react-query")>(),
+  useQuery: ({ queryFn: fetcher }: { queryFn: (context: unknown) => Promise<unknown> }) => {
     const src = String(fetcher);
     if (src.includes("listRawRecords")) {
       return {
         data: { items: [rawSummary], total: 1, page: 0, size: 50 },
-        loading: false,
+        isPending: false,
         error: null,
-        reload: async () => {},
+        refetch: async () => {},
       };
     }
     if (src.includes("getRawRecord")) {
       return {
         data: { summary: rawSummary, payload: '{"a":1}', isJson: true, sha256: "0".repeat(64) },
-        loading: false,
+        isPending: false,
         error: null,
-        reload: async () => {},
+        refetch: async () => {},
       };
     }
     if (src.includes("listCanonicalEntities")) {
@@ -43,9 +52,9 @@ vi.mock("@/lib/use-api-data", () => ({
           { id: "daily_sales", label: "Daily sales", placeholder: false },
           { id: "shift", label: "Shifts", placeholder: true },
         ],
-        loading: false,
+        isPending: false,
         error: null,
-        reload: async () => {},
+        refetch: async () => {},
       };
     }
     if (src.includes("listCanonicalRows")) {
@@ -56,17 +65,17 @@ vi.mock("@/lib/use-api-data", () => ({
           page: 0,
           size: 50,
         },
-        loading: false,
+        isPending: false,
         error: null,
-        reload: async () => {},
+        refetch: async () => {},
       };
     }
     if (src.includes("listResolvedDomains")) {
       return {
         data: [{ id: "resolved_daily_sales", label: "Daily sales", placeholder: false }],
-        loading: false,
+        isPending: false,
         error: null,
-        reload: async () => {},
+        refetch: async () => {},
       };
     }
     if (src.includes("listResolvedRows")) {
@@ -77,12 +86,12 @@ vi.mock("@/lib/use-api-data", () => ({
           page: 0,
           size: 50,
         },
-        loading: false,
+        isPending: false,
         error: null,
-        reload: async () => {},
+        refetch: async () => {},
       };
     }
-    return { data: null, loading: false, error: null, reload: async () => {} };
+    return { data: null, isPending: false, error: null, refetch: async () => {} };
   },
 }));
 
@@ -98,3 +107,5 @@ describe("DataPage", () => {
     expect(screen.getByText("2026-10-05")).toBeInTheDocument();
   });
 });
+
+vi.mock("@/lib/demo-mode", () => ({ useApi: () => ({}), useDemoMode: () => ({ demo: true }) }));

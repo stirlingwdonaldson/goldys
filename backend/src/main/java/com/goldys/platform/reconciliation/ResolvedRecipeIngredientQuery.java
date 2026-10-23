@@ -35,6 +35,10 @@ public class ResolvedRecipeIngredientQuery implements RecipeIngredientMetricsQue
         i.unitOfMeasurement(),
         i.costPerQty(),
         i.costPerUnit(),
-        i.supplierName());
+        i.supplierName(),
+        i.stockUomShortname(),
+        i.stockUsable(),
+        i.stockWastage(),
+        i.isBrokenLink());
   }
 }

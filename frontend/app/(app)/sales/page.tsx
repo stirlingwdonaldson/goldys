@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components/data-table/data-table";
 import { currencyColumn, dateColumn, sourceColumn, traceColumn } from "@/components/data-table/columns";
 import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
@@ -27,19 +28,20 @@ function salesColumns(onTrace: (row: DailySales) => void): ColumnDef<DailySales>
 }
 
 export default function SalesPage() {
+  const queryApi = useApi();
   // The trend must render the reconciled/resolved daily totals, never a client-side
   // sum of competing per-source rows (audit finding F01). The per-source table below
   // stays for source comparison and pages on the server.
   const { page, setPage, pageSize, setPageSize } = usePageState("sales");
-  const sales = useApiData((api) => api.listDailySales({}, page, pageSize), [page, pageSize]);
-  const trend = useApiData((api) => api.getSalesTrend());
+  const sales = useQuery({ queryKey: ["listDailySales", {}, page, pageSize], queryFn: ({ signal }) => queryApi.listDailySales({}, page, pageSize, { signal }) });
+  const trend = useQuery({ queryKey: ["getSalesTrend", undefined, undefined], queryFn: ({ signal }) => queryApi.getSalesTrend(undefined, undefined, { signal }) });
   const [trace, setTrace] = useState<ProvenanceTarget | null>(null);
   const columns = useMemo(
     () => salesColumns((r) => setTrace({ metricId: "sales.gross", metricLabel: "Gross sales", date: r.date })),
     [],
   );
 
-  if (sales.loading || trend.loading) return <LoadingState rows={5} />;
+  if (sales.isPending || trend.isPending) return <LoadingState rows={5} />;
   const error = sales.error ?? trend.error;
   if (error) {
     return (
@@ -47,8 +49,8 @@ export default function SalesPage() {
         title="Couldn't load sales"
         message={error.message}
         onRetry={() => {
-          sales.reload();
-          trend.reload();
+          sales.refetch();
+          trend.refetch();
         }}
       />
     );

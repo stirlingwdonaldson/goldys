@@ -22,4 +22,8 @@ public record RecipeIngredient(
     String unitOfMeasurement,
     BigDecimal costPerQty,
     BigDecimal costPerUnit,
-    String supplierName) {}
+    String supplierName,
+    String stockUomShortname,
+    BigDecimal stockUsable,
+    BigDecimal stockWastage,
+    Boolean isBrokenLink) {}

@@ -1,10 +1,12 @@
 "use client";
 
+import { invalidateBusinessReads } from "@/lib/query/invalidation";
+
 import { Suspense, useCallback, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { History, Search } from "lucide-react";
 import { useApi } from "@/lib/demo-mode";
-import { useApiData } from "@/lib/use-api-data";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/components/feedback/toast";
 import { useShellStatus } from "@/components/app-shell/shell-status";
 import { PageHeader } from "@/components/layout/page-header";
@@ -39,7 +41,11 @@ type Tab = "daily" | "product";
  * or shared (heuristics 3 and 7).
  */
 function ReconciliationContent() {
+  const queryApi = useApi();
   const api = useApi();
+  const queryClient = useQueryClient();
+  const saveDaily = useMutation({ mutationFn: api.saveOverride });
+  const saveProduct = useMutation({ mutationFn: api.saveProductOverride });
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -49,14 +55,11 @@ function ReconciliationContent() {
   // Exceptions are bounded open conflicts, so one page (capped at the backend's 200) is the whole
   // set; ExceptionsList then filters and pages client-side over it. Audit, by contrast, grows
   // forever, so it pages on the server.
-  const { data: exceptions, loading, error, reload } = useApiData((a) => a.listReconciliationExceptions(0, 200));
-  const { data: productExceptions, reload: reloadProducts } = useApiData((a) => a.listProductExceptions(0, 200));
+  const { data: exceptions, isPending: loading, error, refetch: reload } = useQuery({ queryKey: ["listReconciliationExceptions", 0, 200], queryFn: ({ signal }) => queryApi.listReconciliationExceptions(0, 200, { signal }) });
+  const { data: productExceptions } = useQuery({ queryKey: ["listProductExceptions", 0, 200], queryFn: ({ signal }) => queryApi.listProductExceptions(0, 200, { signal }) });
   const { page: auditPage, setPage: setAuditPage, pageSize: auditPageSize, setPageSize: setAuditPageSize } =
     usePageState("audit");
-  const { data: audit, reload: reloadAudit } = useApiData(
-    (a) => a.listReconciliationAudit(auditPage, auditPageSize),
-    [auditPage, auditPageSize],
-  );
+  const { data: audit } = useQuery({ queryKey: ["listReconciliationAudit", auditPage, auditPageSize], queryFn: ({ signal }) => queryApi.listReconciliationAudit(auditPage, auditPageSize, { signal }) });
 
   const tab: Tab = params.get("tab") === "product" ? "product" : "daily";
   const statusParam = params.get("status");
@@ -109,9 +112,9 @@ function ReconciliationContent() {
     setSaving(true);
     try {
       if (recordId) {
-        await api.saveOverride({ recordId, field, source, reason });
+        await saveDaily.mutateAsync({ recordId, field, source, reason });
       } else if (date && product) {
-        await api.saveProductOverride({ date, product, source, reason });
+        await saveProduct.mutateAsync({ date, product, source, reason });
       }
       const subject = recordId ? label : product;
       toast({
@@ -119,7 +122,7 @@ function ReconciliationContent() {
         description: "Saved to the change history.",
         tone: "success",
       });
-      await Promise.all([reload(), reloadProducts(), reloadAudit()]);
+      await invalidateBusinessReads(queryClient);
       shell.refresh();
       closeRecord();
     } catch (e) {
@@ -134,7 +137,7 @@ function ReconciliationContent() {
   }
 
   if (loading) return <LoadingState rows={4} />;
-  if (error) {
+  if (error && !exceptions) {
     if (error.code === "NOT_PERMITTED") return <PermissionDenied subject="reconciliation data" />;
     return (
       <ErrorState
@@ -223,14 +226,14 @@ function ReconciliationContent() {
         <SheetContent side="right" className="flex flex-col gap-0 p-0 sm:max-w-md">
           {recordId ? (
             <ReconciliationDrillIn
-              fetchRecord={(a) => a.getReconciliationRecord(recordId)}
+              fetchRecord={(a, signal) => a.getReconciliationRecord(recordId, { signal })}
               deps={[recordId]}
               onSave={handleSave}
               saving={saving}
             />
           ) : date && product ? (
             <ReconciliationDrillIn
-              fetchRecord={(a) => a.getProductRecord(date, product)}
+              fetchRecord={(a, signal) => a.getProductRecord(date, product, { signal })}
               deps={[date, product]}
               onSave={handleSave}
               saving={saving}

@@ -7,7 +7,8 @@ import type { NetworkGroupSet, NetworkKind, NetworkNode } from "@/components/net
 import { InlineError } from "@/components/states/inline-error";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { buildPlatformMap, impactSummary, type PlatformMap } from "./platform-map-graph";
 
 export const PLATFORM_KINDS: { kind: NetworkKind; label: string }[] = [
@@ -62,11 +63,12 @@ interface PlatformMapViewProps {
  * affects.
  */
 export function PlatformMapView({ initialFocusId, initialLocal, height, compact }: PlatformMapViewProps) {
-  const result = useApiData((api) => api.getPlatformMap());
+  const queryApi = useApi();
+  const result = useQuery({ queryKey: ["getPlatformMap"], queryFn: ({ signal }) => queryApi.getPlatformMap({ signal }) });
   const map = useMemo(() => (result.data ? buildPlatformMap(result.data) : null), [result.data]);
 
-  if (result.loading) return <Skeleton className="w-full" style={{ height: height ?? 560 }} />;
-  if (result.error) {
+  if (result.isPending) return <Skeleton className="w-full" style={{ height: height ?? 560 }} />;
+  if (result.isLoadingError) {
     if (result.error.code === "NOT_PERMITTED") return <PermissionDenied subject="the platform map" />;
     return <InlineError>Couldn&apos;t load the platform map. {result.error.message}</InlineError>;
   }

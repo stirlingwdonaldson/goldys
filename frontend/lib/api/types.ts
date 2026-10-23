@@ -382,6 +382,10 @@ export interface RecipeIngredient {
   costPerQty: number | null;
   costPerUnit: number | null;
   supplierName: string | null;
+  stockUomShortname: string | null;
+  stockUsable: number | null;
+  stockWastage: number | null;
+  isBrokenLink: boolean | null;
 }
 
 /** One curated category in the taxonomy (mirrors backend `CategoryNode`). `groupName` is null for flat (top-level) categories. */
@@ -1216,19 +1220,19 @@ export interface ReviewFilter {
 
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
 export interface Api {
-  getDashboardBootstrap(): Promise<DashboardBootstrap>;
-  getDashboardSummary(): Promise<DashboardSummary>;
-  getDashboardActivity(from?: string, to?: string): Promise<ActivityPoint[]>;
-  listReconciliationExceptions(page: number, size: number): Promise<DataPage<ReconciliationException>>;
-  listProductExceptions(page: number, size: number): Promise<DataPage<ReconciliationException>>;
-  getReconciliationRecord(id: string): Promise<ReconciliationRecord>;
-  getProductRecord(date: string, product: string): Promise<ReconciliationRecord>;
-  listConnectorStatuses(): Promise<ConnectorStatus[]>;
+  getDashboardBootstrap(options?: { signal?: AbortSignal }): Promise<DashboardBootstrap>;
+  getDashboardSummary(options?: { signal?: AbortSignal }): Promise<DashboardSummary>;
+  getDashboardActivity(from?: string, to?: string, options?: { signal?: AbortSignal }): Promise<ActivityPoint[]>;
+  listReconciliationExceptions(page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<ReconciliationException>>;
+  listProductExceptions(page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<ReconciliationException>>;
+  getReconciliationRecord(id: string, options?: { signal?: AbortSignal }): Promise<ReconciliationRecord>;
+  getProductRecord(date: string, product: string, options?: { signal?: AbortSignal }): Promise<ReconciliationRecord>;
+  listConnectorStatuses(options?: { signal?: AbortSignal }): Promise<ConnectorStatus[]>;
   runConnector(source: string): Promise<ConnectorStatus>;
   /** Uploads a CSV drop for one connector (the OpenTable GuestCenter datasets). */
   uploadConnectorCsv(connectorName: string, file: File): Promise<void>;
   /** Fails with NOT_CONFIGURED when the assisted sync isn't enabled on this deployment. */
-  getOpenTableSession(): Promise<OpenTableSessionState>;
+  getOpenTableSession(options?: { signal?: AbortSignal }): Promise<OpenTableSessionState>;
   startOpenTableSession(mode: OpenTableSyncMode): Promise<OpenTableSessionState>;
   /** Relays one input event; events arriving after sign-in completes are dropped silently. */
   sendOpenTableInput(input: OpenTableInput): Promise<void>;
@@ -1238,95 +1242,91 @@ export interface Api {
   watchOpenTableSession(handlers: OpenTableSessionHandlers): () => void;
   saveOverride(input: SaveOverrideInput): Promise<OverrideResult>;
   saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult>;
-  listResolutionRules(): Promise<ResolutionRule[]>;
+  listResolutionRules(options?: { signal?: AbortSignal }): Promise<ResolutionRule[]>;
   saveResolutionRule(input: SaveResolutionRuleInput): Promise<ResolutionRule>;
   deleteResolutionRule(id: string): Promise<void>;
-  getRecomputeStatus(): Promise<RecomputeStatus>;
-  listRuleAudit(): Promise<RuleAuditEntry[]>;
-  listReconciliationAudit(page: number, size: number): Promise<DataPage<ReconciliationAuditEntry>>;
-  listProducts(): Promise<string[]>;
-  listDailySales(filter: SalesFilter, page: number, size: number): Promise<DataPage<DailySales>>;
-  getLatestSales(): Promise<LatestSales>;
-  getReservationSummary(date: string): Promise<ReservationSummary | undefined>;
-  getInventoryObservations(from: string, to: string, kind: "ALL" | "COUNT" | "WASTE", page: number, size: number): Promise<InventoryObservationPage>;
-  getInventoryLines(from: string, to: string): Promise<InventoryLineBreakdown>;
-  getInventorySummary(from: string, to: string): Promise<InventorySummary>;
-  getInvoiceGraphSuppliers(from: string, to: string): Promise<SupplierGraphNode[]>;
+  getRecomputeStatus(options?: { signal?: AbortSignal }): Promise<RecomputeStatus>;
+  listRuleAudit(options?: { signal?: AbortSignal }): Promise<RuleAuditEntry[]>;
+  listReconciliationAudit(page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<ReconciliationAuditEntry>>;
+  listProducts(options?: { signal?: AbortSignal }): Promise<string[]>;
+  listDailySales(filter: SalesFilter, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<DailySales>>;
+  getLatestSales(options?: { signal?: AbortSignal }): Promise<LatestSales>;
+  getReservationSummary(date: string, options?: { signal?: AbortSignal }): Promise<ReservationSummary | undefined>;
+  getInventoryObservations(from: string, to: string, kind: "ALL" | "COUNT" | "WASTE", page: number, size: number, options?: { signal?: AbortSignal }): Promise<InventoryObservationPage>;
+  getInventoryLines(from: string, to: string, options?: { signal?: AbortSignal }): Promise<InventoryLineBreakdown>;
+  getInventorySummary(from: string, to: string, options?: { signal?: AbortSignal }): Promise<InventorySummary>;
+  getInvoiceGraphSuppliers(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SupplierGraphNode[]>;
   getInvoiceGraphInvoices(
     supplier: string,
     from: string,
-    to: string,
-  ): Promise<InvoiceGraphNode[]>;
-  getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]>;
-  getInvoiceGraphInvoicesById(supplierId: string, from: string, to: string): Promise<InvoiceGraphNode[]>;
-  getInvoiceGraphLinesById(invoiceId: string): Promise<LineGraphNode[]>;
+    to: string, options?: { signal?: AbortSignal }): Promise<InvoiceGraphNode[]>;
+  getInvoiceGraphLines(invoiceNumber: string, options?: { signal?: AbortSignal }): Promise<LineGraphNode[]>;
+  getInvoiceGraphInvoicesById(supplierId: string, from: string, to: string, options?: { signal?: AbortSignal }): Promise<InvoiceGraphNode[]>;
+  getInvoiceGraphLinesById(invoiceId: string, options?: { signal?: AbortSignal }): Promise<LineGraphNode[]>;
   listInvoices(
     filter: InvoiceFilter,
     page: number,
-    size: number,
-  ): Promise<DataPage<InvoiceSummary>>;
-  getInvoice(invoiceNumber: string): Promise<InvoiceDetail>;
-  getInvoiceById(invoiceId: string): Promise<InvoiceDetail>;
-  getInvoiceDocuments(invoiceId: string): Promise<InvoiceDocument[]>;
-  listInvoiceFlags(): Promise<InvoiceIngestFlag[]>;
+    size: number, options?: { signal?: AbortSignal }): Promise<DataPage<InvoiceSummary>>;
+  getInvoice(invoiceNumber: string, options?: { signal?: AbortSignal }): Promise<InvoiceDetail>;
+  getInvoiceById(invoiceId: string, options?: { signal?: AbortSignal }): Promise<InvoiceDetail>;
+  getInvoiceDocuments(invoiceId: string, options?: { signal?: AbortSignal }): Promise<InvoiceDocument[]>;
+  listInvoiceFlags(options?: { signal?: AbortSignal }): Promise<InvoiceIngestFlag[]>;
   /** Sources → domains → metrics → dashboards; requires `connectors` READ. */
-  getPlatformMap(): Promise<NetworkGraphDto>;
-  getLabourSummary(from: string, to: string): Promise<LabourSummary>;
-  listDailyCovers(from: string, to: string): Promise<DailyCovers[]>;
-  getProvenance(metricId: string, date: string): Promise<Provenance>;
-  getTopSellers(from?: string, to?: string, limit?: number): Promise<TopSellersResult>;
-  getSalesTrend(from?: string, to?: string): Promise<SalesTrendResult>;
+  getPlatformMap(options?: { signal?: AbortSignal }): Promise<NetworkGraphDto>;
+  getLabourSummary(from: string, to: string, options?: { signal?: AbortSignal }): Promise<LabourSummary>;
+  listDailyCovers(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DailyCovers[]>;
+  getProvenance(metricId: string, date: string, options?: { signal?: AbortSignal }): Promise<Provenance>;
+  getTopSellers(from?: string, to?: string, limit?: number, options?: { signal?: AbortSignal }): Promise<TopSellersResult>;
+  getSalesTrend(from?: string, to?: string, options?: { signal?: AbortSignal }): Promise<SalesTrendResult>;
   /** Runs a bounded catalogue query and returns the raw metric result (time-series or ranked list). */
-  queryMetrics(query: MetricQuery): Promise<MetricResult>;
-  listDashboards(): Promise<SavedDashboardSummary[]>;
-  getDashboard(id: string): Promise<DashboardDocument>;
+  queryMetrics(query: MetricQuery, options?: { signal?: AbortSignal }): Promise<MetricResult>;
+  listDashboards(options?: { signal?: AbortSignal }): Promise<SavedDashboardSummary[]>;
+  getDashboard(id: string, options?: { signal?: AbortSignal }): Promise<DashboardDocument>;
   saveDashboard(input: SaveDashboardInput): Promise<DashboardDocument>;
   updateDashboard(id: string, input: SaveDashboardInput): Promise<DashboardDocument>;
   deleteDashboard(id: string): Promise<void>;
-  renderDashboard(id: string): Promise<RenderedWidget[]>;
-  listDashboardTemplates(): Promise<DashboardTemplate[]>;
+  renderDashboard(id: string, options?: { signal?: AbortSignal }): Promise<RenderedWidget[]>;
+  listDashboardTemplates(options?: { signal?: AbortSignal }): Promise<DashboardTemplate[]>;
   createDashboardFromTemplate(templateId: string): Promise<DashboardDocument>;
-  listDashboardRevisions(id: string): Promise<DashboardRevisionSummary[]>;
+  listDashboardRevisions(id: string, options?: { signal?: AbortSignal }): Promise<DashboardRevisionSummary[]>;
   restoreDashboardRevision(id: string, revision: number): Promise<DashboardDocument>;
   toggleDashboardPin(id: string): Promise<DashboardDocument>;
-  getDashboardSharing(id: string): Promise<DashboardSharing>;
+  getDashboardSharing(id: string, options?: { signal?: AbortSignal }): Promise<DashboardSharing>;
   setDashboardSharing(id: string, sharing: DashboardSharing): Promise<DashboardSharing>;
-  listThreads(): Promise<ConversationThreadSummary[]>;
-  getThread(id: string): Promise<ConversationThreadView>;
+  listThreads(options?: { signal?: AbortSignal }): Promise<ConversationThreadSummary[]>;
+  getThread(id: string, options?: { signal?: AbortSignal }): Promise<ConversationThreadView>;
   renameThread(id: string, title: string): Promise<ConversationThreadView>;
   deleteThread(id: string): Promise<void>;
   listRawRecords(
     filter: RawRecordFilter,
     page: number,
-    size: number,
-  ): Promise<DataPage<RawRecordSummary>>;
-  getRawRecord(id: string): Promise<RawRecordDetail>;
-  listCanonicalEntities(): Promise<EntityDescriptor[]>;
-  listCanonicalRows(entity: string, page: number, size: number): Promise<DataPage<GenericRow>>;
-  listResolvedDomains(): Promise<EntityDescriptor[]>;
-  listResolvedRows(domain: string, page: number, size: number): Promise<DataPage<GenericRow>>;
-  listPayments(filter: PaymentFilter, page: number, size: number): Promise<DataPage<PaymentRow>>;
+    size: number, options?: { signal?: AbortSignal }): Promise<DataPage<RawRecordSummary>>;
+  getRawRecord(id: string, options?: { signal?: AbortSignal }): Promise<RawRecordDetail>;
+  listCanonicalEntities(options?: { signal?: AbortSignal }): Promise<EntityDescriptor[]>;
+  listCanonicalRows(entity: string, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<GenericRow>>;
+  listResolvedDomains(options?: { signal?: AbortSignal }): Promise<EntityDescriptor[]>;
+  listResolvedRows(domain: string, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<GenericRow>>;
+  listPayments(filter: PaymentFilter, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<PaymentRow>>;
   listDeletedSales(
     filter: DeletedSaleFilter,
     page: number,
-    size: number,
-  ): Promise<DataPage<DeletedSaleRow>>;
-  listSaleItems(filter: SaleItemFilter, page: number, size: number): Promise<DataPage<SaleItemRow>>;
-  getPaymentMix(from: string, to: string): Promise<PaymentMix[]>;
-  getDeletedSaleTotals(from: string, to: string): Promise<DeletedSaleDay[]>;
-  getSaleItemMix(from: string, to: string): Promise<SaleItemMix[]>;
-  listForecastMetrics(): Promise<ForecastMetric[]>;
+    size: number, options?: { signal?: AbortSignal }): Promise<DataPage<DeletedSaleRow>>;
+  listSaleItems(filter: SaleItemFilter, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<SaleItemRow>>;
+  getPaymentMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<PaymentMix[]>;
+  getDeletedSaleTotals(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DeletedSaleDay[]>;
+  getSaleItemMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SaleItemMix[]>;
+  listForecastMetrics(options?: { signal?: AbortSignal }): Promise<ForecastMetric[]>;
   createForecastRun(input: CreateForecastInput): Promise<ForecastRun>;
-  listForecastRuns(): Promise<ForecastRun[]>;
-  getForecastRun(id: string): Promise<ForecastRun>;
-  getForecastComparison(id: string): Promise<ForecastComparison>;
-  getRecipes(): Promise<RecipeCosting[]>;
-  getRecipeIngredients(recipeId: number): Promise<RecipeIngredient[]>;
-  getCategoryTaxonomy(): Promise<CategoryNode[]>;
-  getCategoryDendrogram(): Promise<DendrogramNode[]>;
-  getCategoryEmbeddingSpace(): Promise<ProductPoint[]>;
+  listForecastRuns(options?: { signal?: AbortSignal }): Promise<ForecastRun[]>;
+  getForecastRun(id: string, options?: { signal?: AbortSignal }): Promise<ForecastRun>;
+  getForecastComparison(id: string, options?: { signal?: AbortSignal }): Promise<ForecastComparison>;
+  getRecipes(options?: { signal?: AbortSignal }): Promise<RecipeCosting[]>;
+  getRecipeIngredients(recipeId: number, options?: { signal?: AbortSignal }): Promise<RecipeIngredient[]>;
+  getCategoryTaxonomy(options?: { signal?: AbortSignal }): Promise<CategoryNode[]>;
+  getCategoryDendrogram(options?: { signal?: AbortSignal }): Promise<DendrogramNode[]>;
+  getCategoryEmbeddingSpace(options?: { signal?: AbortSignal }): Promise<ProductPoint[]>;
   /** Omit `status` (or pass null/undefined) for all assignments; never pass an empty string. */
-  getCategoryAssignments(status?: string): Promise<AssignmentRow[]>;
+  getCategoryAssignments(status?: string, options?: { signal?: AbortSignal }): Promise<AssignmentRow[]>;
   createCategory(input: CreateCategoryInput): Promise<CategoryNode>;
   /** Renames and/or regroups a category; a null field is left unchanged. */
   renameCategory(id: string, input: UpdateCategoryInput): Promise<void>;
@@ -1337,35 +1337,35 @@ export interface Api {
   /** Submits an asynchronous categorisation run; accepted (202) immediately. */
   runClassification(kind: ClassificationRunKind): Promise<void>;
   /** Recent classification runs, newest first. */
-  listClassificationRuns(): Promise<ClassificationRun[]>;
-  getReviewOverview(from: string, to: string): Promise<ReviewOverview>;
-  getReviewSentimentTrend(from: string, to: string): Promise<SentimentBucket[]>;
-  getReviewRatingTrend(from: string, to: string): Promise<RatingTrendBucket[]>;
-  getReviewAspects(from: string, to: string): Promise<AspectSentimentSummary[]>;
-  getReviewRatings(from: string, to: string): Promise<RatingBucket[]>;
-  getReviewSources(from: string, to: string): Promise<SourceSummary[]>;
-  getReviews(filter: ReviewFilter): Promise<ReviewView[]>;
+  listClassificationRuns(options?: { signal?: AbortSignal }): Promise<ClassificationRun[]>;
+  getReviewOverview(from: string, to: string, options?: { signal?: AbortSignal }): Promise<ReviewOverview>;
+  getReviewSentimentTrend(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SentimentBucket[]>;
+  getReviewRatingTrend(from: string, to: string, options?: { signal?: AbortSignal }): Promise<RatingTrendBucket[]>;
+  getReviewAspects(from: string, to: string, options?: { signal?: AbortSignal }): Promise<AspectSentimentSummary[]>;
+  getReviewRatings(from: string, to: string, options?: { signal?: AbortSignal }): Promise<RatingBucket[]>;
+  getReviewSources(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SourceSummary[]>;
+  getReviews(filter: ReviewFilter, options?: { signal?: AbortSignal }): Promise<ReviewView[]>;
 
   /** The datasets the relational query backend exposes (authorized; unauthorized ones are hidden). */
-  listQueryDatasets(): Promise<QueryDataset[]>;
+  listQueryDatasets(options?: { signal?: AbortSignal }): Promise<QueryDataset[]>;
   /** A dataset's fields (denied explicitly when the role cannot read the dataset). */
-  listQueryFields(dataset: string): Promise<QueryField[]>;
+  listQueryFields(dataset: string, options?: { signal?: AbortSignal }): Promise<QueryField[]>;
   /** The relationships the role may join. */
-  listQueryRelationships(): Promise<QueryRelationship[]>;
+  listQueryRelationships(options?: { signal?: AbortSignal }): Promise<QueryRelationship[]>;
   /** Runs a validated, parameterised query plan and returns typed rows + schema metadata. */
   runQuery(plan: QueryPlan): Promise<QueryResult>;
-  listSavedQueries(): Promise<SavedQuerySummary[]>;
-  getSavedQuery(id: string): Promise<SavedQueryDetail>;
+  listSavedQueries(options?: { signal?: AbortSignal }): Promise<SavedQuerySummary[]>;
+  getSavedQuery(id: string, options?: { signal?: AbortSignal }): Promise<SavedQueryDetail>;
   createSavedQuery(input: SaveQueryInput): Promise<SavedQueryDetail>;
   updateSavedQuery(id: string, input: SaveQueryInput): Promise<SavedQueryDetail>;
   deleteSavedQuery(id: string): Promise<void>;
-  listSavedQueryRevisions(id: string): Promise<SavedQueryRevision[]>;
+  listSavedQueryRevisions(id: string, options?: { signal?: AbortSignal }): Promise<SavedQueryRevision[]>;
   restoreSavedQuery(id: string, revision: number): Promise<SavedQueryDetail>;
   /** Re-validates and re-authorizes a saved query, then runs it read-only. */
   runSavedQuery(id: string): Promise<QueryResult>;
 
   /** The pending taxonomy draft, in display order. */
-  getCategorySuggestions(): Promise<CategorySuggestion[]>;
+  getCategorySuggestions(options?: { signal?: AbortSignal }): Promise<CategorySuggestion[]>;
   addCategorySuggestion(input: { name: string; groupName?: string | null }): Promise<CategorySuggestion>;
   /** Renames and/or regroups a suggestion; a null field is left unchanged. */
   updateCategorySuggestion(

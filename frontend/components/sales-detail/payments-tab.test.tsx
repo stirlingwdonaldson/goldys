@@ -85,7 +85,7 @@ describe("PaymentsTab", () => {
 
     expect(await screen.findByText("SALE-1001")).toBeInTheDocument();
     expect(screen.getByText("Payment mix")).toBeInTheDocument();
-    expect(screen.getByText("SALE-1002")).toBeInTheDocument();
+    expect(await screen.findByText("SALE-1002")).toBeInTheDocument();
     expect(screen.getByText("Main Bar")).toBeInTheDocument();
     expect(screen.getByText("Stirling Donaldson")).toBeInTheDocument();
 
@@ -111,7 +111,7 @@ describe("PaymentsTab", () => {
     fireEvent.click(await screen.findByRole("option", { name: "Visa" }));
 
     await waitFor(() => expect(screen.queryByText("SALE-1001")).not.toBeInTheDocument());
-    expect(screen.getByText("SALE-1002")).toBeInTheDocument();
+    expect(await screen.findByText("SALE-1002")).toBeInTheDocument();
   });
 
   it("calls onViewSale with the row's sale number", async () => {
@@ -152,7 +152,7 @@ describe("PaymentsTab", () => {
     await screen.findByText("SALE-0");
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
     await waitFor(() =>
-      expect(listPayments).toHaveBeenLastCalledWith(expect.anything(), 1, expect.anything()),
+      expect(listPayments).toHaveBeenLastCalledWith(expect.anything(), 1, expect.anything(), expect.objectContaining({ signal: expect.any(AbortSignal) })),
     );
 
     // A new range must return to the first page rather than keep the stale page index.
@@ -162,7 +162,7 @@ describe("PaymentsTab", () => {
       </DemoModeProvider>,
     );
     await waitFor(() =>
-      expect(listPayments).toHaveBeenLastCalledWith(expect.anything(), 0, expect.anything()),
+      expect(listPayments).toHaveBeenLastCalledWith(expect.anything(), 0, expect.anything(), expect.objectContaining({ signal: expect.any(AbortSignal) })),
     );
   });
 

@@ -15,7 +15,8 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import type { Api } from "@/lib/api";
 import type { PaymentRow } from "@/lib/api/types";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { buildPaymentMixWidget } from "./payment-mix-chart";
 
 interface PaymentsTabProps {
@@ -82,15 +83,12 @@ function paymentColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<Pa
  * server-side, always scoped by the shared date range.
  */
 export function PaymentsTab({ from, to, onViewSale, apiOverride }: PaymentsTabProps) {
+  const queryApi = useApi();
   const { page, setPage, pageSize, setPageSize } = usePageState(`${from}|${to}`);
   const [paymentType, setPaymentType] = useState("");
 
-  const mix = useApiData((api) => api.getPaymentMix(from, to), [from, to], apiOverride);
-  const rows = useApiData(
-    (api) => api.listPayments({ from, to, paymentType }, page, pageSize),
-    [from, to, paymentType, page, pageSize],
-    apiOverride,
-  );
+  const mix = useQuery({ queryKey: ["getPaymentMix", from, to], queryFn: ({ signal }) => (apiOverride ?? queryApi).getPaymentMix(from, to, { signal }) });
+  const rows = useQuery({ queryKey: ["listPayments", { from, to, paymentType }, page, pageSize], queryFn: ({ signal }) => (apiOverride ?? queryApi).listPayments({ from, to, paymentType }, page, pageSize, { signal }) });
 
 
   // The dropdown offers exactly the tender types present in the resolved mix.
@@ -112,12 +110,12 @@ export function PaymentsTab({ from, to, onViewSale, apiOverride }: PaymentsTabPr
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        {mix.loading ? <LoadingState rows={2} /> : null}
+        {mix.isPending ? <LoadingState rows={2} /> : null}
         {mix.error ? (
           <ErrorState
             title="Couldn't load the payment mix"
             message={mix.error.message}
-            onRetry={mix.reload}
+            onRetry={mix.refetch}
           />
         ) : null}
         {mix.data ? <WidgetRenderer widget={buildPaymentMixWidget(mix.data)} /> : null}
@@ -147,12 +145,12 @@ export function PaymentsTab({ from, to, onViewSale, apiOverride }: PaymentsTabPr
           </Select>
         </div>
 
-        {rows.loading ? <LoadingState rows={4} /> : null}
+        {rows.isPending ? <LoadingState rows={4} /> : null}
         {rows.error ? (
           <ErrorState
             title="Couldn't load payments"
             message={rows.error.message}
-            onRetry={rows.reload}
+            onRetry={rows.refetch}
           />
         ) : null}
 

@@ -1,8 +1,10 @@
 "use client";
 
+import { invalidateBusinessReads } from "@/lib/query/invalidation";
+
 import { useState } from "react";
 import { useApi, useDemoMode } from "@/lib/demo-mode";
-import { useApiData } from "@/lib/use-api-data";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { buildKnownFields, buildRuleRows, entityLabel, fieldLabel, summarizeRule } from "@/lib/rule-logic";
 import { useToast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
@@ -57,12 +59,16 @@ function RulesApplyHelp() {
  * live mode.
  */
 export function ResolutionRulesContent() {
+  const queryApi = useApi();
   const api = useApi();
+  const queryClient = useQueryClient();
+  const saveRule = useMutation({ mutationFn: api.saveResolutionRule });
+  const deleteRule = useMutation({ mutationFn: api.deleteResolutionRule });
   const { demo } = useDemoMode();
-  const { data: rules, loading, error, reload } = useApiData((api) => api.listResolutionRules());
-  const { data: status, reload: reloadStatus } = useApiData((api) => api.getRecomputeStatus());
-  const { data: audit, reload: reloadAudit } = useApiData((api) => api.listRuleAudit());
-  const { data: products } = useApiData((api) => api.listProducts());
+  const { data: rules, isPending: loading, error, refetch: reload } = useQuery({ queryKey: ["listResolutionRules"], queryFn: ({ signal }) => queryApi.listResolutionRules({ signal }) });
+  const { data: status } = useQuery({ queryKey: ["getRecomputeStatus"], queryFn: ({ signal }) => queryApi.getRecomputeStatus({ signal }) });
+  const { data: audit } = useQuery({ queryKey: ["listRuleAudit"], queryFn: ({ signal }) => queryApi.listRuleAudit({ signal }) });
+  const { data: products } = useQuery({ queryKey: ["listProducts"], queryFn: ({ signal }) => queryApi.listProducts({ signal }) });
 
   const [editing, setEditing] = useState<ResolutionRule | null>(null);
   const [creating, setCreating] = useState(false);
@@ -75,14 +81,14 @@ export function ResolutionRulesContent() {
     if (!deleting) return;
     setDeleteBusy(true);
     try {
-      await api.deleteResolutionRule(deleting.id);
+      await deleteRule.mutateAsync(deleting.id);
       toast({
         title: "Rule deleted",
         description: `${entityLabel(deleting.entityType)} · ${fieldLabel(deleting.entityType, deleting.fieldKey)}`,
         tone: "success",
       });
       setDeleting(null);
-      await Promise.all([reload(), reloadStatus(), reloadAudit()]);
+      await invalidateBusinessReads(queryClient);
     } catch (e) {
       toast({
         title: "Couldn't delete the rule",
@@ -95,7 +101,7 @@ export function ResolutionRulesContent() {
   }
 
   if (loading) return <LoadingState rows={4} />;
-  if (error) {
+  if (error && !rules) {
     return (
       <ErrorState
         title="Couldn't load resolution rules"
@@ -161,10 +167,10 @@ export function ResolutionRulesContent() {
         fieldsByEntity={knownFields}
         demo={demo}
         onSave={async (input) => {
-          await api.saveResolutionRule(input);
+          await saveRule.mutateAsync(input);
           setCreating(false);
           setEditing(null);
-          await Promise.all([reload(), reloadStatus(), reloadAudit()]);
+          await invalidateBusinessReads(queryClient);
         }}
         onCancel={() => {
           setCreating(false);

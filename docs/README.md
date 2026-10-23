@@ -75,6 +75,8 @@ consequences, status).
 
 ### Audits
 
+- [Current audit reconciliation](audits/outstanding-status-2026-10-23.md): merged fixes, this branch’s changes, evidence limits and blocked requirements.
+
 - [audits/production-data/](audits/production-data/README.md): read-only audit of the
   production database (2026-10-09): coverage, integrity, information loss, and
   prioritised remediation.

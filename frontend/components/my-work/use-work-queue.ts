@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Api } from "@/lib/api";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "@/components/app-shell/current-user-provider";
 import { buildWorkQueue, defaultFocus, type Focus, type WorkItem } from "@/lib/work-queue";
 
@@ -17,13 +18,13 @@ export interface WorkQueueResult {
  * who can't read invoice flags still gets their reconciliation decisions, and the page
  * says which part is missing instead of failing outright.
  */
-export async function loadWorkQueue(api: Api): Promise<WorkQueueResult> {
+export async function loadWorkQueue(api: Api, signal?: AbortSignal): Promise<WorkQueueResult> {
   const [daily, product, connectors, flags, recompute] = await Promise.allSettled([
-    api.listReconciliationExceptions(0, 200),
-    api.listProductExceptions(0, 200),
-    api.listConnectorStatuses(),
-    api.listInvoiceFlags(),
-    api.getRecomputeStatus(),
+    api.listReconciliationExceptions(0, 200, { signal }),
+    api.listProductExceptions(0, 200, { signal }),
+    api.listConnectorStatuses({ signal }),
+    api.listInvoiceFlags({ signal }),
+    api.getRecomputeStatus({ signal }),
   ]);
   const value = <T,>(r: PromiseSettledResult<T>): T | null => (r.status === "fulfilled" ? r.value : null);
   const unavailable = [
@@ -46,7 +47,8 @@ export async function loadWorkQueue(api: Api): Promise<WorkQueueResult> {
 }
 
 export function useWorkQueue() {
-  return useApiData(loadWorkQueue);
+  const queryApi = useApi();
+  return useQuery({ queryKey: ["use-work-queue"], queryFn: ({ signal }) => (loadWorkQueue)(queryApi, signal) });
 }
 
 const FOCUS_KEY = "goldys.focus";

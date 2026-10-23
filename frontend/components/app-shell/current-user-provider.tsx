@@ -17,6 +17,7 @@ export type AuthStatus = "loading" | "authenticated" | "unauthenticated" | "erro
 interface CurrentUserContextValue {
   user: CurrentUser | null;
   status: AuthStatus;
+  sessionGeneration: number;
   error: ApiError | null;
   refresh: () => void;
   clear: () => void;
@@ -24,8 +25,13 @@ interface CurrentUserContextValue {
 
 const CurrentUserContext = createContext<CurrentUserContextValue | null>(null);
 
+/** Standalone demo/fixture providers may mount without the authenticated app shell. */
+export function useOptionalCurrentUser(): CurrentUserContextValue | null {
+  return useContext(CurrentUserContext);
+}
+
 export function useCurrentUser(): CurrentUserContextValue {
-  const ctx = useContext(CurrentUserContext);
+  const ctx = useOptionalCurrentUser();
   if (!ctx) throw new Error("useCurrentUser must be used within a CurrentUserProvider");
   return ctx;
 }
@@ -86,7 +92,7 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
   }, [refresh, cancelActive]);
 
   const value = useMemo(
-    () => ({ user, status, error, refresh, clear }),
+    () => ({ user, status, error, refresh, clear, sessionGeneration: generation.current }),
     [user, status, error, refresh, clear],
   );
 

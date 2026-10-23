@@ -15,7 +15,8 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import type { Api } from "@/lib/api";
 import type { SaleItemRow } from "@/lib/api/types";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { buildSaleItemMixWidget } from "./sale-item-mix-chart";
 
 interface SaleItemsTabProps {
@@ -90,15 +91,12 @@ function saleItemColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<S
  * server-side, always scoped by the shared date range.
  */
 export function SaleItemsTab({ from, to, onViewSale, apiOverride }: SaleItemsTabProps) {
+  const queryApi = useApi();
   const { page, setPage, pageSize, setPageSize } = usePageState(`${from}|${to}`);
   const [category, setCategory] = useState("");
 
-  const mix = useApiData((api) => api.getSaleItemMix(from, to), [from, to], apiOverride);
-  const rows = useApiData(
-    (api) => api.listSaleItems({ from, to, category }, page, pageSize),
-    [from, to, category, page, pageSize],
-    apiOverride,
-  );
+  const mix = useQuery({ queryKey: ["getSaleItemMix", from, to], queryFn: ({ signal }) => (apiOverride ?? queryApi).getSaleItemMix(from, to, { signal }) });
+  const rows = useQuery({ queryKey: ["listSaleItems", { from, to, category }, page, pageSize], queryFn: ({ signal }) => (apiOverride ?? queryApi).listSaleItems({ from, to, category }, page, pageSize, { signal }) });
 
 
   // The dropdown offers exactly the categories present in the resolved mix.
@@ -120,12 +118,12 @@ export function SaleItemsTab({ from, to, onViewSale, apiOverride }: SaleItemsTab
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        {mix.loading ? <LoadingState rows={2} /> : null}
+        {mix.isPending ? <LoadingState rows={2} /> : null}
         {mix.error ? (
           <ErrorState
             title="Couldn't load the sale item mix"
             message={mix.error.message}
-            onRetry={mix.reload}
+            onRetry={mix.refetch}
           />
         ) : null}
         {mix.data ? <WidgetRenderer widget={buildSaleItemMixWidget(mix.data)} /> : null}
@@ -155,12 +153,12 @@ export function SaleItemsTab({ from, to, onViewSale, apiOverride }: SaleItemsTab
           </Select>
         </div>
 
-        {rows.loading ? <LoadingState rows={4} /> : null}
+        {rows.isPending ? <LoadingState rows={4} /> : null}
         {rows.error ? (
           <ErrorState
             title="Couldn't load sale items"
             message={rows.error.message}
-            onRetry={rows.reload}
+            onRetry={rows.refetch}
           />
         ) : null}
 

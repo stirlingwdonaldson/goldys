@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import { useApi } from "@/lib/demo-mode";
-import { useApiData } from "@/lib/use-api-data";
+import { useQuery } from "@tanstack/react-query";
 import { isApiError, ApiError } from "@/lib/api";
 import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { EMPTY, formatNumber } from "@/lib/format";
@@ -42,16 +42,14 @@ const OPS: QueryFilterOp[] = ["EQ", "NE", "GT", "GTE", "LT", "LTE", "BETWEEN", "
 
 /** The relational query builder: discover → build → run → render, plus save/load. */
 export function QueryBuilder() {
+  const queryApi = useApi();
   const api = useApi();
-  const datasets = useApiData((api) => api.listQueryDatasets(), []);
-  const relationships = useApiData((api) => api.listQueryRelationships(), []);
-  const saved = useApiData((api) => api.listSavedQueries(), []);
+  const datasets = useQuery({ queryKey: ["listQueryDatasets"], queryFn: ({ signal }) => queryApi.listQueryDatasets({ signal }) });
+  const relationships = useQuery({ queryKey: ["listQueryRelationships"], queryFn: ({ signal }) => queryApi.listQueryRelationships({ signal }) });
+  const saved = useQuery({ queryKey: ["listSavedQueries"], queryFn: ({ signal }) => queryApi.listSavedQueries({ signal }) });
 
   const [dataset, setDataset] = useState("");
-  const fields = useApiData(
-    (api) => (dataset ? api.listQueryFields(dataset) : Promise.resolve([])),
-    [dataset],
-  );
+  const fields = useQuery({ queryKey: ["listQueryFields", dataset], queryFn: ({ signal }) => (dataset ? queryApi.listQueryFields(dataset, { signal }) : Promise.resolve([])) });
   const selectedDataset = datasets.data?.find((d) => d.id === dataset);
 
   const [select, setSelect] = useState<QuerySelectItem[]>([]);
@@ -87,7 +85,7 @@ export function QueryBuilder() {
     const t = title.trim() || `Query ${new Date().toLocaleDateString()}`;
     const created = await api.createSavedQuery({ title: t, plan: plan() });
     setTitle("");
-    await saved.reload();
+    await saved.refetch();
     await loadSaved(created);
   }
 
@@ -106,9 +104,9 @@ export function QueryBuilder() {
   const joinOptions = relationships.data?.filter((r) => r.from === dataset) ?? [];
   const dimensionFields = fields.data?.filter((f) => f.kind === "DIMENSION") ?? [];
 
-  if (datasets.loading || relationships.loading) return <LoadingState rows={4} />;
-  if (datasets.error) {
-    if (datasets.error.code === "NOT_PERMITTED" || datasets.data?.length === 0)
+  if (datasets.isPending || relationships.isPending) return <LoadingState rows={4} />;
+  if (datasets.isLoadingError) {
+    if (datasets.error.code === "NOT_PERMITTED")
       return (
         <PermissionDenied
           subject="query datasets"
@@ -119,7 +117,7 @@ export function QueryBuilder() {
       <ErrorState
         title="Couldn't load datasets"
         message={datasets.error.message}
-        onRetry={datasets.reload}
+        onRetry={datasets.refetch}
       />
     );
   }
@@ -147,12 +145,12 @@ export function QueryBuilder() {
 
           {selectedDataset ? <DatasetMeta dataset={selectedDataset} /> : null}
 
-          {fields.loading ? <LoadingState rows={3} /> : null}
+          {fields.isPending ? <LoadingState rows={3} /> : null}
           {fields.error ? (
             fields.error.code === "NOT_PERMITTED" ? (
               <PermissionDenied message={fields.error.message} />
             ) : (
-              <ErrorState title="Couldn't load fields" message={fields.error.message} onRetry={fields.reload} />
+              <ErrorState title="Couldn't load fields" message={fields.error.message} onRetry={fields.refetch} />
             )
           ) : null}
 

@@ -25,7 +25,7 @@ describe("Inventory observations", () => {
     expect(await screen.findByText("No recorded observations")).toBeInTheDocument();
     expect(screen.getByText(/does not establish zero stock or waste/)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Observation kind"), { target: { value: "WASTE" } });
-    await waitFor(() => expect(fetch).toHaveBeenLastCalledWith("2026-10-01", "2026-10-15", "WASTE", 0, 50));
+    await waitFor(() => expect(fetch).toHaveBeenLastCalledWith("2026-10-01", "2026-10-15", "WASTE", 0, 50, expect.objectContaining({ signal: expect.any(AbortSignal) })));
   });
   it("shows permission denial without turning it into an empty observation list", async () => {
     show({ getInventoryObservations: async () => { throw new ApiError("NOT_PERMITTED", "Denied"); } });

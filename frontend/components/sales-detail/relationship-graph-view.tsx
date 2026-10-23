@@ -6,7 +6,8 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Api } from "@/lib/api";
 import type { DeletedSaleRow, PaymentRow, SaleItemRow } from "@/lib/api/types";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { buildRelationshipGraph } from "./relationship-graph";
 
 /** The start of the Lightspeed data; the wide range is cheap thanks to the `sale_number` index. */
@@ -28,12 +29,12 @@ interface RelationshipData {
 }
 
 /** Loads one sale's tenders, line items, and (if voided) its deleted order. */
-async function loadRelationship(api: Api, saleNumber: string): Promise<RelationshipData> {
+async function loadRelationship(api: Api, saleNumber: string, signal?: AbortSignal): Promise<RelationshipData> {
   const to = todayIso();
   const [payments, items, deletedSales] = await Promise.all([
-    api.listPayments({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE),
-    api.listSaleItems({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE),
-    api.listDeletedSales({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE),
+    api.listPayments({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE, { signal }),
+    api.listSaleItems({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE, { signal }),
+    api.listDeletedSales({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE, { signal }),
   ]);
   return {
     payments: payments.items,
@@ -55,7 +56,8 @@ interface RelationshipGraphViewProps {
  * the sale was voided) hanging off the sale hub. Reuses the drill pattern from the invoice graph.
  */
 export function RelationshipGraphView({ saleNumber, apiOverride }: RelationshipGraphViewProps) {
-  const data = useApiData((api) => loadRelationship(api, saleNumber), [saleNumber], apiOverride);
+  const queryApi = useApi();
+  const data = useQuery({ queryKey: ["relationship-graph-view", saleNumber], queryFn: ({ signal }) => loadRelationship(apiOverride ?? queryApi, saleNumber, signal) });
   const graph = useMemo(
     () =>
       buildRelationshipGraph(
@@ -69,9 +71,9 @@ export function RelationshipGraphView({ saleNumber, apiOverride }: RelationshipG
     [saleNumber, data.data],
   );
 
-  if (data.loading) return <Skeleton className="h-[220px] w-full" />;
+  if (data.isPending) return <Skeleton className="h-[220px] w-full" />;
 
-  if (data.error) {
+  if (data.isLoadingError) {
     if (data.error.code === "NOT_PERMITTED") return <PermissionDenied subject="sale detail" />;
     return (
       <p role="alert" className="text-sm text-destructive">

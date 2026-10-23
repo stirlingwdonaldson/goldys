@@ -105,7 +105,12 @@ import type {
 } from "./types";
 import { demoPlatformMap } from "./demo-platform-map";
 
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve, reject) => {
+  if (signal?.aborted) { reject(signal.reason); return; }
+  const abort = () => { clearTimeout(timer); reject(signal?.reason); };
+  const timer = setTimeout(() => { signal?.removeEventListener("abort", abort); resolve(); }, ms);
+  signal?.addEventListener("abort", abort, { once: true });
+});
 
 // In-memory, mutable fixtures so the override flow genuinely resolves an exception
 // and it drops from the list — the demo behaves like the real data would.
@@ -894,14 +899,14 @@ function inDateRange(date: string, from?: string, to?: string): boolean {
 // lines. Includes a null quantity/cost line (broken link) and null suppliers. Demo data only.
 const demoRecipeIngredients: Record<number, RecipeIngredient[]> = {
   3: [
-    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 101, stockId: 42, stockCode: "BUN", stockDescription: "Brioche bun", portionWeight: 1, unitOfMeasurement: "each", costPerQty: 0.9, costPerUnit: 0.9, supplierName: "Bakehouse" },
-    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 102, stockId: 43, stockCode: "BEEF", stockDescription: "Beef patty", portionWeight: 180, unitOfMeasurement: "grams", costPerQty: 3.2, costPerUnit: 0.0178, supplierName: "Butcher" },
-    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 103, stockId: 44, stockCode: "CHED", stockDescription: "Cheddar", portionWeight: 40, unitOfMeasurement: "grams", costPerQty: 0.8, costPerUnit: 0.02, supplierName: null },
-    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 104, stockId: null, stockCode: null, stockDescription: "Pickle", portionWeight: null, unitOfMeasurement: null, costPerQty: null, costPerUnit: null, supplierName: null },
-    { parentRecipeId: 3, lineRecipeId: 900, lineRecipeName: "Aioli", isSubRecipe: true, recipeDetailId: 201, stockId: 7, stockCode: "GARLIC", stockDescription: "Garlic", portionWeight: 5, unitOfMeasurement: "grams", costPerQty: 0.1, costPerUnit: 0.02, supplierName: "Greengrocer" },
-    { parentRecipeId: 3, lineRecipeId: 900, lineRecipeName: "Aioli", isSubRecipe: true, recipeDetailId: 202, stockId: 8, stockCode: "EGG", stockDescription: "Egg yolk", portionWeight: 15, unitOfMeasurement: "grams", costPerQty: 0.12, costPerUnit: 0.008, supplierName: "Greengrocer" },
-    { parentRecipeId: 3, lineRecipeId: 901, lineRecipeName: "Burger Sauce", isSubRecipe: true, recipeDetailId: 301, stockId: 9, stockCode: "TOMATO", stockDescription: "Tomato sauce", portionWeight: 20, unitOfMeasurement: "grams", costPerQty: 0.15, costPerUnit: 0.0075, supplierName: null },
-    { parentRecipeId: 3, lineRecipeId: 901, lineRecipeName: "Burger Sauce", isSubRecipe: true, recipeDetailId: 302, stockId: 10, stockCode: "MAYO", stockDescription: "Mayonnaise", portionWeight: 25, unitOfMeasurement: "grams", costPerQty: 0.2, costPerUnit: 0.008, supplierName: "Wholesaler" },
+    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 101, stockId: 42, stockCode: "BUN", stockDescription: "Brioche bun", portionWeight: 1, unitOfMeasurement: "each", costPerQty: 0.9, costPerUnit: 0.9, supplierName: "Bakehouse", stockUomShortname: "each", stockUsable: 0, stockWastage: null, isBrokenLink: false },
+    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 102, stockId: 43, stockCode: "BEEF", stockDescription: "Beef patty", portionWeight: 180, unitOfMeasurement: "grams", costPerQty: 3.2, costPerUnit: 0.0178, supplierName: "Butcher", stockUomShortname: null, stockUsable: null, stockWastage: null, isBrokenLink: null },
+    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 103, stockId: 44, stockCode: "CHED", stockDescription: "Cheddar", portionWeight: 40, unitOfMeasurement: "grams", costPerQty: 0.8, costPerUnit: 0.02, supplierName: null, stockUomShortname: null, stockUsable: null, stockWastage: null, isBrokenLink: true },
+    { parentRecipeId: 3, lineRecipeId: 3, lineRecipeName: "Cheeseburger", isSubRecipe: false, recipeDetailId: 104, stockId: null, stockCode: null, stockDescription: "Pickle", portionWeight: null, unitOfMeasurement: null, costPerQty: null, costPerUnit: null, supplierName: null, stockUomShortname: null, stockUsable: null, stockWastage: null, isBrokenLink: null },
+    { parentRecipeId: 3, lineRecipeId: 900, lineRecipeName: "Aioli", isSubRecipe: true, recipeDetailId: 201, stockId: 7, stockCode: "GARLIC", stockDescription: "Garlic", portionWeight: 5, unitOfMeasurement: "grams", costPerQty: 0.1, costPerUnit: 0.02, supplierName: "Greengrocer", stockUomShortname: null, stockUsable: null, stockWastage: null, isBrokenLink: null },
+    { parentRecipeId: 3, lineRecipeId: 900, lineRecipeName: "Aioli", isSubRecipe: true, recipeDetailId: 202, stockId: 8, stockCode: "EGG", stockDescription: "Egg yolk", portionWeight: 15, unitOfMeasurement: "grams", costPerQty: 0.12, costPerUnit: 0.008, supplierName: "Greengrocer", stockUomShortname: null, stockUsable: null, stockWastage: null, isBrokenLink: null },
+    { parentRecipeId: 3, lineRecipeId: 901, lineRecipeName: "Burger Sauce", isSubRecipe: true, recipeDetailId: 301, stockId: 9, stockCode: "TOMATO", stockDescription: "Tomato sauce", portionWeight: 20, unitOfMeasurement: "grams", costPerQty: 0.15, costPerUnit: 0.0075, supplierName: null, stockUomShortname: null, stockUsable: null, stockWastage: null, isBrokenLink: null },
+    { parentRecipeId: 3, lineRecipeId: 901, lineRecipeName: "Burger Sauce", isSubRecipe: true, recipeDetailId: 302, stockId: 10, stockCode: "MAYO", stockDescription: "Mayonnaise", portionWeight: 25, unitOfMeasurement: "grams", costPerQty: 0.2, costPerUnit: 0.008, supplierName: "Wholesaler", stockUomShortname: null, stockUsable: null, stockWastage: null, isBrokenLink: null },
   ],
 };
 
@@ -1220,8 +1225,8 @@ function demoTopSellers(requestedFrom?: string, requestedTo?: string, limit = 5)
 }
 
 export const demoApi: Api = {
-  async getDashboardBootstrap(): Promise<DashboardBootstrap> {
-    await delay(400);
+  async getDashboardBootstrap(options?: { signal?: AbortSignal }): Promise<DashboardBootstrap> {
+    await delay(400, options?.signal);
     return {
       summary: {
         ingestionCompleteness: 92,
@@ -1238,8 +1243,8 @@ export const demoApi: Api = {
     };
   },
 
-  async getDashboardSummary(): Promise<DashboardSummary> {
-    await delay(400);
+  async getDashboardSummary(options?: { signal?: AbortSignal }): Promise<DashboardSummary> {
+    await delay(400, options?.signal);
     return {
       ingestionCompleteness: 92,
       openConflicts: deriveExceptions(records).length + productExceptions.length,
@@ -1248,8 +1253,8 @@ export const demoApi: Api = {
     };
   },
 
-  async getDashboardActivity(from?: string, to?: string): Promise<ActivityPoint[]> {
-    await delay(400);
+  async getDashboardActivity(from?: string, to?: string, options?: { signal?: AbortSignal }): Promise<ActivityPoint[]> {
+    await delay(400, options?.signal);
     const all = activityFixture();
     return all.filter((p) => (!from || p.date >= from) && (!to || p.date <= to));
   },
@@ -1257,28 +1262,28 @@ export const demoApi: Api = {
   async listReconciliationExceptions(
     page: number,
     size: number,
-  ): Promise<DataPage<ReconciliationException>> {
-    await delay(400);
+  options?: { signal?: AbortSignal }): Promise<DataPage<ReconciliationException>> {
+    await delay(400, options?.signal);
     const items = deriveExceptions(records);
     return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
-  async getReconciliationRecord(id: string): Promise<ReconciliationRecord> {
-    await delay(300);
+  async getReconciliationRecord(id: string, options?: { signal?: AbortSignal }): Promise<ReconciliationRecord> {
+    await delay(300, options?.signal);
     const record = records[id];
     if (!record) throw new ApiError("VALIDATION_FAILED", `No record with id ${id}.`);
     return record;
   },
 
-  async getProductRecord(date: string, product: string): Promise<ReconciliationRecord> {
-    await delay(300);
+  async getProductRecord(date: string, product: string, options?: { signal?: AbortSignal }): Promise<ReconciliationRecord> {
+    await delay(300, options?.signal);
     const record = productRecords[product];
     if (!record) throw new ApiError("VALIDATION_FAILED", `No product record ${product}.`);
     return record;
   },
 
-  async listConnectorStatuses(): Promise<ConnectorStatus[]> {
-    await delay(400);
+  async listConnectorStatuses(options?: { signal?: AbortSignal }): Promise<ConnectorStatus[]> {
+    await delay(400, options?.signal);
     return connectorStatuses;
   },
 
@@ -1303,8 +1308,8 @@ export const demoApi: Api = {
     }
   },
 
-  async getOpenTableSession(): Promise<OpenTableSessionState> {
-    await delay(150);
+  async getOpenTableSession(options?: { signal?: AbortSignal }): Promise<OpenTableSessionState> {
+    await delay(150, options?.signal);
     return demoOpenTable;
   },
 
@@ -1384,8 +1389,8 @@ export const demoApi: Api = {
   async listProductExceptions(
     page: number,
     size: number,
-  ): Promise<DataPage<ReconciliationException>> {
-    await delay(400);
+  options?: { signal?: AbortSignal }): Promise<DataPage<ReconciliationException>> {
+    await delay(400, options?.signal);
     return { items: productExceptions, total: productExceptions.length, page, size };
   },
 
@@ -1415,8 +1420,8 @@ export const demoApi: Api = {
     return { ok: true, recordId: input.product, field: input.product };
   },
 
-  async listResolutionRules(): Promise<ResolutionRule[]> {
-    await delay(400);
+  async listResolutionRules(options?: { signal?: AbortSignal }): Promise<ResolutionRule[]> {
+    await delay(400, options?.signal);
     return [...rules];
   },
 
@@ -1531,28 +1536,28 @@ export const demoApi: Api = {
     ];
   },
 
-  async getRecomputeStatus(): Promise<RecomputeStatus> {
-    await delay(300);
+  async getRecomputeStatus(options?: { signal?: AbortSignal }): Promise<RecomputeStatus> {
+    await delay(300, options?.signal);
     return { ...recomputeStatus };
   },
 
-  async listRuleAudit(): Promise<RuleAuditEntry[]> {
-    await delay(300);
+  async listRuleAudit(options?: { signal?: AbortSignal }): Promise<RuleAuditEntry[]> {
+    await delay(300, options?.signal);
     return [...ruleAudit];
   },
 
-  async listReconciliationAudit(page: number, size: number): Promise<DataPage<ReconciliationAuditEntry>> {
-    await delay(300);
+  async listReconciliationAudit(page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<ReconciliationAuditEntry>> {
+    await delay(300, options?.signal);
     return { items: [...reconciliationAudit], total: reconciliationAudit.length, page, size };
   },
 
-  async listProducts(): Promise<string[]> {
-    await delay(300);
+  async listProducts(options?: { signal?: AbortSignal }): Promise<string[]> {
+    await delay(300, options?.signal);
     return [...DEMO_PRODUCTS];
   },
 
-  async listDailySales(filter: import("./types").SalesFilter, page: number, size: number): Promise<DataPage<DailySales>> {
-    await delay(300);
+  async listDailySales(filter: import("./types").SalesFilter, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<DailySales>> {
+    await delay(300, options?.signal);
     const all = [
       { date: "2026-10-05", source: "CTB", totalSales: 10865.72, gst: 985.44, net: 9880.28 },
       { date: "2026-10-04", source: "CTB", totalSales: 29605.13, gst: 2689.54, net: 26915.6 },
@@ -1564,13 +1569,13 @@ export const demoApi: Api = {
     return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
-  async getLatestSales(): Promise<LatestSales> {
-    await delay(300);
+  async getLatestSales(options?: { signal?: AbortSignal }): Promise<LatestSales> {
+    await delay(300, options?.signal);
     return { date: "2026-10-05", total: 9880.28, authoritativeSource: "agreed" };
   },
 
-  async getReservationSummary(date: string): Promise<import("./types").ReservationSummary | undefined> {
-    await delay(300);
+  async getReservationSummary(date: string, options?: { signal?: AbortSignal }): Promise<import("./types").ReservationSummary | undefined> {
+    await delay(300, options?.signal);
     return {
       date,
       bookings: 96,
@@ -1588,8 +1593,8 @@ export const demoApi: Api = {
   async getInventoryLines(
     from: string,
     to: string,
-  ): Promise<import("./types").InventoryLineBreakdown> {
-    await delay(300);
+  options?: { signal?: AbortSignal }): Promise<import("./types").InventoryLineBreakdown> {
+    await delay(300, options?.signal);
     return {
       from,
       to,
@@ -1606,7 +1611,8 @@ export const demoApi: Api = {
     };
   },
 
-  async getInventoryObservations(from, to, kind, page, size) {
+  async getInventoryObservations(from, to, kind, page, size, options?: { signal?: AbortSignal }) {
+    options?.signal?.throwIfAborted();
     const examples: import("./types").InventoryObservation[] = [
       { kind: "COUNT", sourceSystem: "CTB", sourceRecordRef: "stocktake:demo:1",
         logicalId: "demo-count", date: to, productName: "Example flour", stockCode: "DEMO-1",
@@ -1625,13 +1631,13 @@ export const demoApi: Api = {
       notices: ["Incomplete example observations; source population unverified. Counts are dated observations, not current balances. Source values retain an unverified currency, tax and valuation basis."] };
   },
 
-  async getInventorySummary(from: string, to: string): Promise<InventorySummary> {
-    await delay(300);
+  async getInventorySummary(from: string, to: string, options?: { signal?: AbortSignal }): Promise<InventorySummary> {
+    await delay(300, options?.signal);
     return { from, to, purchases: 6950.5, wastage: 412.8, foodCostPercent: null, notices: ["Food cost % unavailable pending valuation evidence"] };
   },
 
-  async getInvoiceGraphSuppliers(from: string, to: string): Promise<SupplierGraphNode[]> {
-    await delay(300);
+  async getInvoiceGraphSuppliers(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SupplierGraphNode[]> {
+    await delay(300, options?.signal);
     void from;
     void to;
     return [
@@ -1646,36 +1652,36 @@ export const demoApi: Api = {
     supplier: string,
     from: string,
     to: string,
-  ): Promise<InvoiceGraphNode[]> {
-    await delay(300);
+  options?: { signal?: AbortSignal }): Promise<InvoiceGraphNode[]> {
+    await delay(300, options?.signal);
     return graphInvoiceFixtures(supplier, from, to, false);
   },
-  async getInvoiceGraphInvoicesById(supplierId: string, from: string, to: string) {
-    await delay(300);
+  async getInvoiceGraphInvoicesById(supplierId: string, from: string, to: string, options?: { signal?: AbortSignal }) {
+    await delay(300, options?.signal);
     return graphInvoiceFixtures(supplierId, from, to, true);
   },
-  async getInvoiceGraphLinesById(invoiceId: string) {
-    await delay(300);
+  async getInvoiceGraphLinesById(invoiceId: string, options?: { signal?: AbortSignal }) {
+    await delay(300, options?.signal);
     const header = demoInvoiceSummaries.find(i => i.invoiceId === invoiceId);
     if (!header) throw new ApiError("NOT_FOUND", "Unknown invoice");
     return demoLines(header);
   },
 
-  async getPlatformMap() {
-    await delay(300);
+  async getPlatformMap(options?: { signal?: AbortSignal }) {
+    await delay(300, options?.signal);
     return demoPlatformMap();
   },
 
-  async listInvoiceFlags(): Promise<InvoiceIngestFlag[]> {
-    await delay(300);
+  async listInvoiceFlags(options?: { signal?: AbortSignal }): Promise<InvoiceIngestFlag[]> {
+    await delay(300, options?.signal);
     return [
       { flagType: "PDF_ONLY_LINE", invoiceNumber: "INV-1042", pdfFilename: "inv-1042.pdf", stockCode: "CB-1", detail: "PDF line has no matching CSV line", occurredAt: "2026-10-08T18:30:00Z" },
       { flagType: "MISSING_PDF", invoiceNumber: "INV-1091", pdfFilename: null, stockCode: null, detail: "no PDF filename in CSV", occurredAt: "2026-10-09T00:24:00Z" },
     ];
   },
 
-  async getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]> {
-    await delay(300);
+  async getInvoiceGraphLines(invoiceNumber: string, options?: { signal?: AbortSignal }): Promise<LineGraphNode[]> {
+    await delay(300, options?.signal);
     const matches = demoInvoiceSummaries.filter(i => i.invoiceNumber === invoiceNumber);
     if (matches.length > 1) throw new ApiError("VALIDATION_FAILED", "Ambiguous invoice number");
     if (!matches.length) throw new ApiError("NOT_FOUND", "Unknown invoice");
@@ -1686,8 +1692,8 @@ export const demoApi: Api = {
     filter: InvoiceFilter,
     page: number,
     size: number,
-  ): Promise<DataPage<InvoiceSummary>> {
-    await delay(300);
+  options?: { signal?: AbortSignal }): Promise<DataPage<InvoiceSummary>> {
+    await delay(300, options?.signal);
     const items = demoInvoiceSummaries.filter(
       (i) =>
         (!filter.supplier || i.supplierName === filter.supplier) &&
@@ -1696,22 +1702,22 @@ export const demoApi: Api = {
     return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
-  async getInvoiceById(id: string): Promise<InvoiceDetail> {
-    await delay(300);
+  async getInvoiceById(id: string, options?: { signal?: AbortSignal }): Promise<InvoiceDetail> {
+    await delay(300, options?.signal);
     const header = demoInvoiceSummaries.find(i => i.invoiceId === id);
     if (!header) throw new ApiError("NOT_FOUND", "Unknown invoice");
     return { ...header, numberAmbiguous: demoInvoiceSummaries.filter(i => i.invoiceNumber === header.invoiceNumber).length > 1, lines: demoLines(header) };
   },
 
-  async getInvoiceDocuments(id: string) {
-    await delay(300);
+  async getInvoiceDocuments(id: string, options?: { signal?: AbortSignal }) {
+    await delay(300, options?.signal);
     const header = demoInvoiceSummaries.find(i => i.invoiceId === id);
     if (!header) throw new ApiError("NOT_FOUND", "Unknown invoice");
     return header.hasPdf ? [{ documentId: "30000000-0000-0000-0000-000000000001", filename: "demo-invoice.pdf", linkedAt: "2026-10-01T00:00:00Z" }] : [];
   },
 
-  async getInvoice(invoiceNumber: string): Promise<InvoiceDetail> {
-    await delay(300);
+  async getInvoice(invoiceNumber: string, options?: { signal?: AbortSignal }): Promise<InvoiceDetail> {
+    await delay(300, options?.signal);
     const matches = demoInvoiceSummaries.filter((i) => i.invoiceNumber === invoiceNumber);
     if (matches.length > 1) throw new ApiError("VALIDATION_FAILED", "Ambiguous invoice number: use invoice identity");
     const header = matches[0];
@@ -1719,8 +1725,8 @@ export const demoApi: Api = {
     return { ...header, lines: demoInvoiceLines[invoiceNumber] ?? [] };
   },
 
-  async getLabourSummary(from: string, to: string): Promise<LabourSummary> {
-    await delay(300);
+  async getLabourSummary(from: string, to: string, options?: { signal?: AbortSignal }): Promise<LabourSummary> {
+    await delay(300, options?.signal);
     return {
       from,
       to,
@@ -1735,28 +1741,28 @@ export const demoApi: Api = {
     };
   },
 
-  async listDailyCovers(from: string, to: string): Promise<DailyCovers[]> {
-    await delay(300);
+  async listDailyCovers(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DailyCovers[]> {
+    await delay(300, options?.signal);
     return demoCovers(from, to);
   },
 
-  async getProvenance(metricId: string, date: string): Promise<Provenance> {
-    await delay(300);
+  async getProvenance(metricId: string, date: string, options?: { signal?: AbortSignal }): Promise<Provenance> {
+    await delay(300, options?.signal);
     return demoProvenance(metricId, date);
   },
 
-  async getTopSellers(from?: string, to?: string, limit?: number): Promise<TopSellersResult> {
-    await delay(300);
+  async getTopSellers(from?: string, to?: string, limit?: number, options?: { signal?: AbortSignal }): Promise<TopSellersResult> {
+    await delay(300, options?.signal);
     return demoTopSellers(from, to, limit);
   },
 
-  async getSalesTrend(from?: string, to?: string): Promise<SalesTrendResult> {
-    await delay(300);
+  async getSalesTrend(from?: string, to?: string, options?: { signal?: AbortSignal }): Promise<SalesTrendResult> {
+    await delay(300, options?.signal);
     return demoSalesTrend(from, to);
   },
 
-  async queryMetrics(query: MetricQuery): Promise<import("./types").MetricResult> {
-    await delay(300);
+  async queryMetrics(query: MetricQuery, options?: { signal?: AbortSignal }): Promise<import("./types").MetricResult> {
+    await delay(300, options?.signal);
     const provenance = {
       metric: query.metric,
       definitionVersion: "1",
@@ -1794,8 +1800,8 @@ export const demoApi: Api = {
     };
   },
 
-  async listDashboards(): Promise<SavedDashboardSummary[]> {
-    await delay(300);
+  async listDashboards(options?: { signal?: AbortSignal }): Promise<SavedDashboardSummary[]> {
+    await delay(300, options?.signal);
     return savedDashboards.map((d) => ({
       id: d.id,
       title: d.title,
@@ -1807,8 +1813,8 @@ export const demoApi: Api = {
     }));
   },
 
-  async getDashboard(id: string): Promise<DashboardDocument> {
-    await delay(300);
+  async getDashboard(id: string, options?: { signal?: AbortSignal }): Promise<DashboardDocument> {
+    await delay(300, options?.signal);
     const found = savedDashboards.find((d) => d.id === id);
     if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
     return found;
@@ -1854,8 +1860,8 @@ export const demoApi: Api = {
     savedDashboards = savedDashboards.filter((d) => d.id !== id);
   },
 
-  async renderDashboard(id: string): Promise<RenderedWidget[]> {
-    await delay(300);
+  async renderDashboard(id: string, options?: { signal?: AbortSignal }): Promise<RenderedWidget[]> {
+    await delay(300, options?.signal);
     const found = savedDashboards.find((d) => d.id === id);
     if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
     // Demo renders each saved widget as the fixed daily-sales time-series spec (the demo has no
@@ -1868,8 +1874,8 @@ export const demoApi: Api = {
     }));
   },
 
-  async listDashboardTemplates(): Promise<DashboardTemplate[]> {
-    await delay(300);
+  async listDashboardTemplates(options?: { signal?: AbortSignal }): Promise<DashboardTemplate[]> {
+    await delay(300, options?.signal);
     return demoTemplates;
   },
 
@@ -1896,8 +1902,8 @@ export const demoApi: Api = {
     return created;
   },
 
-  async listDashboardRevisions(id: string): Promise<DashboardRevisionSummary[]> {
-    await delay(300);
+  async listDashboardRevisions(id: string, options?: { signal?: AbortSignal }): Promise<DashboardRevisionSummary[]> {
+    await delay(300, options?.signal);
     const found = savedDashboards.find((d) => d.id === id);
     if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
     return [{ revision: 1, createdBy: found.createdBy, createdAt: found.createdAt }];
@@ -1921,8 +1927,8 @@ export const demoApi: Api = {
     return { ...found };
   },
 
-  async getDashboardSharing(id: string): Promise<DashboardSharing> {
-    await delay(300);
+  async getDashboardSharing(id: string, options?: { signal?: AbortSignal }): Promise<DashboardSharing> {
+    await delay(300, options?.signal);
     const found = savedDashboards.find((d) => d.id === id);
     if (!found) throw new ApiError("VALIDATION_FAILED", `No dashboard with id ${id}.`);
     return { visibility: found.visibility, roles: [] };
@@ -1936,13 +1942,13 @@ export const demoApi: Api = {
     return { ...sharing };
   },
 
-  async listThreads(): Promise<ConversationThreadSummary[]> {
-    await delay(300);
+  async listThreads(options?: { signal?: AbortSignal }): Promise<ConversationThreadSummary[]> {
+    await delay(300, options?.signal);
     return [...demoThreads];
   },
 
-  async getThread(id: string): Promise<ConversationThreadView> {
-    await delay(300);
+  async getThread(id: string, options?: { signal?: AbortSignal }): Promise<ConversationThreadView> {
+    await delay(300, options?.signal);
     const summary = demoThreads.find((t) => t.id === id);
     if (!summary) throw new ApiError("VALIDATION_FAILED", `No thread with id ${id}.`);
     return { id, title: summary.title, messages: demoThreadMessages[id] ?? [] };
@@ -1967,16 +1973,16 @@ export const demoApi: Api = {
     _filter: RawRecordFilter,
     page: number,
     size: number,
-  ): Promise<DataPage<RawRecordSummary>> {
-    await delay(300);
+  options?: { signal?: AbortSignal }): Promise<DataPage<RawRecordSummary>> {
+    await delay(300, options?.signal);
     const items = _filter.source
       ? demoRawRecords.filter((r) => r.sourceSystem.toLowerCase() === _filter.source!.toLowerCase())
       : demoRawRecords;
     return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
-  async getRawRecord(id: string): Promise<RawRecordDetail> {
-    await delay(300);
+  async getRawRecord(id: string, options?: { signal?: AbortSignal }): Promise<RawRecordDetail> {
+    await delay(300, options?.signal);
     const record = demoRawRecords.find((r) => r.id === id);
     if (!record) throw new ApiError("NOT_FOUND", `No raw record ${id}.`);
     return {
@@ -1987,24 +1993,24 @@ export const demoApi: Api = {
     };
   },
 
-  async listCanonicalEntities(): Promise<EntityDescriptor[]> {
-    await delay(300);
+  async listCanonicalEntities(options?: { signal?: AbortSignal }): Promise<EntityDescriptor[]> {
+    await delay(300, options?.signal);
     return demoCanonicalEntities;
   },
 
-  async listCanonicalRows(entity: string, page: number, size: number): Promise<DataPage<GenericRow>> {
-    await delay(300);
+  async listCanonicalRows(entity: string, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<GenericRow>> {
+    await delay(300, options?.signal);
     const items = demoCanonicalRows[entity] ?? [];
     return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
-  async listResolvedDomains(): Promise<EntityDescriptor[]> {
-    await delay(300);
+  async listResolvedDomains(options?: { signal?: AbortSignal }): Promise<EntityDescriptor[]> {
+    await delay(300, options?.signal);
     return demoResolvedDomains;
   },
 
-  async listResolvedRows(domain: string, page: number, size: number): Promise<DataPage<GenericRow>> {
-    await delay(300);
+  async listResolvedRows(domain: string, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<GenericRow>> {
+    await delay(300, options?.signal);
     const items = demoResolvedRows[domain] ?? [];
     return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
@@ -2013,8 +2019,8 @@ export const demoApi: Api = {
     filter: PaymentFilter,
     page: number,
     size: number,
-  ): Promise<DataPage<PaymentRow>> {
-    await delay(300);
+  options?: { signal?: AbortSignal }): Promise<DataPage<PaymentRow>> {
+    await delay(300, options?.signal);
     const items = demoPayments.filter(
       (p) =>
         inDateRange(p.tradingDate, filter.from, filter.to) &&
@@ -2028,8 +2034,8 @@ export const demoApi: Api = {
     filter: DeletedSaleFilter,
     page: number,
     size: number,
-  ): Promise<DataPage<DeletedSaleRow>> {
-    await delay(300);
+  options?: { signal?: AbortSignal }): Promise<DataPage<DeletedSaleRow>> {
+    await delay(300, options?.signal);
     const items = demoDeletedSales.filter(
       (d) =>
         inDateRange(d.tradingDate, filter.from, filter.to) &&
@@ -2042,8 +2048,8 @@ export const demoApi: Api = {
     filter: SaleItemFilter,
     page: number,
     size: number,
-  ): Promise<DataPage<SaleItemRow>> {
-    await delay(300);
+  options?: { signal?: AbortSignal }): Promise<DataPage<SaleItemRow>> {
+    await delay(300, options?.signal);
     const items = demoSaleItems.filter(
       (s) =>
         inDateRange(s.tradingDate, filter.from, filter.to) &&
@@ -2053,23 +2059,23 @@ export const demoApi: Api = {
     return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
-  async getPaymentMix(from: string, to: string): Promise<PaymentMix[]> {
-    await delay(300);
+  async getPaymentMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<PaymentMix[]> {
+    await delay(300, options?.signal);
     return demoPaymentMix.filter((m) => inDateRange(m.tradingDate, from, to));
   },
 
-  async getDeletedSaleTotals(from: string, to: string): Promise<DeletedSaleDay[]> {
-    await delay(300);
+  async getDeletedSaleTotals(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DeletedSaleDay[]> {
+    await delay(300, options?.signal);
     return demoDeletedSaleTotals.filter((d) => inDateRange(d.tradingDate, from, to));
   },
 
-  async getSaleItemMix(from: string, to: string): Promise<SaleItemMix[]> {
-    await delay(300);
+  async getSaleItemMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SaleItemMix[]> {
+    await delay(300, options?.signal);
     return demoSaleItemMix.filter((m) => inDateRange(m.tradingDate, from, to));
   },
 
-  async listForecastMetrics(): Promise<ForecastMetric[]> {
-    await delay(300);
+  async listForecastMetrics(options?: { signal?: AbortSignal }): Promise<ForecastMetric[]> {
+    await delay(300, options?.signal);
     return demoForecastMetrics.filter((m) => m.metric === "sales.net");
   },
 
@@ -2082,21 +2088,21 @@ export const demoApi: Api = {
     return demoCreatedForecastRun;
   },
 
-  async listForecastRuns(): Promise<ForecastRun[]> {
-    await delay(300);
+  async listForecastRuns(options?: { signal?: AbortSignal }): Promise<ForecastRun[]> {
+    await delay(300, options?.signal);
     return demoForecastRuns;
   },
 
-  async getForecastRun(id: string): Promise<ForecastRun> {
-    await delay(300);
+  async getForecastRun(id: string, options?: { signal?: AbortSignal }): Promise<ForecastRun> {
+    await delay(300, options?.signal);
     if (demoCreatedForecastRun?.id === id) return demoCreatedForecastRun;
     const run = demoForecastRuns.find((r) => r.id === id);
     if (!run) throw new ApiError("VALIDATION_FAILED", `No forecast run with id ${id}.`);
     return run;
   },
 
-  async getForecastComparison(id: string): Promise<ForecastComparison> {
-    await delay(300);
+  async getForecastComparison(id: string, options?: { signal?: AbortSignal }): Promise<ForecastComparison> {
+    await delay(300, options?.signal);
     const run = demoForecastRuns.find((r) => r.id === id);
     if (!run) throw new ApiError("VALIDATION_FAILED", `No forecast run with id ${id}.`);
     return id === demoForecastComparison.runId
@@ -2104,8 +2110,8 @@ export const demoApi: Api = {
       : { runId: id, mape: null, mae: null, points: [] };
   },
 
-  async getRecipes(): Promise<RecipeCosting[]> {
-    await delay(300);
+  async getRecipes(options?: { signal?: AbortSignal }): Promise<RecipeCosting[]> {
+    await delay(300, options?.signal);
     return [
       { recipeId: 1, name: "Parma", folder: "Mains", portionSize: "1", costPerPortion: 6.0, actualCost: 7.2, costGap: 1.2, menuPrice: 18.5, margin: 12.5, gpPercent: 0.6757, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
       { recipeId: 2, name: "Kids Fish & Chippies", folder: "Kids", portionSize: "1 serve", costPerPortion: 4.1, actualCost: 4.5, costGap: 0.4, menuPrice: 12.0, margin: 7.9, gpPercent: 0.6583, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
@@ -2117,28 +2123,28 @@ export const demoApi: Api = {
     ];
   },
 
-  async getRecipeIngredients(recipeId: number): Promise<RecipeIngredient[]> {
-    await delay(300);
+  async getRecipeIngredients(recipeId: number, options?: { signal?: AbortSignal }): Promise<RecipeIngredient[]> {
+    await delay(300, options?.signal);
     return demoRecipeIngredients[recipeId] ?? [];
   },
 
-  async getCategoryTaxonomy(): Promise<CategoryNode[]> {
-    await delay(300);
+  async getCategoryTaxonomy(options?: { signal?: AbortSignal }): Promise<CategoryNode[]> {
+    await delay(300, options?.signal);
     return demoCategoryTaxonomy;
   },
 
-  async getCategoryDendrogram(): Promise<DendrogramNode[]> {
-    await delay(300);
+  async getCategoryDendrogram(options?: { signal?: AbortSignal }): Promise<DendrogramNode[]> {
+    await delay(300, options?.signal);
     return demoCategoryDendrogram;
   },
 
-  async getCategoryEmbeddingSpace(): Promise<ProductPoint[]> {
-    await delay(300);
+  async getCategoryEmbeddingSpace(options?: { signal?: AbortSignal }): Promise<ProductPoint[]> {
+    await delay(300, options?.signal);
     return demoEmbeddingSpace;
   },
 
-  async getCategoryAssignments(status?: string): Promise<AssignmentRow[]> {
-    await delay(300);
+  async getCategoryAssignments(status?: string, options?: { signal?: AbortSignal }): Promise<AssignmentRow[]> {
+    await delay(300, options?.signal);
     if (!status) return demoCategoryAssignments;
     return demoCategoryAssignments.filter((a) => a.status === status);
   },
@@ -2217,8 +2223,8 @@ export const demoApi: Api = {
     });
   },
 
-  async listClassificationRuns(): Promise<ClassificationRun[]> {
-    await delay(300);
+  async listClassificationRuns(options?: { signal?: AbortSignal }): Promise<ClassificationRun[]> {
+    await delay(300, options?.signal);
     // Advance any RUNNING run to SUCCEEDED so the poll loop observes completion, and refresh the
     // counts so a successful run reflects the (still-populated) demo taxonomy/assignments.
     for (const run of demoClassificationRuns) {
@@ -2231,15 +2237,15 @@ export const demoApi: Api = {
     return [...demoClassificationRuns];
   },
 
-  async getReviewOverview(_from: string, _to: string): Promise<ReviewOverview> {
-    await delay(300);
+  async getReviewOverview(_from: string, _to: string, options?: { signal?: AbortSignal }): Promise<ReviewOverview> {
+    await delay(300, options?.signal);
     void _from;
     void _to;
     return { total: 6, averageRating: 3.6, positive: 3, neutral: 1, negative: 2, wouldRecommendPct: 83.3 };
   },
 
-  async getReviewSentimentTrend(_from: string, _to: string): Promise<SentimentBucket[]> {
-    await delay(300);
+  async getReviewSentimentTrend(_from: string, _to: string, options?: { signal?: AbortSignal }): Promise<SentimentBucket[]> {
+    await delay(300, options?.signal);
     void _from;
     void _to;
     return [
@@ -2248,8 +2254,8 @@ export const demoApi: Api = {
     ];
   },
 
-  async getReviewRatingTrend(_from: string, _to: string): Promise<RatingTrendBucket[]> {
-    await delay(300);
+  async getReviewRatingTrend(_from: string, _to: string, options?: { signal?: AbortSignal }): Promise<RatingTrendBucket[]> {
+    await delay(300, options?.signal);
     void _from;
     void _to;
     return [
@@ -2258,8 +2264,8 @@ export const demoApi: Api = {
     ];
   },
 
-  async getReviewAspects(_from: string, _to: string): Promise<AspectSentimentSummary[]> {
-    await delay(300);
+  async getReviewAspects(_from: string, _to: string, options?: { signal?: AbortSignal }): Promise<AspectSentimentSummary[]> {
+    await delay(300, options?.signal);
     void _from;
     void _to;
     return [
@@ -2270,8 +2276,8 @@ export const demoApi: Api = {
     ];
   },
 
-  async getReviewRatings(_from: string, _to: string): Promise<RatingBucket[]> {
-    await delay(300);
+  async getReviewRatings(_from: string, _to: string, options?: { signal?: AbortSignal }): Promise<RatingBucket[]> {
+    await delay(300, options?.signal);
     void _from;
     void _to;
     return [
@@ -2283,8 +2289,8 @@ export const demoApi: Api = {
     ];
   },
 
-  async getReviewSources(_from: string, _to: string): Promise<SourceSummary[]> {
-    await delay(300);
+  async getReviewSources(_from: string, _to: string, options?: { signal?: AbortSignal }): Promise<SourceSummary[]> {
+    await delay(300, options?.signal);
     void _from;
     void _to;
     return [
@@ -2294,8 +2300,8 @@ export const demoApi: Api = {
     ];
   },
 
-  async getReviews(filter: ReviewFilter): Promise<ReviewView[]> {
-    await delay(300);
+  async getReviews(filter: ReviewFilter, options?: { signal?: AbortSignal }): Promise<ReviewView[]> {
+    await delay(300, options?.signal);
     // Hoist the nullable filter fields so the closures below narrow them to strings/numbers.
     const q = filter.query?.trim().toLowerCase();
     const aspect = filter.aspect?.toLowerCase();
@@ -2313,8 +2319,8 @@ export const demoApi: Api = {
     });
   },
 
-  async getCategorySuggestions(): Promise<CategorySuggestion[]> {
-    await delay(300);
+  async getCategorySuggestions(options?: { signal?: AbortSignal }): Promise<CategorySuggestion[]> {
+    await delay(300, options?.signal);
     return [...demoCategorySuggestions];
   },
 
@@ -2371,19 +2377,19 @@ export const demoApi: Api = {
     return created;
   },
 
-  async listQueryDatasets(): Promise<QueryDataset[]> {
-    await delay(300);
+  async listQueryDatasets(options?: { signal?: AbortSignal }): Promise<QueryDataset[]> {
+    await delay(300, options?.signal);
     return demoQueryDatasets;
   },
 
-  async listQueryFields(dataset: string): Promise<QueryField[]> {
-    await delay(200);
+  async listQueryFields(dataset: string, options?: { signal?: AbortSignal }): Promise<QueryField[]> {
+    await delay(200, options?.signal);
     const found = demoQueryDatasets.find((d) => d.id === dataset);
     return found ? found.fields : [];
   },
 
-  async listQueryRelationships(): Promise<QueryRelationship[]> {
-    await delay(200);
+  async listQueryRelationships(options?: { signal?: AbortSignal }): Promise<QueryRelationship[]> {
+    await delay(200, options?.signal);
     return demoQueryRelationships;
   },
 
@@ -2392,8 +2398,8 @@ export const demoApi: Api = {
     return buildDemoQueryResult(plan);
   },
 
-  async listSavedQueries(): Promise<SavedQuerySummary[]> {
-    await delay(300);
+  async listSavedQueries(options?: { signal?: AbortSignal }): Promise<SavedQuerySummary[]> {
+    await delay(300, options?.signal);
     return demoSavedQueries.map(({ id, title, revision, createdAt, updatedAt }) => ({
       id,
       title,
@@ -2403,8 +2409,8 @@ export const demoApi: Api = {
     }));
   },
 
-  async getSavedQuery(id: string): Promise<SavedQueryDetail> {
-    await delay(300);
+  async getSavedQuery(id: string, options?: { signal?: AbortSignal }): Promise<SavedQueryDetail> {
+    await delay(300, options?.signal);
     const found = demoSavedQueries.find((q) => q.id === id);
     if (!found) throw new ApiError("NOT_FOUND", "Saved query not found");
     return found;
@@ -2444,8 +2450,8 @@ export const demoApi: Api = {
     if (index >= 0) demoSavedQueries.splice(index, 1);
   },
 
-  async listSavedQueryRevisions(id: string): Promise<SavedQueryRevision[]> {
-    await delay(300);
+  async listSavedQueryRevisions(id: string, options?: { signal?: AbortSignal }): Promise<SavedQueryRevision[]> {
+    await delay(300, options?.signal);
     const found = demoSavedQueries.find((q) => q.id === id);
     if (!found) return [];
     return Array.from({ length: found.revision }, (_, i) => ({

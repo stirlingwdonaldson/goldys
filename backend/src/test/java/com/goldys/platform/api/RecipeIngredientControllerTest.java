@@ -56,13 +56,21 @@ class RecipeIngredientControllerTest {
                     "grams",
                     new BigDecimal("6.00"),
                     new BigDecimal("2.00"),
-                    "Acme")));
+                    "Acme",
+                    "kg",
+                    BigDecimal.ZERO,
+                    null,
+                    true)));
 
     mvc.perform(get("/api/recipes/463/ingredients").with(authenticated(owner())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].parentRecipeId").value(463))
         .andExpect(jsonPath("$[0].stockDescription").value("Brioche bun"))
-        .andExpect(jsonPath("$[0].isSubRecipe").value(false));
+        .andExpect(jsonPath("$[0].isSubRecipe").value(false))
+        .andExpect(jsonPath("$[0].stockUomShortname").value("kg"))
+        .andExpect(jsonPath("$[0].stockUsable").value(0))
+        .andExpect(jsonPath("$[0].stockWastage").isEmpty())
+        .andExpect(jsonPath("$[0].isBrokenLink").value(true));
   }
 
   @Test

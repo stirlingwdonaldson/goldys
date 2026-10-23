@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Download, ExternalLink } from "lucide-react";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/feedback/toast";
 import { useDemoMode } from "@/lib/demo-mode";
 import { invoiceFlagLabel } from "@/lib/work-queue";
@@ -49,7 +50,7 @@ export function useCopyInvoiceLink(invoiceNumber: string): () => Promise<void> {
 }
 
 export interface InvoiceData {
-  detail: ReturnType<typeof useApiData<InvoiceDetail>>;
+  detail: import("@tanstack/react-query").UseQueryResult<InvoiceDetail, import("@/lib/api").ApiError>;
   flags: InvoiceIngestFlag[];
   previous: InvoiceDetail | null;
 }
@@ -61,21 +62,19 @@ export interface InvoiceData {
  * they're never compared against each other.
  */
 export function useInvoiceData(invoiceNumber: string): InvoiceData {
-  const detail = useApiData((api) => invoiceNumber.startsWith("id:")
-    ? api.getInvoiceById(invoiceNumber.slice(3)) : api.getInvoice(invoiceNumber.replace(/^number:/, "")), [invoiceNumber]);
-  const allFlags = useApiData((api) => api.listInvoiceFlags());
+  const queryApi = useApi();
+  const detail = useQuery({ queryKey: ["invoice-detail", invoiceNumber], queryFn: ({ signal }) => invoiceNumber.startsWith("id:")
+    ? queryApi.getInvoiceById(invoiceNumber.slice(3), { signal }) : queryApi.getInvoice(invoiceNumber.replace(/^number:/, ""), { signal }) });
+  const allFlags = useQuery({ queryKey: ["listInvoiceFlags"], queryFn: ({ signal }) => queryApi.listInvoiceFlags({ signal }) });
 
   const supplier = detail.data?.supplierName ?? null;
   const invoiceDate = detail.data?.invoiceDate ?? null;
-  const previous = useApiData(
-    async (api) => {
+  const previous = useQuery({ queryKey: ["invoice-detail", supplier, invoiceDate, detail.data?.supplierId], queryFn: async ({ signal }) => {
       if (!supplier || !invoiceDate) return null;
-      const page = await api.listInvoices({ supplier, to: dayBefore(invoiceDate) }, 0, 1);
+      const page = await queryApi.listInvoices({ supplier, to: dayBefore(invoiceDate) }, 0, 1, { signal });
       const prev = page.items.find(i => detail.data?.supplierId ? i.supplierId === detail.data.supplierId : true);
-      return prev ? prev.invoiceId ? api.getInvoiceById(prev.invoiceId) : api.getInvoice(prev.invoiceNumber) : null;
-    },
-    [supplier, invoiceDate, detail.data?.supplierId],
-  );
+      return prev ? prev.invoiceId ? queryApi.getInvoiceById(prev.invoiceId, { signal }) : queryApi.getInvoice(prev.invoiceNumber, { signal }) : null;
+    } });
 
   return {
     detail,
@@ -352,8 +351,8 @@ export function InvoiceDetailBody({
   layout: "sheet" | "page";
 }) {
   const { detail, flags, previous } = data;
-  if (detail.loading) return <LoadingState rows={4} />;
-  if (detail.error || !detail.data) {
+  if (detail.isPending) return <LoadingState rows={4} />;
+  if (!detail.data) {
     return (
       <InlineError>
         {detail.error?.code === "NOT_FOUND"
@@ -416,13 +415,14 @@ function QualifiedInvoicePdf({ invoice, className }: {
   invoice: Pick<InvoiceDetail, "invoiceId" | "canReadDocuments" | "pdfStatus">;
   className?: string;
 }) {
+  const queryApi = useApi();
   const { demo } = useDemoMode();
-  const docs = useApiData(api => invoice.canReadDocuments
-    ? api.getInvoiceDocuments(invoice.invoiceId!) : Promise.resolve([]), [invoice.invoiceId, invoice.canReadDocuments]);
+  const docs = useQuery({ queryKey: ["getInvoiceDocuments", invoice.invoiceId!], queryFn: ({ signal }) => invoice.canReadDocuments
+    ? queryApi.getInvoiceDocuments(invoice.invoiceId!, { signal }) : Promise.resolve([]) });
   const [selected, setSelected] = useState<string>("");
   if (!invoice.canReadDocuments) return <p role="status">Not permitted to view original source documents.</p>;
-  if (docs.loading) return <LoadingState rows={2} />;
-  if (docs.error) return <InlineError>{docs.error.code === "NOT_PERMITTED" ? "Not permitted to view original source documents." : docs.error.message}</InlineError>;
+  if (docs.isPending) return <LoadingState rows={2} />;
+  if (docs.isLoadingError) return <InlineError>{docs.error.code === "NOT_PERMITTED" ? "Not permitted to view original source documents." : docs.error.message}</InlineError>;
   const documents = docs.data ?? [];
   if (!documents.length) return <p role="status">No attributable PDF link. Source documents may still be unresolved.</p>;
   const documentId = documents.length === 1 ? documents[0].documentId : documents.some(d => d.documentId === selected) ? selected : "";

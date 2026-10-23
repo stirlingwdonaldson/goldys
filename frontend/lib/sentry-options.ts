@@ -4,7 +4,7 @@
  * SDK v11 collects a lot by default (request/response bodies, cookies, headers, stack-frame local
  * variables, DB query data). This app shows staff names, wages and sales, and the backend's own
  * Sentry config already refuses bodies and PII, so the frontend matches it: keep what helps debug
- * (URLs and their query params, stack traces, timings) and drop everything that could carry
+ * (sanitised URLs, stack traces, timings) and drop everything that could carry
  * personal or financial data.
  */
 import type * as Sentry from "@sentry/nextjs";
@@ -18,37 +18,34 @@ export const dataCollection: InitOptions["dataCollection"] = {
   // Header *names* aren't the risk; cookie, auth and CSRF values are.
   httpHeaders: { request: { deny: ["cookie", "authorization", "x-xsrf-token"] }, response: false },
   httpBodies: [],
-  // Query strings here are filters (dates, domains), not personal data.
-  urlQueryParams: true,
+  // Free-text filters may contain personal information.
+  urlQueryParams: false,
   stackFrameVariables: false,
   databaseQueryData: false,
   genAI: { inputs: false, outputs: false },
 };
 
-/**
- * Removes only the value of the {@code token} query parameter from a URL or a bare query string.
- * The ingest webhooks accept their shared token as {@code ?token=} (some sources can only call a
- * URL), and Next.js rewrites {@code /api/*} to the backend, so a webhook call's URL — secret
- * included — passes through the frontend's Sentry integration. This scrubber is deliberately
- * narrow: it drops the one secret parameter and leaves every other query parameter (filters,
- * dates, domains) intact.
- */
+/** Keep bounded navigation metadata; free-text filters and unknown query fields are private. */
 export function scrubTokenQuery(value: string | undefined): string | undefined {
   if (!value) return value;
   const queryStart = value.indexOf("?");
   if (queryStart < 0) return value;
   const base = value.slice(0, queryStart);
-  const kept = value
-    .slice(queryStart + 1)
-    .split("&")
-    .filter((part) => part !== "token" && !part.startsWith("token="));
-  return kept.length === 0 ? base : `${base}?${kept.join("&")}`;
+  const query = new URLSearchParams(value.slice(queryStart + 1).split("#")[0]);
+  const safe = new URLSearchParams();
+  for (const [key, entry] of query) {
+    if ((["from", "to"].includes(key) && /^\d{4}-\d{2}-\d{2}(T[0-9:.+Z-]+)?$/.test(entry)) ||
+        (["page", "size"].includes(key) && /^\d{1,7}$/.test(entry)) ||
+        (["layer", "domain"].includes(key) && /^[a-z_]{1,40}$/.test(entry))) safe.append(key, entry);
+  }
+  return safe.size ? `${base}?${safe}` : base;
 }
 
 /** Scrub the {@code token} query parameter from an event's request URL and query string. */
-function scrubRequest(event: { request?: { url?: string; queryString?: string } }) {
+function scrubRequest(event: { request?: { url?: string; queryString?: string; query_string?: unknown } }) {
   const request = event.request;
   if (!request) return;
+  delete request.query_string;
   if (typeof request.url === "string") request.url = scrubTokenQuery(request.url);
   if (typeof request.queryString === "string") {
     request.queryString = scrubTokenQuery(request.queryString);

@@ -18,8 +18,9 @@ const failed: ConnectorStatus = {
   },
 };
 
-vi.mock("@/lib/use-api-data", () => ({
-  useApiData: () => ({ data: [failed], loading: false, error: null, reload: async () => {} }),
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@tanstack/react-query")>(),
+  useQuery: () => ({ data: [failed], isPending: false, error: null, refetch: async () => {} }),
 }));
 
 describe("LogsPage", () => {
@@ -32,3 +33,5 @@ describe("LogsPage", () => {
     expect(screen.getByText(/RuntimeException: boom/)).toBeInTheDocument();
   });
 });
+
+vi.mock("@/lib/demo-mode", () => ({ useApi: () => ({}), useDemoMode: () => ({ demo: true }) }));

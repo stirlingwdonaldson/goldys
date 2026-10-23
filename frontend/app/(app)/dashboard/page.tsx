@@ -1,6 +1,7 @@
 "use client";
 
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "@/components/app-shell/current-user-provider";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -18,14 +19,15 @@ import { SalesTrend } from "@/components/dashboard/sales-trend";
 import { PageHeader } from "@/components/layout/page-header";
 
 export default function DashboardPage() {
+  const queryApi = useApi();
   // One bootstrap request replaces the previous five independent fetches.
-  const { data, loading, error, reload } = useApiData((api) => api.getDashboardBootstrap());
+  const { data, isPending: loading, error, refetch: reload } = useQuery({ queryKey: ["getDashboardBootstrap"], queryFn: ({ signal }) => queryApi.getDashboardBootstrap({ signal }) });
   const { user } = useCurrentUser();
   const queue = useWorkQueue();
   const [focus, setFocus] = useFocus();
 
   if (loading) return <LoadingState rows={2} />;
-  if (error) {
+  if (error && !data) {
     if (error.code === "NOT_PERMITTED") return <PermissionDenied subject="dashboard data" />;
     return (
       <ErrorState
@@ -75,7 +77,7 @@ export default function DashboardPage() {
           dashboard reads top-down as "how is the business, then what needs doing". */}
       <AttentionPanel
         items={queue.data ? filterByFocus(queue.data.items, focus) : null}
-        loading={queue.loading}
+        loading={queue.isPending}
         openConflicts={data.summary.openConflicts}
       />
     </div>
