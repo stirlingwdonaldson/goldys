@@ -1,0 +1,48 @@
+{
+  "data": [
+    {
+      "recipeAsIngredientId": 206,
+      "recipeId": 645,
+      "recipeUsedId": 487,
+      "portionWeight": 40,
+      "sequenceNo": 0,
+      "unitOfMeasurementId": 1,
+      "uomName": "grams",
+      "recipeName": "Cacio pepe crouquette Mix",
+      "costPerPortion": 5.119999999999999,
+      "costPerPortionIncludingLabour": 5.119999999999999,
+      "originalPortionSize": 800,
+      "originalUOM": "grams",
+      "originalUOMId": 1,
+      "portionWeightConverted": 40,
+      "costPerQty": 0.25599999999999995,
+      "costPerQtyIncludingLabour": 0.25599999999999995,
+      "ingredientDescription": "Cacio pepe crouquette Mix",
+      "ingredientMethodGroupIds": "",
+      "noOfPortion": 1,
+      "isBrokenLink": false
+    },
+    {
+      "recipeAsIngredientId": 207,
+      "recipeId": 645,
+      "recipeUsedId": 256,
+      "portionWeight": 10,
+      "sequenceNo": 0,
+      "unitOfMeasurementId": 2,
+      "uomName": "kilograms",
+      "recipeName": "Crumb mix",
+      "costPerPortion": 20.81,
+      "costPerPortionIncludingLabour": 20.81,
+      "originalPortionSize": 10,
+      "originalUOM": "kilograms",
+      "originalUOMId": 2,
+      "portionWeightConverted": 10,
+      "costPerQty": 20.81,
+      "costPerQtyIncludingLabour": 20.81,
+      "ingredientDescription": "Crumb mix",
+      "ingredientMethodGroupIds": "",
+      "noOfPortion": 1,
+      "isBrokenLink": false
+    }
+  ]
+}

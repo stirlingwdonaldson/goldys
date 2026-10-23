@@ -77,6 +77,7 @@ public class CtbConnector implements SourceConnector {
   private final CtbWastageParser wastageParser;
   private final CanonicalWastageIngest wastageIngest;
   private final VenueClock venueClock;
+  private CtbRecipeRefresh recipeRefresh;
 
   public CtbConnector(
       CtbClient client,
@@ -107,6 +108,12 @@ public class CtbConnector implements SourceConnector {
     this.wastageParser = wastageParser;
     this.wastageIngest = wastageIngest;
     this.venueClock = venueClock;
+  }
+
+  /** Optional startup wiring keeps the existing connector constructor compatible. */
+  @org.springframework.beans.factory.annotation.Autowired(required = false)
+  void setRecipeRefresh(CtbRecipeRefresh recipeRefresh) {
+    this.recipeRefresh = recipeRefresh;
   }
 
   @Override
@@ -155,6 +162,10 @@ public class CtbConnector implements SourceConnector {
         () -> pullRaw("ctb-stock-orders", client::searchStockOrders, sink));
     pull("ctb-statements", failures, () -> pullStatements(sink));
     pull("ctb-reference-data", failures, () -> pullReferenceData(sink));
+
+    if (recipeRefresh != null) {
+      pull("ctb-recipe-refresh", failures, () -> recipeRefresh.fetch(client, sink));
+    }
 
     if (!failures.isEmpty()) {
       throw aggregate(failures);

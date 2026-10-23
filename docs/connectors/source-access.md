@@ -136,7 +136,7 @@ Reference/master data (small, slow-changing): `BusinessDepartmentActivity/GetAll
 `MeasurementConversion/GetAllMeasurementConversions` (64),
 `RecipeCategory/GetAllRecipeCategories`, `Setting/GetCompanyInformation`.
 
-### Line detail (raw-only backfill — `ctb-detail-backfill`)
+### Historical line-detail backfill — `ctb-detail-backfill`
 
 The header-only datasets above have detail endpoints, ingested to the raw ledger by a
 one-off backfill connector (`ctb-detail-backfill`, gated on `app.ctb-detail-backfill=true`),
@@ -187,7 +187,7 @@ Captured from the CTB web app (Revenue → Wastage Records, opening one record):
 - Known gap: a line deleted in CTB disappears from the detail response, and the existing
   `canonical_wastage` fact is not closed. Not observed yet; revisit if CTB totals drift from ours.
 
-Recipe-ingredient scope (v1) — two deliberate limitations, documented not dropped:
+Historical flattened recipe-ingredient scope (v1) — the complete-recipe refresh below supersedes these limitations only for successfully refreshed recipes:
 
 - **No sub-recipe cost roll-up.** `GetIngredientsIncludingSubRecipeIngredients` returns each
   sub-recipe's *own* quantities, with **no field for how much of the sub-recipe the parent uses**,
@@ -277,3 +277,50 @@ determine when the business migrated from MarketMan to CTB (CTB was adopted
   committed.
 - Access is read-only; no connector writes to a source system.
 - Session cookies/state are ephemeral and never logged.
+
+### Complete recipe observations (2026-10-23)
+
+The existing CTB pull can additionally refresh complete recipe definitions and the
+folder/outlet catalog with `CTB_RECIPES_ENABLED=true` (default false, staged rollout).
+It shares the current connector session and source run lock; there is no second
+registered CTB connector and no widening of the ingestion port.
+
+| Endpoint | Raw identity | Parameters / purpose |
+|---|---|---|
+| `RecipeBook/GetRecipeByRecipeId` | `ctb-recipe-definition` | `recipeId`; full header, portion count/size/unit, source pricing, profit and settings |
+| `RecipeBook/GetRecipeDetailByRecipeId` | `ctb-recipe-direct-stocks` | `recipeId`; direct stock lines, signed quantities/costs, pack sizes and units |
+| `RecipeBook/GetIngredientFromExistingRecipesByRecipeId` | `ctb-recipe-usages` | `recipeId`; explicit child recipe, usage, converted usage, original yield/unit and source contribution cost |
+| `RecipeFolder/GetTreeItemsUnderRecipeFolder` | `ctb-recipe-folder-tree` | `recipeFolderId` plus captured default filters; traverse every discovered folder, including empty ones |
+
+Verified read-only login and representative endpoint access on 2026-10-23. Three
+HARs provide 19 complete captures across 18 distinct recipe IDs. Real fixtures
+retain signed deductions, substitutions, unit conversions, multiple portions and
+nested sub-recipes. The expanded folder response calls its root "Recipes"; the
+parent's child node supplies its actual name. Placeholder `recipe;loadingindicator`
+entries are navigation state, not recipes.
+
+Raw source refs contain a generated capture id plus HTTP status. A recipe is
+canonicalized only after all three successful responses from the same capture are
+stored and validated. All responses, including HTTP failures, land raw before
+schema validation. An incomplete capture never clears old data. A complete new
+snapshot replaces all direct lines/usages together, retiring absent lines by
+supersession of the owning aggregate. Catalog replacement likewise requires a
+complete folder traversal. Recipe IDs, never names, determine identity.
+
+`CTB_RECIPES_DELAY_MILLIS` defaults to 250; limits default to 5000 recipes and 1000
+folders. Exceeding a limit is an explicit failure, never a truncated success.
+`CTB_RECIPES_REPLAY=true` replays only complete capture groups, preserving original
+raw fetch times. Old flattened backfill payloads cannot be reconstructed into
+explicit usage relationships and remain the legacy fallback.
+
+Resolved complete definitions provide current recipe costs/ingredients where
+available. CTB source prices and GP stay separate from POS observations. Recursive
+cost estimates preserve signs, require child yield/unit agreement and a positive
+portion count, and qualify missing children, cycles, stale captures or discrepancies.
+The absolute currency comparison tolerance is configurable, default 0.01, for
+reported component rounding; it is not an entity-matching tolerance. Freshness is
+36 hours by default. Neither stale values nor unknown fields are silently zeroed.
+
+Methods/equipment/notes remained empty, nutrition zero and dietary/allergen boxes
+unchecked in the captures. Rich ingestion of those optional endpoints is deferred;
+no dietary suitability is inferred from names or unchecked fields.

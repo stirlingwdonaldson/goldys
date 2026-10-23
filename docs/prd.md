@@ -104,7 +104,7 @@ Grouped by persona. "AI coding session" stories describe what the *build* must p
 4. **One working ingestion connector per in-scope MVP source**, each behind a common port interface (connector isolation invariant).
    - Sources and paths, per `system-context.md`'s "Per-Source Ingestion Reality" table:
      - **Lightspeed (O-Series/Kounta):** authenticated back-office scrape of server-rendered pages (confirmed working path today). If the paid REST API tier is unlocked before/during build, prefer it, but do not block the MVP on unlocking it.
-     - **Cooking the Books (CTB):** self-serve Custom Invoice Export (CSV/XLSX) via scheduled SFTP or email ingestion, using the standard export only — no request to CTB/Quantaco for additional fields beyond what the standard export provides. Do not build against CTB's internal-endpoint scrape for production ingestion — schema-discovery use only.
+     - **Cooking the Books (CTB):** existing authenticated AJAX pull for revenue and recipe observations, plus Custom Invoice Export CSV/PDF via scheduled SFTP or upload for purchasing. Recipe details require real captured schemas, a verified authenticated access path and observable partial failures; see `decisions/ctb-recipe-ajax.md`.
      - **OpenTable:** scripted browser pull from GuestCenter reporting (not a manual export step — must be automatable).
      - **Deputy:** standard OAuth REST API connector. OAuth client registration is being handled directly by the project owner — engineering should confirm the client is registered before starting this connector, but does not need to chase ownership of that task.
    - **Tenzo is explicitly out of scope for MVP** (see Non-Goals) — do not build a Tenzo connector in this phase.

@@ -338,6 +338,8 @@ export const liveApi: Api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     }),
+  getRecipeComposition: (recipeId) => fetchApi<import("./types").RecipeComposition | null>(`/api/recipes/${recipeId}/composition`),
+  getRecipeCatalog: () => fetchApi<import("./types").RecipeCatalog | null>("/api/recipes/folders"),
   listForecastRuns: (options?: { signal?: AbortSignal }) => fetchApi<ForecastRun[]>("/api/forecasting/runs", { signal: options?.signal }),
   getForecastRun: (id: string, options?: { signal?: AbortSignal }) => fetchApi<ForecastRun>(`/api/forecasting/runs/${id}`, { signal: options?.signal }),
   getForecastComparison: (id: string, options?: { signal?: AbortSignal }) =>

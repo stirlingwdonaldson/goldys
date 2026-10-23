@@ -166,6 +166,14 @@ classification:
 # SFTP pull. Disabled by default; set ctb.sftp.enabled=true and provide host/user/password
 # (CTB_SFTP_HOST/USER/PASSWORD) to turn it on. Cron is the venue zone (app.venue.timezone).
 ctb:
+  recipes:
+    enabled: ${CTB_RECIPES_ENABLED:false}
+    delay-millis: ${CTB_RECIPES_DELAY_MILLIS:250}
+    max-recipes: ${CTB_RECIPES_MAX_RECIPES:5000}
+    max-folders: ${CTB_RECIPES_MAX_FOLDERS:1000}
+    replay: ${CTB_RECIPES_REPLAY:false}
+    max-age: ${CTB_RECIPES_MAX_AGE:PT36H}
+    cost-tolerance: ${CTB_RECIPES_COST_TOLERANCE:0.01}
   sftp:
     enabled: ${CTB_SFTP_ENABLED:false}
     cron: ${CTB_SFTP_CRON:0 */15 * * * *}

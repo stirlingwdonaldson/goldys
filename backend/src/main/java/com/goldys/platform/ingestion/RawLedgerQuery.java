@@ -38,6 +38,14 @@ public class RawLedgerQuery {
     return rawRecords.findById(id).map(RawRecord::payloadBytes).orElse(null);
   }
 
+  /** Capture metadata for a just-stored response; payload contents are not exposed here. */
+  public RawRecordRef rawRecordRef(UUID id) {
+    return rawRecords
+        .findById(id)
+        .map(r -> new RawRecordRef(r.id(), r.sourceRecordRef(), r.fetchedAt()))
+        .orElseThrow(() -> new IllegalArgumentException("Raw response was not stored"));
+  }
+
   /** Stored payloads of one source and fetcher identity (e.g. the batched recipe-cost page). */
   public List<RawPayload> rawPayloadsForFetcher(String sourceSystem, String fetcherIdentity) {
     return rawRecords.findBySourceSystemAndFetcherIdentity(sourceSystem, fetcherIdentity).stream()

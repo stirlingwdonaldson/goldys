@@ -20,6 +20,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
   private final SaleItemProjector saleItemProjector;
   private final RecipeProjector recipeProjector;
   private final RecipeIngredientProjector recipeIngredientProjector;
+  private final RecipeDefinitionProjector recipeDefinitionProjector;
 
   public StartupProjectionSeeder(
       DailySalesProjector projector,
@@ -31,7 +32,8 @@ public class StartupProjectionSeeder implements ApplicationRunner {
       DeletedSaleProjector deletedSaleProjector,
       SaleItemProjector saleItemProjector,
       RecipeProjector recipeProjector,
-      RecipeIngredientProjector recipeIngredientProjector) {
+      RecipeIngredientProjector recipeIngredientProjector,
+      RecipeDefinitionProjector recipeDefinitionProjector) {
     this.projector = projector;
     this.productProjector = productProjector;
     this.reservationProjector = reservationProjector;
@@ -42,6 +44,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     this.saleItemProjector = saleItemProjector;
     this.recipeProjector = recipeProjector;
     this.recipeIngredientProjector = recipeIngredientProjector;
+    this.recipeDefinitionProjector = recipeDefinitionProjector;
   }
 
   @Override
@@ -61,6 +64,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     saleItemProjector.recomputeAll();
     recipeProjector.recomputeAll();
     recipeIngredientProjector.recomputeAll();
+    recipeDefinitionProjector.recomputeAll();
     log.info("Resolved projections rebuilt from current canonical facts");
   }
 }

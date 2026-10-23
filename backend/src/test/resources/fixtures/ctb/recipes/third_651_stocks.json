@@ -1,0 +1,33 @@
+{
+  "data": [
+    {
+      "recipeDetailId": 1234,
+      "stockId": 569,
+      "stockSupplierId": 569,
+      "portionWeight": -200,
+      "unitOfMeasurementId": 1,
+      "unitOfMeasurementName": "grams",
+      "recipeId": 651,
+      "recipeName": "no chips",
+      "stockCode": "101740",
+      "supplierName": "Sealane food services",
+      "supplierStockCode": "101740",
+      "stockDesc": "Chip Supa Crunch 10mm UF 6X2K",
+      "stockWastage": 0,
+      "stockUsable": 100,
+      "costPerUnit": 56.65,
+      "costPerQty": -0.94,
+      "isNutritionLinked": false,
+      "stockUnit": 12,
+      "stockUnitOfMeasurementId": 2,
+      "stockUOMShortname": "kg",
+      "ingredientDescription": "Chip Supa Crunch 10mm UF 6X2K",
+      "selectedRecipeIngredientMethodIds": [],
+      "ingredientMethodGroupIds": "",
+      "isBrokenLink": false,
+      "isSubRecipeIngredient": false,
+      "nutritionFoodID": "",
+      "nutritionDatabaseID": -1
+    }
+  ]
+}

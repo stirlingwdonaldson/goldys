@@ -1,0 +1,33 @@
+{
+  "data": [
+    {
+      "recipeDetailId": 563,
+      "stockId": 585,
+      "stockSupplierId": 585,
+      "portionWeight": 100,
+      "unitOfMeasurementId": 1,
+      "unitOfMeasurementName": "grams",
+      "recipeId": 368,
+      "recipeName": "Bar Pretzels",
+      "stockCode": "108869",
+      "supplierName": "Sealane food services",
+      "supplierStockCode": "108869",
+      "stockDesc": "Pretzels Salted 5k Bulk N FTA",
+      "stockWastage": 0,
+      "stockUsable": 100,
+      "costPerUnit": 44.81,
+      "costPerQty": 0.9,
+      "isNutritionLinked": false,
+      "stockUnit": 5,
+      "stockUnitOfMeasurementId": 2,
+      "stockUOMShortname": "kg",
+      "ingredientDescription": "Pretzels Salted 5k Bulk N FTA",
+      "selectedRecipeIngredientMethodIds": [],
+      "ingredientMethodGroupIds": "",
+      "isBrokenLink": false,
+      "isSubRecipeIngredient": false,
+      "nutritionFoodID": "",
+      "nutritionDatabaseID": -1
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 "use client";
 
+import { RecipeCompositionPanel } from "@/components/recipes/recipe-composition-panel";
+
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { BookOpen } from "lucide-react";
@@ -158,7 +160,7 @@ function IngredientLinesTable({ label, lines }: { label: string; lines: RecipeIn
         columns={ingredientColumns}
         data={lines}
         pageSize={false}
-        getRowId={(r) => String(r.recipeDetailId)}
+        getRowId={(r) => `${r.isSubRecipe ? "sub" : "stock"}:${r.recipeDetailId}:${r.stockId ?? "none"}`}
       />
     </div>
   );
@@ -377,6 +379,7 @@ export default function RecipesPage() {
 
           {selected ? (
             <Section title={`${selected.name ?? "Recipe"} — ingredients`}>
+              <RecipeCompositionPanel recipeId={selected.recipeId} />
               <RecipeIngredientsPanel recipe={selected} />
             </Section>
           ) : null}

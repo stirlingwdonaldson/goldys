@@ -1,3 +1,4 @@
+import { demoRecipeComposition } from "./demo-recipe-composition";
 import { deriveExceptions } from "../reconciliation-logic";
 import { ApiError } from "./errors";
 import type { WidgetSpec } from "@/components/widgets/types";
@@ -2108,6 +2109,16 @@ export const demoApi: Api = {
     return id === demoForecastComparison.runId
       ? demoForecastComparison
       : { runId: id, mape: null, mae: null, points: [] };
+  },
+
+  async getRecipeComposition(recipeId: number): Promise<import("./types").RecipeComposition | null> {
+    await delay(300);
+    return demoRecipeComposition(recipeId);
+  },
+
+  async getRecipeCatalog(): Promise<import("./types").RecipeCatalog | null> {
+    await delay(300);
+    return { folders: [{ folderId: 1, parentId: null, name: "Mains" }], allocations: [], observedAt: new Date().toISOString() };
   },
 
   async getRecipes(options?: { signal?: AbortSignal }): Promise<RecipeCosting[]> {

@@ -1,0 +1,26 @@
+{
+  "data": [
+    {
+      "recipeAsIngredientId": 97,
+      "recipeId": 485,
+      "recipeUsedId": 389,
+      "portionWeight": 1,
+      "sequenceNo": 0,
+      "unitOfMeasurementId": 7,
+      "uomName": "each",
+      "recipeName": "Eggplant Parma",
+      "costPerPortion": 3.6074863247863242,
+      "costPerPortionIncludingLabour": 3.6074863247863242,
+      "originalPortionSize": 1,
+      "originalUOM": "each",
+      "originalUOMId": 7,
+      "portionWeightConverted": 1,
+      "costPerQty": 3.6074863247863242,
+      "costPerQtyIncludingLabour": 3.6074863247863242,
+      "ingredientDescription": "Eggplant Parma",
+      "ingredientMethodGroupIds": "",
+      "noOfPortion": 1,
+      "isBrokenLink": false
+    }
+  ]
+}

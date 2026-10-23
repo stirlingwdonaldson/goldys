@@ -3,6 +3,8 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import type { RecipeCosting, RecipeIngredient } from "@/lib/api";
 import RecipesPage from "./page";
 
+vi.mock("@/components/recipes/recipe-composition-panel", () => ({ RecipeCompositionPanel: () => null }));
+
 const state = vi.hoisted(() => ({
   recipes: null as RecipeCosting[] | null,
   ingredients: null as RecipeIngredient[] | null,
