@@ -46,3 +46,30 @@ and UI PRs landed during implementation; the branch must include their latest ma
 before its final gate. V99 belongs to wastage; complete recipe snapshots use V100.
 Refresh/replay default off. Enabling scheduled collection, production backfill,
 pushing, CI and deployment are separate operations and are not claimed here.
+
+## Final local gates
+
+Verified after rebasing onto `8d6fa0a` (merged wastage, ingestion recovery and UI work):
+
+- `./gradlew test spotlessCheck`: successful. JUnit reports 1655 tests across
+  363 suites, zero failures/errors and three opt-in tests skipped in the default run.
+- `bun run typecheck && bun run lint && bun run test && bun run build`: successful,
+  638 tests across 110 Vitest files and a completed production build.
+- Focused controller/live-API tests verify the HTTP 204 missing-snapshot contract.
+- PostgreSQL integration tests verify complete-snapshot replacement, retained history,
+  older/repeated replay, and a PARTIAL connector run retaining HTTP failure bytes
+  while refreshing another recipe.
+- The Compose YAML parses with collection/replay defaulting off; no production
+  Compose command was executed and no real environment file was read.
+
+Ripwire contract checks found the existing connector fetch and recipe costing
+method contracts unchanged. Its branch quality report remains non-clean: it flags
+Spring interface implementations as unused and structural duplication among typed
+query/record mappings and endpoint wrappers, plus growth in CtbClient. The explicit
+getters retain the shared authenticated client and normal adapter structure. These
+findings were reviewed, not blanket-suppressed; no static-analysis clean claim is
+made. The test-gate's named tests were covered by the complete backend suite; its
+name-based graph is not proof of exhaustive runtime coverage.
+
+No push, PR, CI watch, production migration/backfill or deployment was performed.
+Optional recipe methods/equipment/notes/nutrition/dietary features remain deferred.

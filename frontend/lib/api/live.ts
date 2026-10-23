@@ -338,8 +338,8 @@ export const liveApi: Api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     }),
-  getRecipeComposition: (recipeId) => fetchApi<import("./types").RecipeComposition | null>(`/api/recipes/${recipeId}/composition`),
-  getRecipeCatalog: () => fetchApi<import("./types").RecipeCatalog | null>("/api/recipes/folders"),
+  getRecipeComposition: async (recipeId) => (await fetchApi<import("./types").RecipeComposition>(`/api/recipes/${recipeId}/composition`, undefined, {allowNoContent:true})) ?? null,
+  getRecipeCatalog: async () => (await fetchApi<import("./types").RecipeCatalog>("/api/recipes/folders",undefined,{allowNoContent:true})) ?? null,
   listForecastRuns: (options?: { signal?: AbortSignal }) => fetchApi<ForecastRun[]>("/api/forecasting/runs", { signal: options?.signal }),
   getForecastRun: (id: string, options?: { signal?: AbortSignal }) => fetchApi<ForecastRun>(`/api/forecasting/runs/${id}`, { signal: options?.signal }),
   getForecastComparison: (id: string, options?: { signal?: AbortSignal }) =>

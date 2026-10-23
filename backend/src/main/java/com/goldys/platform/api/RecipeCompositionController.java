@@ -5,6 +5,7 @@ import com.goldys.platform.auth.AccountUserDetails;
 import com.goldys.platform.auth.CurrentUserService;
 import com.goldys.platform.semantic.RecipeCatalog;
 import com.goldys.platform.semantic.RecipeComposition;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,13 +22,15 @@ public class RecipeCompositionController {
   }
 
   @GetMapping("/{recipeId}/composition")
-  RecipeComposition composition(
+  ResponseEntity<RecipeComposition> composition(
       @PathVariable int recipeId, @AuthenticationPrincipal AccountUserDetails user) {
-    return reporting.composition(recipeId, users.roleOf(user));
+    RecipeComposition value = reporting.composition(recipeId, users.roleOf(user));
+    return value == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(value);
   }
 
   @GetMapping("/folders")
-  RecipeCatalog folders(@AuthenticationPrincipal AccountUserDetails user) {
-    return reporting.catalog(users.roleOf(user));
+  ResponseEntity<RecipeCatalog> folders(@AuthenticationPrincipal AccountUserDetails user) {
+    RecipeCatalog value = reporting.catalog(users.roleOf(user));
+    return value == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(value);
   }
 }

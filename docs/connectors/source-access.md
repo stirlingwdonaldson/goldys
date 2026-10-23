@@ -324,3 +324,7 @@ reported component rounding; it is not an entity-matching tolerance. Freshness i
 Methods/equipment/notes remained empty, nutrition zero and dietary/allergen boxes
 unchecked in the captures. Rich ingestion of those optional endpoints is deferred;
 no dietary suitability is inferred from names or unchecked fields.
+
+Composition/catalog reads return HTTP 204 until a complete snapshot exists. The typed
+frontend normalizes this optional response to null; it does not treat absence as an
+empty recipe or a malformed server response.
