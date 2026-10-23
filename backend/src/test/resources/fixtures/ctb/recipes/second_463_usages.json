@@ -1,0 +1,26 @@
+{
+  "data": [
+    {
+      "recipeAsIngredientId": 81,
+      "recipeId": 463,
+      "recipeUsedId": 462,
+      "portionWeight": 60,
+      "sequenceNo": 0,
+      "unitOfMeasurementId": 3,
+      "uomName": "ml",
+      "recipeName": "Burger Sauce batch",
+      "costPerPortion": 17.098181818181818,
+      "costPerPortionIncludingLabour": 17.098181818181818,
+      "originalPortionSize": 2,
+      "originalUOM": "litres",
+      "originalUOMId": 4,
+      "portionWeightConverted": 0.06,
+      "costPerQty": 0.5129454545454545,
+      "costPerQtyIncludingLabour": 0.5129454545454545,
+      "ingredientDescription": "Burger Sauce batch",
+      "ingredientMethodGroupIds": "",
+      "noOfPortion": 1,
+      "isBrokenLink": false
+    }
+  ]
+}

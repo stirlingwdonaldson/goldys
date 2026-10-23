@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 public class CanonicalRecipeCostQuery {
   private final CanonicalRecipeCostRepository repository;
 
+  @org.springframework.beans.factory.annotation.Autowired
+  private com.goldys.platform.ingestion.RawLedgerQuery raw;
+
   public CanonicalRecipeCostQuery(CanonicalRecipeCostRepository repository) {
     this.repository = repository;
   }
@@ -28,6 +31,7 @@ public class CanonicalRecipeCostQuery {
         r.costPerPortionInclLabour(),
         r.totalCost(),
         r.portionSize(),
-        r.portionSizeValue());
+        r.portionSizeValue(),
+        raw.recipeEvidence(r.rawRecordId(), "legacy:ctb-recipe-cost"));
   }
 }

@@ -18,6 +18,9 @@ public class CanonicalSaleItemQuery {
 
   private final CanonicalSaleItemRepository repository;
 
+  @org.springframework.beans.factory.annotation.Autowired
+  private com.goldys.platform.ingestion.RawLedgerQuery raw;
+
   public CanonicalSaleItemQuery(CanonicalSaleItemRepository repository) {
     this.repository = repository;
   }
@@ -46,11 +49,20 @@ public class CanonicalSaleItemQuery {
 
   /** Current sale items' name, sold price and cost — for the recipe price/cost join. */
   public List<SaleItemPriceView> currentSaleItemPrices() {
+    var evidence =
+        new java.util.HashMap<java.util.UUID, com.goldys.platform.semantic.RecipeEvidence>();
     return repository.findAllCurrent().stream()
         .map(
             s ->
                 new SaleItemPriceView(
-                    s.itemName(), s.soldPriceIncTax(), s.costIncTax(), s.tradingDate()))
+                    s.itemName(),
+                    s.soldPriceIncTax(),
+                    s.costIncTax(),
+                    s.tradingDate(),
+                    evidence
+                        .computeIfAbsent(
+                            s.rawRecordId(), id -> raw.recipeEvidence(id, "Lightspeed sale item"))
+                        .forEntity(s.sourceRecordRef())))
         .toList();
   }
 

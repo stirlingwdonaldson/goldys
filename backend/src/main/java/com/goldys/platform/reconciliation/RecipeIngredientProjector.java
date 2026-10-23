@@ -33,6 +33,11 @@ public class RecipeIngredientProjector {
     Instant now = CLOCK.instant();
     List<ResolvedRecipeIngredient> rows =
         canonical.currentIngredients().stream().map(v -> toResolved(v, now)).toList();
+    var evidence = canonical.evidence();
+    rows.forEach(
+        r ->
+            r.sourceEvidence(
+                evidence.get(r.parentRecipeId() + ":" + r.recipeDetailId() + ":" + r.stockId())));
     resolved.saveAll(rows);
   }
 

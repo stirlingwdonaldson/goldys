@@ -344,6 +344,10 @@ export interface LatestSales {
 
 /** Per-dish costing: CTB recipe cost vs Lightspeed price/cost (mirrors backend `RecipeCosting`). */
 export interface RecipeCosting {
+  capturedAt?: string | null;
+  costSource?: string;
+  coverage?: string;
+  stale?: boolean;
   recipeId: number;
   name: string | null;
   folder: string | null;
@@ -1317,6 +1321,9 @@ export interface Api {
   getSaleItemMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SaleItemMix[]>;
   listForecastMetrics(options?: { signal?: AbortSignal }): Promise<ForecastMetric[]>;
   createForecastRun(input: CreateForecastInput): Promise<ForecastRun>;
+  getRecipeComposition(recipeId: number, options?: {signal?:AbortSignal}): Promise<RecipeComposition | null>;
+  getRecipeDetails(recipeId: number, options?: {signal?:AbortSignal}): Promise<RecipeDetails | null>;
+  getRecipeCatalog(options?: {signal?:AbortSignal}): Promise<RecipeCatalog | null>;
   listForecastRuns(options?: { signal?: AbortSignal }): Promise<ForecastRun[]>;
   getForecastRun(id: string, options?: { signal?: AbortSignal }): Promise<ForecastRun>;
   getForecastComparison(id: string, options?: { signal?: AbortSignal }): Promise<ForecastComparison>;
@@ -1684,4 +1691,126 @@ export interface InventoryObservation {
 }
 export interface InventoryObservationPage {
   observations: InventoryObservation[]; page: number; size: number; hasMore: boolean; notices: string[];
+}
+
+// Complete CTB recipe observations. Missing source values remain null.
+export interface RecipeHeader {
+  recipeId: number;
+  name: string | null;
+  folderId: number | null;
+  active: boolean | null;
+  locked: boolean | null;
+  portionCount: number | null;
+  portionSize: number | null;
+  unitId: number | null;
+  unit: string | null;
+  totalCost: number | null;
+  costPerPortion: number | null;
+  costPerPortionIncludingLabour: number | null;
+  labourCost: number | null;
+  sellingPriceIncludingGst: number | null;
+  revenueExcludingGst: number | null;
+  gst: number | null;
+  foodCostPercent: number | null;
+  grossProfit: number | null;
+  description: string | null;
+  menuDescription: string | null;
+  hints: string | null;
+  preparationMinutes: number | null;
+  productionItem: boolean | null;
+  countableOnStocktake: boolean | null;
+  videoUrl: string | null;
+  recipeDate: string | null;
+  createdByName: string | null;
+  difficultyRating: number | null;
+  barcode: string | null;
+  stockCategoryId: number | null;
+  foodCostLimit: number | null;
+  foodCostLimitIncludingLabour: number | null;
+}
+export interface RecipeStock {
+  lineId: number;
+  stockId: number | null;
+  stockCode: string | null;
+  description: string | null;
+  supplierName: string | null;
+  supplierStockCode: string | null;
+  quantity: number | null;
+  unitId: number | null;
+  unit: string | null;
+  stockPackSize: number | null;
+  stockUnitId: number | null;
+  stockUnit: string | null;
+  costPerPack: number | null;
+  cost: number | null;
+  usablePercent: number | null;
+  wastagePercent: number | null;
+  brokenLink: boolean | null;
+}
+export interface RecipeUsage {
+  lineId: number;
+  recipeId: number;
+  name: string | null;
+  quantity: number | null;
+  unitId: number | null;
+  unit: string | null;
+  originalPortionSize: number | null;
+  originalUnitId: number | null;
+  originalUnit: string | null;
+  convertedQuantity: number | null;
+  sourceCostPerPortion: number | null;
+  cost: number | null;
+  costIncludingLabour: number | null;
+  brokenLink: boolean | null;
+}
+export interface RecipeFolder {
+  folderId: number;
+  parentId: number | null;
+  name: string | null;
+}
+export interface RecipeOutletAllocation {
+  entityType: string | null;
+  entityId: number;
+  outletId: number;
+  deallocated: boolean;
+}
+export interface RecipeDefinition {
+  header: RecipeHeader;
+  stocks: RecipeStock[];
+  usages: RecipeUsage[];
+  observedAt: string;
+}
+export interface RecipeCatalog {
+  folders: RecipeFolder[];
+  allocations: RecipeOutletAllocation[];
+  observedAt: string;
+}
+export interface RecipeComposition {
+  definition: RecipeDefinition;
+  folderPath: string[];
+  outlets: RecipeOutletAllocation[];
+  sourceComponentTotal: number | null;
+  calculatedTotal: number | null;
+  difference: number | null;
+  issues: string[];
+  stale: boolean;
+}
+
+export interface RecipeEvidence {
+ rawRecordId: string | null; sourceSystem: string; fetcher: string; endpoint: string;
+ sourceRecordRef: string | null; capturedAt: string; ingestionRunId: string | null; sha256: string | null; entityRefs?: string[];
+}
+export interface RecipeField { path: string; value: string | null; type: string; }
+export interface RecipeSection {
+ recipeId: number; section: string; successful: boolean; notice: string | null;
+ fields: RecipeField[]; evidence: RecipeEvidence;
+}
+export interface RecipeReference { recipeId: number; name: string | null; available: boolean; }
+export interface RecipeDetails {
+ recipeId: number; name: string | null; costSelection: string; sections: RecipeSection[];
+ latestAttempts: RecipeSection[]; usedIn: RecipeReference[]; uses: RecipeReference[];
+ compositionSources: RecipeEvidence[];
+ collection?: { source:string; connector:string; lastRunAt:string | null; status:string } | null;
+ collectionEnabled?: boolean;
+ freshnessLimitSeconds?: number;
 }

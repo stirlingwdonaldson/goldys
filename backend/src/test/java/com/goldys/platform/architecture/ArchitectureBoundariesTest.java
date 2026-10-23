@@ -548,4 +548,12 @@ class ArchitectureBoundariesTest {
           .implement(ReviewMetricsQuery.class)
           .should()
           .resideInAPackage("..classification..");
+
+  @ArchTest
+  static final ArchRule recipeCompositionImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(com.goldys.platform.semantic.RecipeCompositionQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
 }

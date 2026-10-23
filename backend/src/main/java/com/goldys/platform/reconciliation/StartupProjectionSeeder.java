@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class StartupProjectionSeeder implements ApplicationRunner {
   private static final Logger log = LoggerFactory.getLogger(StartupProjectionSeeder.class);
+
+  private final RecipeSectionProjector recipeSectionProjector;
+
   private final DailySalesProjector projector;
   private final ProductSalesProjector productProjector;
   private final ReservationProjector reservationProjector;
@@ -20,6 +23,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
   private final SaleItemProjector saleItemProjector;
   private final RecipeProjector recipeProjector;
   private final RecipeIngredientProjector recipeIngredientProjector;
+  private final RecipeDefinitionProjector recipeDefinitionProjector;
 
   public StartupProjectionSeeder(
       DailySalesProjector projector,
@@ -31,8 +35,11 @@ public class StartupProjectionSeeder implements ApplicationRunner {
       DeletedSaleProjector deletedSaleProjector,
       SaleItemProjector saleItemProjector,
       RecipeProjector recipeProjector,
-      RecipeIngredientProjector recipeIngredientProjector) {
+      RecipeIngredientProjector recipeIngredientProjector,
+      RecipeDefinitionProjector recipeDefinitionProjector,
+      RecipeSectionProjector recipeSectionProjector) {
     this.projector = projector;
+    this.recipeSectionProjector = recipeSectionProjector;
     this.productProjector = productProjector;
     this.reservationProjector = reservationProjector;
     this.labourProjector = labourProjector;
@@ -42,6 +49,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     this.saleItemProjector = saleItemProjector;
     this.recipeProjector = recipeProjector;
     this.recipeIngredientProjector = recipeIngredientProjector;
+    this.recipeDefinitionProjector = recipeDefinitionProjector;
   }
 
   @Override
@@ -61,6 +69,8 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     saleItemProjector.recomputeAll();
     recipeProjector.recomputeAll();
     recipeIngredientProjector.recomputeAll();
+    recipeDefinitionProjector.recomputeAll();
+    recipeSectionProjector.recomputeAll();
     log.info("Resolved projections rebuilt from current canonical facts");
   }
 }

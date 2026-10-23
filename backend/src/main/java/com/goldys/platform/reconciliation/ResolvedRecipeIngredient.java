@@ -75,6 +75,18 @@ class ResolvedRecipeIngredient {
   @Column(name = "resolved_at", nullable = false)
   private Instant resolvedAt;
 
+  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+  @Column(name = "source_evidence")
+  private com.goldys.platform.semantic.RecipeEvidence sourceEvidence;
+
+  com.goldys.platform.semantic.RecipeEvidence sourceEvidence() {
+    return sourceEvidence;
+  }
+
+  void sourceEvidence(com.goldys.platform.semantic.RecipeEvidence value) {
+    sourceEvidence = value;
+  }
+
   protected ResolvedRecipeIngredient() {}
 
   ResolvedRecipeIngredient(

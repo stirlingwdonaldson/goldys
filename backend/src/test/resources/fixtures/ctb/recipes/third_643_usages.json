@@ -1,0 +1,26 @@
+{
+  "data": [
+    {
+      "recipeAsIngredientId": 214,
+      "recipeId": 643,
+      "recipeUsedId": 449,
+      "portionWeight": -50,
+      "sequenceNo": 0,
+      "unitOfMeasurementId": 1,
+      "uomName": "grams",
+      "recipeName": "Cheese Blend",
+      "costPerPortion": 474.22,
+      "costPerPortionIncludingLabour": 474.22,
+      "originalPortionSize": 52,
+      "originalUOM": "kilograms",
+      "originalUOMId": 2,
+      "portionWeightConverted": -0.05,
+      "costPerQty": -0.45598076923076925,
+      "costPerQtyIncludingLabour": -0.45598076923076925,
+      "ingredientDescription": "Cheese Blend",
+      "ingredientMethodGroupIds": "",
+      "noOfPortion": 1,
+      "isBrokenLink": false
+    }
+  ]
+}

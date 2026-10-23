@@ -55,7 +55,10 @@ public class CtbRecipeIngredientsParser {
               sanitize(n.get("supplierStockCode")),
               decimal(n.get("portionWeight")),
               sanitize(n.get("unitOfMeasurementName")),
-              sanitize(n.get("stockUomShortname")),
+              sanitize(
+                  n.has("stockUOMShortname")
+                      ? n.get("stockUOMShortname")
+                      : n.get("stockUomShortname")),
               decimal(n.get("costPerQty")),
               decimal(n.get("costPerUnit")),
               decimal(n.get("stockUsable")),

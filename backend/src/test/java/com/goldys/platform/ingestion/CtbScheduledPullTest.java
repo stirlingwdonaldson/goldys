@@ -55,4 +55,17 @@ class CtbScheduledPullTest {
     assertThat(config.getSchedule().getValue()).isEqualTo("0 4 * * *");
     assertThat(config.getTimezone()).isEqualTo("Australia/Melbourne");
   }
+
+  @Test
+  void completeRecipeRefreshHasEnoughMonitorRuntimeWithoutChangingTheDefault() {
+    var pull = new CtbScheduledPull(mock(IngestionService.class), CRON, ZONE);
+    var config =
+        (MonitorConfig)
+            org.springframework.test.util.ReflectionTestUtils.getField(pull, "monitorConfig");
+    pull.pullCtb();
+    assertThat(config.getMaxRuntime()).isEqualTo(30L);
+    org.springframework.test.util.ReflectionTestUtils.setField(pull, "recipeRefreshEnabled", true);
+    pull.pullCtb();
+    assertThat(config.getMaxRuntime()).isEqualTo(120L);
+  }
 }

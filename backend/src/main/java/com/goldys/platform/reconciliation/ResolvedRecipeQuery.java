@@ -4,31 +4,43 @@ import com.goldys.platform.semantic.RecipeCosting;
 import com.goldys.platform.semantic.RecipeMetricsQuery;
 import com.goldys.platform.semantic.RecipeSummary;
 import java.math.BigDecimal;
+import java.util.*;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** {@link RecipeMetricsQuery} backed by the resolved recipe projection. */
 @Service
 public class ResolvedRecipeQuery implements RecipeMetricsQuery {
 
   private final ResolvedRecipeRepository repository;
+  private final RecipeDefinitionReadAdapter definitions;
 
-  public ResolvedRecipeQuery(ResolvedRecipeRepository repository) {
+  @Autowired
+  public ResolvedRecipeQuery(
+      ResolvedRecipeRepository repository, RecipeDefinitionReadAdapter definitions) {
     this.repository = repository;
+    this.definitions = definitions;
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<RecipeSummary> recipes() {
-    return repository.findAllByOrderByRecipeNameAsc().stream()
-        .map(ResolvedRecipeQuery::toSummary)
-        .toList();
+    return currentRows().stream().map(ResolvedRecipeQuery::toSummary).toList();
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<RecipeCosting> costing() {
-    return repository.findAllByOrderByRecipeNameAsc().stream()
-        .map(ResolvedRecipeQuery::toCosting)
+    return currentRows().stream()
+        .map(r -> definitions == null ? toCosting(r) : definitions.status(toCosting(r)))
         .toList();
+  }
+
+  private List<ResolvedRecipe> currentRows() {
+    List<ResolvedRecipe> rows = repository.findAllByOrderByRecipeNameAsc();
+    return definitions == null ? rows : definitions.overlay(rows);
   }
 
   private static RecipeSummary toSummary(ResolvedRecipe r) {
@@ -64,6 +76,13 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
         r.priceSource(),
         r.lastSoldPrice(),
         r.lastSoldCost(),
-        r.lastSoldDate());
+        r.lastSoldDate(),
+        r.costEvidence().stream()
+            .map(com.goldys.platform.semantic.RecipeEvidence::capturedAt)
+            .max(java.time.Instant::compareTo)
+            .orElse(null),
+        "CTB",
+        r.costPerPortion() == null ? "DETAILS_MISSING" : "LEGACY_OR_COMPLETE",
+        false);
   }
 }

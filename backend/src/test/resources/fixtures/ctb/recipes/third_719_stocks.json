@@ -1,0 +1,33 @@
+{
+  "data": [
+    {
+      "recipeDetailId": 1419,
+      "stockId": 386,
+      "stockSupplierId": 386,
+      "portionWeight": 0,
+      "unitOfMeasurementId": 2,
+      "unitOfMeasurementName": "kilograms",
+      "recipeId": 719,
+      "recipeName": "Jus",
+      "stockCode": "PDF_1346E9F42960B7",
+      "supplierName": "PREPFRESH PTY LTD T/A Chefs Pantry",
+      "supplierStockCode": "STM-RWJ 1KG - PREMIUM RED WINE JUS",
+      "stockDesc": "STM-RWJ 1KG - PREMIUM RED WINE JUS",
+      "stockWastage": 0,
+      "stockUsable": 100,
+      "costPerUnit": 391.66,
+      "costPerQty": 0,
+      "isNutritionLinked": false,
+      "stockUnit": 10,
+      "stockUnitOfMeasurementId": 2,
+      "stockUOMShortname": "kg",
+      "ingredientDescription": "STM-RWJ 1KG - PREMIUM RED WINE JUS",
+      "selectedRecipeIngredientMethodIds": [],
+      "ingredientMethodGroupIds": "",
+      "isBrokenLink": false,
+      "isSubRecipeIngredient": false,
+      "nutritionFoodID": "",
+      "nutritionDatabaseID": -1
+    }
+  ]
+}

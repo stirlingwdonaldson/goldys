@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 class ResolvedRecipeQueryTest {
 
   private final ResolvedRecipeRepository repository = mock(ResolvedRecipeRepository.class);
-  private final ResolvedRecipeQuery query = new ResolvedRecipeQuery(repository);
+  private final ResolvedRecipeQuery query = new ResolvedRecipeQuery(repository, null);
 
   @Test
   void recipesReturnsResolvedRows() {

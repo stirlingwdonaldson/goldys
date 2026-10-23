@@ -1,0 +1,33 @@
+{
+  "data": [
+    {
+      "recipeDetailId": 1236,
+      "stockId": 346,
+      "stockSupplierId": 346,
+      "portionWeight": 50,
+      "unitOfMeasurementId": 1,
+      "unitOfMeasurementName": "grams",
+      "recipeId": 643,
+      "recipeName": "vegan option -  eggplant parma",
+      "stockCode": "9421",
+      "supplierName": "Vegan Perfection",
+      "supplierStockCode": "9421",
+      "stockDesc": "Vegan Mozzarella 2.5kg",
+      "stockWastage": 0,
+      "stockUsable": 100,
+      "costPerUnit": 37.36,
+      "costPerQty": 0.75,
+      "isNutritionLinked": false,
+      "stockUnit": 2.5,
+      "stockUnitOfMeasurementId": 2,
+      "stockUOMShortname": "kg",
+      "ingredientDescription": "Vegan Mozzarella 2.5kg",
+      "selectedRecipeIngredientMethodIds": [],
+      "ingredientMethodGroupIds": "",
+      "isBrokenLink": false,
+      "isSubRecipeIngredient": false,
+      "nutritionFoodID": "",
+      "nutritionDatabaseID": -1
+    }
+  ]
+}

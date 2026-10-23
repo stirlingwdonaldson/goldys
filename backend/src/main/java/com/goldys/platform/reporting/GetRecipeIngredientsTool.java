@@ -40,7 +40,7 @@ public class GetRecipeIngredientsTool implements ReportingTool {
   @Override
   public String description() {
     return "The ingredient lines of one recipe: ingredient, quantity, unit, cost and supplier, "
-        + "including sub-recipe lines. Use for 'what goes into this dish' questions, not for a "
+        + "including explicit sub-recipe usage where received. Use for 'what goes into this dish' questions, not for a "
         + "metric over a period.";
   }
 
@@ -96,7 +96,12 @@ public class GetRecipeIngredientsTool implements ReportingTool {
     WidgetSpec widget =
         new TableWidgetSpec(
             UUID.randomUUID().toString(), "Recipe ingredients", null, columns, tableRows, null);
-    return new ToolResult(widget, List.of(), List.of(), List.of());
+    return new ToolResult(
+        widget,
+        List.of(
+            "Quantities and costs retain signed adjustments. Complete refreshes show direct sub-recipe usage; older flattened records may show unscaled child quantities. CTB costs are source estimates."),
+        List.of(),
+        List.of());
   }
 
   private static GetRecipeIngredientsInput require(ToolInput input) {

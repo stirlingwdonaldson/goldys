@@ -1,0 +1,48 @@
+{
+  "data": [
+    {
+      "recipeAsIngredientId": 114,
+      "recipeId": 401,
+      "recipeUsedId": 498,
+      "portionWeight": 200,
+      "sequenceNo": 0,
+      "unitOfMeasurementId": 1,
+      "uomName": "grams",
+      "recipeName": "Fairy bread pudding mix",
+      "costPerPortion": 16.779999999999998,
+      "costPerPortionIncludingLabour": 16.779999999999998,
+      "originalPortionSize": 1400,
+      "originalUOM": "grams",
+      "originalUOMId": 1,
+      "portionWeightConverted": 200,
+      "costPerQty": 2.397142857142857,
+      "costPerQtyIncludingLabour": 2.397142857142857,
+      "ingredientDescription": "Fairy bread pudding mix",
+      "ingredientMethodGroupIds": "",
+      "noOfPortion": 1,
+      "isBrokenLink": false
+    },
+    {
+      "recipeAsIngredientId": 113,
+      "recipeId": 401,
+      "recipeUsedId": 497,
+      "portionWeight": 50,
+      "sequenceNo": 0,
+      "unitOfMeasurementId": 3,
+      "uomName": "ml",
+      "recipeName": "Vanilla custard",
+      "costPerPortion": 10.77,
+      "costPerPortionIncludingLabour": 10.77,
+      "originalPortionSize": 1200,
+      "originalUOM": "ml",
+      "originalUOMId": 3,
+      "portionWeightConverted": 50,
+      "costPerQty": 0.44875,
+      "costPerQtyIncludingLabour": 0.44875,
+      "ingredientDescription": "Vanilla custard",
+      "ingredientMethodGroupIds": "",
+      "noOfPortion": 1,
+      "isBrokenLink": false
+    }
+  ]
+}

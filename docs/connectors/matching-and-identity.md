@@ -390,3 +390,41 @@ with all per-page amount totals preserved. Read-only live checks also accepted t
 report (118 rows / 117 products), 17 October (199 / 199), and a 1–22 October aggregate
 used only to exercise pagination (364 rows over two pages / 359 products). The range probe
 was never ingested or attributed to a trading day.
+## Complete recipe definition and catalog observations
+
+- Source: CTB's three per-recipe detail responses and complete folder-tree traversal.
+- Definition identity: `(source_system=CTB, source_record_ref=recipe-definition:{recipeId})`.
+  A single bitemporal parent owns normalized stock/usage rows for that observation;
+  child identity is scoped to that observation, with source line IDs retained.
+  Removed lines are absent from the successor, never deleted from history.
+- Catalog identity: `(CTB, recipe-catalog)`. A complete observation owns normalized
+  folders (including empty ones), parent IDs and explicit outlet allocations with
+  deallocation state. Folder names are labels; folder IDs determine identity.
+- Recipe names are not unique (captured recipe IDs 719 and 721 are both Jus).
+  No new recipe-to-POS fuzzy matching or tolerance is introduced.
+- Every observation retains the raw header/stock/usage IDs or all tree response IDs.
+  Valid time is capture time; recorded time is when canonicalization occurs. These
+  are observed snapshots, not claims of historical effective time in CTB.
+- Same/older capture times do not replace newer observations. A later complete
+  observation versions all owned rows atomically, including valid empty lists.
+- Explicit sub-recipe usage retains its source `recipeAsIngredientId`, child ID,
+  signed quantity, source unit, converted quantity, original batch yield/unit and
+  CTB contribution cost. Flattened ingredient rows are never added a second time.
+- Manual source correction/write-back is not wired. Questionable quantities stay
+  source facts; derived discrepancy notices do not mutate them.
+
+### Recipe sections, evidence and precedence (23 October extension)
+
+Recipe-section identity is `recipe-section:{recipeId}:{section}:{success|failure}` under
+CTB. Each chain uses the existing bitemporal supersession rules and authoritative raw-record ID.
+The catalogue and shared lookup observations use recipe ID 0. Scalars and empty-state markers
+are normalized into owned field rows; original field paths are retained. The resolved JSON
+projection is disposable. A failed observation never supersedes the last successful section.
+
+Complete composition retains its three original capture IDs. Its header, direct stock lines and
+explicit usages stay atomic. Equivalent legacy reported cost fields compete by original raw
+capture time, not projection rebuild time. Flattened legacy lines remain a labelled fallback;
+they never replace the explicit usage graph. Catalogue names can be newer than recipe details;
+a list response cannot establish cost/ingredient freshness. Source-provided dietary booleans
+are observations, not inferred safety assertions. Recipe identity and reverse usage links use
+CTB IDs, never names. Embedded markup becomes plain text; raw bytes remain unchanged.

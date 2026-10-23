@@ -67,6 +67,10 @@ interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
 
 interface RawRecordRepository
     extends JpaRepository<RawRecord, UUID>, JpaSpecificationExecutor<RawRecord> {
+  @Query(
+      "select new com.goldys.platform.semantic.RecipeEvidence(r.id,r.sourceSystem,r.fetcherIdentity,:endpoint,r.sourceRecordRef,r.fetchedAt,r.ingestionRunId,r.payloadSha256) from RawRecord r where r.id=:id")
+  Optional<com.goldys.platform.semantic.RecipeEvidence> recipeEvidence(UUID id, String endpoint);
+
   List<RawRecord> findByIngestionRunId(UUID ingestionRunId);
 
   List<RawRecord> findBySourceSystem(String sourceSystem);

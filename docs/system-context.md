@@ -53,7 +53,7 @@ Design assumptions about API access must be checked against what's actually avai
 |Source|API access|Working ingestion path|
 |---|---|---|
 |**Lightspeed (O-Series / Kounta)**|Public REST API exists but is paid-add-on-gated on the current plan (or ask support to unlock the legacy free tier)|Authenticated back-office scrape of server-rendered pages (working today); richer REST API if unlocked|
-|**Cooking the Books (CTB)**|No public API|Self-serve Custom Invoice Export (CSV/XLSX → scheduled SFTP/email) for production; internal-endpoint scrape exists but is fragile/unsupported — schema-discovery only, not production|
+|**Cooking the Books (CTB)**|No public API|Existing authenticated internal AJAX pull for revenue and recipe data; Custom Invoice Export CSV/PDF via SFTP for purchasing. Internal endpoints remain unsupported and require captured schemas and observable failures (see `decisions/ctb-recipe-ajax.md`).|
 |**MarketMan (history only)**|Buyer-portal internal API (session cookie) + official API v3 (`api.marketman.com/v3`, keys from MarketMan support)|One-time historical pull of old (pre-CTB) numbers — not a recurring connector. Integrated with Kounta (POS) and Deputy (labour); customer since 2022|
 |**OpenTable**|Partner-gated, no self-serve API; GuestCenter's reports are backed by internal JSON endpoints|Assisted session: a human signs in to GuestCenter through a live view of the VM's browser (no automated login or challenge-solving), then the connector pulls the JSON endpoints. Manual CSV drop as fallback (`connectors/opentable.md`)|
 |**Deputy**|Genuine self-serve OAuth REST API|Standard API connector — cleanest of the five once someone with admin access registers the OAuth client|

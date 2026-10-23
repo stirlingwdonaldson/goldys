@@ -40,6 +40,7 @@ public class CtbClient {
     this.http =
         HttpClient.newBuilder()
             .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
+            .connectTimeout(java.time.Duration.ofSeconds(20))
             .build();
   }
 
@@ -134,6 +135,77 @@ public class CtbClient {
   /** All recipes (id + name). Not paginated; returns the full array in one call. */
   public CtbPage getAllRecipes() {
     return page("RecipeBook/GetAllRecipes", post("/RecipeBook/GetAllRecipes", ""));
+  }
+
+  public RecipeResponse getRecipeList() {
+    return recipeResponse("RecipeBook/GetAllRecipes", post("/RecipeBook/GetAllRecipes", ""));
+  }
+
+  public RecipeResponse getRecipeDefinition(int recipeId) {
+    return recipeResponse(
+        "RecipeBook/GetRecipeByRecipeId",
+        post("/RecipeBook/GetRecipeByRecipeId", form("recipeId", String.valueOf(recipeId))));
+  }
+
+  public RecipeResponse getRecipeDirectStocks(int recipeId) {
+    return recipeResponse(
+        "RecipeBook/GetRecipeDetailByRecipeId",
+        post("/RecipeBook/GetRecipeDetailByRecipeId", form("recipeId", String.valueOf(recipeId))));
+  }
+
+  public RecipeResponse getRecipeUsages(int recipeId) {
+    return recipeResponse(
+        "RecipeBook/GetIngredientFromExistingRecipesByRecipeId",
+        post(
+            "/RecipeBook/GetIngredientFromExistingRecipesByRecipeId",
+            form("recipeId", String.valueOf(recipeId))));
+  }
+
+  public RecipeResponse getRecipeSection(int recipeId, String section) {
+    String endpoint = CtbRecipeRefresh.sectionEndpoint(section);
+    String body = form("recipeId", String.valueOf(recipeId));
+    if (section.equals("EQUIPMENT")) body += "&" + form("keyword", "", "start", "0", "limit", "50");
+    else if (section.equals("DIETARY") || section.equals("ALLERGENS"))
+      body += "&" + form("isSortByName", "true");
+    else if (!section.equals("NUTRITION") && !section.equals("INGREDIENT_METHODS"))
+      body += "&" + form("recipeFactType", section);
+    return recipeResponse(endpoint, post(endpoint, body));
+  }
+
+  public RecipeResponse getRecipeEquipmentOptions() {
+    return recipeResponse(
+        "Equipment/SearchEquipments",
+        post("/Equipment/SearchEquipments", form("keyword", "", "start", "0", "limit", "1000")));
+  }
+
+  public RecipeResponse getRecipeFolder(int folderId) {
+    return recipeResponse(
+        "RecipeFolder/GetTreeItemsUnderRecipeFolder",
+        post(
+            "/RecipeFolder/GetTreeItemsUnderRecipeFolder",
+            form(
+                "recipeFolderId",
+                String.valueOf(folderId),
+                "recipeName",
+                "",
+                "searchType",
+                "-1",
+                "regionId",
+                "-1",
+                "recipeStatus",
+                "",
+                "outletId",
+                "-1",
+                "belongToOutletId",
+                "-1",
+                "requisitionOrderSupplierId",
+                "-1",
+                "onlyCountableOnStocktakeRecipes",
+                "false",
+                "isShowCheckbox",
+                "false",
+                "isShowLeafCheckbox",
+                "false")));
   }
 
   /** One page of stock items (master data) plus the total count. */
@@ -332,6 +404,7 @@ public class CtbClient {
   private String get(String path) {
     HttpRequest request =
         HttpRequest.newBuilder(URI.create(baseUrl + path))
+            .timeout(java.time.Duration.ofSeconds(45))
             .header("Accept", "text/html,application/xhtml+xml")
             .GET()
             .build();
@@ -354,6 +427,7 @@ public class CtbClient {
     String body = requestBody(form);
     HttpRequest request =
         HttpRequest.newBuilder(URI.create(baseUrl + path))
+            .timeout(java.time.Duration.ofSeconds(45))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .header("X-Requested-With", "XMLHttpRequest")
             .header("Accept", "application/json, text/javascript, */*")
@@ -361,7 +435,7 @@ public class CtbClient {
             .POST(HttpRequest.BodyPublishers.ofString(body))
             .build();
     try {
-      HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+      HttpResponse<byte[]> response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
       return new Response(
           response.body(),
           response.statusCode(),
@@ -374,10 +448,38 @@ public class CtbClient {
     }
   }
 
+  // Recipe responses are validated by the refresh only AFTER raw storage, including failures.
+  private RecipeResponse recipeResponse(String action, Response response) {
+    return new RecipeResponse(response.bytes(), response.status(), response.contentType());
+  }
+
+  public record RecipeResponse(byte[] bytes, int status, String contentType) {
+    public RecipeResponse {
+      bytes = bytes.clone();
+    }
+
+    public RecipeResponse(String json, int status) {
+      this(json.getBytes(StandardCharsets.UTF_8), status, "application/json");
+    }
+
+    @Override
+    public byte[] bytes() {
+      return bytes.clone();
+    }
+
+    public String json() {
+      return new String(bytes, StandardCharsets.UTF_8);
+    }
+  }
+
   /**
    * One HTTP exchange: the raw body plus the status and content-type needed to explain a failure.
    */
-  record Response(String body, int status, String contentType) {}
+  record Response(byte[] bytes, int status, String contentType) {
+    String body() {
+      return new String(bytes, StandardCharsets.UTF_8);
+    }
+  }
 
   /**
    * IIS/ASP.NET returns HTTP 411 for a POST with no body/Content-Length, and Java's HttpClient does
