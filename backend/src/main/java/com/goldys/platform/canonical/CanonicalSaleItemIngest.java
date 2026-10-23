@@ -11,6 +11,11 @@ public class CanonicalSaleItemIngest {
     this.service = service;
   }
 
+  /** Insert-only recovery, returning whether a missing source key was recorded. */
+  public boolean recordMissing(SaleItemInput input) {
+    return service.recordMissing(input);
+  }
+
   public void record(SaleItemInput input) {
     service.record(input);
   }

@@ -1,0 +1,10 @@
+# Review only. Applying this override starts the preview runner; it does not insert sale lines.
+# Use with the existing release safety override so legacy whole-ledger replays stay disabled.
+services:
+  backend:
+    environment:
+      APP_LIGHTSPEED_SALE_ITEMS_RECOVERY_ENABLED: "true"
+      APP_LIGHTSPEED_SALE_ITEMS_RECOVERY_RAW_ID: "154d8cef-a26d-4a86-acd5-832b913d73b2"
+      APP_LIGHTSPEED_SALE_ITEMS_RECOVERY_DRY_RUN: "true"
+      APP_LIGHTSPEED_SALE_ITEMS_RECOVERY_EXPECTED_KEYS: "409565"
+      APP_LIGHTSPEED_SALE_ITEMS_RECOVERY_EXPECTED_CONFLICTS: "13"
