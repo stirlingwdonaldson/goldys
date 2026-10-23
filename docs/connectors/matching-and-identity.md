@@ -352,3 +352,41 @@ hub/variant mappings; no historical repair or automatic name-based promotion is 
 The group-financial observation ref remains code/date/group for backwards compatibility. Different
 known sites colliding on that ref fail visibly instead of superseding one another. A dedicated
 site-scoped transition there requires further source evidence and is not silently guessed.
+
+### CTB report-local row IDs (23 October collision repair)
+
+A retained 6 August report contains two ungrouped rows with the same site/code but different
+names, quantities and amounts. CTB distinguishes them with `uniqueId`. In the 13 dated pages
+from the 23 October run, these IDs cover `0..rowCount-1`; they are report-local row identities,
+not permanent product identities. The connector retains distinct row IDs and deduplicates
+identical overlapping observations by row ID within one fetched day. Changed repeats and a
+mixture of identified/unidentified rows reject the day. Reports without row IDs retain the
+legacy strict site/code/group deduplication rule.
+
+Daily product totals still use site/code/date and sum the distinct observations. Source-native
+facts preserve each identified row under `ctb-row:<site/code identity>@<day>:<uniqueId>`.
+Only after all pages validate does one transaction replace the previous source-fact
+representation for each represented product/site/day. This closes superseded versions, including
+legacy facts and renumbered rows, and records a report receipt in `source_product_sale_observation`.
+A day-level PostgreSQL advisory lock serializes these replacements. Older/repeated report receipts
+cannot overwrite the latest representation, and legacy page replay cannot resurrect an upgraded
+representation. Products absent from a report are untouched; no deletion is inferred.
+
+Failures are collected by requested trading date and ingestion continues through the remaining
+window. The run still ends PARTIAL/FAILED with the failed dates recorded. Source facts and daily
+totals are not published for an incomplete/conflicting day; raw pages remain immutable.
+The source-fact backfill accepts native rows only when `totalCount` proves the retained envelope
+is complete. It rejects incomplete native envelopes rather than replacing a full report from one
+page. Use the normal connector for paginated reports; grouping legacy pages into complete fetches
+requires durable pagination/run metadata and is outside this repair.
+
+Evidence: 2,719 retained rows were available at investigation time; 186 repeated observations
+across retained dated receipts had unchanged IDs. The anonymized full failing page is
+`fixtures/ctb/sale-items-row-collision.json` (118 source rows, 117 product/site totals). This is
+report-local evidence, not a guarantee of ID stability on future CTB responses.
+
+The updated Java parser/accumulator accepted all 2,719 rows across 20 retained dated pages,
+with all per-page amount totals preserved. Read-only live checks also accepted the 6 August
+report (118 rows / 117 products), 17 October (199 / 199), and a 1–22 October aggregate
+used only to exercise pagination (364 rows over two pages / 359 products). The range probe
+was never ingested or attributed to a trading day.

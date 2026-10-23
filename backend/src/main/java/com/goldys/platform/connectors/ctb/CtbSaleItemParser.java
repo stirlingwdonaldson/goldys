@@ -41,9 +41,30 @@ public class CtbSaleItemParser {
               decimal(n, "taxAmount"),
               decimal(n, "unitPrice"),
               text(n, "uniqueGroupId"),
-              n.path("siteNumber").isIntegralNumber() ? n.path("siteNumber").intValue() : null));
+              n.path("siteNumber").isIntegralNumber() ? n.path("siteNumber").intValue() : null,
+              rowId(n)));
     }
     return out;
+  }
+
+  private static String rowId(JsonNode row) {
+    JsonNode id = row.get("uniqueId");
+    if (id == null || id.isNull()) return null;
+    if (!id.isIntegralNumber() || !id.canConvertToLong() || id.longValue() < 0)
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Invalid sale item row identity");
+    return id.asText();
+  }
+
+  boolean isCompleteReport(byte[] json) {
+    try {
+      JsonNode root = MAPPER.readTree(json);
+      return root.path("data").isArray()
+          && root.path("totalCount").isIntegralNumber()
+          && root.path("totalCount").intValue() == root.path("data").size();
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   /**

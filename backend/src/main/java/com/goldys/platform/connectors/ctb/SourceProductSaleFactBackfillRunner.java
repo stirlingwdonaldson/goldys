@@ -126,6 +126,25 @@ public class SourceProductSaleFactBackfillRunner implements ApplicationRunner {
         rejected++;
         continue;
       }
+      if (items.stream().anyMatch(item -> item.uniqueId() != null)) {
+        // shortcut: replay only complete native envelopes; group pages once run/page metadata is
+        // retained.
+        if (!parser.isCompleteReport(bytes)) {
+          log.warn("Skipping incomplete sale-item report {}", ref.id());
+          rejected++;
+          continue;
+        }
+        try {
+          var batch = new CtbProductSalesBatch(day);
+          for (var item : items) batch.add(item, ref.id());
+          ingest.recordReport(batch.sourceFacts(), ref.id());
+          accepted += batch.sourceFacts().size();
+        } catch (ConnectorFetchException e) {
+          log.warn("Skipping conflicting sale-item report {}: {}", ref.id(), e.getMessage());
+          rejected++;
+        }
+        continue;
+      }
       List<SourceProductSaleFactInput> toRecord = new ArrayList<>();
       for (CtbSaleItem item : items) {
         String code = item.stockCode();
@@ -134,25 +153,7 @@ public class SourceProductSaleFactBackfillRunner implements ApplicationRunner {
           continue;
         }
         accepted++;
-        toRecord.add(
-            new SourceProductSaleFactInput(
-                "CTB",
-                SourceProductSaleFactInput.sourceRecordRef(code, day, item.uniqueGroupId()),
-                day,
-                code,
-                item.costPerUnit(),
-                item.foodCost(),
-                item.totalFoodCost(),
-                item.profit(),
-                item.discountedAmount(),
-                item.taxAmount(),
-                item.unitPrice(),
-                item.uniqueGroupId(),
-                ref.id(),
-                item.quantitySold(),
-                item.amount(),
-                item.stockDescription(),
-                item.siteNumber()));
+        toRecord.add(item.sourceFact(day, ref.id()));
       }
       if (!toRecord.isEmpty()) ingest.recordAll(toRecord);
     }

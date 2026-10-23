@@ -1,6 +1,7 @@
 package com.goldys.platform.canonical;
 
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /** Public write facade for source-native product-day measures. */
@@ -19,5 +20,10 @@ public class SourceProductSaleFactIngest {
   /** Batch record for historical replay. */
   public void recordAll(List<SourceProductSaleFactInput> inputs) {
     service.recordAll(inputs);
+  }
+
+  /** Complete CTB report: replace observations only for products represented in this report. */
+  public void recordReport(List<SourceProductSaleFactInput> inputs, UUID completedRawId) {
+    service.recordReport(inputs, completedRawId);
   }
 }

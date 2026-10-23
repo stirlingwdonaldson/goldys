@@ -12,8 +12,8 @@ import java.util.UUID;
 /**
  * One version of a source-native product-day measure: fields CTB supplies (source cost, food cost,
  * discount, tax, unit price, profit) that have no universal canonical home. Keyed by (source, stock
- * code, trading date, source group). Never projected into a resolved view — it is a source
- * observation, not a reconciled business fact.
+ * code, trading date, source group) for legacy data, or a row within a complete CTB report. Never
+ * projected into a resolved view — it is a source observation, not a reconciled business fact.
  */
 @Entity
 @Table(name = "source_product_sale_fact")

@@ -68,3 +68,16 @@ an SPA and concurrent edits from another browser have no new server-side guarant
 checks are local; CI continues to run the existing unit/type/lint/build gates. The original
 production checkout and its untracked requirements files were preserved. A working copy of the
 requirements package was kept untracked here, with a reconciliation note added to OPEN-DECISIONS.
+
+## Main integration and conflict resolution
+
+Merged main at `23abaeee` (PRs #208 and #209) into PR #210. Kept the receipt-style sale
+summary, deleted the superseded relationship view, and migrated the summary's removed
+`useApiData` dependency to React Query with cancellation of all three list reads.
+The new unmount regression passed. Combined validation: backend `test spotlessCheck --offline`
+passed (1,645 tests, zero failures/errors, two skipped live evaluations); frontend typecheck,
+lint, all 643 tests and production build passed; all four fixture-backed browser checks passed.
+No unresolved index entries or references to the deleted hook/view remain. The scoped Ripwire
+comparison against the pre-merge HEAD reports inherited sale-summary complexity/duplication
+heuristics from #208; these are not a clean quality result and were not suppressed or refactored
+as part of this conflict resolution. No production database access or deployment was performed.
