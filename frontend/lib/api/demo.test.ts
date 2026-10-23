@@ -208,20 +208,20 @@ describe("demoApi forecasting", () => {
       expect(m.requiredPermission).toBeTruthy();
     }
     const foodCost = metrics.find((m) => m.metric === "inventory.food_cost_percent");
-    expect(foodCost?.sourceDomain).toBe("derived");
+    expect(foodCost).toBeUndefined();
   });
 
   it("creates a succeeded run that echoes the request and is immediately retrievable", async () => {
     const run = await demoApi.createForecastRun({
-      target: "sales.gross",
-      covariates: ["reservations.covers"],
+      target: "sales.net",
+      covariates: [],
       historyFrom: "2026-09-26",
       horizonDays: 7,
     });
     expect(run.id).toBe("fc-1");
     expect(run.status).toBe("SUCCEEDED");
-    expect(run.targetMetric).toBe("sales.gross");
-    expect(run.covariates).toEqual(["reservations.covers"]);
+    expect(run.targetMetric).toBe("sales.net");
+    expect(run.covariates).toEqual([]);
     expect(run.horizonDays).toBe(7);
     expect(run.errorMessage).toBeNull();
     expect(run.modelVersion).toBeTruthy();
@@ -260,12 +260,27 @@ describe("demoApi forecasting", () => {
     }
   });
 
+  it("getForecastRunReturnsDiagnosticsAndSplit", async () => {
+    const run = await demoApi.getForecastRun("fc-2");
+    expect(run.diagnostics).not.toBeNull();
+    expect(run.diagnostics!.importance!.length).toBeGreaterThan(0);
+    expect(run.diagnostics!.backtest!.byWeekday!.length).toBeGreaterThan(0);
+    expect(run.diagnostics!.backtest!.rows!.length).toBeGreaterThan(0);
+    expect(run.diagnostics!.holdoutNetXgboost).not.toBeNull();
+    expect(run.series).not.toBeNull();
+    for (const p of run.series!) {
+      expect(p.food).toBeTypeOf("number");
+      expect(p.bev).toBeTypeOf("number");
+      expect(p.baseline).toBeTypeOf("number");
+    }
+  });
+
   it("returns a comparison with a small MAPE/MAE and actuals on past dates", async () => {
     const comparison = await demoApi.getForecastComparison("fc-2");
     expect(comparison.runId).toBe("fc-2");
     expect(comparison.mape).not.toBeNull();
     expect(comparison.mae).not.toBeNull();
-    expect(comparison.mape!).toBeLessThan(0.1);
+    expect(comparison.mape!).toBeLessThan(10); // percent, matching the live score()
     expect(comparison.points.length).toBeGreaterThan(0);
     for (const p of comparison.points) {
       expect(p.predictedMedian).toBeTypeOf("number");
@@ -439,5 +454,45 @@ describe("demoApi OpenTable assisted sign-in", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("qualified invoice demo identity", () => {
+  it("keeps same-number invoices separate and refuses a legacy first match", async () => {
+    const page = await demoApi.listInvoices({},0,20);
+    const shared = page.items.filter(i => i.invoiceNumber === "INV-SHARED");
+    expect(shared).toHaveLength(2);
+    expect(shared[0].invoiceId).not.toBe(shared[1].invoiceId);
+    const details = await Promise.all(shared.map(i => demoApi.getInvoiceById(i.invoiceId!)));
+    expect(details.map(i => i.lines[0].lineTotal)).toEqual([100,200]);
+    await expect(demoApi.getInvoice("INV-SHARED")).rejects.toMatchObject({code:"VALIDATION_FAILED"});
+  });
+});
+
+describe("demo dashboard qualifications", () => {
+  it("keeps the requested sales grid, explicit zero, unresolved and absent amounts", async () => {
+    const result = await demoApi.getSalesTrend("2026-10-01", "2026-10-06");
+    expect(result.points).toHaveLength(6);
+    expect(result.points[0].total).toBe(0);
+    expect(result.points[3].total).toBeNull();
+    expect(result.points[5].total).toBeNull();
+    expect(result.provenance.coverage?.unresolvedDates).toEqual(["2026-10-04"]);
+    expect(result.provenance.coverage?.absentDates).toEqual(["2026-10-06"]);
+    expect(result.notices.join(" ")).toContain("Incomplete subtotal");
+  });
+
+  it("shares ranking values and qualifications and keeps them for empty periods", async () => {
+    const bootstrap = await demoApi.getDashboardBootstrap();
+    expect(bootstrap.topSellers).toEqual(await demoApi.getTopSellers());
+    expect(bootstrap.salesTrend).toEqual(await demoApi.getSalesTrend());
+    const ranking = await demoApi.queryMetrics({metric: "product.top_sellers", range: {from: "2026-10-05", to: "2026-10-05", calendar: "CALENDAR"}, grain: "DAY", dimensions: [], comparison: null});
+    const direct = await demoApi.getTopSellers("2026-10-05", "2026-10-05");
+    expect(ranking.notices).toEqual(direct.notices);
+    expect(ranking.provenance.coverage).toEqual(direct.coverage);
+    expect(ranking.provenance.missingPeriods).toEqual(["2026-10-05"]);
+    const empty = await demoApi.getTopSellers("2026-10-06", "2026-10-06");
+    expect(empty.items).toEqual([]);
+    expect(empty.coverage.absentDates).toEqual(["2026-10-06"]);
+    expect(empty.notices).toContain("Ranked by known sales; full-period ranking unverified.");
   });
 });

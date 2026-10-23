@@ -4,6 +4,8 @@ import {
   getInvoiceGraphSuppliers,
   getInvoiceGraphInvoices,
   getInvoiceGraphLines,
+  getInvoiceGraphInvoicesById,
+  getInvoiceGraphLinesById,
 } from "./invoice-graph";
 import { isApiError } from "./errors";
 import type {
@@ -53,6 +55,15 @@ import type {
   ReviewView,
   SentimentBucket,
   SourceSummary,
+  QueryDataset,
+  QueryField,
+  QueryPlan,
+  QueryRelationship,
+  QueryResult,
+  SavedQueryDetail,
+  SavedQueryRevision,
+  SavedQuerySummary,
+  SaveQueryInput,
 } from "./types";
 
 /** A `?from=…&to=…` suffix, or "" when both bounds are absent. */
@@ -160,6 +171,10 @@ export const liveApi: Api = {
       `/api/reservations/summary?date=${date}`,
       undefined, { allowNoContent: true },
     ),
+  getInventoryObservations: (from, to, kind, page, size) => {
+    const params = new URLSearchParams({ from, to, kind, page: String(page), size: String(size) });
+    return fetchApi<import("./types").InventoryObservationPage>(`/api/inventory/observations?${params}`);
+  },
   getInventoryLines: (from: string, to: string) =>
     fetchApi<import("./types").InventoryLineBreakdown>(
       `/api/inventory/lines?from=${from}&to=${to}`,
@@ -174,6 +189,8 @@ export const liveApi: Api = {
   getInvoiceGraphSuppliers,
   getInvoiceGraphInvoices,
   getInvoiceGraphLines,
+  getInvoiceGraphInvoicesById,
+  getInvoiceGraphLinesById,
   listInvoices: (filter: import("./types").InvoiceFilter, page: number, size: number) => {
     const q = new URLSearchParams({ page: String(page), size: String(size) });
     if (filter.supplier) q.set("supplier", filter.supplier);
@@ -183,6 +200,8 @@ export const liveApi: Api = {
       `/api/invoices?${q.toString()}`,
     );
   },
+  getInvoiceById: (id: string) => fetchApi<import("./types").InvoiceDetail>(`/api/invoices/by-id/${encodeURIComponent(id)}`),
+  getInvoiceDocuments: (id: string) => fetchApi<import("./types").InvoiceDocument[]>(`/api/invoices/by-id/${encodeURIComponent(id)}/documents`),
   getInvoice: (invoiceNumber: string) =>
     fetchApi<import("./types").InvoiceDetail>(`/api/invoices/${encodeURIComponent(invoiceNumber)}`),
   listInvoiceFlags: () => fetchApi<import("./types").InvoiceIngestFlag[]>("/api/inventory/flags"),
@@ -193,12 +212,12 @@ export const liveApi: Api = {
     if (to) q.set("to", to);
     if (limit != null) q.set("limit", String(limit));
     const qs = q.toString();
-    return fetchApi<import("./types").TopSeller[]>(
+    return fetchApi<import("./types").TopSellersResult>(
       `/api/dashboard/top-sellers${qs ? `?${qs}` : ""}`,
     );
   },
   getSalesTrend: (from?: string, to?: string) =>
-    fetchApi<import("./types").SalesTrendPoint[]>(
+    fetchApi<import("./types").SalesTrendResult>(
       `/api/dashboard/sales-trend${dateRangeQuery(from, to)}`,
     ),
   queryMetrics: (query: import("./types").MetricQuery) =>
@@ -430,6 +449,40 @@ export const liveApi: Api = {
     fetchApi<import("./types").CategoryNode[]>("/api/products/categories/suggestions/apply", {
       method: "POST",
     }),
+  listQueryDatasets: () => fetchApi<QueryDataset[]>("/api/query/datasets"),
+  listQueryFields: (dataset: string) =>
+    fetchApi<QueryField[]>(`/api/query/datasets/${dataset}/fields`),
+  listQueryRelationships: () => fetchApi<QueryRelationship[]>("/api/query/relationships"),
+  runQuery: (plan: QueryPlan) =>
+    fetchApi<QueryResult>("/api/query/plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(plan),
+    }),
+  listSavedQueries: () => fetchApi<SavedQuerySummary[]>("/api/query/saved"),
+  getSavedQuery: (id: string) => fetchApi<SavedQueryDetail>(`/api/query/saved/${id}`),
+  createSavedQuery: (input: SaveQueryInput) =>
+    fetchApi<SavedQueryDetail>("/api/query/saved", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  updateSavedQuery: (id: string, input: SaveQueryInput) =>
+    fetchApi<SavedQueryDetail>(`/api/query/saved/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  deleteSavedQuery: (id: string) =>
+    fetchApi<void>(`/api/query/saved/${id}`, { method: "DELETE" }, { responseType: "void" }),
+  listSavedQueryRevisions: (id: string) =>
+    fetchApi<SavedQueryRevision[]>(`/api/query/saved/${id}/revisions`),
+  restoreSavedQuery: (id: string, revision: number) =>
+    fetchApi<SavedQueryDetail>(`/api/query/saved/${id}/restore?revision=${revision}`, {
+      method: "POST",
+    }),
+  runSavedQuery: (id: string) =>
+    fetchApi<QueryResult>(`/api/query/saved/${id}/run`, { method: "POST" }),
 };
 
 /**

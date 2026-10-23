@@ -53,6 +53,7 @@ class InventoryProjectorIntegrationTest {
             "CTB",
             ref,
             invoiceNumber,
+            null,
             date,
             product,
             null,
@@ -84,5 +85,49 @@ class InventoryProjectorIntegrationTest {
         "0".repeat(64),
         1);
     return recordId;
+  }
+
+  @Test
+  void movedLastLineClearsOldProjectionAndPreservesOnlyNewDate() {
+    LocalDate oldDate = LocalDate.of(2026, 9, 20), newDate = oldDate.plusDays(1);
+    recordLine("MOVE:1", "MOVE", oldDate, "oil", "10.00");
+    assertThat(resolved.findByTradingDateBetweenOrderByTradingDateAsc(oldDate, oldDate)).hasSize(1);
+    recordLine("MOVE:1", "MOVE", newDate, "oil", "10.00");
+    assertThat(resolved.findByTradingDateBetweenOrderByTradingDateAsc(oldDate, oldDate)).isEmpty();
+    assertThat(resolved.findByTradingDateBetweenOrderByTradingDateAsc(newDate, newDate))
+        .singleElement()
+        .satisfies(day -> assertThat(day.purchases()).isEqualByComparingTo("10.00"));
+  }
+
+  @Test
+  void knownInvoiceAmountSurvivesUnknownQuantityAndCost() {
+    LocalDate date = LocalDate.of(2026, 9, 20);
+    ingest.record(
+        new InvoiceLineInput(
+            "CTB",
+            "UNKNOWN:1",
+            "UNKNOWN",
+            null,
+            date,
+            "oil",
+            null,
+            null,
+            null,
+            new BigDecimal("25.00"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            rawRecord(),
+            "CSV"));
+    assertThat(resolved.findByTradingDateBetweenOrderByTradingDateAsc(date, date))
+        .singleElement()
+        .satisfies(day -> assertThat(day.purchases()).isEqualByComparingTo("25.00"));
+    assertThat(
+            jdbc.queryForObject(
+                "select quantity from canonical_invoice_line where source_record_ref='UNKNOWN:1'",
+                BigDecimal.class))
+        .isNull();
   }
 }

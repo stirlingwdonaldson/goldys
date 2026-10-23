@@ -106,16 +106,20 @@ class DashboardControllerTest {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(dashboard.topSellers(any(), any(), any(), any()))
         .thenReturn(
-            List.of(
-                new DashboardApplicationService.TopSeller(
-                    "garlic aioli", new BigDecimal("150"), new BigDecimal("380.88"), true)));
+            new DashboardApplicationService.TopSellersResult(
+                List.of(
+                    new DashboardApplicationService.TopSeller(
+                        "garlic aioli", new BigDecimal("150"), new BigDecimal("380.88"), true)),
+                List.of("Incomplete subtotal"),
+                null));
 
     mvc.perform(get("/api/dashboard/top-sellers").with(authenticated(owner())))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].name").value("garlic aioli"))
-        .andExpect(jsonPath("$[0].quantitySold").value(150))
-        .andExpect(jsonPath("$[0].amount").value(380.88))
-        .andExpect(jsonPath("$[0].hasConflict").value(true));
+        .andExpect(jsonPath("$.items[0].name").value("garlic aioli"))
+        .andExpect(jsonPath("$.items[0].quantitySold").value(150))
+        .andExpect(jsonPath("$.items[0].amount").value(380.88))
+        .andExpect(jsonPath("$.items[0].hasConflict").value(true))
+        .andExpect(jsonPath("$.notices[0]").value("Incomplete subtotal"));
   }
 
   @Test
@@ -128,13 +132,19 @@ class DashboardControllerTest {
                     92, 1, "42m avg", new OverrideUsage(3, "last 7 days")),
                 new DashboardApplicationService.LatestSales(
                     "2026-10-05", new BigDecimal("10865.72"), "agreed"),
-                List.of(
-                    new DashboardApplicationService.SalesTrend(
-                        "2026-10-05", new BigDecimal("10865.72"))),
+                new DashboardApplicationService.SalesTrendResult(
+                    List.of(
+                        new DashboardApplicationService.SalesTrend(
+                            "2026-10-05", new BigDecimal("10865.72"))),
+                    List.of("Incomplete subtotal"),
+                    null),
                 List.of(new DashboardApplicationService.ActivityPoint("2026-10-05", 5, 1)),
-                List.of(
-                    new DashboardApplicationService.TopSeller(
-                        "garlic aioli", new BigDecimal("150"), new BigDecimal("380.88"), true)),
+                new DashboardApplicationService.TopSellersResult(
+                    List.of(
+                        new DashboardApplicationService.TopSeller(
+                            "garlic aioli", new BigDecimal("150"), new BigDecimal("380.88"), true)),
+                    List.of("Incomplete subtotal"),
+                    null),
                 new DashboardApplicationService.CoversToday(34L, 12L, 2L),
                 new DashboardApplicationService.FoodCost(
                     new BigDecimal("0.3125"), new BigDecimal("5000"), new BigDecimal("120"))));
@@ -143,9 +153,9 @@ class DashboardControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.summary.openConflicts").value(1))
         .andExpect(jsonPath("$.latestSales.total").value(10865.72))
-        .andExpect(jsonPath("$.salesTrend[0].date").value("2026-10-05"))
+        .andExpect(jsonPath("$.salesTrend.points[0].date").value("2026-10-05"))
         .andExpect(jsonPath("$.activity[0].clean").value(5))
-        .andExpect(jsonPath("$.topSellers[0].name").value("garlic aioli"))
+        .andExpect(jsonPath("$.topSellers.items[0].name").value("garlic aioli"))
         .andExpect(jsonPath("$.coversToday.covers").value(34))
         .andExpect(jsonPath("$.foodCost.foodCostPercent").value(0.3125));
   }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -35,7 +36,7 @@ class CtbDetailBackfillConnectorTest {
         .thenReturn(page("{\"data\":[{\"recipeId\":627},{\"recipeId\":628}],\"totalCount\":2}", 2));
     when(client.getStocktakeDetail(anyInt(), anyInt(), anyInt()))
         .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
-    when(client.getWastageRecordDetail(anyInt()))
+    when(client.getWastageRecordDetail(anyInt(), anyInt(), anyInt()))
         .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
     when(client.getIngredientsIncludingSubRecipeIngredients(anyInt()))
         .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
@@ -85,7 +86,7 @@ class CtbDetailBackfillConnectorTest {
         .thenReturn(page("{\"data\":[{\"recipeId\":627},{\"recipeId\":628}],\"totalCount\":2}", 2));
     when(client.getStocktakeDetail(anyInt(), anyInt(), anyInt()))
         .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
-    when(client.getWastageRecordDetail(anyInt()))
+    when(client.getWastageRecordDetail(anyInt(), anyInt(), anyInt()))
         .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
     when(client.getIngredientsIncludingSubRecipeIngredients(anyInt()))
         .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
@@ -180,7 +181,7 @@ class CtbDetailBackfillConnectorTest {
         .thenReturn(page("{\"data\":[{\"recipeId\":627},{\"recipeId\":628}],\"totalCount\":2}", 2));
     when(client.getStocktakeDetail(anyInt(), anyInt(), anyInt()))
         .thenReturn(page("{\"data\":[{}],\"totalCount\":1}", 1));
-    when(client.getWastageRecordDetail(60))
+    when(client.getWastageRecordDetail(eq(60), anyInt(), anyInt()))
         .thenThrow(
             new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB WastageRecord detail"));
     when(client.getIngredientsIncludingSubRecipeIngredients(627))

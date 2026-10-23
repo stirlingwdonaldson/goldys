@@ -3,6 +3,7 @@ package com.goldys.platform.api;
 import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.config.CorrelationIdFilter;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
+import com.goldys.platform.semantic.query.QueryException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,19 @@ class ApiExceptionHandler {
         .body(
             new ApiErrorResponse(
                 "NOT_PERMITTED", exception.getMessage(), correlationId(request), Map.of()));
+  }
+
+  /** A relational query plan that failed validation (unknown id, type mismatch, fanout, limit…). */
+  @ExceptionHandler(QueryException.class)
+  ResponseEntity<ApiErrorResponse> handleQuery(
+      QueryException exception, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(
+            new ApiErrorResponse(
+                exception.code().name(),
+                exception.getMessage(),
+                correlationId(request),
+                exception.details()));
   }
 
   @ExceptionHandler(IllegalArgumentException.class)

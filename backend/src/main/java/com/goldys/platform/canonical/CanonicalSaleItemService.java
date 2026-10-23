@@ -34,6 +34,16 @@ class CanonicalSaleItemService {
     return saved;
   }
 
+  /** Recovery only inserts missing keys; it must not overwrite a newer observation. */
+  @Transactional
+  boolean recordMissing(SaleItemInput input) {
+    if (repository.lockCurrentSourceFact(input.sourceSystem(), input.receiptLineId()).isPresent())
+      return false;
+    recordAt(input, CLOCK.instant());
+    publisher.publishEvent(new SaleItemRecorded(input.tradingDate()));
+    return true;
+  }
+
   @Transactional
   CanonicalSaleItem recordAt(SaleItemInput input, Instant recordedAt) {
     String ref = input.receiptLineId();

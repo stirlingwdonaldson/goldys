@@ -83,3 +83,14 @@ Note CTB is owned by Quantaco, a hospitality analytics competitor — any reques
 ## Working Notes for LLM-Authored Code
 
 This codebase is being built primarily by LLM coding sessions, with a Java-proficient human collaborator likely joining later. Favor conventional, idiomatic Java/TypeScript over clever or terse solutions; comment non-obvious decisions (especially bitemporal query logic and reconciliation rule evaluation) rather than relying on the code being self-explanatory to whoever picks it up next.
+
+## Approved single-source evidence query boundary (16 October 2026)
+
+Governed business metrics continue to read resolved projections through the semantic layer.
+The owner's single-source evidence exception permits the bounded Data Explorer query registry to
+expose invoice/line observations and CTB product-sale source facts as `CANONICAL_DIRECT`, labelled
+with source basis and unverified coverage. This does not make them reconciled COGS or business
+metrics. Financial observations require the financial grant; every query operand is authorised.
+The raw ledger is never exposed to this executor. Saved query widgets retain those qualifications.
+No generic query tool is added to Ask Goldy's. The executor uses a SELECT-only database role in an
+independent read-only transaction; it cannot fall back to the application's normal privileges.

@@ -75,7 +75,7 @@ public class LightspeedProductIngestService {
       byProduct.merge(
           key,
           new ProductSalesInput(
-              "LIGHTSPEED", tradingDate, key, row.quantitySold(), row.amount(), rawId),
+              "LIGHTSPEED", tradingDate, key, row.quantitySold(), row.amount(), null, rawId),
           (a, b) ->
               new ProductSalesInput(
                   "LIGHTSPEED",
@@ -83,6 +83,7 @@ public class LightspeedProductIngestService {
                   key,
                   a.quantitySold().add(b.quantitySold()),
                   a.amount().add(b.amount()),
+                  null,
                   rawId));
     }
     try {

@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +44,7 @@ class ForecastServiceIntegrationTest {
   @Autowired ForecastService service;
   @Autowired ForecastRunRepository repository;
 
-  @MockitoBean TimesFmClient client;
+  @MockitoBean ForecastModelClient client;
   @MockitoBean MetricQueryService queries;
 
   @BeforeEach
@@ -58,14 +57,48 @@ class ForecastServiceIntegrationTest {
     when(queries.query(any())).thenReturn(targetSeries());
     when(client.forecast(any()))
         .thenReturn(
-            new TimesFmForecast(
-                List.of(OCT_12, OCT_12.plusDays(1)),
-                Map.of(
-                    "0.1", List.of(new BigDecimal("10.1"), new BigDecimal("11.1")),
-                    "0.5", List.of(new BigDecimal("10.5"), new BigDecimal("11.5")),
-                    "0.9", List.of(new BigDecimal("10.9"), new BigDecimal("11.9")))));
+            new ForecastModelResponse(
+                List.of(
+                    new ForecastModelResponse.Day(
+                        OCT_12,
+                        new BigDecimal("10.5"),
+                        new BigDecimal("10.1"),
+                        new BigDecimal("10.9"),
+                        null,
+                        null,
+                        null,
+                        null,
+                        0,
+                        null,
+                        0,
+                        0,
+                        0,
+                        0,
+                        null,
+                        null,
+                        null),
+                    new ForecastModelResponse.Day(
+                        OCT_12.plusDays(1),
+                        new BigDecimal("11.5"),
+                        new BigDecimal("11.1"),
+                        new BigDecimal("11.9"),
+                        null,
+                        null,
+                        null,
+                        null,
+                        0,
+                        null,
+                        0,
+                        0,
+                        0,
+                        0,
+                        null,
+                        null,
+                        null)),
+                null,
+                List.of()));
 
-    ForecastRun run = service.submit("sales.gross", List.of(), SEP_01, 7, "owner@example.com");
+    ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, "owner@example.com");
 
     ForecastRun reloaded = repository.findById(run.id()).orElseThrow();
     assertThat(reloaded.status()).isEqualTo(ForecastRunStatus.SUCCEEDED);

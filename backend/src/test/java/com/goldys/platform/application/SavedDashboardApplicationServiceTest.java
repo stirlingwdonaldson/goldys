@@ -22,6 +22,7 @@ import com.goldys.platform.dashboard.SavedDashboardShareRepository;
 import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.Visibility;
 import com.goldys.platform.dashboard.WidgetLayout;
+import com.goldys.platform.query.SavedQueryService;
 import com.goldys.platform.reporting.WidgetRenderer;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
@@ -66,7 +67,8 @@ class SavedDashboardApplicationServiceTest {
           revisions,
           shares,
           metricQueryService,
-          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))));
+          new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))),
+          mock(SavedQueryService.class));
 
   @org.junit.jupiter.api.BeforeEach
   void stubShares() {
@@ -89,7 +91,8 @@ class SavedDashboardApplicationServiceTest {
             revisions,
             shares,
             metricQueryService,
-            new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))));
+            new DashboardTemplateCatalog(VenueClock.system(ZoneId.of("Australia/Melbourne"))),
+            mock(SavedQueryService.class));
 
     var input =
         new SavedDashboardApplicationService.DashboardInput(
@@ -282,6 +285,44 @@ class SavedDashboardApplicationServiceTest {
     assertThat(summary.pinned()).isTrue();
     assertThat(summary.visibility()).isEqualTo("ORG_WIDE");
     assertThat(summary.updatedAt()).isEqualTo(java.time.Instant.EPOCH.toString());
+  }
+
+  @Test
+  void summaryWidgetRequestsPeriodRatioAndPreservesQualifications() {
+    SavedDashboard saved =
+        SavedDashboard.create(
+            "Labour",
+            null,
+            "grid",
+            List.of(
+                new SavedWidget(
+                    "w1",
+                    "stat",
+                    List.of(query(MetricId.LABOUR_FOH_PERCENT)),
+                    new WidgetLayout(6, 2))),
+            DashboardFilters.empty(),
+            Visibility.PRIVATE,
+            "a@b.com",
+            java.time.Instant.EPOCH);
+    when(repo.findById(saved.id())).thenReturn(java.util.Optional.of(saved));
+    when(metricQueryService.query(any()))
+        .thenAnswer(
+            inv -> {
+              MetricQuery q = inv.getArgument(0);
+              assertThat(q.grain()).isEqualTo(TimeGrain.TOTAL);
+              return new com.goldys.platform.semantic.catalog.TimeSeriesResult(
+                  q.metric(),
+                  List.of(
+                      new com.goldys.platform.semantic.catalog.MetricSeries(
+                          null,
+                          List.of(
+                              new com.goldys.platform.semantic.catalog.MetricPoint(SEP_13, null)))),
+                  List.of("Incomplete: sales input missing"),
+                  new com.goldys.platform.semantic.catalog.MetricProvenance(
+                      q.metric(), "2", RANGE, q.grain(), "test", null, List.of(), "1"));
+            });
+    var result = service.render(OWNER, "a@b.com", saved.id()).getFirst();
+    assertThat(result.notices()).contains("Incomplete: sales input missing");
   }
 
   private static MetricQuery query(MetricId id) {

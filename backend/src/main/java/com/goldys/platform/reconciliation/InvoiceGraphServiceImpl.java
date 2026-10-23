@@ -8,21 +8,12 @@ import com.goldys.platform.semantic.InvoiceGraphNode;
 import com.goldys.platform.semantic.InvoiceGraphQuery;
 import com.goldys.platform.semantic.LineGraphNode;
 import com.goldys.platform.semantic.SupplierGraphNode;
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import org.springframework.stereotype.Service;
 
-/**
- * {@link InvoiceGraphQuery} over canonical invoice facts. Supplier identity is the normalized name
- * on the invoice header; lines whose invoice number has no header bucket to {@code "Unknown"}.
- * Spend is the sum of line totals, falling back to header totals when a supplier has invoices but
- * no lines.
- */
+/** Supplier-qualified invoice reads; supplier amounts are known ex-tax line subtotals. */
 @Service
 public class InvoiceGraphServiceImpl implements InvoiceGraphQuery {
 
@@ -39,62 +30,42 @@ public class InvoiceGraphServiceImpl implements InvoiceGraphQuery {
 
   @Override
   public List<SupplierGraphNode> suppliers(LocalDate from, LocalDate to) {
-    Map<String, Integer> invoiceCount = new LinkedHashMap<>();
-    Map<String, BigDecimal> headerSpend = new LinkedHashMap<>();
-    for (InvoiceMetadataView i : invoices.currentInvoices()) {
-      if (!inRange(i.invoiceDate(), from, to)) {
-        continue;
-      }
-      invoiceCount.merge(i.supplierName(), 1, Integer::sum);
-      if (i.totalAmount() != null) {
-        headerSpend.merge(i.supplierName(), i.totalAmount(), BigDecimal::add);
-      }
-    }
-
-    Map<String, String> supplierByInvoice = invoices.currentSupplierNames();
-    Map<String, BigDecimal> lineSpend = new LinkedHashMap<>();
-    BigDecimal unknownSpend = BigDecimal.ZERO;
-    boolean hasUnknown = false;
-    for (EnrichedInvoiceLine line : inventory.currentEnrichedLines()) {
-      if (!inRange(line.invoiceDate(), from, to) || line.lineTotal() == null) {
-        continue;
-      }
-      String supplier = supplierByInvoice.get(line.invoiceNumber());
-      if (supplier == null) {
-        hasUnknown = true;
-        unknownSpend = unknownSpend.add(line.lineTotal());
-      } else {
-        lineSpend.merge(supplier, line.lineTotal(), BigDecimal::add);
-      }
-    }
-
-    List<SupplierGraphNode> out = new ArrayList<>();
-    for (Map.Entry<String, Integer> e : invoiceCount.entrySet()) {
-      String supplier = e.getKey();
-      BigDecimal spend = lineSpend.get(supplier);
-      if (spend == null) {
-        spend = headerSpend.get(supplier); // invoices but no lines: fall back to header totals
-      }
-      out.add(new SupplierGraphNode(supplier, e.getValue(), spend));
-    }
-    for (String supplier : lineSpend.keySet()) {
-      if (!invoiceCount.containsKey(supplier)) {
-        out.add(new SupplierGraphNode(supplier, 0, lineSpend.get(supplier)));
-      }
-    }
-    out.sort(
-        Comparator.comparing(
-            SupplierGraphNode::totalSpend, Comparator.nullsLast(Comparator.reverseOrder())));
-    if (hasUnknown) {
-      out.add(new SupplierGraphNode(UNKNOWN, 0, unknownSpend));
-    }
-    return out;
+    return InvoicePurchaseBreakdown.summarize(
+            invoices.currentInvoices(), inventory.currentEnrichedLines(), from, to)
+        .stream()
+        .map(
+            s ->
+                new SupplierGraphNode(
+                    s.supplier(),
+                    s.invoiceCount(),
+                    s.lineTotal(),
+                    s.supplierId(),
+                    s.invoicesWithoutLines(),
+                    s.notices()))
+        .toList();
   }
 
   @Override
   public List<InvoiceGraphNode> invoicesForSupplier(String supplier, LocalDate from, LocalDate to) {
-    return invoices.currentInvoices().stream()
-        .filter(i -> supplier.equals(i.supplierName()))
+    List<InvoiceMetadataView> matches =
+        invoices.currentInvoices().stream().filter(i -> supplier.equals(i.supplierName())).toList();
+    if (matches.stream().map(InvoiceMetadataView::supplierId).distinct().count() > 1)
+      throw new IllegalArgumentException("Ambiguous supplier name: use supplier identity");
+    return invoiceNodes(matches, from, to);
+  }
+
+  @Override
+  public List<InvoiceGraphNode> invoicesForSupplierId(
+      java.util.UUID supplier, LocalDate from, LocalDate to) {
+    return invoiceNodes(
+        invoices.currentInvoices().stream().filter(i -> supplier.equals(i.supplierId())).toList(),
+        from,
+        to);
+  }
+
+  private List<InvoiceGraphNode> invoiceNodes(
+      List<InvoiceMetadataView> headers, LocalDate from, LocalDate to) {
+    return headers.stream()
         .filter(i -> inRange(i.invoiceDate(), from, to))
         .sorted(Comparator.comparing(InvoiceMetadataView::invoiceDate).reversed())
         .map(
@@ -104,14 +75,27 @@ public class InvoiceGraphServiceImpl implements InvoiceGraphQuery {
                     i.invoiceDate(),
                     i.totalAmount(),
                     i.purchaseNumber(),
-                    i.pdfFilename()))
+                    i.pdfFilename(),
+                    i.invoiceId(),
+                    i.amountExTax()))
         .toList();
   }
 
   @Override
   public List<LineGraphNode> linesForInvoice(String invoiceNumber) {
-    return inventory.currentEnrichedLines().stream()
-        .filter(l -> invoiceNumber.equals(l.invoiceNumber()))
+    invoices.requireUnambiguousNumber(invoiceNumber);
+    java.util.UUID id =
+        invoices
+            .invoiceLogicalIdForInvoiceNumber(invoiceNumber)
+            .orElseThrow(() -> new java.util.NoSuchElementException("Unknown invoice"));
+    return linesForInvoiceId(id);
+  }
+
+  @Override
+  public List<LineGraphNode> linesForInvoiceId(java.util.UUID id) {
+    if (invoices.currentInvoice(id).isEmpty())
+      throw new java.util.NoSuchElementException("Unknown invoice");
+    return inventory.enrichedLinesForInvoice(id).stream()
         .sorted(Comparator.comparing(EnrichedInvoiceLine::lineTotal).reversed())
         .map(
             l ->

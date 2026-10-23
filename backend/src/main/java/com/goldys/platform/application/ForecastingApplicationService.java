@@ -62,8 +62,9 @@ public class ForecastingApplicationService {
       MetricCatalog catalog,
       ForecastService forecasts,
       MetricQueryService queries,
-      ForecastRunRepository runs) {
-    this(permissions, catalog, forecasts, queries, runs, Clock.systemUTC());
+      ForecastRunRepository runs,
+      com.goldys.platform.config.VenueClock venueClock) {
+    this(permissions, catalog, forecasts, queries, runs, venueClock.clock());
   }
 
   /** Test-friendly constructor with an explicit clock for the compare-to-actuals date boundary. */
@@ -95,6 +96,12 @@ public class ForecastingApplicationService {
     for (String covariate : request.covariates()) {
       requireMetricRead(role, covariate);
     }
+    // The forecast also reads these internal series regardless of the requested covariates, so a
+    // caller who cannot read them is denied before the run is created (never silently dropped).
+    requireMetricRead(role, MetricId.RESERVATIONS_BOOKED_COVERS.value());
+    requireMetricRead(role, MetricId.RESERVATIONS_BOOKINGS.value());
+    requireMetricRead(role, MetricId.SALES_FOOD.value());
+    requireMetricRead(role, MetricId.SALES_BEV.value());
     ForecastRun run =
         forecasts.submit(
             request.target(),
@@ -109,21 +116,23 @@ public class ForecastingApplicationService {
   public ForecastRunDto get(UserRole role, UUID id) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     ForecastRun run = loadRun(id);
-    requireMetricRead(role, run.targetMetric());
+    requireRunRead(role, run);
     return toRunDto(run);
   }
 
   /** All runs, newest first. */
   public List<ForecastRunDto> list(UserRole role) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return runs.findAllByOrderByCreatedAtDesc().stream().map(this::toRunDto).toList();
+    List<ForecastRun> all = runs.findAllByOrderByCreatedAtDesc();
+    all.forEach(run -> requireRunRead(role, run));
+    return all.stream().map(this::toRunDto).toList();
   }
 
   /** Forecast-versus-actual for a succeeded run, with MAPE/MAE over comparable past dates. */
   public ForecastComparisonDto comparison(UserRole role, UUID id) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     ForecastRun run = loadRun(id);
-    requireMetricRead(role, run.targetMetric());
+    requireRunRead(role, run);
 
     LocalDate today = LocalDate.now(clock);
 
@@ -204,8 +213,23 @@ public class ForecastingApplicationService {
 
   private void requireMetricRead(UserRole role, String metric) {
     MetricId id = MetricId.fromValue(metric);
-    String permission = catalog.definition(id).requiredPermission();
-    permissions.require(role, new ResourceKey(permission), PermissionAction.READ);
+    // These aggregate inputs are explicitly included in the forecast viewer's purpose grant.
+    // This does not grant generic metric-query access or raw/individual-pay access.
+    if (Set.of(
+            MetricId.SALES_NET,
+            MetricId.SALES_FOOD,
+            MetricId.SALES_BEV,
+            MetricId.RESERVATIONS_BOOKED_COVERS,
+            MetricId.RESERVATIONS_BOOKINGS)
+        .contains(id)) return;
+    for (String resource : catalog.requiredPermissions(id)) {
+      permissions.require(role, new ResourceKey(resource), PermissionAction.READ);
+    }
+  }
+
+  private void requireRunRead(UserRole role, ForecastRun run) {
+    requireMetricRead(role, run.targetMetric());
+    for (String covariate : run.covariates()) requireMetricRead(role, covariate);
   }
 
   private ForecastRun loadRun(UUID id) {
@@ -229,7 +253,11 @@ public class ForecastingApplicationService {
         run.createdAt(),
         series,
         run.errorMessage(),
-        run.modelVersion());
+        run.modelVersion(),
+        ForecastDiagnosticsDto.fromJson(run.diagnostics()),
+        run.inputSnapshot() == null
+            ? List.of("Legacy run: original input evidence unavailable")
+            : run.inputSnapshot().notices());
   }
 
   private ForecastSeriesPointDto toSeriesPoint(ForecastDay day) {
@@ -237,7 +265,24 @@ public class ForecastingApplicationService {
     // A missing/NaN decile is surfaced as null (not a number) so the chart can gap the point
     // rather than the whole run failing; the DTO's BigDecimal fields accept null.
     return new ForecastSeriesPointDto(
-        day.date(), quantiles.get("0.5"), quantiles.get("0.1"), quantiles.get("0.9"));
+        day.date(),
+        quantiles.get("0.5"),
+        quantiles.get("0.1"),
+        quantiles.get("0.9"),
+        day.food(),
+        day.bev(),
+        day.baseline(),
+        day.bookedCovers(),
+        day.publicHoliday(),
+        day.publicHolidayName(),
+        day.publicHolidayEve(),
+        day.dayAfterPublicHoliday(),
+        day.schoolHoliday(),
+        day.uniInSession(),
+        day.serviceTempMaxC(),
+        day.serviceRainMm(),
+        day.weatherSource(),
+        day.observedBookedCovers());
   }
 
   private static MetricSeries singleSeries(MetricResult result) {

@@ -1,0 +1,183 @@
+"""Curated dataset inventory for the Phase 1 audit.
+
+This is the one hand-maintained input. It maps each source dataset (identified by
+its raw-ledger ``fetcher_identity`` — *not* its connector name) through the full
+path:
+
+    source -> raw_record -> parser -> canonical -> projector -> resolved -> semantic query
+
+Every entry also records the source's original record grain and unique key, so the
+field-lineage matrix is self-contained about identity, not just column shape.
+
+The build step (``build_inventory.py``) cross-checks every table, parser class,
+semantic interface and fetcher-identity literal against the actual schema and code,
+so any drift here fails loudly instead of silently producing a stale audit.
+
+Readiness exclusions (per instruction): Labour (Deputy), Wastage (CTB), Reports
+(OpenTable reviews/reputation) are audited but excluded from the query-ready bar.
+"""
+import pathlib
+
+REPO = pathlib.Path(__file__).resolve().parents[4]
+
+# (source_system, dataset, fetcher_identity, parser, canonical, resolved,
+#  semantic_query, read_mode, excluded_reason, record_grain, source_key)
+DATASETS = [
+    # ---- Lightspeed ----------------------------------------------------------
+    ("LIGHTSPEED", "daily_sales", "lightspeed-insights",
+     "LightspeedInsightsCsvParser", "canonical_daily_sales",
+     "resolved_daily_sales", "SalesMetricsQuery", "resolved", "",
+     "one reconciled trading day per report",
+     "trading_date + source_system (aggregate; no transaction id retained)"),
+    ("LIGHTSPEED", "daily_sales", "lightspeed-all-sales",
+     "LightspeedAllSalesCsvParser", "canonical_daily_sales",
+     "resolved_daily_sales", "SalesMetricsQuery", "resolved", "",
+     "one sale per detailed report row",
+     "Sale Number (retained only in raw; aggregated to day in canonical)"),
+    ("LIGHTSPEED", "payments", "lightspeed-payments",
+     "LightspeedPaymentCsvParser", "canonical_payment", "resolved_payment_day",
+     "PaymentMetricsQuery", "resolved", "",
+     "one payment tender per sale",
+     "sale_number|payment_type_code|register_code|trading_date (composite)"),
+    ("LIGHTSPEED", "deleted_sales", "lightspeed-deleted-sales",
+     "LightspeedDeletedSaleCsvParser", "canonical_deleted_sale",
+     "resolved_deleted_sale_day", "DeletedSaleMetricsQuery", "resolved", "",
+     "one deleted order",
+     "sale number (unique in the deleted-orders report)"),
+    ("LIGHTSPEED", "sale_items", "lightspeed-sale-items",
+     "LightspeedSaleItemCsvParser", "canonical_sale_item",
+     "resolved_sale_item_day", "SaleItemMetricsQuery", "resolved", "",
+     "one sale line (receipt line)",
+     "receipt line id (salelines.id)"),
+    ("LIGHTSPEED", "product_catalog", "lightspeed-product-catalog",
+     "LightspeedProductCatalogParser", "canonical_product", "", "",
+     "canonical-direct", "",
+     "one product",
+     "product_id"),
+    ("LIGHTSPEED", "products", "lightspeed-products",
+     "LightspeedProductCsvParser", "canonical_product_sales",
+     "resolved_product_sales", "ProductMetricsQuery", "resolved", "",
+     "one product-day",
+     "product name + trading_date"),
+    ("LIGHTSPEED", "zreport", "lightspeed-zreport",
+     "LightspeedZReportIngestService", "", "", "", "raw-only", "",
+     "one Z-report",
+     "n/a (raw only)"),
+
+    # ---- CTB ----------------------------------------------------------------
+    ("CTB", "daily_revenue", "ctb-revenue",
+     "CtbRevenueParser", "canonical_daily_sales", "resolved_daily_sales",
+     "SalesMetricsQuery", "resolved", "",
+     "one department revenue row per day",
+     "revenueId"),
+    ("CTB", "product_sales", "ctb-revenue",
+     "CtbSaleItemParser", "canonical_product_sales", "resolved_product_sales",
+     "ProductMetricsQuery", "resolved", "",
+     "one product-day (stock item)",
+     "stockCode + saleDate (stockCode dropped from canonical)"),
+    ("CTB", "invoices_ajax", "ctb-invoices-ajax",
+     "", "", "", "", "raw-only", "",
+     "one invoice header (AJAX snapshot)",
+     "invoiceId / invoiceNo"),
+    ("CTB", "invoices_csv", "ctb-invoices",
+     "CtInvoiceCsvParser", "canonical_invoice,canonical_invoice_line",
+     "resolved_inventory_day", "InvoiceLineMetricsQuery,InvoiceGraphQuery",
+     "resolved", "",
+     "one invoice header + one line per CSV row",
+     "invoice_number (+ ordinal line seq; not supplier-scoped)"),
+    ("CTB", "invoice_pdf", "ctb-sftp",
+     "HybridInvoicePdfExtractor", "canonical_invoice_line", "",
+     "InvoiceLineMetricsQuery", "enrichment", "",
+     "one PDF per invoice",
+     "pdf sha256 (pdf raw record id)"),
+    ("CTB", "sale_recipe_links", "ctb-sale-recipe-links",
+     "CtbSaleRecipeLinkParser", "canonical_sale_recipe_link", "", "",
+     "canonical-direct", "",
+     "one sale-item -> recipe link",
+     "saleItemRecipeId / saleItemStockCode"),
+    ("CTB", "recipes", "ctb-recipes",
+     "", "", "", "", "raw-only", "",
+     "one recipe",
+     "recipe id"),
+    ("CTB", "recipe_cost", "ctb-recipe-cost",
+     "CtbRecipeCostParser", "canonical_recipe_cost", "resolved_recipe",
+     "RecipeMetricsQuery", "resolved", "",
+     "one recipe cost",
+     "recipeId"),
+    ("CTB", "recipe_ingredients", "ctb-recipe-ingredients",
+     "CtbRecipeIngredientsParser", "canonical_recipe_ingredient",
+     "resolved_recipe_ingredient", "RecipeIngredientMetricsQuery", "resolved",
+     "",
+     "one recipe ingredient line",
+     "parentRecipeId + recipeDetailId + stockId (owner-scoped line id)"),
+    ("CTB", "stocktakes", "ctb-stocktakes",
+     "CtbStocktakeParser", "canonical_stocktake", "", "", "canonical-direct",
+     "",
+     "one stocktake header",
+     "stocktakeId"),
+    ("CTB", "stocktake_detail", "ctb-stocktake-detail",
+     "CtbStocktakeParser", "canonical_stock_count", "", "", "canonical-direct",
+     "",
+     "one stocktake count line",
+     "stocktakeId + line id (detail carries no date)"),
+    ("CTB", "wastage", "ctb-wastage",
+     "CtbWastageParser", "", "", "", "raw-only", "",
+     "one wastage record header",
+     "wastageRecordId"),
+    ("CTB", "wastage_detail", "ctb-wastage-detail",
+     "CtbWastageParser", "canonical_wastage", "", "", "canonical-direct",
+     "wastage excluded from readiness",
+     "one wastage record line",
+     "wastageRecordId + wastageRecordDetailId"),
+    ("CTB", "stocks", "ctb-stocks", "", "", "", "", "raw-only", "",
+     "one stock item master", "stock id"),
+    ("CTB", "suppliers", "ctb-suppliers", "", "", "", "", "raw-only", "",
+     "one supplier master", "supplier id"),
+    ("CTB", "stock_orders", "ctb-stock-orders", "", "", "", "", "raw-only",
+     "", "one stock order", "order id"),
+    ("CTB", "statements", "ctb-statements", "", "", "", "", "raw-only", "",
+     "one supplier statement", "statement id"),
+    ("CTB", "reference_data", "ctb-reference-data", "", "", "", "", "raw-only",
+     "", "reference/department/activity/UOM", "n/a"),
+
+    # ---- OpenTable ----------------------------------------------------------
+    ("OPENTABLE", "reservations", "opentable-reservations",
+     "OpenTableReservationsCsvParser,OpenTableReservationJsonParser",
+     "canonical_reservation", "resolved_reservation_day",
+     "ReservationMetricsQuery", "resolved", "",
+     "one reservation",
+     "reservationId"),
+    ("OPENTABLE", "reviews", "opentable-reviews",
+     "OpenTableReviewJsonParser,OpenTableReviewsCsvParser", "canonical_review",
+     "", "ReviewMetricsQuery", "canonical-direct",
+     "reports excluded from readiness",
+     "one review",
+     "review id (OT-/RT- prefix + source)"),
+    ("OPENTABLE", "menu_items", "opentable-menu-items",
+     "OpenTableMenuItemsCsvParser", "", "", "", "raw-only", "",
+     "one menu item",
+     "item id / invariant id"),
+    ("OPENTABLE", "menus", "opentable-menus",
+     "", "", "", "", "raw-only", "",
+     "one menu",
+     "menu id"),
+    ("OPENTABLE", "guests", "opentable-reviews",
+     "OpenTableReviewJsonParser,OpenTableReviewsCsvParser", "canonical_guest",
+     "", "", "canonical-direct", "",
+     "one guest (derived from reviews)",
+     "guest id"),
+
+    # ---- Deputy -------------------------------------------------------------
+    ("DEPUTY", "timesheets", "deputy-webhook",
+     "", "canonical_labour_entry", "", "LabourMetricsQuery", "none",
+     "labour excluded from readiness",
+     "one timesheet/shift",
+     "deputy shift id (schema provisional; no delivery observed)"),
+]
+
+
+def as_dicts():
+    keys = ["source_system", "dataset", "fetcher_identity", "parser",
+            "canonical", "resolved", "semantic_query", "read_mode",
+            "excluded_reason", "record_grain", "source_key"]
+    return [dict(zip(keys, d)) for d in DATASETS]

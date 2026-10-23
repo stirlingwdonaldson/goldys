@@ -5,7 +5,8 @@
   // Pinned so a new upstream release never runs on this box (which also hosts
   // production) without review. Bump deliberately.
   "plugins": [
-    "superpowers@git+https://github.com/obra/superpowers.git#v6.4.2"
+    "superpowers@git+https://github.com/obra/superpowers.git#v6.4.2",
+    "@dietrichgebert/ponytail@5.3.2"
   ],
 
   // Always loaded alongside AGENTS.md. Claude Code scopes this file to backend/**;
@@ -21,6 +22,12 @@
           "-y",
           "@playwright/mcp@0.0.83",
           "--headless",
+          // Default (no --browser) resolves to channel "chrome" (branded Google
+          // Chrome at /opt/google/chrome/chrome), which is not installed here.
+          // "chromium" maps to channel "chrome-for-testing" = the bundled Chromium
+          // already in ~/.cache/ms-playwright/chromium-*.
+          "--browser",
+          "chromium",
           "--user-data-dir=/srv/ai/data/browser-profiles/goldys"
         ],
         "codemode": false,

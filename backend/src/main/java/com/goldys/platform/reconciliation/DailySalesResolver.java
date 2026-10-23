@@ -66,7 +66,13 @@ final class DailySalesResolver {
       return "single";
     }
     BigDecimal first = sources.get(0).totalSales();
-    boolean allAgree = sources.stream().allMatch(s -> withinCent(first, s.totalSales()));
+    boolean allAgree =
+        sources.stream()
+            .allMatch(
+                s ->
+                    withinCent(first, s.totalSales())
+                        && withinCent(sources.get(0).gstTotal(), s.gstTotal())
+                        && withinCent(sources.get(0).netTotal(), s.netTotal()));
     return allAgree ? "agreed" : "conflict";
   }
 

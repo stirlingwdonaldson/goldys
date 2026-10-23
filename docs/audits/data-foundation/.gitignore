@@ -1,0 +1,8 @@
+# Python bytecode from the audit scripts — regenerate on every run, never commit.
+__pycache__/
+*.pyc
+
+# Operator evidence is private; keep it out of this public repository.
+evidence/production/
+evidence/release-*/
+evidence/*.csv

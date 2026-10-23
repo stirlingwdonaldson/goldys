@@ -149,3 +149,73 @@ dimensions, comparison), not a snapshot. Rendering always re-runs those queries 
 stay current. Revisions snapshot the *document* (query config + shares) for history/restore, never
 the rendered data.
 
+
+
+### Data-handling corrections (15 October 2026)
+
+Semantic period summaries use `TimeGrain.TOTAL`; saved stat/table widgets request the same period
+aggregation, retaining qualification notices. API, tool and saved-dashboard reads check the
+transitive operand permissions of derived metrics. Explicit permission-table rows grant managers
+aggregate sales, bookings and labour, and known authenticated roles forecasting with aggregate
+support; raw sources and individual pay remain restricted. New/custom roles require explicit grants.
+
+Forecast submission freezes the exact internal model request and its qualifications in JSONB before
+queueing. Execution uses that snapshot; legacy queued work without one requires resubmission.
+Forecasting receives a qualified `Clock` bean backed by `VenueClock`, keeping its package independent
+of configuration classes. Snapshotting does not freeze external weather or model artefacts.
+
+
+### Integrated data foundation (16 October 2026)
+
+The bounded relational query path has its own typed registry/compiler/executor. It reads the
+registered resolved projections plus the explicitly approved single-source invoice and CTB
+product-sale observations (`CANONICAL_DIRECT`). It does not expose raw tables or a generic AI tool.
+These source observations retain source basis and are not a substitute for reconciled metrics.
+Detailed source costs require `inventory.cost`, including for predicates/grouping/order operands.
+
+The executor uses an independent read-only transaction and `SET LOCAL ROLE goldys_ro`; the role
+has SELECT only on the allowlisted analytical tables. V94 grants role membership to the principal
+used by the application's Flyway datasource. A deployment with a separate migration principal
+must explicitly grant the application principal membership before enabling queries. There is no
+fallback to unrestricted execution. Raw-table reads and DML are exercised as denied operations.
+
+Parent SUM/AVG/COUNT across a one-to-many join are rejected; DISTINCT monetary values do not repair
+entity fanout. Users can query parent aggregates independently or sum child facts. Query responses
+carry explicit coverage, source-basis and limit notices; saved query widgets retain those notices.
+Saved-query filters are used as saved, with a visible notice when dashboard-level filters cannot
+apply. Saved definitions remain configuration revisions, not retained report results.
+
+Unreleased foundation migrations V74–V80 have been sequenced as V86–V92, after the current main and
+drift migrations. V93 stores idempotent source-observation receipts; V94 enables the analytical role.
+No already-applied main migration is edited. A test upgrades a disposable V82 schema through the
+combined migrations without enabling out-of-order execution. None was applied to production.
+
+
+### Dated inventory observation reads (16 October correctness increment)
+
+`resolved_inventory_observation` is a disposable SQL view of current canonical count and waste lines,
+with current same-source stocktake-header partial/locked context. `ResolvedInventoryObservationQuery`
+implements the semantic `InventoryObservationQuery` port. The application checks both
+`inventory.stock` and `inventory.cost` before paged API reads. Raw UUIDs/version IDs remain in the
+projection for lineage and are omitted from its business DTO. No new grants, raw browsing, source
+writes or AI tool are introduced. Counts are dated observations, not current balances. Units and
+nullable source costs are preserved; heterogeneous quantities are never totalled.
+
+Sales, food/beverage, product, labour, booking, inventory and payment calendar-grid metrics carry `MetricCoverage` in provenance and reason/count notices.
+Observed values include explicit zeros; null projection values and absent dates are distinct.
+The expected trading population remains unverified even when every requested date has a value.
+This metadata introduces no age expiry, estimated missing money, valuation or statistical bound.
+
+
+### Inventory receipt protection (16 October 2026)
+
+Canonical stocktake/count/waste writers share an internal processing-receipt repository and the
+existing source-fact locks. Receipt insertion and canonical version supersession share one
+transaction. Equal-value receipts remain evidence, preventing old intermediate observations from
+manufacturing revisions after a correction. Count version provenance includes its nullable
+canonical header-version FK, and count receipt identity includes that header context. The
+observation view and semantic/API authorization remain unchanged.
+
+Inventory replay now uses the existing lightweight raw reference query and loads bytes per payload;
+the former inventory-only bulk-payload/time facade and duplicate repository finder were removed
+after their only caller moved. No new ingestion port, domain, permission or frontend call is added.

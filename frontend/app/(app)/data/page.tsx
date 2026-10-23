@@ -7,6 +7,7 @@ import { useApiData } from "@/lib/use-api-data";
 import { RESOLVED_SCREENS } from "@/lib/data-layers";
 import type { DataPage, GenericRow, RawRecordSummary } from "@/lib/api/types";
 import { GenericTable } from "@/components/data-explorer/generic-table";
+import { QueryBuilder } from "@/components/query-builder/query-builder";
 import { DEFAULT_PAGE_SIZE, TablePagination, usePageState } from "@/components/data-table/table-pagination";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -16,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageHeader } from "@/components/layout/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type Section = "raw" | "canonical" | "resolved";
+type Section = "raw" | "canonical" | "resolved" | "query";
 
 const emptyPage = (): DataPage<GenericRow> => ({ items: [], total: 0, page: 0, size: DEFAULT_PAGE_SIZE });
 
@@ -48,6 +49,7 @@ function DataExplorer() {
           <TabsTrigger value="raw">Raw</TabsTrigger>
           <TabsTrigger value="canonical">Canonical</TabsTrigger>
           <TabsTrigger value="resolved">Resolved</TabsTrigger>
+          <TabsTrigger value="query">Query</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -58,6 +60,7 @@ function DataExplorer() {
       {section === "resolved" ? (
         <ResolvedSection initialDomain={layer === "resolved" ? deepLinkEntity : null} />
       ) : null}
+      {section === "query" ? <QueryBuilder /> : null}
     </div>
   );
 }

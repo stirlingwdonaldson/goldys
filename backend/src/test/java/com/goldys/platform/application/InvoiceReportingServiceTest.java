@@ -45,7 +45,7 @@ class InvoiceReportingServiceTest {
                 invoice("A. Foods", "INV-2", "2026-09-02", "20.00"),
                 invoice("A. Foods", "INV-1", "2026-09-01", "10.00"),
                 invoice("B. Foods", "INV-3", "2026-09-03", "30.00")));
-    when(pdfLinks.linkedInvoiceNumbers()).thenReturn(Set.of("INV-1"));
+    when(pdfLinks.status(id("INV-1"))).thenReturn("AVAILABLE");
 
     DataPage<InvoiceReportingService.InvoiceSummary> page =
         service.list(
@@ -135,15 +135,18 @@ class InvoiceReportingServiceTest {
 
   @Test
   void detailReturnsHeaderAndLinesSortedByLineTotalDesc() {
-    when(invoices.currentInvoices())
-        .thenReturn(List.of(invoice("A. Foods", "INV-1", "2026-09-01", "30.00")));
-    when(inventory.currentEnrichedLines())
+    when(invoices.invoiceLogicalIdForInvoiceNumber("INV-1"))
+        .thenReturn(java.util.Optional.of(id("INV-1")));
+    when(invoices.currentInvoice(id("INV-1")))
+        .thenReturn(java.util.Optional.of(invoice("A. Foods", "INV-1", "2026-09-01", "30.00")));
+    when(inventory.enrichedLinesForInvoice(id("INV-1")))
         .thenReturn(List.of(line("INV-1", "10.00", "cheap"), line("INV-1", "20.00", "pricey")));
-    when(pdfLinks.linkedInvoiceNumbers()).thenReturn(Set.of("INV-1"));
+    when(pdfLinks.status(id("INV-1"))).thenReturn("AVAILABLE");
 
     InvoiceReportingService.InvoiceDetail detail = service.detail(role(), "INV-1");
 
-    verify(permissions).require(role(), new ResourceKey("inventory.cost"), PermissionAction.READ);
+    verify(permissions, org.mockito.Mockito.atLeastOnce())
+        .require(role(), new ResourceKey("inventory.cost"), PermissionAction.READ);
     assertThat(detail.supplierName()).isEqualTo("A. Foods");
     assertThat(detail.invoiceNumber()).isEqualTo("INV-1");
     assertThat(detail.hasPdf()).isTrue();
@@ -172,7 +175,9 @@ class InvoiceReportingServiceTest {
         null,
         null,
         null,
-        null);
+        null,
+        id(number),
+        id(supplier));
   }
 
   private static EnrichedInvoiceLine line(String invoice, String lineTotal, String key) {
@@ -187,6 +192,16 @@ class InvoiceReportingServiceTest {
         null,
         null,
         null,
-        null);
+        null,
+        null,
+        null,
+        null,
+        null,
+        id(invoice));
+  }
+
+  private static java.util.UUID id(String value) {
+    return java.util.UUID.nameUUIDFromBytes(
+        value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
   }
 }

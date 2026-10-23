@@ -3,7 +3,6 @@ package com.goldys.platform.semantic.catalog;
 import com.goldys.platform.semantic.ReservationMetricsQuery;
 import com.goldys.platform.semantic.ReservationSummary;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,8 +26,10 @@ public class ReservationMetricExecutor implements MetricExecutor {
   public Set<MetricId> ids() {
     return Set.of(
         MetricId.RESERVATIONS_BOOKINGS,
+        MetricId.RESERVATIONS_EXPECTED_BOOKINGS,
         MetricId.RESERVATIONS_ATTENDED,
         MetricId.RESERVATIONS_COVERS,
+        MetricId.RESERVATIONS_BOOKED_COVERS,
         MetricId.RESERVATIONS_NO_SHOWS);
   }
 
@@ -37,8 +38,10 @@ public class ReservationMetricExecutor implements MetricExecutor {
     Function<ReservationSummary, Long> pick =
         switch (query.metric()) {
           case RESERVATIONS_BOOKINGS -> ReservationSummary::bookings;
+          case RESERVATIONS_EXPECTED_BOOKINGS -> s -> s.bookings() - s.cancelled() - s.walkIns();
           case RESERVATIONS_ATTENDED -> ReservationSummary::attended;
           case RESERVATIONS_COVERS -> ReservationSummary::covers;
+          case RESERVATIONS_BOOKED_COVERS -> ReservationSummary::bookedCovers;
           case RESERVATIONS_NO_SHOWS -> ReservationSummary::noShows;
           default ->
               throw new IllegalArgumentException("Not a reservation metric: " + query.metric());
@@ -55,19 +58,20 @@ public class ReservationMetricExecutor implements MetricExecutor {
     MetricDefinition definition = catalog.definition(query.metric());
     MetricProvenance provenance =
         new MetricProvenance(
-            query.metric(),
-            definition.version(),
-            query.range(),
-            query.grain(),
-            definition.sourceDomain(),
-            Instant.EPOCH,
-            bucket.missingDays(),
-            definition.version());
+                query.metric(),
+                definition.version(),
+                query.range(),
+                query.grain(),
+                definition.sourceDomain(),
+                null,
+                bucket.missingDays(),
+                definition.version())
+            .withCoverage(bucket.coverage());
 
     return new TimeSeriesResult(
         query.metric(),
         List.of(new MetricSeries(null, bucket.points())),
-        SalesMetricExecutor.notices(bucket.missingDays()),
+        bucket.coverage().notices(),
         provenance);
   }
 }

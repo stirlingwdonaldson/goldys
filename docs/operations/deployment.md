@@ -229,6 +229,11 @@ backed up freely.
 
 ## Upgrading
 
+For the data-correctness release introducing V83–V98, use the
+[release runbook](data-correctness-release-2026-10-16.md), including its read-only preflight,
+backup/restore rehearsal, paired frontend/backend rollout and replay-disabled overlays.
+The generic commands below do not perform those release checks.
+
 ```bash
 git pull
 export SENTRY_RELEASE=$(git rev-parse --short HEAD)   # tags errors with the deployed commit
@@ -282,9 +287,10 @@ git checkout <last-good-tag-or-sha>
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 ```
 
-Because the raw log is append-only and canonical rows are closed rather than
-overwritten, rolling back code is safe; rolling back a Flyway migration is not
-(do not revert migrations — add a corrective migration instead).
+Code rollback requires verified schema and data compatibility. Append-only raw history alone does
+not make an old binary compatible with new nullable facts or identity/replay contracts. For V83–V98,
+follow the release runbook: prefer a forward fix, or obtain explicit approval to restore the quiesced
+database backup and saved image pair. Do not edit applied migrations or use Flyway repair to downgrade.
 
 ## Logs & health
 

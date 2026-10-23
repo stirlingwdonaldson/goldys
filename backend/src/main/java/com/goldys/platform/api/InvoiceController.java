@@ -59,6 +59,32 @@ public class InvoiceController {
       @RequestParam(value = "disposition", required = false) String disposition,
       @AuthenticationPrincipal AccountUserDetails user) {
     InvoiceDocumentService.PdfDocument doc = documents.pdf(currentUser.roleOf(user), invoiceNumber);
+    return pdfResponse(doc, disposition);
+  }
+
+  @GetMapping("/by-id/{id}")
+  InvoiceReportingService.InvoiceDetail detailById(
+      @PathVariable java.util.UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    return reporting.detailById(currentUser.roleOf(user), id);
+  }
+
+  @GetMapping("/by-id/{id}/documents")
+  java.util.List<InvoiceDocumentService.Document> documents(
+      @PathVariable java.util.UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    return documents.documents(currentUser.roleOf(user), id);
+  }
+
+  @GetMapping("/by-id/{id}/documents/{documentId}/pdf")
+  ResponseEntity<byte[]> pdfById(
+      @PathVariable java.util.UUID id,
+      @PathVariable java.util.UUID documentId,
+      @RequestParam(value = "disposition", required = false) String disposition,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return pdfResponse(documents.pdf(currentUser.roleOf(user), id, documentId), disposition);
+  }
+
+  private ResponseEntity<byte[]> pdfResponse(
+      InvoiceDocumentService.PdfDocument doc, String disposition) {
     boolean attachment = "attachment".equalsIgnoreCase(disposition);
     String contentDisposition =
         (attachment ? "attachment" : "inline") + "; filename=\"" + sanitize(doc.filename()) + "\"";

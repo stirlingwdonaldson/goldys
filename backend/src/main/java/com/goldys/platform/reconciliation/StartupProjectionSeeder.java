@@ -1,13 +1,15 @@
 package com.goldys.platform.reconciliation;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-/** Seeds the resolved projection on first boot of the read-model tables; a no-op once populated. */
+/** Rebuilds disposable resolved projections from canonical facts and accepted decisions on boot. */
 @Component
 public class StartupProjectionSeeder implements ApplicationRunner {
-  private final ResolvedDailySalesRepository resolved;
+  private static final Logger log = LoggerFactory.getLogger(StartupProjectionSeeder.class);
   private final DailySalesProjector projector;
   private final ProductSalesProjector productProjector;
   private final ReservationProjector reservationProjector;
@@ -20,7 +22,6 @@ public class StartupProjectionSeeder implements ApplicationRunner {
   private final RecipeIngredientProjector recipeIngredientProjector;
 
   public StartupProjectionSeeder(
-      ResolvedDailySalesRepository resolved,
       DailySalesProjector projector,
       ProductSalesProjector productProjector,
       ReservationProjector reservationProjector,
@@ -31,7 +32,6 @@ public class StartupProjectionSeeder implements ApplicationRunner {
       SaleItemProjector saleItemProjector,
       RecipeProjector recipeProjector,
       RecipeIngredientProjector recipeIngredientProjector) {
-    this.resolved = resolved;
     this.projector = projector;
     this.productProjector = productProjector;
     this.reservationProjector = reservationProjector;
@@ -46,9 +46,9 @@ public class StartupProjectionSeeder implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) {
-    if (resolved.count() == 0) {
-      projector.recomputeAll();
-    }
+    // Changed resolver semantics must reach populated history after deployment too. Rebuild only
+    // the disposable projection; source facts, raw evidence, overrides and rules are retained.
+    projector.recomputeAll();
     // Product, reservation, labour, inventory, payment, deleted-sale, sale-item, recipe and
     // recipe-ingredient projections are backfilled on every boot: "no conflicts" and "never seeded"
     // are indistinguishable without a checkpoint table, and the rebuild is cheap at pub scale.
@@ -61,5 +61,6 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     saleItemProjector.recomputeAll();
     recipeProjector.recomputeAll();
     recipeIngredientProjector.recomputeAll();
+    log.info("Resolved projections rebuilt from current canonical facts");
   }
 }

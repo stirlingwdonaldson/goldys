@@ -4,9 +4,9 @@ import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.MissingDataStatus;
 import com.goldys.platform.semantic.ProductMetricsQuery;
+import com.goldys.platform.semantic.ProductRanking;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +33,7 @@ public class DerivedMetricExecutor implements MetricExecutor {
       LabourMetricExecutor labourExec,
       InventoryMetricExecutor inventory,
       ProductMetricExecutor productExec,
+      FoodBevMetricExecutor foodBev,
       LabourMetricsQuery labour,
       ProductMetricsQuery product,
       MetricCatalog catalog) {
@@ -40,16 +41,19 @@ public class DerivedMetricExecutor implements MetricExecutor {
     this.product = product;
     this.catalog = catalog;
     this.base =
-        Map.of(
-            MetricId.RESERVATIONS_BOOKINGS, reservations,
-            MetricId.RESERVATIONS_ATTENDED, reservations,
-            MetricId.RESERVATIONS_COVERS, reservations,
-            MetricId.RESERVATIONS_NO_SHOWS, reservations,
-            MetricId.SALES_GROSS, sales,
-            MetricId.LABOUR_SCHEDULED_HOURS, labourExec,
-            MetricId.LABOUR_ACTUAL_HOURS, labourExec,
-            MetricId.LABOUR_COST, labourExec,
-            MetricId.INVENTORY_PURCHASES, inventory);
+        Map.ofEntries(
+            Map.entry(MetricId.RESERVATIONS_BOOKINGS, reservations),
+            Map.entry(MetricId.RESERVATIONS_EXPECTED_BOOKINGS, reservations),
+            Map.entry(MetricId.RESERVATIONS_ATTENDED, reservations),
+            Map.entry(MetricId.RESERVATIONS_COVERS, reservations),
+            Map.entry(MetricId.RESERVATIONS_NO_SHOWS, reservations),
+            Map.entry(MetricId.SALES_GROSS, sales),
+            Map.entry(MetricId.SALES_NET, sales),
+            Map.entry(MetricId.SALES_FOOD, foodBev),
+            Map.entry(MetricId.LABOUR_SCHEDULED_HOURS, labourExec),
+            Map.entry(MetricId.LABOUR_ACTUAL_HOURS, labourExec),
+            Map.entry(MetricId.LABOUR_COST, labourExec),
+            Map.entry(MetricId.INVENTORY_PURCHASES, inventory));
   }
 
   @Override
@@ -59,6 +63,7 @@ public class DerivedMetricExecutor implements MetricExecutor {
         MetricId.RESERVATIONS_BOOKING_TO_COVER_CONVERSION,
         MetricId.RESERVATIONS_AVG_PARTY_SIZE,
         MetricId.SALES_AVERAGE_SPEND_PER_COVER,
+        MetricId.SALES_FOOD_SHARE,
         MetricId.LABOUR_HOURS_PER_COVER,
         MetricId.LABOUR_COST_PER_COVER,
         MetricId.LABOUR_HOURS_VARIANCE,
@@ -72,13 +77,14 @@ public class DerivedMetricExecutor implements MetricExecutor {
   public MetricResult evaluate(MetricQuery query) {
     return switch (query.metric()) {
       case RESERVATIONS_NO_SHOW_RATE ->
-          ratio(query, MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_BOOKINGS);
+          ratio(query, MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_EXPECTED_BOOKINGS);
       case RESERVATIONS_BOOKING_TO_COVER_CONVERSION ->
           ratio(query, MetricId.RESERVATIONS_ATTENDED, MetricId.RESERVATIONS_BOOKINGS);
       case RESERVATIONS_AVG_PARTY_SIZE ->
           ratio(query, MetricId.RESERVATIONS_COVERS, MetricId.RESERVATIONS_ATTENDED);
       case SALES_AVERAGE_SPEND_PER_COVER ->
           ratio(query, MetricId.SALES_GROSS, MetricId.RESERVATIONS_COVERS);
+      case SALES_FOOD_SHARE -> ratio(query, MetricId.SALES_FOOD, MetricId.SALES_NET);
       case LABOUR_HOURS_PER_COVER ->
           ratio(query, MetricId.LABOUR_ACTUAL_HOURS, MetricId.RESERVATIONS_COVERS);
       case LABOUR_COST_PER_COVER ->
@@ -86,7 +92,17 @@ public class DerivedMetricExecutor implements MetricExecutor {
       case LABOUR_HOURS_VARIANCE ->
           difference(query, MetricId.LABOUR_SCHEDULED_HOURS, MetricId.LABOUR_ACTUAL_HOURS);
       case INVENTORY_FOOD_COST_PERCENT ->
-          ratio(query, MetricId.INVENTORY_PURCHASES, MetricId.SALES_GROSS);
+          new TimeSeriesResult(
+              query.metric(),
+              List.of(
+                  new MetricSeries(
+                      null,
+                      List.of(
+                          new MetricPoint(
+                              query.range().from(), null, MissingDataStatus.UNRESOLVED)))),
+              List.of(
+                  "Food cost % withdrawn: invoice purchases are not COGS; valuation evidence is required"),
+              provenance(query));
       case LABOUR_FOH_PERCENT -> departmentPercent(query, "FOH");
       case LABOUR_BOH_PERCENT -> departmentPercent(query, "BOH");
       case PRODUCT_TOP_SELLERS -> topSellers(query);
@@ -138,6 +154,11 @@ public class DerivedMetricExecutor implements MetricExecutor {
                 null,
                 a.anyData ? MissingDataStatus.UNRESOLVED : MissingDataStatus.NOT_RECEIVED));
         notices.add("no shared coverage for " + a.start);
+      } else if (!a.excludedDays.isEmpty()) {
+        points.add(new MetricPoint(a.start, null, MissingDataStatus.UNRESOLVED));
+        partialCoverageNotice(notices, a);
+        notices.add(
+            "Ratio unavailable: missing inputs have no validated five-percentage-point uncertainty bound");
       } else if (a.denominator.signum() == 0) {
         points.add(new MetricPoint(a.start, null, MissingDataStatus.UNRESOLVED));
         notices.add("zero denominator for " + a.start);
@@ -209,6 +230,11 @@ public class DerivedMetricExecutor implements MetricExecutor {
                 null,
                 a.anyData ? MissingDataStatus.UNRESOLVED : MissingDataStatus.NOT_RECEIVED));
         notices.add("no shared coverage for " + a.start);
+      } else if (!a.excludedDays.isEmpty()) {
+        points.add(new MetricPoint(a.start, null, MissingDataStatus.UNRESOLVED));
+        partialCoverageNotice(notices, a);
+        notices.add(
+            "Ratio unavailable: missing inputs have no validated five-percentage-point uncertainty bound");
       } else if (a.denominator.signum() == 0) {
         points.add(new MetricPoint(a.start, null, MissingDataStatus.UNRESOLVED));
         notices.add("zero gross sales for " + a.start);
@@ -243,7 +269,10 @@ public class DerivedMetricExecutor implements MetricExecutor {
       TimeGrain grain) {
     TreeMap<LocalDate, Aligned> buckets = new TreeMap<>();
     for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
-      Aligned a = buckets.computeIfAbsent(GrainAggregator.bucketStart(d, grain), Aligned::new);
+      Aligned a =
+          buckets.computeIfAbsent(
+              grain == TimeGrain.TOTAL ? from : GrainAggregator.bucketStart(d, grain),
+              Aligned::new);
       BigDecimal n = numerator.get(d);
       BigDecimal de = denominator.get(d);
       boolean nResolved = n != null;
@@ -278,17 +307,27 @@ public class DerivedMetricExecutor implements MetricExecutor {
   }
 
   private RankedListResult topSellers(MetricQuery query) {
+    ProductRanking ranking =
+        product.qualifiedTopSellers(query.range().from(), query.range().to(), 5);
     List<MetricRankedItem> items =
-        product.topSellers(query.range().from(), query.range().to(), 5).stream()
+        ranking.items().stream()
             .map(
                 t ->
                     new MetricRankedItem(
                         t.productName(), t.amount(), t.quantitySold(), t.hasConflict()))
             .toList();
-    return new RankedListResult(query.metric(), items, List.of(), provenance(query));
+    return new RankedListResult(
+        query.metric(),
+        items,
+        ranking.notices(),
+        provenance(query, ranking.coverage().missingDates()).withCoverage(ranking.coverage()));
   }
 
   private MetricProvenance provenance(MetricQuery query) {
+    return provenance(query, List.of());
+  }
+
+  private MetricProvenance provenance(MetricQuery query, List<LocalDate> missingDates) {
     MetricDefinition d = catalog.definition(query.metric());
     return new MetricProvenance(
         query.metric(),
@@ -297,8 +336,8 @@ public class DerivedMetricExecutor implements MetricExecutor {
         query.grain(),
         d.sourceDomain(),
         // TODO(provenance): plumb max(resolved_at) from the *MetricsQuery read, not Instant.EPOCH
-        Instant.EPOCH,
-        List.of(),
+        null,
+        missingDates,
         d.version());
   }
 }

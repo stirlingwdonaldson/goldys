@@ -1,0 +1,2 @@
+id,classification,evidence
+PUBLIC-BOUNDARY,verification_limit,Production audit findings are retained operator-local; use implementation reports for code findings and the release preflight for current compatibility

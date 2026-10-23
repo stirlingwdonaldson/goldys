@@ -63,6 +63,15 @@ public class InvoicePdfEnrichmentService {
     PdfExtractedInvoice parsed = parser.extract(text);
     String invoiceNumber =
         invoiceQuery.invoiceNumberForPdfFilename(pdfFilename).orElse(parsed.invoiceNumber());
+    if (invoiceQuery.hasAmbiguousInvoiceNumber(invoiceNumber)) {
+      flags.flag(
+          InvoiceIngestFlagType.AMBIGUOUS_PDF,
+          invoiceNumber,
+          pdfFilename,
+          null,
+          "Supplier-qualified invoice identity required; no enrichment or recovery applied");
+      return;
+    }
     // A replayed PDF has no filename on its raw record; fall back to the invoice's stored
     // pdf_filename so flag identities stay stable across the live and replay paths.
     String flagFilename =

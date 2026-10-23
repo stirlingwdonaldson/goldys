@@ -89,10 +89,10 @@ describe("buildInvoiceGraph", () => {
     expect(g.edges.some((e) => e.source === "sup:A. Foods" && e.target === "inv:INV-2")).toBe(true);
   });
 
-  it("dedupes identical product keys and orders lines by line total", () => {
+  it("preserves repeated product occurrences and orders lines by line total", () => {
     const lines = [
       line("chicken breast", 50),
-      line("chicken breast", 30), // duplicates the key above -> summed to 80
+      line("chicken breast", 30), // same label, a separate occurrence
       line("beef mince", 90),
     ];
     const g = buildInvoiceGraph(
@@ -101,7 +101,9 @@ describe("buildInvoiceGraph", () => {
     );
     expect(g.columns).toHaveLength(3);
     const linesColumn = g.columns[2];
-    // beef mince (90) ranks above the deduped chicken breast (80)
+    expect(linesColumn).toHaveLength(3);
+    expect(new Set(linesColumn.map(n => n.id)).size).toBe(3);
+    // beef mince (90) ranks above the separate chicken breast lines
     expect(linesColumn[0].data.title).toBe("beef mince");
     expect(linesColumn[1].data.title).toBe("chicken breast");
   });
@@ -116,4 +118,14 @@ describe("buildInvoiceGraph", () => {
     expect(col0.some((n) => n.data.title.startsWith("Other 1"))).toBe(false);
     expect(col0).toHaveLength(SUPPLIER_TOP_N + 1);
   });
+});
+
+it("uses distinct invoice identities for same-number graph nodes", () => {
+  const graph = buildInvoiceGraph(input({
+    suppliers: [supplier("A",2,200)], focusedSupplier:"A",
+    invoices:[{...invoice("SHARED","2026-09-01",110),invoiceId:"a",amountExTax:100},
+      {...invoice("SHARED","2026-09-01",110),invoiceId:"b",amountExTax:100}],
+  }));
+  expect(graph.columns[1].map(n => n.id)).toEqual(["inv:id:a","inv:id:b"]);
+  expect(graph.columns[1].map(n => n.data.drill)).toEqual(["invoice:id:a","invoice:id:b"]);
 });

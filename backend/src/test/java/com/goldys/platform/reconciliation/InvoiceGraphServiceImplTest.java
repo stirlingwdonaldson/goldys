@@ -53,7 +53,7 @@ class InvoiceGraphServiceImplTest {
   }
 
   @Test
-  void fallsBackToHeaderTotalWhenASupplierHasInvoicesButNoLines() {
+  void headerOnlySupplierHasUnknownPurchasesInsteadOfGrossFallback() {
     when(invoices.currentInvoices())
         .thenReturn(List.of(invoice("A. Foods", "INV-1", "2026-09-01", "100.00")));
     when(invoices.currentSupplierNames()).thenReturn(Map.of("INV-1", "A. Foods"));
@@ -62,7 +62,8 @@ class InvoiceGraphServiceImplTest {
     List<SupplierGraphNode> result = service.suppliers(FROM, TO);
 
     assertThat(result).hasSize(1);
-    assertThat(result.get(0).totalSpend()).isEqualByComparingTo("100.00");
+    assertThat(result.get(0).totalSpend()).isNull();
+    assertThat(result.get(0).invoicesWithoutLines()).isEqualTo(1);
   }
 
   @Test
@@ -99,10 +100,13 @@ class InvoiceGraphServiceImplTest {
 
   @Test
   void filtersLinesByInvoiceNumber() {
-    when(inventory.currentEnrichedLines())
-        .thenReturn(
-            List.of(line("INV-1", "2026-09-01", "20.00"), line("INV-2", "2026-09-02", "30.00")));
+    when(inventory.enrichedLinesForInvoice(id("INV-1")))
+        .thenReturn(List.of(line("INV-1", "2026-09-01", "20.00")));
 
+    when(invoices.invoiceLogicalIdForInvoiceNumber("INV-1"))
+        .thenReturn(java.util.Optional.of(id("INV-1")));
+    when(invoices.currentInvoice(id("INV-1")))
+        .thenReturn(java.util.Optional.of(invoice("A", "INV-1", "2026-09-01", "20")));
     List<LineGraphNode> result = service.linesForInvoice("INV-1");
 
     assertThat(result).hasSize(1);
@@ -122,7 +126,9 @@ class InvoiceGraphServiceImplTest {
         null,
         null,
         null,
-        null);
+        null,
+        id(number),
+        id(supplier));
   }
 
   private static EnrichedInvoiceLine line(String invoice, String date, String lineTotal) {
@@ -137,6 +143,16 @@ class InvoiceGraphServiceImplTest {
         null,
         null,
         null,
-        null);
+        null,
+        null,
+        null,
+        null,
+        null,
+        id(invoice));
+  }
+
+  private static java.util.UUID id(String value) {
+    return java.util.UUID.nameUUIDFromBytes(
+        value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
   }
 }

@@ -13,4 +13,9 @@ public class VenueClockConfig {
   VenueClock venueClock(@Value("${app.venue.timezone:Australia/Melbourne}") String zone) {
     return VenueClock.system(ZoneId.of(zone));
   }
+
+  @Bean("venueCalendarClock")
+  public java.time.Clock venueCalendarClock(VenueClock venueClock) {
+    return venueClock.clock();
+  }
 }

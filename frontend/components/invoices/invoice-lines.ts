@@ -71,13 +71,13 @@ export function priceChanges(
   const before = new Map<string, number>();
   for (const l of previous) {
     const key = lineMatchKey(l);
-    if (!before.has(key)) before.set(key, l.unitCost);
+    if (!before.has(key) && l.unitCost != null) before.set(key, l.unitCost);
   }
   const changes = new Map<string, PriceChange>();
   for (const l of current) {
     const key = lineMatchKey(l);
     const previousUnitCost = before.get(key);
-    if (previousUnitCost == null || previousUnitCost === 0) continue;
+    if (previousUnitCost == null || previousUnitCost === 0 || l.unitCost == null) continue;
     const ratio = (l.unitCost - previousUnitCost) / previousUnitCost;
     if (Math.abs(ratio) >= MIN_CHANGE) changes.set(key, { previousUnitCost, ratio });
   }

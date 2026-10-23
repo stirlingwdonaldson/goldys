@@ -15,7 +15,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
     && pip install --no-cache-dir -r requirements.txt
 
-COPY predictor.py app.py ./
+COPY predictor.py app.py external.py features.py model.py forecast.py ./
+COPY data/ data/
 
 # Model weights are downloaded on first warm-up (first /forecast) and cached here so a
 # restart never re-downloads them (~hundreds of MB).

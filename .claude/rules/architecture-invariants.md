@@ -96,3 +96,12 @@ under time pressure. Paths below are relative to
 - Tools return typed widget specs (schema version 2), never executable UI code.
 - Saved dashboards store query configuration, never rendered data, and are
   re-authorized per metric at render time.
+
+
+## Approved single-source evidence exception
+
+The bounded `query` registry may expose the owner's explicitly approved invoice/line and CTB
+product-sale observations as `CANONICAL_DIRECT` with source/coverage qualifications and financial
+permission gates. This exception is for source evidence, not governed reconciled metrics; it never
+permits raw-ledger access or a generic AI SQL/query tool. See the 16 October 2026 clarification in
+`docs/system-context.md`. All other resolved-only business read rules remain in force.

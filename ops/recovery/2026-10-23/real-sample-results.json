@@ -1,0 +1,98 @@
+{
+  "javaParserProbe": [
+    {
+      "id": "154d8cef-a26d-4a86-acd5-832b913d73b2",
+      "fetcher_identity": "lightspeed-sale-items",
+      "fetched_at": "2026-10-10T06:18:57.853097+00:00",
+      "exit_code": 1,
+      "counts": {
+        "rows": 410558,
+        "keys": 409565,
+        "conflictingRepeats": 13
+      }
+    },
+    {
+      "id": "5c6dca7e-2dd8-4251-bc90-6055d500c1fc",
+      "fetcher_identity": "ctb-revenue",
+      "fetched_at": "2026-10-16T17:00:41.904646+00:00",
+      "exit_code": 0,
+      "counts": {
+        "rows": 176,
+        "products": 176
+      }
+    },
+    {
+      "id": "2861d264-4047-4055-ba3a-a17391e3bd94",
+      "fetcher_identity": "ctb-revenue",
+      "fetched_at": "2026-10-17T17:01:34.612618+00:00",
+      "exit_code": 0,
+      "counts": {
+        "rows": 115,
+        "products": 115
+      }
+    },
+    {
+      "id": "7aa51fa2-81c7-4ff7-8fdb-5a9457c66a93",
+      "fetcher_identity": "ctb-revenue",
+      "fetched_at": "2026-10-18T17:01:32.315376+00:00",
+      "exit_code": 0,
+      "counts": {
+        "rows": 107,
+        "products": 107
+      }
+    },
+    {
+      "id": "e643e907-0dac-448d-9b56-15cd2875fb86",
+      "fetcher_identity": "ctb-revenue",
+      "fetched_at": "2026-10-19T17:00:32.352529+00:00",
+      "exit_code": 0,
+      "counts": {
+        "rows": 105,
+        "products": 105
+      }
+    },
+    {
+      "id": "c4818f96-a6bf-42fe-b4f9-ea2759f8c3f3",
+      "fetcher_identity": "ctb-revenue",
+      "fetched_at": "2026-10-20T17:01:29.102842+00:00",
+      "exit_code": 0,
+      "counts": {
+        "rows": 105,
+        "products": 105
+      }
+    },
+    {
+      "id": "350668bb-3dce-4f41-b185-1e6834f4f654",
+      "fetcher_identity": "ctb-revenue",
+      "fetched_at": "2026-10-21T17:01:29.646439+00:00",
+      "exit_code": 0,
+      "counts": {
+        "rows": 160,
+        "products": 160
+      }
+    },
+    {
+      "id": "f07f1f08-7bcb-47da-92cd-f986277e0756",
+      "fetcher_identity": "ctb-revenue",
+      "fetched_at": "2026-10-23T02:46:00.13242+00:00",
+      "exit_code": 0,
+      "counts": {
+        "rows": 186,
+        "products": 186
+      }
+    }
+  ],
+  "lightspeedConflictReview": {
+    "rows": 410558,
+    "keys": 409565,
+    "conflictingRepeats": 13,
+    "differingFields": {
+      "amount": 11,
+      "costIncTax": 2,
+      "quantity": 13,
+      "totalTax": 11
+    },
+    "conflictingKeys": 13,
+    "missingConflictingKeys": 11
+  }
+}

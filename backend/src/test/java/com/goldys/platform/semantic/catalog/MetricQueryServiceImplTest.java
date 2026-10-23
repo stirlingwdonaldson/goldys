@@ -56,14 +56,17 @@ class MetricQueryServiceImplTest {
             List.of(new MetricSeries(null, List.of(new MetricPoint(RANGE.from(), null)))),
             List.of(),
             new MetricProvenance(
-                MetricId.SALES_GROSS,
-                "1",
-                RANGE,
-                TimeGrain.DAY,
-                "resolved_daily_sales",
-                Instant.EPOCH,
-                List.of(),
-                "1"));
+                    MetricId.SALES_GROSS,
+                    "1",
+                    RANGE,
+                    TimeGrain.DAY,
+                    "resolved_daily_sales",
+                    Instant.EPOCH,
+                    List.of(),
+                    "1")
+                .withCoverage(
+                    new MetricCoverage(
+                        RANGE.from(), RANGE.to(), List.of(), List.of(RANGE.from()), List.of())));
     when(executor.evaluate(query)).thenReturn(executorResult);
 
     MetricQueryService service =
@@ -71,6 +74,7 @@ class MetricQueryServiceImplTest {
 
     MetricResult result = service.query(query);
 
+    assertThat(result.provenance().coverage()).isSameAs(executorResult.provenance().coverage());
     assertThat(result.provenance().trust()).isSameAs(summary);
     assertThat(result.provenance().trust()).isNotNull();
     assertThat(result.provenance().dataFreshness())
@@ -79,7 +83,7 @@ class MetricQueryServiceImplTest {
   }
 
   @Test
-  void fallsBackToLastIngestionAtWhenResolvedAtIsAbsent() {
+  void receiptTimeDoesNotMasqueradeAsResolvedEvidenceTime() {
     MetricExecutor executor = mock(MetricExecutor.class);
     when(executor.ids()).thenReturn(Set.of(MetricId.SALES_GROSS));
     TrustSummary summary =
@@ -115,8 +119,7 @@ class MetricQueryServiceImplTest {
     MetricResult result = service.query(query);
 
     assertThat(result.provenance().trust()).isSameAs(summary);
-    assertThat(result.provenance().dataFreshness())
-        .isEqualTo(Instant.parse("2026-09-12T06:00:00Z"));
+    assertThat(result.provenance().dataFreshness()).isNull();
   }
 
   @Test

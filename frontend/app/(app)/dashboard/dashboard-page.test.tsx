@@ -15,9 +15,9 @@ vi.mock("@/lib/use-api-data", () => ({
             overrideUsage: { count: 3, period: "this week" },
           },
           latestSales: { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" },
-          salesTrend: [],
+          salesTrend: { points: [], notices: ["Incomplete sales subtotal"] },
           activity: [],
-          topSellers: [],
+          topSellers: { items: [], notices: ["Incomplete product subtotal"] },
           coversToday: { covers: 132, bookings: 98, noShows: 4 },
           foodCost: { foodCostPercent: 0.3125, purchases: 15842.6, wastage: 214.5 },
         },
@@ -40,5 +40,7 @@ describe("DashboardPage", () => {
     // The KPI grid renders the single resolved value; if the page reverted to
     // summing `listDailySales` rows, this resolved figure would not appear.
     expect(screen.getByText("$10,865.72")).toBeInTheDocument();
+    expect(screen.getByText("Incomplete sales subtotal")).toBeInTheDocument();
+    expect(screen.getByText("Incomplete product subtotal")).toBeInTheDocument();
   });
 });

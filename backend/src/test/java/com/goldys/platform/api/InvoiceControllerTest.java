@@ -43,6 +43,27 @@ class InvoiceControllerTest {
   @MockitoBean CurrentUserService currentUser;
 
   @Test
+  void explicitInvoiceAndDocumentIdsReachTheScopedRead() throws Exception {
+    UUID invoiceId = UUID.randomUUID(), documentId = UUID.randomUUID();
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(documents.pdf(any(), eq(invoiceId), eq(documentId)))
+        .thenReturn(new InvoiceDocumentService.PdfDocument(new byte[] {1, 2}, "selected.pdf"));
+    mvc.perform(
+            get("/api/invoices/by-id/" + invoiceId + "/documents/" + documentId + "/pdf")
+                .with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Content-Disposition", "inline; filename=\"selected.pdf\""))
+        .andExpect(header().string("X-Frame-Options", "SAMEORIGIN"));
+  }
+
+  @Test
+  void malformedInvoiceIdIsAValidationError() throws Exception {
+    mvc.perform(get("/api/invoices/by-id/not-a-uuid").with(authenticated(owner())))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+  }
+
+  @Test
   void listReturnsPagedSummaries() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
     when(reporting.list(any(), any(), any(), any(), anyInt(), anyInt()))
@@ -56,7 +77,10 @@ class InvoiceControllerTest {
                         LocalDate.of(2026, 10, 1),
                         new BigDecimal("10.00"),
                         "PO-1",
-                        true)),
+                        true,
+                        null,
+                        null,
+                        "NOT_LINKED")),
                 1,
                 0,
                 50));
@@ -97,6 +121,14 @@ class InvoiceControllerTest {
                 "PO-1",
                 true,
                 null,
+                null,
+                null,
+                List.of(),
+                null,
+                null,
+                "NOT_LINKED",
+                false,
+                false,
                 null,
                 null,
                 List.of()));
@@ -208,6 +240,14 @@ class InvoiceControllerTest {
                 null,
                 false,
                 null,
+                null,
+                null,
+                List.of(),
+                null,
+                null,
+                "NOT_LINKED",
+                false,
+                false,
                 null,
                 null,
                 List.of()));

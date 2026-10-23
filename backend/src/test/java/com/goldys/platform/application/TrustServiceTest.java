@@ -182,7 +182,7 @@ class TrustServiceTest {
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
 
-    assertThat(summary.freshness()).isEqualTo(FreshnessState.STALE);
+    assertThat(summary.freshness()).isEqualTo(FreshnessState.UNKNOWN);
     assertThat(summary.lastIngestionAt()).isEqualTo(staleAt);
   }
 
@@ -198,7 +198,7 @@ class TrustServiceTest {
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
 
     assertThat(summary.state()).isEqualTo(TrustState.VERIFIED);
-    assertThat(summary.freshness()).isEqualTo(FreshnessState.FRESH);
+    assertThat(summary.freshness()).isEqualTo(FreshnessState.UNKNOWN);
     assertThat(summary.lastIngestionAt()).isEqualTo(lightspeedAt);
   }
 
@@ -216,7 +216,7 @@ class TrustServiceTest {
     TrustSummary summary =
         service(range, List.of(state(day, "agreed", SOURCE)), health).trustFor(METRIC, range);
 
-    assertThat(summary.freshness()).isEqualTo(FreshnessState.FRESH);
+    assertThat(summary.freshness()).isEqualTo(FreshnessState.UNKNOWN);
     assertThat(summary.lastIngestionAt()).isEqualTo(freshAt);
   }
 

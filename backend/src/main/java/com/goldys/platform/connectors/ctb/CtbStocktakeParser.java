@@ -65,7 +65,7 @@ public class CtbStocktakeParser {
               requiredInt(n.get("id"), "id"),
               countedDate,
               ProductNameKey.normalize(sanitize(n.get("stockDesc"))),
-              nz(decimal(n.get("qtyCount"))),
+              decimal(n.get("qtyCount")),
               integer(n.get("stockId")),
               sanitize(n.get("stockCode")),
               sanitize(n.get("stockUnitOfMeasurementName")),
@@ -166,9 +166,5 @@ public class CtbStocktakeParser {
       return null;
     }
     return n.asText().replace("\u0000", "");
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }

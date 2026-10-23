@@ -27,16 +27,30 @@ public class InventoryController {
   private final InvoiceGraphService graph;
   private final InvoiceIngestFlagQueryService flags;
   private final CurrentUserService currentUser;
+  private final com.goldys.platform.application.InventoryObservationService observations;
 
   public InventoryController(
       InventoryReportingService reporting,
       InvoiceGraphService graph,
       InvoiceIngestFlagQueryService flags,
-      CurrentUserService currentUser) {
+      CurrentUserService currentUser,
+      com.goldys.platform.application.InventoryObservationService observations) {
     this.reporting = reporting;
     this.graph = graph;
     this.flags = flags;
     this.currentUser = currentUser;
+    this.observations = observations;
+  }
+
+  @GetMapping("/observations")
+  com.goldys.platform.application.InventoryObservationService.Page observations(
+      @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @RequestParam(defaultValue = "ALL") String kind,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "50") int size,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return observations.observations(currentUser.roleOf(user), from, to, kind, page, size);
   }
 
   @GetMapping("/summary")
@@ -76,6 +90,21 @@ public class InventoryController {
   List<LineGraphNode> linesForInvoice(
       @PathVariable String invoiceNumber, @AuthenticationPrincipal AccountUserDetails user) {
     return graph.linesForInvoice(currentUser.roleOf(user), invoiceNumber);
+  }
+
+  @GetMapping("/graph/suppliers/by-id/{id}/invoices")
+  List<InvoiceGraphNode> invoicesById(
+      @PathVariable java.util.UUID id,
+      @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return graph.invoicesForSupplierId(currentUser.roleOf(user), id, from, to);
+  }
+
+  @GetMapping("/graph/invoices/by-id/{id}/lines")
+  List<LineGraphNode> linesById(
+      @PathVariable java.util.UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    return graph.linesForInvoiceId(currentUser.roleOf(user), id);
   }
 
   @GetMapping("/flags")

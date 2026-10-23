@@ -1,0 +1,37 @@
+# Public holidays the DataVic feed does not publish yet.
+#
+# Checked 29 Jul 2026: the feed carries Melbourne Cup out to 2027 and AFL
+# Grand Final Friday for 2025, but NOT Grand Final Friday for 2026 or 2027,
+# because those depend on a fixture the AFL has not finalised. The README's
+# older claim that the feed "stops at King's Birthday" is out of date.
+#
+# So the one real gap is Grand Final Friday from 2026 on. It is a Victorian
+# public holiday and one of the biggest trading days of the year for a
+# Collingwood pub, and without it the model treats 25 Sep 2026 as an
+# ordinary Friday. Add each year once the AFL releases the finals schedule
+# (~August). Any year missing from this list produces a warning on every run.
+#
+# Anything already in the DataVic feed wins over an entry here — these are
+# gap-fillers, not overrides. Melbourne Cup is also computed independently
+# (first Tuesday of November, see external.melbourne_cup_day) purely as a
+# safety net in case the feed ever lags. Cup eve and the day after are
+# derived automatically, as for any holiday.
+
+afl_grand_final_friday:
+  # date        verified  source
+  2024-09-27:
+    verified: true
+    source: publicholidays.com.au
+  2025-09-26:
+    verified: true
+    source: publicholidays.com.au
+  2026-09-25:
+    verified: true
+    source: "Grand Final Sat 26 Sep 2026 at the MCG; holiday is the Friday prior"
+
+# Other one-off dates worth flagging as holiday-like trade. Same treatment
+# as a public holiday: the day itself, its eve, and the day after.
+# Leave empty rather than guessing.
+additional_holidays: {}
+  # "2026-12-31":
+  #   name: New Year's Eve

@@ -22,6 +22,11 @@ interface CanonicalSaleItemRepository extends BitemporalRepository<CanonicalSale
           + "and s.sourceRecordRef = :sourceRef and s.supersededAt is null")
   Optional<CanonicalSaleItem> lockCurrentSourceFact(String source, String sourceRef);
 
+  @Query(
+      "select s.sourceRecordRef from CanonicalSaleItem s where s.sourceSystem = :source "
+          + "and s.sourceRecordRef in :refs and s.supersededAt is null")
+  List<String> currentSourceRefs(String source, Collection<String> refs);
+
   @Query("select s from CanonicalSaleItem s where s.supersededAt is null")
   List<CanonicalSaleItem> findAllCurrent();
 

@@ -20,9 +20,10 @@ import type {
   DendrogramNode,
   EntityDescriptor,
   ForecastComparison,
+  ForecastDayRow,
+  ForecastDiagnostics,
   ForecastMetric,
   ForecastRun,
-  ForecastSeriesPoint,
   GenericRow,
   RawRecordDetail,
   RawRecordFilter,
@@ -59,6 +60,9 @@ import type {
   ResolutionRule,
   RuleAuditEntry,
   SalesTrendPoint,
+  SalesTrendResult,
+  TopSellersResult,
+  MetricCoverage,
   SupplierGraphNode,
   SaveDashboardInput,
   SaveOverrideInput,
@@ -89,6 +93,15 @@ import type {
   ReviewView,
   SentimentBucket,
   SourceSummary,
+  QueryDataset,
+  QueryField,
+  QueryPlan,
+  QueryRelationship,
+  QueryResult,
+  SavedQueryDetail,
+  SavedQueryRevision,
+  SavedQuerySummary,
+  SaveQueryInput,
 } from "./types";
 import { demoPlatformMap } from "./demo-platform-map";
 
@@ -676,16 +689,21 @@ const demoSaleItemMix: SaleItemMix[] = [
 const demoForecastMetrics: ForecastMetric[] = [
   { metric: "sales.gross", name: "Gross sales", unit: "AUD", sourceDomain: "resolved_daily_sales", requiredPermission: "reconciliation.sales" },
   { metric: "sales.net", name: "Net sales", unit: "AUD", sourceDomain: "resolved_daily_sales", requiredPermission: "reconciliation.sales" },
-  { metric: "reservations.covers", name: "Covers", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
+  { metric: "reservations.covers", name: "Attendance proxy", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
   { metric: "reservations.bookings", name: "Bookings", unit: "count", sourceDomain: "resolved_reservation_day", requiredPermission: "reservations.metrics" },
-  { metric: "labour.cost", name: "Labour cost", unit: "AUD", sourceDomain: "resolved_labour_day", requiredPermission: "labour.cost" },
+  { metric: "labour.cost", name: "Labour cost (wages only)", unit: "AUD", sourceDomain: "resolved_labour_day", requiredPermission: "labour.cost" },
   { metric: "labour.scheduled_hours", name: "Scheduled hours", unit: "hours", sourceDomain: "resolved_labour_day", requiredPermission: "labour.hours" },
-  { metric: "inventory.food_cost_percent", name: "Food cost %", unit: "%", sourceDomain: "derived", requiredPermission: "inventory.cost" },
+  { metric: "inventory.food_cost_percent", name: "Food cost % (unavailable)", unit: "%", sourceDomain: "derived", requiredPermission: "inventory.cost" },
 ];
 
-/** A deterministic median/p10/p90 series: p10 < median < p90 on every day. */
-function demoForecastSeries(historyTo: string, horizonDays: number): ForecastSeriesPoint[] {
-  const points: ForecastSeriesPoint[] = [];
+/**
+ * A deterministic enriched median/p10/p90 series: p10 < median < p90 on every day, split into a
+ * 45/55 food/bev pair, a slightly-lower seasonal-naive baseline, booked covers, and a couple of
+ * external-driver flags (one public holiday with its eve and day-after) so the day-by-day
+ * breakdown renders without a backend.
+ */
+function demoForecastSeries(historyTo: string, horizonDays: number): ForecastDayRow[] {
+  const points: ForecastDayRow[] = [];
   const start = new Date(`${historyTo}T00:00:00Z`);
   for (let i = 0; i < horizonDays; i++) {
     const day = new Date(start);
@@ -693,10 +711,101 @@ function demoForecastSeries(historyTo: string, horizonDays: number): ForecastSer
     const date = day.toISOString().slice(0, 10);
     const median = Math.round(9600 + 400 * Math.sin(i * 0.9) + i * 120);
     const spread = Math.round(median * 0.06);
-    points.push({ date, median, p10: median - spread, p90: median + spread });
+    const publicHoliday = i === 3;
+    points.push({
+      date,
+      median,
+      p10: median - spread,
+      p90: median + spread,
+      food: Math.round(median * 0.45),
+      bev: Math.round(median * 0.55),
+      baseline: Math.round(median * 0.97),
+      bookedCovers: 120 + (i % 5) * 15,
+      observedBookedCovers: i === 2 ? null : 60 + (i % 5) * 10,
+      publicHoliday,
+      publicHolidayEve: i === 2,
+      dayAfterPublicHoliday: i === 4,
+      schoolHoliday: false,
+      uniInSession: false,
+      publicHolidayName: publicHoliday ? "Melbourne Cup" : null,
+      weatherSource: "open-meteo",
+      serviceTempMaxC: 18 + (i % 7),
+      serviceRainMm: i % 3 === 0 ? 2.5 : 0,
+    });
   }
   return points;
 }
+
+/**
+ * The diagnostic payload for the succeeded demo run, mirroring the forecast runtime's snapshot
+ * shape: accuracy vs baseline (holdout + CV), feature importance, and a walk-forward backtest
+ * with weekday error summary and worst misses. Demo data only.
+ */
+const demoForecastDiagnostics: ForecastDiagnostics = {
+  modelVersion: "timesfm-3.0 + xgboost-twin",
+  diagnosticModel: "xgboost",
+  validationMethod: "recursive-holdout-v1",
+  trainedRows: 287,
+  reliable: true,
+  warnings: [],
+  features: [
+    "day_of_week",
+    "is_weekend",
+    "is_friday",
+    "is_saturday",
+    "day_of_month",
+    "booked_covers",
+    "net_revenue_lag_7",
+    "net_revenue_lag_14",
+    "net_revenue_roll_mean_7",
+    "net_revenue_roll_mean_28",
+    "public_holiday",
+    "service_temp_max_c",
+    "service_rain_mm",
+  ],
+  shareFeatures: ["day_of_week", "is_weekend", "is_friday", "booked_covers", "service_temp_max_c"],
+  holdoutNetXgboost: { mae: 421.5, rmse: 512.8, mape: 4.12, n: 72 },
+  holdoutNetBaseline: { mae: 640.0, rmse: 780.0, mape: 6.25, n: 72 },
+  holdoutFood: { mae: 205.0, rmse: 260.0, mape: 4.7, n: 72 },
+  holdoutBev: { mae: 280.0, rmse: 350.0, mape: 5.8, n: 72 },
+  cvNetXgboost: { mae: 445.0, rmse: 540.0, mape: 4.3, n: 215 },
+  cvNetBaseline: { mae: 655.0, rmse: 800.0, mape: 6.4, n: 215 },
+  beatsBaseline: true,
+  importance: [
+    { feature: "booked_covers", importance: 0.38 },
+    { feature: "net_revenue_lag_7", importance: 0.21 },
+    { feature: "net_revenue_dow_mean_4", importance: 0.14 },
+    { feature: "is_friday", importance: 0.09 },
+    { feature: "is_saturday", importance: 0.08 },
+    { feature: "public_holiday", importance: 0.05 },
+    { feature: "service_temp_max_c", importance: 0.03 },
+    { feature: "day_of_month", importance: 0.02 },
+  ],
+  backtest: {
+    rows: [
+      { date: "2026-09-26", day: "Saturday", actualNet: 11820, predictedNet: 11240, error: 580, absPctError: 4.9, actualFood: 5320, predictedFood: 5060, actualBev: 6500, predictedBev: 6180, baselineNet: 10980 },
+      { date: "2026-09-27", day: "Sunday", actualNet: 10450, predictedNet: 10780, error: -330, absPctError: 3.2, actualFood: 4700, predictedFood: 4850, actualBev: 5750, predictedBev: 5930, baselineNet: 10200 },
+      { date: "2026-09-28", day: "Monday", actualNet: 7850, predictedNet: 7620, error: 230, absPctError: 2.9, actualFood: 3530, predictedFood: 3430, actualBev: 4320, predictedBev: 4190, baselineNet: 7400 },
+      { date: "2026-09-29", day: "Tuesday", actualNet: 8100, predictedNet: 8420, error: -320, absPctError: 4.0, actualFood: 3645, predictedFood: 3790, actualBev: 4455, predictedBev: 4630, baselineNet: 7950 },
+      { date: "2026-09-30", day: "Wednesday", actualNet: 11200, predictedNet: 10850, error: 350, absPctError: 3.1, actualFood: 5040, predictedFood: 4880, actualBev: 6160, predictedBev: 5970, baselineNet: 10400 },
+    ],
+    byWeekday: [
+      { day: "Monday", n: 41, mae: 342.0, mape: 4.3, meanActual: 7950, meanPredicted: 7820 },
+      { day: "Tuesday", n: 41, mae: 318.0, mape: 4.0, meanActual: 8230, meanPredicted: 8120 },
+      { day: "Wednesday", n: 41, mae: 290.0, mape: 3.6, meanActual: 8100, meanPredicted: 8050 },
+      { day: "Thursday", n: 41, mae: 305.0, mape: 3.8, meanActual: 8420, meanPredicted: 8310 },
+      { day: "Friday", n: 41, mae: 380.0, mape: 4.2, meanActual: 9180, meanPredicted: 8950 },
+      { day: "Saturday", n: 41, mae: 470.0, mape: 4.1, meanActual: 11850, meanPredicted: 11400 },
+      { day: "Sunday", n: 41, mae: 440.0, mape: 4.2, meanActual: 10620, meanPredicted: 10300 },
+    ],
+    residualMean: 12.5,
+    residualStd: 480.2,
+    worstDays: [
+      { date: "2026-10-03", day: "Saturday", actualNet: 12540, predictedNet: 11480, error: 1060, absPctError: 8.5, actualFood: 5640, predictedFood: 5170, actualBev: 6900, predictedBev: 6310, baselineNet: 11100 },
+      { date: "2026-10-02", day: "Friday", actualNet: 9740, predictedNet: 9020, error: 720, absPctError: 7.4, actualFood: 4380, predictedFood: 4060, actualBev: 5360, predictedBev: 4960, baselineNet: 9300 },
+    ],
+  },
+};
 
 /**
  * The deterministic SUCCEEDED run the create-forecast flow returns. The demo has no background
@@ -721,6 +830,7 @@ function buildCreatedForecastRun(input: CreateForecastInput): ForecastRun {
     series: demoForecastSeries(historyTo, input.horizonDays),
     errorMessage: null,
     modelVersion: "timesfm-1.0",
+    diagnostics: demoForecastDiagnostics,
   };
 }
 
@@ -732,7 +842,7 @@ const demoForecastRuns: ForecastRun[] = [
   {
     id: "fc-2",
     status: "SUCCEEDED",
-    targetMetric: "sales.gross",
+    targetMetric: "sales.net",
     covariates: ["reservations.covers"],
     historyFrom: "2026-09-26",
     historyTo: "2026-10-05",
@@ -741,6 +851,7 @@ const demoForecastRuns: ForecastRun[] = [
     series: demoForecastSeries("2026-10-05", 7),
     errorMessage: null,
     modelVersion: "timesfm-1.0",
+    diagnostics: demoForecastDiagnostics,
   },
   {
     id: "fc-1",
@@ -754,6 +865,7 @@ const demoForecastRuns: ForecastRun[] = [
     series: null,
     errorMessage: null,
     modelVersion: null,
+    diagnostics: null,
   },
 ];
 
@@ -869,7 +981,27 @@ const demoInvoiceSummaries: Omit<InvoiceDetail, "lines">[] = [
   { supplierName: "Paramount Liquor", invoiceNumber: "INV-1091", invoiceDate: "2026-09-21", dueDate: null, totalAmount: 240.02, purchaseNumber: "PO-91", hasPdf: false, amountExTax: 218.2, gstAmount: 21.82, freightAmount: 0 },
   { supplierName: "Oranges & Lemons", invoiceNumber: "INV-1103", invoiceDate: "2026-09-15", dueDate: "2026-10-15", totalAmount: null, purchaseNumber: null, hasPdf: true, amountExTax: null, gstAmount: null, freightAmount: null },
   { supplierName: "Sealane Beverages", invoiceNumber: "INV-0987", invoiceDate: "2026-09-08", dueDate: "2026-10-08", totalAmount: 512.0, purchaseNumber: "PO-77", hasPdf: false, amountExTax: null, gstAmount: null, freightAmount: null },
-];
+  { supplierName: "Paramount Liquor", invoiceNumber: "INV-SHARED", invoiceDate: "2026-08-01", dueDate: null, totalAmount: 110, purchaseNumber: null, hasPdf: false, amountExTax: 100, gstAmount: 10, freightAmount: 0 },
+  { supplierName: "Sealane Beverages", invoiceNumber: "INV-SHARED", invoiceDate: "2026-08-01", dueDate: null, totalAmount: 220, purchaseNumber: null, hasPdf: false, amountExTax: 200, gstAmount: 20, freightAmount: 0 },
+].map((item, index) => ({ ...item,
+  invoiceId: `10000000-0000-0000-0000-${String(index + 1).padStart(12, "0")}`,
+  supplierId: `20000000-0000-0000-0000-${String(["Paramount Liquor", "Oranges & Lemons", "Sealane Beverages"].indexOf(item.supplierName) + 1).padStart(12, "0")}`,
+  canReadDocuments: true,
+  pdfStatus: item.hasPdf ? "AVAILABLE" as const : "NOT_LINKED" as const,
+  notices: ["Incomplete: known ex-tax invoice-line subtotal; demo source coverage is unverified"],
+}));
+
+function graphInvoiceFixtures(supplier: string, from: string, to: string, byId: boolean): InvoiceGraphNode[] {
+  return demoInvoiceSummaries.filter(i => (byId ? i.supplierId === supplier : i.supplierName === supplier)
+    && inDateRange(i.invoiceDate, from, to)).map(i => ({invoiceId:i.invoiceId,invoiceNumber:i.invoiceNumber,
+      invoiceDate:i.invoiceDate,totalAmount:i.totalAmount,amountExTax:i.amountExTax,
+      purchaseNumber:i.purchaseNumber,pdfFilename:i.hasPdf ? i.invoiceNumber+".pdf" : null}));
+}
+
+function demoLines(header: Omit<InvoiceDetail, "lines">): LineGraphNode[] {
+  if (header.invoiceNumber === "INV-SHARED") return [{ productNameKey: header.supplierName === "Sealane Beverages" ? "demo drink" : "demo food", stockCode: "DEMO", quantity: 1, unitCost: header.amountExTax, lineTotal: header.amountExTax ?? 0, uom: "EACH" }];
+  return demoInvoiceLines[header.invoiceNumber] ?? [];
+}
 
 const demoInvoiceLines: Record<string, LineGraphNode[]> = {
   "INV-1042": [
@@ -1030,6 +1162,63 @@ const demoReviews: ReviewView[] = [
   },
 ];
 
+// Fixed demo evidence includes zero, unavailable amounts and absent dates.
+const DEMO_SALES: SalesTrendPoint[] = [
+  { date: "2026-10-01", total: 0 },
+  { date: "2026-10-02", total: 33909.35 },
+  { date: "2026-10-03", total: 39658.53 },
+  { date: "2026-10-04", total: null },
+  { date: "2026-10-05", total: 9880.28 },
+];
+function demoDashboardRange(from: string | undefined, to: string | undefined, days: number) {
+  const end = to ?? "2026-10-05";
+  const start = new Date(`${end}T00:00:00Z`);
+  start.setUTCDate(start.getUTCDate() - days + 1);
+  const begin = from ?? start.toISOString().slice(0, 10);
+  if (begin > end) throw new ApiError("VALIDATION_FAILED", "to is before from");
+  return { from: begin, to: end };
+}
+function demoCoverage(from: string, to: string, observed: string[], unresolved: string[]): MetricCoverage {
+  const dates: string[] = [];
+  for (let d = from; d <= to;) {
+    dates.push(d);
+    const next = new Date(`${d}T00:00:00Z`);
+    next.setUTCDate(next.getUTCDate() + 1);
+    d = next.toISOString().slice(0, 10);
+  }
+  return { from, to, observedDates: dates.filter((d) => observed.includes(d) && !unresolved.includes(d)),
+    unresolvedDates: dates.filter((d) => unresolved.includes(d)),
+    absentDates: dates.filter((d) => !observed.includes(d) && !unresolved.includes(d)), expectedTradingPopulationKnown: false };
+}
+function demoCoverageNotices(c: MetricCoverage): string[] {
+  return [`${c.unresolvedDates.length || c.absentDates.length ? "Incomplete subtotal" : "Calendar coverage"}: ${c.observedDates.length} observed day(s), ${c.unresolvedDates.length} unresolved day(s), ${c.absentDates.length} day(s) without a resolved record; expected trading population and within-day completeness are unverified`];
+}
+function demoSalesTrend(requestedFrom?: string, requestedTo?: string): SalesTrendResult {
+  const { from, to } = demoDashboardRange(requestedFrom, requestedTo, 14);
+  const coverage = demoCoverage(from, to, DEMO_SALES.filter((p) => p.total != null).map((p) => p.date), ["2026-10-04"]);
+  const dates = [...coverage.observedDates, ...coverage.unresolvedDates, ...coverage.absentDates].sort();
+  return { points: dates.map((date) => ({ date, total: DEMO_SALES.find((p) => p.date === date)?.total ?? null })),
+    notices: demoCoverageNotices(coverage),
+    provenance: { metric: "sales.net", definitionVersion: "1", range: { from, to, calendar: "CALENDAR" },
+      grain: "DAY", sourceDomain: "sales", dataFreshness: null,
+      missingPeriods: [...coverage.unresolvedDates, ...coverage.absentDates].sort(), calculationVersion: "1", trust: null, coverage } };
+}
+function demoTopSellers(requestedFrom?: string, requestedTo?: string, limit = 5): TopSellersResult {
+  const { from, to } = demoDashboardRange(requestedFrom, requestedTo, 30);
+  if (limit <= 0) throw new ApiError("VALIDATION_FAILED", "limit must be positive");
+  // Product fixture subtotals belong to this single date; do not invent a daily allocation.
+  const coverage = demoCoverage(from, to, [], ["2026-10-05"]);
+  const items: TopSeller[] = from <= "2026-10-05" && to >= "2026-10-05" ? [
+    { name: "pint carlton draught", quantitySold: 493, amount: 7904.25, hasConflict: false },
+    { name: "chicken schnitzel", quantitySold: 211, amount: 5591.5, hasConflict: false },
+    { name: "parma", quantitySold: 132, amount: 3696, hasConflict: false },
+    { name: "house red", quantitySold: 98, amount: 1078, hasConflict: false },
+    { name: "garlic aioli", quantitySold: 150, amount: 380.88, hasConflict: true },
+  ] : [];
+  return { items: items.slice(0, limit), coverage, notices: [...demoCoverageNotices(coverage),
+    "Ranked by known sales; full-period ranking unverified.", "An absent product row does not imply zero sales; product identity remains name-based and revenue tax basis is source-qualified."] };
+}
+
 export const demoApi: Api = {
   async getDashboardBootstrap(): Promise<DashboardBootstrap> {
     await delay(400);
@@ -1040,22 +1229,10 @@ export const demoApi: Api = {
         timeToDetectFailure: "42m avg",
         overrideUsage: { count: 3, period: "this week" },
       },
-      latestSales: { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" },
-      salesTrend: [
-        { date: "2026-10-01", total: 9582.11 },
-        { date: "2026-10-02", total: 33909.35 },
-        { date: "2026-10-03", total: 43618.92 },
-        { date: "2026-10-04", total: 29605.13 },
-        { date: "2026-10-05", total: 10865.72 },
-      ],
+      latestSales: { date: "2026-10-05", total: 9880.28, authoritativeSource: "agreed" },
+      salesTrend: demoSalesTrend(),
       activity: activityFixture(),
-      topSellers: [
-        { name: "pint carlton draught", quantitySold: 493, amount: 7904.25, hasConflict: false },
-        { name: "chicken schnitzel", quantitySold: 211, amount: 5591.5, hasConflict: false },
-        { name: "garlic aioli", quantitySold: 150, amount: 380.88, hasConflict: true },
-        { name: "parma", quantitySold: 132, amount: 3696, hasConflict: false },
-        { name: "house red", quantitySold: 98, amount: 1078, hasConflict: false },
-      ],
+      topSellers: demoTopSellers(),
       coversToday: { covers: 132, bookings: 98, noShows: 4 },
       foodCost: { foodCostPercent: 0.3125, purchases: 15842.6, wastage: 214.5 },
     };
@@ -1083,7 +1260,7 @@ export const demoApi: Api = {
   ): Promise<DataPage<ReconciliationException>> {
     await delay(400);
     const items = deriveExceptions(records);
-    return { items, total: items.length, page, size };
+    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async getReconciliationRecord(id: string): Promise<ReconciliationRecord> {
@@ -1384,12 +1561,12 @@ export const demoApi: Api = {
     const items = all.filter(
       (r) => (!filter.from || r.date >= filter.from) && (!filter.to || r.date <= filter.to),
     );
-    return { items, total: items.length, page, size };
+    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async getLatestSales(): Promise<LatestSales> {
     await delay(300);
-    return { date: "2026-10-05", total: 10865.72, authoritativeSource: "agreed" };
+    return { date: "2026-10-05", total: 9880.28, authoritativeSource: "agreed" };
   },
 
   async getReservationSummary(date: string): Promise<import("./types").ReservationSummary | undefined> {
@@ -1429,9 +1606,28 @@ export const demoApi: Api = {
     };
   },
 
+  async getInventoryObservations(from, to, kind, page, size) {
+    const examples: import("./types").InventoryObservation[] = [
+      { kind: "COUNT", sourceSystem: "CTB", sourceRecordRef: "stocktake:demo:1",
+        logicalId: "demo-count", date: to, productName: "Example flour", stockCode: "DEMO-1",
+        quantity: 0, unit: "KG", unitSize: null, unitCost: null, sourceValue: null,
+        area: "Kitchen", stocktakePartial: true, stocktakeLocked: false, parentSourceId: 1,
+        recordedAt: `${to}T00:00:00Z` },
+      { kind: "WASTE", sourceSystem: "CTB", sourceRecordRef: "wastage:demo:1",
+        logicalId: "demo-waste", date: to, productName: "Example stock", stockCode: null,
+        quantity: 2, unit: "EACH", unitSize: null, unitCost: 2.25, sourceValue: 4.5,
+        area: null, stocktakePartial: null, stocktakeLocked: null, parentSourceId: 2,
+        recordedAt: `${to}T00:00:00Z` },
+    ];
+    const matching = examples.filter(row => row.date >= from && row.date <= to && (kind === "ALL" || row.kind === kind));
+    return { observations: matching.slice(page * size, (page + 1) * size), page, size,
+      hasMore: matching.length > (page + 1) * size,
+      notices: ["Incomplete example observations; source population unverified. Counts are dated observations, not current balances. Source values retain an unverified currency, tax and valuation basis."] };
+  },
+
   async getInventorySummary(from: string, to: string): Promise<InventorySummary> {
     await delay(300);
-    return { from, to, purchases: 6950.5, wastage: 412.8, foodCostPercent: 0.2914 };
+    return { from, to, purchases: 6950.5, wastage: 412.8, foodCostPercent: null, notices: ["Food cost % unavailable pending valuation evidence"] };
   },
 
   async getInvoiceGraphSuppliers(from: string, to: string): Promise<SupplierGraphNode[]> {
@@ -1439,9 +1635,9 @@ export const demoApi: Api = {
     void from;
     void to;
     return [
-      { name: "Paramount Liquor", invoiceCount: 214, totalSpend: 9240.0 },
-      { name: "Oranges & Lemons", invoiceCount: 98, totalSpend: 4820.5 },
-      { name: "Sealane Beverages", invoiceCount: 51, totalSpend: 1240.0 },
+      { supplierId: "20000000-0000-0000-0000-000000000001", notices: ["Incomplete: known purchases only"], name: "Paramount Liquor", invoiceCount: 214, totalSpend: 9240.0 },
+      { supplierId: "20000000-0000-0000-0000-000000000002", notices: ["Incomplete: known purchases only"], name: "Oranges & Lemons", invoiceCount: 98, totalSpend: 4820.5 },
+      { supplierId: "20000000-0000-0000-0000-000000000003", notices: ["Incomplete: known purchases only"], name: "Sealane Beverages", invoiceCount: 51, totalSpend: 1240.0 },
       { name: "Unknown", invoiceCount: 0, totalSpend: 12.4 },
     ];
   },
@@ -1452,25 +1648,17 @@ export const demoApi: Api = {
     to: string,
   ): Promise<InvoiceGraphNode[]> {
     await delay(300);
-    void supplier;
-    void from;
-    void to;
-    return [
-      {
-        invoiceNumber: "INV-1042",
-        invoiceDate: "2026-09-28",
-        totalAmount: 1420.15,
-        purchaseNumber: "PO-88",
-        pdfFilename: "inv-1042.pdf",
-      },
-      {
-        invoiceNumber: "INV-1091",
-        invoiceDate: "2026-09-21",
-        totalAmount: 980.4,
-        purchaseNumber: "PO-91",
-        pdfFilename: "inv-1091.pdf",
-      },
-    ];
+    return graphInvoiceFixtures(supplier, from, to, false);
+  },
+  async getInvoiceGraphInvoicesById(supplierId: string, from: string, to: string) {
+    await delay(300);
+    return graphInvoiceFixtures(supplierId, from, to, true);
+  },
+  async getInvoiceGraphLinesById(invoiceId: string) {
+    await delay(300);
+    const header = demoInvoiceSummaries.find(i => i.invoiceId === invoiceId);
+    if (!header) throw new ApiError("NOT_FOUND", "Unknown invoice");
+    return demoLines(header);
   },
 
   async getPlatformMap() {
@@ -1488,11 +1676,10 @@ export const demoApi: Api = {
 
   async getInvoiceGraphLines(invoiceNumber: string): Promise<LineGraphNode[]> {
     await delay(300);
-    void invoiceNumber;
-    return [
-      { productNameKey: "chicken breast", stockCode: "CB-1", quantity: 4, unitCost: 12.5, lineTotal: 50.0, uom: "CTN" },
-      { productNameKey: "beef mince", stockCode: "BM-2", quantity: 10, unitCost: 9.0, lineTotal: 90.0, uom: "KG" },
-    ];
+    const matches = demoInvoiceSummaries.filter(i => i.invoiceNumber === invoiceNumber);
+    if (matches.length > 1) throw new ApiError("VALIDATION_FAILED", "Ambiguous invoice number");
+    if (!matches.length) throw new ApiError("NOT_FOUND", "Unknown invoice");
+    return demoLines(matches[0]);
   },
 
   async listInvoices(
@@ -1506,12 +1693,28 @@ export const demoApi: Api = {
         (!filter.supplier || i.supplierName === filter.supplier) &&
         inDateRange(i.invoiceDate, filter.from, filter.to),
     );
-    return { items, total: items.length, page, size };
+    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
+  },
+
+  async getInvoiceById(id: string): Promise<InvoiceDetail> {
+    await delay(300);
+    const header = demoInvoiceSummaries.find(i => i.invoiceId === id);
+    if (!header) throw new ApiError("NOT_FOUND", "Unknown invoice");
+    return { ...header, numberAmbiguous: demoInvoiceSummaries.filter(i => i.invoiceNumber === header.invoiceNumber).length > 1, lines: demoLines(header) };
+  },
+
+  async getInvoiceDocuments(id: string) {
+    await delay(300);
+    const header = demoInvoiceSummaries.find(i => i.invoiceId === id);
+    if (!header) throw new ApiError("NOT_FOUND", "Unknown invoice");
+    return header.hasPdf ? [{ documentId: "30000000-0000-0000-0000-000000000001", filename: "demo-invoice.pdf", linkedAt: "2026-10-01T00:00:00Z" }] : [];
   },
 
   async getInvoice(invoiceNumber: string): Promise<InvoiceDetail> {
     await delay(300);
-    const header = demoInvoiceSummaries.find((i) => i.invoiceNumber === invoiceNumber);
+    const matches = demoInvoiceSummaries.filter((i) => i.invoiceNumber === invoiceNumber);
+    if (matches.length > 1) throw new ApiError("VALIDATION_FAILED", "Ambiguous invoice number: use invoice identity");
+    const header = matches[0];
     if (!header) throw new ApiError("NOT_FOUND", `No invoice ${invoiceNumber}.`);
     return { ...header, lines: demoInvoiceLines[invoiceNumber] ?? [] };
   },
@@ -1542,28 +1745,14 @@ export const demoApi: Api = {
     return demoProvenance(metricId, date);
   },
 
-  async getTopSellers(from?: string, to?: string, limit?: number): Promise<TopSeller[]> {
+  async getTopSellers(from?: string, to?: string, limit?: number): Promise<TopSellersResult> {
     await delay(300);
-    const all = [
-      { name: "pint carlton draught", quantitySold: 493, amount: 7904.25, hasConflict: false },
-      { name: "chicken schnitzel", quantitySold: 211, amount: 5591.5, hasConflict: false },
-      { name: "garlic aioli", quantitySold: 150, amount: 380.88, hasConflict: true },
-      { name: "parma", quantitySold: 132, amount: 3696, hasConflict: false },
-      { name: "house red", quantitySold: 98, amount: 1078, hasConflict: false },
-    ];
-    return limit != null ? all.slice(0, limit) : all;
+    return demoTopSellers(from, to, limit);
   },
 
-  async getSalesTrend(from?: string, to?: string): Promise<SalesTrendPoint[]> {
+  async getSalesTrend(from?: string, to?: string): Promise<SalesTrendResult> {
     await delay(300);
-    const all = [
-      { date: "2026-10-01", total: 9582.11 },
-      { date: "2026-10-02", total: 33909.35 },
-      { date: "2026-10-03", total: 43618.92 },
-      { date: "2026-10-04", total: 29605.13 },
-      { date: "2026-10-05", total: 10865.72 },
-    ];
-    return all.filter((p) => (!from || p.date >= from) && (!to || p.date <= to));
+    return demoSalesTrend(from, to);
   },
 
   async queryMetrics(query: MetricQuery): Promise<import("./types").MetricResult> {
@@ -1579,14 +1768,17 @@ export const demoApi: Api = {
       calculationVersion: "1",
       trust: null,
     };
+    if (query.metric === "inventory.food_cost_percent") {
+      return { metric: query.metric,
+        series: [{ dimensionValue: null, points: [{ bucketStart: query.range.from, value: null, status: "UNRESOLVED" }] }],
+        notices: ["Food cost % unavailable pending consumed-cost valuation evidence"], provenance };
+    }
     if (query.metric === "product.top_sellers") {
-      return {
-        metric: query.metric,
-        items: [
-          { label: "pint carlton draught", primary: 7904.25, secondary: 493, hasConflict: false },
-        ],
-        notices: [],
-        provenance,
+      const result = demoTopSellers(query.range.from, query.range.to);
+      return { metric: query.metric,
+        items: result.items.map((t) => ({ label: t.name, primary: t.amount!, secondary: t.quantitySold!, hasConflict: t.hasConflict })),
+        notices: result.notices,
+        provenance: { ...provenance, sourceDomain: "product_sales", dataFreshness: null, missingPeriods: [...result.coverage.unresolvedDates, ...result.coverage.absentDates].sort(), coverage: result.coverage },
       };
     }
     return {
@@ -1780,7 +1972,7 @@ export const demoApi: Api = {
     const items = _filter.source
       ? demoRawRecords.filter((r) => r.sourceSystem.toLowerCase() === _filter.source!.toLowerCase())
       : demoRawRecords;
-    return { items, total: items.length, page, size };
+    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async getRawRecord(id: string): Promise<RawRecordDetail> {
@@ -1803,7 +1995,7 @@ export const demoApi: Api = {
   async listCanonicalRows(entity: string, page: number, size: number): Promise<DataPage<GenericRow>> {
     await delay(300);
     const items = demoCanonicalRows[entity] ?? [];
-    return { items, total: items.length, page, size };
+    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async listResolvedDomains(): Promise<EntityDescriptor[]> {
@@ -1814,7 +2006,7 @@ export const demoApi: Api = {
   async listResolvedRows(domain: string, page: number, size: number): Promise<DataPage<GenericRow>> {
     await delay(300);
     const items = demoResolvedRows[domain] ?? [];
-    return { items, total: items.length, page, size };
+    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async listPayments(
@@ -1829,7 +2021,7 @@ export const demoApi: Api = {
         (!filter.paymentType || p.paymentTypeName === filter.paymentType) &&
         (!filter.saleNumber || p.saleNumber === filter.saleNumber),
     );
-    return { items, total: items.length, page, size };
+    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async listDeletedSales(
@@ -1843,7 +2035,7 @@ export const demoApi: Api = {
         inDateRange(d.tradingDate, filter.from, filter.to) &&
         (!filter.saleNumber || d.saleNumber === filter.saleNumber),
     );
-    return { items, total: items.length, page, size };
+    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async listSaleItems(
@@ -1858,7 +2050,7 @@ export const demoApi: Api = {
         (!filter.category || s.categoryName === filter.category) &&
         (!filter.saleNumber || s.saleNumber === filter.saleNumber),
     );
-    return { items, total: items.length, page, size };
+    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async getPaymentMix(from: string, to: string): Promise<PaymentMix[]> {
@@ -1878,11 +2070,14 @@ export const demoApi: Api = {
 
   async listForecastMetrics(): Promise<ForecastMetric[]> {
     await delay(300);
-    return demoForecastMetrics;
+    return demoForecastMetrics.filter((m) => m.metric === "sales.net");
   },
 
   async createForecastRun(input: CreateForecastInput): Promise<ForecastRun> {
     await delay(400);
+    if (input.target !== "sales.net" || input.covariates.length > 0) {
+      throw new ApiError("VALIDATION_FAILED", "The net-revenue model uses fixed supporting inputs.");
+    }
     demoCreatedForecastRun = buildCreatedForecastRun(input);
     return demoCreatedForecastRun;
   },
@@ -2175,7 +2370,205 @@ export const demoApi: Api = {
     demoCategorySuggestions.length = 0;
     return created;
   },
+
+  async listQueryDatasets(): Promise<QueryDataset[]> {
+    await delay(300);
+    return demoQueryDatasets;
+  },
+
+  async listQueryFields(dataset: string): Promise<QueryField[]> {
+    await delay(200);
+    const found = demoQueryDatasets.find((d) => d.id === dataset);
+    return found ? found.fields : [];
+  },
+
+  async listQueryRelationships(): Promise<QueryRelationship[]> {
+    await delay(200);
+    return demoQueryRelationships;
+  },
+
+  async runQuery(plan: QueryPlan): Promise<QueryResult> {
+    await delay(400);
+    return buildDemoQueryResult(plan);
+  },
+
+  async listSavedQueries(): Promise<SavedQuerySummary[]> {
+    await delay(300);
+    return demoSavedQueries.map(({ id, title, revision, createdAt, updatedAt }) => ({
+      id,
+      title,
+      revision,
+      createdAt,
+      updatedAt,
+    }));
+  },
+
+  async getSavedQuery(id: string): Promise<SavedQueryDetail> {
+    await delay(300);
+    const found = demoSavedQueries.find((q) => q.id === id);
+    if (!found) throw new ApiError("NOT_FOUND", "Saved query not found");
+    return found;
+  },
+
+  async createSavedQuery(input: SaveQueryInput): Promise<SavedQueryDetail> {
+    await delay(400);
+    const created: SavedQueryDetail = {
+      id: `sq-${demoSavedQueries.length + 1}`,
+      title: input.title,
+      plan: input.plan,
+      revision: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    demoSavedQueries.unshift(created);
+    return created;
+  },
+
+  async updateSavedQuery(id: string, input: SaveQueryInput): Promise<SavedQueryDetail> {
+    await delay(400);
+    const index = demoSavedQueries.findIndex((q) => q.id === id);
+    if (index < 0) throw new ApiError("NOT_FOUND", "Saved query not found");
+    demoSavedQueries[index] = {
+      ...demoSavedQueries[index],
+      title: input.title,
+      plan: input.plan,
+      revision: demoSavedQueries[index].revision + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    return demoSavedQueries[index];
+  },
+
+  async deleteSavedQuery(id: string): Promise<void> {
+    await delay(300);
+    const index = demoSavedQueries.findIndex((q) => q.id === id);
+    if (index >= 0) demoSavedQueries.splice(index, 1);
+  },
+
+  async listSavedQueryRevisions(id: string): Promise<SavedQueryRevision[]> {
+    await delay(300);
+    const found = demoSavedQueries.find((q) => q.id === id);
+    if (!found) return [];
+    return Array.from({ length: found.revision }, (_, i) => ({
+      revision: found.revision - i,
+      createdBy: "owner@goldys.example",
+      createdAt: found.updatedAt,
+    }));
+  },
+
+  async restoreSavedQuery(id: string, revision: number): Promise<SavedQueryDetail> {
+    await delay(400);
+    const found = demoSavedQueries.find((q) => q.id === id);
+    if (!found) throw new ApiError("NOT_FOUND", "Saved query not found");
+    return { ...found, revision: revision };
+  },
+
+  async runSavedQuery(id: string): Promise<QueryResult> {
+    await delay(400);
+    const found = demoSavedQueries.find((q) => q.id === id);
+    if (!found) throw new ApiError("NOT_FOUND", "Saved query not found");
+    return buildDemoQueryResult(found.plan);
+  },
 };
+
+const demoQueryDatasets: QueryDataset[] = [
+  {
+    id: "resolved_daily_sales",
+    table: "resolved_daily_sales",
+    readMode: "RESOLVED",
+    grain: "one trading day",
+    permission: "reconciliation.sales",
+    currentFact: false,
+    fields: [
+      field("trading_date", "trading_date", "DATE", null, "DIMENSION"),
+      field("total_sales", "total_sales", "DECIMAL", "AUD", "MEASURE"),
+      field("net_sales", "net_sales", "DECIMAL", "AUD", "MEASURE"),
+      field("gst", "gst", "DECIMAL", "AUD", "MEASURE"),
+      field("authoritative_source", "authoritative_source", "TEXT", null, "DIMENSION"),
+      field("has_conflict", "has_conflict", "BOOLEAN", null, "DIMENSION"),
+    ],
+  },
+  {
+    id: "invoice",
+    table: "canonical_invoice",
+    readMode: "CANONICAL_DIRECT",
+    grain: "one invoice header",
+    permission: "inventory.cost",
+    currentFact: true,
+    fields: [
+      field("invoice_number", "invoice_number", "TEXT", null, "DIMENSION"),
+      field("supplier_name", "supplier_name", "TEXT", null, "DIMENSION"),
+      field("invoice_date", "invoice_date", "DATE", null, "DIMENSION"),
+      field("total_amount", "total_amount", "DECIMAL", "AUD", "MEASURE"),
+      field("amount_ex_tax", "amount_ex_tax", "DECIMAL", "AUD", "MEASURE"),
+    ],
+  },
+  {
+    id: "invoice_line",
+    table: "canonical_invoice_line",
+    readMode: "CANONICAL_DIRECT",
+    grain: "one invoice line item",
+    permission: "inventory.cost",
+    currentFact: true,
+    fields: [
+      field("product_name_key", "product_name_key", "TEXT", null, "DIMENSION"),
+      field("stock_code", "stock_code", "TEXT", null, "DIMENSION"),
+      field("quantity", "quantity", "DECIMAL", "each", "MEASURE"),
+      field("unit_cost", "unit_cost", "DECIMAL", "AUD", "MEASURE"),
+      field("line_total", "line_total", "DECIMAL", "AUD", "MEASURE"),
+    ],
+  },
+];
+
+function field(
+  name: string,
+  column: string,
+  type: QueryField["type"],
+  unit: string | null,
+  kind: QueryField["kind"],
+): QueryField {
+  return { name, column, type, unit, nullable: true, kind, permission: null };
+}
+
+const demoSavedQueries: SavedQueryDetail[] = [];
+
+const demoQueryRelationships: QueryRelationship[] = [
+  {
+    id: "invoice_lines",
+    from: "invoice",
+    to: "invoice_line",
+    joinKeys: [{ fromField: "logical_entity_id", toField: "invoice_logical_id" }],
+    cardinality: "ONE_TO_MANY",
+    fanoutRisk: true,
+    permission: "inventory.cost",
+  },
+];
+
+/** Shared synthetic result builder for both `runQuery` and `runSavedQuery`. */
+async function buildDemoQueryResult(plan: QueryPlan): Promise<QueryResult> {
+  const dataset = demoQueryDatasets.find((d) => d.id === plan.dataset);
+  const columns = plan.select.map((s) => {
+    const field = dataset?.fields.find((f) => f.name === s.field);
+    return { name: s.field, type: field?.type ?? "TEXT", unit: field?.unit ?? null };
+  });
+  const rows: QueryResult["rows"] = [
+    columns.map((c) => (c.type === "DECIMAL" ? 1234.5 : c.type === "TEXT" ? "sample" : null)),
+    columns.map((c) => (c.type === "DECIMAL" ? 890.25 : c.type === "TEXT" ? "sample" : null)),
+  ];
+  return {
+    columns,
+    rows,
+    notices: ["Demo query uses synthetic example rows", ...(plan.select.some((item) => item.aggregate)
+      ? ["Incomplete: aggregates cover example observations only; expected coverage is unverified"] : [])],
+    pagination: { limit: plan.limit, offset: plan.offset, truncated: false },
+    semantics: {
+      currentFact: dataset?.currentFact ?? false,
+      grain: dataset?.grain ?? "n/a",
+      readMode: dataset?.readMode ?? "RESOLVED",
+      datasets: [plan.dataset, ...(plan.joins ?? [])],
+      asOf: new Date().toISOString(),
+    },
+  };
+}
 
 let savedDashboards: DashboardDocument[] = [];
 

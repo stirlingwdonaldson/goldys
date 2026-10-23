@@ -52,7 +52,7 @@ class ResolvedReservationQueryIntegrationTest {
     assertThat(summary.covers()).isEqualTo(32);
     assertThat(summary.noShows()).isEqualTo(1);
     assertThat(summary.avgPartySize()).isEqualByComparingTo(new BigDecimal("4.0000"));
-    assertThat(summary.noShowRate()).isEqualByComparingTo(new BigDecimal("0.1000"));
+    assertThat(summary.noShowRate()).isEqualByComparingTo(new BigDecimal("0.1429"));
     assertThat(summary.bookingToCoverConversion()).isEqualByComparingTo(new BigDecimal("0.8000"));
   }
 
@@ -112,6 +112,7 @@ class ResolvedReservationQueryIntegrationTest {
         cancelled,
         noShows,
         walkIns,
+        0,
         "single",
         "OPENTABLE",
         false,

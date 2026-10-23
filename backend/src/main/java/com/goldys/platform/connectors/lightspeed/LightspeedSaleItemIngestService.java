@@ -13,7 +13,6 @@ import com.goldys.platform.ingestion.IngestionStageOutcome;
 import com.goldys.platform.ingestion.RawLedgerQuery;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
@@ -102,34 +101,71 @@ public class LightspeedSaleItemIngestService {
     }
   }
 
+  /** Parse and validate a retained report without changing ledger/canonical state. */
+  public List<LightspeedSaleItem> preview(RawLedgerQuery.RawPayload payload) {
+    List<LightspeedSaleItem> items = parseItems(payload.bytes());
+    for (LightspeedSaleItem item : items) {
+      if (item.quantity() == null || item.amount() == null)
+        throw new ConnectorFetchException(
+            "CONNECTOR_SCHEMA_MISMATCH", "Sale-item quantity or amount is missing");
+    }
+    return items;
+  }
+
+  /** Targeted recovery never replaces an existing source fact and propagates every failure. */
+  public int recoverMissing(RawLedgerQuery.RawPayload payload, List<LightspeedSaleItem> items) {
+    int inserted = 0;
+    try {
+      for (LightspeedSaleItem item : items) {
+        if (canonical.recordMissing(input(item, payload.id()))) inserted++;
+      }
+    } catch (RuntimeException e) {
+      ingestion.recordStage(
+          payload.id(), IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
+      throw e;
+    }
+    ingestion.recordStage(
+        payload.id(),
+        IngestionStageKind.CANONICALIZED,
+        items.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
+    return inserted;
+  }
+
   private List<LightspeedSaleItem> parseItems(byte[] body) {
     return parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
   }
 
   private void recordItems(List<LightspeedSaleItem> items, UUID rawId) {
     for (LightspeedSaleItem it : items) {
-      canonical.record(
-          new SaleItemInput(
-              "LIGHTSPEED",
-              it.receiptLineId(),
-              it.saleDate(),
-              it.saleNumber(),
-              it.itemName(),
-              it.productNumber(),
-              it.sku(),
-              it.categoryName(),
-              nz(it.quantity()),
-              nz(it.amount()),
-              it.soldPriceIncTax(),
-              it.totalTax(),
-              it.costIncTax(),
-              it.orderType(),
-              it.saleType(),
-              it.staffName(),
-              it.registerName(),
-              it.tableNumber(),
-              rawId));
+      if (it.quantity() == null || it.amount() == null) {
+        throw new ConnectorFetchException(
+            "CONNECTOR_SCHEMA_MISMATCH", "Sale-item quantity or amount is missing");
+      }
+      canonical.record(input(it, rawId));
     }
+  }
+
+  private static SaleItemInput input(LightspeedSaleItem it, UUID rawId) {
+    return new SaleItemInput(
+        "LIGHTSPEED",
+        it.receiptLineId(),
+        it.saleDate(),
+        it.saleNumber(),
+        it.itemName(),
+        it.productNumber(),
+        it.sku(),
+        it.categoryName(),
+        it.quantity(),
+        it.amount(),
+        it.soldPriceIncTax(),
+        it.totalTax(),
+        it.costIncTax(),
+        it.orderType(),
+        it.saleType(),
+        it.staffName(),
+        it.registerName(),
+        it.tableNumber(),
+        rawId);
   }
 
   private static String extractCsv(byte[] body) {
@@ -144,9 +180,5 @@ public class LightspeedSaleItemIngestService {
     } catch (IOException e) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON webhook payload", e);
     }
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }

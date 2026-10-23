@@ -31,11 +31,11 @@ describe("StaffPageView", () => {
     expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
   });
 
-  it("locks the labor-cost surface for a non-Owner while roster stays visible", () => {
+  it("offers aggregate wages to managers without individual pay", () => {
     render(<StaffPageView seniority="MANAGER" />);
     expect(screen.getByText("Rostering & hours")).toBeInTheDocument();
-    expect(screen.getByText(/owner only/i)).toBeInTheDocument();
-    expect(screen.queryByText("Labour cost as a % of sales.")).not.toBeInTheDocument();
+    expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/super and other employment costs excluded/i)).toBeInTheDocument();
   });
 
   it("fails closed (locks labor cost) when seniority is absent", () => {
@@ -47,15 +47,15 @@ describe("StaffPageView", () => {
   it("shows resolved hours and, for an Owner, labour cost", () => {
     render(<StaffPageView seniority="OWNER" labour={loaded(summary)} />);
     expect(screen.getByText("1,231.5 h")).toBeInTheDocument();
-    expect(screen.getByText("14.1%")).toBeInTheDocument();
+    expect(screen.getByText("14%")).toBeInTheDocument();
     expect(screen.queryByText("Rostering & hours")).not.toBeInTheDocument();
   });
 
-  it("never shows cost figures to a non-Owner even if the backend returned them", () => {
+  it("shows permitted aggregate wages to managers", () => {
     render(<StaffPageView seniority="MANAGER" labour={loaded(summary)} />);
     expect(screen.getByText("1,231.5 h")).toBeInTheDocument();
-    expect(screen.queryByText("14.1%")).not.toBeInTheDocument();
-    expect(screen.getByText(/owner only/i)).toBeInTheDocument();
+    expect(screen.getByText("14%")).toBeInTheDocument();
+    expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
   });
 
   it("treats an all-null summary as awaiting data, not zero", () => {

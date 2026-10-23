@@ -12,8 +12,8 @@ import java.util.UUID;
 
 /**
  * One observed outcome of one pipeline stage for one dataset within an ingestion run, recorded
- * append-only. A push that stored raw bytes but then failed to parse is still {@code SUCCESS} on
- * the run (the bytes are safe); this fact keeps the transformation outcome visible instead.
+ * append-only. Failed transformation stages also mark the owning run PARTIAL/FAILED so connector
+ * health cannot mistake stored evidence for successfully processed business facts.
  */
 @Entity
 @Table(name = "ingestion_stage")

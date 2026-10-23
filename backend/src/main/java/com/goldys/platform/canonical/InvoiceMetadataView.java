@@ -14,4 +14,32 @@ public record InvoiceMetadataView(
     String pdfFilename,
     BigDecimal amountExTax,
     BigDecimal gstAmount,
-    BigDecimal freightAmount) {}
+    BigDecimal freightAmount,
+    java.util.UUID invoiceId,
+    java.util.UUID supplierId) {
+  public InvoiceMetadataView(
+      String supplierName,
+      String invoiceNumber,
+      LocalDate invoiceDate,
+      LocalDate dueDate,
+      BigDecimal totalAmount,
+      String purchaseNumber,
+      String pdfFilename,
+      BigDecimal amountExTax,
+      BigDecimal gstAmount,
+      BigDecimal freightAmount) {
+    this(
+        supplierName,
+        invoiceNumber,
+        invoiceDate,
+        dueDate,
+        totalAmount,
+        purchaseNumber,
+        pdfFilename,
+        amountExTax,
+        gstAmount,
+        freightAmount,
+        null,
+        null);
+  }
+}

@@ -25,9 +25,9 @@ interface BusinessKpiGridProps {
   topSellers?: TopSeller[];
 }
 
-// Definition from docs/metrics/catalog.md (`sales.gross`).
-const GROSS_SALES_HELP =
-  "Resolved gross sales including GST: the reconciled daily total, after any conflicting sources have been decided.";
+// Definition from docs/metrics/catalog.md (`sales.net`).
+const NET_SALES_HELP =
+  "Resolved net sales excluding GST: the reconciled daily total, after any conflicting sources have been decided.";
 
 /**
  * Compares the latest day against the same weekday a week earlier, when both are
@@ -43,7 +43,7 @@ function weekOnWeek(latest: { date: string | null; total: number | null }, trend
   const pct = ((latest.total - prev) / prev) * 100;
   const direction = Math.abs(pct) < 0.05 ? "flat" : pct > 0 ? "up" : "down";
   return {
-    label: `${Math.abs(pct).toFixed(1)}% vs ${formatDay(prior)}`,
+    label: `${Math.abs(pct).toFixed(0)}% vs ${formatDay(prior)}`,
     direction,
     tone: direction === "flat" ? "neutral" : direction === "up" ? "good" : "bad",
   };
@@ -62,40 +62,40 @@ export function BusinessKpiGrid({
   foodCost,
   topSellers = [],
 }: BusinessKpiGridProps) {
-  const isOwnerRole = isOwner(seniority);
-  const unresolvedDays = salesTrend.filter((p) => p.total == null).length;
+  const isOwnerRole = isOwner(seniority) || seniority?.trim().toUpperCase() === "MANAGER";
+  const unavailableDays = salesTrend.filter((p) => p.total == null).length;
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       {latestSales == null ? (
         <AwaitingData
           label="Sales"
-          description="Gross sales today and this week vs. last week."
+          description="Net sales excluding GST today and this week vs. last week."
           reason="Awaiting sales-reporting endpoint."
           icon={TrendingUp}
         />
       ) : latestSales.total == null ? (
         <AwaitingData
           label="Sales"
-          description="The latest day's totals disagree across sources."
-          reason="Needs decision in Reconciliation."
+          description="The latest day's sales have missing or disputed inputs."
+          reason="Needs review in Data health or Reconciliation."
           icon={Scale}
         />
       ) : (
         <StatCard
           label="Sales"
           value={formatCurrency(latestSales.total)}
-          hint={latestSales.date ? `Gross, ${formatDay(latestSales.date)}` : undefined}
-          help={GROSS_SALES_HELP}
+          hint={latestSales.date ? `Ex GST, ${formatDay(latestSales.date)}` : undefined}
+          help={NET_SALES_HELP}
           delta={weekOnWeek(latestSales, salesTrend)}
           spark={salesTrend.length > 1 ? salesTrend.map((p) => toNumber(p.total)) : undefined}
           footer={
-            // Never hide that the trend includes undecided days (heuristic 5).
-            unresolvedDays > 0 ? (
+            // Missing receipts and unresolved amounts both remain unavailable, never zero.
+            unavailableDays > 0 ? (
               <Badge variant="conflict">
-                {unresolvedDays} {unresolvedDays === 1 ? "day" : "days"} disputed
+                {unavailableDays} {unavailableDays === 1 ? "day" : "days"} unavailable
               </Badge>
             ) : salesTrend.length > 0 ? (
-              <Badge variant="success">Reconciled</Badge>
+              <Badge variant="outline">Coverage unverified</Badge>
             ) : null
           }
         />

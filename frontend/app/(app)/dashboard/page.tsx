@@ -49,7 +49,7 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Home"
-        description="Your numbers, verified across every source."
+        description="Resolved sales and source qualifications."
         actions={<FocusSwitcher value={focus} onChange={setFocus} />}
       />
 
@@ -58,18 +58,18 @@ export default function DashboardPage() {
       <BusinessKpiGrid
         seniority={user?.seniority}
         latestSales={data.latestSales}
-        salesTrend={data.salesTrend}
+        salesTrend={data.salesTrend.points}
         coversToday={data.coversToday}
         foodCost={data.foodCost}
-        topSellers={data.topSellers}
+        topSellers={data.topSellers.items}
       />
 
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <SalesTrend points={data.salesTrend} />
+        <SalesTrend points={data.salesTrend.points} notices={data.salesTrend.notices} provenance={data.salesTrend.provenance} />
         <ActivityChart points={data.activity} />
       </section>
 
-      <TopSellers items={data.topSellers} />
+      <TopSellers items={data.topSellers.items} notices={data.topSellers.notices} coverage={data.topSellers.coverage} />
 
       {/* Below the fold: the attention queue sits under the headline numbers so the
           dashboard reads top-down as "how is the business, then what needs doing". */}

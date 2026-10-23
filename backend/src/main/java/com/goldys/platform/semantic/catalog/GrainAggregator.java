@@ -19,26 +19,32 @@ import java.util.TreeMap;
 final class GrainAggregator {
   private GrainAggregator() {}
 
-  record Bucket(List<MetricPoint> points, List<LocalDate> missingDays) {}
+  record Bucket(List<MetricPoint> points, List<LocalDate> missingDays, MetricCoverage coverage) {}
 
   static Bucket sum(
       Map<LocalDate, BigDecimal> byDay, LocalDate from, LocalDate to, TimeGrain grain) {
     TreeMap<LocalDate, Sum> buckets = new TreeMap<>();
     List<LocalDate> missingDays = new ArrayList<>();
+    List<LocalDate> observed = new ArrayList<>(),
+        unresolved = new ArrayList<>(),
+        absent = new ArrayList<>();
     for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
-      LocalDate key = bucketStart(d, grain);
+      LocalDate key = grain == TimeGrain.TOTAL ? from : bucketStart(d, grain);
       Sum s = buckets.computeIfAbsent(key, k -> new Sum());
       if (!byDay.containsKey(d)) {
         // No source row for this day at all.
+        absent.add(d);
         missingDays.add(d);
       } else {
         BigDecimal v = byDay.get(d);
         if (v == null) {
           // A source row existed but its value is unresolved.
           s.unresolved = true;
+          unresolved.add(d);
           missingDays.add(d);
         } else {
           s.anyValue = true;
+          observed.add(d);
           s.total = s.total.add(v);
         }
       }
@@ -54,12 +60,15 @@ final class GrainAggregator {
         points.add(new MetricPoint(e.getKey(), null, MissingDataStatus.NOT_RECEIVED));
       }
     }
-    return new Bucket(List.copyOf(points), List.copyOf(missingDays));
+    return new Bucket(
+        List.copyOf(points),
+        List.copyOf(missingDays),
+        new MetricCoverage(from, to, observed, unresolved, absent));
   }
 
   static LocalDate bucketStart(LocalDate d, TimeGrain grain) {
     return switch (grain) {
-      case DAY -> d;
+      case DAY, TOTAL -> d;
       case WEEK -> d.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
       case MONTH -> d.withDayOfMonth(1);
     };

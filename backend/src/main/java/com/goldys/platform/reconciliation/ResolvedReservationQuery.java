@@ -88,7 +88,7 @@ public class ResolvedReservationQuery implements ReservationMetricsQuery {
   public Optional<BigDecimal> noShowRate(LocalDate from, LocalDate to) {
     long bookings = 0, noShows = 0;
     for (ResolvedReservationDay r : rows(from, to)) {
-      bookings += r.bookings();
+      bookings += r.bookings() - r.cancelled() - r.walkIns();
       noShows += r.noShows();
     }
     return Optional.ofNullable(ratio(noShows, bookings));
@@ -118,6 +118,7 @@ public class ResolvedReservationQuery implements ReservationMetricsQuery {
 
   private static ReservationSummary summarize(LocalDate date, List<ResolvedReservationDay> rows) {
     long bookings = 0, attended = 0, covers = 0, cancelled = 0, noShows = 0, walkIns = 0;
+    long bookedCovers = 0;
     for (ResolvedReservationDay r : rows) {
       bookings += r.bookings();
       attended += r.attended();
@@ -125,6 +126,7 @@ public class ResolvedReservationQuery implements ReservationMetricsQuery {
       cancelled += r.cancelled();
       noShows += r.noShows();
       walkIns += r.walkIns();
+      bookedCovers += r.bookedCovers();
     }
     return new ReservationSummary(
         date,
@@ -134,8 +136,9 @@ public class ResolvedReservationQuery implements ReservationMetricsQuery {
         cancelled,
         noShows,
         walkIns,
+        bookedCovers,
         ratio(covers, attended),
-        ratio(noShows, bookings),
+        ratio(noShows, bookings - cancelled - walkIns),
         ratio(attended, bookings));
   }
 

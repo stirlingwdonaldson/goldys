@@ -22,13 +22,13 @@ class CanonicalDailySales extends BitemporalEntity {
   @Column(name = "trading_date", nullable = false, updatable = false)
   private LocalDate tradingDate;
 
-  @Column(name = "total_sales", nullable = false, updatable = false, precision = 14, scale = 4)
+  @Column(name = "total_sales", updatable = false, precision = 14, scale = 4)
   private BigDecimal totalSales;
 
-  @Column(name = "gst_total", nullable = false, updatable = false, precision = 14, scale = 4)
+  @Column(name = "gst_total", updatable = false, precision = 14, scale = 4)
   private BigDecimal gstTotal;
 
-  @Column(name = "net_total", nullable = false, updatable = false, precision = 14, scale = 4)
+  @Column(name = "net_total", updatable = false, precision = 14, scale = 4)
   private BigDecimal netTotal;
 
   protected CanonicalDailySales() {}
