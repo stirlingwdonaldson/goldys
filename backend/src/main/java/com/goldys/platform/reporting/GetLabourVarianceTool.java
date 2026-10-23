@@ -84,6 +84,6 @@ public class GetLabourVarianceTool implements ReportingTool {
   }
 
   private static MetricQuery q(MetricId id, TimeRange range) {
-    return new MetricQuery(id, range, TimeGrain.DAY, Set.of(), null);
+    return new MetricQuery(id, range, TimeGrain.TOTAL, Set.of(), null);
   }
 }

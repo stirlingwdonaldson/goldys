@@ -34,4 +34,27 @@ class VenueClockTest {
     assertEquals(MELBOURNE, clock.zone());
     assertEquals(MELBOURNE, clock.clock().getZone());
   }
+
+  @Test
+  void salesCutoffIsTwoAmLocalIncludingExactBoundaryAndSunday() {
+    VenueClock clock = VenueClock.system(MELBOURNE);
+    assertEquals(
+        LocalDate.of(2026, 10, 16),
+        clock.salesTradingDate(Instant.parse("2026-10-16T14:00:00Z"))); // Saturday 01:00
+    assertEquals(
+        LocalDate.of(2026, 10, 17),
+        clock.salesTradingDate(Instant.parse("2026-10-16T15:00:00Z"))); // Saturday 02:00
+    assertEquals(
+        LocalDate.of(2026, 10, 17),
+        clock.salesTradingDate(Instant.parse("2026-10-17T14:00:00Z"))); // Sunday 01:00
+  }
+
+  @Test
+  void tradingAttributionUsesLocalTimeAcrossDstWithoutChangingOccurrence() {
+    VenueClock clock = VenueClock.system(MELBOURNE);
+    Instant beforeDstJump = Instant.parse("2026-10-03T15:30:00Z"); // 01:30 Sunday
+    Instant afterDstJump = Instant.parse("2026-10-03T16:00:00Z"); // 03:00 Sunday
+    assertEquals(LocalDate.of(2026, 10, 3), clock.salesTradingDate(beforeDstJump));
+    assertEquals(LocalDate.of(2026, 10, 4), clock.salesTradingDate(afterDstJump));
+  }
 }

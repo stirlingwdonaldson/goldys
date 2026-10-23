@@ -35,7 +35,15 @@ class CanonicalReservationService {
 
   @Transactional
   CanonicalReservation record(ReservationInput input) {
+    java.time.LocalDate previousDate =
+        repository
+            .lockCurrentReservation(input.reservationId(), input.sourceSystem())
+            .map(r -> r.reservationAt().atZone(zone).toLocalDate())
+            .orElse(input.reservationAt().atZone(zone).toLocalDate());
     CanonicalReservation saved = recordAt(input, CLOCK.instant());
+    if (!previousDate.equals(input.reservationAt().atZone(zone).toLocalDate())) {
+      publisher.publishEvent(new ReservationRecorded(previousDate));
+    }
     publisher.publishEvent(
         new ReservationRecorded(input.reservationAt().atZone(zone).toLocalDate()));
     return saved;

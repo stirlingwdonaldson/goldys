@@ -34,7 +34,7 @@ describe("number formatters", () => {
   it("formats counts, ratios and hours", () => {
     expect(formatNumber(1284)).toBe("1,284");
     expect(formatNumber(2.456, 2)).toBe("2.46");
-    expect(formatPercent(0.141)).toBe("14.1%");
+    expect(formatPercent(0.141)).toBe("14%");
     expect(formatHours(1231.5)).toBe("1,231.5 h");
     expect(formatPercent(null)).toBe("—");
   });

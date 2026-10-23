@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
-/** Resolved inventory purchases (COGS), wastage, and food-cost percentage for a date range. */
+/** Resolved invoice purchases and wastage for a date range. */
 @Component
 public class GetInventorySummaryTool implements ReportingTool {
   private final MetricQueryService metrics;
@@ -38,8 +38,7 @@ public class GetInventorySummaryTool implements ReportingTool {
 
   @Override
   public String description() {
-    return "Resolved inventory purchases (COGS), wastage, and food-cost percentage for a date "
-        + "range.";
+    return "Resolved invoice purchases and wastage for a date range; food cost percentage is unavailable.";
   }
 
   @Override
@@ -74,13 +73,10 @@ public class GetInventorySummaryTool implements ReportingTool {
           "Expected GetInventorySummaryInput, got " + input.getClass().getSimpleName());
     }
     TimeRange range = new TimeRange(in.startDate(), in.endDate(), Calendar.CALENDAR);
-    return List.of(
-        q(MetricId.INVENTORY_PURCHASES, range),
-        q(MetricId.INVENTORY_WASTAGE, range),
-        q(MetricId.INVENTORY_FOOD_COST_PERCENT, range));
+    return List.of(q(MetricId.INVENTORY_PURCHASES, range), q(MetricId.INVENTORY_WASTAGE, range));
   }
 
   private static MetricQuery q(MetricId id, TimeRange range) {
-    return new MetricQuery(id, range, TimeGrain.DAY, Set.of(), null);
+    return new MetricQuery(id, range, TimeGrain.TOTAL, Set.of(), null);
   }
 }

@@ -12,6 +12,19 @@ import org.junit.jupiter.api.Test;
 class ProductSalesResolverTest {
 
   @Test
+  void sourceOverrideCannotPickTheFirstOfTwoDifferentProductsWithTheSameName() {
+    var result =
+        ProductSalesResolver.resolve(
+                List.of(st("CTB", "1", "10"), st("CTB", "2", "20")),
+                Optional.of("CTB"),
+                Optional.empty())
+            .orElseThrow();
+    assertThat(result.hasConflict()).isTrue();
+    assertThat(result.amount()).isNull();
+    assertThat(result.quantitySold()).isNull();
+  }
+
+  @Test
   void classifiesSingleAgreedAndConflict() {
     assertThat(classify(List.of(st("LIGHTSPEED", "10", "100.00"), st("CTB", "10", "100.00"))))
         .isEqualTo("agreed");

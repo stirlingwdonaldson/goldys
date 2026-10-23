@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.goldys.platform.auth.AuthService;
-import com.goldys.platform.forecasting.TimesFmClient;
+import com.goldys.platform.forecasting.ForecastModelClient;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricPoint;
@@ -57,7 +57,7 @@ class ForecastingControllerIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired AuthService authService;
 
-  @MockitoBean TimesFmClient client;
+  @MockitoBean ForecastModelClient client;
   @MockitoBean MetricQueryService queries;
 
   @BeforeEach
@@ -74,12 +74,12 @@ class ForecastingControllerIntegrationTest {
 
     mvc.perform(get("/api/forecasting/metrics").session(owner.session()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[?(@.metric == 'sales.gross')].name").value("Gross sales"))
-        .andExpect(jsonPath("$[?(@.metric == 'sales.gross')].unit").value("AUD"))
+        .andExpect(jsonPath("$[?(@.metric == 'sales.net')].name").value("Net sales"))
+        .andExpect(jsonPath("$[?(@.metric == 'sales.net')].unit").value("AUD"))
         .andExpect(
-            jsonPath("$[?(@.metric == 'sales.gross')].sourceDomain").value("resolved_daily_sales"))
+            jsonPath("$[?(@.metric == 'sales.net')].sourceDomain").value("resolved_daily_sales"))
         .andExpect(
-            jsonPath("$[?(@.metric == 'sales.gross')].requiredPermission")
+            jsonPath("$[?(@.metric == 'sales.net')].requiredPermission")
                 .value("reconciliation.sales"))
         .andExpect(jsonPath("$[?(@.metric == 'product.top_sellers')]").isEmpty());
   }
@@ -106,11 +106,11 @@ class ForecastingControllerIntegrationTest {
                     .header("X-XSRF-TOKEN", owner.xsrf().getValue())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
-                        "{\"target\":\"sales.gross\",\"covariates\":[],"
+                        "{\"target\":\"sales.net\",\"covariates\":[],"
                             + "\"historyFrom\":\"2026-09-01\",\"horizonDays\":7}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("QUEUED"))
-            .andExpect(jsonPath("$.targetMetric").value("sales.gross"))
+            .andExpect(jsonPath("$.targetMetric").value("sales.net"))
             .andReturn();
 
     String id = JsonPath.read(created.getResponse().getContentAsString(), "$.id");
@@ -140,7 +140,7 @@ class ForecastingControllerIntegrationTest {
                 .header("X-XSRF-TOKEN", staff.xsrf().getValue())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"target\":\"sales.gross\",\"covariates\":[\"reservations.covers\"],"
+                    "{\"target\":\"sales.net\",\"covariates\":[\"reservations.covers\"],"
                         + "\"historyFrom\":\"2026-09-01\",\"horizonDays\":7}"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("NOT_PERMITTED"));

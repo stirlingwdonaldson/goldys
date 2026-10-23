@@ -11,5 +11,10 @@ public interface InvoiceGraphQuery {
 
   List<InvoiceGraphNode> invoicesForSupplier(String supplier, LocalDate from, LocalDate to);
 
+  List<InvoiceGraphNode> invoicesForSupplierId(
+      java.util.UUID supplier, LocalDate from, LocalDate to);
+
+  List<LineGraphNode> linesForInvoiceId(java.util.UUID id);
+
   List<LineGraphNode> linesForInvoice(String invoiceNumber);
 }

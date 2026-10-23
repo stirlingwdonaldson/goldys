@@ -32,10 +32,15 @@ class CanonicalInvoiceIntegrationTest {
   void unchangedInvoiceRetryDoesNotAppendAVersion() {
     InvoiceInput input = invoice("INV-1001", "Supplier A", "2026-09-20", "120.00");
 
-    CanonicalInvoice first = invoiceService.record(input);
-    CanonicalInvoice retry = invoiceService.record(input);
+    InvoiceIdentity first = invoiceService.record(input);
+    InvoiceIdentity retry = invoiceService.record(input);
 
-    assertThat(retry.id()).isEqualTo(first.id());
+    assertThat(retry.logicalEntityId()).isEqualTo(first.logicalEntityId());
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from canonical_invoice where superseded_at is null",
+                Integer.class))
+        .isEqualTo(1);
   }
 
   @Test
@@ -47,6 +52,7 @@ class CanonicalInvoiceIntegrationTest {
             "CTB",
             "INV-1001:1",
             "INV-1001",
+            before.invoiceLogicalId(),
             LocalDate.of(2026, 9, 20),
             "potatoes",
             null,
@@ -77,6 +83,7 @@ class CanonicalInvoiceIntegrationTest {
             "CTB",
             "INV-3001:1",
             "INV-3001",
+            null,
             LocalDate.of(2026, 9, 20),
             "beef rump cap",
             "BEEF025",
@@ -104,6 +111,7 @@ class CanonicalInvoiceIntegrationTest {
         "CTB",
         number,
         supplier,
+        null,
         LocalDate.parse(date),
         null,
         new BigDecimal(total),
@@ -124,6 +132,7 @@ class CanonicalInvoiceIntegrationTest {
         "CTB",
         number + ":" + seq,
         number,
+        null,
         LocalDate.parse(date),
         product,
         null,

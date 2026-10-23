@@ -21,6 +21,12 @@
           "-y",
           "@playwright/mcp@0.0.83",
           "--headless",
+          // Default (no --browser) resolves to channel "chrome" (branded Google
+          // Chrome at /opt/google/chrome/chrome), which is not installed here.
+          // "chromium" maps to channel "chrome-for-testing" = the bundled Chromium
+          // already in ~/.cache/ms-playwright/chromium-*.
+          "--browser",
+          "chromium",
           "--user-data-dir=/srv/ai/data/browser-profiles/goldys"
         ],
         "codemode": false,

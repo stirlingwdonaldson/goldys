@@ -3,7 +3,6 @@ package com.goldys.platform.semantic.catalog;
 import com.goldys.platform.semantic.SaleItemMetricsQuery;
 import com.goldys.platform.semantic.SaleItemMix;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,7 +52,7 @@ public class SaleItemMetricExecutor implements MetricExecutor {
             query.range(),
             query.grain(),
             definition.sourceDomain(),
-            Instant.EPOCH,
+            null,
             bucket.missingDays(),
             definition.version());
 

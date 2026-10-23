@@ -11,6 +11,8 @@ import datetime as dt
 import os
 from typing import Protocol
 
+import numpy as np
+
 
 class Predictor(Protocol):
     """The interface ``app`` depends on; tests inject a ``FakePredictor``."""
@@ -30,12 +32,17 @@ class Predictor(Protocol):
         horizon: int,
         freq: str,
         quantiles: list[str],
+        *,
+        past_future_covariates: np.ndarray | None = None,
     ) -> tuple[list[str], dict[str, list[float]]]:
         """Forecast ``horizon`` steps ahead of ``dates[-1]``.
 
         ``target`` and every covariate array are aligned to ``dates`` by index; missing
-        values are ``float("nan")``. Returns the future dates (ascending) and one value
-        per quantile per date.
+        values are ``float("nan")``. ``past_future_covariates`` (when given) holds the
+        covariates known for both the context and the horizon, shaped
+        ``(num_covariates, context_len + horizon)``; it is passed straight through to
+        TimesFM's ``past_future_covariates``. Returns the future dates (ascending) and
+        one value per quantile per date.
         """
 
 
@@ -79,9 +86,9 @@ class TimesFmPredictor:
             self._forecaster = TimesFM3Forecaster.from_pretrained(model, **kwargs)
         return self._forecaster
 
-    def predict(self, dates, target, covariates, horizon, freq, quantiles):
-        import numpy as np
-
+    def predict(
+        self, dates, target, covariates, horizon, freq, quantiles, *, past_future_covariates=None
+    ):
         forecaster = self._load()
 
         context = np.asarray(target, dtype=np.float32)
@@ -96,6 +103,7 @@ class TimesFmPredictor:
             context,
             horizon=horizon,
             past_only_covariates=covariate_array,
+            past_future_covariates=past_future_covariates,
             return_quantiles=True,
         )
 

@@ -11,4 +11,7 @@ public interface ProductCategoryMetricsQuery {
 
   /** Resolved category sales over the inclusive range. */
   List<CategorySales> salesByCategory(LocalDate from, LocalDate to);
+
+  /** Resolved food/beverage sales split, per day, over the inclusive range. */
+  List<FoodBevSplit> dailyFoodBev(LocalDate from, LocalDate to);
 }

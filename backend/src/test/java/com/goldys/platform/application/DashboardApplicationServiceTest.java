@@ -22,9 +22,11 @@ import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
 import com.goldys.platform.semantic.ProductMetricsQuery;
+import com.goldys.platform.semantic.ProductRanking;
 import com.goldys.platform.semantic.SalesMetricsQuery;
 import com.goldys.platform.semantic.TopSeller;
 import com.goldys.platform.semantic.catalog.Calendar;
+import com.goldys.platform.semantic.catalog.MetricCoverage;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricPoint;
 import com.goldys.platform.semantic.catalog.MetricProvenance;
@@ -91,17 +93,23 @@ class DashboardApplicationServiceTest {
 
   @Test
   void topSellersMapsSemanticToResponse() {
-    when(productMetrics.topSellers(any(), any(), eq(5)))
+    when(productMetrics.qualifiedTopSellers(any(), any(), eq(5)))
         .thenReturn(
-            List.of(new TopSeller("chips", new BigDecimal("10"), new BigDecimal("50"), true)));
+            new ProductRanking(
+                List.of(new TopSeller("chips", new BigDecimal("10"), new BigDecimal("50"), true)),
+                new MetricCoverage(
+                    SEP_13.minusDays(29), SEP_13, List.of(), List.of(SEP_13), List.of()),
+                List.of("Incomplete subtotal")));
 
     var sellers = service.topSellers(OWNER, null, null, null);
 
-    assertThat(sellers).hasSize(1);
-    assertThat(sellers.get(0).name()).isEqualTo("chips");
-    assertThat(sellers.get(0).quantitySold()).isEqualByComparingTo("10");
-    assertThat(sellers.get(0).amount()).isEqualByComparingTo("50");
-    assertThat(sellers.get(0).hasConflict()).isTrue();
+    assertThat(sellers.items()).hasSize(1);
+    assertThat(sellers.notices()).containsExactly("Incomplete subtotal");
+    verify(productMetrics).qualifiedTopSellers(SEP_13.minusDays(29), SEP_13, 5);
+    assertThat(sellers.items().get(0).name()).isEqualTo("chips");
+    assertThat(sellers.items().get(0).quantitySold()).isEqualByComparingTo("10");
+    assertThat(sellers.items().get(0).amount()).isEqualByComparingTo("50");
+    assertThat(sellers.items().get(0).hasConflict()).isTrue();
   }
 
   @Test
@@ -109,18 +117,40 @@ class DashboardApplicationServiceTest {
     when(metrics.query(any()))
         .thenReturn(
             new TimeSeriesResult(
-                MetricId.SALES_GROSS,
+                MetricId.SALES_NET,
                 List.of(
                     new MetricSeries(
                         null, List.of(new MetricPoint(SEP_13, new BigDecimal("100"))))),
-                List.of(),
-                provenance(MetricId.SALES_GROSS)));
+                List.of("Incomplete subtotal"),
+                provenance(MetricId.SALES_NET)));
 
     var trend = service.salesTrend(OWNER, null, null);
 
-    assertThat(trend).hasSize(1);
-    assertThat(trend.get(0).date()).isEqualTo("2026-09-13");
-    assertThat(trend.get(0).total()).isEqualByComparingTo("100");
+    assertThat(trend.points()).hasSize(1);
+    assertThat(trend.notices()).containsExactly("Incomplete subtotal");
+    assertThat(trend.provenance()).isEqualTo(provenance(MetricId.SALES_NET));
+    verify(metrics)
+        .query(
+            new com.goldys.platform.semantic.catalog.MetricQuery(
+                MetricId.SALES_NET,
+                new TimeRange(SEP_13.minusDays(13), SEP_13, Calendar.CALENDAR),
+                TimeGrain.DAY,
+                java.util.Set.of(),
+                null));
+    assertThat(trend.points().get(0).date()).isEqualTo("2026-09-13");
+    assertThat(trend.points().get(0).total()).isEqualByComparingTo("100");
+  }
+
+  @Test
+  void deniedDashboardReadsDoNotReachSemanticQueries() {
+    doThrow(AccessDeniedException.forResource("reconciliation.sales"))
+        .when(permissions)
+        .require(any(), any(), any());
+    assertThatThrownBy(() -> service.salesTrend(OWNER, null, null))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> service.topSellers(OWNER, null, null, null))
+        .isInstanceOf(AccessDeniedException.class);
+    org.mockito.Mockito.verifyNoInteractions(metrics, productMetrics);
   }
 
   private static MetricProvenance provenance(MetricId id) {

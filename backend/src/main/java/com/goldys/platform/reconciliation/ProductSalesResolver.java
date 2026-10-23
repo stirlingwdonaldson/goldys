@@ -31,6 +31,9 @@ final class ProductSalesResolver {
       List<ProductSourceTotal> sources,
       Optional<String> overrideSource,
       Optional<ResolutionRule> rule) {
+    // A name that represents multiple products in one source has no safe first-match override.
+    if (sources.stream().map(ProductSourceTotal::sourceSystem).distinct().count() != sources.size())
+      return Optional.of(new Result("conflict", null, null, null));
     if (overrideSource.isPresent()) {
       return sources.stream()
           .filter(s -> s.sourceSystem().equals(overrideSource.get()))

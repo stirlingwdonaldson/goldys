@@ -144,14 +144,15 @@ fetcher identities `ctb-stocktake-detail`, `ctb-wastage-detail`, `ctb-recipe-ing
 `ctb-recipe-cost`. Recipe cost (`ctb-recipe-cost`) is canonicalized by the recipe-composition slice
 (D); recipe ingredients (`ctb-recipe-ingredients`) are canonicalized by the recipe-ingredients
 slice, replayed from the existing raw ledger by a flag-gated runner
-(`app.recipe-ingredients-canonicalize=true`). Stocktake and wastage detail are canonicalised by a
-flag-gated runner (`app.stock-wastage-canonicalize=true`, `StockWastageCanonicalizationRunner`),
-replayed from the existing raw ledger; they have no resolved projection yet (slices B–C).
+(`app.recipe-ingredients-canonicalize=true`). Stocktake detail remains raw-only. Wastage detail is
+also pulled by the scheduled `CtbConnector` for the newest 60 wastage records each run and
+canonicalized into `canonical_wastage` (see "Wastage" below); older records come from this backfill
+plus the `app.stock-wastage-canonicalize=true` replay.
 
 | Domain | Endpoint | Params | Returns |
 |---|---|---|---|
 | Stocktake lines | `Stocktake/GetStocktakeDetailByStocktakeId` | `stocktakeId`,`start`,`limit` | counted lines (`qtyCount`/`qtyCount1-4`, custom UOM, `stocktakeDetailCost`, `subTotal`, `stocktakeAreaName`, `stockCode`/`stockDesc`, `recipeId`, `supplierName`) — paged, one raw record per page |
-| Wastage lines | `WastageRecord/GetWastageRecordDetailByWastageRecordId` | `wastageRecordId` | per-item line (`quantity`,`cost`,`reason`,`recipeId`,`unitSize`,…) — one request per id |
+| Wastage lines | `WastageRecord/GetWastageRecordDetailByWastageRecordId` | `wastageRecordId`,`start`,`limit` | per-item line (`quantity`,`cost`,`reason`,`recipeId`,`unitSize`,…) — paged by `totalCount`, one raw record per page |
 | Recipe ingredients | `RecipeBook/GetIngredientsIncludingSubRecipeIngredients` | `recipeId` | ingredient line (`costPerQty`,`costPerUnit`,`portionWeight`,`isSubRecipeIngredient`,`isBrokenLink`,…) — one request per id |
 | Recipe cost (batched) | `RecipeBook/GetSelectedRecipeFullRecords` | `recipeIds` (JSON array), `recipeFolderIds=[]` | CTB derived cost per recipe (`costPerPortion`,`costPerPortionIncludingLabour`,`totalCost`,`portionSize`) — one batched call |
 
@@ -159,6 +160,32 @@ replayed from the existing raw ledger; they have no resolved projection yet (sli
 without the folder ids it returns a server-error envelope. `Statement/GetStatementDetailByStatementId`
 returns a non-JSON XHTML page (both `Statement/` and `ProformaInvoice/` paths) and is not ingested:
 the underlying invoices are already covered by the CSV/PDF pipeline.
+
+### Wastage (captured live 2026-10-23)
+
+Captured from the CTB web app (Revenue → Wastage Records, opening one record):
+
+- **List:** `POST /WastageRecord/SearchWastageRecords` with
+  `keyword=&fromDate=…&toDate=…&searchType=-1&start=0&limit=50`. Headers only: `wastageRecordId`,
+  `wastageRecordDescription` (free text, often contains a date), `isActive`, `outletName`, `total`,
+  `createdBy`, plus `totalCount`. Ids come back newest first. There is **no date field** on the
+  header. The connector sends only `start`/`limit`. The header count tracking the site (58 → 112 → 149) suggests
+  that returns the full list, but the date/`searchType` filters have not been tested when omitted.
+- **Detail:** `POST /WastageRecord/GetWastageRecordDetailByWastageRecordId` with
+  `start=0&limit=50&wastageRecordId=<id>`. Rows: `wastageRecordId`, `wastageRecordName`,
+  `wastageRecordDetailId`, `stockSupplierId`, `recipeId`, `stockDesc`, `supplierName`, `quantity`,
+  `cost`, `reason`, `peopleInvolved`, `recordDate`, `unitSize`, `isActive`, `stockUnit`,
+  `unitOfMeasurementName`, plus `totalCount`.
+- `recordDate` is a long-form English date (`"Wednesday, 21 October 2026"`), not ISO.
+- `recipeId` is `-1` for a plain stock item (no recipe); it is stored as null.
+- `cost` is **per stock unit**: a line's value is `quantity × cost`, and the sum over lines equals
+  the header `total` (record 149: 0.5×40 + 0.5×56.65 + 4×26.5 = 154.325).
+  `resolved_inventory_observation` (V99) reports waste `unit_cost = cost` and
+  `source_value = quantity × cost`; before V99 it showed the per-unit cost as the line value.
+- Templates (`WastageTemplate/GetWastageTemplates`, `GetWastageTemplateByTemplateId` with
+  `templateId`) are pre-filled forms, not wastage, and are not ingested.
+- Known gap: a line deleted in CTB disappears from the detail response, and the existing
+  `canonical_wastage` fact is not closed. Not observed yet; revisit if CTB totals drift from ours.
 
 Recipe-ingredient scope (v1) — two deliberate limitations, documented not dropped:
 

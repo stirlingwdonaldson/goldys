@@ -42,9 +42,27 @@ class InventoryControllerTest {
   @Autowired MockMvc mvc;
 
   @MockitoBean InventoryReportingService reporting;
+  @MockitoBean com.goldys.platform.application.InventoryObservationService observations;
   @MockitoBean InvoiceGraphService graph;
   @MockitoBean InvoiceIngestFlagQueryService flags;
   @MockitoBean CurrentUserService currentUser;
+
+  @Test
+  void observationPageRetainsQualifications() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(observations.observations(eq(ownerRole()), any(), any(), eq("COUNT"), eq(0), eq(50)))
+        .thenReturn(
+            new com.goldys.platform.application.InventoryObservationService.Page(
+                List.of(), 0, 50, false, List.of("Incomplete observation listing")));
+    mvc.perform(
+            get("/api/inventory/observations")
+                .param("from", "2026-10-01")
+                .param("to", "2026-10-15")
+                .param("kind", "COUNT")
+                .with(authenticated(owner())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.notices[0]").value("Incomplete observation listing"));
+  }
 
   @Test
   void suppliersReturnsRankedSuppliers() throws Exception {

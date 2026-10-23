@@ -79,7 +79,9 @@ class MetricQueryControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.metric").value("sales.gross"))
         .andExpect(jsonPath("$.series[0].points[0].bucketStart").value("2026-10-01"))
-        .andExpect(jsonPath("$.series[0].points[0].value").value(10865.72));
+        .andExpect(jsonPath("$.series[0].points[0].value").value(10865.72))
+        .andExpect(jsonPath("$.provenance.coverage.expectedTradingPopulationKnown").value(false))
+        .andExpect(jsonPath("$.provenance.coverage.observedDates[0]").value("2026-10-01"));
 
     verify(permissions)
         .require(any(), eq(new ResourceKey("reconciliation.sales")), eq(PermissionAction.READ));
@@ -152,23 +154,32 @@ class MetricQueryControllerTest {
   }
 
   private static MetricResult timeSeriesResult() {
+    var coverage =
+        new com.goldys.platform.semantic.catalog.MetricCoverage(
+            LocalDate.of(2026, 10, 1),
+            LocalDate.of(2026, 10, 7),
+            List.of(LocalDate.of(2026, 10, 1)),
+            List.of(),
+            LocalDate.of(2026, 10, 2).datesUntil(LocalDate.of(2026, 10, 8)).toList());
     MetricProvenance provenance =
         new MetricProvenance(
-            MetricId.SALES_GROSS,
-            "1",
-            new TimeRange(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7), Calendar.CALENDAR),
-            TimeGrain.DAY,
-            "resolved_daily_sales",
-            Instant.parse("2026-10-07T09:00:00Z"),
-            List.of(),
-            "1");
+                MetricId.SALES_GROSS,
+                "1",
+                new TimeRange(
+                    LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 7), Calendar.CALENDAR),
+                TimeGrain.DAY,
+                "resolved_daily_sales",
+                Instant.parse("2026-10-07T09:00:00Z"),
+                coverage.absentDates(),
+                "1")
+            .withCoverage(coverage);
     return new TimeSeriesResult(
         MetricId.SALES_GROSS,
         List.of(
             new MetricSeries(
                 null,
                 List.of(new MetricPoint(LocalDate.of(2026, 10, 1), new BigDecimal("10865.72"))))),
-        List.of(),
+        coverage.notices(),
         provenance);
   }
 

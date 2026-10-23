@@ -41,6 +41,17 @@ public class InvoiceGraphService {
     return query.invoicesForSupplier(supplier, from, to);
   }
 
+  public List<InvoiceGraphNode> invoicesForSupplierId(
+      UserRole role, java.util.UUID id, LocalDate from, LocalDate to) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return query.invoicesForSupplierId(id, from, to);
+  }
+
+  public List<LineGraphNode> linesForInvoiceId(UserRole role, java.util.UUID id) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return query.linesForInvoiceId(id);
+  }
+
   public List<LineGraphNode> linesForInvoice(UserRole role, String invoiceNumber) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     return query.linesForInvoice(invoiceNumber);

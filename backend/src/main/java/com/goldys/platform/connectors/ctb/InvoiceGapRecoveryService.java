@@ -152,6 +152,8 @@ public class InvoiceGapRecoveryService {
     }
 
     String pdfSha256 = sha256Hex(pdf);
+    UUID invoiceLogicalId =
+        invoiceQuery.invoiceLogicalIdForInvoiceNumber(invoiceNumber).orElse(null);
     for (int index : unmatchedIndexes) {
       PdfExtractedLine line = pdfLines.get(index);
       BigDecimal amount = line.amountExTax();
@@ -165,6 +167,7 @@ public class InvoiceGapRecoveryService {
               "CTB",
               invoiceNumber + ":pdf:" + pdfSha256 + ":" + index,
               invoiceNumber,
+              invoiceLogicalId,
               invoiceDate,
               ProductNameKey.normalize(line.description()),
               line.stockCode(),

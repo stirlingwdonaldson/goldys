@@ -38,6 +38,8 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.apache.commons:commons-csv:1.11.0'
+	// JSON Schema structural validation for source dataset contracts (draft 2020-12).
+	implementation 'com.networknt:json-schema-validator:1.5.6'
 	// Invoice PDF text extraction (behind the DocumentTextExtractor port, so it is swappable).
 	implementation 'org.apache.pdfbox:pdfbox:3.0.4'
 
@@ -122,6 +124,7 @@ tasks.register('fastTest', Test) {
 			'LlmInvoicePdfExtractorEvalTest',
 			'MetricQueryControllerTest',
 			'PlatformMapControllerTest',
+			'ProductCategoryPermissionBoundaryTest',
 			'ProvenanceControllerTest',
 			'RecipeControllerTest',
 			'ReconciliationControllerTest',

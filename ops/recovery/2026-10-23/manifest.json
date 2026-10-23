@@ -1,0 +1,26 @@
+{
+  "sourceCommit": "a342068fc7bedc97cbbefc9cae78dfd47ae36280",
+  "inspectedOn": "2026-10-23",
+  "timezone": "Australia/Melbourne",
+  "lightspeed": {
+    "rawId": "154d8cef-a26d-4a86-acd5-832b913d73b2",
+    "payloadBytes": 235903051,
+    "dateWindow": [
+      "2025-01-01",
+      "2025-12-31"
+    ],
+    "csvRows": 410558,
+    "distinctKeys": 409565,
+    "conflictingKeys": 13,
+    "missingUnambiguousKeysAtInspection": 376533,
+    "missingConflictingKeysHeldForReview": 11,
+    "payloadSha256": "c3bda72763ffa8638d1608309a685e008e376cc20f75a28abc394e2ccf7cb182"
+  },
+  "ctb": {
+    "retainedDatedPagesChecked": 7,
+    "rowsChecked": 954,
+    "rowsAcceptedByUpdatedJavaBatch": 954,
+    "duplicateProductSiteKeysWithinPages": 0,
+    "nullOrBlankGroupIds": 954
+  }
+}

@@ -21,11 +21,13 @@ class InvoicePdfLinkServiceTest {
 
   private InvoicePdfLinkRepository repository;
   private InvoicePdfLinkService service;
+  private CanonicalInvoiceQuery invoices;
 
   @BeforeEach
   void setUp() {
     repository = mock(InvoicePdfLinkRepository.class);
-    service = new InvoicePdfLinkService(repository);
+    invoices = mock(CanonicalInvoiceQuery.class);
+    service = new InvoicePdfLinkService(repository, invoices);
   }
 
   @Test
@@ -40,23 +42,70 @@ class InvoicePdfLinkServiceTest {
   }
 
   @Test
-  void pdfRawRecordIdReturnsIdAfterLinkAndEmptyBefore() {
-    when(repository.findFirstByInvoiceNumber("INV-1")).thenReturn(Optional.empty());
-    assertThat(service.pdfRawRecordId("INV-1")).isEmpty();
-
-    when(repository.findFirstByInvoiceNumber("INV-1"))
-        .thenReturn(Optional.of(link("INV-1", PDF, "inv-1.pdf")));
-    assertThat(service.pdfRawRecordId("INV-1")).contains(PDF);
+  void attributableLegacyDocumentHasTheSameAvailabilityAndRetrievalStatus() {
+    UUID invoiceId = UUID.randomUUID();
+    when(invoices.currentInvoice(invoiceId))
+        .thenReturn(
+            Optional.of(
+                new InvoiceMetadataView(
+                    "A",
+                    "INV-1",
+                    java.time.LocalDate.of(2026, 10, 1),
+                    null,
+                    null,
+                    null,
+                    "unique.pdf",
+                    null,
+                    null,
+                    null,
+                    invoiceId,
+                    UUID.randomUUID())));
+    when(invoices.hasUniqueCurrentPdfFilename("unique.pdf")).thenReturn(true);
+    when(repository.findByInvoiceNumber("INV-1"))
+        .thenReturn(List.of(link("INV-1", PDF, "unique.pdf")));
+    assertThat(service.status(invoiceId)).isEqualTo("AVAILABLE");
+    assertThat(service.document(invoiceId, PDF).filename()).isEqualTo("unique.pdf");
+    when(invoices.hasUnqualifiedHistory("INV-1")).thenReturn(true);
+    assertThat(service.status(invoiceId)).isEqualTo("UNRESOLVED");
+    assertThat(service.documents(invoiceId)).isEmpty();
   }
 
   @Test
-  void pdfFilenameReturnsFilenameAfterLinkAndEmptyBefore() {
-    when(repository.findFirstByInvoiceNumber("INV-1")).thenReturn(Optional.empty());
-    assertThat(service.pdfFilename("INV-1")).isEmpty();
-
-    when(repository.findFirstByInvoiceNumber("INV-1"))
-        .thenReturn(Optional.of(link("INV-1", PDF, "inv-1.pdf")));
-    assertThat(service.pdfFilename("INV-1")).contains("inv-1.pdf");
+  void pairedDocumentsStayScopedEvenWhenNumbersCollide() {
+    UUID invoiceId = UUID.randomUUID();
+    when(invoices.currentInvoice(invoiceId))
+        .thenReturn(
+            Optional.of(
+                new InvoiceMetadataView(
+                    "A",
+                    "INV-1",
+                    java.time.LocalDate.of(2026, 10, 1),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    invoiceId,
+                    UUID.randomUUID())));
+    when(invoices.hasUnqualifiedHistory("INV-1")).thenReturn(true);
+    when(repository.findByInvoiceLogicalIdOrderByLinkedAtAscPdfRawRecordIdAsc(invoiceId))
+        .thenReturn(
+            List.of(
+                InvoicePdfLink.scoped(
+                    invoiceId,
+                    PDF,
+                    "INV-1",
+                    "selected.pdf",
+                    InvoicePdfLinkSource.ENRICHMENT,
+                    Instant.now())));
+    var selected = service.document(invoiceId, PDF);
+    assertThat(selected.documentId()).isEqualTo(PDF);
+    assertThat(selected.filename()).isEqualTo("selected.pdf");
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> service.document(invoiceId, UUID.randomUUID()))
+        .isInstanceOf(java.util.NoSuchElementException.class);
   }
 
   @Test

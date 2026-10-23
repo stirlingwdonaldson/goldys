@@ -39,17 +39,29 @@ public class InvoiceLineMetricsServiceImpl implements InvoiceLineMetricsQuery {
   @Override
   public List<UomUnitCost> unitCostByUom(LocalDate from, LocalDate to) {
     Map<String, BigDecimal[]> byUom = new LinkedHashMap<>(); // [lineTotal, effective quantity]
+    Map<String, java.util.Set<String>> items = new LinkedHashMap<>();
     for (EnrichedInvoiceLine line : inRange(from, to)) {
       BigDecimal[] acc =
           byUom.computeIfAbsent(
               line.uom(), k -> new BigDecimal[] {BigDecimal.ZERO, BigDecimal.ZERO});
       acc[0] = acc[0].add(line.lineTotal());
-      acc[1] = acc[1].add(effectiveQuantity(line));
+      BigDecimal quantity = effectiveQuantity(line);
+      acc[1] = acc[1] == null || quantity == null ? null : acc[1].add(quantity);
+      items
+          .computeIfAbsent(line.uom(), key -> new java.util.HashSet<>())
+          .add(line.stockCode() == null ? "unknown:" + line.productNameKey() : line.stockCode());
     }
     List<UomUnitCost> out = new ArrayList<>();
     for (Map.Entry<String, BigDecimal[]> e : byUom.entrySet()) {
       BigDecimal[] acc = e.getValue();
-      out.add(new UomUnitCost(e.getKey(), acc[0], acc[1], unitCost(acc[0], acc[1])));
+      out.add(
+          new UomUnitCost(
+              e.getKey(),
+              acc[0],
+              acc[1],
+              e.getKey() == null || items.get(e.getKey()).size() != 1
+                  ? null
+                  : unitCost(acc[0], acc[1])));
     }
     out.sort(
         Comparator.comparing(UomUnitCost::uom, Comparator.nullsLast(Comparator.naturalOrder())));
@@ -60,12 +72,12 @@ public class InvoiceLineMetricsServiceImpl implements InvoiceLineMetricsQuery {
    * Quantity in base units, so the blended unit cost is per the UOM's base unit: the CSV's coarse
    * {@code quantity} times the PDF's {@code unitQuantity} (the per-pack count) when it was
    * enriched, otherwise the coarse quantity alone. This is a best-effort blend — the CSV's coarse
-   * quantity (which falls back to 1 when unparseable) means a few lines contribute an imprecise
+   * quantity (which remains unknown when unparseable) means a few lines contribute an imprecise
    * denominator, so the figure is an approximation, not an exact cost-per-unit.
    */
   private static BigDecimal effectiveQuantity(EnrichedInvoiceLine line) {
-    if (line.quantity() == null) {
-      return BigDecimal.ZERO;
+    if (line.quantity() == null || line.uom() == null) {
+      return null;
     }
     if (line.unitQuantity() != null) {
       return line.quantity().multiply(line.unitQuantity());
@@ -75,25 +87,8 @@ public class InvoiceLineMetricsServiceImpl implements InvoiceLineMetricsQuery {
 
   @Override
   public List<SupplierCogs> cogsBySupplier(LocalDate from, LocalDate to) {
-    Map<String, String> supplierByInvoice = invoices.currentSupplierNames();
-    Map<String, BigDecimal[]> bySupplier = new LinkedHashMap<>(); // [lineTotal, wetAmount]
-    for (EnrichedInvoiceLine line : inRange(from, to)) {
-      String supplier = supplierByInvoice.getOrDefault(line.invoiceNumber(), "Unknown");
-      BigDecimal[] acc =
-          bySupplier.computeIfAbsent(
-              supplier, k -> new BigDecimal[] {BigDecimal.ZERO, BigDecimal.ZERO});
-      acc[0] = acc[0].add(line.lineTotal());
-      if (line.wetAmount() != null) {
-        acc[1] = acc[1].add(line.wetAmount());
-      }
-    }
-    List<SupplierCogs> out = new ArrayList<>();
-    for (Map.Entry<String, BigDecimal[]> e : bySupplier.entrySet()) {
-      BigDecimal[] acc = e.getValue();
-      out.add(new SupplierCogs(e.getKey(), acc[0], acc[1]));
-    }
-    out.sort(Comparator.comparing(SupplierCogs::lineTotal).reversed());
-    return out;
+    return InvoicePurchaseBreakdown.summarize(
+        invoices.currentInvoices(), inventory.currentEnrichedLines(), from, to);
   }
 
   private List<EnrichedInvoiceLine> inRange(LocalDate from, LocalDate to) {

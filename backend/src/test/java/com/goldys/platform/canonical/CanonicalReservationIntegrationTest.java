@@ -21,6 +21,7 @@ class CanonicalReservationIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired CanonicalReservationService service;
   @Autowired CanonicalReservationRepository repository;
+  @Autowired com.goldys.platform.reconciliation.ReservationProjectionListener projections;
 
   @BeforeEach
   void clean() {
@@ -336,5 +337,29 @@ class CanonicalReservationIntegrationTest {
         "0".repeat(64),
         1);
     return recordId;
+  }
+
+  @Test
+  void rescheduledBookingInvalidatesBothFormerAndReplacementDates() {
+    jdbc.update("truncate table resolved_reservation_day");
+    service.record(input("OPENTABLE", "moved", "2026-09-23T09:30:00Z"));
+    projections.flushPendingDates();
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from resolved_reservation_day where trading_date='2026-09-23'",
+                Integer.class))
+        .isEqualTo(1);
+    service.record(input("OPENTABLE", "moved", "2026-09-24T09:30:00Z"));
+    projections.flushPendingDates();
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from resolved_reservation_day where trading_date='2026-09-23'",
+                Integer.class))
+        .isZero();
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from resolved_reservation_day where trading_date='2026-09-24'",
+                Integer.class))
+        .isEqualTo(1);
   }
 }

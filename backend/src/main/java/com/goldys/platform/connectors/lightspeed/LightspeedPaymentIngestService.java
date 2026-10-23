@@ -12,8 +12,8 @@ import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
 import com.goldys.platform.ingestion.RawLedgerQuery;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
-import com.goldys.platform.util.Nulls;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
@@ -115,12 +115,12 @@ public class LightspeedPaymentIngestService {
               p.paymentSourceType(),
               p.lspayPaymentMode(),
               p.clearingAccount(),
-              Nulls.zeroIfNull(p.amount()),
-              Nulls.zeroIfNull(p.tip()),
-              Nulls.zeroIfNull(p.tendered()),
-              Nulls.zeroIfNull(p.surcharge()),
-              Nulls.zeroIfNull(p.paymentCount()),
-              Nulls.zeroIfNull(p.tipCount()),
+              requiredAmount(p.amount()),
+              nz(p.tip()),
+              nz(p.tendered()),
+              nz(p.surcharge()),
+              nz(p.paymentCount()),
+              nz(p.tipCount()),
               p.reconciled(),
               p.registerCode(),
               p.registerName(),
@@ -144,5 +144,19 @@ public class LightspeedPaymentIngestService {
     } catch (IOException e) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON webhook payload", e);
     }
+  }
+
+  private static BigDecimal requiredAmount(BigDecimal value) {
+    if (value == null)
+      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Payment amount is missing");
+    return value;
+  }
+
+  private static BigDecimal nz(BigDecimal v) {
+    return v == null ? BigDecimal.ZERO : v;
+  }
+
+  private static int nz(Integer v) {
+    return v == null ? 0 : v;
   }
 }

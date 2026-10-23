@@ -1,53 +1,70 @@
 package com.goldys.platform.application;
 
-import com.goldys.platform.auth.PermissionAction;
-import com.goldys.platform.auth.PermissionService;
-import com.goldys.platform.auth.ResourceKey;
-import com.goldys.platform.auth.UserRole;
+import com.goldys.platform.auth.*;
+import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.canonical.InvoicePdfLinkService;
 import com.goldys.platform.ingestion.RawLedgerQuery;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
 import org.springframework.stereotype.Service;
 
-/**
- * Resolves an invoice's PDF bytes from the raw ledger via its recorded link. Gated on the same
- * {@code inventory.cost} READ permission as the rest of the inventory surface; unknown invoices,
- * missing links and missing bytes all surface as {@code NOT_FOUND} via {@link
- * NoSuchElementException}.
- */
+/** Original source documents require both financial detail and raw-source permissions. */
 @Service
 public class InvoiceDocumentService {
-
-  private static final ResourceKey RESOURCE = new ResourceKey("inventory.cost");
-
   private final InvoicePdfLinkService pdfLinks;
   private final RawLedgerQuery rawLedger;
   private final PermissionService permissions;
+  private final CanonicalInvoiceQuery invoices;
 
   public InvoiceDocumentService(
-      InvoicePdfLinkService pdfLinks, RawLedgerQuery rawLedger, PermissionService permissions) {
+      InvoicePdfLinkService pdfLinks,
+      RawLedgerQuery rawLedger,
+      PermissionService permissions,
+      CanonicalInvoiceQuery invoices) {
     this.pdfLinks = pdfLinks;
     this.rawLedger = rawLedger;
     this.permissions = permissions;
+    this.invoices = invoices;
   }
 
-  /** The linked PDF document for {@code invoiceNumber}, or {@code NOT_FOUND}. */
-  public PdfDocument pdf(UserRole role, String invoiceNumber) {
-    permissions.require(role, RESOURCE, PermissionAction.READ);
-    UUID rawRecordId =
-        pdfLinks
-            .pdfRawRecordId(invoiceNumber)
-            .orElseThrow(
-                () -> new NoSuchElementException("No PDF linked for invoice: " + invoiceNumber));
-    byte[] bytes = rawLedger.payloadBytes(rawRecordId);
-    if (bytes == null) {
-      throw new NoSuchElementException("PDF bytes missing for invoice: " + invoiceNumber);
-    }
-    String filename = pdfLinks.pdfFilename(invoiceNumber).orElse(invoiceNumber + ".pdf");
-    return new PdfDocument(bytes, filename);
+  private void authorize(UserRole role) {
+    permissions.require(role, new ResourceKey("inventory.cost"), PermissionAction.READ);
+    permissions.require(role, new ResourceKey("connectors"), PermissionAction.READ);
   }
 
-  /** The PDF bytes and the filename to present in the download header. */
+  public List<Document> documents(UserRole role, UUID invoiceId) {
+    authorize(role);
+    return pdfLinks.documents(invoiceId).stream()
+        .map(d -> new Document(d.documentId(), d.filename(), d.linkedAt()))
+        .toList();
+  }
+
+  public PdfDocument pdf(UserRole role, UUID invoiceId, UUID documentId) {
+    authorize(role);
+    return read(pdfLinks.document(invoiceId, documentId));
+  }
+
+  /** Compatibility route is available only for one qualified document on one invoice. */
+  public PdfDocument pdf(UserRole role, String number) {
+    authorize(role);
+    UUID id =
+        invoices
+            .invoiceLogicalIdForInvoiceNumber(number)
+            .orElseThrow(() -> new NoSuchElementException("Unknown invoice"));
+    List<InvoicePdfLinkService.Document> links = pdfLinks.documents(id);
+    if (links.isEmpty())
+      throw new NoSuchElementException("No attributable PDF linked to this invoice");
+    if (links.size() != 1)
+      throw new IllegalArgumentException("Multiple documents: select a document explicitly");
+    return read(links.getFirst());
+  }
+
+  private PdfDocument read(InvoicePdfLinkService.Document link) {
+    byte[] bytes = rawLedger.payloadBytes(link.documentId());
+    if (bytes == null) throw new NoSuchElementException("PDF bytes missing");
+    return new PdfDocument(bytes, link.filename() == null ? "invoice.pdf" : link.filename());
+  }
+
+  public record Document(UUID documentId, String filename, java.time.Instant linkedAt) {}
+
   public record PdfDocument(byte[] bytes, String filename) {}
 }

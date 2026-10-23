@@ -22,6 +22,18 @@ public class CanonicalSaleItemQuery {
     this.repository = repository;
   }
 
+  /** Bounded indexed lookups for a recovery preview; no full entity/table materialisation. */
+  public java.util.Set<String> currentSourceRefs(String source, Collection<String> refs) {
+    var ids = List.copyOf(refs);
+    var found = new java.util.HashSet<String>();
+    for (int start = 0; start < ids.size(); start += 1000) {
+      found.addAll(
+          repository.currentSourceRefs(
+              source, ids.subList(start, Math.min(start + 1000, ids.size()))));
+    }
+    return found;
+  }
+
   /** All current sale items, mapped to views. */
   public List<SaleItemView> currentSaleItems() {
     return repository.findAllCurrent().stream().map(this::toView).toList();

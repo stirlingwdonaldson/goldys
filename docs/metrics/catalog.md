@@ -10,9 +10,12 @@ data is unresolved ("display + note": a figure always shows when any resolved da
 | `sales.gross` | Gross sales | Resolved gross sales incl. GST | totalSales | AUD | resolved_daily_sales | — | day, week, month | reconciliation.sales | displays resolved sum; unresolved days noted |
 | `sales.net` | Net sales | Resolved net sales = gross − GST | netTotal | AUD | resolved_daily_sales | — | day, week, month | reconciliation.sales | displays resolved sum; unresolved days noted |
 | `sales.gst` | GST | Resolved GST | gstTotal | AUD | resolved_daily_sales | — | day, week, month | reconciliation.sales | displays resolved sum; unresolved days noted |
+| `sales.food` | Food sales | Resolved food sales (product group "Food") | food | AUD | resolved_product_sales | — | day, week, month | reconciliation.sales | sum of food-group product sales; approximate (see below) |
+| `sales.bev` | Beverage sales | Resolved beverage sales (non-food product groups) | bev | AUD | resolved_product_sales | — | day, week, month | reconciliation.sales | sum of non-food product sales; approximate (see below) |
 | `reservations.bookings` | Bookings | Resolved bookings | bookings | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum (absent day = no row, not zero, unless projected) |
 | `reservations.attended` | Attended parties | Resolved attended | attended | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
 | `reservations.covers` | Covers | Resolved covers (guests) | covers | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
+| `reservations.booked_covers` | Booked covers | Resolved booked covers (party size excluding cancelled and walk-ins) | bookedCovers | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
 | `reservations.no_shows` | No-shows | Resolved no-shows | noShows | count | resolved_reservation_day | service_period | day, week, month | reservations.metrics | sum |
 | `labour.scheduled_hours` | Scheduled hours | Resolved scheduled hours | scheduledHours | hours | resolved_labour_day | department | day, week, month | labour.hours | sum of non-null |
 | `labour.actual_hours` | Actual hours | Resolved actual hours | actualHours | hours | resolved_labour_day | department | day, week, month | labour.hours | sum of non-null |
@@ -31,6 +34,7 @@ data is unresolved ("display + note": a figure always shows when any resolved da
 | `reservations.booking_to_cover_conversion` | Booking-to-cover conversion | attended ÷ bookings | attended ÷ bookings | % | derived | — | day, week, month | reservations.metrics | null when bookings = 0 |
 | `reservations.avg_party_size` | Average party size | covers ÷ attended | covers ÷ attended | ratio | derived | — | day, week, month | reservations.metrics | null when attended = 0 |
 | `sales.average_spend_per_cover` | Average spend per cover | sales.gross ÷ reservations.covers | sales.gross ÷ reservations.covers | AUD | derived | — | day, week, month | reconciliation.sales | null when covers = 0 or gross unresolved |
+| `sales.food_share` | Food share | sales.food ÷ sales.net | sales.food ÷ sales.net | % | derived | — | day, week, month | reconciliation.sales | null when net = 0/unresolved |
 | `labour.hours_per_cover` | Hours per cover | labour.actual_hours ÷ reservations.covers | labour.actual_hours ÷ reservations.covers | hours/cover | derived | — | day, week, month | labour.hours | null when covers = 0 |
 | `labour.cost_per_cover` | Cost per cover | labour.cost ÷ reservations.covers | labour.cost ÷ reservations.covers | AUD/cover | derived | — | day, week, month | labour.cost | null when covers = 0 or cost unknown |
 | `labour.hours_variance` | Hours variance | labour.scheduled_hours − labour.actual_hours | labour.scheduled_hours − labour.actual_hours | hours | derived | — | day, week, month | labour.hours | — |
@@ -53,8 +57,19 @@ Base metrics read resolved projections. They are live today and are the authorit
 post-reconciliation value: `sales.gross` / `sales.net` *are* the reconciled figure.
 
 - `sales.gross`, `sales.net`, `sales.gst` — `resolved_daily_sales`, no dimensions, day/week/month.
+- `sales.food`, `sales.bev` — `resolved_product_sales`, no dimensions, day/week/month; the food/beverage
+  split is derived from curated product classification. Group `Food` (or a flat `Food` category)
+  maps to food. Recognised beverage groups **or flat category names** map to beverage: Beverage,
+  Beverages, Drinks, Beer, Wine, Spirits, Liqueurs, Cocktails, Soft Drinks, Non-Alcoholic
+  (case-insensitive). A missing parent alone does not exclude a drink. Merchandise, cash-out,
+  raffle tickets and donations are excluded from eligible sales. Other categories are unclassified;
+  both daily values are missing when less than 95% of eligible absolute product revenue is mapped,
+  an unclassified amount is unresolved, or no products are mapped. Genuine zero mapped sales stay zero.
+  Forecast share training additionally requires 28 classified days and 80% coverage of revenue days;
+  otherwise the split is unavailable with a diagnostic warning. Product values include GST; the
+  forecast applies their food/(food+beverage) share to net revenue. The split remains approximate.
 - `reservations.bookings`, `reservations.attended`, `reservations.covers`,
-  `reservations.no_shows` — `resolved_reservation_day`, dimension `service_period`, day/week/month.
+  `reservations.booked_covers`, `reservations.no_shows` — `resolved_reservation_day`, dimension `service_period`, day/week/month.
 - `labour.scheduled_hours`, `labour.actual_hours`, `labour.cost` — `resolved_labour_day`,
   dimension `department`, day/week/month.
 - `inventory.purchases`, `inventory.wastage` — `resolved_inventory_day`, no dimensions,
@@ -113,3 +128,21 @@ today is on `sales.gross`: **"gross includes GST"**.
   department dimension is a future extension, not this pass.
 - Grafana-style dashboard variables — future extension; the query/panel model accommodates it
   without a rewrite.
+
+## Data-handling corrections (15 October 2026)
+
+`reservations.expected_bookings` counts booking records excluding cancellations and walk-ins.
+`reservations.no_show_rate` uses declared no-shows over that population; pending outcomes remain provisional.
+`reservations.covers` is a stated-party-size attendance proxy, not verified actual arrivals.
+`inventory.purchases` means Invoice purchases, never COGS. `inventory.food_cost_percent` is retained
+for saved-query compatibility but returns unavailable pending valuation evidence.
+`labour.cost` is labelled wages only pending source-basis confirmation; departmental percentages
+retain their explicitly named gross-sales denominator. Displayed percentages round to whole percentages.
+
+`TOTAL` aggregates the exact inclusive requested range, anchored at its first date. Period summaries
+use the same catalogue calculations as series. Missing base values yield labelled known subtotals;
+ratios with incomplete coverage are unavailable until a validated uncertainty estimate can support
+the owner's five-percentage-point allowance. No statistical confidence policy has yet been adopted.
+Sales reporting defaults to evidenced net sales. The simplified all-days trading cutoff is 02:00
+Australia/Melbourne; date-only source reports retain their supplied attribution because no close
+instant is available to shift them safely. Receipt recency is not business-evidence eligibility.

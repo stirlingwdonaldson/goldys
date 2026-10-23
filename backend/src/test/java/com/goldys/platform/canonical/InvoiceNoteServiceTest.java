@@ -13,7 +13,8 @@ import org.junit.jupiter.api.Test;
 class InvoiceNoteServiceTest {
 
   private final InvoiceNoteRepository repository = mock(InvoiceNoteRepository.class);
-  private final InvoiceNoteService service = new InvoiceNoteService(repository);
+  private final InvoiceNoteService service =
+      new InvoiceNoteService(repository, org.mockito.Mockito.mock(CanonicalInvoiceQuery.class));
 
   @Test
   void recordsANewNote() {

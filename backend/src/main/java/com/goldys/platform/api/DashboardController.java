@@ -48,7 +48,7 @@ public class DashboardController {
   }
 
   @GetMapping("/top-sellers")
-  List<DashboardApplicationService.TopSeller> topSellers(
+  DashboardApplicationService.TopSellersResult topSellers(
       @RequestParam(value = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate from,
       @RequestParam(value = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -59,7 +59,7 @@ public class DashboardController {
   }
 
   @GetMapping("/sales-trend")
-  List<DashboardApplicationService.SalesTrend> salesTrend(
+  DashboardApplicationService.SalesTrendResult salesTrend(
       @RequestParam(value = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate from,
       @RequestParam(value = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)

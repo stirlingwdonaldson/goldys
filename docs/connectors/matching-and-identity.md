@@ -83,99 +83,44 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Invoice metadata (`canonical_invoice`)
 
-- **Source:** `CTB` — two ingestion paths for the same records:
-  - **Custom Invoice Export CSV** upload (`/api/ingest/ctb-invoices`, `fetch_method=FILE_EXPORT`,
-    `fetcher_identity=ctb-invoices`), and
-  - **`Invoice/SearchInvoices`** AJAX pull (`fetch_method=API`,
-    `fetcher_identity=ctb-invoices-ajax`).
-- **Logical identity:** `UUID.nameUUIDFromBytes("invoice:" + invoiceNumber)`.
-- **Source identity:** `(source_system = CTB, source_record_ref = invoice number)`.
-- **Matching strategy:** both paths key on `invoice_number` (exact). The CSV path canonicalizes
-  today; the AJAX path is **raw-ledger only** and is deliberately *not* canonicalized yet, so the
-  two paths cannot silently double-count the same invoice. Before the AJAX path feeds
-  `canonical_invoice`, the two must be de-duplicated on `invoice_number` (a second path for the same
-  number supersedes rather than appends, per the bitemporal close-and-reinsert pattern).
-- **Confidence:** high for the `invoice_number` join (exact).
-- **Manual resolution path:** not yet wired; COGS comes from line items, so invoice-header totals
-  are metadata only.
-- **Invoice → PDF link:** `invoice_pdf_link` is a plain idempotent evidence table (like
-  `invoice_ingest_flag`, not bitemporal) that records which raw record holds an invoice's PDF. It
-  maps `pdf_raw_record_id` (primary key) → `invoice_number`, with an optional `pdf_filename` and a
-  `link_source` of `ENRICHMENT` (the live path: a newly ingested PDF matched to its canonical
-  invoice) or `BACKFILL` (the one-off `InvoicePdfLinkBackfillRunner`). The invoices viewer resolves
-  invoice → PDF through this table; keying on the PDF raw record id means a re-pull cannot pile up
-  duplicate links for the same document. The link joins on `invoice_number` today, so it inherits
-  the same supplier-scoping caveat as the header identity — see
-  `docs/superpowers/specs/2026-10-12-invoice-identity-design.md`.
+- **Source:** CTB Custom Invoice Export CSV. The AJAX invoice feed remains raw-only.
+- **Source identity:** supplier source code (fallback `name:<normalised supplier name>` when no
+  code exists), followed by `::` and invoice number. A fallback name is visible and unverified;
+  no cross-supplier alias or rename is inferred from it. Different known supplier codes remain
+  separate even if their invoice numbers match.
+- **Logical identity:** UUID derived from the scoped reference for new invoices. A transition
+  from a legacy bare-number header retains that header's enduring logical ID when its supplier
+  name matches, so already-parented children stay attached. This is a structural transition;
+  it does not authorise historical value repair or invent supplier-code evidence.
+- **Scope limitation:** different outlet/document contexts within one supplier/number delivery
+  are rejected. Cross-delivery outlet/type identity and CTB revision semantics remain unconfirmed.
+- **Invoice/PDF and legacy routes:** the evidence link still carries invoice number. Number-only
+  reads, enrichment, notes and recovery explicitly reject ambiguous numbers instead of selecting
+  the first supplier. CSV/PDF convergence uses the parent invoice logical ID. A future
+  supplier-qualified document-viewer route is separate work; no source document is assigned by guess.
 
 ## Invoice line (`canonical_invoice_line`)
 
-- **Source:** `CTB` Custom Invoice Export CSV (authoritative), enriched from the matching invoice
-  PDF delivered over SFTP.
-- **Logical identity:** `UUID.nameUUIDFromBytes("invoice-line:" + invoiceNumber + ":" +
-  sourceRecordRef)`.
-- **Source identity:** two `source_record_ref` shapes, both keyed `(source_system = CTB)`:
-  - CSV-sourced line: `invoice number + ":" + line seq`.
-  - PDF-derived gap line (see below): `invoice number + ":pdf:" + sha256(pdf) + ":" + line seq`.
-- **Origin:** `canonical_invoice_line.origin` is `"CSV"` for export-sourced lines and `"PDF"` for
-  PDF-derived gap lines; `null` is a legacy CSV row (ingested before the column existed) and is
-  treated as CSV for matching and convergence.
-- **Matching strategy:** invoice metadata ↔ lines join on `invoice_number` (exact). PDFs never
-  create lines on their own except through gap recovery: `InvoicePdfEnrichmentService` resolves a
-  PDF to its invoice through the CSV's persisted `pdf_filename` (falling back to the invoice number
-  in the PDF text only when the filename does not resolve), then maps each parsed PDF line to one of
-  that invoice's current CSV lines via `InvoiceLineMatcher` and enriches it (stock code, unit of
-  measure, unit quantity, pack size, WET amount). Lines carry a denormalized `invoice_date` so COGS
-  can be bucketed by date from lines alone.
-- **Gap recovery (PDF-derived lines):** when the header ex-tax total reconciles with the PDF line
-  sum but not the CSV line sum (a short export), `InvoiceGapRecoveryService` records the CSV's
-  missing PDF lines as canonical `origin='PDF'` lines so COGS is complete. The gap-line identity is
-  `source_record_ref = "{invoiceNumber}:pdf:{pdfSha256}:{lineSeq}"`, anchored to the PDF raw record
-  (`raw_record_id`). A re-run over the same PDF is a no-op: the re-computed line sum now includes
-  the gap line already recorded, so the invoice reconciles as CSV-complete and nothing new is
-  created. The shared reconciliation tolerance is `0.02` (ex-tax,
-  2 cents): a line sum within that of the header counts as reconciling. Gap lines are created only
-  when the PDF reconciles and the CSV does not, and the created sum does not exceed the header
-  shortfall (`header − csvSum`) beyond the tolerance; otherwise `INVOICE_EXPORT_INCOMPLETE` is
-  flagged and nothing is created.
-- **Convergence:** once the CTB CSV later includes the lines it omitted, the CSV's now-complete
-  lines supersede the PDF-derived gap lines (bitemporally closed, never deleted), so only the CSV
-  lines remain current.
-- **PDF↔line key (tiered, scoped to one invoice):** the CTB export and its PDFs key the same line
-  differently, so the matcher tries progressively looser keys — (1) normalized stock code, where
-  CTB's synthetic `PDF_<hex>` placeholder counts as "no code"; (2) a unique code variant (one
-  normalized code is a prefix of the other, e.g. `HAMB008` vs `HAMB008A1c`); (3) exact normalized
-  description; (4) whole-token containment, accepted for a single shared token only when the extra
-  tokens are packaging noise (`... SET PRICE 4 KG PRICE`, `... ORDER BY BOX`); (5) a majority of
-  shared significant tokens. **Ambiguity is resolved conservatively, not guessed:** if more than one
-  line wins a tier, the tie is broken by the PDF line's quantity, then its ex-tax amount, choosing
-  only the single tied line that agrees; a tie that also ties on quantity and amount is left
-  un-enriched and `PDF_ONLY_LINE` is recorded.
-- **Before matching:** `HybridInvoicePdfExtractor` sanitizes the extractor output
-  (`InvoicePdfSanitizer`). A parsed invoice number with no digit (a header label such as
-  `Tax Invoice No`) becomes null, so the filename join decides. Annotation rows (no stock code, no
-  amount, and a parenthesised or `COMMENT`/`NOTE` description, or no quantity and no unit) are not
-  purchases, so they are kept out of the line list and recorded as a per-invoice `invoice_note`
-  (concatenated, keyed by invoice number) rather than silently discarded. If the PDF still resolves
-  to no invoice the export knows (no current header and no current lines), its lines are not
-  matched: a live drop raises one `AMBIGUOUS_PDF` flag for the PDF, and a replay (no filename)
-  raises nothing.
-- **Confidence:** high for the invoice-number and filename joins (exact); line matching is
-  tolerant-but-conservative (tiers above, unique-winner only). PDF text extraction is
-  per-supplier-layout (`*InvoicePdfExtractor`, with an LLM fallback); unmatched or inconsistent
-  PDFs raise `InvoiceIngestFlag` rows instead of being dropped.
-- **Anomaly lifecycle:** `invoice_ingest_flag` is append-only. A flag carries a nullable
-  `resolved_at`; the read API returns **open** flags by default (`?status=all` includes resolved).
-  `PDF_ONLY_LINE` marks a parsed PDF line the matcher could not unambiguously assign; when the
-  matcher improves, a one-off replay (`app.ctb-invoice-reenrich=true`, then unset —
-  `CtbInvoicePdfReenrichRunner`) re-enriches the stored raw PDFs and sets `resolved_at` on the
-  `PDF_ONLY_LINE` flags that now resolve, so the work queue reflects reality without deleting the
-  historical anomaly record. The same pass also retires `PDF_ONLY_LINE` flags that are annotation
-  text or that name an invoice number the export does not know; neither could ever match. `INVOICE_EXPORT_INCOMPLETE` marks an invoice whose CSV line sum does
-  not reconcile with the header and whose PDF could not close the gap (missing header, unresolved
-  PDF sum, PDF-only lines that would over-state the shortfall, or no resolvable invoice date).
-- **Manual resolution path:** `InventoryOverrideService.save(...)` sets an override for a
-  `trading_date`, replacing the computed purchases (COGS).
+- CSV references combine the scoped invoice reference with a content signature and an occurrence
+  discriminator for identical repeated lines. Reordering and identical replay retain identities;
+  the signature is an export occurrence key, not a verified enduring CTB line ID.
+- Parentage is `invoice_logical_id`. A legacy ordinal line can be re-keyed only through a
+  one-to-one match on its existing CSV values under an unambiguous parent. Structural successors
+  preserve logical identity, known valid time and PDF enrichment. Unknown legacy values that
+  differ from replayed source values require separately reviewed repair.
+- **Default export policy:** absent lines are retained. A known subset or identical/reordered
+  delivery is safe; changed/additional occurrences on an existing invoice are withheld explicitly
+  because complete-versus-partial and revision semantics have not been confirmed. Header/line
+  validation is atomic; a failure leaves raw bytes and a failed processing stage available.
+- `app.ctb-invoice-csv.complete-invoice-snapshots=true` permits authoritative replacement only
+  after source completeness is confirmed. It defaults false. Tests that exercise replacement
+  declare that policy for their fixtures; it is not a production policy.
+- PDF-derived facts remain marked `origin=PDF`. Their convergence is scoped to the parent ID;
+  no supplier can prune another supplier's lines through a shared invoice number. Older
+  number-only recovery/enrichment paths stop on ambiguous identity.
+- Missing quantity and unit cost remain null; zero is retained only when observed. No pack/UOM
+  conversion or return sign is guessed. Header and line tax/conversion evidence remain separate.
+
 
 ## Stocktake header (`canonical_stocktake`)
 
@@ -209,18 +154,44 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Wastage (`canonical_wastage`)
 
-- **Source:** `CTB` (wastage detail via `ctb-wastage-detail`, backfilled by the one-off
-  `ctb-detail-backfill` run).
+- **Source:** `CTB` (wastage detail via `ctb-wastage-detail`: the scheduled `CtbConnector` pulls and
+  canonicalizes the newest 60 records each run; older records come from the one-off
+  `ctb-detail-backfill` run plus the stock/wastage replay).
 - **Logical identity:** `UUID.nameUUIDFromBytes("wastage:" + wastageRecordId + ":" + lineId)`.
 - **Source identity:** `(source_system = CTB, source_record_ref = "wastage:<recordId>:<detailId>")`,
   where `lineId` is the source's globally unique `wastageRecordDetailId`.
 - **No stock code:** wastage has no `stockCode` in the source — product identity is `product_name_key`
   from `stockDesc` only (a documented limitation).
-- **Date:** self-contained (`recordDate`); no header entity is needed.
+- **Date:** self-contained (`recordDate`, sent by CTB as `"Wednesday, 21 October 2026"`); no header
+  entity is needed.
 - **Matching strategy:** deterministic single source; re-record supersedes on
   `(source_system, source_record_ref)`.
 - **Confidence:** n/a (single source).
 - **Manual resolution path:** not wired.
+
+### Receipt replay and count date lineage (16 October 2026)
+
+Stocktake headers, stock counts and waste keep their existing source/logical identities. Each
+writer records processing receipts, including unchanged observations, in
+`inventory_observation_receipt` under its own kind/source/reference. A repeated receipt creates no
+new fact. Previously unseen receipts older by `(raw.fetched_at, raw.id)` are retained as processed
+but cannot replace a newer observation. This is deterministic reception order, not proof of CTB's
+business revision or edited-export semantics; no deletion, completeness or source authority policy
+is inferred from absence or age.
+
+A COUNT processing receipt also identifies the accepted canonical header version used as its date
+context. The count writer locks the current same-source header before the count and derives the
+count date there, so an old caller hint cannot undo a header date correction. Reusing the latest
+detail under a genuinely changed header date can append one dated count version. Reusing an older
+detail cannot restore its quantity under that context. Header metadata changes without count/date
+changes produce no count revision. Newly appended count versions retain `header_version_id`;
+legacy rows remain unknown rather than receiving a guessed historical header association.
+
+The flag-gated replay retains its latest-header selection but streams raw references/bytes one
+payload at a time and commits each payload batch atomically. Missing referenced headers are checked
+before canonical writes. Malformed detail references retain the existing visible warning/skip
+behaviour. A later payload failure leaves earlier committed payloads intact; receipt guards make a
+retry safe. No historical repair or production replay is run by this code change alone.
 
 ## Recipe composition
 
@@ -284,8 +255,100 @@ so a second source can be added later without re-deriving these decisions.
 - **Manual resolution path:** not yet wired.
 - **Important:** the report must be scheduled **without** the `Product Salelines → Product ID` field; that join silently drops ~92% of rows (see the 2026-10-10 design spec).
 
+## Source product-sale fact (`source_product_sale_fact`)
+
+- **Source:** `CTB` (`Sale/SearchSaleItemsByDateRange`, pages ingested under the shared
+  `ctb-revenue` fetcher identity). A source observation of the product-day measures CTB supplies
+  (cost, food cost, discount, tax, unit price, profit) that have no universal canonical home. It is
+  written by the live connector and the flag-gated `SourceProductSaleFactBackfillRunner`, and is
+  never projected into a resolved view.
+- **Logical identity:** `UUID.nameUUIDFromBytes("source-product-sale-fact:" + sourceSystem + ":" +
+  sourceRecordRef)`.
+- **Source identity:** `(source_system = CTB, source_record_ref =
+  "<stockCode>@<tradingDate>[@<uniqueGroupId>]")`. `uniqueGroupId` is the source's grouping
+  namespace (documented in `field-preservation.csv` as previously dropped); it is included so
+  distinct rows that share a stock code and day remain distinct. This assumes `uniqueGroupId` is
+  stable across re-pulls of the same product-day — unverified against production data, so revisit
+  the identity if it proves unstable.
+- **Trading date:** the request window, recovered from the `sale-items:<day>` raw-record reference
+  or the `canonical_product_sales.raw_record_id → trading_date` provenance — never derived from
+  `fetched_at` or record ordering.
+- **Matching strategy:** deterministic single source; a re-record supersedes on
+  `(source_system, source_record_ref)`.
+- **Confidence:** n/a (single source). The cost fields are source-estimated (CTB recipe costing),
+  distinct from purchasing COGS (`canonical_invoice_line`).
+
 ## Unmatched / missing data
 
 Where a second source is absent or has no record for an entity, the resolved layer surfaces
 "no data from source X" (the same pattern as the sales slice) rather than silently dropping it.
 Nothing here invents a cross-source match where only one source exists.
+
+
+## CTB invoice safety guard (15 October 2026)
+
+Existing invoice-number identities are retained pending verified stable source keys. CSVs with a
+single invoice number spanning different supplier code/label, outlet or document-type contexts
+are rejected as ambiguous. An existing canonical invoice cannot silently change supplier label.
+A supplier rename may therefore need investigation rather than automatic replacement. This guard
+prevents silent merging; it is not a full issuer-aware identity model. Export completeness,
+post-export corrections, Return signs and alias history remain unconfirmed. Replay of stored
+fetcher deliveries is ordered by receipt time and raw-record ID; source revision precedence is
+not inferred from that receipt ordering.
+
+
+## Foundation repair integration (16 October 2026)
+
+This section supersedes older number-only transition notes below the historical domain entries.
+Source-product identities retain source codes. Existing hub mappings, including ACCEPTED, REJECTED
+and automatic mappings, survive source refresh/rename; an explicit mapping operation is required
+to change them. New name-selected hub associations are labelled NAME rather than SOURCE_CODE.
+Daily canonical/resolved product sales remain name-keyed; these tables alone do not close that gap.
+
+Product-sale replay records each `(source, source reference, raw record)` observation once, including
+identical intermediate receipts. Later replay cannot manufacture a second correction history or
+replace newer received evidence with an older receipt. Receipt ordering remains distinct from
+unverified source-effective/revision ordering. Raw observations remain immutable; original values
+and unknown business dates are not guessed. Replay processes one stored payload batch at a time.
+
+
+### Invoice read and document qualification — 16 October 2026
+
+Invoice detail, supplier breakdowns and graph navigation carry stored invoice/supplier logical UUIDs.
+Number/name-only compatibility reads require uniqueness; unresolved parent lines remain unattributed.
+PDF link evidence gains nullable `invoice_logical_id` in V95. New links capture the unambiguous stored
+parent only when identity history has a single logical invoice. Historical links are not bulk-assigned.
+A legacy link is usable on read only when the invoice's identity history is unique and its current
+PDF filename agrees uniquely with that link. Qualified documents pair raw ID and filename; multiple
+documents require explicit selection. No receipt-order document authority or new source matcher is
+introduced. Raw PDF access additionally requires the existing `connectors` source-record grant.
+
+
+## CTB product daily observations (16 October correctness increment)
+
+New daily facts use `(source_system, trading_date, siteNumber, stockCode)`. The source product
+reference is length-delimited code plus site (`unknown` when absent); the logical daily UUID also
+includes source and date. Display-name normalization remains a compatibility reporting alias,
+never the source identity. Source group observations retain quantity, amount, original name/site
+and financial fields. Every contributing page is linked in `product_sales_contributor`.
+
+Repeated `(site, code, uniqueGroupId)` observations within a fetched day contribute once. Inconsistent
+repeats or missing code/quantity/amount reject the batch; raw receipts remain retained.
+`uniqueGroupId` is optional: all 954 rows in seven dated production pages inspected on
+23 October 2026 have null/blank group IDs, with unique `(siteNumber, stockCode)` keys per page.
+A null/blank group denotes the ungrouped product/site observation, not a missing identity.
+Identical repeats contribute once; inconsistent repeats are rejected rather than summed.
+Qualified daily facts are published atomically after pagination completes. The canonical writer
+retains equal-value receipts and rejects already-observed/older receipt replay as new revisions.
+It does not infer deletion from absence or claim that a fetched report is all business activity.
+
+Legacy canonical rows remain immutable. On a source/day with qualified facts the name compatibility
+read excludes its legacy name aggregates, preventing a second representation after a rename. All old
+and new aliases for the day are reprojected. Multiple qualified products from the same source sharing
+one name/day produce a conflict with unavailable values, including when a source override exists.
+Cross-source equivalence and category history remain name-based compatibility, pending reviewed
+hub/variant mappings; no historical repair or automatic name-based promotion is performed.
+
+The group-financial observation ref remains code/date/group for backwards compatibility. Different
+known sites colliding on that ref fail visibly instead of superseding one another. A dedicated
+site-scoped transition there requires further source evidence and is not silently guessed.

@@ -1,0 +1,7 @@
+source_system,dataset,stage,outcome,stage_rows,last_occurred
+LIGHTSPEED,daily_sales,RAW_STORED,SUCCESS,1,2026-10-13 08:20:49.925028+00
+source_system,dataset,last_raw,last_canon
+LIGHTSPEED,daily_sales,2026-10-13 08:20:49.925028+00,
+source_system,connector_name,status,runs,counter_mismatch,empty_success
+CTB,ctb-revenue,SUCCESS,1,1,0
+LIGHTSPEED,lightspeed-insights,PARTIAL,1,0,0

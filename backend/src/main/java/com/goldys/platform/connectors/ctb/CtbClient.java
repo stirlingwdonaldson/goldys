@@ -198,13 +198,24 @@ public class CtbClient {
                 String.valueOf(limit))));
   }
 
-  /** The per-item lines of one wastage record. Single response. */
-  public CtbPage getWastageRecordDetail(int wastageRecordId) {
+  /**
+   * One page of a wastage record's item lines plus the total count. The CTB web app sends {@code
+   * start}/{@code limit} with the id and the response carries {@code totalCount} (captured live
+   * 2026-10-23: {@code start=0&limit=50&wastageRecordId=149}), so callers page by {@code
+   * totalCount} rather than trusting one response to hold every line.
+   */
+  public CtbPage getWastageRecordDetail(int wastageRecordId, int start, int limit) {
     return page(
         "WastageRecord/GetWastageRecordDetailByWastageRecordId",
         post(
             "/WastageRecord/GetWastageRecordDetailByWastageRecordId",
-            form("wastageRecordId", String.valueOf(wastageRecordId))));
+            form(
+                "start",
+                String.valueOf(start),
+                "limit",
+                String.valueOf(limit),
+                "wastageRecordId",
+                String.valueOf(wastageRecordId))));
   }
 
   /** The ingredient lines of one recipe (incl. sub-recipe ingredients). Single response. */

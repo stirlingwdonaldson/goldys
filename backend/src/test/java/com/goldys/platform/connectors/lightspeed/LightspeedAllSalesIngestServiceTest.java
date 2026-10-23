@@ -20,6 +20,44 @@ class LightspeedAllSalesIngestServiceTest {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   @Test
+  void missingTaxPreservesGrossButCannotFabricateExclusiveRevenue() throws Exception {
+    IngestionService ingestion = Mockito.mock(IngestionService.class);
+    CanonicalDailySalesIngest canonical = Mockito.mock(CanonicalDailySalesIngest.class);
+    var service =
+        new LightspeedAllSalesIngestService(
+            ingestion, canonical, new LightspeedAllSalesCsvParser());
+    ObjectNode root = MAPPER.createObjectNode();
+    root.putObject("attachment")
+        .put(
+            "data",
+            "Sales Data Sale Closed Date,Sales Data Total Inc Tax,Sales Data Total Tax\n2026-09-20,110,\n");
+    service.ingest(MAPPER.writeValueAsBytes(root));
+    var input = ArgumentCaptor.forClass(DailySalesInput.class);
+    verify(canonical).record(input.capture());
+    assertThat(input.getValue().totalSales()).isEqualByComparingTo("110");
+    assertThat(input.getValue().gstTotal()).isNull();
+    assertThat(input.getValue().netTotal()).isNull();
+  }
+
+  @Test
+  void malformedAttachmentRecordsAProcessingFailureAfterRawReceipt() {
+    IngestionService ingestion = Mockito.mock(IngestionService.class);
+    var service =
+        new LightspeedAllSalesIngestService(
+            ingestion,
+            Mockito.mock(CanonicalDailySalesIngest.class),
+            new LightspeedAllSalesCsvParser());
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> service.ingest("broken".getBytes(StandardCharsets.UTF_8)))
+        .isInstanceOf(com.goldys.platform.ingestion.port.ConnectorFetchException.class);
+    verify(ingestion)
+        .recordStage(
+            null,
+            com.goldys.platform.ingestion.IngestionStageKind.PARSED,
+            com.goldys.platform.ingestion.IngestionStageOutcome.FAILED);
+  }
+
+  @Test
   void persistsRawAndAggregatesPerSaleDate() throws Exception {
     IngestionService ingestion = Mockito.mock(IngestionService.class);
     CanonicalDailySalesIngest canonical = Mockito.mock(CanonicalDailySalesIngest.class);

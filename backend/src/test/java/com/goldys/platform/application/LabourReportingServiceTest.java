@@ -45,8 +45,7 @@ class LabourReportingServiceTest {
         .require(any(), any(), any());
 
     LabourReportingService service =
-        new LabourReportingService(
-            mock(LabourMetricsQuery.class), mock(MetricQueryService.class), permissions);
+        new LabourReportingService(mock(MetricQueryService.class), permissions);
 
     assertThatThrownBy(() -> service.summary(OWNER, FROM, TO))
         .isInstanceOf(AccessDeniedException.class);
@@ -87,7 +86,7 @@ class LabourReportingServiceTest {
             MetricId.SALES_GROSS, new BigDecimal("10000.00"));
 
     PermissionService permissions = mock(PermissionService.class);
-    LabourReportingService service = new LabourReportingService(labour, metrics, permissions);
+    LabourReportingService service = new LabourReportingService(metrics, permissions);
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 
@@ -128,7 +127,7 @@ class LabourReportingServiceTest {
             MetricId.SALES_GROSS, new BigDecimal("10000.00"));
 
     LabourReportingService service =
-        new LabourReportingService(labour, metrics, mock(PermissionService.class));
+        new LabourReportingService(metrics, mock(PermissionService.class));
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 
@@ -152,7 +151,7 @@ class LabourReportingServiceTest {
             MetricId.SALES_GROSS, new BigDecimal("10000.00"));
 
     LabourReportingService service =
-        new LabourReportingService(labour, metrics, mock(PermissionService.class));
+        new LabourReportingService(metrics, mock(PermissionService.class));
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 
@@ -172,9 +171,39 @@ class LabourReportingServiceTest {
                   return series(query, (BigDecimal) idValues[i + 1]);
                 }
               }
-              throw new AssertionError("unexpected metric " + query.metric());
+              BigDecimal value =
+                  switch (query.metric()) {
+                    case LABOUR_HOURS_PER_COVER ->
+                        ratio(idValues, MetricId.LABOUR_ACTUAL_HOURS, MetricId.RESERVATIONS_COVERS);
+                    case LABOUR_COST_PER_COVER ->
+                        ratio(idValues, MetricId.LABOUR_COST, MetricId.RESERVATIONS_COVERS);
+                    case LABOUR_FOH_PERCENT ->
+                        find(idValues, MetricId.LABOUR_COST) == null
+                            ? null
+                            : new BigDecimal("0.0200");
+                    case LABOUR_BOH_PERCENT ->
+                        find(idValues, MetricId.LABOUR_COST) == null
+                            ? null
+                            : new BigDecimal("0.0150");
+                    default -> throw new AssertionError("unexpected metric " + query.metric());
+                  };
+              assertThat(query.grain()).isEqualTo(TimeGrain.TOTAL);
+              return series(query, value);
             });
     return metrics;
+  }
+
+  private static BigDecimal find(Object[] values, MetricId id) {
+    for (int i = 0; i < values.length; i += 2)
+      if (values[i] == id) return (BigDecimal) values[i + 1];
+    return null;
+  }
+
+  private static BigDecimal ratio(Object[] values, MetricId a, MetricId b) {
+    BigDecimal n = find(values, a), d = find(values, b);
+    return n == null || d == null || d.signum() == 0
+        ? null
+        : n.divide(d, 4, java.math.RoundingMode.HALF_UP);
   }
 
   private static TimeSeriesResult series(MetricQuery query, BigDecimal value) {

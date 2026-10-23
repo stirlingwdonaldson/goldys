@@ -25,7 +25,7 @@ class ProductSalesSeederIntegrationTest {
   @BeforeEach
   void clean() {
     jdbc.update(
-        "truncate table reconciliation_exception, canonical_product_sales, product_sales_override, resolution_rule");
+        "truncate table reconciliation_exception, product_sales_contributor, canonical_product_sales, product_sales_override, resolution_rule");
   }
 
   @Test

@@ -44,10 +44,7 @@ class GetInventorySummaryToolTest {
     assertThat(tool.name()).isEqualTo("get_inventory_summary");
     assertThat(tool.toMetricQueries(new GetInventorySummaryInput(FROM, TO)))
         .extracting(MetricQuery::metric)
-        .contains(
-            MetricId.INVENTORY_PURCHASES,
-            MetricId.INVENTORY_WASTAGE,
-            MetricId.INVENTORY_FOOD_COST_PERCENT);
+        .containsExactly(MetricId.INVENTORY_PURCHASES, MetricId.INVENTORY_WASTAGE);
   }
 
   @Test
@@ -74,8 +71,7 @@ class GetInventorySummaryToolTest {
     assertThat((BigDecimal) widget.rows().get(0).get("inventory.purchases"))
         .isEqualByComparingTo(new BigDecimal("70.00"));
     assertThat(widget.rows().get(0).get("inventory.wastage")).isNull();
-    assertThat((BigDecimal) widget.rows().get(0).get("inventory.food_cost_percent"))
-        .isEqualByComparingTo(new BigDecimal("28.50"));
+    assertThat(widget.rows().get(0)).doesNotContainKey("inventory.food_cost_percent");
     assertThat(result.notices()).isEmpty();
   }
 
@@ -105,7 +101,7 @@ class GetInventorySummaryToolTest {
             id,
             "1",
             new TimeRange(FROM, TO, Calendar.CALENDAR),
-            TimeGrain.DAY,
+            TimeGrain.TOTAL,
             "resolved_inventory_day",
             Instant.EPOCH,
             List.of(),

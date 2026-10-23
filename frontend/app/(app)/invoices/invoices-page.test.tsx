@@ -20,7 +20,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace, back: mocks.back }),
 }));
 
-const headers = [
+const headers: import("@/lib/api/types").InvoiceSummary[] = [
   {
     supplierName: "Paramount Liquor",
     invoiceNumber: "INV-1042",
@@ -136,7 +136,7 @@ describe("InvoicesPage", () => {
     expect(within(sheet).getByText("Invoice line only on the PDF")).toBeInTheDocument();
     expect(within(sheet).getByLabelText("Flagged line")).toBeInTheDocument();
     // 10.00 → 12.50 against the previous invoice.
-    expect(within(sheet).getByText(/25\.0%/)).toBeInTheDocument();
+    expect(within(sheet).getByText(/25%/)).toBeInTheDocument();
     // "BEEF MINCE" repeats the product name, so only CB-1 is shown as a code.
     expect(within(sheet).getByText("CB-1")).toBeInTheDocument();
     expect(within(sheet).queryByText("BEEF MINCE")).not.toBeInTheDocument();
@@ -165,4 +165,15 @@ describe("InvoicesPage", () => {
     const sheet = screen.getByRole("dialog");
     expect(within(sheet).queryByRole("link", { name: "Download" })).not.toBeInTheDocument();
   });
+});
+
+it("selects duplicate invoice numbers by invoice identity", () => {
+  const previous = headers.map(h => ({...h}));
+  try {
+    headers[0] = {...headers[0],invoiceNumber:"SHARED",invoiceId:"10000000-0000-0000-0000-000000000001"};
+    headers[1] = {...headers[1],invoiceNumber:"SHARED",invoiceId:"10000000-0000-0000-0000-000000000002"};
+    render(<InvoicesPage />);
+    fireEvent.click(screen.getAllByText("SHARED")[1]);
+    expect(mocks.push).toHaveBeenCalledWith("/invoices?invoiceId=10000000-0000-0000-0000-000000000002",{scroll:false});
+  } finally { headers.splice(0,headers.length,...previous); }
 });

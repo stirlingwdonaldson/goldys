@@ -1,5 +1,7 @@
 package com.goldys.platform.connectors.ctb;
 
+import com.goldys.platform.ingestion.contract.ContractValidator;
+import com.goldys.platform.ingestion.contract.ContractValidator.HeaderValidation;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,16 +31,47 @@ import org.springframework.stereotype.Component;
 @Component
 public class CtInvoiceCsvParser {
 
-  public List<CtInvoice> parse(byte[] csv) {
+  /** The versioned source dataset contract this parser is bound to. */
+  static final String CONTRACT = "connectors/ctb-invoice-csv.contract.json";
+
+  private static final com.fasterxml.jackson.databind.ObjectMapper OUTPUT_MAPPER =
+      new com.fasterxml.jackson.databind.ObjectMapper()
+          .findAndRegisterModules()
+          .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+  private final ContractValidator validator;
+
+  public CtInvoiceCsvParser() {
+    this(new ContractValidator());
+  }
+
+  public CtInvoiceCsvParser(ContractValidator validator) {
+    this.validator = validator;
+  }
+
+  public ParseResult parse(byte[] csv) {
     List<CSVRecord> records = readAll(csv);
-    if (records.size() < 2) {
+    if (records.isEmpty()) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Invoice CSV is empty");
     }
     Map<String, Integer> columns = columnIndex(records.get(0));
-    require(
-        columns, "Invoice", "Supplier", "Date", "StockCode", "StockDescription", "LineTotalExTax");
+    // Contract-driven schema validation: a missing required column is a failure; an unknown column
+    // is additive drift that is surfaced (never silently discarded) and kept in the raw ledger.
+    HeaderValidation validation =
+        validator.validateHeader(CONTRACT, new ArrayList<>(columns.keySet()));
+    if (!validation.valid()) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH",
+          "Missing required column(s) '"
+              + String.join("', '", validation.missingRequired())
+              + "' in invoice CSV");
+    }
+    // A header-only delivery (no data rows) is a legitimate empty response, not a failure.
+    if (records.size() < 2) {
+      return new ParseResult(List.of(), validation.unknownColumns());
+    }
 
     Map<String, Group> groups = new LinkedHashMap<>();
+    Map<String, String> contexts = new HashMap<>();
     for (int i = 1; i < records.size(); i++) {
       CSVRecord r = records.get(i);
       String description = optionalString(columns, r, "StockDescription");
@@ -46,15 +79,30 @@ public class CtInvoiceCsvParser {
         continue; // header-only / blank row — not a line
       }
       String invoiceNumber = requireValue(columns, r, "Invoice");
+      String supplierCode = optionalString(columns, r, "SupplierCode");
+      String supplierName = requireValue(columns, r, "Supplier");
+      String groupKey = (supplierCode != null ? supplierCode : supplierName) + "::" + invoiceNumber;
+      String context =
+          optionalString(columns, r, "OutletCode")
+              + "|"
+              + optionalString(columns, r, "DocumentType");
+      String previousContext = contexts.putIfAbsent(groupKey, context);
+      if (previousContext != null && !previousContext.equals(context)) {
+        throw new ConnectorFetchException(
+            "AMBIGUOUS_INVOICE_IDENTITY",
+            "Invoice appears in multiple outlet/document contexts; source identity requires review");
+      }
+
       Group g =
           groups.computeIfAbsent(
-              invoiceNumber,
+              groupKey,
               k ->
                   new Group(
-                      requireValue(columns, r, "Supplier"),
+                      supplierCode,
+                      supplierName,
                       optionalString(columns, r, "PONumber"),
                       date(columns, r, "Date"),
-                      k,
+                      invoiceNumber,
                       optionalDate(columns, r, "InvoiceDueDate"),
                       optionalMoney(columns, r, "InvoiceTotalExTax"),
                       optionalMoney(columns, r, "GST"),
@@ -77,6 +125,7 @@ public class CtInvoiceCsvParser {
     for (Group g : groups.values()) {
       out.add(
           new CtInvoice(
+              g.supplierCode,
               g.supplierName,
               g.purchaseNumber,
               g.invoiceDate,
@@ -89,11 +138,18 @@ public class CtInvoiceCsvParser {
               List.copyOf(g.pdfFilenames),
               g.lines));
     }
-    return out;
+    for (CtInvoice invoice : out) {
+      if (!validator.validateOutput(CONTRACT, OUTPUT_MAPPER.valueToTree(invoice)).isEmpty()) {
+        throw new ConnectorFetchException(
+            "CONNECTOR_SCHEMA_MISMATCH", "Normalised invoice violates the source dataset contract");
+      }
+    }
+    return new ParseResult(out, validation.unknownColumns());
   }
 
   /** Header fields captured from the first line row of an invoice, plus its accumulated lines. */
   private static final class Group {
+    final String supplierCode;
     final String supplierName;
     final String purchaseNumber;
     final LocalDate invoiceDate;
@@ -107,6 +163,7 @@ public class CtInvoiceCsvParser {
     final LinkedHashSet<String> pdfFilenames = new LinkedHashSet<>();
 
     Group(
+        String supplierCode,
         String supplierName,
         String purchaseNumber,
         LocalDate invoiceDate,
@@ -116,6 +173,7 @@ public class CtInvoiceCsvParser {
         BigDecimal gstAmount,
         BigDecimal freightAmount,
         BigDecimal incTaxAmount) {
+      this.supplierCode = supplierCode;
       this.supplierName = supplierName;
       this.purchaseNumber = purchaseNumber;
       this.invoiceDate = invoiceDate;
@@ -144,15 +202,6 @@ public class CtInvoiceCsvParser {
       out.put(header.get(i).trim(), i);
     }
     return out;
-  }
-
-  private static void require(Map<String, Integer> columns, String... names) {
-    for (String name : names) {
-      if (!columns.containsKey(name)) {
-        throw new ConnectorFetchException(
-            "CONNECTOR_SCHEMA_MISMATCH", "Missing column '" + name + "' in invoice CSV");
-      }
-    }
   }
 
   private static String get(Map<String, Integer> columns, CSVRecord r, String name) {

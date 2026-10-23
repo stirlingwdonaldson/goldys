@@ -94,6 +94,13 @@ class IngestionRun {
     this.completedAt = Objects.requireNonNull(completedAt, "completedAt");
   }
 
+  /** Stored bytes remain safe, but a later transformation failure cannot remain a clean run. */
+  void processingFailed(IngestionStageKind stage) {
+    if (status == IngestionStatus.RUNNING) return; // Normal completion will read the failure row.
+    status = persistedCount > 0 ? IngestionStatus.PARTIAL : IngestionStatus.FAILED;
+    failureSummary = "Processing failed at " + stage.name();
+  }
+
   private void requireRunning() {
     if (status != IngestionStatus.RUNNING) {
       throw new RunAlreadyCompletedException("Ingestion run " + id + " is already " + status);

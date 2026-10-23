@@ -196,11 +196,20 @@ public class CtbDetailBackfillConnector implements SourceConnector {
   }
 
   private void pullWastageDetail(int wastageRecordId, IngestionSink sink) {
-    writeRaw(
-        client.getWastageRecordDetail(wastageRecordId).json(),
-        "ctb-wastage-detail",
-        "wastage:" + wastageRecordId,
-        sink);
+    int start = 0;
+    int pages = 0;
+    int total = -1;
+    while (pages < MAX_PAGES) {
+      CtbClient.CtbPage page =
+          client.getWastageRecordDetail(wastageRecordId, start, DETAIL_PAGE_SIZE);
+      writeRaw(page.json(), "ctb-wastage-detail", "wastage:" + wastageRecordId, sink);
+      total = page.totalCount();
+      pages++;
+      if (start + DETAIL_PAGE_SIZE >= total) {
+        break;
+      }
+      start += DETAIL_PAGE_SIZE;
+    }
   }
 
   private void pullRecipeIngredients(int recipeId, IngestionSink sink) {

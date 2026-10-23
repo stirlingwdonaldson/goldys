@@ -1,9 +1,19 @@
 package com.goldys.platform.semantic;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
 
-/**
- * Purchases (COGS) and Wine Equalisation Tax grouped by supplier over a period, so liquor-tax
- * accounting and per-supplier spend are visible without reading canonical source rows.
- */
-public record SupplierCogs(String supplier, BigDecimal lineTotal, BigDecimal wetAmount) {}
+/** Known invoice purchases and WET; retained type name for API compatibility. */
+public record SupplierCogs(
+    String supplier,
+    BigDecimal lineTotal,
+    BigDecimal wetAmount,
+    UUID supplierId,
+    int invoiceCount,
+    int invoicesWithoutLines,
+    List<String> notices) {
+  public SupplierCogs(String supplier, BigDecimal total, BigDecimal wet) {
+    this(supplier, total, wet, null, 0, 0, List.of());
+  }
+}

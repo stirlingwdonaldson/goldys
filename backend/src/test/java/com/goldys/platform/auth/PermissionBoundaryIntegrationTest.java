@@ -55,8 +55,9 @@ class PermissionBoundaryIntegrationTest {
   void managerWithOnlyHoursIsDeniedCostAndWages() {
     jdbc.update(
         "insert into permission (id, department, seniority, resource, can_read, can_write) "
-            + "values (gen_random_uuid(), 'FOH', 'MANAGER', 'labour.hours', true, true)");
-    UserRole fohManager = new UserRole(new DepartmentCode("FOH"), new SeniorityCode("MANAGER"));
+            + "values (gen_random_uuid(), 'TEST_HOURS', 'MANAGER', 'labour.hours', true, true)");
+    UserRole fohManager =
+        new UserRole(new DepartmentCode("TEST_HOURS"), new SeniorityCode("MANAGER"));
 
     assertThatCode(
             () ->

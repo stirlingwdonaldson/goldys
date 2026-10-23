@@ -3,6 +3,7 @@ package com.goldys.platform.canonical;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
@@ -15,6 +16,15 @@ interface CanonicalInvoiceLineRepository extends BitemporalRepository<CanonicalI
 
   @Query("select l from CanonicalInvoiceLine l where l.supersededAt is null")
   List<CanonicalInvoiceLine> findAllCurrent();
+
+  /**
+   * Current lines whose parent invoice reference is still unresolved — legacy rows ingested before
+   * the parent-reference column existed. The one-off backfill resolves these from the invoice
+   * number; orphans and ambiguous cases are left null by the caller.
+   */
+  @Query(
+      "select l from CanonicalInvoiceLine l where l.invoiceLogicalId is null and l.supersededAt is null")
+  List<CanonicalInvoiceLine> findCurrentWithNullInvoiceLogicalId();
 
   /** The current lines of one invoice, locked for enrichment. Row order is not significant. */
   @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -53,4 +63,17 @@ interface CanonicalInvoiceLineRepository extends BitemporalRepository<CanonicalI
       "select l from CanonicalInvoiceLine l where l.invoiceNumber = :invoiceNumber "
           + "and l.supersededAt is null and (l.origin is null or l.origin <> 'PDF')")
   List<CanonicalInvoiceLine> findCurrentCsvByInvoiceNumber(String invoiceNumber);
+
+  /**
+   * The current CSV-sourced lines of one invoice entity (by parent logical id), used by the
+   * line-convergence step to close lines a re-ingested export no longer carries.
+   */
+  @Query(
+      "select l from CanonicalInvoiceLine l where l.invoiceLogicalId = :invoiceLogicalId "
+          + "and l.supersededAt is null and (l.origin is null or l.origin <> 'PDF')")
+  List<CanonicalInvoiceLine> findCurrentCsvByInvoiceLogicalId(UUID invoiceLogicalId);
+
+  @Query(
+      "select l from CanonicalInvoiceLine l where l.invoiceLogicalId = :invoiceId and l.supersededAt is null")
+  List<CanonicalInvoiceLine> findCurrentByInvoiceId(UUID invoiceId);
 }

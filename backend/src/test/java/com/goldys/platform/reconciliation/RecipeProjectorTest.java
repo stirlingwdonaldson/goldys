@@ -313,7 +313,7 @@ class RecipeProjectorTest {
   }
 
   @Test
-  void retiredProductYieldsOffMenu() {
+  void retiredProductLeavesAvailabilityUnknown() {
     when(recipeCosts.currentRecipeCosts()).thenReturn(List.of(cost(1, "Parma", "6.00")));
     when(links.currentLinks())
         .thenReturn(List.of(linkWithProduct(1, "Parma", "Mains", "Parma", 1)));
@@ -322,7 +322,7 @@ class RecipeProjectorTest {
 
     projector.recomputeAll();
 
-    assertThat(captured().get(0).menuState()).isEqualTo("OFF_MENU");
+    assertThat(captured().get(0).menuState()).isEqualTo("UNKNOWN");
   }
 
   @Test
@@ -350,11 +350,11 @@ class RecipeProjectorTest {
 
     projector.recomputeAll();
 
-    assertThat(captured().get(0).menuState()).isEqualTo("OFF_MENU");
+    assertThat(captured().get(0).menuState()).isEqualTo("UNKNOWN");
   }
 
   @Test
-  void zeroPriceProductNotOnMenu() {
+  void zeroPriceProductCanBeListed() {
     when(recipeCosts.currentRecipeCosts()).thenReturn(List.of(cost(1, "Parma", "6.00")));
     when(links.currentLinks())
         .thenReturn(List.of(linkWithProduct(1, "Parma", "Mains", "Parma", 3)));
@@ -363,7 +363,7 @@ class RecipeProjectorTest {
 
     projector.recomputeAll();
 
-    assertThat(captured().get(0).menuState()).isEqualTo("OFF_MENU");
+    assertThat(captured().get(0).menuState()).isEqualTo("ON_MENU");
   }
 
   @Test

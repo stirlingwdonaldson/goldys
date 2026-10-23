@@ -1,0 +1,14 @@
+{
+  "command": "./gradlew test spotlessCheck build",
+  "result": "BUILD SUCCESSFUL",
+  "duration": "3m 23s",
+  "suites": 353,
+  "tests": 1624,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 2,
+  "database": "PostgreSQL 16 via isolated Testcontainers",
+  "frontend": "unchanged; not run",
+  "ci": "not run for this branch; push not authorized",
+  "productionReplay": "not performed"
+}

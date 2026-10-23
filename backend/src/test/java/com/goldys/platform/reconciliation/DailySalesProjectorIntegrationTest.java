@@ -36,6 +36,41 @@ class DailySalesProjectorIntegrationTest {
   }
 
   @Test
+  void startupReclassifiesPopulatedHistoryWithoutReplayingCanonicalFacts() {
+    ingest.record(input("LIGHTSPEED", SEP_13, "110.00"));
+    ingest.record(input("CTB", SEP_13, "110.00"));
+    jdbc.update(
+        "update canonical_daily_sales set gst_total=10,net_total=100 where source_system='LIGHTSPEED' and superseded_at is null");
+    jdbc.update(
+        "update canonical_daily_sales set gst_total=0,net_total=110 where source_system='CTB' and superseded_at is null");
+    jdbc.update(
+        "update resolved_daily_sales set resolution_type='agreed',authoritative_source='agreed',has_conflict=false,total_sales=110,gst=10,net_sales=100");
+    int facts = jdbc.queryForObject("select count(*) from canonical_daily_sales", Integer.class);
+    var startup =
+        new StartupProjectionSeeder(
+            projector,
+            org.mockito.Mockito.mock(ProductSalesProjector.class),
+            org.mockito.Mockito.mock(ReservationProjector.class),
+            org.mockito.Mockito.mock(LabourProjector.class),
+            org.mockito.Mockito.mock(InventoryProjector.class),
+            org.mockito.Mockito.mock(PaymentProjector.class),
+            org.mockito.Mockito.mock(DeletedSaleProjector.class),
+            org.mockito.Mockito.mock(SaleItemProjector.class),
+            org.mockito.Mockito.mock(RecipeProjector.class),
+            org.mockito.Mockito.mock(RecipeIngredientProjector.class));
+    startup.run(new org.springframework.boot.DefaultApplicationArguments());
+    var row = resolved.findById(SEP_13).orElseThrow();
+    assertThat(row.hasConflict()).isTrue();
+    assertThat(row.netSales()).isNull();
+    assertThat(jdbc.queryForObject("select count(*) from canonical_daily_sales", Integer.class))
+        .isEqualTo(facts);
+    startup.run(new org.springframework.boot.DefaultApplicationArguments());
+    assertThat(resolved.findById(SEP_13).orElseThrow().netSales()).isNull();
+    assertThat(jdbc.queryForObject("select count(*) from canonical_daily_sales", Integer.class))
+        .isEqualTo(facts);
+  }
+
+  @Test
   void agreeingSourcesResolveWithNoException() {
     ingest.record(input("LIGHTSPEED", SEP_13, "9694.80"));
     ingest.record(input("CTB", SEP_13, "9694.80"));

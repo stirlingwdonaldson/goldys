@@ -1,5 +1,5 @@
 import { Inbox, Package, Receipt, Truck } from "lucide-react";
-import type { ColumnGraph, FlowTone, StepNodeData } from "@/components/flow/types";
+import type { ColumnGraph, StepNodeData } from "@/components/flow/types";
 import type { InvoiceGraphNode, LineGraphNode, SupplierGraphNode } from "@/lib/api/types";
 import { formatCurrency } from "@/lib/format";
 
@@ -38,32 +38,21 @@ function split<T>(items: T[], n: number): { shown: T[]; rest: T[] } {
 
 export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
   const real = input.suppliers
-    .filter((s) => s.name !== UNKNOWN_SUPPLIER)
+    .filter((s) => s.supplierId != null || s.name !== UNKNOWN_SUPPLIER)
     .slice()
     .sort((a, b) => (b.totalSpend ?? -1) - (a.totalSpend ?? -1));
-  const unknown = input.suppliers.find((s) => s.name === UNKNOWN_SUPPLIER);
+  const unknown = input.suppliers.find((s) => s.supplierId == null && s.name === UNKNOWN_SUPPLIER);
 
   const { shown: topSuppliers, rest: restSuppliers } = split(real, SUPPLIER_TOP_N);
 
-  const supplierNodes: { id: string; data: StepNodeData }[] = topSuppliers.map((s) => ({
-    id: `sup:${s.name}`,
-    data: {
-      title: s.name,
-      subtitle: `${formatCurrency(s.totalSpend)} · ${plural(s.invoiceCount, "invoice", "invoices")}`,
-      icon: Truck,
-      tone: (s.invoiceCount > 0 && (s.totalSpend == null || s.totalSpend === 0)
-        ? "missing"
-        : "neutral") as FlowTone,
-      drill: supplierDrillId(s.name),
-    },
-  }));
+  const supplierNodes = topSuppliers.map(supplierNode);
 
   if (restSuppliers.length > 0) {
     supplierNodes.push({
       id: "sup:__other__",
       data: {
         title: `Other ${plural(restSuppliers.length, "supplier", "suppliers")}`,
-        subtitle: formatCurrency(restSuppliers.reduce((sum, s) => sum + (s.totalSpend ?? 0), 0)),
+        subtitle: `Known subtotal ${formatCurrency(knownSubtotal(restSuppliers, s => s.totalSpend))} ex GST`,
         icon: Truck,
         tone: "neutral",
       },
@@ -107,24 +96,14 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
       .sort((a, b) => b.invoiceDate.localeCompare(a.invoiceDate));
     const { shown: topInvoices, rest: restInvoices } = split(sorted, INVOICE_TOP_N);
 
-    const invoiceNodes: { id: string; data: StepNodeData }[] = topInvoices.map((inv) => ({
-      id: `inv:${inv.invoiceNumber}`,
-      data: {
-        title: inv.invoiceNumber,
-        subtitle: `${inv.invoiceDate} · ${formatCurrency(inv.totalAmount)}`,
-        detail: inv.purchaseNumber ?? inv.pdfFilename ?? undefined,
-        icon: Receipt,
-        tone: "neutral",
-        drill: invoiceDrillId(inv.invoiceNumber),
-      },
-    }));
+    const invoiceNodes = topInvoices.map(invoiceNode);
 
     if (restInvoices.length > 0) {
       invoiceNodes.push({
         id: "inv:__other__",
         data: {
           title: `Other ${plural(restInvoices.length, "invoice", "invoices")}`,
-          subtitle: formatCurrency(restInvoices.reduce((sum, i) => sum + (i.totalAmount ?? 0), 0)),
+          subtitle: `Known header subtotal ${formatCurrency(knownSubtotal(restInvoices, i => i.amountExTax))} ex GST`,
           icon: Receipt,
           tone: "neutral",
         },
@@ -138,14 +117,14 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
   }
 
   if (input.focusedInvoice && input.lines) {
-    const deduped = dedupeLines(input.lines);
+    const deduped = input.lines.slice().sort((a, b) => b.lineTotal - a.lineTotal);
     const { shown: topLines, rest: restLines } = split(deduped, LINE_TOP_N);
 
-    const lineNodes: { id: string; data: StepNodeData }[] = topLines.map((l) => ({
-      id: `line:${input.focusedInvoice}:${l.productNameKey ?? l.stockCode ?? "(unnamed)"}`,
+    const lineNodes: { id: string; data: StepNodeData }[] = topLines.map((l, index) => ({
+      id: `line:${input.focusedInvoice}:${index}:${l.productNameKey ?? l.stockCode ?? "(unnamed)"}`,
       data: {
         title: l.productNameKey ?? l.stockCode ?? "(unnamed)",
-        subtitle: `${l.quantity} × ${formatCurrency(l.unitCost)}`,
+        subtitle: `${l.quantity == null ? "Unknown quantity" : l.quantity} × ${formatCurrency(l.unitCost)}`,
         detail: l.uom ?? undefined,
         icon: Package,
         tone: "neutral",
@@ -173,21 +152,25 @@ export function buildInvoiceGraph(input: InvoiceGraphInput): ColumnGraph {
   return { columns, edges };
 }
 
-/** Sums duplicate product keys so a split line can't double-count, then ranks by line total. */
-function dedupeLines(lines: LineGraphNode[]): LineGraphNode[] {
-  const byKey = new Map<string, LineGraphNode>();
-  for (const l of lines) {
-    const key = l.productNameKey ?? l.stockCode ?? "(unnamed)";
-    const existing = byKey.get(key);
-    if (existing) {
-      byKey.set(key, {
-        ...existing,
-        quantity: existing.quantity + l.quantity,
-        lineTotal: existing.lineTotal + l.lineTotal,
-      });
-    } else {
-      byKey.set(key, l);
-    }
-  }
-  return [...byKey.values()].sort((a, b) => b.lineTotal - a.lineTotal);
+function supplierNode(s: SupplierGraphNode): { id: string; data: StepNodeData } {
+  const key = s.supplierId ? "id:" + s.supplierId : s.name;
+  return { id: `sup:${key}`, data: {
+    title: s.name,
+    subtitle: `${formatCurrency(s.totalSpend)} ex GST · ${plural(s.invoiceCount, "invoice", "invoices")}`,
+    detail: s.notices?.join("; "), icon: Truck,
+    tone: s.totalSpend == null ? "missing" : "neutral",
+    drill: supplierDrillId(key),
+  }};
+}
+function invoiceNode(inv: InvoiceGraphNode): { id: string; data: StepNodeData } {
+  const key = inv.invoiceId ? "id:" + inv.invoiceId : inv.invoiceNumber;
+  return {id: `inv:${key}`, data: {
+    title: inv.invoiceNumber, subtitle: `${inv.invoiceDate} · ${formatCurrency(inv.amountExTax)}`,
+    detail: "Source ex-tax header amount; line subtotal may differ", icon: Receipt,
+    tone: "neutral", drill: invoiceDrillId(key),
+  }};
+}
+function knownSubtotal<T>(items: T[], pick: (item: T) => number | null | undefined): number | null {
+  const values = items.map(pick).filter((value): value is number => value != null);
+  return values.length ? values.reduce((sum, value) => sum + value, 0) : null;
 }

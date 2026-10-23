@@ -29,7 +29,7 @@ class CanonicalStockCount extends BitemporalEntity {
   @Column(name = "product_name_key", nullable = false, updatable = false, length = 512)
   private String productNameKey;
 
-  @Column(name = "quantity_on_hand", nullable = false, updatable = false, precision = 14, scale = 4)
+  @Column(name = "quantity_on_hand", updatable = false, precision = 14, scale = 4)
   private BigDecimal quantityOnHand;
 
   @Column(name = "stock_id", updatable = false)
@@ -55,6 +55,13 @@ class CanonicalStockCount extends BitemporalEntity {
 
   @Column(name = "recipe_id", updatable = false)
   private Integer recipeId;
+
+  @Column(name = "header_version_id", updatable = false)
+  private UUID headerVersionId;
+
+  void captureHeaderVersion(UUID version) {
+    this.headerVersionId = version;
+  }
 
   protected CanonicalStockCount() {}
 
@@ -136,10 +143,10 @@ class CanonicalStockCount extends BitemporalEntity {
         recipeId);
   }
 
-  boolean sameFact(StockCountInput input) {
+  boolean sameFact(StockCountInput input, LocalDate effectiveDate) {
     return stocktakeId == input.stocktakeId()
         && lineId == input.lineId()
-        && Objects.equals(countedDate, input.countedDate())
+        && Objects.equals(countedDate, effectiveDate)
         && Objects.equals(productNameKey, input.productNameKey())
         && sameAmount(quantityOnHand, input.quantityOnHand())
         && Objects.equals(stockId, input.stockId())

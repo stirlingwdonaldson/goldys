@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.goldys.platform.semantic.LabourMetric;
 import com.goldys.platform.semantic.LabourMetricsQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
+import com.goldys.platform.semantic.ProductRanking;
 import com.goldys.platform.semantic.TopSeller;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -49,23 +50,28 @@ class RankingServiceTest {
 
   @Test
   void ranksProductsByAmountDelegatingToTopSellers() {
-    when(products.topSellers(FROM, TO, 5))
+    when(products.qualifiedTopSellers(FROM, TO, 5))
         .thenReturn(
-            List.of(
-                new TopSeller("Steak", new BigDecimal("12"), new BigDecimal("540.00"), false),
-                new TopSeller("Wine", new BigDecimal("30"), new BigDecimal("450.00"), true)));
+            new ProductRanking(
+                List.of(
+                    new TopSeller("Steak", new BigDecimal("12"), new BigDecimal("540.00"), false),
+                    new TopSeller("Wine", new BigDecimal("30"), new BigDecimal("450.00"), true)),
+                new MetricCoverage(FROM, TO, List.of(), List.of(FROM), List.of()),
+                List.of("Incomplete subtotal")));
 
     RankedListResult result =
         service.rank(MetricId.PRODUCT_SALES_AMOUNT, Dimension.PRODUCT, RANGE, 5);
 
     assertThat(result.metric()).isEqualTo(MetricId.PRODUCT_SALES_AMOUNT);
+    assertThat(result.notices()).containsExactly("Incomplete subtotal");
+    assertThat(result.provenance().coverage().unresolvedDates()).isNotEmpty();
     assertThat(result.items())
         .containsExactly(
             new MetricRankedItem("Steak", new BigDecimal("540.00"), new BigDecimal("12"), false),
             new MetricRankedItem("Wine", new BigDecimal("450.00"), new BigDecimal("30"), true));
     assertThat(result.provenance().metric()).isEqualTo(MetricId.PRODUCT_SALES_AMOUNT);
     assertThat(result.provenance().range()).isEqualTo(RANGE);
-    verify(products).topSellers(FROM, TO, 5);
+    verify(products).qualifiedTopSellers(FROM, TO, 5);
   }
 
   @Test

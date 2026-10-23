@@ -74,6 +74,7 @@ class ReservationReadModelRepositoryIntegrationTest {
         cancelled,
         noShows,
         walkIns,
+        0,
         "single",
         "OPENTABLE",
         false,

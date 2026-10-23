@@ -52,7 +52,7 @@ class InventoryReportingServiceTest {
   }
 
   @Test
-  void summaryComputesFoodCostPercent() {
+  void summaryPreservesPurchasesButWithdrawsFoodCostPercent() {
     MetricQueryService metrics =
         metricService(
             MetricId.INVENTORY_PURCHASES, new BigDecimal("70.00"),
@@ -66,7 +66,8 @@ class InventoryReportingServiceTest {
     InventoryReportingService.InventorySummary summary = service.summary(OWNER, FROM, TO);
 
     assertThat(summary.purchases()).isEqualByComparingTo(new BigDecimal("70.00"));
-    assertThat(summary.foodCostPercent()).isEqualByComparingTo(new BigDecimal("0.0700"));
+    assertThat(summary.foodCostPercent()).isNull();
+    assertThat(summary.notices()).anyMatch(n -> n.contains("not consumed cost"));
     verify(permissions).require(OWNER, new ResourceKey("inventory.cost"), PermissionAction.READ);
   }
 

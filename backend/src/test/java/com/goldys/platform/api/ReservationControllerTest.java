@@ -53,6 +53,7 @@ class ReservationControllerTest {
                     1,
                     1,
                     2,
+                    0,
                     new BigDecimal("4.0000"),
                     new BigDecimal("0.1000"),
                     new BigDecimal("0.8000"))));
