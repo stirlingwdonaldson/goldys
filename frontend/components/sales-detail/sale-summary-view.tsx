@@ -187,9 +187,9 @@ function SaleSummaryBody({ summary }: { summary: SaleSummary }) {
               primary: l.name,
               secondary: [
                 l.quantity != null && l.unitPrice != null
-                  ? `${formatNumber(l.quantity)} × ${formatCurrency(l.unitPrice)}`
+                  ? `${formatNumber(l.quantity, 6)} × ${formatCurrency(l.unitPrice)}`
                   : l.quantity != null
-                    ? `× ${formatNumber(l.quantity)}`
+                    ? `× ${formatNumber(l.quantity, 6)}`
                     : null,
                 l.category,
               ]

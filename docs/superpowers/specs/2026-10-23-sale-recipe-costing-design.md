@@ -7,7 +7,7 @@ Code baseline: `051d0012dd8666bda09cd26ab11488ef329364c2`.
 
 The sale receipt computes gross margin in the browser from Lightspeed `costIncTax`, without a recipe lookup. Non-null zero is accepted as complete cost. Sale **SP-100 1021082623**, trading date 2026-10-21, contains one $28 Steak Frites and one $15 Swiftsure Sauvignon Blanc glass; both raw POS costs are zero. The receipt therefore claims $43 profit and 100% margin. Across that trading date, 786 of 1,161 current item rows have zero POS cost.
 
-The owner's correction is verified: **recipe 722, `$28 Steak Frites`, exists in the retained CTB recipe catalogue**. It first appears in retained deliveries on 14 October and is present in the latest delivery, `81276941-7cf5-46f6-beea-6bb6bd7a8e90` (23 October). The catalogue response has recipe ID/name only; the owner's BOH / Seasonal menu folder path has not been independently verified.
+The owner's correction is verified: **recipe 722, `$28 Steak Frites`, exists in the retained CTB recipe catalogue**. It first appears in retained deliveries on 15 October Melbourne time (14 October UTC) and is present in the latest delivery, `81276941-7cf5-46f6-beea-6bb6bd7a8e90` (23 October). The catalogue response has recipe ID/name only; the owner's BOH / Seasonal menu folder path has not been independently verified.
 
 There are **zero** canonical cost versions, canonical ingredient versions, raw ingredient deliveries (`recipe:722`) or resolved recipe rows for 722. The only `ctb-recipe-cost` delivery is from 12 October (`6e460748-1f1f-483a-9f5e-f860025cf4ce`), before 722 appears in retained catalogues. This is an ongoing-detail-ingestion gap, separate from the sale-margin bug. `CtbConnector.fetch` refreshes recipe names but neither costs nor ingredients; the detail connector is a one-off backfill. `RecipeProjector` iterates cost records, so catalogue-only recipes never enter `resolved_recipe`.
 
@@ -79,3 +79,13 @@ Acceptance examples: exact special resolves to 722; wine resolves to 57; missing
 Recipe 722 cost/ingredients/tax units and folder hierarchy have not been fetched live. Happy-hour representation is unverified. Historical effective recipe costs are unavailable from current retained evidence. Adjustment multirow semantics need a measured preservation rule. These gate their dependent implementation, not the independent metric-containment/payment work.
 
 No new dependencies, AI tools, global metric catalogue entry, fuzzy matcher, general overrides UI, automatic CTB writes, card-brand enrichment, production scheduler toggle or deployment is included. Architecture source: `docs/system-context.md`, `.claude/rules/architecture-invariants.md`, `docs/architecture/current-state.md`. Source reality: `docs/connectors/source-access.md`; extend `matching-and-identity.md` when the resolution rule is implemented.
+
+## Superseding owner decision (23 October 2026)
+
+The owner subsequently instructed us to assume CTB cost per portion excludes GST and make this
+easy to change. Individual-sale estimated GP/margin is therefore enabled with the explicit
+`CTB_RECIPE_COSTS_EXCLUDE_GST=true` assumption. Setting false withholds GP/margin without hiding
+observed recipe costs. Use reported final ex-GST revenue, or final amount minus reported tax for
+older rows; do not assume a GST rate when tax is missing. Show the assumption next to estimated
+margin, retain freshness/coverage qualifications and keep historical actual-cost claims withheld.
+This supersedes the earlier numerical-margin tax-basis gate; the source basis remains unverified.

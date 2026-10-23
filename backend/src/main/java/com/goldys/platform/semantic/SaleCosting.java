@@ -5,7 +5,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Current recipe observations, not historical actual COGS. Unverified ratios remain unavailable.
+ * Current recipe observations, not historical actual COGS. Ratios identify the configured tax-basis
+ * assumption.
  */
 public record SaleCosting(
     List<Line> lines,
@@ -13,7 +14,8 @@ public record SaleCosting(
     BigDecimal recipeCost,
     BigDecimal grossProfit,
     BigDecimal margin,
-    String qualification) {
+    String qualification,
+    String recipeCostTaxBasis) {
   public record Line(
       String receiptLineId,
       String itemName,

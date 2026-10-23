@@ -899,6 +899,7 @@ export interface SaleCosting {
   grossProfit: number | string | null;
   margin: number | string | null;
   qualification: string;
+  recipeCostTaxBasis: "ASSUMED_EX_GST" | "UNVERIFIED";
 }
 
 export interface SaleItemRow {

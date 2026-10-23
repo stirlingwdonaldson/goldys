@@ -2057,7 +2057,7 @@ export const demoApi: Api = {
         costObservedAt: s.receiptLineId === "LINE-3" ? "2026-10-05T04:00:00Z" : null,
         costSource: s.receiptLineId === "LINE-3" ? "CTB complete refresh" : null,
         status: s.receiptLineId === "LINE-3" ? "STALE_COST" : "UNMATCHED" }));
-    return { lines, complete: false, recipeCost: null, grossProfit: null, margin: null, qualification: "INCOMPLETE_COSTING" };
+    return { lines, complete: false, recipeCost: null, grossProfit: null, margin: null, qualification: "INCOMPLETE_COSTING", recipeCostTaxBasis: "ASSUMED_EX_GST" };
   },
 
   async listSaleItems(

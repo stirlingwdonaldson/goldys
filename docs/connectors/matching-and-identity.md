@@ -446,7 +446,9 @@ Measured against 21 October's 1,161 current sale lines and the retained 23 Octob
 ambiguous/inactive links. The catalogue has 11 normalized-name collision keys; the special's
 exact-name candidate is uniquely 722. These counts establish matching coverage, not cost
 completeness or historical effective cost. Source costs retain observation date and freshness;
-unknown tax/effective bases do not establish profit or gross margin.
+individual-sale margins explicitly assume ex-GST recipe costs on the owner's 23 October
+instruction. `CTB_RECIPE_COSTS_EXCLUDE_GST=false` withdraws that assumption and withholds ratios.
+Current recipe costs still do not establish historical actual COGS.
 
 The sale-item parser retains final tax-exclusive revenue, pre-adjustment gross, signed aggregate
 adjustment amounts, type/reason/level and promotion name in an optional `adjustment` object.

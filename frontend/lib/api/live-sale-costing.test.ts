@@ -10,7 +10,7 @@ it("sends the exact sale number and date scope and preserves null margin", async
     const q = new URL(request.url).searchParams;
     expect(q.get("saleNumber")).toBe("SP-100 1021082623");
     expect(q.get("from")).toBe("2026-10-21"); expect(q.get("to")).toBe("2026-10-21");
-    return HttpResponse.json({lines:[],complete:false,recipeCost:null,grossProfit:null,margin:null,qualification:"INCOMPLETE_COSTING"});
+    return HttpResponse.json({lines:[],complete:false,recipeCost:null,grossProfit:null,margin:null,qualification:"INCOMPLETE_COSTING",recipeCostTaxBasis:"ASSUMED_EX_GST"});
   }));
   expect((await liveApi.getSaleCosting("SP-100 1021082623","2026-10-21","2026-10-21")).margin).toBeNull();
 });

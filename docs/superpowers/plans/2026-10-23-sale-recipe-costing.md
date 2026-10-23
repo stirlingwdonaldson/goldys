@@ -5,7 +5,7 @@ Design: [sale-recipe-costing-design](../specs/2026-10-23-sale-recipe-costing-des
 
 ## Confirmed starting point
 
-Raw catalogue contains recipe **722 `$28 Steak Frites`**, from 14 October onwards. It has no cost/ingredient delivery and no canonical cost or resolved recipe row. The current source sale link remains unassigned. Fix **recurring recipe details**, **sale association**, and **margin arithmetic** as distinct defects; never substitute recipe 710 or 706.
+Raw catalogue contains recipe **722 `$28 Steak Frites`**, from 15 October Melbourne time (14 October UTC) onwards. It has no cost/ingredient delivery and no canonical cost or resolved recipe row. The current source sale link remains unassigned. Fix **recurring recipe details**, **sale association**, and **margin arithmetic** as distinct defects; never substitute recipe 710 or 706.
 
 Evidence: latest catalogue raw ID `81276941-7cf5-46f6-beea-6bb6bd7a8e90`; cost snapshot `6e460748-1f1f-483a-9f5e-f860025cf4ce`; unassigned link `a8bf328b-a31e-45c4-b060-79fda985ff24`; example item report `e1b13f9e-39c3-4971-80f3-fa35d977d2d4`; payment report `9c96e847-70a7-4b30-9b25-7e4753061943`.
 
@@ -108,3 +108,9 @@ line prices are displayed with qualifications. Source adjustment retention, dupl
 card mode display and the reported sale regressions are implemented. Historical enrichment replay
 is deliberately not automated: the existing replay has no newer-source guard for this repair.
 See `docs/operations/sale-costing-rollout.md` for the bounded rollout and remaining source gates.
+
+The owner's final tax-basis decision authorizes assuming CTB costs exclude GST.
+`CTB_RECIPE_COSTS_EXCLUDE_GST` defaults true and false withdraws the assumption. The receipt
+labels numerical results estimated and shows the assumption; missing/stale costs, missing tax
+revenue and zero denominators remain explicit. This supersedes the earlier “numerical margin
+remains null” implementation note. See the rollout document's assumption decision.

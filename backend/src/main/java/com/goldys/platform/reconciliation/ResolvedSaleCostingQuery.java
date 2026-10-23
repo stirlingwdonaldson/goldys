@@ -4,8 +4,10 @@ import com.goldys.platform.semantic.RecipeMetricsQuery;
 import com.goldys.platform.semantic.SaleCosting;
 import com.goldys.platform.semantic.SaleCostingQuery;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -20,10 +22,15 @@ public class ResolvedSaleCostingQuery implements SaleCostingQuery {
   private static final int MAX_LINES = 10000;
   private final JdbcTemplate jdbc;
   private final RecipeMetricsQuery recipes;
+  private final boolean costsExcludeGst;
 
-  public ResolvedSaleCostingQuery(JdbcTemplate jdbc, RecipeMetricsQuery recipes) {
+  public ResolvedSaleCostingQuery(
+      JdbcTemplate jdbc,
+      RecipeMetricsQuery recipes,
+      @Value("${ctb.recipes.costs-exclude-gst:true}") boolean costsExcludeGst) {
     this.jdbc = jdbc;
     this.recipes = recipes;
+    this.costsExcludeGst = costsExcludeGst;
   }
 
   @Override
@@ -42,7 +49,7 @@ public class ResolvedSaleCostingQuery implements SaleCostingQuery {
         jdbc.query(
             """
         select receipt_line_id, item_name, quantity_sold, amount,
-               (adjustment->>'finalExTax')::numeric as revenue_ex_tax from resolved_sale_line
+               coalesce((adjustment->>'finalExTax')::numeric, amount - total_tax) as revenue_ex_tax from resolved_sale_line
         where sale_number=? and trading_date between ? and ?
         order by trading_date, receipt_line_id limit ?
         """,
@@ -58,6 +65,10 @@ public class ResolvedSaleCostingQuery implements SaleCostingQuery {
             from,
             to,
             MAX_LINES + 1);
+    return summarise(lines, costsExcludeGst);
+  }
+
+  private static SaleCosting summarise(List<SaleCosting.Line> lines, boolean costsExcludeGst) {
     boolean complete =
         !lines.isEmpty()
             && lines.size() <= MAX_LINES
@@ -68,16 +79,33 @@ public class ResolvedSaleCostingQuery implements SaleCostingQuery {
                 .map(SaleCosting.Line::recipeCost)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
             : null;
-    // Source tax/effective cost bases remain unverified; never manufacture historical actual GP.
+    boolean revenueKnown = lines.stream().allMatch(l -> l.revenueExTax() != null);
+    BigDecimal revenue =
+        revenueKnown
+            ? lines.stream()
+                .map(SaleCosting.Line::revenueExTax)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+            : null;
+    // Owner assumption (23 Oct 2026): CTB costs exclude GST; margins are current-recipe estimates.
+    BigDecimal profit =
+        complete && costsExcludeGst && revenueKnown ? revenue.subtract(total) : null;
+    BigDecimal margin =
+        profit != null && revenue.signum() != 0
+            ? profit.divide(revenue, 8, RoundingMode.HALF_UP)
+            : null;
+    String qualification = "EX_GST_COST_ASSUMED";
+    if (!complete) qualification = "INCOMPLETE_COSTING";
+    else if (!costsExcludeGst) qualification = "TAX_BASIS_UNVERIFIED";
+    else if (!revenueKnown) qualification = "REVENUE_MISSING";
+    else if (revenue.signum() == 0) qualification = "ZERO_NET_REVENUE";
     return new SaleCosting(
         lines.stream().limit(MAX_LINES).toList(),
         complete,
         total,
-        null,
-        null,
-        lines.size() > MAX_LINES
-            ? "SALE_TOO_LARGE"
-            : complete ? "TAX_BASIS_UNVERIFIED" : "INCOMPLETE_COSTING");
+        profit,
+        margin,
+        lines.size() > MAX_LINES ? "SALE_TOO_LARGE" : qualification,
+        costsExcludeGst ? "ASSUMED_EX_GST" : "UNVERIFIED");
   }
 
   private static SaleCosting.Line cost(
@@ -93,6 +121,10 @@ public class ResolvedSaleCostingQuery implements SaleCostingQuery {
     String status = match.status();
     if (r != null) {
       if (quantity == null || unit == null || unit.signum() < 0) status = "COST_MISSING";
+      else if (quantity.signum() != 0
+          && revenueIncTax != null
+          && revenueIncTax.signum() != 0
+          && quantity.signum() != revenueIncTax.signum()) status = "QUANTITY_REVENUE_MISMATCH";
       else if (r.capturedAt() == null) status = "COST_DATE_UNKNOWN";
       else if (r.stale()) status = "STALE_COST";
       else status = "CURRENT_RECIPE_ESTIMATE";
