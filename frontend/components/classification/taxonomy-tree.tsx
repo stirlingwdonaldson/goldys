@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Folder, Tag } from "lucide-react";
 import { FlowCanvas } from "@/components/flow/flow-canvas";
-import { layoutTree, type TreeNode } from "@/components/flow/layout";
+import { layoutTree, NODE_HEIGHT, type TreeNode } from "@/components/flow/layout";
 import { EmptyState } from "@/components/states/empty-state";
 import type { CategoryNode } from "@/lib/api";
 
@@ -76,12 +76,12 @@ export function buildTaxonomyTree(categories: CategoryNode[]): TreeNode[] {
 }
 
 /**
- * The curated taxonomy, drawn top-down: flat categories beside the groups, categories
- * nested under their group. Clicking a category drills into it (the page shows that
+ * The curated taxonomy, drawn left-to-right: flat categories beside the groups, categories
+ * following their group. Clicking a category drills into it (the page shows that
  * category's products).
  */
-export function TaxonomyTree({ categories, onDrill, height = 420 }: TaxonomyTreeProps) {
-  const laid = useMemo(() => layoutTree(buildTaxonomyTree(categories)), [categories]);
+export function TaxonomyTree({ categories, onDrill, height }: TaxonomyTreeProps) {
+  const laid = useMemo(() => layoutTree(buildTaxonomyTree(categories), { direction: "horizontal", rootGap: 0 }), [categories]);
 
   if (categories.length === 0) {
     return (
@@ -97,7 +97,7 @@ export function TaxonomyTree({ categories, onDrill, height = 420 }: TaxonomyTree
       laidOut={laid}
       ariaLabel="Product taxonomy: groups and categories, with product counts"
       onDrill={onDrill}
-      height={height}
+      height={height ?? Math.max(420, Math.min(720, Math.max(...laid.nodes.map(node => node.position.y + NODE_HEIGHT)) + 96))}
     />
   );
 }

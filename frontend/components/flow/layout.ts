@@ -193,7 +193,7 @@ function childEdge(source: string, target: string, tone: FlowTone): FlowEdge {
  */
 export function layoutTree(
   roots: TreeNode[],
-  options: { direction?: "horizontal" | "vertical" } = {},
+  options: { direction?: "horizontal" | "vertical"; rootGap?: number } = {},
 ): { nodes: FlowNode[]; edges: FlowEdge[] } {
   const vertical = options.direction !== "horizontal";
   const crossSize = vertical ? NODE_WIDTH : NODE_HEIGHT;
@@ -232,8 +232,8 @@ export function layoutTree(
 
   for (const root of roots) {
     place(root, 0, false);
-    // Leave one empty slot between sibling roots so their subtrees don't run together.
-    slot.value += 1;
+    // Default to one empty slot between roots; compact callers can omit that space.
+    slot.value += (options.rootGap ?? crossSize + TREE_SIBLING_GAP) / (crossSize + TREE_SIBLING_GAP);
   }
 
   return { nodes, edges };

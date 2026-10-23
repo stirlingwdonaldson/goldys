@@ -13,7 +13,6 @@ import { FocusSwitcher } from "@/components/my-work/work-list";
 import { useFocus, useWorkQueue } from "@/components/my-work/use-work-queue";
 import { filterByFocus } from "@/lib/work-queue";
 import { BusinessKpiGrid } from "@/components/dashboard/business-kpi-grid";
-import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { TopSellers } from "@/components/dashboard/top-sellers";
 import { SalesTrend } from "@/components/dashboard/sales-trend";
 import { PageHeader } from "@/components/layout/page-header";
@@ -66,9 +65,8 @@ export default function DashboardPage() {
         topSellers={data.topSellers.items}
       />
 
-      <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <section>
         <SalesTrend points={data.salesTrend.points} notices={data.salesTrend.notices} provenance={data.salesTrend.provenance} />
-        <ActivityChart points={data.activity} />
       </section>
 
       <TopSellers items={data.topSellers.items} notices={data.topSellers.notices} coverage={data.topSellers.coverage} />
