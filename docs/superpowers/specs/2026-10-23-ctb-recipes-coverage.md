@@ -1,75 +1,97 @@
-# CTB recipe evidence and verification
+# CTB recipe implementation evidence and verification
 
-## Captured response coverage
+## Real capture coverage
 
-The sanitized three-HAR corpus contains 19 complete recipe captures across 18
-source recipe IDs: 41 direct stock lines and 15 explicit sub-recipe usages.
-`CtbRecipeDefinitionParserTest` parsed all 19 captures, rejecting none and dropping
-no lines. Summed direct-stock plus explicit usage contributions match each source
-header total within an absolute currency tolerance of 0.01. This checks reported
-component reconciliation, not independently verified supplier price/cost bases.
+The original three HARs supply 19 complete captures across 18 recipe IDs, with 41 direct
+stock lines and 15 explicit sub-recipe usages. All parse successfully; no lines are dropped.
+Reported direct-stock plus usage contributions reconcile to source header totals within 0.01.
+This verifies source arithmetic, not independently evidenced supplier cost/tax bases.
 
-Examples include negative stock deductions (651), negative sub-recipe deductions
-(649, 643), nested recipe reuse (464→463→462), a 15-portion batch (696), a six-litre
-batch (451), a questionable ten-kilogram Crumb mix usage (645), and duplicate names
-with distinct IDs (719 and 721). Source values are preserved in each case.
+The later sanitised survey supplies five endpoints for all 670 catalogue recipe IDs:
+3350 unique recipe/endpoint pairs, 3372 responses including repeats. The actual parser accepts
+all 3372 responses. It preserves selected dietary states and extracts method text without
+markup. There are 24 unique recipes with visible method text, including source stock-export
+descriptions; no automatic summary discards those descriptions. Two recipes have dietary
+selections. Lookups contain ten dietary requirements, 23 allergens and 17 equipment choices.
+The supplied gzip fixture has zero login requests, cookie records or authentication headers.
 
-## Live access proof
+The [field checklist](2026-10-23-ctb-recipe-field-coverage.md) accounts for 129 distinct supplied
+business scalar paths across ten section families. Field paths accompany displayed values;
+account/approval-user objects and permission flags are excluded from business display.
+Original bytes, metadata and hashes remain available through authorised raw evidence access.
 
-On 2026-10-23 `CtbRecipeLiveAccessTest` authenticated through the real Java CtbClient,
-read and parsed recipe 696's three detail responses, and traversed all 112 folders,
-observing 2342 explicit outlet allocation rows. The opt-in test passed with no skip.
-Credentials were entered through hidden terminal input, passed only in process
-memory, and excluded from fixture files, logs and configuration cache.
+## Live source validation on 23 October 2026
 
-The 27 inspected HAR folder responses are partial browser navigation, not a complete catalog. Six representative responses from the second walkthrough are retained as regression fixtures.
-The parser tests correctly refuse to promote those partial walks to a full catalog.
-Live source data was read only; no production database or deployment was changed.
+The authenticated Java client fetched and parsed complete compositions for **670/670** listed
+recipes: header, direct stock lines and explicit usages. The local audit CSV records every
+recipe ID/name and completion status. Of those, 637 appeared in the folder traversal and 33
+did not; this is why the recipe list, rather than visited folders, drives full collection.
+See [the complete source coverage CSV](2026-10-23-ctb-recipe-live-coverage.csv).
+
+The live Gradle harness encountered an EOF reporting failure after writing the complete CSV
+because two test tasks shared the same output directory. This is not claimed as a successful
+JUnit live-audit run. The coverage rows themselves record 670 completed parser results and
+zero source failures. Subsequent final backend verification runs serially.
+
+A separate read-only proof using the compiled client successfully fetched and parsed all
+eleven optional sections for recipe 377 plus the 17-choice equipment lookup. Each response
+was HTTP 200. Its output is `/tmp/goldys-recipe-optional-live.log`; the proof completed at
+2026-10-23 08:10 UTC. Earlier access proof also traversed 112 folders and 2342 explicit outlet
+allocation rows; allocation rows are not a count of unique recipes.
+
+Credentials were entered through hidden input, held in process memory, excluded from fixture
+files and configuration caching. Live validation did not write to CTB or the production database.
+
+## Behaviour and source selection
+
+- Catalogue-only recipes remain visible with missing details and unknown costs.
+- Header/direct-stock/usage observations replace owned lines atomically; removals retain history.
+- Optional sections have independent success/failure histories. Failed refreshes retain previous
+  successful values and their original capture times. Older/repeated replays cannot inflate freshness.
+- Compatible legacy reported costs compete by original capture time; complete structure retains
+  precedence over flattened ingredients. Catalogue names do not establish cost freshness.
+- Source evidence reaches resolved/API data: capture/run/raw IDs, hashes, source dataset, endpoint
+  or legacy report identity, field paths, and contributing POS entity references. Raw references
+  require connectors READ in addition to recipe domain permissions.
+- Parent/child recipe navigation uses CTB IDs. Reverse lookup uses an indexed resolved usage query.
+  Recursive calculation evidence includes descendant capture references. No inferred name matching
+  is introduced; existing POS name/modal-value associations remain explicitly qualified.
+- Methods are plain text extracted with the JDK parser. Paragraphs, ordered lists and entity text
+  survive; script/style content and formatting do not enter the DOM. Raw source bytes are unchanged.
+- Existing recipe tax/cost basis qualifications remain in force; incomparable derived GP/cost-gap
+  figures stay unavailable. Reported CTB GP remains labelled as a source figure.
 
 ## Scope limits
 
-Many sub-recipes are referenced but their own headers are not opened in the HARs.
-Their absence yields qualified/incomplete recursive estimates, not fabricated costs.
-Parser tests verify all source-reported contributions. Recursive calculation tests
-use captured values plus explicitly labeled synthetic graph mutations to exercise
-scaling, negative usage, missing children and cycles. These synthetic scenarios are
-not presented as source discovery.
+No populated equipment or ingredient-method schema was observed. Unexpected populated rows are
+retained raw with an explicit unsupported-state failure; no fabricated parser claims coverage.
+Nutrition was zero throughout the survey. CTB screenshots show per-serving/per-100g displays,
+but the response does not establish the basis. Unchecked allergens do not establish absence.
+Recipe-fact and ingredient-method modes were sampled; archived/deleted recipes and other outlets
+were not enumerated. No automatic dietary suitability or recipe editing is implemented.
 
-Optional methods/equipment/notes are empty; nutrition is zero and dietary/allergen
-selections unchecked. Those endpoints remain outside this implementation, and no
-dietary suitability is inferred.
+## Final verification
 
-## Concurrency and rollout
+`./gradlew spotlessApply test spotlessCheck` passed: 1672 tests across 369 suites, zero failures/errors and 4 opt-in tests skipped.
+`bun run typecheck && bun run lint && bun run test && bun run build` passed: 653 tests
+across 115 files, with the `/recipes/[recipeId]` route included in the completed production build.
+`git diff --check` passed. Browser checks use a local demo server
+and mocked owner session, not production authentication. Desktop and 390px mobile checks verify
+plain text, child → parent navigation, no horizontal overflow and no browser runtime errors.
 
-Work is isolated on codex/ctb-recipe-integration. Concurrent wastage, source recovery
-and UI PRs landed during implementation; the branch must include their latest main
-before its final gate. V99 belongs to wastage; complete recipe snapshots use V100.
-Refresh/replay default off. Enabling scheduled collection, production backfill,
-pushing, CI and deployment are separate operations and are not claimed here.
+Ripwire reports remain non-clean. The two introduced pre-existing method complexity regressions
+(capture and overlay) were simplified; RecipeProjector grows from complexity 18 to 21 (minor).
+Remaining findings include framework/route/test entry points reported as unused, structural
+mapping/record duplication, contract arity, class growth and edit churn. They were reviewed,
+not blanket-suppressed. No static-analysis-clean claim is made.
 
-## Final local gates
+## Concurrent work and rollout
 
-Verified after rebasing onto `8d6fa0a` (merged wastage, ingestion recovery and UI work):
+The isolated worktree includes current main `051d0012` (#208–#210), including native React Query,
+cancellation, source coverage and ingredient qualification changes. V100 belongs to #210;
+unshipped complete snapshots use V101 and sections/evidence V102. The connector monitor allows
+120 minutes when complete recipes are enabled (30 minutes otherwise), because the default pacing
+alone puts the full 670 × 14-request refresh beyond the old 30-minute monitoring threshold.
 
-- `./gradlew test spotlessCheck`: successful. JUnit reports 1655 tests across
-  363 suites, zero failures/errors and three opt-in tests skipped in the default run.
-- `bun run typecheck && bun run lint && bun run test && bun run build`: successful,
-  638 tests across 110 Vitest files and a completed production build.
-- Focused controller/live-API tests verify the HTTP 204 missing-snapshot contract.
-- PostgreSQL integration tests verify complete-snapshot replacement, retained history,
-  older/repeated replay, and a PARTIAL connector run retaining HTTP failure bytes
-  while refreshing another recipe.
-- The Compose YAML parses with collection/replay defaulting off; no production
-  Compose command was executed and no real environment file was read.
-
-Ripwire contract checks found the existing connector fetch and recipe costing
-method contracts unchanged. Its branch quality report remains non-clean: it flags
-Spring interface implementations as unused and structural duplication among typed
-query/record mappings and endpoint wrappers, plus growth in CtbClient. The explicit
-getters retain the shared authenticated client and normal adapter structure. These
-findings were reviewed, not blanket-suppressed; no static-analysis clean claim is
-made. The test-gate's named tests were covered by the complete backend suite; its
-name-based graph is not proof of exhaustive runtime coverage.
-
-No push, PR, CI watch, production migration/backfill or deployment was performed.
-Optional recipe methods/equipment/notes/nutrition/dietary features remain deferred.
+Collection/replay remain disabled by default. No push, PR, CI, production migration, production
+backfill, source write or deployment has been performed by this task.

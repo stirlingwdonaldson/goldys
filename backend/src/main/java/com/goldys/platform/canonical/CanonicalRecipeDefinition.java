@@ -60,6 +60,7 @@ class CanonicalRecipeDefinition extends BitemporalEntity {
         header.toValue(),
         stocks.stream().map(RecipeStockFact::toValue).toList(),
         usages.stream().map(RecipeUsageFact::toValue).toList(),
-        validFrom());
+        validFrom(),
+        List.of(rawRecordId(), stocksRawRecordId, usagesRawRecordId));
   }
 }

@@ -58,7 +58,8 @@ class DailySalesProjectorIntegrationTest {
             org.mockito.Mockito.mock(SaleItemProjector.class),
             org.mockito.Mockito.mock(RecipeProjector.class),
             org.mockito.Mockito.mock(RecipeIngredientProjector.class),
-            org.mockito.Mockito.mock(RecipeDefinitionProjector.class));
+            org.mockito.Mockito.mock(RecipeDefinitionProjector.class),
+            org.mockito.Mockito.mock(RecipeSectionProjector.class));
     startup.run(new org.springframework.boot.DefaultApplicationArguments());
     var row = resolved.findById(SEP_13).orElseThrow();
     assertThat(row.hasConflict()).isTrue();

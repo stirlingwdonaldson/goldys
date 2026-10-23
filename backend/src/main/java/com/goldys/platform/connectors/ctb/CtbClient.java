@@ -161,6 +161,23 @@ public class CtbClient {
             form("recipeId", String.valueOf(recipeId))));
   }
 
+  public RecipeResponse getRecipeSection(int recipeId, String section) {
+    String endpoint = CtbRecipeRefresh.sectionEndpoint(section);
+    String body = form("recipeId", String.valueOf(recipeId));
+    if (section.equals("EQUIPMENT")) body += "&" + form("keyword", "", "start", "0", "limit", "50");
+    else if (section.equals("DIETARY") || section.equals("ALLERGENS"))
+      body += "&" + form("isSortByName", "true");
+    else if (!section.equals("NUTRITION") && !section.equals("INGREDIENT_METHODS"))
+      body += "&" + form("recipeFactType", section);
+    return recipeResponse(endpoint, post(endpoint, body));
+  }
+
+  public RecipeResponse getRecipeEquipmentOptions() {
+    return recipeResponse(
+        "Equipment/SearchEquipments",
+        post("/Equipment/SearchEquipments", form("keyword", "", "start", "0", "limit", "1000")));
+  }
+
   public RecipeResponse getRecipeFolder(int folderId) {
     return recipeResponse(
         "RecipeFolder/GetTreeItemsUnderRecipeFolder",

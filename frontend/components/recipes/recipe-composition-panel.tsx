@@ -1,15 +1,18 @@
 "use client";
 
-import { useApiData } from "@/lib/use-api-data";
+import Link from "next/link";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 
 export function RecipeCompositionPanel({ recipeId }: { recipeId: number }) {
-  const result = useApiData((api) => api.getRecipeComposition(recipeId), [recipeId]);
-  if (result.loading) return <LoadingState rows={2} />;
-  if (result.error) {
-    return <ErrorState title="Couldn't load recipe details" message={result.error.message} onRetry={result.reload} />;
+  const api=useApi();
+ const result=useQuery({queryKey:["getRecipeComposition",recipeId],queryFn:({signal})=>api.getRecipeComposition(recipeId,{signal})});
+  if (result.isPending) return <LoadingState rows={2} />;
+  if (result.isLoadingError) {
+    return <ErrorState title="Couldn't load recipe details" message={result.error.message} onRetry={result.refetch} />;
   }
   const data = result.data;
   if (!data) return <p className="text-sm text-muted-foreground">Complete recipe details have not been received yet.</p>;
@@ -32,16 +35,16 @@ export function RecipeCompositionPanel({ recipeId }: { recipeId: number }) {
         <div><dt className="text-muted-foreground">Difference from CTB</dt><dd>{formatCurrency(data.difference)}</dd></div>
         <div><dt className="text-muted-foreground">Allocated outlets</dt><dd>{outletIds.join(", ") || "None recorded"}</dd></div>
       </dl>
-      {header.description ? <p>{header.description}</p> : null}
+      {header.description ? <p className="whitespace-pre-wrap">{header.description}</p> : null}
       {header.menuDescription ? <p>{header.menuDescription}</p> : null}
-      {header.hints ? <p>{header.hints}</p> : null}
+      {header.hints ? <p className="whitespace-pre-wrap">{header.hints}</p> : null}
       {data.definition.usages.length > 0 ? (
         <div>
           <h3 className="mb-1 font-medium">Sub-recipe usage</h3>
           <ul className="list-inside list-disc">
             {data.definition.usages.map((usage) => (
               <li key={usage.lineId}>
-                {usage.name ?? "Unnamed recipe"}: {formatNumber(usage.quantity, 4)} {usage.unit ?? "—"}
+                <Link className="underline" href={`/recipes/${usage.recipeId}`}>{usage.name ?? "Unnamed recipe"}</Link>: {formatNumber(usage.quantity, 4)} {usage.unit ?? "—"}
                 {" from a "}{formatNumber(usage.originalPortionSize, 4)} {usage.originalUnit ?? "—"} yield
                 {" · CTB contribution "}{formatCurrency(usage.cost)}
               </li>

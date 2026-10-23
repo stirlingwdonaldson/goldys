@@ -8,4 +8,16 @@ import java.time.LocalDate;
  * each recipe with its Lightspeed price and actual cost.
  */
 public record SaleItemPriceView(
-    String itemName, BigDecimal soldPriceIncTax, BigDecimal costIncTax, LocalDate tradingDate) {}
+    String itemName,
+    BigDecimal soldPriceIncTax,
+    BigDecimal costIncTax,
+    LocalDate tradingDate,
+    com.goldys.platform.semantic.RecipeEvidence evidence) {
+  public SaleItemPriceView(
+      String itemName,
+      java.math.BigDecimal soldPriceIncTax,
+      java.math.BigDecimal costIncTax,
+      java.time.LocalDate tradingDate) {
+    this(itemName, soldPriceIncTax, costIncTax, tradingDate, null);
+  }
+}

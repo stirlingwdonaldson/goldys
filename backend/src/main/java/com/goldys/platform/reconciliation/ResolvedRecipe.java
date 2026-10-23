@@ -70,6 +70,56 @@ class ResolvedRecipe {
   @Column(name = "resolved_at", nullable = false)
   private Instant resolvedAt;
 
+  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+  @Column(nullable = false)
+  private java.util.List<com.goldys.platform.semantic.RecipeEvidence> costEvidence =
+      java.util.List.of();
+
+  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+  @Column(nullable = false)
+  private java.util.List<com.goldys.platform.semantic.RecipeEvidence> priceEvidence =
+      java.util.List.of();
+
+  java.util.List<com.goldys.platform.semantic.RecipeEvidence> costEvidence() {
+    return costEvidence;
+  }
+
+  java.util.List<com.goldys.platform.semantic.RecipeEvidence> priceEvidence() {
+    return priceEvidence;
+  }
+
+  void evidence(
+      java.util.List<com.goldys.platform.semantic.RecipeEvidence> cost,
+      java.util.List<com.goldys.platform.semantic.RecipeEvidence> price) {
+    costEvidence = cost;
+    priceEvidence = price;
+  }
+
+  ResolvedRecipe withName(String name) {
+    var row =
+        new ResolvedRecipe(
+            recipeId,
+            name,
+            recipeFolderName,
+            costPerPortion,
+            costPerPortionInclLabour,
+            totalCost,
+            portionSize,
+            portionSizeValue,
+            menuPrice,
+            actualCost,
+            menuState,
+            priceSource,
+            lastSoldPrice,
+            lastSoldCost,
+            lastSoldDate,
+            resolutionType,
+            authoritativeSource,
+            resolvedAt);
+    row.evidence(costEvidence, priceEvidence);
+    return row;
+  }
+
   protected ResolvedRecipe() {}
 
   ResolvedRecipe(

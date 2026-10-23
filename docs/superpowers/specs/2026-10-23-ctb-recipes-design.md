@@ -44,10 +44,10 @@ A bounded, paced recipe collection helper runs within the existing CTB connector
 Regular scheduling is configurable; disabled until an explicit rollout configuration.
 Folder traversal must finish before catalog replacement. Recipes commit independently
 only after all three detail responses succeed. Capture-specific source references let
-replay assemble exactly those three responses without mixing runs. Optional empty
-methods/equipment/nutrition/dietary tabs remain deferred; unchecked does not mean safe.
+replay assemble exactly those three responses without mixing runs. The later optional-section survey supersedes the original deferral; see the complete-UI
+implementation plan. Unchecked does not mean safe.
 
-PR 205 owns V99 and overlaps CTB client/config/connector edits. This branch uses V100
+PR 205 owns V99 and overlaps CTB client/config/connector edits. This branch uses V101 (V100 now belongs to #210)
 and additive methods/helpers; migration versions and overlap must be rechecked before
 landing. Work stays in the isolated codex/ctb-recipe-integration worktree. No production
 stack operation, deployment or push is part of this implementation authorization.

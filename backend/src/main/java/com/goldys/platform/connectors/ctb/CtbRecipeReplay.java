@@ -23,6 +23,10 @@ public class CtbRecipeReplay implements ApplicationRunner {
       Pattern.compile("recipe:(\\d+):capture:([a-f0-9-]+):http:(2\\d\\d)");
   private static final Pattern CATALOG =
       Pattern.compile("catalog:([a-f0-9-]+):folder:(\\d+):http:(2\\d\\d)");
+
+  @org.springframework.beans.factory.annotation.Autowired
+  private com.goldys.platform.canonical.RecipeSectionIngest sections;
+
   private final RawLedgerQuery raw;
   private final RecipeDefinitionIngest ingest;
   private final CtbRecipeDefinitionParser parser;
@@ -38,6 +42,7 @@ public class CtbRecipeReplay implements ApplicationRunner {
   public void run(ApplicationArguments args) {
     int completed = replayRecipes();
     int catalogs = replayCatalogs();
+    replaySections();
     log.info(
         "Replayed {} complete recipe captures and {} catalogs; incomplete captures retained as raw only",
         completed,
@@ -76,9 +81,68 @@ public class CtbRecipeReplay implements ApplicationRunner {
           h.id(),
           s.id(),
           u.id());
+      if (sections != null) {
+        replaySection(id, "HEADER", h, "/RecipeBook/GetRecipeByRecipeId");
+        replaySection(id, "STOCKS", s, "/RecipeBook/GetRecipeDetailByRecipeId");
+        replaySection(id, "USAGES", u, "/RecipeBook/GetIngredientFromExistingRecipesByRecipeId");
+      }
       completed++;
     }
     return completed;
+  }
+
+  private void replaySection(int id, String section, RawRecordRef ref, String endpoint) {
+    var parser = new CtbRecipeSectionParser();
+    var evidence = raw.recipeEvidence(ref.id(), endpoint);
+    try {
+      sections.record(parser.parse(id, section, raw.payloadBytes(ref.id()), evidence));
+    } catch (com.goldys.platform.ingestion.port.ConnectorFetchException e) {
+      sections.record(
+          new com.goldys.platform.semantic.RecipeSection(
+              id, section, false, e.getMessage(), List.of(), evidence));
+    }
+  }
+
+  private void replaySections() {
+    if (sections == null) return;
+    for (String section :
+        List.of(
+            "EQUIPMENT_OPTIONS",
+            "EQUIPMENT",
+            "NUTRITION",
+            "DIETARY",
+            "ALLERGENS",
+            "INGREDIENT_METHODS",
+            "MAJOR_FLAVOUR",
+            "MAJOR_INGREDIENT",
+            "COOKING_METHOD",
+            "SECTION",
+            "DISH_TYPE",
+            "HEADING")) {
+      String endpoint = CtbRecipeRefresh.sectionEndpoint(section);
+      for (var ref :
+          raw.rawRecordRefsForFetcher(
+              "CTB", "ctb-recipe-section-" + section.toLowerCase(java.util.Locale.ROOT))) {
+        var match =
+            Pattern.compile("recipe:(\\d+):section:" + section + ":http:(\\d{3})")
+                .matcher(Objects.toString(ref.sourceRecordRef(), ""));
+        if (!match.matches()) continue;
+        int id = Integer.parseInt(match.group(1));
+        int status = Integer.parseInt(match.group(2));
+        if (status >= 200 && status < 300) replaySection(id, section, ref, endpoint);
+        else
+          sections.record(
+              new com.goldys.platform.semantic.RecipeSection(
+                  id,
+                  section,
+                  false,
+                  "HTTP " + status,
+                  List.of(),
+                  raw.recipeEvidence(ref.id(), endpoint)));
+      }
+    }
+    for (var ref : raw.rawRecordRefsForFetcher("CTB", "ctb-recipes"))
+      replaySection(0, "LIST", ref, "/RecipeBook/GetAllRecipes");
   }
 
   private int replayCatalogs() {
@@ -94,6 +158,8 @@ public class CtbRecipeReplay implements ApplicationRunner {
       for (RawRecordRef ref : group) {
         int folder = Integer.parseInt(ref.sourceRecordRef().split(":")[3]);
         tree.accept(folder, raw.payloadBytes(ref.id()));
+        if (sections != null)
+          replaySection(0, "FOLDER_" + folder, ref, "/RecipeFolder/GetTreeItemsUnderRecipeFolder");
       }
       if (!tree.pending().isEmpty()) {
         log.warn("Incomplete raw recipe catalog skipped");

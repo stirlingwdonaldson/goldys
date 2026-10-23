@@ -43,6 +43,9 @@ class CtbScheduledPull {
   private final IngestionService ingestion;
   private final MonitorConfig monitorConfig;
 
+  @Value("${ctb.recipes.enabled:false}")
+  private boolean recipeRefreshEnabled;
+
   CtbScheduledPull(
       IngestionService ingestion,
       @Value("${app.scheduling.ctb.cron:0 0 4 * * *}") String springCron,
@@ -55,6 +58,8 @@ class CtbScheduledPull {
       cron = "${app.scheduling.ctb.cron:0 0 4 * * *}",
       zone = "${app.venue.timezone:Australia/Melbourne}")
   void pullCtb() {
+    // 670 recipes × 14 detail calls already exceed 30 minutes at the configured pacing.
+    monitorConfig.setMaxRuntime(recipeRefreshEnabled ? 120L : 30L);
     SentryId checkInId = checkIn(null, CheckInStatus.IN_PROGRESS);
     try {
       ingestion.runConnector(

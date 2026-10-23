@@ -33,7 +33,9 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
   @Override
   @Transactional(readOnly = true)
   public List<RecipeCosting> costing() {
-    return currentRows().stream().map(ResolvedRecipeQuery::toCosting).toList();
+    return currentRows().stream()
+        .map(r -> definitions == null ? toCosting(r) : definitions.status(toCosting(r)))
+        .toList();
   }
 
   private List<ResolvedRecipe> currentRows() {
@@ -74,6 +76,13 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
         r.priceSource(),
         r.lastSoldPrice(),
         r.lastSoldCost(),
-        r.lastSoldDate());
+        r.lastSoldDate(),
+        r.costEvidence().stream()
+            .map(com.goldys.platform.semantic.RecipeEvidence::capturedAt)
+            .max(java.time.Instant::compareTo)
+            .orElse(null),
+        "CTB",
+        r.costPerPortion() == null ? "DETAILS_MISSING" : "LEGACY_OR_COMPLETE",
+        false);
   }
 }

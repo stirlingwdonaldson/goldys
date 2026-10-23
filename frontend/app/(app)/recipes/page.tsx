@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { RecipeDetailsPanel } from "@/components/recipes/recipe-details-panel";
 import { RecipeCompositionPanel } from "@/components/recipes/recipe-composition-panel";
 
 import { useMemo, useState } from "react";
@@ -186,7 +188,7 @@ function RecipeIngredientsPanel({ recipe }: { recipe: RecipeCosting }) {
     return (
       <EmptyState
         title="No ingredients recorded"
-        description={`${recipe.name ?? "This recipe"} has no ingredient lines in Cooking the Books yet.`}
+        description={`${recipe.name ?? "This recipe"} has no ingredient lines in the stored CTB observation.`}
       />
     );
   }
@@ -202,6 +204,12 @@ function RecipeIngredientsPanel({ recipe }: { recipe: RecipeCosting }) {
       ))}
     </div>
   );
+}
+
+function RecipeCoverage({recipe}:{recipe:RecipeCosting}) {
+  const labels:Record<string,string>={COMPLETE:"Complete composition",DETAILS_MISSING:"Details not received",LEGACY:"Legacy data"};
+  const date=recipe.capturedAt?new Date(recipe.capturedAt).toLocaleDateString("en-AU",{timeZone:"Australia/Melbourne"}):"Capture time unavailable";
+  return <div className="text-xs"><span>{labels[recipe.coverage??"LEGACY"]??"Coverage unavailable"}</span><p className="text-muted-foreground">{date}{recipe.stale?" · Refresh overdue":""}</p><p className="text-muted-foreground">{recipe.costSource??"Source details unavailable"}</p></div>;
 }
 
 export default function RecipesPage() {
@@ -222,7 +230,7 @@ export default function RecipesPage() {
           if (!name) return <span className="italic text-muted-foreground">Unnamed recipe</span>;
           return (
             <span className="block max-w-xs truncate font-medium text-foreground" title={name}>
-              {name}
+              <Link className="underline underline-offset-2" href={`/recipes/${row.original.recipeId}`}>{name}</Link>
             </span>
           );
         },
@@ -250,6 +258,9 @@ export default function RecipesPage() {
             {row.original.portionSize?.trim() || EMPTY}
           </span>
         ),
+      },
+      {
+        id:"coverage",header:"Data coverage",cell:({row})=><RecipeCoverage recipe={row.original}/>
       },
       currencyColumn("costPerPortion", "Cost/portion", (r) => r.costPerPortion),
       {
@@ -346,7 +357,7 @@ export default function RecipesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Recipes"
-        description="Recipe costs are estimates; sold prices do not prove current menu terms. GP and cost comparisons await matching tax and cost bases. Per-dish cost, margin and gross profit."
+        description="Recipe estimates and separate POS price observations. Open a recipe for ingredients, relationships and source evidence."
       />
 
       {rows.length === 0 ? (
@@ -379,6 +390,7 @@ export default function RecipesPage() {
 
           {selected ? (
             <Section title={`${selected.name ?? "Recipe"} — ingredients`}>
+              <RecipeDetailsPanel recipeId={selected.recipeId} />
               <RecipeCompositionPanel recipeId={selected.recipeId} />
               <RecipeIngredientsPanel recipe={selected} />
             </Section>

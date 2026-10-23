@@ -215,6 +215,24 @@ public class RecipeProjector {
               "CTB",
               now));
     }
+    Map<Integer, RecipeCostView> costInputs = new HashMap<>();
+    recipeCosts.currentRecipeCosts().forEach(c -> costInputs.put(c.recipeId(), c));
+    for (ResolvedRecipe row : rows) {
+      RecipeCostView cost = costInputs.get(row.recipeId());
+      Set<String> names = new HashSet<>();
+      var recipeLinks = linksByRecipe.getOrDefault(row.recipeId(), List.of());
+      if (recipeLinks.stream().anyMatch(l -> !Boolean.FALSE.equals(l.isRecipeActive()))
+          || recipeLinks.isEmpty()) names.add(ProductNameKey.normalize(row.recipeName()));
+      recipeLinks.forEach(l -> names.add(ProductNameKey.normalize(l.saleItemStockDescription())));
+      var priceEvidence =
+          names.stream()
+              .map(byName::get)
+              .filter(java.util.Objects::nonNull)
+              .flatMap(p -> p.evidence().stream())
+              .distinct()
+              .toList();
+      row.evidence(cost.evidence() == null ? List.of() : List.of(cost.evidence()), priceEvidence);
+    }
     resolved.saveAll(rows);
   }
 
@@ -260,9 +278,41 @@ public class RecipeProjector {
       }
       index.put(
           entry.getKey(),
-          new PriceInfo(mode(prices), mode(costs), lastSoldDate, lastSoldPrice, lastSoldCost));
+          new PriceInfo(
+              mode(prices),
+              mode(costs),
+              lastSoldDate,
+              lastSoldPrice,
+              lastSoldCost,
+              captureEvidence(items)));
     }
     return index;
+  }
+
+  private static List<com.goldys.platform.semantic.RecipeEvidence> captureEvidence(
+      List<SaleItemPriceView> items) {
+    Map<java.util.UUID, List<com.goldys.platform.semantic.RecipeEvidence>> groups =
+        new LinkedHashMap<>();
+    items.stream()
+        .map(SaleItemPriceView::evidence)
+        .filter(java.util.Objects::nonNull)
+        .forEach(e -> groups.computeIfAbsent(e.rawRecordId(), id -> new ArrayList<>()).add(e));
+    return groups.values().stream()
+        .map(
+            group -> {
+              var e = group.getFirst();
+              return new com.goldys.platform.semantic.RecipeEvidence(
+                  e.rawRecordId(),
+                  e.sourceSystem(),
+                  e.fetcher(),
+                  e.endpoint(),
+                  e.sourceRecordRef(),
+                  e.capturedAt(),
+                  e.ingestionRunId(),
+                  e.sha256(),
+                  group.stream().flatMap(v -> v.entityRefs().stream()).distinct().toList());
+            })
+        .toList();
   }
 
   /** The most frequent value, or null when empty/all-null; ties keep the first seen. */
@@ -289,5 +339,6 @@ public class RecipeProjector {
       BigDecimal cost,
       LocalDate lastSoldDate,
       BigDecimal lastSoldPrice,
-      BigDecimal lastSoldCost) {}
+      BigDecimal lastSoldCost,
+      List<com.goldys.platform.semantic.RecipeEvidence> evidence) {}
 }

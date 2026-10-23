@@ -20,6 +20,7 @@ class RecipeCompositionControllerTest {
             .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
             .build();
     mvc.perform(get("/api/recipes/463/composition")).andExpect(status().isNoContent());
+    mvc.perform(get("/api/recipes/463/details")).andExpect(status().isNoContent());
     mvc.perform(get("/api/recipes/folders")).andExpect(status().isNoContent());
   }
 }

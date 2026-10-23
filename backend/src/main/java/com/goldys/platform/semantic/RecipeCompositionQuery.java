@@ -6,4 +6,8 @@ public interface RecipeCompositionQuery {
   Optional<RecipeComposition> composition(int recipeId);
 
   Optional<RecipeCatalog> catalog();
+
+  default Optional<RecipeDetails> details(int recipeId) {
+    return Optional.empty();
+  }
 }

@@ -13,4 +13,24 @@ public record RecipeCostView(
     BigDecimal costPerPortionInclLabour,
     BigDecimal totalCost,
     String portionSize,
-    BigDecimal portionSizeValue) {}
+    BigDecimal portionSizeValue,
+    com.goldys.platform.semantic.RecipeEvidence evidence) {
+  public RecipeCostView(
+      int recipeId,
+      String recipeName,
+      java.math.BigDecimal costPerPortion,
+      java.math.BigDecimal costPerPortionInclLabour,
+      java.math.BigDecimal totalCost,
+      String portionSize,
+      java.math.BigDecimal portionSizeValue) {
+    this(
+        recipeId,
+        recipeName,
+        costPerPortion,
+        costPerPortionInclLabour,
+        totalCost,
+        portionSize,
+        portionSizeValue,
+        null);
+  }
+}

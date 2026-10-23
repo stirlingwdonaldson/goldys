@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ResolvedRecipeCompositionQuery implements RecipeCompositionQuery {
   private final ResolvedRecipeDefinitionRepository definitions;
   private final ResolvedRecipeCatalogRepository catalogs;
+
   private final Duration maxAge;
   private final BigDecimal tolerance;
 
@@ -55,6 +56,14 @@ public class ResolvedRecipeCompositionQuery implements RecipeCompositionQuery {
         : Optional.of(
             new RecipeCompositionCalculator(graph, Instant.now(), maxAge, tolerance)
                 .calculate(root, catalog().orElse(null)));
+  }
+
+  @org.springframework.beans.factory.annotation.Autowired
+  private ResolvedRecipeDetailsQuery details;
+
+  @Override
+  public Optional<RecipeDetails> details(int recipeId) {
+    return details.details(recipeId);
   }
 
   @Override

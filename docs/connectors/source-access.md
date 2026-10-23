@@ -321,8 +321,12 @@ The absolute currency comparison tolerance is configurable, default 0.01, for
 reported component rounding; it is not an entity-matching tolerance. Freshness is
 36 hours by default. Neither stale values nor unknown fields are silently zeroed.
 
-Methods/equipment/notes remained empty, nutrition zero and dietary/allergen boxes
-unchecked in the captures. Rich ingestion of those optional endpoints is deferred;
+The original HARs had empty optional sections. The later 670-recipe survey establishes
+populated method text and selected dietary requirements. The complete refresh now collects
+equipment, nutrition, dietary/allergens, ingredient methods and the six observed recipe-fact
+types independently, with their own capture timestamps and evidence. Populated equipment
+and ingredient-method schemas remain unverified and are retained raw with an explicit
+unsupported-state failure. Zero nutrition and unchecked allergens do not establish suitability;
 no dietary suitability is inferred from names or unchecked fields.
 
 Composition/catalog reads return HTTP 204 until a complete snapshot exists. The typed

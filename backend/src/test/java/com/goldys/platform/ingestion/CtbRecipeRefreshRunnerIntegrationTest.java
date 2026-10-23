@@ -26,6 +26,7 @@ class CtbRecipeRefreshRunnerIntegrationTest {
   @Autowired RawLedgerQuery raw;
   @Autowired IngestionService ingestion;
   @Autowired RecipeDefinitionIngest ingest;
+  @Autowired com.goldys.platform.canonical.RecipeSectionIngest sections;
   @Autowired RecipeCompositionQuery query;
 
   @Test
@@ -56,7 +57,15 @@ class CtbRecipeRefreshRunnerIntegrationTest {
     when(client.getRecipeDefinition(696)).thenReturn(response(text("third_696_header.json")));
     when(client.getRecipeDirectStocks(696)).thenReturn(response(text("third_696_stocks.json")));
     when(client.getRecipeUsages(696)).thenReturn(response(text("third_696_usages.json")));
+    when(client.getRecipeEquipmentOptions()).thenReturn(response("{\"data\":[],\"totalCount\":0}"));
+    when(client.getRecipeSection(
+            org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyString()))
+        .thenAnswer(
+            call ->
+                response(
+                    call.getArgument(1).equals("NUTRITION") ? "{\"data\":{}}" : "{\"data\":[]}"));
     var refresh = new CtbRecipeRefresh(ingest, new CtbRecipeDefinitionParser(), raw, 0, 10, 10);
+    refresh.setSections(sections);
     SourceConnector connector =
         new SourceConnector() {
           public String sourceSystem() {
@@ -80,7 +89,7 @@ class CtbRecipeRefreshRunnerIntegrationTest {
     }
     assertThat(status).isEqualTo(IngestionStatus.PARTIAL);
     assertThat(records.findByIngestionRunId(runId))
-        .hasSize(7)
+        .hasSize(30)
         .anySatisfy(
             row -> {
               assertThat(row.sourceRecordRef()).endsWith(":http:503");

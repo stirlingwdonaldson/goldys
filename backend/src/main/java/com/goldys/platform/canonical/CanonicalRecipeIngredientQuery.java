@@ -9,6 +9,22 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class CanonicalRecipeIngredientQuery {
+  @org.springframework.beans.factory.annotation.Autowired
+  private com.goldys.platform.ingestion.RawLedgerQuery raw;
+
+  public java.util.Map<String, com.goldys.platform.semantic.RecipeEvidence> evidence() {
+    java.util.Map<String, com.goldys.platform.semantic.RecipeEvidence> out =
+        new java.util.HashMap<>();
+    var evidence =
+        new java.util.HashMap<java.util.UUID, com.goldys.platform.semantic.RecipeEvidence>();
+    for (var row : repository.findAllCurrent())
+      out.put(
+          row.parentRecipeId() + ":" + row.recipeDetailId() + ":" + row.stockId(),
+          evidence.computeIfAbsent(
+              row.rawRecordId(), id -> raw.recipeEvidence(id, "legacy:ctb-recipe-ingredients")));
+    return out;
+  }
+
   private final CanonicalRecipeIngredientRepository repository;
 
   public CanonicalRecipeIngredientQuery(CanonicalRecipeIngredientRepository repository) {

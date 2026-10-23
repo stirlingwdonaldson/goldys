@@ -28,6 +28,13 @@ public class RecipeCompositionController {
     return value == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(value);
   }
 
+  @GetMapping("/{recipeId}/details")
+  ResponseEntity<com.goldys.platform.semantic.RecipeDetails> details(
+      @PathVariable int recipeId, @AuthenticationPrincipal AccountUserDetails user) {
+    var value = reporting.details(recipeId, users.roleOf(user));
+    return value == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(value);
+  }
+
   @GetMapping("/folders")
   ResponseEntity<RecipeCatalog> folders(@AuthenticationPrincipal AccountUserDetails user) {
     RecipeCatalog value = reporting.catalog(users.roleOf(user));

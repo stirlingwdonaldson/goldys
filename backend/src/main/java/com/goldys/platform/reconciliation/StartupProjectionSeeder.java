@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class StartupProjectionSeeder implements ApplicationRunner {
   private static final Logger log = LoggerFactory.getLogger(StartupProjectionSeeder.class);
+
+  private final RecipeSectionProjector recipeSectionProjector;
+
   private final DailySalesProjector projector;
   private final ProductSalesProjector productProjector;
   private final ReservationProjector reservationProjector;
@@ -33,8 +36,10 @@ public class StartupProjectionSeeder implements ApplicationRunner {
       SaleItemProjector saleItemProjector,
       RecipeProjector recipeProjector,
       RecipeIngredientProjector recipeIngredientProjector,
-      RecipeDefinitionProjector recipeDefinitionProjector) {
+      RecipeDefinitionProjector recipeDefinitionProjector,
+      RecipeSectionProjector recipeSectionProjector) {
     this.projector = projector;
+    this.recipeSectionProjector = recipeSectionProjector;
     this.productProjector = productProjector;
     this.reservationProjector = reservationProjector;
     this.labourProjector = labourProjector;
@@ -65,6 +70,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     recipeProjector.recomputeAll();
     recipeIngredientProjector.recomputeAll();
     recipeDefinitionProjector.recomputeAll();
+    recipeSectionProjector.recomputeAll();
     log.info("Resolved projections rebuilt from current canonical facts");
   }
 }

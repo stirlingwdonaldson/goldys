@@ -344,6 +344,10 @@ export interface LatestSales {
 
 /** Per-dish costing: CTB recipe cost vs Lightspeed price/cost (mirrors backend `RecipeCosting`). */
 export interface RecipeCosting {
+  capturedAt?: string | null;
+  costSource?: string;
+  coverage?: string;
+  stale?: boolean;
   recipeId: number;
   name: string | null;
   folder: string | null;
@@ -1317,8 +1321,9 @@ export interface Api {
   getSaleItemMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SaleItemMix[]>;
   listForecastMetrics(options?: { signal?: AbortSignal }): Promise<ForecastMetric[]>;
   createForecastRun(input: CreateForecastInput): Promise<ForecastRun>;
-  getRecipeComposition(recipeId: number): Promise<RecipeComposition | null>;
-  getRecipeCatalog(): Promise<RecipeCatalog | null>;
+  getRecipeComposition(recipeId: number, options?: {signal?:AbortSignal}): Promise<RecipeComposition | null>;
+  getRecipeDetails(recipeId: number, options?: {signal?:AbortSignal}): Promise<RecipeDetails | null>;
+  getRecipeCatalog(options?: {signal?:AbortSignal}): Promise<RecipeCatalog | null>;
   listForecastRuns(options?: { signal?: AbortSignal }): Promise<ForecastRun[]>;
   getForecastRun(id: string, options?: { signal?: AbortSignal }): Promise<ForecastRun>;
   getForecastComparison(id: string, options?: { signal?: AbortSignal }): Promise<ForecastComparison>;
@@ -1789,4 +1794,23 @@ export interface RecipeComposition {
   difference: number | null;
   issues: string[];
   stale: boolean;
+}
+
+export interface RecipeEvidence {
+ rawRecordId: string | null; sourceSystem: string; fetcher: string; endpoint: string;
+ sourceRecordRef: string | null; capturedAt: string; ingestionRunId: string | null; sha256: string | null; entityRefs?: string[];
+}
+export interface RecipeField { path: string; value: string | null; type: string; }
+export interface RecipeSection {
+ recipeId: number; section: string; successful: boolean; notice: string | null;
+ fields: RecipeField[]; evidence: RecipeEvidence;
+}
+export interface RecipeReference { recipeId: number; name: string | null; available: boolean; }
+export interface RecipeDetails {
+ recipeId: number; name: string | null; costSelection: string; sections: RecipeSection[];
+ latestAttempts: RecipeSection[]; usedIn: RecipeReference[]; uses: RecipeReference[];
+ compositionSources: RecipeEvidence[];
+ collection?: { source:string; connector:string; lastRunAt:string | null; status:string } | null;
+ collectionEnabled?: boolean;
+ freshnessLimitSeconds?: number;
 }

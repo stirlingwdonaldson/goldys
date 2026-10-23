@@ -412,3 +412,19 @@ was never ingested or attributed to a trading day.
   CTB contribution cost. Flattened ingredient rows are never added a second time.
 - Manual source correction/write-back is not wired. Questionable quantities stay
   source facts; derived discrepancy notices do not mutate them.
+
+### Recipe sections, evidence and precedence (23 October extension)
+
+Recipe-section identity is `recipe-section:{recipeId}:{section}:{success|failure}` under
+CTB. Each chain uses the existing bitemporal supersession rules and authoritative raw-record ID.
+The catalogue and shared lookup observations use recipe ID 0. Scalars and empty-state markers
+are normalized into owned field rows; original field paths are retained. The resolved JSON
+projection is disposable. A failed observation never supersedes the last successful section.
+
+Complete composition retains its three original capture IDs. Its header, direct stock lines and
+explicit usages stay atomic. Equivalent legacy reported cost fields compete by original raw
+capture time, not projection rebuild time. Flattened legacy lines remain a labelled fallback;
+they never replace the explicit usage graph. Catalogue names can be newer than recipe details;
+a list response cannot establish cost/ingredient freshness. Source-provided dietary booleans
+are observations, not inferred safety assertions. Recipe identity and reverse usage links use
+CTB IDs, never names. Embedded markup becomes plain text; raw bytes remain unchanged.

@@ -2111,13 +2111,17 @@ export const demoApi: Api = {
       : { runId: id, mape: null, mae: null, points: [] };
   },
 
-  async getRecipeComposition(recipeId: number): Promise<import("./types").RecipeComposition | null> {
-    await delay(300);
+  async getRecipeDetails(recipeId: number, options?: {signal?:AbortSignal}): Promise<import("./types").RecipeDetails | null> {
+    await delay(300, options?.signal);
+    return (await import("./demo-recipe-details")).demoRecipeDetails(recipeId);
+  },
+  async getRecipeComposition(recipeId: number, options?: {signal?:AbortSignal}): Promise<import("./types").RecipeComposition | null> {
+    await delay(300, options?.signal);
     return demoRecipeComposition(recipeId);
   },
 
-  async getRecipeCatalog(): Promise<import("./types").RecipeCatalog | null> {
-    await delay(300);
+  async getRecipeCatalog(options?: {signal?:AbortSignal}): Promise<import("./types").RecipeCatalog | null> {
+    await delay(300, options?.signal);
     return { folders: [{ folderId: 1, parentId: null, name: "Mains" }], allocations: [], observedAt: new Date().toISOString() };
   },
 

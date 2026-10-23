@@ -91,6 +91,10 @@ public class RawLedgerQuery {
         .map(d -> new StoredDigest(d.getId(), d.getPayloadSha256()));
   }
 
+  public com.goldys.platform.semantic.RecipeEvidence recipeEvidence(UUID id, String endpoint) {
+    return rawRecords.recipeEvidence(id, endpoint).orElseThrow();
+  }
+
   /** A stored raw payload's id and lowercase hex SHA-256. */
   public record StoredDigest(UUID id, String sha256) {}
 

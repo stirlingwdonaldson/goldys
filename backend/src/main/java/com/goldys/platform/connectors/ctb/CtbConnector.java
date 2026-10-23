@@ -145,7 +145,8 @@ public class CtbConnector implements SourceConnector {
         failures,
         () -> pullRaw("ctb-invoices-ajax", client::searchInvoices, sink));
     pull("ctb-sale-recipe-links", failures, () -> pullSaleRecipeLinks(sink));
-    pull("ctb-recipes", failures, () -> pullSingle("ctb-recipes", client::getAllRecipes, sink));
+    if (recipeRefresh == null)
+      pull("ctb-recipes", failures, () -> pullSingle("ctb-recipes", client::getAllRecipes, sink));
     pull("ctb-stocks", failures, () -> pullRaw("ctb-stocks", client::searchStocks, sink));
     pull(
         "ctb-suppliers",
