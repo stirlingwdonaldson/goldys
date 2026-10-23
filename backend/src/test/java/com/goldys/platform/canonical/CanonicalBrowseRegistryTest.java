@@ -221,6 +221,7 @@ class CanonicalBrowseRegistryTest {
             "A. Staff",
             "Front Register",
             "T12",
-            UUID.randomUUID()));
+            UUID.randomUUID(),
+            null));
   }
 }

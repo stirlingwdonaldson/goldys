@@ -61,7 +61,17 @@ public class LightspeedSaleItemCsvParser {
               text(r, columns, "Sales Data Sale Type"),
               text(r, columns, "Staff Sale Closed Staff Name"),
               text(r, columns, "Register Closed Register Name"),
-              text(r, columns, "Tables Table Number")));
+              text(r, columns, "Tables Table Number"),
+              new com.goldys.platform.semantic.SaleAdjustment(
+                  money(r, columns, "Sales Data Total Ex Tax"),
+                  money(r, columns, "Sales Adjustments Gross Sale Inc Tax"),
+                  money(r, columns, "Sales Adjustments Gross Sale Ex Tax"),
+                  money(r, columns, "Sales Adjustments Total Adjustment Amount Inc Tax"),
+                  money(r, columns, "Sales Adjustments Total Adjustment Amount Ex Tax"),
+                  text(r, columns, "Sales Adjustments Adjustment Type"),
+                  text(r, columns, "Sales Adjustments Adjustment Reason"),
+                  text(r, columns, "Sales Adjustments Adjustment Level"),
+                  text(r, columns, "Sales Adjustments Promotion Name"))));
     }
     return out;
   }

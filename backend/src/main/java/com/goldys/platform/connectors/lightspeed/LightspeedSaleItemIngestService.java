@@ -103,7 +103,7 @@ public class LightspeedSaleItemIngestService {
 
   /** Parse and validate a retained report without changing ledger/canonical state. */
   public List<LightspeedSaleItem> preview(RawLedgerQuery.RawPayload payload) {
-    List<LightspeedSaleItem> items = parseItems(payload.bytes());
+    List<LightspeedSaleItem> items = parseRows(payload.bytes());
     for (LightspeedSaleItem item : items) {
       if (item.quantity() == null || item.amount() == null)
         throw new ConnectorFetchException(
@@ -131,8 +131,23 @@ public class LightspeedSaleItemIngestService {
     return inserted;
   }
 
-  private List<LightspeedSaleItem> parseItems(byte[] body) {
+  private List<LightspeedSaleItem> parseRows(byte[] body) {
     return parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+  }
+
+  private List<LightspeedSaleItem> parseItems(byte[] body) {
+    List<LightspeedSaleItem> out = parseRows(body);
+    // Tender joins repeat whole items. Distinct components need a verified aggregation contract.
+    java.util.Map<String, LightspeedSaleItem> distinct = new java.util.LinkedHashMap<>();
+    for (LightspeedSaleItem item : out) {
+      LightspeedSaleItem previous = distinct.putIfAbsent(item.receiptLineId(), item);
+      if (previous != null && !previous.equals(item)) {
+        throw new ConnectorFetchException(
+            "CONNECTOR_SCHEMA_MISMATCH",
+            "Conflicting rows for one Lightspeed receipt line; report grain needs review");
+      }
+    }
+    return List.copyOf(distinct.values());
   }
 
   private void recordItems(List<LightspeedSaleItem> items, UUID rawId) {
@@ -165,7 +180,8 @@ public class LightspeedSaleItemIngestService {
         it.staffName(),
         it.registerName(),
         it.tableNumber(),
-        rawId);
+        rawId,
+        it.adjustment());
   }
 
   private static String extractCsv(byte[] body) {

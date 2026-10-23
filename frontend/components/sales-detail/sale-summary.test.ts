@@ -83,11 +83,11 @@ describe("summariseSale", () => {
     expect(s.checks.find((c) => c.id === "balance")?.tone).toBe("success");
   });
 
-  it("sorts lines by total and computes margin from line costs", () => {
+  it("sorts lines without presenting POS costs as recipe-backed margin", () => {
     const s = summariseSale([payment("Tyro", 35)], [item("wine", 1, 11), item("pint", 2, 12)], null);
     expect(s.lines.map((l) => l.name)).toEqual(["pint", "wine"]);
-    expect(s.grossProfit).toBeCloseTo(26.25);
-    expect(s.margin).toBeCloseTo(0.75);
+    expect(s.grossProfit).toBeNull();
+    expect(s.margin).toBeNull();
   });
 
   it("flags a mismatch with the direction and size of the gap", () => {
@@ -124,13 +124,14 @@ describe("summariseSale", () => {
     expect(summariseSale([payment("Tyro", 12)], [], null).verdict).toBe("no-items");
   });
 
-  it("spots discounted lines and lines without a price or cost", () => {
+  it("uses observed adjustments and preserves missing prices", () => {
     const s = summariseSale(
       [payment("Tyro", 20)],
-      [item("pint", 2, 12, { amount: 20 }), item("mystery", null, null)],
+      [item("pint", 2, 12, { amount: 20, adjustment: { finalExTax: null, grossIncTax: 24, grossExTax: null,
+        amountIncTax: -4, amountExTax: null, type: "Discount", reason: "Happy hour", level: "Order Level", promotion: null } }), item("mystery", null, null)],
       null,
     );
-    expect(ids(s)).toEqual(expect.arrayContaining(["discount", "unpriced", "uncosted"]));
+    expect(ids(s)).toEqual(expect.arrayContaining(["adjustment:line-pint", "unpriced"]));
     expect(s.grossProfit).toBeNull();
   });
 
@@ -150,5 +151,18 @@ describe("summariseSale", () => {
       { label: "Register", value: "Main Bar" },
       { label: "Staff", value: "Alex" },
     ]);
+  });
+  it("does not turn the reported zero-cost steak sale into 100% margin", () => {
+    const s = summariseSale([payment("Cash",43)], [item("$28 Steak Frites",1,28,{costIncTax:0}),
+      item("G - Swiftsure",1,15,{costIncTax:0})],null);
+    expect(s.itemsTotal).toBe(43); expect(s.paidTotal).toBe(43);
+    expect(s.margin).toBeNull(); expect(s.grossProfit).toBeNull();
+  });
+
+  it("does not invent discounts or unit prices from aggregated sold-price measures", () => {
+    const s = summariseSale([payment("Card",36)], [item("spritz",2,36,{amount:36})],null);
+    expect(s.lines[0].unitPrice).toBeNull();
+    expect(s.checks.some((c) => c.id === "discount")).toBe(false);
+    expect(s.itemsTotal).toBe(36);
   });
 });

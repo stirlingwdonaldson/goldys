@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { DemoModeProvider } from "@/lib/demo-mode";
 import { ApiError, type Api } from "@/lib/api";
 import { demoApi } from "@/lib/api/demo";
@@ -41,7 +41,7 @@ describe("SaleSummaryView", () => {
     expect(screen.getByRole("list", { name: "What stands out" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Line items" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Tenders" })).toBeInTheDocument();
-    expect(screen.getByText("chicken schnitzel")).toBeInTheDocument();
+    expect(within(screen.getByRole("table", { name: "Line items" })).getByText("chicken schnitzel")).toBeInTheDocument();
   });
 
   it("shows a voided sale as voided", async () => {
@@ -76,5 +76,21 @@ describe("SaleSummaryView", () => {
 
     unmount();
     expect(signals.every((signal) => signal?.aborted)).toBe(true);
+  });
+  it("keeps the receipt visible when recipe cost permission is denied", async () => {
+    renderView("SALE-1002", { ...demoApi, getSaleCosting: async () => {
+      throw new ApiError("NOT_PERMITTED", "Not permitted");
+    }});
+    expect(await screen.findByText("You do not have permission to view recipe costs.")).toBeInTheDocument();
+    expect(screen.getByRole("table",{name:"Line items"})).toBeInTheDocument();
+  });
+
+  it("displays observed card mode without inferring it from tendered", async () => {
+    renderView("SALE-1002", { ...demoApi, listPayments: async (...args) => {
+      const rows = await demoApi.listPayments(...args);
+      return {...rows, items:rows.items.map((p) => ({...p,lspayPaymentMode:"Card Payment"}))};
+    }});
+    const tenders = await screen.findByRole("table", {name:"Tenders"});
+    expect(within(tenders).getAllByText(/^Card ·/)).toHaveLength(2);
   });
 });

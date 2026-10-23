@@ -47,6 +47,7 @@ export interface SummaryTender {
   amount: number | null;
   tip: number | null;
   surcharge: number | null;
+  mode: string | null;
 }
 
 export interface SaleSummary {
@@ -80,12 +81,10 @@ function sum(values: (number | null)[]): number {
   return values.reduce<number>((acc, v) => acc + (v ?? 0), 0);
 }
 
-/** A line's total: the reported line total, else quantity × sold price, else unknown. */
+/** Use the reported line total; the source sold-price measure is not consistently per unit. */
 function lineTotal(item: SaleItemRow): number | null {
   const amount = toNumber(item.amount);
   if (amount != null) return amount;
-  const price = toNumber(item.soldPriceIncTax);
-  if (price != null && item.quantitySold != null) return price * item.quantitySold;
   return null;
 }
 
@@ -118,7 +117,7 @@ export function summariseSale(
       name: it.itemName ?? "(unnamed item)",
       category: it.categoryName,
       quantity: it.quantitySold,
-      unitPrice: toNumber(it.soldPriceIncTax),
+      unitPrice: null,
       total: lineTotal(it),
     }))
     .sort((a, b) => (b.total ?? -Infinity) - (a.total ?? -Infinity));
@@ -129,6 +128,7 @@ export function summariseSale(
     amount: toNumber(p.amount),
     tip: toNumber(p.tip),
     surcharge: toNumber(p.surcharge),
+    mode: p.lspayPaymentMode,
   }));
 
   const hasItems = lines.length > 0 || truncatedItems > 0;
@@ -139,11 +139,9 @@ export function summariseSale(
   const tipTotal = sum(tenders.map((t) => t.tip));
   const surchargeTotal = sum(tenders.map((t) => t.surcharge));
 
-  const costs = items.map((it) => toNumber(it.costIncTax));
-  const allCosted = items.length > 0 && costs.every((c) => c != null);
-  const grossProfit = allCosted && itemsTotal != null ? itemsTotal - sum(costs) : null;
-  const margin =
-    grossProfit != null && itemsTotal != null && itemsTotal !== 0 ? grossProfit / itemsTotal : null;
+  // POS cost is source evidence, not a recipe-backed profit calculation.
+  const grossProfit = null;
+  const margin = null;
 
   const difference = itemsTotal != null && paidTotal != null ? paidTotal - itemsTotal : null;
 
@@ -232,19 +230,16 @@ export function summariseSale(
     });
   }
 
-  const discounted = items.filter((it) => {
-    const amount = toNumber(it.amount);
-    const price = toNumber(it.soldPriceIncTax);
-    return (
-      amount != null && price != null && it.quantitySold != null && amount + CENT < price * it.quantitySold
-    );
-  });
-  if (discounted.length > 0) {
-    checks.push({
-      id: "discount",
-      tone: "info",
-      text: `${plural(discounted.length, "line")} sold below the listed price (discount or comp).`,
-    });
+  for (const item of items) {
+    const adjustment = item.adjustment;
+    const amount = toNumber(adjustment?.amountIncTax);
+    if (adjustment && amount != null && amount !== 0) {
+      checks.push({
+        id: `adjustment:${item.receiptLineId}`,
+        tone: "info",
+        text: `${item.itemName ?? "Item"}: ${[adjustment.promotion, adjustment.type, adjustment.reason, adjustment.level].filter(Boolean).join(" · ") || "Adjustment"} (${formatCurrency(amount)}, already included in the line total).`,
+      });
+    }
   }
 
   const unpriced = lines.filter((l) => l.total == null).length;
@@ -253,13 +248,6 @@ export function summariseSale(
       id: "unpriced",
       tone: "missing",
       text: `${plural(unpriced, "line")} without a price.`,
-    });
-  }
-  if (items.length > 0 && !allCosted) {
-    checks.push({
-      id: "uncosted",
-      tone: "missing",
-      text: "Some lines have no cost, so margin isn't shown.",
     });
   }
   if (truncatedPayments > 0 || truncatedItems > 0) {

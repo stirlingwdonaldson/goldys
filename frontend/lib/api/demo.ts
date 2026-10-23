@@ -2045,6 +2045,21 @@ export const demoApi: Api = {
     return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
+  async getSaleCosting(saleNumber: string, from: string, to: string, options?: { signal?: AbortSignal }): Promise<import("./types").SaleCosting> {
+    await delay(300, options?.signal);
+    const lines = demoSaleItems.filter((s) => s.saleNumber === saleNumber && inDateRange(s.tradingDate, from, to))
+      .map((s) => ({ receiptLineId: s.receiptLineId, itemName: s.itemName, quantity: s.quantitySold, revenueIncTax: s.amount, revenueExTax: null,
+        recipeId: s.receiptLineId === "LINE-3" ? 314 : null,
+        recipeName: s.receiptLineId === "LINE-3" ? "Chicken Schnitzel" : null,
+        matchMethod: s.receiptLineId === "LINE-3" ? "CTB_LINK" : null,
+        costPerPortion: s.receiptLineId === "LINE-3" ? 9.8 : null,
+        recipeCost: s.receiptLineId === "LINE-3" ? 9.8 : null,
+        costObservedAt: s.receiptLineId === "LINE-3" ? "2026-10-05T04:00:00Z" : null,
+        costSource: s.receiptLineId === "LINE-3" ? "CTB complete refresh" : null,
+        status: s.receiptLineId === "LINE-3" ? "STALE_COST" : "UNMATCHED" }));
+    return { lines, complete: false, recipeCost: null, grossProfit: null, margin: null, qualification: "INCOMPLETE_COSTING" };
+  },
+
   async listSaleItems(
     filter: SaleItemFilter,
     page: number,

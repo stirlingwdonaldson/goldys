@@ -50,7 +50,8 @@ class CanonicalVersionIntegrationTest {
         null,
         null,
         null,
-        raw);
+        raw,
+        null);
   }
 
   private static BigDecimal money(String value) {

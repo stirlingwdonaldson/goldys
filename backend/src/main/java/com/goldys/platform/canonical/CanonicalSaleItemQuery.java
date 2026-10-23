@@ -113,6 +113,7 @@ public class CanonicalSaleItemQuery {
         s.saleType(),
         s.staffName(),
         s.registerName(),
-        s.tableNumber());
+        s.tableNumber(),
+        s.adjustment());
   }
 }
