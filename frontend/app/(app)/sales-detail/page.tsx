@@ -7,7 +7,7 @@ import { Section } from "@/components/layout/section";
 import { LoadingState } from "@/components/states/loading-state";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DateRangeFilter, defaultRange } from "@/components/sales-detail/date-range-filter";
+import { TimeRangeSelector, defaultRange } from "@/components/ui/time-range-selector";
 import { PaymentsTab } from "@/components/sales-detail/payments-tab";
 import { DeletedOrdersTab } from "@/components/sales-detail/deleted-orders-tab";
 import { SaleItemsTab } from "@/components/sales-detail/sale-items-tab";
@@ -77,7 +77,7 @@ function SalesDetail() {
         description="Payments, deleted orders, and sale items behind the sales totals."
       />
 
-      <DateRangeFilter from={range.from} to={range.to} onChange={setRange} />
+      <TimeRangeSelector value={range} onChange={setRange} />
 
       <Section
         title="Settlement"

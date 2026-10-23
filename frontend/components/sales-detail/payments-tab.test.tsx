@@ -107,7 +107,8 @@ describe("PaymentsTab", () => {
     );
 
     await screen.findByText("SALE-1001");
-    fireEvent.change(screen.getByLabelText("Payment type"), { target: { value: "Visa" } });
+    fireEvent.click(screen.getByLabelText("Payment type"));
+    fireEvent.click(await screen.findByRole("option", { name: "Visa" }));
 
     await waitFor(() => expect(screen.queryByText("SALE-1001")).not.toBeInTheDocument());
     expect(screen.getByText("SALE-1002")).toBeInTheDocument();

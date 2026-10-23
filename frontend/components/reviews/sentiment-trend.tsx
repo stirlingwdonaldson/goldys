@@ -64,7 +64,7 @@ function NegativeTrendIndicator({ signal }: { signal: NegativeTrend }) {
     return <p className="text-xs text-muted-foreground">{text}</p>;
   }
   return (
-    <Badge variant={variant}>
+    <Badge variant={variant} className="self-start">
       <span aria-hidden>{signal === "down" ? "↓" : signal === "up" ? "↑" : "→"}</span>
       {text}
     </Badge>

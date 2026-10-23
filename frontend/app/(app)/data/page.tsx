@@ -13,6 +13,7 @@ import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/layout/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -107,18 +108,18 @@ function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }
           onChange={(e) => setFetcher(e.target.value)}
           className="w-60"
         />
-        <select
-          aria-label="Method"
-          className="rounded-md border bg-background px-2 py-1 text-sm"
-          value={method}
-          onChange={(e) => setMethod(e.target.value)}
-        >
-          <option value="">All methods</option>
-          <option value="API">API</option>
-          <option value="FILE_EXPORT">File export</option>
-          <option value="SCRAPE">Scrape</option>
-          <option value="MANUAL">Manual</option>
-        </select>
+        <Select value={method || "all"} onValueChange={(v) => setMethod(v === "all" ? "" : v)}>
+          <SelectTrigger aria-label="Method" className="w-40">
+            <SelectValue placeholder="All methods" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All methods</SelectItem>
+            <SelectItem value="API">API</SelectItem>
+            <SelectItem value="FILE_EXPORT">File export</SelectItem>
+            <SelectItem value="SCRAPE">Scrape</SelectItem>
+            <SelectItem value="MANUAL">Manual</SelectItem>
+          </SelectContent>
+        </Select>
         <Input
           aria-label="From"
           placeholder="From (ISO, e.g. 2026-10-01T00:00:00Z)"
@@ -263,21 +264,24 @@ function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) 
     <div className="flex flex-col gap-4">
       <label className="text-sm text-muted-foreground">
         Entity
-        <select
-          aria-label="Entity"
-          className="ml-2 rounded-md border bg-background px-2 py-1 text-sm"
+        <Select
           value={selected}
-          onChange={(e) => {
-            setEntity(e.target.value);
+          onValueChange={(v) => {
+            setEntity(v);
             setPage(0);
           }}
         >
-          {(entities.data ?? []).map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger aria-label="Entity" className="ml-2 w-56">
+            <SelectValue placeholder="Choose entity" />
+          </SelectTrigger>
+          <SelectContent>
+            {(entities.data ?? []).map((e) => (
+              <SelectItem key={e.id} value={e.id}>
+                {e.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </label>
 
       {rows.loading ? <LoadingState rows={4} /> : null}
@@ -338,21 +342,24 @@ function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
       <div className="flex items-center gap-3">
         <label className="text-sm text-muted-foreground">
           Domain
-          <select
-            aria-label="Domain"
-            className="ml-2 rounded-md border bg-background px-2 py-1 text-sm"
+          <Select
             value={selected}
-            onChange={(e) => {
-              setDomain(e.target.value);
+            onValueChange={(v) => {
+              setDomain(v);
               setPage(0);
             }}
           >
-            {(domains.data ?? []).map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label="Domain" className="ml-2 w-56">
+              <SelectValue placeholder="Choose domain" />
+            </SelectTrigger>
+            <SelectContent>
+              {(domains.data ?? []).map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
         {screen ? (
           <Link

@@ -9,20 +9,16 @@ import { EmptyState } from "@/components/states/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TimeRangeSelector, defaultRange } from "@/components/ui/time-range-selector";
 import { humanizeKey } from "@/lib/format";
 import { OverviewStrip } from "@/components/reviews/overview-strip";
 import { SentimentTrend } from "@/components/reviews/sentiment-trend";
+import { RatingTrend } from "@/components/reviews/rating-trend";
 import { AspectBreakdown } from "@/components/reviews/aspect-breakdown";
 import { RatingDistribution } from "@/components/reviews/rating-distribution";
 import { SourceComparison, reviewSourceLabel } from "@/components/reviews/source-comparison";
 import { ReviewExplorer, sentimentLabel } from "@/components/reviews/review-explorer";
-
-/** Trailing 30-day window, so the screen renders without the operator touching a date input. */
-function defaultRange(): { from: string; to: string } {
-  const to = new Date();
-  const from = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate() - 29));
-  return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
-}
 
 const SENTIMENTS = ["POSITIVE", "NEUTRAL", "NEGATIVE"] as const;
 
@@ -40,6 +36,7 @@ export default function ReviewsPage() {
 
   const overview = useApiData((api) => api.getReviewOverview(range.from, range.to), [range.from, range.to]);
   const trend = useApiData((api) => api.getReviewSentimentTrend(range.from, range.to), [range.from, range.to]);
+  const ratingTrend = useApiData((api) => api.getReviewRatingTrend(range.from, range.to), [range.from, range.to]);
   const aspects = useApiData((api) => api.getReviewAspects(range.from, range.to), [range.from, range.to]);
   const ratings = useApiData((api) => api.getReviewRatings(range.from, range.to), [range.from, range.to]);
   const sources = useApiData((api) => api.getReviewSources(range.from, range.to), [range.from, range.to]);
@@ -77,73 +74,51 @@ export default function ReviewsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3">
-      <Field label="From" htmlFor="reviews-from">
-        <Input
-          id="reviews-from"
-          type="date"
-          value={range.from}
-          max={range.to}
-          onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
-          className="w-44"
-        />
-      </Field>
-      <Field label="To" htmlFor="reviews-to">
-        <Input
-          id="reviews-to"
-          type="date"
-          value={range.to}
-          min={range.from}
-          onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
-          className="w-44"
-        />
-      </Field>
+      <TimeRangeSelector value={range} onChange={setRange} />
       <Field label="Source" htmlFor="reviews-source">
-        <select
-          id="reviews-source"
-          aria-label="Source"
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-2 text-sm"
-        >
-          <option value="">All sources</option>
-          {sourceOptions.map((s) => (
-            <option key={s.source} value={s.source}>
-              {reviewSourceLabel(s.source)}
-            </option>
-          ))}
-        </select>
+        <Select value={source || "all"} onValueChange={(v) => setSource(v === "all" ? "" : v)}>
+          <SelectTrigger id="reviews-source" aria-label="Source" className="w-44">
+            <SelectValue placeholder="All sources" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All sources</SelectItem>
+            {sourceOptions.map((s) => (
+              <SelectItem key={s.source} value={s.source}>
+                {reviewSourceLabel(s.source)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <Field label="Sentiment" htmlFor="reviews-sentiment">
-        <select
-          id="reviews-sentiment"
-          aria-label="Sentiment"
-          value={sentiment}
-          onChange={(e) => setSentiment(e.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-2 text-sm"
-        >
-          <option value="">All sentiments</option>
-          {SENTIMENTS.map((s) => (
-            <option key={s} value={s}>
-              {sentimentLabel(s)}
-            </option>
-          ))}
-        </select>
+        <Select value={sentiment || "all"} onValueChange={(v) => setSentiment(v === "all" ? "" : v)}>
+          <SelectTrigger id="reviews-sentiment" aria-label="Sentiment" className="w-44">
+            <SelectValue placeholder="All sentiments" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All sentiments</SelectItem>
+            {SENTIMENTS.map((s) => (
+              <SelectItem key={s} value={s}>
+                {sentimentLabel(s)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <Field label="Aspect" htmlFor="reviews-aspect">
-        <select
-          id="reviews-aspect"
-          aria-label="Aspect"
-          value={aspect}
-          onChange={(e) => setAspect(e.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-2 text-sm"
-        >
-          <option value="">All aspects</option>
-          {aspectOptions.map((a) => (
-            <option key={a.aspect} value={a.aspect}>
-              {humanizeKey(a.aspect)}
-            </option>
-          ))}
-        </select>
+        <Select value={aspect || "all"} onValueChange={(v) => setAspect(v === "all" ? "" : v)}>
+          <SelectTrigger id="reviews-aspect" aria-label="Aspect" className="w-44">
+            <SelectValue placeholder="All aspects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All aspects</SelectItem>
+            {aspectOptions.map((a) => (
+              <SelectItem key={a.aspect} value={a.aspect}>
+                {humanizeKey(a.aspect)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <Field label="Search" htmlFor="reviews-search">
         <Input
@@ -209,6 +184,13 @@ export default function ReviewsPage() {
         description="Positive, neutral and negative reviews over time, stacked per week."
       >
         <SentimentTrend buckets={trend.data ?? []} />
+      </Section>
+
+      <Section
+        title="Rating & recommend"
+        description="Average star rating and the share of guests who would recommend, over time."
+      >
+        <RatingTrend buckets={ratingTrend.data ?? []} />
       </Section>
 
       <Section

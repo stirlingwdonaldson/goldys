@@ -71,16 +71,13 @@ describe("SalesDetailPage", () => {
     expect(screen.queryByTestId("payments-tab")).not.toBeInTheDocument();
   });
 
-  it("renders a shared date-range filter defaulting to a trailing 30-day window", () => {
+  it("renders the shared time-range selector", () => {
     render(<SalesDetailPage />);
-    // The date pickers expose their "yyyy-mm-dd" value on the trigger.
-    const from = screen.getByLabelText("From").getAttribute("data-value") ?? "";
-    const to = screen.getByLabelText("To").getAttribute("data-value") ?? "";
-    expect(from).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(to).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    // 30 days inclusive of both ends => the window spans 29 days.
-    const spanDays = (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000;
-    expect(spanDays).toBe(29);
+    expect(screen.getByRole("button", { name: "Today" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Past week" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Past month" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Past year" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Custom date range" })).toBeInTheDocument();
   });
 
   it("shows the data lineage section and hides the relationship graph until a sale is drilled", () => {

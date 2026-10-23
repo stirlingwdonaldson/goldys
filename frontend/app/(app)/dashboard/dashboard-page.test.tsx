@@ -18,6 +18,8 @@ vi.mock("@/lib/use-api-data", () => ({
           salesTrend: { points: [], notices: ["Incomplete sales subtotal"] },
           activity: [],
           topSellers: { items: [], notices: ["Incomplete product subtotal"] },
+          coversToday: { covers: 132, bookings: 98, noShows: 4 },
+          foodCost: { foodCostPercent: 0.3125, purchases: 15842.6, wastage: 214.5 },
         },
         loading: false,
         error: null,

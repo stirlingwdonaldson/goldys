@@ -6,6 +6,8 @@ import { useApiData } from "@/lib/use-api-data";
 import { buildKnownFields, buildRuleRows, entityLabel, fieldLabel, summarizeRule } from "@/lib/rule-logic";
 import { useToast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { CircleHelp } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +26,30 @@ import type { ResolutionRule } from "@/lib/api";
 import { PageHeader } from "@/components/layout/page-header";
 
 const ENTITIES = ["daily_sales", "product_sales"];
+
+/** A "?" next to the page title explaining that rule changes take effect immediately. */
+function RulesApplyHelp() {
+  return (
+    <HoverCard openDelay={150}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          className="rounded-full text-muted-foreground/70 hover:text-foreground"
+          aria-label="About resolution rules"
+        >
+          <CircleHelp className="size-4" aria-hidden="true" />
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-80 text-sm">
+        <p className="font-medium">Rules apply immediately</p>
+        <p className="mt-1 text-muted-foreground">
+          Saving a rule recomputes the resolved views straight away, so every screen reflects the
+          new decision without a separate &ldquo;apply&rdquo; step.
+        </p>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
 
 /**
  * The resolution-rules screen: the rule list, editor, recompute banner, and audit.
@@ -85,7 +111,11 @@ export function ResolutionRulesContent() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Resolution rules" description="How disagreements between sources are resolved, per field." />
+      <PageHeader
+        title="Resolution rules"
+        description="How disagreements between sources are resolved, per field."
+        status={<RulesApplyHelp />}
+      />
 
       {status ? <RecomputeBanner status={status} /> : null}
 

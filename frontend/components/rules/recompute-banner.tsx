@@ -30,10 +30,7 @@ export function RecomputeBanner({ status }: RecomputeBannerProps) {
     return (
       <div className="flex items-center gap-2 rounded-xl border border-transparent bg-status-success-soft p-3 text-sm text-status-success">
         <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-        <span>
-          Rules apply immediately · last changed{" "}
-          {new Date(status.lastChangedAt).toLocaleString()}
-        </span>
+        <span>Last recomputed {new Date(status.lastChangedAt).toLocaleString()}</span>
       </div>
     );
   }

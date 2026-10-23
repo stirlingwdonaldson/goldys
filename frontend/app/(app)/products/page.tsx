@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaxonomyTree } from "@/components/classification/taxonomy-tree";
 import { DendrogramView, type DendroAction, type DendroSelection } from "@/components/classification/dendrogram-view";
 import { EmbeddingScatter } from "@/components/classification/embedding-scatter";
@@ -68,26 +69,28 @@ function MoveToCategory({
   onClear: (productNameKey: string) => void;
 }) {
   return (
-    <select
-      aria-label={`Move ${productNameKey} to a category`}
-      className="h-8 rounded-md border bg-background px-2 text-sm"
-      value={categoryId ?? ""}
-      onChange={(event) => {
-        const next = event.target.value;
-        if (next === "") {
+    <Select
+      value={categoryId ?? "uncategorised"}
+      onValueChange={(next) => {
+        if (next === "uncategorised") {
           if (categoryId != null) onClear(productNameKey);
           return;
         }
         onMove(productNameKey, next);
       }}
     >
-      <option value="">Uncategorised</option>
-      {categories.map((category) => (
-        <option key={category.id} value={category.id}>
-          {category.groupName ? `${category.groupName} · ${category.name}` : category.name}
-        </option>
-      ))}
-    </select>
+      <SelectTrigger aria-label={`Move ${productNameKey} to a category`} className="h-8 w-56">
+        <SelectValue placeholder="Uncategorised" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="uncategorised">Uncategorised</SelectItem>
+        {categories.map((category) => (
+          <SelectItem key={category.id} value={category.id}>
+            {category.groupName ? `${category.groupName} · ${category.name}` : category.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -148,22 +151,24 @@ function CategoryDetail({
         <label htmlFor="category-group" className="text-sm text-muted-foreground">
           Group
         </label>
-        <select
-          id="category-group"
-          aria-label="Category group"
-          className="h-8 rounded-md border bg-background px-2 text-sm"
-          value={category.groupName ?? ""}
-          onChange={(event) => onRegroup(category.id, event.target.value)}
+        <Select
+          value={category.groupName ?? "none"}
+          onValueChange={(next) => onRegroup(category.id, next === "none" ? "" : next)}
         >
-          <option value="">No group</option>
-          {groups
-            .filter((group) => group !== category.groupName)
-            .map((group) => (
-              <option key={group} value={group}>
-                {group}
-              </option>
-            ))}
-        </select>
+          <SelectTrigger id="category-group" aria-label="Category group" className="h-8 w-56">
+            <SelectValue placeholder="No group" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No group</SelectItem>
+            {groups
+              .filter((group) => group !== category.groupName)
+              .map((group) => (
+                <SelectItem key={group} value={group}>
+                  {group}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
         <Button
           variant="destructive"
           size="sm"

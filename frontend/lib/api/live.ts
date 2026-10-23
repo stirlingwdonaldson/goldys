@@ -49,6 +49,7 @@ import type {
   UpdateCategoryInput,
   AspectSentimentSummary,
   RatingBucket,
+  RatingTrendBucket,
   ReviewFilter,
   ReviewOverview,
   ReviewView,
@@ -399,6 +400,8 @@ export const liveApi: Api = {
     fetchApi<ReviewOverview>(`/api/reviews/overview?from=${from}&to=${to}`),
   getReviewSentimentTrend: (from: string, to: string) =>
     fetchApi<SentimentBucket[]>(`/api/reviews/sentiment-trend?from=${from}&to=${to}`),
+  getReviewRatingTrend: (from: string, to: string) =>
+    fetchApi<RatingTrendBucket[]>(`/api/reviews/rating-trend?from=${from}&to=${to}`),
   getReviewAspects: (from: string, to: string) =>
     fetchApi<AspectSentimentSummary[]>(`/api/reviews/aspects?from=${from}&to=${to}`),
   getReviewRatings: (from: string, to: string) =>

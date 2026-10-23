@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -12,11 +12,13 @@ import {
   type ColumnFiltersState,
   type PaginationState,
   type Row,
+  type RowSelectionState,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { Settings2 } from "lucide-react";
+import { MoreHorizontal, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -64,6 +66,15 @@ interface DataTableProps<TData, TValue> {
    * order changes, e.g. so a detail view can step to the previous/next row.
    */
   onRowOrderChange?: (rows: TData[]) => void;
+  /**
+   * When provided, renders a trailing "…" action menu per row (the shadcn data-table's row
+   * actions). Return the menu items for a given row.
+   */
+  rowActions?: (row: TData) => ReactNode;
+  /** When true, renders a leading checkbox column for bulk selection. */
+  selectable?: boolean;
+  /** Called with the selected rows' data whenever the selection changes. */
+  onSelectedRowsChange?: (rows: TData[]) => void;
 }
 
 /**
@@ -84,29 +95,94 @@ export function DataTable<TData, TValue>({
   onRowClick,
   isRowSelected,
   onRowOrderChange,
+  rowActions,
+  selectable = false,
+  onSelectedRowsChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const paginated = pageSize !== false;
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: pageSize === false ? DEFAULT_PAGE_SIZE : pageSize,
   });
 
+  // Leading checkbox column for bulk selection (opt-in via `selectable`).
+  const selectionColumn: ColumnDef<TData, TValue> = useMemo(
+    () => ({
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    }),
+    [],
+  );
+
+  // Trailing "…" action menu per row (opt-in via `rowActions`).
+  const actionsColumn: ColumnDef<TData, TValue> = useMemo(
+    () => ({
+      id: "actions",
+      header: () => null,
+      cell: ({ row }) => (
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8" aria-label="Row actions">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">{rowActions!(row.original)}</DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    }),
+    [rowActions],
+  );
+
+  const allColumns: ColumnDef<TData, TValue>[] = [
+    ...(selectable ? [selectionColumn] : []),
+    ...columns,
+    ...(rowActions ? [actionsColumn] : []),
+  ];
+
   const table = useReactTable({
     data,
-    columns,
+    columns: allColumns,
     getRowId,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     ...(paginated ? { getPaginationRowModel: getPaginationRowModel() } : {}),
+    ...(selectable ? { onRowSelectionChange: setRowSelection } : {}),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
-    state: { sorting, columnFilters, columnVisibility, ...(paginated ? { pagination } : {}) },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      ...(selectable ? { rowSelection } : {}),
+      ...(paginated ? { pagination } : {}),
+    },
   });
 
   const hideableColumns = table.getAllColumns().filter((c) => c.getCanHide());
@@ -122,6 +198,16 @@ export function DataTable<TData, TValue>({
     onRowOrderChangeRef.current?.(rows.map((r) => r.original));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowOrderKey]);
+
+  // Report the selected rows' data whenever the selection changes.
+  const onSelectedRowsChangeRef = useRef(onSelectedRowsChange);
+  onSelectedRowsChangeRef.current = onSelectedRowsChange;
+  const selectedRowKey = table.getSelectedRowModel().rows.map((r) => r.id).join("\u0000");
+  useEffect(() => {
+    if (!selectable || !onSelectedRowsChangeRef.current) return;
+    onSelectedRowsChangeRef.current(table.getSelectedRowModel().rows.map((r) => r.original));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRowKey]);
 
   return (
     <div className="flex flex-col gap-3">

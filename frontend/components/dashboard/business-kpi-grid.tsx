@@ -3,9 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { AwaitingData } from "@/components/states/awaiting-data";
 import { OwnerOnlyTile } from "@/components/states/owner-only";
 import { StatCard, type StatDelta } from "@/components/data-display/stat-card";
-import { formatCurrency, formatDay, toNumber } from "@/lib/format";
+import { formatCurrency, formatDay, formatNumber, formatPercent, toNumber } from "@/lib/format";
 import { isOwner } from "@/lib/roles";
-import type { SalesTrendPoint } from "@/lib/api";
+import type { CoversToday, FoodCost, SalesTrendPoint, TopSeller } from "@/lib/api";
 
 interface BusinessKpiGridProps {
   /** Current user's seniority; gates the Owner-only labour tile. */
@@ -17,6 +17,12 @@ interface BusinessKpiGridProps {
   latestSales?: { date: string | null; total: number | null } | null;
   /** Recent resolved daily totals, for the Sales tile's sparkline and week-on-week delta. */
   salesTrend?: SalesTrendPoint[];
+  /** Today's resolved reservation figures (nulls when OpenTable has no data yet). */
+  coversToday?: CoversToday;
+  /** Food-cost over the trailing window (nulls when inventory has no data yet). */
+  foodCost?: FoodCost;
+  /** The recent top sellers, used for the top-seller tile. */
+  topSellers?: TopSeller[];
 }
 
 // Definition from docs/metrics/catalog.md (`sales.net`).
@@ -45,9 +51,17 @@ function weekOnWeek(latest: { date: string | null; total: number | null }, trend
 
 /**
  * The dashboard's five business KPI tiles. The Sales tile shows the latest resolved daily total
- * once data lands; the rest are placeholders until their reporting data lands.
+ * once data lands; the rest show resolved figures once their reporting data lands, or a
+ * placeholder until then. Labour cost stays a placeholder until Deputy is connected.
  */
-export function BusinessKpiGrid({ seniority, latestSales, salesTrend = [] }: BusinessKpiGridProps) {
+export function BusinessKpiGrid({
+  seniority,
+  latestSales,
+  salesTrend = [],
+  coversToday,
+  foodCost,
+  topSellers = [],
+}: BusinessKpiGridProps) {
   const isOwnerRole = isOwner(seniority) || seniority?.trim().toUpperCase() === "MANAGER";
   const unavailableDays = salesTrend.filter((p) => p.total == null).length;
   return (
@@ -96,24 +110,54 @@ export function BusinessKpiGrid({ seniority, latestSales, salesTrend = [] }: Bus
       ) : (
         <OwnerOnlyTile label="Labour cost %" />
       )}
-      <AwaitingData
-        label="Attendance proxy today"
-        description="Today's covers, bookings, and no-shows."
-        reason="Awaiting OpenTable reporting."
-        icon={CalendarDays}
-      />
-      <AwaitingData
-        label="Top sellers"
-        description="Best-selling items and revenue mix."
-        reason="Awaiting product-sales reporting."
-        icon={Trophy}
-      />
-      <AwaitingData
-        label="Invoice purchases"
-        description="Invoiced purchases; food cost % awaits valuation evidence."
-        reason="Inventory not yet connected."
-        icon={Utensils}
-      />
+      {coversToday?.covers == null ? (
+        <AwaitingData
+          label="Covers today"
+          description="Today's covers, bookings, and no-shows."
+          reason="No resolved covers yet."
+          icon={CalendarDays}
+        />
+      ) : (
+        <StatCard
+          label="Covers today"
+          value={formatNumber(coversToday.covers)}
+          hint={`${formatNumber(coversToday.bookings ?? 0)} bookings · ${formatNumber(coversToday.noShows ?? 0)} no-shows`}
+          icon={CalendarDays}
+          help="Resolved covers for today, summed across service periods."
+        />
+      )}
+      {topSellers.length === 0 ? (
+        <AwaitingData
+          label="Top sellers"
+          description="Best-selling items and revenue mix."
+          reason="No resolved product sales yet."
+          icon={Trophy}
+        />
+      ) : (
+        <StatCard
+          label="Top sellers"
+          value={formatCurrency(topSellers[0].amount)}
+          hint={topSellers[0].name}
+          icon={Trophy}
+          help="The highest-revenue product over the trailing 30 days."
+        />
+      )}
+      {foodCost?.foodCostPercent == null ? (
+        <AwaitingData
+          label="Food cost"
+          description="Cost of goods, stock, and wastage."
+          reason="No resolved inventory data yet."
+          icon={Utensils}
+        />
+      ) : (
+        <StatCard
+          label="Food cost"
+          value={formatPercent(foodCost.foodCostPercent)}
+          hint={`COGS ${formatCurrency(foodCost.purchases)} · wastage ${formatCurrency(foodCost.wastage)}`}
+          icon={Utensils}
+          help="Cost of goods sold as a share of gross sales over the trailing 30 days."
+        />
+      )}
     </div>
   );
 }

@@ -10,7 +10,7 @@ function status(state: RecomputeStatus["state"], lastChangedAt: string | null = 
 describe("RecomputeBanner", () => {
   it("shows the last-changed time when complete", () => {
     render(<RecomputeBanner status={status("complete", "2026-09-30T08:00:00Z")} />);
-    expect(screen.getByText(/rules apply immediately/i)).toBeInTheDocument();
+    expect(screen.getByText(/last recomputed/i)).toBeInTheDocument();
     // The rendered timestamp is locale-formatted, so assert on the year only.
     expect(screen.getByText(/2026/i)).toBeInTheDocument();
   });

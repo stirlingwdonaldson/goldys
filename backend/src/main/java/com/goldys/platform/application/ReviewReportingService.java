@@ -6,6 +6,7 @@ import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.AspectSentimentSummary;
 import com.goldys.platform.semantic.RatingBucket;
+import com.goldys.platform.semantic.RatingTrendBucket;
 import com.goldys.platform.semantic.ReviewFilter;
 import com.goldys.platform.semantic.ReviewMetricsQuery;
 import com.goldys.platform.semantic.ReviewOverview;
@@ -42,6 +43,12 @@ public class ReviewReportingService {
   public List<SentimentBucket> sentimentTrend(UserRole role, LocalDate from, LocalDate to) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     return query.sentimentTrend(from, to);
+  }
+
+  /** Weekly average rating and % who would recommend over the inclusive range. */
+  public List<RatingTrendBucket> ratingTrend(UserRole role, LocalDate from, LocalDate to) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return query.ratingTrend(from, to);
   }
 
   /** Mentions and sentiment per aspect over the inclusive range. */

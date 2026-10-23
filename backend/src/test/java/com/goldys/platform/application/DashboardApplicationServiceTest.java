@@ -3,6 +3,7 @@ package com.goldys.platform.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -23,6 +24,7 @@ import com.goldys.platform.reconciliation.OverrideUsage;
 import com.goldys.platform.reconciliation.OverrideUsageService;
 import com.goldys.platform.semantic.ProductMetricsQuery;
 import com.goldys.platform.semantic.ProductRanking;
+import com.goldys.platform.semantic.ReservationSummary;
 import com.goldys.platform.semantic.SalesMetricsQuery;
 import com.goldys.platform.semantic.TopSeller;
 import com.goldys.platform.semantic.catalog.Calendar;
@@ -39,6 +41,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class DashboardApplicationServiceTest {
@@ -50,6 +53,10 @@ class DashboardApplicationServiceTest {
   private final PermissionService permissions = mock(PermissionService.class);
   private final SalesMetricsQuery salesMetrics = mock(SalesMetricsQuery.class);
   private final ProductMetricsQuery productMetrics = mock(ProductMetricsQuery.class);
+  private final ReservationReportingService reservationReporting =
+      mock(ReservationReportingService.class);
+  private final InventoryReportingService inventoryReporting =
+      mock(InventoryReportingService.class);
   private final MetricQueryService metrics = mock(MetricQueryService.class);
   private final IngestionService ingestion = mock(IngestionService.class);
   private final OverrideUsageService overrideUsage = mock(OverrideUsageService.class);
@@ -58,6 +65,8 @@ class DashboardApplicationServiceTest {
       new DashboardApplicationService(
           salesMetrics,
           productMetrics,
+          reservationReporting,
+          inventoryReporting,
           ingestion,
           overrideUsage,
           permissions,
@@ -151,6 +160,47 @@ class DashboardApplicationServiceTest {
     assertThatThrownBy(() -> service.topSellers(OWNER, null, null, null))
         .isInstanceOf(AccessDeniedException.class);
     org.mockito.Mockito.verifyNoInteractions(metrics, productMetrics);
+  }
+
+  @Test
+  void bootstrapComposesCoversTodayAndFoodCost() {
+    when(salesMetrics.openConflicts()).thenReturn(0L);
+    when(productMetrics.openConflicts()).thenReturn(0L);
+    when(ingestion.health()).thenReturn(new IngestionHealth(92, "42m avg"));
+    when(overrideUsage.usage()).thenReturn(new OverrideUsage(0, "never"));
+    when(salesMetrics.latestTradingDay()).thenReturn(Optional.empty());
+    when(metrics.query(any()))
+        .thenReturn(
+            new TimeSeriesResult(
+                MetricId.SALES_GROSS, List.of(), List.of(), provenance(MetricId.SALES_GROSS)));
+    when(ingestion.activity(anyInt())).thenReturn(List.of());
+    when(productMetrics.qualifiedTopSellers(any(), any(), eq(5)))
+        .thenReturn(
+            new ProductRanking(
+                List.of(),
+                new MetricCoverage(SEP_13.minusDays(29), SEP_13, List.of(), List.of(), List.of()),
+                List.of()));
+    when(reservationReporting.summary(eq(OWNER), any()))
+        .thenReturn(
+            Optional.of(new ReservationSummary(SEP_13, 12, 10, 34, 1, 2, 4, 0L, null, null, null)));
+    when(inventoryReporting.summary(eq(OWNER), any(), any()))
+        .thenReturn(
+            new InventoryReportingService.InventorySummary(
+                "2026-08-14",
+                "2026-09-13",
+                new BigDecimal("5000"),
+                new BigDecimal("120"),
+                new BigDecimal("0.3125"),
+                List.of()));
+
+    var bootstrap = service.bootstrap(OWNER);
+
+    assertThat(bootstrap.coversToday().covers()).isEqualTo(34L);
+    assertThat(bootstrap.coversToday().bookings()).isEqualTo(12L);
+    assertThat(bootstrap.coversToday().noShows()).isEqualTo(2L);
+    assertThat(bootstrap.foodCost().foodCostPercent()).isEqualByComparingTo("0.3125");
+    assertThat(bootstrap.foodCost().purchases()).isEqualByComparingTo("5000");
+    assertThat(bootstrap.foodCost().wastage()).isEqualByComparingTo("120");
   }
 
   private static MetricProvenance provenance(MetricId id) {
