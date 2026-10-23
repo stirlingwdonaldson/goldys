@@ -61,6 +61,22 @@ class IngestionRunService {
             ingestionRunId, run.sourceSystem(), failureType, detail, stackTrace, occurredAt));
   }
 
+  /** A stage failure survives the caller's rollback and is visible in connector health. */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  void recordProcessingFailure(UUID runId, IngestionStageKind stage, Instant occurredAt) {
+    IngestionRun run = require(runId);
+    failures.save(
+        IngestionFailure.record(
+            runId,
+            run.sourceSystem(),
+            "PROCESSING_" + stage.name() + "_FAILED",
+            "Processing failed at " + stage.name(),
+            null,
+            occurredAt));
+    run.processingFailed(stage);
+    runs.save(run);
+  }
+
   /** Closes the run and returns the terminal status it was given. */
   @Transactional
   IngestionStatus complete(UUID ingestionRunId, String outputWatermark, Instant completedAt) {

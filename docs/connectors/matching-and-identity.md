@@ -333,7 +333,11 @@ never the source identity. Source group observations retain quantity, amount, or
 and financial fields. Every contributing page is linked in `product_sales_contributor`.
 
 Repeated `(site, code, uniqueGroupId)` observations within a fetched day contribute once. Inconsistent
-repeats or missing code/group/quantity/amount reject the batch; raw receipts remain retained.
+repeats or missing code/quantity/amount reject the batch; raw receipts remain retained.
+`uniqueGroupId` is optional: all 954 rows in seven dated production pages inspected on
+23 October 2026 have null/blank group IDs, with unique `(siteNumber, stockCode)` keys per page.
+A null/blank group denotes the ungrouped product/site observation, not a missing identity.
+Identical repeats contribute once; inconsistent repeats are rejected rather than summed.
 Qualified daily facts are published atomically after pagination completes. The canonical writer
 retains equal-value receipts and rejects already-observed/older receipt replay as new revisions.
 It does not infer deletion from absence or claim that a fetched report is all business activity.

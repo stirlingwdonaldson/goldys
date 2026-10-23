@@ -213,6 +213,9 @@ public class IngestionService {
             stage,
             outcome,
             CLOCK.instant()));
+    if (outcome == IngestionStageOutcome.FAILED) {
+      runs.recordProcessingFailure(record.ingestionRunId(), stage, CLOCK.instant());
+    }
   }
 
   /** The latest run for each source. One query, indexed, regardless of ledger size. */
