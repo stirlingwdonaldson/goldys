@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Receives a manually-exported GuestCenter reviews CSV and ingests it raw (validation only — no
  * canonicalization yet).
  *
- * <p>Public (no OIDC session), gated by a shared token in the {@code X-Webhook-Token} header or
+ * <p>Public (no user session), gated by a shared token in the {@code X-Webhook-Token} header or
  * {@code token} query param. Set {@code opentable.drop-token} in production; while unset the
  * endpoint rejects every request (fail closed).
  */

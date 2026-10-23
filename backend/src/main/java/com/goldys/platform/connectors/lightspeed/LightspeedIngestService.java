@@ -8,6 +8,7 @@ import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.RawLedgerQuery;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
+import com.goldys.platform.util.Nulls;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -106,12 +107,13 @@ public class LightspeedIngestService {
     BigDecimal gst = BigDecimal.ZERO;
 
     void add(LightspeedInsightsSale sale) {
-      total = total.add(nz(sale.totalIncTax())).add(nz(sale.totalAdjustmentIncTax()));
-      gst = gst.add(nz(sale.totalTax())).add(nz(sale.totalAdjustmentTax()));
+      total =
+          total
+              .add(Nulls.zeroIfNull(sale.totalIncTax()))
+              .add(Nulls.zeroIfNull(sale.totalAdjustmentIncTax()));
+      gst =
+          gst.add(Nulls.zeroIfNull(sale.totalTax()))
+              .add(Nulls.zeroIfNull(sale.totalAdjustmentTax()));
     }
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }

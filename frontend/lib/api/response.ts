@@ -47,7 +47,7 @@ function isAuthRedirect(path: string, response: Response): boolean {
     const original = new URL(path, base);
     const target = new URL(response.url);
     return original.pathname.startsWith("/api/") && original.origin === target.origin &&
-      (target.pathname === "/login" || target.pathname.startsWith("/oauth2/") || target.pathname.startsWith("/login/oauth2/"));
+      target.pathname === "/login";
   } catch {
     return false;
   }

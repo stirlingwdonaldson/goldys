@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Receives manually-exported CTB invoice CSV (metadata + lines) and ingests it. Public (no OIDC
+ * Receives manually-exported CTB invoice CSV (metadata + lines) and ingests it. Public (no user
  * session), gated by a shared token in the {@code X-Webhook-Token} header or {@code token} query
  * param. Set {@code ctb.drop-token} in production; while unset the endpoint rejects every request
  * (fail closed).

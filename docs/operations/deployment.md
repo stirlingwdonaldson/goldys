@@ -108,9 +108,7 @@ seeded by migrations (`V6`, `V13`, `V18`, `V23`, `V26`). Today only `ALL × OWNE
 grants; BOH/FOH-specific rows wait on the stakeholder field-to-role mapping (see
 `docs/prd.md` Open Questions). No seniority is special-cased in code.
 
-> `.env.oidc.example`, the `/oauth2` rewrites in `frontend/next.config.ts`, and some
-> code comments still mention OIDC. They are leftovers from the original OIDC
-> design (replaced by `V7`/`V8`) and are not used.
+> OIDC was replaced by the email + password flow (`V7`/`V8`); no OIDC references remain in code or config.
 
 ## Database
 

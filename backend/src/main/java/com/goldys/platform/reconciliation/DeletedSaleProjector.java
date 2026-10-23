@@ -2,6 +2,7 @@ package com.goldys.platform.reconciliation;
 
 import com.goldys.platform.canonical.CanonicalDeletedSaleQuery;
 import com.goldys.platform.canonical.DeletedSaleView;
+import com.goldys.platform.util.Nulls;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -78,12 +79,8 @@ public class DeletedSaleProjector {
 
     void add(DeletedSaleView v) {
       count++;
-      totalIncTax = totalIncTax.add(nz(v.totalIncTax()));
-      totalTax = totalTax.add(nz(v.totalTax()));
+      totalIncTax = totalIncTax.add(Nulls.zeroIfNull(v.totalIncTax()));
+      totalTax = totalTax.add(Nulls.zeroIfNull(v.totalTax()));
     }
-  }
-
-  private static BigDecimal nz(BigDecimal v) {
-    return v == null ? BigDecimal.ZERO : v;
   }
 }

@@ -13,7 +13,7 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
-# The /api and /oauth2 rewrites target the backend service. This is baked at
+# The /api rewrite targets the backend service. This is baked at
 # build time because Next.js resolves rewrites when the config is loaded.
 ARG BACKEND_ORIGIN=http://backend:8080
 ENV BACKEND_ORIGIN=$BACKEND_ORIGIN

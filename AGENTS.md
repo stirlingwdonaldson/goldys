@@ -195,9 +195,7 @@ collaborator joining later.
 - Check `docs/connectors/source-access.md` before assuming a source has an API.
   Lightspeed arrives via scheduled-report webhooks, CTB via an internal-AJAX pull plus
   an SFTP drop, OpenTable via a manual CSV drop, Deputy via a raw-only webhook.
-- Auth is email + password (`user_account`). Leftover OIDC references
-  (`.env.oidc.example`, `/oauth2` rewrites in `frontend/next.config.ts`, some comments)
-  are dead; don't extend them.
+- Auth is email + password (`user_account`); OIDC was removed by `V7`/`V8` — don't reintroduce it.
 - The frontend demo mode (`NEXT_PUBLIC_DEMO_MODE`, default on) uses fixtures in
   `frontend/lib/api/demo.ts`. Every `Api` method needs a live and a demo implementation.
 
