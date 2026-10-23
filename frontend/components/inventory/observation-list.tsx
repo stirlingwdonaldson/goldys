@@ -8,6 +8,11 @@ import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { EmptyState } from "@/components/states/empty-state";
+import type { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/data-table/data-table";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 export function ObservationList({ from: initialFrom, to: initialTo, apiOverride }: { from: string; to: string; apiOverride?: Api }) {
@@ -20,9 +25,27 @@ export function ObservationList({ from: initialFrom, to: initialTo, apiOverride 
   return <div className="flex flex-col gap-3">
     <p className="text-sm text-muted-foreground">Counts and waste retain source units and dates. Quantities are not added across units. Source values have an unverified currency, tax and valuation basis.</p>
     <div className="flex flex-wrap gap-3">
-      <label>From <input aria-label="Observation from" type="date" value={from} onChange={e => { setFrom(e.target.value); setPage(0); }} /></label>
-      <label>To <input aria-label="Observation to" type="date" value={to} onChange={e => { setTo(e.target.value); setPage(0); }} /></label>
-      <label>Kind <select aria-label="Observation kind" value={kind} onChange={e => { setKind(e.target.value as typeof kind); setPage(0); }}><option value="ALL">All</option><option value="COUNT">Counts</option><option value="WASTE">Waste</option></select></label>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="observation-from">From</Label>
+        <DatePicker id="observation-from" aria-label="Observation from" value={from} max={to}
+          onChange={value => { setFrom(value); setPage(0); }} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="observation-to">To</Label>
+        <DatePicker id="observation-to" aria-label="Observation to" value={to} min={from}
+          onChange={value => { setTo(value); setPage(0); }} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="observation-kind">Kind</Label>
+        <Select value={kind} onValueChange={value => { setKind(value as typeof kind); setPage(0); }}>
+          <SelectTrigger id="observation-kind" aria-label="Observation kind" className="w-36"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All</SelectItem>
+            <SelectItem value="COUNT">Counts</SelectItem>
+            <SelectItem value="WASTE">Waste</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
     {result.isPending ? <LoadingState rows={3} /> : result.error ? result.error.code === "NOT_PERMITTED"
       ? <PermissionDenied subject="stock and waste observations" />
@@ -48,22 +71,23 @@ function stocktakeState(row: InventoryObservation) {
   return `${partial}; ${locked}`;
 }
 
-function ObservationRow({ row }: { row: InventoryObservation }) {
-  return <tr>
-    <td className="p-2">{row.date}</td><td>{row.kind}</td>
-    <td>{row.productName}{row.stockCode ? ` / ${row.stockCode}` : ""}</td>
-    <td>{decimal(row.quantity, 4)} {row.unit ?? "Unknown unit"}{row.unitSize ? ` (${row.unitSize})` : ""}</td>
-    <td>{decimal(row.unitCost)}</td><td>{decimal(row.sourceValue)}</td>
-    <td>{row.area ?? "Unknown"}</td><td>{stocktakeState(row)}</td>
-    <td>{row.sourceSystem} {row.sourceRecordRef}</td>
-  </tr>;
-}
+const observationColumns: ColumnDef<InventoryObservation>[] = [
+  { accessorKey: "date", header: "Date" },
+  { accessorKey: "kind", header: "Kind" },
+  { id: "product", header: "Product / code", accessorFn: row => `${row.productName}${row.stockCode ? ` / ${row.stockCode}` : ""}` },
+  { id: "quantity", header: "Quantity / unit", cell: ({ row: { original: row } }) =>
+    `${decimal(row.quantity, 4)} ${row.unit ?? "Unknown unit"}${row.unitSize ? ` (${row.unitSize})` : ""}` },
+  { accessorKey: "unitCost", header: "Unit cost", cell: ({ row }) => decimal(row.original.unitCost), meta: { align: "right", title: "Unit cost" } },
+  { accessorKey: "sourceValue", header: "Source value", cell: ({ row }) => decimal(row.original.sourceValue), meta: { align: "right", title: "Source value" } },
+  { accessorKey: "area", header: "Area", cell: ({ row }) => row.original.area ?? "Unknown" },
+  { id: "stocktake", header: "Stocktake state", accessorFn: row => stocktakeState(row) },
+  { id: "source", header: "Source reference", accessorFn: row => `${row.sourceSystem} ${row.sourceRecordRef}` },
+];
 
 function ObservationTable({ rows, page }: { rows: InventoryObservation[]; page: number }) {
-  const headings = ["Date", "Kind", "Product / code", "Quantity / unit", "Unit cost", "Source value", "Area", "Stocktake state", "Source reference"];
-  return <div className="overflow-x-auto"><table className="w-full text-sm">
-    <caption className="text-left">Dated source observations — page {page + 1}</caption>
-    <thead><tr>{headings.map(label => <th key={label} scope="col" className="p-2 text-left">{label}</th>)}</tr></thead>
-    <tbody>{rows.map(row => <ObservationRow key={`${row.kind}:${row.sourceSystem}:${row.sourceRecordRef}`} row={row} />)}</tbody>
-  </table></div>;
+  return <div role="region" aria-label="Dated source observations" className="flex flex-col gap-3">
+    <p className="text-sm text-muted-foreground">Dated source observations — page {page + 1}</p>
+    <DataTable columns={observationColumns} data={rows} pageSize={false}
+      getRowId={row => `${row.kind}:${row.sourceSystem}:${row.sourceRecordRef}`} />
+  </div>;
 }

@@ -35,5 +35,12 @@ describe("layoutTree", () => {
     expect(drinks.data.hasOutput).toBe(true);
     expect(cocktails.data.hasInput).toBe(true);
   });
+  it("packs independent roots with the normal sibling gap when rootGap is zero", () => {
+    const roots = Array.from({ length: 7 }, (_, i) => treeNode(String(i)));
+    const { nodes } = layoutTree(roots, { direction: "horizontal", rootGap: 0 });
+    expect(nodes).toHaveLength(7);
+    expect(nodes.map(node => node.position.x)).toEqual(Array(7).fill(0));
+    expect(nodes.map(node => node.position.y)).toEqual([0, 88, 176, 264, 352, 440, 528]);
+  });
 });
 

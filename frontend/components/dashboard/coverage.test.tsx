@@ -17,7 +17,7 @@ describe("dashboard coverage", () => {
     expect(spec.title).toContain("ex GST");
     expect(spec.description).not.toContain("awaiting a decision");
     expect(spec.series[0].points.map((p: { y: number | null }) => p.y)).toEqual([0, null]);
-    expect(screen.getByRole("status")).toHaveTextContent("Incomplete");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("qualifies empty rankings rather than implying no sales", () => {
@@ -26,7 +26,7 @@ describe("dashboard coverage", () => {
     const spec = JSON.parse(screen.getByTestId("widget").textContent!);
     expect(spec.description).toContain("Ranked by known sales; full-period ranking unverified.");
     expect(spec.description).toContain("2026-10-01 to 2026-10-02");
-    expect(screen.getByRole("status")).toHaveTextContent("no resolved records");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("does not call absent dates disputed or a full calendar complete", () => {

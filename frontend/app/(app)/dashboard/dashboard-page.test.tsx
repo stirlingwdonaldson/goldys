@@ -42,8 +42,9 @@ describe("DashboardPage", () => {
     // The KPI grid renders the single resolved value; if the page reverted to
     // summing `listDailySales` rows, this resolved figure would not appear.
     expect(screen.getByText("$10,865.72")).toBeInTheDocument();
-    expect(screen.getByText("Incomplete sales subtotal")).toBeInTheDocument();
-    expect(screen.getByText("Incomplete product subtotal")).toBeInTheDocument();
+    expect(screen.queryByText("Incomplete sales subtotal")).not.toBeInTheDocument();
+    expect(screen.queryByText("Incomplete product subtotal")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connector activity")).not.toBeInTheDocument();
   });
 });
 

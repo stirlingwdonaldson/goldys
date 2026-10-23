@@ -138,10 +138,10 @@ function taxonomyTree() {
   return within(screen.getByRole("region", { name: /taxonomy/i }));
 }
 
-/** A React Flow node's laid-out y, read from the node wrapper's transform. */
-function nodeY(nodeTitle: HTMLElement): number {
+/** A React Flow node's laid-out x, read from the node wrapper's transform. */
+function nodeX(nodeTitle: HTMLElement): number {
   const node = nodeTitle.closest(".react-flow__node") as HTMLElement;
-  const match = /translate\([^,]+,\s*(-?[\d.]+)px\)/.exec(node.style.transform);
+  const match = /translate\((-?[\d.]+)px,\s*[^)]+\)/.exec(node.style.transform);
   return Number(match?.[1] ?? Number.NaN);
 }
 
@@ -159,10 +159,10 @@ describe("ProductsPage", () => {
     expect(tree.getByText("Wine")).toBeInTheDocument();
     expect(tree.getByText("Red Wine")).toBeInTheDocument();
 
-    // A null-group category is a root: it shares the group nodes' row, and its grouped
-    // siblings sit one level below it.
-    expect(nodeY(tree.getByText("Beer"))).toBe(nodeY(tree.getByText("Wine")));
-    expect(nodeY(tree.getByText("Red Wine"))).toBeGreaterThan(nodeY(tree.getByText("Wine")));
+    // A null-group category is a root: it shares the group nodes' column, and its grouped
+    // siblings sit one level to the right.
+    expect(nodeX(tree.getByText("Beer"))).toBe(nodeX(tree.getByText("Wine")));
+    expect(nodeX(tree.getByText("Red Wine"))).toBeGreaterThan(nodeX(tree.getByText("Wine")));
   });
 
   it("renders a NEEDS_REVIEW assignment with the warn (status-conflict) treatment", () => {
