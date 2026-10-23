@@ -154,14 +154,16 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Wastage (`canonical_wastage`)
 
-- **Source:** `CTB` (wastage detail via `ctb-wastage-detail`, backfilled by the one-off
-  `ctb-detail-backfill` run).
+- **Source:** `CTB` (wastage detail via `ctb-wastage-detail`: the scheduled `CtbConnector` pulls and
+  canonicalizes the newest 60 records each run; older records come from the one-off
+  `ctb-detail-backfill` run plus the stock/wastage replay).
 - **Logical identity:** `UUID.nameUUIDFromBytes("wastage:" + wastageRecordId + ":" + lineId)`.
 - **Source identity:** `(source_system = CTB, source_record_ref = "wastage:<recordId>:<detailId>")`,
   where `lineId` is the source's globally unique `wastageRecordDetailId`.
 - **No stock code:** wastage has no `stockCode` in the source — product identity is `product_name_key`
   from `stockDesc` only (a documented limitation).
-- **Date:** self-contained (`recordDate`); no header entity is needed.
+- **Date:** self-contained (`recordDate`, sent by CTB as `"Wednesday, 21 October 2026"`); no header
+  entity is needed.
 - **Matching strategy:** deterministic single source; re-record supersedes on
   `(source_system, source_record_ref)`.
 - **Confidence:** n/a (single source).

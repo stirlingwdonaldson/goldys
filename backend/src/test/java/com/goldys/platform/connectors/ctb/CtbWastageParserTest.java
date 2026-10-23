@@ -7,6 +7,8 @@ import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.WastageInput;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +44,55 @@ class CtbWastageParserTest {
     assertThat(w.unitOfMeasurementName()).isEqualTo("kg");
     assertThat(w.unitSize()).isEqualTo("1kg");
     assertThat(w.recipeId()).isEqualTo(105);
+  }
+
+  /**
+   * Real CTB response for wastage record 149, captured from the live site (HAR, 2026-10-23). CTB
+   * sends {@code recordDate} as a long-form English date and {@code recipeId: -1} for plain stock
+   * items; both previously made every live line fail to parse.
+   */
+  @Test
+  void parsesRealCtbDetailResponse() throws Exception {
+    byte[] json =
+        Files.readAllBytes(Path.of("src/test/resources/fixtures/ctb/wastage_detail_sample.json"));
+
+    List<WastageInput> out = parser.parse(json, RAW);
+
+    assertThat(out).hasSize(3);
+    assertThat(out)
+        .allSatisfy(
+            w -> {
+              assertThat(w.wastageRecordId()).isEqualTo(149);
+              assertThat(w.wastageDate()).isEqualTo(LocalDate.of(2026, 10, 21));
+              assertThat(w.recipeId()).isNull();
+              assertThat(w.rawRecordId()).isEqualTo(RAW);
+            });
+    assertThat(out).extracting(WastageInput::lineId).containsExactly(726, 727, 728);
+    WastageInput chips = out.get(1);
+    assertThat(chips.productNameKey())
+        .isEqualTo(ProductNameKey.normalize("Chip Supa Crunch 10mm UF 6X2K"));
+    assertThat(chips.quantity()).isEqualByComparingTo("0.5");
+    assertThat(chips.cost()).isEqualByComparingTo("56.65");
+    assertThat(chips.supplierName()).isEqualTo("Sealane food services");
+    assertThat(chips.unitOfMeasurementName()).isEqualTo("kilograms");
+    assertThat(chips.unitSize()).isEqualTo("12 kilograms");
+    // cost is per stock unit: sum(quantity x cost) reproduces the header total CTB shows (154.325).
+    assertThat(
+            out.stream()
+                .map(w -> w.quantity().multiply(w.cost()))
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add))
+        .isEqualByComparingTo("154.325");
+  }
+
+  @Test
+  void keepsPositiveRecipeId() {
+    String json =
+        """
+        {"data":[{"wastageRecordId":7,"wastageRecordDetailId":1,
+        "recordDate":"Monday, 5 October 2026","stockDesc":"Burger","quantity":1,"recipeId":42}]}
+        """;
+
+    assertThat(parser.parse(bytes(json), RAW).get(0).recipeId()).isEqualTo(42);
   }
 
   @Test

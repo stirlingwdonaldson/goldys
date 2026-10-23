@@ -2,6 +2,7 @@ package com.goldys.platform.connectors.ctb;
 
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
+import com.goldys.platform.canonical.CanonicalWastageIngest;
 import com.goldys.platform.canonical.ProductMappingIngest;
 import com.goldys.platform.canonical.SaleRecipeLinkIngest;
 import com.goldys.platform.canonical.SourceProductSaleFactIngest;
@@ -26,6 +27,8 @@ public class CtbConfig {
       SaleRecipeLinkIngest saleRecipeLinkIngest,
       ProductMappingIngest productMapping,
       SourceProductSaleFactIngest sourceSaleFact,
+      CtbWastageParser wastageParser,
+      CanonicalWastageIngest wastageIngest,
       VenueClock venueClock) {
     return new CtbConnector(
         new CtbClient(baseUrl),
@@ -39,6 +42,8 @@ public class CtbConfig {
         saleRecipeLinkIngest,
         productMapping,
         sourceSaleFact,
+        wastageParser,
+        wastageIngest,
         venueClock);
   }
 }
