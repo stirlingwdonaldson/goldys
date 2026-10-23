@@ -9,6 +9,66 @@ import org.junit.jupiter.api.Test;
 
 class CtbProductSalesBatchTest {
   @Test
+  void retainedRowCollisionPreservesBothObservationsAndCountsEachOnce() throws Exception {
+    byte[] bytes;
+    try (var in = getClass().getResourceAsStream("/fixtures/ctb/sale-items-row-collision.json")) {
+      bytes = in.readAllBytes();
+    }
+    var items = new CtbSaleItemParser().parse(bytes);
+    var batch = new CtbProductSalesBatch(LocalDate.of(2026, 8, 6));
+    UUID first = UUID.randomUUID(), overlap = UUID.randomUUID();
+    items.forEach(i -> batch.add(i, first));
+    items.forEach(i -> batch.add(i, overlap));
+    assertThat(items).hasSize(118);
+    assertThat(batch.sourceFacts()).hasSize(118);
+    assertThat(batch.totals()).hasSize(117);
+    assertThat(
+            batch.totals().stream().map(t -> t.amount()).reduce(BigDecimal.ZERO, BigDecimal::add))
+        .isEqualByComparingTo(
+            items.stream().map(CtbSaleItem::amount).reduce(BigDecimal.ZERO, BigDecimal::add));
+    var collision =
+        batch.sourceFacts().stream()
+            .filter(
+                i ->
+                    i.quantitySold().compareTo(new BigDecimal("14")) == 0
+                        && i.amount().compareTo(new BigDecimal("136.2796")) == 0)
+            .findFirst()
+            .orElseThrow();
+    assertThat(batch.totals())
+        .filteredOn(t -> t.stockCode().equals(collision.stockCode()))
+        .singleElement()
+        .satisfies(
+            t -> {
+              assertThat(t.quantitySold()).isEqualByComparingTo("15");
+              assertThat(t.amount()).isEqualByComparingTo("146.6001");
+              assertThat(t.contributorRawIds()).containsExactly(first, overlap);
+            });
+    var changed = items.getFirst();
+    assertThatThrownBy(
+            () ->
+                batch.add(
+                    new CtbSaleItem(
+                        changed.stockCode(),
+                        changed.stockDescription(),
+                        BigDecimal.ZERO,
+                        changed.amount(),
+                        changed.costPerUnit(),
+                        changed.foodCost(),
+                        changed.totalFoodCost(),
+                        changed.profit(),
+                        changed.discountedAmount(),
+                        changed.taxAmount(),
+                        changed.unitPrice(),
+                        changed.uniqueGroupId(),
+                        changed.siteNumber(),
+                        changed.uniqueId()),
+                    overlap))
+        .hasMessageContaining("group changed");
+    assertThatThrownBy(() -> batch.add(item("X", null, "1"), overlap))
+        .hasMessageContaining("mixes");
+  }
+
+  @Test
   void deduplicatesOverlappingPagesAndRetainsEveryReceipt() {
     var batch = new CtbProductSalesBatch(LocalDate.of(2026, 10, 1));
     UUID a = UUID.randomUUID(), b = UUID.randomUUID();

@@ -34,6 +34,36 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class CtbConnectorTest {
+  @Test
+  void conflictingDayDoesNotBlockLaterDaysAndFailureIncludesItsDate() {
+    CtbClient client = emptyClient();
+    when(client.searchSaleItems(eq("2026-07-25"), eq("2026-07-25"), anyInt(), anyInt()))
+        .thenReturn(
+            new CtbClient.CtbPage(
+                "{\"data\":[{\"uniqueId\":0,\"stockCode\":\"A\",\"quantitySold\":1,\"amount\":10},{\"uniqueId\":0,\"stockCode\":\"A\",\"quantitySold\":2,\"amount\":20}]}",
+                2));
+    var products = mock(CanonicalProductSalesIngest.class);
+    var facts = mock(SourceProductSaleFactIngest.class);
+    var connector =
+        connector(
+            client,
+            emptyRevenueParser(),
+            new CtbSaleItemParser(),
+            mock(CtbSaleRecipeLinkParser.class),
+            mock(SaleRecipeLinkIngest.class),
+            products,
+            facts);
+    assertThatThrownBy(() -> connector.fetch("2026-10-23", payload -> UUID.randomUUID()))
+        .isInstanceOf(ConnectorFetchException.class)
+        .hasMessageContaining("sale-items:2026-07-25");
+    verify(client).searchSaleItems("2026-07-26", "2026-07-26", 0, 200);
+    verify(client).searchSaleItems("2026-10-23", "2026-10-23", 0, 200);
+    verify(client).searchStocks(anyInt(), anyInt());
+    verify(facts, never()).recordReport(any(), any());
+    verify(facts, never()).recordAll(any());
+    verify(products, never())
+        .recordAll(org.mockito.ArgumentMatchers.argThat(inputs -> !inputs.isEmpty()));
+  }
 
   @Test
   void saleItemsBackfillsThe90DayWindow() {
@@ -181,6 +211,24 @@ class CtbConnectorTest {
       CtbSaleItemParser saleItemParser,
       CtbSaleRecipeLinkParser saleRecipeLinkParser,
       SaleRecipeLinkIngest saleRecipeLinkIngest) {
+    return connector(
+        client,
+        revenueParser,
+        saleItemParser,
+        saleRecipeLinkParser,
+        saleRecipeLinkIngest,
+        mock(CanonicalProductSalesIngest.class),
+        mock(SourceProductSaleFactIngest.class));
+  }
+
+  private static CtbConnector connector(
+      CtbClient client,
+      CtbRevenueParser revenueParser,
+      CtbSaleItemParser saleItemParser,
+      CtbSaleRecipeLinkParser saleRecipeLinkParser,
+      SaleRecipeLinkIngest saleRecipeLinkIngest,
+      CanonicalProductSalesIngest products,
+      SourceProductSaleFactIngest facts) {
     return new CtbConnector(
         client,
         "e",
@@ -188,11 +236,11 @@ class CtbConnectorTest {
         revenueParser,
         mock(CanonicalDailySalesIngest.class),
         saleItemParser,
-        mock(CanonicalProductSalesIngest.class),
+        products,
         saleRecipeLinkParser,
         saleRecipeLinkIngest,
         mock(ProductMappingIngest.class),
-        mock(SourceProductSaleFactIngest.class),
+        facts,
         new CtbWastageParser(),
         mock(CanonicalWastageIngest.class),
         VenueClock.system(ZoneId.of("Australia/Melbourne")));
