@@ -24,6 +24,43 @@ class CtbProductSalesRecoveryIntegrationTest {
   @Autowired JdbcTemplate jdbc;
 
   @Test
+  void retainedCollisionReachesResolvedTotalsWithoutDoubleCounting() throws Exception {
+    byte[] bytes;
+    try (var in = getClass().getResourceAsStream("/fixtures/ctb/sale-items-row-collision.json")) {
+      bytes = in.readAllBytes();
+    }
+    var raw =
+        ingestion.ingestPush(
+            "CTB",
+            "collision-recovery",
+            FetchMethod.API,
+            "application/json",
+            bytes,
+            "UTF-8",
+            "ctb-revenue");
+    var day = LocalDate.of(2026, 8, 8);
+    var batch = new CtbProductSalesBatch(day);
+    var items = new CtbSaleItemParser().parse(bytes);
+    items.forEach(i -> batch.add(i, raw));
+    products.recordAll(batch.totals());
+    products.recordAll(batch.totals());
+    projector.recomputeAll();
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from canonical_product_sales where trading_date=? and source_product_ref is not null and superseded_at is null",
+                Integer.class,
+                day))
+        .isEqualTo(117);
+    assertThat(
+            jdbc.queryForObject(
+                "select sum(amount) from resolved_product_sales where trading_date=?",
+                BigDecimal.class,
+                day))
+        .isEqualByComparingTo(
+            items.stream().map(CtbSaleItem::amount).reduce(BigDecimal.ZERO, BigDecimal::add));
+  }
+
+  @Test
   void realUngroupedSampleReachesCanonicalAndResolvedWithoutDoubleCountingReplay()
       throws Exception {
     byte[] bytes;

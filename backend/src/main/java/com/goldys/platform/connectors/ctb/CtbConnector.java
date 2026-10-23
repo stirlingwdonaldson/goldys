@@ -130,7 +130,7 @@ public class CtbConnector implements SourceConnector {
     Map<String, ConnectorFetchException> failures = new LinkedHashMap<>();
 
     pull("daily-sales", failures, () -> pullRevenue(watermark, sink));
-    pull("sale-items", failures, () -> pullSaleItems(watermark, sink));
+    pullSaleItems(watermark, sink, failures);
 
     // Inventory / purchasing / food-cost endpoints — raw ledger only, per fetcher identity.
     pull(
@@ -173,13 +173,17 @@ public class CtbConnector implements SourceConnector {
   }
 
   /**
-   * A single failed dataset is rethrown verbatim so its failure type and stack stay intact; several
-   * are summarised (with each dataset's own detail) so the run records what is missing rather than
-   * only the first, and the captured response evidence is not lost.
+   * A single failed dataset retains its type/cause and includes its dataset/date; several are
+   * summarised (with each dataset's own detail) so the run records what is missing rather than only
+   * the first, and the captured response evidence is not lost.
    */
   private static ConnectorFetchException aggregate(Map<String, ConnectorFetchException> failures) {
     if (failures.size() == 1) {
-      return failures.values().iterator().next();
+      var failure = failures.entrySet().iterator().next();
+      return new ConnectorFetchException(
+          failure.getValue().failureType(),
+          "CTB dataset " + failure.getKey() + ": " + failure.getValue().getMessage(),
+          failure.getValue());
     }
     String firstType = failures.values().iterator().next().failureType();
     StringBuilder detail = new StringBuilder("CTB datasets failed:");
@@ -234,14 +238,16 @@ public class CtbConnector implements SourceConnector {
     }
   }
 
-  private void pullSaleItems(String watermark, IngestionSink sink) {
+  private void pullSaleItems(
+      String watermark, IngestionSink sink, Map<String, ConnectorFetchException> failures) {
     // CTB's sale-items endpoint has no per-row date (the date is the range supplied to the
     // call), so pull one day at a time and attribute every row to that day. CTB keeps a
     // rolling ~90 days of sale items, so backfill that window.
     LocalDate to = watermarkDate(watermark);
     LocalDate from = to.minusDays(90);
     for (LocalDate day = from; !day.isAfter(to); day = day.plusDays(1)) {
-      pullSaleItemsForDay(day, sink);
+      LocalDate requestedDay = day;
+      pull("sale-items:" + day, failures, () -> pullSaleItemsForDay(requestedDay, sink));
     }
   }
 
@@ -250,6 +256,7 @@ public class CtbConnector implements SourceConnector {
     int pages = 0;
     int total = -1;
     CtbProductSalesBatch batch = new CtbProductSalesBatch(day);
+    UUID lastRawId = null;
     while (pages < MAX_PAGES) {
       CtbClient.CtbPage page =
           client.searchSaleItems(day.toString(), day.toString(), start, PAGE_SIZE);
@@ -257,10 +264,9 @@ public class CtbConnector implements SourceConnector {
       // the request window. Persist it out-of-band so a later replay can recover the date durably.
       UUID rawId = writeRaw(page.json(), "ctb-revenue", "sale-items:" + day, sink);
 
+      lastRawId = rawId;
       for (CtbSaleItem item : saleItemParser.parse(page.json().getBytes(StandardCharsets.UTF_8))) {
         batch.add(item, rawId);
-        recordSourceProduct(item, rawId);
-        recordSourceSaleFact(item, day, rawId);
       }
 
       total = page.totalCount();
@@ -273,6 +279,16 @@ public class CtbConnector implements SourceConnector {
 
     throwIfTruncated("sale-items for " + day, pages, start, total);
 
+    List<SourceProductSaleFactInput> facts = batch.sourceFacts();
+    if (!facts.isEmpty()) {
+      if (facts.stream().allMatch(f -> f.sourceRecordRef().startsWith("ctb-row:")))
+        sourceSaleFact.recordReport(facts, lastRawId);
+      else sourceSaleFact.recordAll(facts);
+      for (SourceProductSaleFactInput fact : facts)
+        productMapping.mapSourceProduct(
+            new SourceProductInput(
+                "CTB", fact.stockCode(), null, fact.productName(), null, null, fact.rawRecordId()));
+    }
     productSales.recordAll(batch.totals());
   }
 
@@ -387,47 +403,6 @@ public class CtbConnector implements SourceConnector {
     } catch (IOException e) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON CTB response", e);
     }
-  }
-
-  /** Records the CTB sale product's source-scoped identity and maps it to the business hub. */
-  private void recordSourceProduct(CtbSaleItem item, UUID rawId) {
-    String code = item.stockCode();
-    if (code == null || code.isBlank()) {
-      return;
-    }
-    productMapping.mapSourceProduct(
-        new SourceProductInput("CTB", code, null, item.stockDescription(), null, null, rawId));
-  }
-
-  /**
-   * Records the source-native product-day measures (cost, food cost, discount, tax, unit price,
-   * profit), keyed by (stock code, trading date, source group) so distinct rows that share a code
-   * and day are preserved.
-   */
-  private void recordSourceSaleFact(CtbSaleItem item, LocalDate day, UUID rawId) {
-    String code = item.stockCode();
-    if (code == null || code.isBlank()) {
-      return;
-    }
-    sourceSaleFact.record(
-        new SourceProductSaleFactInput(
-            "CTB",
-            SourceProductSaleFactInput.sourceRecordRef(code, day, item.uniqueGroupId()),
-            day,
-            code,
-            item.costPerUnit(),
-            item.foodCost(),
-            item.totalFoodCost(),
-            item.profit(),
-            item.discountedAmount(),
-            item.taxAmount(),
-            item.unitPrice(),
-            item.uniqueGroupId(),
-            rawId,
-            item.quantitySold(),
-            item.amount(),
-            item.stockDescription(),
-            item.siteNumber()));
   }
 
   /**

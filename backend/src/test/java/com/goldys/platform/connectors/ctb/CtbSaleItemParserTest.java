@@ -1,6 +1,7 @@
 package com.goldys.platform.connectors.ctb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -10,6 +11,17 @@ import org.junit.jupiter.api.Test;
 class CtbSaleItemParserTest {
 
   private final CtbSaleItemParser parser = new CtbSaleItemParser();
+
+  @Test
+  void rejectsInvalidReportRowIds() {
+    for (String id : new String[] {"-1", "1.5", "\"1\""}) {
+      assertThatThrownBy(
+              () ->
+                  parser.parse(
+                      ("{\"data\":[{\"uniqueId\":" + id + "}]}").getBytes(StandardCharsets.UTF_8)))
+          .hasMessageContaining("Invalid sale item row identity");
+    }
+  }
 
   @Test
   void parsesRows() throws Exception {

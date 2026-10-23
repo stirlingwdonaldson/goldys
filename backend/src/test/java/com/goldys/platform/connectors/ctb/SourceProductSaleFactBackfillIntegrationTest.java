@@ -60,6 +60,108 @@ class SourceProductSaleFactBackfillIntegrationTest {
     new SourceProductSaleFactBackfillRunner(rawLedger, parser, ingest, productSales).run(null);
   }
 
+  @Test
+  void completeReportsReplaceLegacyAndRenumberedRowsWithoutLosingHistoryOrReplayingOlderValues() {
+    var day = java.time.LocalDate.of(2026, 8, 6);
+    String legacy =
+        "{\"data\":[{\"stockCode\":\"A\",\"stockDescription\":\"Old name\",\"siteNumber\":-1,\"quantitySold\":14,\"amount\":136.2796}]}";
+    UUID old = rawRecord("sale-items:" + day, legacy, Instant.parse("2026-10-20T04:00:00Z"));
+    var legacyFact =
+        parser.parse(legacy.getBytes(StandardCharsets.UTF_8)).getFirst().sourceFact(day, old);
+    ingest.record(legacyFact);
+    String report =
+        "{\"totalCount\":2,\"data\":[{\"uniqueId\":33,\"stockCode\":\"A\",\"stockDescription\":\"Old name\",\"siteNumber\":-1,\"quantitySold\":14,\"amount\":136.2796},{\"uniqueId\":34,\"stockCode\":\"A\",\"stockDescription\":\"New name\",\"siteNumber\":-1,\"quantitySold\":1,\"amount\":10.3205}]}";
+    UUID first = rawRecord("sale-items:" + day, report, Instant.parse("2026-10-21T04:00:00Z"));
+    var batch = new CtbProductSalesBatch(day);
+    parser.parse(report.getBytes(StandardCharsets.UTF_8)).forEach(i -> batch.add(i, first));
+    ingest.recordReport(batch.sourceFacts(), first);
+    ingest.recordReport(batch.sourceFacts(), first);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from source_product_sale_fact where superseded_at is null",
+                Integer.class))
+        .isEqualTo(2);
+    String renumbered =
+        report
+            .replace("\"uniqueId\":33", "\"uniqueId\":99")
+            .replace("\"uniqueId\":34", "\"uniqueId\":100");
+    UUID second = rawRecord("sale-items:" + day, renumbered, Instant.parse("2026-10-22T04:00:00Z"));
+    var next = new CtbProductSalesBatch(day);
+    parser.parse(renumbered.getBytes(StandardCharsets.UTF_8)).forEach(i -> next.add(i, second));
+    ingest.recordReport(next.sourceFacts(), second);
+    ingest.recordReport(batch.sourceFacts(), first);
+    ingest.record(legacyFact);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from source_product_sale_fact where superseded_at is null",
+                Integer.class))
+        .isEqualTo(2);
+    assertThat(
+            jdbc.queryForObject(
+                "select sum(amount) from source_product_sale_fact where superseded_at is null",
+                BigDecimal.class))
+        .isEqualByComparingTo("146.6001");
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from source_product_sale_fact where superseded_at is not null",
+                Integer.class))
+        .isEqualTo(3);
+    assertThat(
+            jdbc.queryForList(
+                "select distinct raw_record_id from source_product_sale_fact where superseded_at is null",
+                UUID.class))
+        .containsExactly(second);
+  }
+
+  @Test
+  void replayAcceptsTheCompleteRetainedCollisionButRejectsAnIncompleteNativeReport()
+      throws Exception {
+    String report;
+    try (var in = getClass().getResourceAsStream("/fixtures/ctb/sale-items-row-collision.json")) {
+      report = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+    }
+    var ledger = org.mockito.Mockito.mock(RawLedgerQuery.class);
+    UUID first = rawRecord("sale-items:2026-08-06", report, Instant.parse("2026-10-21T04:00:00Z"));
+    var firstRef =
+        new RawLedgerQuery.RawRecordRef(
+            first, "sale-items:2026-08-06", Instant.parse("2026-10-21T04:00:00Z"));
+    org.mockito.Mockito.when(ledger.rawRecordRefsForFetcher("CTB", "ctb-revenue"))
+        .thenReturn(java.util.List.of(firstRef));
+    org.mockito.Mockito.when(ledger.payloadBytes(first))
+        .thenReturn(report.getBytes(StandardCharsets.UTF_8));
+    var runner = new SourceProductSaleFactBackfillRunner(ledger, parser, ingest, productSales);
+    runner.replay();
+    runner.replay();
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from source_product_sale_fact where superseded_at is null",
+                Integer.class))
+        .isEqualTo(118);
+    UUID second =
+        rawRecord(
+            "sale-items:2026-08-06",
+            report.replace("\"totalCount\": 118", "\"totalCount\": 200"),
+            Instant.parse("2026-10-22T04:00:00Z"));
+    org.mockito.Mockito.when(ledger.rawRecordRefsForFetcher("CTB", "ctb-revenue"))
+        .thenReturn(
+            java.util.List.of(
+                firstRef,
+                new RawLedgerQuery.RawRecordRef(
+                    second, "sale-items:2026-08-06", Instant.parse("2026-10-22T04:00:00Z"))));
+    org.mockito.Mockito.when(ledger.payloadBytes(second))
+        .thenReturn(
+            report
+                .replace("\"totalCount\": 118", "\"totalCount\": 200")
+                .getBytes(StandardCharsets.UTF_8));
+    var result = runner.replay();
+    assertThat(result.rejected()).isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from source_product_sale_fact where superseded_at is null",
+                Integer.class))
+        .isEqualTo(118);
+  }
+
   private UUID rawRecord(String sourceRecordRef, String json, Instant fetchedAt) {
     UUID runId = UUID.randomUUID();
     UUID recordId = UUID.randomUUID();

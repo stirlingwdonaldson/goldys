@@ -3,9 +3,12 @@ package com.goldys.platform.canonical;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +37,58 @@ class SourceProductSaleFactService {
   }
 
   @Transactional
+  void recordReport(List<SourceProductSaleFactInput> inputs, UUID completedRawId) {
+    if (inputs.isEmpty()) return;
+    var day = inputs.getFirst().tradingDate();
+    if (inputs.stream()
+        .anyMatch(
+            i ->
+                !i.sourceSystem().equals("CTB")
+                    || !i.tradingDate().equals(day)
+                    || !i.sourceRecordRef().startsWith("ctb-row:")))
+      throw new IllegalArgumentException(
+          "Expected one complete dated CTB report with row identities");
+    repository.lockReportDay(day);
+    Map<String, List<SourceProductSaleFactInput>> products =
+        inputs.stream()
+            .collect(
+                Collectors.groupingBy(
+                    i -> ProductSalesInput.sourceIdentity(i.stockCode(), i.siteNumber()),
+                    LinkedHashMap::new,
+                    Collectors.toList()));
+    Instant now = CLOCK.instant();
+    for (var product : products.entrySet()) {
+      var first = product.getValue().getFirst();
+      var current =
+          repository.lockCurrentProduct("CTB", day, first.stockCode(), first.siteNumber());
+      String reportRef = "ctb-report:" + product.getKey() + "@" + day;
+      if (repository.hasLaterProductObservation(
+              "CTB", day, first.stockCode(), first.siteNumber(), completedRawId)
+          || repository.hasLaterObservation("CTB", reportRef, completedRawId)
+          || repository.registerObservation("CTB", reportRef, completedRawId) == 0) continue;
+      var refs =
+          product.getValue().stream()
+              .map(SourceProductSaleFactInput::sourceRecordRef)
+              .collect(Collectors.toSet());
+      // Row numbers can move between reports; close the old representation, never add both.
+      for (var old : current) if (!refs.contains(old.sourceRecordRef())) old.supersede(now);
+      repository.flush();
+      for (var input : product.getValue()) recordAt(input, now);
+    }
+  }
+
+  @Transactional
   void recordAt(SourceProductSaleFactInput input, Instant recordedAt) {
     String sourceRef = input.sourceRecordRef();
+    if (input.sourceSystem().equals("CTB") && !sourceRef.startsWith("ctb-row:"))
+      repository.lockReportDay(input.tradingDate());
+    // Legacy page replay cannot reintroduce the representation replaced by a complete report.
+    if (input.sourceSystem().equals("CTB")
+        && !sourceRef.startsWith("ctb-row:")
+        && repository
+            .lockCurrentProduct("CTB", input.tradingDate(), input.stockCode(), input.siteNumber())
+            .stream()
+            .anyMatch(f -> f.sourceRecordRef().startsWith("ctb-row:"))) return;
     UUID logicalId =
         UUID.nameUUIDFromBytes(
             ("source-product-sale-fact:" + input.sourceSystem() + ":" + sourceRef)

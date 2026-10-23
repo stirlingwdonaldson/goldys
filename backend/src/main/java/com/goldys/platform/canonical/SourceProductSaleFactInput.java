@@ -7,7 +7,8 @@ import java.util.UUID;
 /**
  * A source-native product-day measure observation (CTB cost/tax/discount/unit price/profit). {@code
  * uniqueGroupId} is the source's grouping key: when it distinguishes two otherwise-identical rows
- * it is part of the identity, so distinct rows that share a stock code and day are preserved.
+ * it is part of the legacy identity. CTB report snapshots instead qualify rows by product/site/day
+ * and report-local row ID in sourceRecordRef; uniqueGroupId remains an unmodified source field.
  */
 public record SourceProductSaleFactInput(
     String sourceSystem,

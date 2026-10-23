@@ -2,6 +2,7 @@ package com.goldys.platform.connectors.ctb;
 
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.ProductSalesInput;
+import com.goldys.platform.canonical.SourceProductSaleFactInput;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -15,6 +16,7 @@ import java.util.UUID;
 final class CtbProductSalesBatch {
   private final LocalDate date;
   private final Map<GroupKey, Observation> observations = new LinkedHashMap<>();
+  private Boolean hasRowIds;
 
   CtbProductSalesBatch(LocalDate date) {
     this.date = date;
@@ -24,10 +26,16 @@ final class CtbProductSalesBatch {
     String identity = ProductSalesInput.sourceIdentity(item.stockCode(), item.siteNumber());
     if (identity == null || item.quantitySold() == null || item.amount() == null)
       throw mismatch("Sale item lacks a stable group/product identity or quantity/amount");
-    // CTB's ungrouped product-day rows have null uniqueGroupId (verified on retained pages).
-    // Product + site identifies that observation; differing repeats still fail below.
+    boolean identified = item.uniqueId() != null;
+    if (hasRowIds != null && hasRowIds != identified)
+      throw mismatch("Sale item report mixes identified and unidentified rows");
+    hasRowIds = identified;
+    // uniqueId identifies a row within this fetched report; it is not a permanent product ID.
     String group = item.uniqueGroupId();
-    GroupKey key = new GroupKey(identity, group == null || group.isBlank() ? null : group);
+    GroupKey key =
+        identified
+            ? new GroupKey("row:" + item.uniqueId(), null)
+            : new GroupKey(identity, group == null || group.isBlank() ? null : group);
     Observation prior = observations.get(key);
     if (prior != null) {
       // Overlapping pages must not add the same observation twice. A changed group within one
@@ -53,9 +61,9 @@ final class CtbProductSalesBatch {
                   item.amount(),
                   item.stockCode(),
                   ids.getFirst(),
-                  key.product,
+                  ProductSalesInput.sourceIdentity(item.stockCode(), item.siteNumber()),
                   ids);
-          totals.merge(key.product, next, this::combine);
+          totals.merge(next.sourceProductRef(), next, this::combine);
         });
     return List.copyOf(totals.values());
   }
@@ -77,6 +85,12 @@ final class CtbProductSalesBatch {
 
   private static ConnectorFetchException mismatch(String message) {
     return new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", message);
+  }
+
+  List<SourceProductSaleFactInput> sourceFacts() {
+    return observations.values().stream()
+        .map(o -> o.item.sourceFact(date, o.rawIds.iterator().next()))
+        .toList();
   }
 
   private record GroupKey(String product, String group) {}
