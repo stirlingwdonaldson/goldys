@@ -7,10 +7,12 @@ import com.goldys.platform.canonical.WastageInput;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +26,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class CtbWastageParser {
   private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final List<DateTimeFormatter> DATE_FORMATS =
+      List.of(
+          DateTimeFormatter.ofPattern("EEEE, d MMMM uuuu", Locale.ENGLISH),
+          DateTimeFormatter.ISO_LOCAL_DATE);
 
   public List<WastageInput> parse(byte[] json, UUID rawRecordId) {
     JsonNode data = data(json);
@@ -45,7 +51,7 @@ public class CtbWastageParser {
               sanitize(n.get("supplierName")),
               sanitize(n.get("unitOfMeasurementName")),
               sanitize(n.get("unitSize")),
-              integer(n.get("recipeId")),
+              recipeId(n.get("recipeId")),
               rawRecordId));
     }
     // Collapse exact-duplicate lines so a repeated source row is not double-counted.
@@ -68,12 +74,27 @@ public class CtbWastageParser {
     if (n == null || n.isNull() || n.asText().isBlank()) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Missing wastage record date");
     }
-    try {
-      return LocalDate.parse(n.asText().trim());
-    } catch (DateTimeParseException e) {
-      throw new ConnectorFetchException(
-          "CONNECTOR_SCHEMA_MISMATCH", "Bad wastage record date '" + n.asText() + "'", e);
+    String text = n.asText().trim();
+    // CTB sends a long-form English date ("Wednesday, 21 October 2026", captured live
+    // 2026-10-23). ISO is still accepted so already-normalized inputs keep working.
+    for (DateTimeFormatter format : DATE_FORMATS) {
+      try {
+        return LocalDate.parse(text, format);
+      } catch (DateTimeParseException e) {
+        // try the next accepted format
+      }
     }
+    throw new ConnectorFetchException(
+        "CONNECTOR_SCHEMA_MISMATCH", "Bad wastage record date '" + n.asText() + "'");
+  }
+
+  /**
+   * CTB uses {@code -1} for "no recipe" (a plain stock item); anything non-positive is not a real
+   * recipe id, so it is recorded as absent rather than as a bogus link.
+   */
+  private static Integer recipeId(JsonNode n) {
+    Integer id = integer(n);
+    return id == null || id <= 0 ? null : id;
   }
 
   private static int requiredInt(JsonNode n, String field) {
