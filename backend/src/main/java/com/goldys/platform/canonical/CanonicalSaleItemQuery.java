@@ -51,7 +51,8 @@ public class CanonicalSaleItemQuery {
   public List<SaleItemPriceView> currentSaleItemPrices() {
     var evidence =
         new java.util.HashMap<java.util.UUID, com.goldys.platform.semantic.RecipeEvidence>();
-    return repository.findAllCurrent().stream()
+    // Entity loading here makes each later evidence lookup dirty-check the entire sale history.
+    return repository.findCurrentPriceInputs().stream()
         .map(
             s ->
                 new SaleItemPriceView(

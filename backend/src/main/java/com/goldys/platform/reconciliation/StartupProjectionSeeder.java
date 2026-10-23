@@ -59,7 +59,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
     projector.recomputeAll();
     // Product, reservation, labour, inventory, payment, deleted-sale, sale-item, recipe and
     // recipe-ingredient projections are backfilled on every boot: "no conflicts" and "never seeded"
-    // are indistinguishable without a checkpoint table, and the rebuild is cheap at pub scale.
+    // are indistinguishable without a checkpoint table.
     productProjector.recomputeAll();
     reservationProjector.recomputeAll();
     labourProjector.recomputeAll();

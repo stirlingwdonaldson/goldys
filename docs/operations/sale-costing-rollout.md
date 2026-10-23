@@ -91,3 +91,130 @@ and are estimates, with source dates and freshness retained.
 The code is based on merged recipe ingestion #211 and UI fixes #212. No complete recipe collection
 flags were enabled by this task. Actual historical rows remain dependent on a separately authorized
 refresh/replay; missing recipe cost remains missing, never a POS-zero fallback.
+
+## CTB lock incident and recovery (23 October 2026)
+
+Read-only production inspection found CTB run `a80834a2-b477-44bf-afcf-ea90ddb39bb9` waiting
+at `delete from resolved_recipe` behind a transaction started during application initialization.
+At 09:40 UTC it had persisted 107 payloads / 7,383,864 bytes, with no new payload since
+09:22:13 UTC. Socket samples showed only database connections. This was processing contention,
+not a CTB download in progress.
+
+The deployed price query loaded all 1,473,588 current sale entities into the recipe rebuild's
+persistence context. Subsequent evidence queries could repeatedly dirty-check that entire history.
+The replacement uses a six-field constructor projection, preserving all price observations and
+exact source/receipt references without managing sale entities. The recipe cost inputs are also
+loaded once per rebuild, and start/prepared timing messages identify the rebuild in logs.
+The final prepared message precedes transaction commit; startup's “Resolved projections rebuilt”
+message confirms completion of the startup sequence.
+
+Verification: a PostgreSQL regression first reproduced 1,000 managed sale entities, then passed
+with zero while retaining all current observations and receipt provenance. A separate temporary
+PostgreSQL 16 benchmark with 1,473,588 synthetic sale rows, 663 recipes, one shared source payload,
+and a 2 GiB test heap rebuilt/flushed in 11,866 ms with 1,326 managed entities. It verified all
+1,473,588 receipt references survived in the price evidence. This is a workload benchmark, not a
+production timing guarantee or a test of the live CTB endpoint. The equivalent scalar scan on
+production took 427 ms in read-only `EXPLAIN ANALYZE`; that excludes Java mapping and writes.
+
+Recovery is a planned maintenance deployment, not a database-session kill or raw replay:
+
+The inspected production containers use release checkout
+`/srv/ai/projects/goldys-releases/f2203e5adf560e12dd70b91ada06372eb378dbcd`, the committed
+`ops/releases/2026-10-16-data-correctness/safety.yml`, and a local `recipe-rollout.yml` that enables
+complete recipes and disables recipe replay. Preserve this layout and both overlays. Do not use
+the generic root-checkout Compose command from the initial rollout instructions.
+
+1. Merge updated PR #213 after CI passes. Prepare a new immutable release checkout in one Bash
+   session; leave the shared root checkout and existing release unchanged:
+
+   ```bash
+   set -euo pipefail
+   umask 077
+   cd /srv/ai/projects/goldys
+   git fetch --prune origin
+   release_sha=$(gh pr view 213 --repo stirlingwdonaldson/goldys --json state,mergeCommit \
+     --jq 'select(.state == "MERGED") | .mergeCommit.oid')
+   test -n "$release_sha"
+   git merge-base --is-ancestor "$release_sha" origin/main
+   release_dir="/srv/ai/projects/goldys-releases/$release_sha"
+   git worktree add --detach "$release_dir" "$release_sha"
+   cd "$release_dir"
+   cat > recipe-rollout.yml <<'YAML'
+   services:
+     backend:
+       environment:
+         CTB_RECIPES_ENABLED: "true"
+         CTB_RECIPES_REPLAY: "false"
+   YAML
+   prod_release() {
+     docker compose -p goldys-prod --env-file /srv/ai/projects/goldys/.env.prod \
+       -f "$release_dir/docker-compose.prod.yml" \
+       -f "$release_dir/ops/releases/2026-10-16-data-correctness/safety.yml" \
+       -f "$release_dir/recipe-rollout.yml" "$@"
+   }
+   ```
+
+   The recipe overlay reproduces the two flags read from the current deployment. The safety
+   overlay keeps historical replay/backfill runners disabled. The ex-GST assumption defaults to
+   true in the new base Compose config; set `CTB_RECIPE_COSTS_EXCLUDE_GST=false` in the existing
+   operator-managed env file to withdraw it later. Do not read, copy, print or source that env file.
+2. Build before starting the outage:
+
+   ```bash
+   export SENTRY_RELEASE="$release_sha"
+   prod_release build backend frontend
+   ```
+
+3. Arrange a maintenance window: pause upstream webhook delivery or confirm its retry/retention.
+   Stop frontend/backend only; their in-flight transactions roll back and the database releases
+   their locks. The separately committed raw payloads remain available. Do not stop PostgreSQL,
+   remove volumes, or terminate individual database sessions.
+
+   ```bash
+   prod_release stop frontend backend
+   ```
+
+4. Take the quiesced database backup using the existing deployment runbook. For example:
+
+   ```bash
+   backup_dir="$HOME/goldys-backups/sale-costing-$(date -u +%Y%m%dT%H%M%SZ)"
+   mkdir -p "$backup_dir"
+   chmod 700 "$backup_dir"
+   (umask 077; docker exec goldys-prod-postgres-1 sh -c \
+     'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$backup_dir/database.dump")
+   test -s "$backup_dir/database.dump"
+   sha256sum "$backup_dir/database.dump" > "$backup_dir/database.dump.sha256"
+   docker exec -i goldys-prod-postgres-1 pg_restore --list < "$backup_dir/database.dump" > "$backup_dir/archive-list.txt"
+   ```
+
+   Stop if backup creation or archive listing fails. This backup contains business/personal data;
+   keep it outside the repository and access-controlled.
+
+5. Start the already-built pair; Flyway applies V103 on backend startup:
+
+   ```bash
+   prod_release up -d --no-build --no-deps backend frontend
+   prod_release logs --since 5m backend
+   curl -fsS https://platform.swd.sh/api/health
+   ```
+
+   Expect health `UP`, a completed startup projection rebuild, and the previous run recorded with
+   `RUN_INTERRUPTED` (normally terminal `PARTIAL` because it already has stored payloads).
+   Health alone is insufficient: HTTP serving starts before startup runners finish.
+6. Resume upstream delivery. In Data health, run CTB once and wait for terminal status. Verify
+   fresh complete recipe observations including recipe 722 and then sale SP-100 1021082623.
+   A complete recipe crawl can take tens of minutes; check that raw payload counts/timestamps
+   advance rather than treating `RUNNING` alone as evidence of a stall.
+   The five historical sale-item schema warnings observed on 7/9/15 August and 5/22 September
+   remain a separate source-data issue; a new run can finish `PARTIAL` for those dates. Review
+   its failure details rather than expecting a blanket `SUCCESS`.
+
+No maintenance command in this section has been executed by this task. Do not restart the old
+image just to clear the lock: it contains the same expensive entity-loading query.
+
+Final fix validation: `LIGHTSPEED_EVIDENCE_CSV=/tmp/lightspeed-sale-evidence-full.csv ./gradlew
+spotlessApply test spotlessCheck` passed (1,687 tests, zero failures/errors, four opt-in skips;
+373 suites). Recovery shell blocks passed `bash -n`; the commands were not executed. Public
+contracts for `currentSaleItemPrices` and `RecipeProjector.recomputeAll` are unchanged. Ripwire
+still reports generic test-fixture duplication and recent-churn findings; no static-clean claim
+is made. Frontend code was not changed by this follow-up, so its previous local gate was not repeated.
