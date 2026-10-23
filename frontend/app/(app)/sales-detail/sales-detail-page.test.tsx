@@ -23,14 +23,14 @@ vi.mock("@/components/sales-detail/sale-items-tab", () => ({
   SaleItemsTab: () => <div data-testid="sale-items-tab" />,
 }));
 
-// The lineage/relationship views fetch through the Api context and render React Flow;
+// The lineage and sale-summary views fetch through the Api context;
 // this page test only covers the shell, so they stand in as inert leaves.
 vi.mock("@/components/sales-detail/lineage-graph-view", () => ({
   LineageGraphView: () => <div data-testid="lineage-graph" />,
 }));
 
-vi.mock("@/components/sales-detail/relationship-graph-view", () => ({
-  RelationshipGraphView: () => <div data-testid="relationship-graph" />,
+vi.mock("@/components/sales-detail/sale-summary-view", () => ({
+  SaleSummaryView: () => <div data-testid="sale-summary" />,
 }));
 
 vi.mock("@/components/sales-detail/settlement-flow-view", () => ({
@@ -80,11 +80,11 @@ describe("SalesDetailPage", () => {
     expect(screen.getByRole("button", { name: "Custom date range" })).toBeInTheDocument();
   });
 
-  it("shows the data lineage section and hides the relationship graph until a sale is drilled", () => {
+  it("shows the data lineage section and hides the sale summary until a sale is drilled", () => {
     render(<SalesDetailPage />);
     expect(screen.getByRole("heading", { name: "Data lineage" })).toBeInTheDocument();
     expect(screen.getByTestId("lineage-graph")).toBeInTheDocument();
-    expect(screen.queryByTestId("relationship-graph")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("sale-summary")).not.toBeInTheDocument();
   });
 
   it("shows the settlement section above the tabs", () => {
