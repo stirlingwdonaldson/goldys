@@ -22,13 +22,12 @@ final class CtbProductSalesBatch {
 
   void add(CtbSaleItem item, UUID rawId) {
     String identity = ProductSalesInput.sourceIdentity(item.stockCode(), item.siteNumber());
-    if (identity == null
-        || item.uniqueGroupId() == null
-        || item.uniqueGroupId().isBlank()
-        || item.quantitySold() == null
-        || item.amount() == null)
+    if (identity == null || item.quantitySold() == null || item.amount() == null)
       throw mismatch("Sale item lacks a stable group/product identity or quantity/amount");
-    GroupKey key = new GroupKey(identity, item.uniqueGroupId());
+    // CTB's ungrouped product-day rows have null uniqueGroupId (verified on retained pages).
+    // Product + site identifies that observation; differing repeats still fail below.
+    String group = item.uniqueGroupId();
+    GroupKey key = new GroupKey(identity, group == null || group.isBlank() ? null : group);
     Observation prior = observations.get(key);
     if (prior != null) {
       // Overlapping pages must not add the same observation twice. A changed group within one
