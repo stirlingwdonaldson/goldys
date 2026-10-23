@@ -1,0 +1,10 @@
+Sales Data Receipt Line ID,Sales Data Sale Closed Date,Saleline Payments Sale Number,Products Product Name,Sales Data Product Quantity,Sales Data Total Inc Tax,Advanced Dimensions Sold Price Inc Tax,Sales Data Total Tax,Sales Data Cost Inc Tax,Sales Data Total Ex Tax,Sales Adjustments Gross Sale Inc Tax,Sales Adjustments Gross Sale Ex Tax,Sales Adjustments Total Adjustment Amount Inc Tax,Sales Adjustments Total Adjustment Amount Ex Tax,Sales Adjustments Adjustment Type,Sales Adjustments Adjustment Reason,Sales Adjustments Adjustment Level,Sales Adjustments Promotion Name
+31036049020002,2026-10-22,SP-23 1021063649,Pint - Bodriggy Speccy Juice,1,0,0,0,2.5942,0,10,9.09,-10,-9.091,Discount,Testing/Manager photos,Order Level,
+31036045530002,2026-10-21,103604553 1021063908,Frickles,1,14.23,14.23,1.29,0,12.94,14,12.729999999999999,0.23,0.2091,Surcharge,Custom Adjustment,Order Level,
+31036797080003,2026-10-21,SP-100 1021083107,Aperol Spritz (NV Three Pillars),2,36,36,3.27,0,32.73,36,32.73,0,0,None,,,
+31036943060002,2026-10-21,SP-115 1021085520,Pot - Pale Ale Love Shack,1,8,8,0.73,1.518,7.27,8,7.27,0,0,None,,,
+31036943060001,2026-10-21,SP-115 1021085520,Pot - Pale Ale Love Shack,1,8,8,0.73,1.518,7.27,8,7.27,0,0,None,,,
+31036767650001,2026-10-21,SP-100 1021082623,$28 Steak Frites,1,28,28,2.55,0,25.45,28,25.45,0,0,None,,,
+31036767650002,2026-10-21,SP-100 1021082623,G - Swiftsure 'Marlborough' Sauvignon Blanc,1,15,15,1.36,0,13.64,15,13.64,0,0,None,,,
+31036943060001,2026-10-21,SP-115 1021085520,Pot - Pale Ale Love Shack,1,8,8,0.73,1.518,7.27,8,7.27,0,0,None,,,
+31036943060002,2026-10-21,SP-115 1021085520,Pot - Pale Ale Love Shack,1,8,8,0.73,1.518,7.27,8,7.27,0,0,None,,,

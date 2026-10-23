@@ -78,8 +78,8 @@ function saleItemColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<S
     textColumn<SaleItemRow>("categoryName", "Category"),
     textColumn<SaleItemRow>("orderType", "Order type"),
     numberColumn<SaleItemRow>("quantitySold", "Qty", (r) => r.quantitySold),
-    currencyColumn<SaleItemRow>("soldPriceIncTax", "Sold price", (r) => r.soldPriceIncTax),
-    currencyColumn<SaleItemRow>("costIncTax", "Cost", (r) => r.costIncTax),
+    currencyColumn<SaleItemRow>("soldPriceIncTax", "Source sold-price measure", (r) => r.soldPriceIncTax),
+    currencyColumn<SaleItemRow>("costIncTax", "POS reported cost", (r) => r.costIncTax),
     currencyColumn<SaleItemRow>("amount", "Total", (r) => r.amount),
     ...(onViewSale ? [viewSaleColumn(onViewSale)] : []),
   ];

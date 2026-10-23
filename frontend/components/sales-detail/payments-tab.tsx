@@ -65,6 +65,7 @@ function paymentColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<Pa
     dateColumn<PaymentRow>("tradingDate", "Date"),
     textColumn<PaymentRow>("saleNumber", "Sale"),
     textColumn<PaymentRow>("paymentTypeName", "Payment type"),
+    textColumn<PaymentRow>("lspayPaymentMode", "Payment mode"),
     textColumn<PaymentRow>("reconciled", "Reconciled"),
     textColumn<PaymentRow>("registerName", "Register"),
     textColumn<PaymentRow>("staffName", "Staff"),

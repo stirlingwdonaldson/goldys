@@ -12,6 +12,7 @@ Many specs still carry their original `Status: Draft` or `In review` header. The
 
 | Date | Topic | Spec | Plan | Outcome |
 |---|---|---|---|---|
+| 10-23 | Sale recipe costing, adjustments and payment indicators | [spec](specs/2026-10-23-sale-recipe-costing-design.md) | [plan](plans/2026-10-23-sale-recipe-costing.md) | Implemented locally; recipe costs assumed ex-GST via a reversible setting, disclosed on sale estimates |
 | 09-19 | Phase 1 MVP foundation (ledger, canonical, permissions) | [spec](specs/2026-09-19-phase-one-mvp-design.md) | [plan](plans/2026-09-19-phase-one-foundation.md) | Implemented. OIDC later replaced by email + password |
 | 09-20 | Deployment environments | [spec](specs/2026-09-20-deployment-environments-design.md) | [plan](plans/2026-09-20-deployment-environments.md) | Implemented; runbook in `operations/deployment.md` |
 | 09-20 | Email + password auth | [spec](specs/2026-09-20-email-password-auth-design.md) | [plan](plans/2026-09-20-email-password-auth.md) | Implemented (V7, V8) |

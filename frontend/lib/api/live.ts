@@ -315,6 +315,10 @@ export const liveApi: Api = {
       `/api/deleted-sales?${q.toString()}`, { signal: options?.signal }
     );
   },
+  getSaleCosting: (saleNumber: string, from: string, to: string, options?: { signal?: AbortSignal }) => {
+    const query = new URLSearchParams({ saleNumber, from, to });
+    return fetchApi<import("./types").SaleCosting>(`/api/sale-items/costing?${query}`, { signal: options?.signal });
+  },
   listSaleItems: (filter: import("./types").SaleItemFilter, page: number, size: number, options?: { signal?: AbortSignal }) => {
     const q = new URLSearchParams({ page: String(page), size: String(size) });
     if (filter.from) q.set("from", filter.from);

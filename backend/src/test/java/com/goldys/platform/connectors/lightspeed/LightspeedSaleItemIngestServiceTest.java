@@ -57,7 +57,8 @@ class LightspeedSaleItemIngestServiceTest {
         "Sale",
         "Example Staff",
         "Goldy's Main Bar",
-        "12");
+        "12",
+        null);
   }
 
   @Test
@@ -149,5 +150,33 @@ class LightspeedSaleItemIngestServiceTest {
     service().backfill(new RawLedgerQuery.RawPayload(rawId, body()));
 
     verify(canonical, never()).record(any());
+  }
+
+  @Test
+  void refusesConflictingComponentsBeforeCanonicalWritesButKeepsRecoveryPreview() throws Exception {
+    UUID rawId = UUID.randomUUID();
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any())).thenReturn(rawId);
+    String csv =
+        "Sales Data Receipt Line ID,Sales Data Sale Closed Date,Sales Data Product Quantity,Sales Data Total Inc Tax,Sales Adjustments Adjustment Reason\n"
+            + "L1,2026-10-21,1,20,discount\nL1,2026-10-21,1,20,surcharge\n";
+    byte[] body =
+        new com.fasterxml.jackson.databind.ObjectMapper()
+            .writeValueAsBytes(java.util.Map.of("attachment", java.util.Map.of("data", csv)));
+    var real =
+        new LightspeedSaleItemIngestService(
+            ingestion, canonical, new LightspeedSaleItemCsvParser());
+    org.assertj.core.api.Assertions.assertThat(
+            real.preview(new RawLedgerQuery.RawPayload(rawId, body)))
+        .hasSize(2);
+    assertThatThrownBy(() -> real.ingest(body)).hasMessageContaining("Conflicting rows");
+    verify(canonical, never()).record(any());
+    verify(ingestion).recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
+  }
+
+  @Test
+  void identicalTenderJoinsAreCanonicalizedOnlyOnce() {
+    when(parser.parse(any())).thenReturn(List.of(item(), item()));
+    service().ingest(body());
+    verify(canonical).record(any());
   }
 }

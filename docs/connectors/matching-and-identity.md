@@ -428,3 +428,32 @@ they never replace the explicit usage graph. Catalogue names can be newer than r
 a list response cannot establish cost/ingredient freshness. Source-provided dietary booleans
 are observations, not inferred safety assertions. Recipe identity and reverse usage links use
 CTB IDs, never names. Embedded markup becomes plain text; raw bytes remain unchanged.
+
+## Sale receipt recipe costing (23 October 2026)
+
+Sale costing reads current-version `resolved_sale_line` / `resolved_sale_recipe_link` SQL views
+and the existing resolved recipe query. It retains POS cost separately from CTB recipe cost.
+With blank product identifiers in the observed feed, match a unique `ProductNameKey`-normalized
+sale name to the CTB link description. A single positive recipe ID with no explicitly inactive
+link wins. Conflicting/inactive links remain unresolved; a missing linked recipe never falls
+back to a similarly named recipe. Only an unassigned item (no positive source association)
+may use a unique exact normalized recipe name. Preserve numeric price tokens: `$28 Steak Frites`
+is recipe 722, distinct from regular Steak Frites 710. Blank names and normalization collisions
+never select the first candidate. This derived association does not change CTB source links.
+
+Measured against 21 October's 1,161 current sale lines and the retained 23 October catalogue:
+951 explicit-link candidates, 169 unique exact-name candidates, 36 unmatched and 5 with
+ambiguous/inactive links. The catalogue has 11 normalized-name collision keys; the special's
+exact-name candidate is uniquely 722. These counts establish matching coverage, not cost
+completeness or historical effective cost. Source costs retain observation date and freshness;
+individual-sale margins explicitly assume ex-GST recipe costs on the owner's 23 October
+instruction. `CTB_RECIPE_COSTS_EXCLUDE_GST=false` withdraws that assumption and withholds ratios.
+Current recipe costs still do not establish historical actual COGS.
+
+The sale-item parser retains final tax-exclusive revenue, pre-adjustment gross, signed aggregate
+adjustment amounts, type/reason/level and promotion name in an optional `adjustment` object.
+Older reports have unknown fields. Identical parsed rows repeated by tender joins collapse by
+receipt ID; conflicting rows for that ID fail explicitly after raw persistence. Multiple distinct
+components need a verified source grouping contract before they can be combined. Final line
+revenue already includes the observed adjustments; never apply them again. The source sold-price
+measure is not consistently per unit and cannot establish a discount or substitute for line total.

@@ -556,4 +556,21 @@ class ArchitectureBoundariesTest {
           .implement(com.goldys.platform.semantic.RecipeCompositionQuery.class)
           .should()
           .resideInAPackage("..reconciliation..");
+
+  @ArchTest
+  static final ArchRule saleCostingUsesResolvedSemanticBoundary =
+      classes()
+          .that()
+          .implement(com.goldys.platform.semantic.SaleCostingQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  @ArchTest
+  static final ArchRule saleCostingServiceDoesNotBypassResolvedQuery =
+      noClasses()
+          .that()
+          .haveFullyQualifiedName("com.goldys.platform.application.SaleCostingService")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("..canonical..", "..ingestion..", "..reconciliation..");
 }

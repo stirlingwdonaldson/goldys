@@ -866,7 +866,44 @@ export interface DeletedSaleRow {
 }
 
 /** One current sale line item, for the Sale-items list endpoint (mirrors `semantic.SaleItemRow`). */
+export interface SaleAdjustment {
+  finalExTax: number | string | null;
+  grossIncTax: number | string | null;
+  grossExTax: number | string | null;
+  amountIncTax: number | string | null;
+  amountExTax: number | string | null;
+  type: string | null;
+  reason: string | null;
+  level: string | null;
+  promotion: string | null;
+}
+
+export interface SaleCosting {
+  lines: {
+    receiptLineId: string;
+    itemName: string | null;
+    quantity: number | string | null;
+    revenueIncTax: number | string | null;
+    revenueExTax: number | string | null;
+    recipeId: number | null;
+    recipeName: string | null;
+    matchMethod: string | null;
+    costPerPortion: number | string | null;
+    recipeCost: number | string | null;
+    costObservedAt: string | null;
+    costSource: string | null;
+    status: string;
+  }[];
+  complete: boolean;
+  recipeCost: number | string | null;
+  grossProfit: number | string | null;
+  margin: number | string | null;
+  qualification: string;
+  recipeCostTaxBasis: "ASSUMED_EX_GST" | "UNVERIFIED";
+}
+
 export interface SaleItemRow {
+  adjustment?: SaleAdjustment | null;
   tradingDate: string;
   saleNumber: string | null;
   /** The Lightspeed receipt-line id (the backend's `source_record_ref`). */
@@ -1315,6 +1352,7 @@ export interface Api {
     filter: DeletedSaleFilter,
     page: number,
     size: number, options?: { signal?: AbortSignal }): Promise<DataPage<DeletedSaleRow>>;
+  getSaleCosting(saleNumber: string, from: string, to: string, options?: { signal?: AbortSignal }): Promise<SaleCosting>;
   listSaleItems(filter: SaleItemFilter, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<SaleItemRow>>;
   getPaymentMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<PaymentMix[]>;
   getDeletedSaleTotals(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DeletedSaleDay[]>;

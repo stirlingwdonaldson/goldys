@@ -21,4 +21,5 @@ public record LightspeedSaleItem(
     String saleType,
     String staffName,
     String registerName,
-    String tableNumber) {}
+    String tableNumber,
+    com.goldys.platform.semantic.SaleAdjustment adjustment) {}

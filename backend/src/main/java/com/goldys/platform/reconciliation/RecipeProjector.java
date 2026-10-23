@@ -20,6 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class RecipeProjector {
   private static final Clock CLOCK = Clock.systemUTC();
+  private static final Logger log = LoggerFactory.getLogger(RecipeProjector.class);
 
   private static final String ON_MENU = "ON_MENU";
   private static final String UNKNOWN = "UNKNOWN";
@@ -61,6 +64,8 @@ public class RecipeProjector {
   /** Rebuild the whole read model from canonical facts. */
   @Transactional
   public void recomputeAll() {
+    long started = System.nanoTime();
+    log.info("Rebuilding recipe projection");
     resolved.deleteAllInBatch();
 
     Map<String, PriceInfo> byName = priceIndex();
@@ -82,7 +87,8 @@ public class RecipeProjector {
 
     Instant now = CLOCK.instant();
     List<ResolvedRecipe> rows = new ArrayList<>();
-    for (RecipeCostView c : recipeCosts.currentRecipeCosts()) {
+    List<RecipeCostView> costs = recipeCosts.currentRecipeCosts();
+    for (RecipeCostView c : costs) {
       List<SaleRecipeLinkView> recipeLinks = linksByRecipe.getOrDefault(c.recipeId(), List.of());
       List<SaleRecipeLinkView> active = new ArrayList<>();
       List<SaleRecipeLinkView> inactive = new ArrayList<>();
@@ -216,7 +222,7 @@ public class RecipeProjector {
               now));
     }
     Map<Integer, RecipeCostView> costInputs = new HashMap<>();
-    recipeCosts.currentRecipeCosts().forEach(c -> costInputs.put(c.recipeId(), c));
+    costs.forEach(c -> costInputs.put(c.recipeId(), c));
     for (ResolvedRecipe row : rows) {
       RecipeCostView cost = costInputs.get(row.recipeId());
       Set<String> names = new HashSet<>();
@@ -234,6 +240,10 @@ public class RecipeProjector {
       row.evidence(cost.evidence() == null ? List.of() : List.of(cost.evidence()), priceEvidence);
     }
     resolved.saveAll(rows);
+    log.info(
+        "Prepared recipe projection: {} recipes in {} ms",
+        rows.size(),
+        (System.nanoTime() - started) / 1_000_000);
   }
 
   /**

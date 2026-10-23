@@ -167,6 +167,8 @@ classification:
 # (CTB_SFTP_HOST/USER/PASSWORD) to turn it on. Cron is the venue zone (app.venue.timezone).
 ctb:
   recipes:
+    # Owner assumption, 23 Oct 2026. False withholds sale margins until a comparable basis is established.
+    costs-exclude-gst: ${CTB_RECIPE_COSTS_EXCLUDE_GST:true}
     enabled: ${CTB_RECIPES_ENABLED:false}
     delay-millis: ${CTB_RECIPES_DELAY_MILLIS:250}
     max-recipes: ${CTB_RECIPES_MAX_RECIPES:5000}

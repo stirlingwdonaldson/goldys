@@ -8,9 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusDot } from "@/components/ui/status-dot";
 import type { Api } from "@/lib/api";
 import type { DeletedSaleRow, PaymentRow, SaleItemRow } from "@/lib/api/types";
-import { formatCurrency, formatDay, formatNumber, formatPercent } from "@/lib/format";
+import { formatCurrency, formatDay, formatNumber } from "@/lib/format";
 import { useApi } from "@/lib/demo-mode";
 import { cn } from "@/lib/utils";
+import { SaleCostingPanel } from "./sale-costing-panel";
 import { summariseSale, type CheckTone, type SaleSummary, type SaleVerdict } from "./sale-summary";
 
 /** The start of the Lightspeed data; the wide range is cheap thanks to the `sale_number` index. */
@@ -121,7 +122,10 @@ export function SaleSummaryView({ saleNumber, apiOverride }: SaleSummaryViewProp
     );
   }
 
-  return <SaleSummaryBody summary={summary} />;
+  return <div className="flex flex-col gap-4">
+    <SaleSummaryBody summary={summary} />
+    {summary.lines.length > 0 ? <SaleCostingPanel saleNumber={saleNumber} api={apiOverride ?? api} /> : null}
+  </div>;
 }
 
 function SaleSummaryBody({ summary }: { summary: SaleSummary }) {
@@ -148,15 +152,11 @@ function SaleSummaryBody({ summary }: { summary: SaleSummary }) {
       </div>
 
       {hasRows ? (
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Figure label="Rung up" value={formatCurrency(summary.itemsTotal)} />
           <Figure label="Paid" value={formatCurrency(summary.paidTotal)} />
           <Figure label="Tips" value={formatCurrency(summary.tipTotal)} muted={summary.tipTotal === 0} />
-          <Figure
-            label="Gross margin"
-            value={formatPercent(summary.margin)}
-            hint={summary.grossProfit != null ? `${formatCurrency(summary.grossProfit)} profit` : undefined}
-          />
+
         </dl>
       ) : null}
 
@@ -187,9 +187,9 @@ function SaleSummaryBody({ summary }: { summary: SaleSummary }) {
               primary: l.name,
               secondary: [
                 l.quantity != null && l.unitPrice != null
-                  ? `${formatNumber(l.quantity)} × ${formatCurrency(l.unitPrice)}`
+                  ? `${formatNumber(l.quantity, 6)} × ${formatCurrency(l.unitPrice)}`
                   : l.quantity != null
-                    ? `× ${formatNumber(l.quantity)}`
+                    ? `× ${formatNumber(l.quantity, 6)}`
                     : null,
                 l.category,
               ]
@@ -206,6 +206,7 @@ function SaleSummaryBody({ summary }: { summary: SaleSummary }) {
               key: t.key,
               primary: t.name,
               secondary: [
+                t.mode === "Card Payment" ? "Card" : t.mode,
                 t.tip ? `+${formatCurrency(t.tip)} tip` : null,
                 t.surcharge ? `+${formatCurrency(t.surcharge)} surcharge` : null,
               ]

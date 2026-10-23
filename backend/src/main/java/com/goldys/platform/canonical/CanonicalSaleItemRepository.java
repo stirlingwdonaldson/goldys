@@ -30,6 +30,12 @@ interface CanonicalSaleItemRepository extends BitemporalRepository<CanonicalSale
   @Query("select s from CanonicalSaleItem s where s.supersededAt is null")
   List<CanonicalSaleItem> findAllCurrent();
 
+  @Query(
+      "select new com.goldys.platform.canonical.SaleItemPriceSource("
+          + "s.itemName,s.soldPriceIncTax,s.costIncTax,s.tradingDate,s.rawRecordId,s.sourceRecordRef) "
+          + "from CanonicalSaleItem s where s.supersededAt is null")
+  List<SaleItemPriceSource> findCurrentPriceInputs();
+
   /**
    * The distinct (name, category) pairs across current sale items, without materialising the full
    * entity list. The categorisation feature text only needs these two fields per product, and the

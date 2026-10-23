@@ -24,4 +24,5 @@ public record SaleItemInput(
     String staffName,
     String registerName,
     String tableNumber,
-    UUID rawRecordId) {}
+    UUID rawRecordId,
+    com.goldys.platform.semantic.SaleAdjustment adjustment) {}

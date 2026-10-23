@@ -66,6 +66,14 @@ class CanonicalSaleItem extends BitemporalEntity {
   @Column(name = "table_number", updatable = false)
   private String tableNumber;
 
+  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+  @Column(name = "adjustment", columnDefinition = "jsonb", updatable = false)
+  private com.goldys.platform.semantic.SaleAdjustment adjustment;
+
+  com.goldys.platform.semantic.SaleAdjustment adjustment() {
+    return adjustment;
+  }
+
   protected CanonicalSaleItem() {}
 
   private CanonicalSaleItem(
@@ -93,6 +101,7 @@ class CanonicalSaleItem extends BitemporalEntity {
     this.staffName = input.staffName();
     this.registerName = input.registerName();
     this.tableNumber = input.tableNumber();
+    this.adjustment = input.adjustment();
   }
 
   static CanonicalSaleItem create(
@@ -123,7 +132,8 @@ class CanonicalSaleItem extends BitemporalEntity {
         && Objects.equals(saleType, input.saleType())
         && Objects.equals(staffName, input.staffName())
         && Objects.equals(registerName, input.registerName())
-        && Objects.equals(tableNumber, input.tableNumber());
+        && Objects.equals(tableNumber, input.tableNumber())
+        && Objects.equals(adjustment, input.adjustment());
   }
 
   private static boolean sameAmount(BigDecimal a, BigDecimal b) {

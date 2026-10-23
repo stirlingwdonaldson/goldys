@@ -49,6 +49,7 @@ class RecipeProjectorTest {
     assertThat(r.actualCost()).isNull();
     assertThat(r.resolutionType()).isEqualTo("SINGLE_SOURCE");
     assertThat(r.authoritativeSource()).isEqualTo("CTB");
+    verify(recipeCosts).currentRecipeCosts();
   }
 
   @Test

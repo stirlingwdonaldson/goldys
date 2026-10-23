@@ -78,6 +78,60 @@ class SaleItemListIntegrationTest {
             new SaleItemIdentityView("Espresso", "FOOD"));
   }
 
+  @Test
+  void adjustmentCorrectionSupersedesEvidenceAndUpdatesTheResolvedView() {
+    var old = saleItem(DAY_1, "SALE-EVIDENCE", "EVIDENCE-1", "FOOD", "100.00");
+    ingest.record(old);
+    var adjustment =
+        new com.goldys.platform.semantic.SaleAdjustment(
+            new BigDecimal("90.91"),
+            new BigDecimal("110"),
+            new BigDecimal("100"),
+            new BigDecimal("-10"),
+            new BigDecimal("-9.09"),
+            "Discount",
+            "Manager",
+            "Order Level",
+            null);
+    var next =
+        new SaleItemInput(
+            old.sourceSystem(),
+            old.receiptLineId(),
+            old.tradingDate(),
+            old.saleNumber(),
+            old.itemName(),
+            old.productNumber(),
+            old.sku(),
+            old.categoryName(),
+            old.quantitySold(),
+            old.amount(),
+            old.soldPriceIncTax(),
+            old.totalTax(),
+            old.costIncTax(),
+            old.orderType(),
+            old.saleType(),
+            old.staffName(),
+            old.registerName(),
+            old.tableNumber(),
+            rawRecord(),
+            adjustment);
+    ingest.record(next);
+    ingest.record(next);
+    assertThat(
+            query.page(null, "SALE-EVIDENCE", DAY_1, DAY_1, 0, 50).items().getFirst().adjustment())
+        .isEqualTo(adjustment);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from canonical_sale_item where source_record_ref='EVIDENCE-1'",
+                Integer.class))
+        .isEqualTo(2);
+    assertThat(
+            jdbc.queryForObject(
+                "select adjustment->>'reason' from resolved_sale_line where receipt_line_id='EVIDENCE-1'",
+                String.class))
+        .isEqualTo("Manager");
+  }
+
   private void assertFullFieldSet(SaleItemRow r) {
     assertThat(r.tradingDate()).isEqualTo(DAY_1);
     assertThat(r.saleNumber()).isEqualTo("SALE-1");
@@ -119,7 +173,8 @@ class SaleItemListIntegrationTest {
         "Alice",
         "Bar 1",
         "T12",
-        rawRecord());
+        rawRecord(),
+        null);
   }
 
   private UUID rawRecord() {
