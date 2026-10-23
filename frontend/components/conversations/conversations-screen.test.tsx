@@ -122,7 +122,7 @@ describe("ConversationsScreen", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Sales last week" }));
 
-    await waitFor(() => expect(getThread).toHaveBeenCalledWith("t1"));
+    await waitFor(() => expect(getThread).toHaveBeenCalledWith("t1", expect.objectContaining({ signal: expect.any(AbortSignal) })));
     expect(await screen.findByText("What were sales last week?")).toBeInTheDocument();
     expect(screen.getByText("Gross sales were $43,691.48.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();

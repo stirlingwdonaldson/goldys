@@ -37,9 +37,9 @@ it("preserves unrelated exception reporting", async () => {
   expect(await beforeSend(event, { originalException: error })).toBe(event);
 });
 
-it("strips only the token query parameter's value from a URL", () => {
+it("strips secret and unrestricted query values", () => {
   expect(scrubTokenQuery("https://host/api/ingest/lightspeed?token=SECRET&a=1&b=2"))
-    .toBe("https://host/api/ingest/lightspeed?a=1&b=2");
+    .toBe("https://host/api/ingest/lightspeed");
 });
 
 it("leaves other query parameters untouched when no token is present", () => {
@@ -57,8 +57,8 @@ it("does not strip a bare value with no query string", () => {
     .toBe("https://host/api/ingest/lightspeed");
 });
 
-it("does not touch a parameter that merely contains the word token", () => {
-  expect(scrubTokenQuery("https://host/api?tokenizer=x&token=SECRET")).toBe("https://host/api?tokenizer=x");
+it("removes unknown parameters as well as tokens", () => {
+  expect(scrubTokenQuery("https://host/api?tokenizer=x&token=SECRET")).toBe("https://host/api");
 });
 
 it("scrubs the url in an HTTP breadcrumb's data", () => {
@@ -68,6 +68,16 @@ it("scrubs the url in an HTTP breadcrumb's data", () => {
     data: { url: "https://host/api/ingest/lightspeed?token=SECRET&a=1", method: "POST" },
   };
   const scrubbed = beforeBreadcrumb(breadcrumb);
-  expect(scrubbed?.data?.url).toBe("https://host/api/ingest/lightspeed?a=1");
+  expect(scrubbed?.data?.url).toBe("https://host/api/ingest/lightspeed");
   expect(scrubbed?.data?.method).toBe("POST");
+});
+
+
+it("drops private filter values from events and spans", async () => {
+  const event: Sentry.ErrorEvent = { type: undefined, request: { url: "https://host/data?source=person%40example.invalid&from=2026-10-01&token=secret", query_string: "fetcher=private-name" } };
+  const result = await beforeSend(event, {});
+  expect(JSON.stringify(result)).not.toContain("example.invalid");
+  expect(JSON.stringify(result)).not.toContain("private-name");
+  expect(JSON.stringify(result)).not.toContain("secret");
+  expect(result?.request?.url).toBe("https://host/data?from=2026-10-01");
 });

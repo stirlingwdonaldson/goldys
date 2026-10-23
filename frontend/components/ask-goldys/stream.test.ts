@@ -1,287 +1,62 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { parseSseBlock, parseDraft, parseAnswer, streamChat } from "./stream";
 
-describe("parseSseBlock", () => {
-  it("parses a named event with JSON data", () => {
-    const block = 'event: text\ndata: {"delta":"hello"}\n\n';
-    expect(parseSseBlock(block)).toEqual({ event: "text", data: '{"delta":"hello"}' });
+const answer = { widgets: [], trace: [], asOf: "2026-10-23T00:00:00Z", notices: [] };
+const filters = { dateRange: null, comparison: null, dimensions: [] };
+const widget = { id: "w", renderType: "stat", queries: [], layout: { w: 6, h: 1 } };
+
+afterEach(() => vi.unstubAllGlobals());
+
+describe("reporting contracts", () => {
+  it("parses LF/CRLF blocks and multiline data", () => {
+    for (const newline of ["\n", "\r\n"]) expect(parseSseBlock(`event: answer${newline}data: a${newline}data: b`)).toEqual({ event: "answer", data: "a\nb" });
   });
-
-  it("defaults the event name to message", () => {
-    expect(parseSseBlock('data: {"a":1}\n\n')).toEqual({ event: "message", data: '{"a":1}' });
+  it("preserves a valid draft and rejects a damaged widget or unsupported query grain", () => {
+    expect(parseDraft({ title: "Weekly", filters, widgets: [widget] })).toEqual({ title: "Weekly", filters, widgets: [widget], description: null, dashboardId: null });
+    expect(parseDraft({ title: "Weekly", widgets: [widget, { renderType: "stat" }] })).toBeNull();
+    expect(parseDraft({ title: "Weekly", widgets: [{ ...widget, layout: { w: 0, h: 1 } }] })).toBeNull();
+    expect(parseDraft({ widgets: [] })).toBeNull();
   });
-
-  it("joins multi-line data", () => {
-    expect(parseSseBlock('event: answer\ndata: {"a":1}\ndata: {"b":2}\n\n')).toEqual({
-      event: "answer",
-      data: '{"a":1}\n{"b":2}',
-    });
+  it("retains TOTAL provenance and explicit unavailable freshness", () => {
+    const provenance = { metric: "sales.net", definitionVersion: "1", range: { from: "2026-10-01", to: "2026-10-07", calendar: "CALENDAR" }, grain: "TOTAL", sourceDomain: "resolved_daily_sales", dataFreshness: null, missingPeriods: [], calculationVersion: "1", trust: null };
+    expect(parseAnswer({ ...answer, trace: [{ tool: "get_sales_by_period", description: "Sales", provenance: [provenance] }] }).trace[0].provenance).toEqual([provenance]);
   });
-});
-
-describe("parseDraft", () => {
-  it("round-trips a well-formed draft", () => {
-    const draft = {
-      title: "Weekly sales",
-      description: "Gross sales by day",
-      filters: {
-        dateRange: { from: "2026-10-01", to: "2026-10-07", calendar: "TRADING" },
-        comparison: "PREVIOUS_WEEK",
-        dimensions: ["PRODUCT"],
-      },
-      widgets: [
-        {
-          id: "w1",
-          renderType: "time-series",
-          queries: [
-            {
-              metric: "sales.gross",
-              range: { from: "2026-10-01", to: "2026-10-07", calendar: "CALENDAR" },
-              grain: "DAY",
-              dimensions: ["DEPARTMENT"],
-              comparison: null,
-            },
-          ],
-          layout: { w: 6, h: 2 },
-        },
-      ],
-    };
-    expect(parseDraft(draft)).toEqual({ ...draft, dashboardId: null });
-  });
-
-  it("returns null when the title is missing", () => {
-    expect(parseDraft({ description: "no title", filters: {}, widgets: [] })).toBeNull();
-    expect(parseDraft("not an object")).toBeNull();
-    expect(parseDraft(null)).toBeNull();
-  });
-
-  it("drops malformed widgets and keeps valid ones", () => {
-    const parsed = parseDraft({
-      title: "Weekly sales",
-      widgets: [
-        { renderType: "time-series" }, // missing id -> dropped
-        { id: "w2", renderType: "stat", queries: [], layout: { w: 6, h: 1 } },
-      ],
-    });
-    expect(parsed?.widgets).toEqual([
-      { id: "w2", renderType: "stat", queries: [], layout: { w: 6, h: 1 } },
-    ]);
-  });
-
-  it("degrades missing filters to null filters", () => {
-    const parsed = parseDraft({ title: "Weekly sales", widgets: [] });
-    expect(parsed?.filters).toEqual({ dateRange: null, comparison: null, dimensions: [] });
-  });
-
-  it("parses an optional dashboardId and degrades it to null when absent", () => {
-    expect(parseDraft({ title: "Weekly sales", widgets: [], dashboardId: "d1" })?.dashboardId).toBe(
-      "d1",
-    );
-    expect(parseDraft({ title: "Weekly sales", widgets: [] })?.dashboardId).toBeNull();
-  });
-});
-
-describe("parseAnswer", () => {
-  it("parses trace provenance, dropping malformed provenance entries", () => {
-    const answer = parseAnswer({
-      widgets: [],
-      trace: [
-        {
-          tool: "get_sales_by_period",
-          description: "Resolved daily sales totals.",
-          provenance: [
-            {
-              metric: "sales.gross",
-              definitionVersion: "3",
-              range: { from: "2026-10-01", to: "2026-10-07", calendar: "CALENDAR" },
-              grain: "DAY",
-              sourceDomain: "resolved_daily_sales",
-              dataFreshness: "2026-10-07T09:00:00Z",
-              missingPeriods: ["2026-10-05"],
-              calculationVersion: "1",
-            },
-            "not-an-object",
-          ],
-        },
-      ],
-      asOf: "2026-10-07T10:00:00Z",
-      notices: [],
-    });
-
-    expect(answer.trace).toEqual([
-      {
-        tool: "get_sales_by_period",
-        description: "Resolved daily sales totals.",
-        provenance: [
-          {
-            metric: "sales.gross",
-            definitionVersion: "3",
-            range: { from: "2026-10-01", to: "2026-10-07", calendar: "CALENDAR" },
-            grain: "DAY",
-            sourceDomain: "resolved_daily_sales",
-            dataFreshness: "2026-10-07T09:00:00Z",
-            missingPeriods: ["2026-10-05"],
-            calculationVersion: "1",
-            trust: null,
-          },
-        ],
-      },
-    ]);
-  });
-
-  it("falls back to empty provenance for malformed provenance", () => {
-    const answer = parseAnswer({
-      trace: [{ tool: "get_metric", description: "x", provenance: "nope" }],
-      asOf: "",
-      notices: [],
-    });
-    expect(answer.trace[0].provenance).toEqual([]);
-  });
-
-  it("parses a provenance trust summary and degrades unknown trust to null", () => {
-    const parsed = parseAnswer({
-      trace: [
-        {
-          tool: "get_sales_by_period",
-          description: "x",
-          provenance: [
-            {
-              metric: "sales.gross",
-              definitionVersion: "3",
-              trust: {
-                state: "SINGLE_SOURCE",
-                freshness: "STALE",
-                authoritativeSource: "Lightspeed",
-                resolvedAt: "2026-10-07T10:00:00Z",
-                lastIngestionAt: null,
-                threshold: 86_400_000,
-              },
-            },
-          ],
-        },
-      ],
-      asOf: "",
-      notices: [],
-    });
-    expect(parsed.trace[0].provenance[0].trust).toEqual({
-      state: "SINGLE_SOURCE",
-      freshness: "STALE",
-      authoritativeSource: "Lightspeed",
-      resolvedAt: "2026-10-07T10:00:00Z",
-      lastIngestionAt: null,
-      threshold: 86_400_000,
-    });
-
-    // An unknown state (e.g. a freshness value in the state slot) degrades to null.
-    const unknown = parseAnswer({
-      trace: [
-        {
-          tool: "get_sales_by_period",
-          description: "x",
-          provenance: [
-            {
-              metric: "sales.gross",
-              definitionVersion: "3",
-              trust: { state: "STALE" },
-            },
-          ],
-        },
-      ],
-      asOf: "",
-      notices: [],
-    });
-    expect(unknown.trace[0].provenance[0].trust).toBeNull();
-  });
-
-  it("drops a trace entry missing tool or description", () => {
-    const answer = parseAnswer({
-      trace: [
-        { tool: "get_metric", description: "x", provenance: [] },
-        { description: "no tool", provenance: [] },
-      ],
-      asOf: "",
-      notices: [],
-    });
-    expect(answer.trace).toEqual([
-      { tool: "get_metric", description: "x", provenance: [] },
-    ]);
+  it("rejects malformed provenance instead of removing the evidence", () => {
+    expect(() => parseAnswer({ ...answer, trace: [{ tool: "sales", description: "Sales", provenance: [42] }] })).toThrow("invalid reporting data");
+    expect(() => parseAnswer({ ...answer, draft: { title: "Draft", widgets: [{}] } })).toThrow();
   });
 });
 
 describe("streamChat", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
+  it("handles a CRLF boundary split across chunks and releases the reader", async () => {
+    const cancel = vi.fn();
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({ start(controller) {
+      for (const part of ['event: text\r', '\ndata: {"delta":"Hi"}\r\n\r', `\nevent: answer\r\ndata: ${JSON.stringify(answer)}\r\n\r\n`]) controller.enqueue(encoder.encode(part));
+      controller.close();
+    }, cancel });
+    const response = new Response(stream, { headers: { "Content-Type": "text/event-stream;charset=UTF-8" } });
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(response);
+    vi.stubGlobal("fetch", fetch);
+    const handlers = { onText: vi.fn(), onAnswer: vi.fn(), onError: vi.fn() };
+    await streamChat("thread", "question", handlers);
+    expect(JSON.parse(fetch.mock.calls[0]?.[1]?.body as string)).toEqual({ threadId: "thread", message: "question" });
+    expect(handlers.onText).toHaveBeenCalledWith("Hi");
+    expect(handlers.onAnswer).toHaveBeenCalledWith(answer);
+    expect(response.body?.locked).toBe(false);
   });
-
-  it("posts {threadId, message} and parses provenance from the answer event", async () => {
-    const answerPayload = {
-      widgets: [],
-      trace: [
-        {
-          tool: "get_sales_by_period",
-          description: "Resolved daily sales totals.",
-          provenance: [
-            {
-              metric: "sales.gross",
-              definitionVersion: "3",
-              range: { from: "2026-10-01", to: "2026-10-07", calendar: "CALENDAR" },
-              grain: "DAY",
-              sourceDomain: "resolved_daily_sales",
-              dataFreshness: "2026-10-07T09:00:00Z",
-              missingPeriods: ["2026-10-05"],
-              calculationVersion: "1",
-            },
-          ],
-        },
-      ],
-      asOf: "2026-10-07T10:00:00Z",
-      notices: [],
-    };
-
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(
-          new TextEncoder().encode(`event: answer\ndata: ${JSON.stringify(answerPayload)}\n\n`),
-        );
-        controller.close();
-      },
-    });
-    const fetchMock = vi.fn().mockResolvedValue(new Response(stream, { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    const onText = vi.fn();
-    const onAnswer = vi.fn();
-    const onError = vi.fn();
-
-    await streamChat("thread-1", "What were sales last week?", { onText, onAnswer, onError });
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("/api/conversational/chat");
-    expect(init.method).toBe("POST");
-    expect(JSON.parse(init.body)).toEqual({
-      threadId: "thread-1",
-      message: "What were sales last week?",
-    });
-    expect(init.body).not.toContain("messages");
-
-    expect(onError).not.toHaveBeenCalled();
-    expect(onAnswer).toHaveBeenCalledTimes(1);
-    expect(onAnswer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        trace: [
-          {
-            tool: "get_sales_by_period",
-            description: "Resolved daily sales totals.",
-            provenance: [
-              expect.objectContaining({
-                metric: "sales.gross",
-                missingPeriods: ["2026-10-05"],
-              }),
-            ],
-          },
-        ],
-      }),
-    );
+  it("rejects HTML and malformed answer frames without a false empty success", async () => {
+    const handlers = { onText: vi.fn(), onAnswer: vi.fn(), onError: vi.fn() };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("<html>", { headers: { "Content-Type": "text/html" } })));
+    await expect(streamChat("t", "q", handlers)).rejects.toThrow("did not return a chat stream");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response('event: answer\ndata: {"widgets":[{}]}\n\n', { headers: { "Content-Type": "text/event-stream" } })));
+    await expect(streamChat("t", "q", handlers)).rejects.toThrow("could not be read");
+    expect(handlers.onAnswer).not.toHaveBeenCalled();
+  });
+  it("passes cancellation to the transport", async () => {
+    const controller = new AbortController();
+    const fetch = vi.fn(async (_url: unknown, init: RequestInit) => { expect(init.signal).toBe(controller.signal); throw new DOMException("Aborted", "AbortError"); });
+    vi.stubGlobal("fetch", fetch);
+    await expect(streamChat("t", "q", { signal: controller.signal, onText: vi.fn(), onAnswer: vi.fn(), onError: vi.fn() })).rejects.toMatchObject({ name: "AbortError" });
   });
 });

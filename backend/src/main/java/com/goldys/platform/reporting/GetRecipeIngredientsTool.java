@@ -69,6 +69,10 @@ public class GetRecipeIngredientsTool implements ReportingTool {
             new Column("unit", "Unit", null),
             new Column("cost", "Cost", "currency"),
             new Column("supplier", "Supplier", null),
+            new Column("stock_unit", "Source stock unit", null),
+            new Column("usable", "Source usable quantity", null),
+            new Column("wastage", "Source wastage", null),
+            new Column("broken_link", "Broken link", null),
             new Column("is_sub_recipe", "Sub-recipe", null));
     List<Map<String, Object>> tableRows =
         rows.stream()
@@ -82,6 +86,10 @@ public class GetRecipeIngredientsTool implements ReportingTool {
                   row.put("cost", r.costPerQty());
                   row.put("supplier", r.supplierName());
                   row.put("is_sub_recipe", r.isSubRecipe());
+                  row.put("stock_unit", r.stockUomShortname());
+                  row.put("usable", r.stockUsable());
+                  row.put("wastage", r.stockWastage());
+                  row.put("broken_link", r.isBrokenLink());
                   return row;
                 })
             .toList();

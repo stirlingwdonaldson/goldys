@@ -48,16 +48,17 @@ const state = vi.hoisted(() => {
   });
 });
 
-vi.mock("@/lib/use-api-data", () => ({
-  useApiData: (fetcher: (api: unknown) => unknown) => {
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@tanstack/react-query")>(),
+  useQuery: ({ queryFn: fetcher }: { queryFn: (context: unknown) => unknown }) => {
     // No `String(fetcher)` substring here: the fetcher itself does the routing, so a
     // misrouted fetch cannot silently resolve to `null` → `[]`.
     const data = fetcher(state.readApi);
-    return { data, loading: false, error: null, reload: async () => {} };
+    return { data, isPending: false, error: null, refetch: async () => {} };
   },
 }));
 
-vi.mock("@/lib/demo-mode", () => ({ useApi: () => state.api }));
+vi.mock("@/lib/demo-mode", () => ({ useApi: () => ({ ...state.api, ...state.readApi }) }));
 
 // The taxonomy tree renders React Flow, which reads the router on mount.
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));

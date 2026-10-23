@@ -1,123 +1,32 @@
-import type {
-  Column,
-  RankedItem,
-  Series,
-  SeriesPoint,
-  WidgetQuery,
-  WidgetSpec,
-} from "./types";
+import { z } from "zod";
+import { ApiError } from "@/lib/api/errors";
+import type { WidgetSpec } from "./types";
 
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
+const base = {
+  schemaVersion: z.literal(2), id: z.string(), title: z.string(), description: z.string().nullable().optional(),
+  query: z.object({ tool: z.string(), input: z.record(z.string(), z.unknown()) }).nullable().optional(),
+};
+const series = z.array(z.object({ key: z.string(), label: z.string(), points: z.array(z.object({ x: z.string(), y: z.number().finite().nullable() })) }));
+const cell = z.union([z.string(), z.number().finite(), z.boolean(), z.null()]);
+export const widgetSchema = z.discriminatedUnion("type", [
+  z.object({ ...base, type: z.literal("stat"), value: z.number().finite().nullable(), format: z.string().nullable().optional(), hint: z.string().nullable().optional() }),
+  z.object({ ...base, type: z.literal("time-series"), series, yFormat: z.string().nullable().optional() }),
+  z.object({ ...base, type: z.literal("bar-chart"), series, yFormat: z.string().nullable().optional(), stacked: z.boolean().optional() }),
+  z.object({ ...base, type: z.literal("table"), columns: z.array(z.object({ key: z.string(), label: z.string(), format: z.string().nullable().optional() })), rows: z.array(z.record(z.string(), cell)) }),
+  z.object({ ...base, type: z.literal("ranked-list"), items: z.array(z.object({ label: z.string(), primary: z.string().nullable().optional(), secondary: z.string().nullable().optional(), badge: z.string().nullable().optional() })) }),
+]);
 
-function strOrNull(v: unknown): string | null {
-  return typeof v === "string" ? v : null;
-}
-
-function parsePoint(v: unknown): SeriesPoint | null {
-  if (!isRecord(v) || typeof v.x !== "string") return null;
-  return { x: v.x, y: typeof v.y === "number" ? v.y : null };
-}
-
-function parseSeries(v: unknown): Series[] {
-  if (!Array.isArray(v)) return [];
-  const out: Series[] = [];
-  for (const s of v) {
-    if (!isRecord(s) || typeof s.key !== "string" || typeof s.label !== "string") continue;
-    const points = Array.isArray(s.points)
-      ? s.points.map(parsePoint).filter((p): p is SeriesPoint => p !== null)
-      : [];
-    out.push({ key: s.key, label: s.label, points });
-  }
-  return out;
-}
-
-function parseColumns(v: unknown): Column[] {
-  if (!Array.isArray(v)) return [];
-  const out: Column[] = [];
-  for (const c of v) {
-    if (!isRecord(c) || typeof c.key !== "string") continue;
-    out.push({
-      key: c.key,
-      label: typeof c.label === "string" ? c.label : c.key,
-      format: strOrNull(c.format),
-    });
-  }
-  return out;
-}
-
-function parseItems(v: unknown): RankedItem[] {
-  if (!Array.isArray(v)) return [];
-  const out: RankedItem[] = [];
-  for (const i of v) {
-    if (!isRecord(i) || typeof i.label !== "string") continue;
-    out.push({
-      label: i.label,
-      primary: strOrNull(i.primary),
-      secondary: strOrNull(i.secondary),
-      badge: strOrNull(i.badge),
-    });
-  }
-  return out;
-}
-
-function parseQuery(v: unknown): WidgetQuery | null {
-  if (!isRecord(v) || typeof v.tool !== "string" || !isRecord(v.input)) return null;
-  return { tool: v.tool, input: v.input };
-}
-
-/**
- * Validate an untrusted widget document at the boundary. Returns null for any malformed or
- * unknown shape so the renderer degrades safely instead of crashing.
- */
+/** Single-widget callers can render an explicit invalid-widget state. */
 export function parseWidgetSpec(value: unknown): WidgetSpec | null {
-  if (!isRecord(value) || value.schemaVersion !== 2) return null;
-  if (typeof value.id !== "string" || typeof value.title !== "string") return null;
-
-  const base = {
-    schemaVersion: 2 as const,
-    id: value.id,
-    title: value.title,
-    description: strOrNull(value.description),
-    query: parseQuery(value.query),
-  };
-
-  switch (value.type) {
-    case "stat":
-      return {
-        ...base,
-        type: "stat",
-        value: typeof value.value === "number" ? value.value : null,
-        format: strOrNull(value.format),
-        hint: strOrNull(value.hint),
-      };
-    case "time-series":
-      return { ...base, type: "time-series", series: parseSeries(value.series), yFormat: strOrNull(value.yFormat) };
-    case "bar-chart":
-      return {
-        ...base,
-        type: "bar-chart",
-        series: parseSeries(value.series),
-        yFormat: strOrNull(value.yFormat),
-        stacked: value.stacked === true,
-      };
-    case "table":
-      return {
-        ...base,
-        type: "table",
-        columns: parseColumns(value.columns),
-        rows: Array.isArray(value.rows) ? value.rows.filter(isRecord) : [],
-      };
-    case "ranked-list":
-      return { ...base, type: "ranked-list", items: parseItems(value.items) };
-    default:
-      return null;
-  }
+  const result = widgetSchema.safeParse(value);
+  return result.success ? result.data : null;
 }
 
-/** Parse a list of widgets, dropping any that are malformed. */
+/** Reject the complete response rather than silently omitting business data. */
 export function parseWidgetSpecs(value: unknown): WidgetSpec[] {
-  if (!Array.isArray(value)) return [];
-  return value.map(parseWidgetSpec).filter((w): w is WidgetSpec => w !== null);
+  const result = z.array(widgetSchema).safeParse(value);
+  if (!result.success) throw new ApiError("INVALID_WIDGET", "The response contains an invalid widget.", undefined, undefined, {
+    kind: "protocol", diagnostics: result.error.issues.map(issue => ({ path: issue.path.map(String), code: issue.code })),
+  });
+  return result.data;
 }

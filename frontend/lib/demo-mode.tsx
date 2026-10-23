@@ -9,6 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useOptionalCurrentUser } from "@/components/app-shell/current-user-provider";
+import { QueryProvider } from "@/lib/query/provider";
 import { demoApi } from "@/lib/api/demo";
 import { liveApi } from "@/lib/api/live";
 import type { Api } from "@/lib/api";
@@ -27,15 +29,18 @@ export function useDemoMode(): DemoModeContextValue {
 }
 
 export function DemoModeProvider({ children }: { children: ReactNode }) {
+  const auth = useOptionalCurrentUser();
   // Server and client must agree on the initial render to avoid a hydration
   // mismatch. Both use the build-time env (NEXT_PUBLIC_* is inlined); the
   // localStorage override is applied only after mount, in a useEffect below.
   const envDefault = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
+  const [ready, setReady] = useState(false);
   const [demo, setDemoState] = useState<boolean>(envDefault);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("goldys-demo-mode");
     if (stored != null) setDemoState(stored === "true");
+    setReady(true);
   }, []);
 
   const setDemo = useCallback((value: boolean) => {
@@ -45,7 +50,7 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({ demo, setDemo }), [demo, setDemo]);
 
-  return <DemoModeContext.Provider value={value}>{children}</DemoModeContext.Provider>;
+  return <DemoModeContext.Provider value={value}>{ready ? <QueryProvider key={`${demo}:${auth?.sessionGeneration ?? 0}:${auth?.status ?? "standalone"}`} enabled={demo || auth?.status === "authenticated"}>{children}</QueryProvider> : null}</DemoModeContext.Provider>;
 }
 
 /**
@@ -53,8 +58,7 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
  * demo/live directly.
  *
  * IMPORTANT: this must return a referentially stable value (the module-singleton
- * `demoApi`/`liveApi`), because `useApiData` depends on `api` identity to decide
- * when to re-fetch. Do not wrap the return in a fresh object or useMemo-less call.
+ * `demoApi`/`liveApi`), because query consumers use the adapter identity for demo/live isolation. Do not wrap the return in a fresh object or useMemo-less call.
  */
 export function useApi(): Api {
   const { demo } = useDemoMode();

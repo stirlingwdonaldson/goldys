@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 import { PermissionDenied } from "@/components/states/permission-denied";
@@ -81,6 +82,8 @@ function worstTrust(trusts: (TrustSummary | null)[]): TrustSummary | null {
 
 /** The answer anatomy: summary + widgets + "How I got this" trace + "as of" + notices + draft. */
 export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
+  const queryClient = useQueryClient();
+  const saveMutation = useMutation({ mutationFn: ({ id, input }: { id?: string | null; input: SaveDashboardInput }) => id ? api.updateDashboard(id, input) : api.saveDashboard(input) });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<DashboardDocument | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -100,10 +103,10 @@ export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
         visibility: "PRIVATE",
         widgets: draft.widgets,
       };
-      const doc = draft.dashboardId
-        ? await api.updateDashboard(draft.dashboardId, input)
-        : await api.saveDashboard(input);
+      const doc = await saveMutation.mutateAsync({ id: draft.dashboardId, input });
       setSaved(doc);
+      void queryClient.invalidateQueries({ queryKey: ["listDashboards"] });
+      void queryClient.invalidateQueries({ queryKey: ["getDashboard", doc.id] });
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Couldn't save the dashboard.");
     } finally {

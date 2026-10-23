@@ -9,11 +9,12 @@ const state = vi.hoisted(() => ({
 }));
 
 // The recipes fetch passes no deps; the ingredient-panel fetch passes `[recipeId]`.
-vi.mock("@/lib/use-api-data", () => ({
-  useApiData: (_fetcher: unknown, deps: unknown[] = []) =>
-    deps.length > 0
-      ? { data: state.ingredients, loading: false, error: null, reload: async () => {} }
-      : { data: state.recipes, loading: false, error: null, reload: async () => {} },
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@tanstack/react-query")>(),
+  useQuery: ({ queryKey }: { queryKey: unknown[] }) =>
+    queryKey.length > 1
+      ? { data: state.ingredients, isPending: false, error: null, refetch: async () => {} }
+      : { data: state.recipes, isPending: false, error: null, refetch: async () => {} },
 }));
 
 const parma: RecipeCosting = {
@@ -142,6 +143,7 @@ describe("RecipesPage", () => {
         costPerQty: 3.2,
         costPerUnit: 0.016,
         supplierName: "Butcher",
+        stockUomShortname: "kg", stockUsable: 0, stockWastage: null, isBrokenLink: true,
       },
       {
         parentRecipeId: 1,
@@ -157,6 +159,7 @@ describe("RecipesPage", () => {
         costPerQty: 0.1,
         costPerUnit: 0.02,
         supplierName: "Greengrocer",
+        stockUomShortname: "kg", stockUsable: 0, stockWastage: null, isBrokenLink: true,
       },
     ];
     render(<RecipesPage />);
@@ -179,3 +182,5 @@ describe("RecipesPage", () => {
     expect(screen.getByText("No ingredients recorded")).toBeInTheDocument();
   });
 });
+
+vi.mock("@/lib/demo-mode", () => ({ useApi: () => ({}), useDemoMode: () => ({ demo: true }) }));

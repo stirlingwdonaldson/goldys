@@ -104,3 +104,14 @@ Authentication is email + password (`user_account`, V7). Integration tests creat
 accounts and roles directly and do not need any external identity provider. See
 [`deployment.md`](deployment.md#accounts-and-the-first-administrator) for how a
 real deployment gets its first administrator.
+
+
+## Audit browser regressions
+
+From `frontend/`, run `bun run build` followed by `bun run test:browser`. The Playwright runner
+starts the built app on `127.0.0.1:3117` and intercepts every API request with fixtures, so it
+never needs a production session or source access. Install the runner's Chromium through
+Playwright, or select an existing compatible executable using `PLAYWRIGHT_CHROMIUM_EXECUTABLE`.
+The tests cover pending-save edits, dirty exit, explorer Apply/history, shared-read request counts,
+and chat cancellation. Traces are retained only on failure under ignored `frontend/test-results/`.
+These local fixture checks do not establish production source completeness or operational acceptance.

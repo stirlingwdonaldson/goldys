@@ -149,7 +149,7 @@ Backend (from `backend/`):
 Frontend (from `frontend/`, Bun only, no npm/yarn lockfiles):
 - `bun install`, `bun run dev`, `bun run build`, `bun run typecheck`, `bun run lint`
   (plain ESLint; `next lint` was removed), `bun run test` (Vitest).
-- CI doesn't run `bun run test` yet, so run it before pushing frontend changes.
+- CI runs `bun run test`; run it locally before pushing frontend changes too.
 - Don't run `build` and `typecheck` concurrently in one checkout; they race on
   `.next/types`.
 

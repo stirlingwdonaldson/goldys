@@ -1,8 +1,9 @@
 "use client";
 
+import { stopThreadStream } from "@/lib/stream-lifecycle";
 import { useState } from "react";
 import { ArrowLeft, MessageSquareText, Pencil, Trash2 } from "lucide-react";
-import { useApiData } from "@/lib/use-api-data";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,18 +45,19 @@ function sortThreads(list: ConversationThreadSummary[]): ConversationThreadSumma
  * tests can inject a stub; the page passes the demo/live singleton.
  */
 export function ConversationsScreen({ api }: { api: Api }) {
-  const list = useApiData((a) => a.listThreads(), [], api);
+
+  const list = useQuery({ queryKey: ["listThreads"], queryFn: ({ signal }) => api.listThreads({ signal }) });
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  if (list.loading) return <LoadingState rows={3} />;
-  if (list.error) {
+  if (list.isPending) return <LoadingState rows={3} />;
+  if (list.isLoadingError) {
     if (list.error.code === "NOT_PERMITTED") return <PermissionDenied subject="conversations" />;
     return (
       <ErrorState
         title="Couldn't load conversations"
         message={list.error.message}
         correlationId={list.error.correlationId}
-        onRetry={list.reload}
+        onRetry={list.refetch}
       />
     );
   }
@@ -86,7 +88,7 @@ export function ConversationsScreen({ api }: { api: Api }) {
             thread={t}
             api={api}
             onOpen={() => setSelectedId(t.id)}
-            onChanged={() => list.reload()}
+            onChanged={() => list.refetch()}
           />
         ))}
       </ul>
@@ -103,6 +105,9 @@ interface ThreadRowProps {
 
 /** One list entry: title (opens the transcript), preview, last-updated, rename and delete. */
 function ThreadRow({ thread, api, onOpen, onChanged }: ThreadRowProps) {
+  const queryClient = useQueryClient();
+  const renameMutation = useMutation({ mutationFn: (title: string) => api.renameThread(thread.id, title) });
+  const deleteMutation = useMutation({ mutationFn: () => api.deleteThread(thread.id) });
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [title, setTitle] = useState(thread.title);
@@ -115,7 +120,7 @@ function ThreadRow({ thread, api, onOpen, onChanged }: ThreadRowProps) {
     setSaving(true);
     setError(null);
     try {
-      await api.renameThread(thread.id, next);
+      await renameMutation.mutateAsync(next);
       setRenameOpen(false);
       onChanged();
     } catch (e) {
@@ -130,7 +135,9 @@ function ThreadRow({ thread, api, onOpen, onChanged }: ThreadRowProps) {
     setSaving(true);
     setError(null);
     try {
-      await api.deleteThread(thread.id);
+      stopThreadStream(thread.id);
+      await deleteMutation.mutateAsync();
+      queryClient.removeQueries({ queryKey: ["getThread", thread.id] });
       setDeleteOpen(false);
       onChanged();
     } catch (e) {
@@ -247,17 +254,18 @@ interface ThreadTranscriptProps {
 
 /** A thread's full transcript, reached by opening a row. */
 function ThreadTranscript({ api, threadId, onBack }: ThreadTranscriptProps) {
-  const thread = useApiData((a) => a.getThread(threadId), [threadId], api);
 
-  if (thread.loading) return <LoadingState rows={3} />;
-  if (thread.error) {
+  const thread = useQuery({ queryKey: ["getThread", threadId], queryFn: ({ signal }) => api.getThread(threadId, { signal }) });
+
+  if (thread.isPending) return <LoadingState rows={3} />;
+  if (thread.isLoadingError) {
     if (thread.error.code === "NOT_PERMITTED") return <PermissionDenied subject="this conversation" />;
     return (
       <ErrorState
         title="Couldn't load this conversation"
         message={thread.error.message}
         correlationId={thread.error.correlationId}
-        onRetry={thread.reload}
+        onRetry={thread.refetch}
       />
     );
   }

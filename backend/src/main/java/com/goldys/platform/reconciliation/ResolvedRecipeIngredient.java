@@ -60,6 +60,18 @@ class ResolvedRecipeIngredient {
   @Column(name = "supplier_name")
   private String supplierName;
 
+  @Column(name = "stock_uom_shortname", length = 32)
+  private String stockUomShortname;
+
+  @Column(name = "stock_usable", precision = 14, scale = 4)
+  private BigDecimal stockUsable;
+
+  @Column(name = "stock_wastage", precision = 14, scale = 4)
+  private BigDecimal stockWastage;
+
+  @Column(name = "is_broken_link")
+  private Boolean isBrokenLink;
+
   @Column(name = "resolved_at", nullable = false)
   private Instant resolvedAt;
 
@@ -79,7 +91,11 @@ class ResolvedRecipeIngredient {
       BigDecimal costPerQty,
       BigDecimal costPerUnit,
       String supplierName,
-      Instant resolvedAt) {
+      Instant resolvedAt,
+      String stockUomShortname,
+      BigDecimal stockUsable,
+      BigDecimal stockWastage,
+      Boolean isBrokenLink) {
     this.id = UUID.randomUUID();
     this.parentRecipeId = parentRecipeId;
     this.lineRecipeId = lineRecipeId;
@@ -95,6 +111,10 @@ class ResolvedRecipeIngredient {
     this.costPerUnit = costPerUnit;
     this.supplierName = supplierName;
     this.resolvedAt = resolvedAt;
+    this.stockUomShortname = stockUomShortname;
+    this.stockUsable = stockUsable;
+    this.stockWastage = stockWastage;
+    this.isBrokenLink = isBrokenLink;
   }
 
   int parentRecipeId() {
@@ -147,5 +167,21 @@ class ResolvedRecipeIngredient {
 
   String supplierName() {
     return supplierName;
+  }
+
+  String stockUomShortname() {
+    return stockUomShortname;
+  }
+
+  BigDecimal stockUsable() {
+    return stockUsable;
+  }
+
+  BigDecimal stockWastage() {
+    return stockWastage;
+  }
+
+  Boolean isBrokenLink() {
+    return isBrokenLink;
   }
 }

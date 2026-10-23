@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,7 +9,7 @@ import { StatusDot } from "@/components/ui/status-dot";
 import type { Api } from "@/lib/api";
 import type { DeletedSaleRow, PaymentRow, SaleItemRow } from "@/lib/api/types";
 import { formatCurrency, formatDay, formatNumber, formatPercent } from "@/lib/format";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
 import { cn } from "@/lib/utils";
 import { summariseSale, type CheckTone, type SaleSummary, type SaleVerdict } from "./sale-summary";
 
@@ -31,12 +32,12 @@ interface SaleData {
 }
 
 /** Loads one sale's tenders, line items, and (if voided) its deleted order. */
-async function loadSale(api: Api, saleNumber: string): Promise<SaleData> {
+async function loadSale(api: Api, saleNumber: string, signal: AbortSignal): Promise<SaleData> {
   const to = todayIso();
   const [payments, items, deletedSales] = await Promise.all([
-    api.listPayments({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE),
-    api.listSaleItems({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE),
-    api.listDeletedSales({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE),
+    api.listPayments({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE, { signal }),
+    api.listSaleItems({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE, { signal }),
+    api.listDeletedSales({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE, { signal }),
   ]);
   return {
     payments: payments.items,
@@ -76,7 +77,11 @@ interface SaleSummaryViewProps {
  * same rows but left the reader to do the arithmetic.
  */
 export function SaleSummaryView({ saleNumber, apiOverride }: SaleSummaryViewProps) {
-  const data = useApiData((api) => loadSale(api, saleNumber), [saleNumber], apiOverride);
+  const api = useApi();
+  const data = useQuery({
+    queryKey: ["sale-summary", saleNumber],
+    queryFn: ({ signal }) => loadSale(apiOverride ?? api, saleNumber, signal),
+  });
   const summary = useMemo(
     () =>
       data.data
@@ -91,9 +96,9 @@ export function SaleSummaryView({ saleNumber, apiOverride }: SaleSummaryViewProp
     [data.data],
   );
 
-  if (data.loading) return <Skeleton className="h-[220px] w-full" />;
+  if (data.isPending) return <Skeleton className="h-[220px] w-full" />;
 
-  if (data.error) {
+  if (data.isLoadingError) {
     if (data.error.code === "NOT_PERMITTED") return <PermissionDenied subject="sale detail" />;
     return (
       <p role="alert" className="text-sm text-destructive">

@@ -4,7 +4,8 @@ import { invoiceReference, selectedInvoice, withSelectedInvoice } from "@/lib/in
 import { Suspense, useCallback, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
@@ -84,6 +85,7 @@ export default function InvoicesPage() {
 }
 
 function InvoicesContent() {
+  const queryApi = useApi();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -130,24 +132,17 @@ function InvoicesContent() {
     }
   }
 
-  const invoices = useApiData(
-    (api) =>
-      api.listInvoices(
-        { supplier: supplier || undefined, from: range.from, to: range.to },
-        page,
-        PAGE_SIZE,
-      ),
-    [supplier, range.from, range.to, page],
-  );
+  const invoices = useQuery({ queryKey: ["listInvoices", { supplier: supplier || undefined, from: range.from, to: range.to }, page, PAGE_SIZE], queryFn: ({ signal }) => queryApi.listInvoices({ supplier: supplier || undefined, from: range.from, to: range.to }, page, PAGE_SIZE, { signal }
+      ) });
 
-  if (invoices.loading) return <LoadingState rows={6} />;
-  if (invoices.error) {
+  if (invoices.isPending) return <LoadingState rows={6} />;
+  if (invoices.isLoadingError) {
     if (invoices.error.code === "NOT_PERMITTED") return <PermissionDenied subject="supplier invoices" />;
     return (
       <ErrorState
         title="Couldn't load invoices"
         message={invoices.error.message}
-        onRetry={invoices.reload}
+        onRetry={invoices.refetch}
       />
     );
   }

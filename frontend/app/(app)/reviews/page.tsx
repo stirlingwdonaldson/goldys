@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import type { ReviewFilter } from "@/lib/api";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -28,18 +29,19 @@ const SENTIMENTS = ["POSITIVE", "NEUTRAL", "NEGATIVE"] as const;
  * review explorer's list (the only endpoint that accepts those filters).
  */
 export default function ReviewsPage() {
+  const queryApi = useApi();
   const [range, setRange] = useState(defaultRange);
   const [source, setSource] = useState("");
   const [sentiment, setSentiment] = useState("");
   const [aspect, setAspect] = useState("");
   const [query, setQuery] = useState("");
 
-  const overview = useApiData((api) => api.getReviewOverview(range.from, range.to), [range.from, range.to]);
-  const trend = useApiData((api) => api.getReviewSentimentTrend(range.from, range.to), [range.from, range.to]);
-  const ratingTrend = useApiData((api) => api.getReviewRatingTrend(range.from, range.to), [range.from, range.to]);
-  const aspects = useApiData((api) => api.getReviewAspects(range.from, range.to), [range.from, range.to]);
-  const ratings = useApiData((api) => api.getReviewRatings(range.from, range.to), [range.from, range.to]);
-  const sources = useApiData((api) => api.getReviewSources(range.from, range.to), [range.from, range.to]);
+  const overview = useQuery({ queryKey: ["getReviewOverview", range.from, range.to], queryFn: ({ signal }) => queryApi.getReviewOverview(range.from, range.to, { signal }) });
+  const trend = useQuery({ queryKey: ["getReviewSentimentTrend", range.from, range.to], queryFn: ({ signal }) => queryApi.getReviewSentimentTrend(range.from, range.to, { signal }) });
+  const ratingTrend = useQuery({ queryKey: ["getReviewRatingTrend", range.from, range.to], queryFn: ({ signal }) => queryApi.getReviewRatingTrend(range.from, range.to, { signal }) });
+  const aspects = useQuery({ queryKey: ["getReviewAspects", range.from, range.to], queryFn: ({ signal }) => queryApi.getReviewAspects(range.from, range.to, { signal }) });
+  const ratings = useQuery({ queryKey: ["getReviewRatings", range.from, range.to], queryFn: ({ signal }) => queryApi.getReviewRatings(range.from, range.to, { signal }) });
+  const sources = useQuery({ queryKey: ["getReviewSources", range.from, range.to], queryFn: ({ signal }) => queryApi.getReviewSources(range.from, range.to, { signal }) });
 
   const reviewFilter = useMemo<ReviewFilter>(
     () => ({
@@ -52,14 +54,7 @@ export default function ReviewsPage() {
     }),
     [range.from, range.to, source, sentiment, aspect, query],
   );
-  const reviews = useApiData((api) => api.getReviews(reviewFilter), [
-    range.from,
-    range.to,
-    source,
-    sentiment,
-    aspect,
-    query,
-  ]);
+  const reviews = useQuery({ queryKey: ["getReviews", reviewFilter], queryFn: ({ signal }) => queryApi.getReviews(reviewFilter, { signal }) });
 
   // The filter bar's source/aspect options derive from the aggregate data already on screen.
   const sourceOptions = sources.data ?? [];
@@ -133,7 +128,7 @@ export default function ReviewsPage() {
     </div>
   );
 
-  if (overview.loading) {
+  if (overview.isPending) {
     return (
       <div className="flex flex-col gap-6">
         {header}
@@ -143,7 +138,7 @@ export default function ReviewsPage() {
     );
   }
 
-  if (overview.error) {
+  if (overview.isLoadingError) {
     return (
       <div className="flex flex-col gap-6">
         {header}
@@ -151,7 +146,7 @@ export default function ReviewsPage() {
         <ErrorState
           title="Couldn't load reviews"
           message={overview.error.message}
-          onRetry={overview.reload}
+          onRetry={overview.refetch}
         />
       </div>
     );

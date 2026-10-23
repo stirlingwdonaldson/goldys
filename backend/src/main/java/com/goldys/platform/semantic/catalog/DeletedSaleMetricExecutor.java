@@ -30,7 +30,13 @@ public class DeletedSaleMetricExecutor implements MetricExecutor {
   public MetricResult evaluate(MetricQuery query) {
     Map<LocalDate, BigDecimal> byDay = new LinkedHashMap<>();
     for (DeletedSaleDay d : deletedSales.dailyTotals(query.range().from(), query.range().to())) {
-      byDay.merge(d.tradingDate(), d.totalIncTax(), BigDecimal::add);
+      BigDecimal amount = d.totalIncTax();
+      if (amount == null
+          || (byDay.containsKey(d.tradingDate()) && byDay.get(d.tradingDate()) == null)) {
+        byDay.put(d.tradingDate(), null);
+      } else {
+        byDay.merge(d.tradingDate(), amount, BigDecimal::add);
+      }
     }
     GrainAggregator.Bucket bucket =
         GrainAggregator.sum(byDay, query.range().from(), query.range().to(), query.grain());
@@ -38,19 +44,20 @@ public class DeletedSaleMetricExecutor implements MetricExecutor {
     MetricDefinition definition = catalog.definition(query.metric());
     MetricProvenance provenance =
         new MetricProvenance(
-            query.metric(),
-            definition.version(),
-            query.range(),
-            query.grain(),
-            definition.sourceDomain(),
-            null,
-            bucket.missingDays(),
-            definition.version());
+                query.metric(),
+                definition.version(),
+                query.range(),
+                query.grain(),
+                definition.sourceDomain(),
+                null,
+                bucket.missingDays(),
+                definition.version())
+            .withCoverage(bucket.coverage());
 
     return new TimeSeriesResult(
         query.metric(),
         List.of(new MetricSeries(null, bucket.points())),
-        SalesMetricExecutor.notices(bucket.missingDays()),
+        bucket.coverage().notices(),
         provenance);
   }
 }

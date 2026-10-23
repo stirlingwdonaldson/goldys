@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { CalendarDays } from "lucide-react";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import type { DailyCovers, ReservationSummary } from "@/lib/api";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -66,9 +67,10 @@ function SummaryStats({ s }: { s: ReservationSummary }) {
 }
 
 export default function ReservationsPage() {
+  const queryApi = useApi();
   const { from, to } = last30Days();
-  const summary = useApiData((api) => api.getReservationSummary(today()));
-  const covers = useApiData((api) => api.listDailyCovers(from, to), [from, to]);
+  const summary = useQuery({ queryKey: ["getReservationSummary", today()], queryFn: ({ signal }) => queryApi.getReservationSummary(today(), { signal }) });
+  const covers = useQuery({ queryKey: ["listDailyCovers", from, to], queryFn: ({ signal }) => queryApi.listDailyCovers(from, to, { signal }) });
   const [trace, setTrace] = useState<ProvenanceTarget | null>(null);
   const columns = useMemo(
     () =>
@@ -78,13 +80,13 @@ export default function ReservationsPage() {
     [],
   );
 
-  if (summary.loading) return <LoadingState rows={3} />;
-  if (summary.error) {
+  if (summary.isPending) return <LoadingState rows={3} />;
+  if (summary.isLoadingError) {
     return (
       <ErrorState
         title="Couldn't load reservations"
         message={summary.error.message}
-        onRetry={summary.reload}
+        onRetry={summary.refetch}
       />
     );
   }
@@ -105,12 +107,12 @@ export default function ReservationsPage() {
       )}
 
       <Section title="Covers, last 30 days">
-        {covers.loading ? <LoadingState rows={4} /> : null}
+        {covers.isPending ? <LoadingState rows={4} /> : null}
         {covers.error ? (
           <ErrorState
             title="Couldn't load daily covers"
             message={covers.error.message}
-            onRetry={covers.reload}
+            onRetry={covers.refetch}
           />
         ) : null}
         {covers.data && covers.data.length === 0 ? (

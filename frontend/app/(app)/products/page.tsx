@@ -14,7 +14,7 @@ import {
   type ProductPoint,
 } from "@/lib/api";
 import { useApi } from "@/lib/demo-mode";
-import { useApiData } from "@/lib/use-api-data";
+import { useQuery } from "@tanstack/react-query";
 import { formatDateTime, formatPercent, humanizeKey } from "@/lib/format";
 import { AwaitingData } from "@/components/states/awaiting-data";
 import { ErrorState } from "@/components/states/error-state";
@@ -538,14 +538,15 @@ function RunClassificationMenu({
 }
 
 export default function ProductsPage() {
+  const queryApi = useApi();
   // All four datasets are read once, because the pipeline flow summarises all of them and
   // every curation write re-reads them together.
-  const taxonomy = useApiData((api) => api.getCategoryTaxonomy());
-  const assignments = useApiData((api) => api.getCategoryAssignments());
-  const points = useApiData((api) => api.getCategoryEmbeddingSpace());
-  const dendrogram = useApiData((api) => api.getCategoryDendrogram());
-  const runsQuery = useApiData((api) => api.listClassificationRuns());
-  const suggestionsQuery = useApiData((api) => api.getCategorySuggestions());
+  const taxonomy = useQuery({ queryKey: ["getCategoryTaxonomy"], queryFn: ({ signal }) => queryApi.getCategoryTaxonomy({ signal }) });
+  const assignments = useQuery({ queryKey: ["getCategoryAssignments", undefined], queryFn: ({ signal }) => queryApi.getCategoryAssignments(undefined, { signal }) });
+  const points = useQuery({ queryKey: ["getCategoryEmbeddingSpace"], queryFn: ({ signal }) => queryApi.getCategoryEmbeddingSpace({ signal }) });
+  const dendrogram = useQuery({ queryKey: ["getCategoryDendrogram"], queryFn: ({ signal }) => queryApi.getCategoryDendrogram({ signal }) });
+  const runsQuery = useQuery({ queryKey: ["listClassificationRuns"], queryFn: ({ signal }) => queryApi.listClassificationRuns({ signal }) });
+  const suggestionsQuery = useQuery({ queryKey: ["getCategorySuggestions"], queryFn: ({ signal }) => queryApi.getCategorySuggestions({ signal }) });
 
   const [tab, setTab] = useState<Tab>("categories");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -559,11 +560,11 @@ export default function ProductsPage() {
 
   const reloadAll = useCallback(async () => {
     await Promise.all([
-      taxonomy.reload(),
-      assignments.reload(),
-      points.reload(),
-      dendrogram.reload(),
-      suggestionsQuery.reload(),
+      taxonomy.refetch(),
+      assignments.refetch(),
+      points.refetch(),
+      dendrogram.refetch(),
+      suggestionsQuery.refetch(),
     ]);
   }, [taxonomy, assignments, points, dendrogram, suggestionsQuery]);
 
@@ -658,7 +659,7 @@ export default function ProductsPage() {
       if (latest && latest.status === "RUNNING") {
         pollTimer.current = setTimeout(() => void pollLatestRun(), 2000);
       } else {
-        void runsQuery.reload();
+        void runsQuery.refetch();
         if (latest && latest.status === "SUCCEEDED") {
           await reloadAll();
         }
@@ -691,7 +692,7 @@ export default function ProductsPage() {
       setWriteError(null);
       try {
         await operation();
-        await suggestionsQuery.reload();
+        await suggestionsQuery.refetch();
       } catch (e: unknown) {
         setWriteError(isApiError(e) ? e.message : "Couldn't update the suggestions.");
       }
@@ -730,7 +731,7 @@ export default function ProductsPage() {
     }
   }, [api, reloadAll]);
 
-  const loading = taxonomy.loading || assignments.loading || points.loading || dendrogram.loading;
+  const loading = taxonomy.isPending || assignments.isPending || points.isPending || dendrogram.isPending;
   const error = taxonomy.error ?? assignments.error ?? points.error ?? dendrogram.error;
   const categories = taxonomy.data ?? [];
   const rows = assignments.data ?? [];

@@ -15,6 +15,6 @@ describe("DemoModeToggle", () => {
     expect(toggle).toHaveAttribute("aria-checked", "true");
 
     fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("switch", { name: "Demo data" })).toHaveAttribute("aria-checked", "false");
   });
 });

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { ChevronDown, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -22,7 +23,7 @@ import { cn } from "@/lib/utils";
 import type { Api, ReconciliationField, ReconciliationRecord, ResolutionRule } from "@/lib/api";
 
 interface DrillInProps {
-  fetchRecord: (api: Api) => Promise<ReconciliationRecord>;
+  fetchRecord: (api: Api, signal?: AbortSignal) => Promise<ReconciliationRecord>;
   deps: unknown[];
   onSave: (field: string, source: string, reason: string, label: string) => Promise<void>;
   saving: boolean;
@@ -34,8 +35,9 @@ interface DrillInProps {
  * of the way but one click from view (docs/design/design-system.md §6).
  */
 export function ReconciliationDrillIn({ fetchRecord, deps, onSave, saving }: DrillInProps) {
-  const { data: record, loading, error, reload } = useApiData(fetchRecord, deps);
-  const { data: rules } = useApiData((api) => api.listResolutionRules(), []);
+  const queryApi = useApi();
+  const { data: record, isPending: loading, error, refetch: reload } = useQuery({ queryKey: ["drill-in", ...deps], queryFn: ({ signal }) => (fetchRecord)(queryApi, signal) });
+  const { data: rules } = useQuery({ queryKey: ["listResolutionRules"], queryFn: ({ signal }) => queryApi.listResolutionRules({ signal }) });
 
   if (loading) {
     return (
@@ -45,7 +47,7 @@ export function ReconciliationDrillIn({ fetchRecord, deps, onSave, saving }: Dri
       </div>
     );
   }
-  if (error) {
+  if (error && !record) {
     return (
       <div className="p-6">
         <SheetTitle className="sr-only">Couldn&apos;t load this record</SheetTitle>

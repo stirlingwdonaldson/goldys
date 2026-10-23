@@ -56,7 +56,11 @@ class RecipeIngredientReportingServiceTest {
             "grams",
             new BigDecimal("6.00"),
             new BigDecimal("2.00"),
-            "Acme");
+            "Acme",
+            null,
+            null,
+            null,
+            null);
     when(metrics.ingredientsFor(463)).thenReturn(List.of(expected));
     PermissionService permissions = mock(PermissionService.class);
     RecipeIngredientReportingService service =

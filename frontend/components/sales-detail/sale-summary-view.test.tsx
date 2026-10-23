@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import { DemoModeProvider } from "@/lib/demo-mode";
 import { ApiError, type Api } from "@/lib/api";
 import { demoApi } from "@/lib/api/demo";
@@ -59,5 +59,22 @@ describe("SaleSummaryView", () => {
   it("shows the permission state when the lists are not permitted", async () => {
     renderView("SALE-1", deniedApi());
     expect(await screen.findByText(/sale detail/i)).toBeInTheDocument();
+  });
+
+  it("cancels all three sale reads when the summary closes", async () => {
+    const pending = vi.fn<Api["listPayments"]>(() => new Promise(() => {}));
+    const api = {
+      listPayments: pending,
+      listSaleItems: pending,
+      listDeletedSales: pending,
+    } as unknown as Api;
+    const { unmount } = renderView("SALE-1002", api);
+
+    await waitFor(() => expect(pending).toHaveBeenCalledTimes(3));
+    const signals = pending.mock.calls.map((call) => call[3]?.signal);
+    expect(signals.every((signal) => signal instanceof AbortSignal && !signal.aborted)).toBe(true);
+
+    unmount();
+    expect(signals.every((signal) => signal?.aborted)).toBe(true);
   });
 });

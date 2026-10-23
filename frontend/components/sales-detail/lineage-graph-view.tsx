@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { FlowCanvas } from "@/components/flow/flow-canvas";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Api } from "@/lib/api";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import {
   buildLineageGraph,
   LINEAGE_DOMAIN_META,
@@ -25,12 +26,12 @@ async function orNull<T>(p: Promise<T>): Promise<T | null> {
  * Reads the three layer counts with `size=1` paged calls (only `total` is read, so each
  * count is one cheap request), tolerating any failure as `null`.
  */
-async function loadCounts(api: Api, domain: LineageDomain): Promise<LineageCounts> {
+async function loadCounts(api: Api, domain: LineageDomain, signal?: AbortSignal): Promise<LineageCounts> {
   const meta = LINEAGE_DOMAIN_META[domain];
   const [raw, canonical, resolved] = await Promise.all([
-    orNull(api.listRawRecords({}, 0, 1)),
-    orNull(api.listCanonicalRows(meta.canonicalId, 0, 1)),
-    orNull(api.listResolvedRows(meta.resolvedDomainId, 0, 1)),
+    orNull(api.listRawRecords({}, 0, 1, { signal })),
+    orNull(api.listCanonicalRows(meta.canonicalId, 0, 1, { signal })),
+    orNull(api.listResolvedRows(meta.resolvedDomainId, 0, 1, { signal })),
   ]);
   return {
     raw: raw?.total ?? null,
@@ -53,13 +54,14 @@ interface LineageGraphViewProps {
  * back to the tab that shows it.
  */
 export function LineageGraphView({ domain, onSwitchTab, apiOverride }: LineageGraphViewProps) {
-  const counts = useApiData((api) => loadCounts(api, domain), [domain], apiOverride);
+  const queryApi = useApi();
+  const counts = useQuery({ queryKey: ["lineage-graph-view", domain], queryFn: ({ signal }) => loadCounts(apiOverride ?? queryApi, domain, signal) });
   const graph = useMemo(
     () => buildLineageGraph(domain, counts.data ?? { raw: null, canonical: null, resolved: null }),
     [domain, counts.data],
   );
 
-  if (counts.loading) return <Skeleton className="h-[220px] w-full" />;
+  if (counts.isPending) return <Skeleton className="h-[220px] w-full" />;
 
   const meta = LINEAGE_DOMAIN_META[domain];
   return (

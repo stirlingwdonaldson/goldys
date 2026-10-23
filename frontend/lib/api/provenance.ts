@@ -6,8 +6,8 @@ import type { Provenance } from "./types";
  * (`GET /api/provenance/{metricId}/{date}`). Throws `ApiError` on failure, including
  * `NOT_PERMITTED` for a role without the metric's domain read.
  */
-export async function getProvenance(metricId: string, date: string): Promise<Provenance> {
+export async function getProvenance(metricId: string, date: string, options?: { signal?: AbortSignal }): Promise<Provenance> {
   return fetchApi<Provenance>(
-    `/api/provenance/${encodeURIComponent(metricId)}/${encodeURIComponent(date)}`,
+    `/api/provenance/${encodeURIComponent(metricId)}/${encodeURIComponent(date)}`,{ signal: options?.signal }
   );
 }

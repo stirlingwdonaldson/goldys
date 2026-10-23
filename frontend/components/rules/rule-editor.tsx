@@ -88,20 +88,28 @@ export function RuleEditor({
     });
   }
 
-  function submit() {
-    onSave({
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  async function submit() {
+    if (submitting) return;
+    setSubmitting(true);
+    setSaveError(null);
+    try { await onSave({
       id: initial?.id,
       entityType,
       fieldKey,
       strategy,
       sourcePriority: strategy === "priority" ? priority : undefined,
       customLogic: strategy === "custom" ? customLogic : undefined,
-    });
+    }); }
+    catch (error) { setSaveError(error instanceof Error ? error.message : "Couldn't save the rule."); }
+    finally { setSubmitting(false); }
   }
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <DialogContent className="sm:max-w-md">
+        {saveError ? <p role="alert" className="text-destructive">{saveError}</p> : null}
         <DialogHeader>
           <DialogTitle>{initial ? "Edit rule" : "New rule"}</DialogTitle>
           <DialogDescription>

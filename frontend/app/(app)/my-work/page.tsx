@@ -24,7 +24,7 @@ const PAGE_SIZE = 25;
  * the page where it's resolved, so this page never duplicates those workflows.
  */
 export default function MyWorkPage() {
-  const { data, loading, error, reload } = useWorkQueue();
+  const { data, isPending: loading, error, refetch: reload } = useWorkQueue();
   const [focus, setFocus] = useFocus();
   const [category, setCategory] = useState<CategoryFilter>("all");
 

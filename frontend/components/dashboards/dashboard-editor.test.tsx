@@ -154,6 +154,7 @@ describe("DashboardEditor", () => {
   });
 
   it("restores a revision from the revisions panel", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const restoreDashboardRevision = vi.fn(async () => document());
     render(
       <DashboardEditor api={editorApi({ restoreDashboardRevision })} dashboardId="d1" />,
@@ -224,4 +225,31 @@ describe("dashboard library", () => {
     fireEvent.click(screen.getByRole("button", { name: /unpin dashboard/i }));
     expect(onTogglePin).toHaveBeenCalled();
   });
+});
+
+it("keeps edits made after a save starts and guards dirty exit", async () => {
+  let complete!: (value: DashboardDocument) => void;
+  const updateDashboard = vi.fn<UpdateDashboardMock>(() => new Promise(resolve => { complete = resolve; }));
+  const onClose = vi.fn();
+  vi.spyOn(window, "confirm").mockReturnValue(false);
+  render(<DashboardEditor api={editorApi({ updateDashboard })} dashboardId="d1" onClose={onClose} />);
+  await screen.findByText("Sales dashboard");
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Submitted title" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(updateDashboard).toHaveBeenCalledTimes(1));
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "New unsaved title" } });
+  complete(saveResult(updateDashboard.mock.calls[0][1]));
+  await screen.findByText("Saved.");
+  expect(screen.getByLabelText("Title")).toHaveValue("New unsaved title");
+  fireEvent.click(screen.getByRole("button", { name: "Library" }));
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+it("recovers from a failed document load without retaining the old error", async () => {
+  const getDashboard = vi.fn().mockRejectedValueOnce(new Error("load failed")).mockResolvedValue(document());
+  render(<DashboardEditor api={editorApi({ getDashboard })} dashboardId="d1" />);
+  await screen.findByText("load failed");
+  fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+  expect(await screen.findByText("Sales dashboard")).toBeInTheDocument();
+  expect(screen.queryByText("load failed")).not.toBeInTheDocument();
 });

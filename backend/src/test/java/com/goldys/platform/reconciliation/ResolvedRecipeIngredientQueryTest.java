@@ -33,6 +33,10 @@ class ResolvedRecipeIngredientQueryTest {
     assertThat(main.isSubRecipe()).isFalse();
     assertThat(main.stockDescription()).isEqualTo("Brioche bun");
     assertThat(main.portionWeight()).isEqualByComparingTo("1.0000");
+    assertThat(main.stockUomShortname()).isEqualTo("kg");
+    assertThat(main.stockUsable()).isEqualByComparingTo("0");
+    assertThat(main.stockWastage()).isNull();
+    assertThat(main.isBrokenLink()).isTrue();
     assertThat(main.costPerQty()).isEqualByComparingTo("6.00");
 
     RecipeIngredient sub = out.get(1);
@@ -64,6 +68,10 @@ class ResolvedRecipeIngredientQueryTest {
         new BigDecimal("6.00"),
         new BigDecimal("2.00"),
         "Acme",
-        Instant.now());
+        Instant.now(),
+        "kg",
+        BigDecimal.ZERO,
+        null,
+        true);
   }
 }

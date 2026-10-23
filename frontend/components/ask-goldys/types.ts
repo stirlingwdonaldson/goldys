@@ -19,9 +19,9 @@ export interface MetricProvenance {
   metric: string;
   definitionVersion: string;
   range: { from: string; to: string; calendar: "TRADING" | "CALENDAR" };
-  grain: "DAY" | "WEEK" | "MONTH";
+  grain: "DAY" | "WEEK" | "MONTH" | "TOTAL";
   sourceDomain: string;
-  dataFreshness: string;
+  dataFreshness: string | null;
   missingPeriods: string[];
   calculationVersion: string;
   /** Trust + freshness summary for the metric; null when the backend did not attach one. */

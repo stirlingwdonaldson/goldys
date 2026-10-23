@@ -1,7 +1,8 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
@@ -81,19 +82,20 @@ function SummaryStats({ s }: { s: InventorySummary }) {
 }
 
 export default function KitchenPage() {
+  const queryApi = useApi();
   const { from, to } = defaultRange();
-  const lines = useApiData((api) => api.getInventoryLines(from, to), [from, to]);
-  const summary = useApiData((api) => api.getInventorySummary(from, to), [from, to]);
-  const flags = useApiData((api) => api.listInvoiceFlags());
+  const lines = useQuery({ queryKey: ["getInventoryLines", from, to], queryFn: ({ signal }) => queryApi.getInventoryLines(from, to, { signal }) });
+  const summary = useQuery({ queryKey: ["getInventorySummary", from, to], queryFn: ({ signal }) => queryApi.getInventorySummary(from, to, { signal }) });
+  const flags = useQuery({ queryKey: ["listInvoiceFlags"], queryFn: ({ signal }) => queryApi.listInvoiceFlags({ signal }) });
 
-  if (lines.loading) return <LoadingState rows={6} />;
-  if (lines.error) {
+  if (lines.isPending) return <LoadingState rows={6} />;
+  if (lines.isLoadingError) {
     if (lines.error.code === "NOT_PERMITTED") return <PermissionDenied subject="invoice purchases" />;
     return (
       <ErrorState
         title="Couldn't load invoice purchases"
         message={lines.error.message}
-        onRetry={lines.reload}
+        onRetry={lines.refetch}
       />
     );
   }
@@ -112,7 +114,7 @@ export default function KitchenPage() {
 
       <p className="text-sm text-muted-foreground">Food cost % is unavailable until consumed cost and valuation are evidenced. Invoice purchases are not COGS. Unit cost is unavailable for mixed items or unknown conversion bases.</p>
       <DataQualifications notices={summary.data?.notices} />
-      {summary.loading ? <LoadingState rows={1} /> : null}
+      {summary.isPending ? <LoadingState rows={1} /> : null}
       {summary.error ? (
         <InlineError>Couldn&apos;t load the 30-day totals. Refresh the page to try again.</InlineError>
       ) : null}
@@ -124,7 +126,7 @@ export default function KitchenPage() {
         <InvoiceGraphView from={from} to={to} />
       </Section>
 
-      {flags.loading ? <LoadingState rows={2} /> : null}
+      {flags.isPending ? <LoadingState rows={2} /> : null}
       {flags.error ? (
         <InlineError>Couldn&apos;t load invoice ingestion flags. Refresh the page to try again.</InlineError>
       ) : null}

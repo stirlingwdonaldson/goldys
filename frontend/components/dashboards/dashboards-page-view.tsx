@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { useApiData } from "@/lib/use-api-data";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -36,28 +36,40 @@ function sortDashboards(list: SavedDashboardSummary[]): SavedDashboardSummary[] 
  * page passes the demo/live singleton.
  */
 export function DashboardsPageView({ api }: { api: Api }) {
-  const list = useApiData((a) => a.listDashboards(), [], api);
-  const templates = useApiData((a) => a.listDashboardTemplates(), [], api);
+  const queryClient = useQueryClient();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const list = useQuery({ queryKey: ["listDashboards"], queryFn: ({ signal }) => api.listDashboards({ signal }) });
+  const templates = useQuery({ queryKey: ["listDashboardTemplates"], queryFn: ({ signal }) => api.listDashboardTemplates({ signal }) });
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [creating, setCreating] = useState<string | null>(null);
 
-  async function togglePin(id: string) {
-    await api.toggleDashboardPin(id);
-    await list.reload();
-  }
-
-  async function createFromTemplate(templateId: string) {
-    setCreating(templateId);
-    try {
-      const created = await api.createDashboardFromTemplate(templateId);
-      await list.reload();
+  const pin = useMutation({
+    mutationFn: api.toggleDashboardPin,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["listDashboards"] }),
+    onError: error => setActionError(error.message),
+  });
+  const create = useMutation({
+    mutationFn: api.createDashboardFromTemplate,
+    onSuccess: created => {
+      void queryClient.invalidateQueries({ queryKey: ["listDashboards"] });
       setTemplatesOpen(false);
       setSelectedId(created.id);
-    } finally {
-      setCreating(null);
-    }
+    },
+    onError: error => setActionError(error.message),
+    onSettled: () => setCreating(null),
+  });
+  function togglePin(id: string) {
+    if (pin.isPending) return;
+    setActionError(null);
+    pin.mutate(id);
+  }
+  function createFromTemplate(templateId: string) {
+    if (create.isPending) return;
+    setActionError(null);
+    setCreating(templateId);
+    create.mutate(templateId);
   }
 
   const templateDialog = (
@@ -67,13 +79,14 @@ export function DashboardsPageView({ api }: { api: Api }) {
           <DialogTitle>New from template</DialogTitle>
           <DialogDescription>Pick a starting point. A private copy is created for you.</DialogDescription>
         </DialogHeader>
-        {templates.loading ? (
+        {actionError ? <p role="alert">{actionError}</p> : null}
+        {templates.isPending ? (
           <LoadingState rows={2} />
         ) : templates.error ? (
           <ErrorState
             title="Couldn't load templates"
             message={templates.error.message}
-            onRetry={templates.reload}
+            onRetry={templates.refetch}
           />
         ) : (
           <ul className="flex flex-col gap-2">
@@ -96,15 +109,15 @@ export function DashboardsPageView({ api }: { api: Api }) {
     </Dialog>
   );
 
-  if (list.loading) return <LoadingState rows={3} />;
-  if (list.error) {
+  if (list.isPending) return <LoadingState rows={3} />;
+  if (list.isLoadingError) {
     if (list.error.code === "NOT_PERMITTED") return <PermissionDenied subject="saved dashboards" />;
     return (
       <ErrorState
         title="Couldn't load dashboards"
         message={list.error.message}
         correlationId={list.error.correlationId}
-        onRetry={list.reload}
+        onRetry={list.refetch}
       />
     );
   }
@@ -117,9 +130,9 @@ export function DashboardsPageView({ api }: { api: Api }) {
         onClose={() => setSelectedId(null)}
         onDeleted={async () => {
           setSelectedId(null);
-          await list.reload();
+          await list.refetch();
         }}
-        onChanged={() => list.reload()}
+        onChanged={() => { void queryClient.invalidateQueries({ queryKey: ["listDashboards"] }); }}
       />
     );
   }
@@ -159,6 +172,7 @@ export function DashboardsPageView({ api }: { api: Api }) {
         }
       />
 
+      {actionError ? <p role="alert">{actionError}</p> : null}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {sorted.map((d) => (
           <DashboardCard

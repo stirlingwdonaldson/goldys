@@ -10,6 +10,7 @@ export interface CountedLayer extends EntityDescriptor {
 }
 
 export interface PipelineInput {
+  unavailable?: string[];
   connectors: ConnectorStatus[];
   /** Raw-record count per connector `source` (live sources are raw `sourceSystem` codes). */
   rawCountBySource: Record<string, number | null>;

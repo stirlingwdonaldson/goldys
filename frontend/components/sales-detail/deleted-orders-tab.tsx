@@ -16,7 +16,8 @@ import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import type { Api } from "@/lib/api";
 import type { DeletedSaleRow } from "@/lib/api/types";
 import { formatCurrency, formatNumber, toNumber } from "@/lib/format";
-import { useApiData } from "@/lib/use-api-data";
+import { useApi } from "@/lib/demo-mode";
+import { useQuery } from "@tanstack/react-query";
 import { buildDeletedSalesTrend } from "./deleted-sales-trend";
 
 interface DeletedOrdersTabProps {
@@ -90,14 +91,11 @@ function deletedOrderColumns(
  * `listDeletedSales` server-side, always scoped by the shared date range.
  */
 export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedOrdersTabProps) {
+  const queryApi = useApi();
   const { page, setPage, pageSize, setPageSize } = usePageState(`${from}|${to}`);
 
-  const totals = useApiData((api) => api.getDeletedSaleTotals(from, to), [from, to], apiOverride);
-  const rows = useApiData(
-    (api) => api.listDeletedSales({ from, to }, page, pageSize),
-    [from, to, page, pageSize],
-    apiOverride,
-  );
+  const totals = useQuery({ queryKey: ["getDeletedSaleTotals", from, to], queryFn: ({ signal }) => (apiOverride ?? queryApi).getDeletedSaleTotals(from, to, { signal }) });
+  const rows = useQuery({ queryKey: ["listDeletedSales", { from, to }, page, pageSize], queryFn: ({ signal }) => (apiOverride ?? queryApi).listDeletedSales({ from, to }, page, pageSize, { signal }) });
 
 
   const columns = useMemo(() => deletedOrderColumns(onViewSale), [onViewSale]);
@@ -116,12 +114,12 @@ export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedO
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-6">
-        {totals.loading ? <LoadingState rows={2} /> : null}
+        {totals.isPending ? <LoadingState rows={2} /> : null}
         {totals.error ? (
           <ErrorState
             title="Couldn't load deleted orders"
             message={totals.error.message}
-            onRetry={totals.reload}
+            onRetry={totals.refetch}
           />
         ) : null}
         {trend ? (
@@ -147,12 +145,12 @@ export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedO
       </div>
 
       <div className="flex flex-col gap-4">
-        {rows.loading ? <LoadingState rows={4} /> : null}
+        {rows.isPending ? <LoadingState rows={4} /> : null}
         {rows.error ? (
           <ErrorState
             title="Couldn't load deleted orders"
             message={rows.error.message}
-            onRetry={rows.reload}
+            onRetry={rows.refetch}
           />
         ) : null}
 

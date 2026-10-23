@@ -80,7 +80,7 @@ describe("SaleItemsTab", () => {
     expect(await screen.findByText("pint carlton draught")).toBeInTheDocument();
     // The resolved mix chart is titled from the builder.
     expect(screen.getByText("Sale item mix")).toBeInTheDocument();
-    expect(screen.getByText("chicken schnitzel")).toBeInTheDocument();
+    expect(await screen.findByText("chicken schnitzel")).toBeInTheDocument();
     expect(screen.getByText("SKU-100")).toBeInTheDocument();
     expect(screen.getByText("P-100")).toBeInTheDocument();
 
@@ -109,7 +109,7 @@ describe("SaleItemsTab", () => {
     await waitFor(() =>
       expect(screen.queryByText("pint carlton draught")).not.toBeInTheDocument(),
     );
-    expect(screen.getByText("chicken schnitzel")).toBeInTheDocument();
+    expect(await screen.findByText("chicken schnitzel")).toBeInTheDocument();
   });
 
   it("calls onViewSale with the row's sale number", async () => {
