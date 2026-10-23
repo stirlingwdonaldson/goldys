@@ -68,6 +68,58 @@ class InventoryObservationIntegrationTest {
     assertThat(query.observations(date.plusDays(1), date.plusDays(1), "ALL", 0, 50)).isEmpty();
   }
 
+  /**
+   * CTB's wastage {@code cost} is per stock unit, so a waste row reports it as {@code unitCost} and
+   * its {@code sourceValue} is quantity x cost (the per-line value CTB itself displays).
+   */
+  @Test
+  void wasteRowReportsUnitCostAndLineValue() {
+    waste.record(
+        new WastageInput(
+            "CTB",
+            149,
+            727,
+            date,
+            "chip supa crunch 10mm uf 6x2k",
+            new BigDecimal("0.5"),
+            new BigDecimal("56.65"),
+            null,
+            "Sealane food services",
+            "kilograms",
+            "12 kilograms",
+            null,
+            raw()));
+
+    var row = query.observations(date, date, "WASTE", 0, 50).getFirst();
+
+    assertThat(row.unitCost()).isEqualByComparingTo("56.65");
+    assertThat(row.sourceValue()).isEqualByComparingTo("28.325");
+  }
+
+  @Test
+  void wasteWithoutCostHasNoValue() {
+    waste.record(
+        new WastageInput(
+            "CTB",
+            150,
+            1,
+            date,
+            "oil",
+            new BigDecimal("1"),
+            null,
+            null,
+            null,
+            "EACH",
+            null,
+            null,
+            raw()));
+
+    var row = query.observations(date, date, "WASTE", 0, 50).getFirst();
+
+    assertThat(row.unitCost()).isNull();
+    assertThat(row.sourceValue()).isNull();
+  }
+
   @Test
   void correctionMovesTheObservationWithoutRewritingHistoryAndUnknownHeaderStaysUnknown() {
     counts.record(count(date, "5", raw()));

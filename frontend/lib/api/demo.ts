@@ -1611,7 +1611,7 @@ export const demoApi: Api = {
         recordedAt: `${to}T00:00:00Z` },
       { kind: "WASTE", sourceSystem: "CTB", sourceRecordRef: "wastage:demo:1",
         logicalId: "demo-waste", date: to, productName: "Example stock", stockCode: null,
-        quantity: 2, unit: "EACH", unitSize: null, unitCost: null, sourceValue: 4.5,
+        quantity: 2, unit: "EACH", unitSize: null, unitCost: 2.25, sourceValue: 4.5,
         area: null, stocktakePartial: null, stocktakeLocked: null, parentSourceId: 2,
         recordedAt: `${to}T00:00:00Z` },
     ];
