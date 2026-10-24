@@ -12,7 +12,15 @@ is excluded. The implementation uses current frontend API fields and shared
 components; it adds no endpoint, metric, permission, schema, connector or source
 write. Architecture remains governed by `docs/system-context.md` and `docs/prd.md`.
 
-## Behaviour
+## User correction — 24 October 2026
+
+The user confirmed that the Settings boolean for hiding verbose incomplete-data
+output is intentional and requested its restoration. This supersedes the first
+behaviour item and its always-visible acceptance criterion below. Restore the
+original switch, default-off browser preference and notice-card matching from
+PR #212; preserve the audit's other trust, error, pagination and label fixes.
+
+## Behaviour (original audit implementation)
 
 - Render every returned qualification beside its result. Remove the preference
   that hides incomplete notices, including its provider and Settings control.
