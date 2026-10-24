@@ -3,6 +3,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { demoRecipeComposition } from "@/lib/api/demo-recipe-composition";
 import { demoRecipeDetails } from "@/lib/api/demo-recipe-details";
 import { RecipeDetailsPanel } from "./recipe-details-panel";
+vi.mock("./recipe-ingredient-diagram", () => ({
+  RecipeIngredientDiagram: () => null,
+}));
 const state = vi.hoisted(() => ({
   data: null as ReturnType<typeof demoRecipeDetails>,
   error: null as { message: string } | null,

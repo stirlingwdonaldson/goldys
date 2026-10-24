@@ -3,6 +3,10 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import type { RecipeCosting } from "@/lib/api";
 import RecipesPage from "./page";
 
+vi.mock("@/components/recipes/recipe-folder-diagram", () => ({
+  RecipeFolderDiagram: () => null,
+}));
+
 const state = vi.hoisted(() => ({
   recipes: [] as RecipeCosting[],
   params: new URLSearchParams(),

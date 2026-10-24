@@ -30,7 +30,8 @@ public record RecipeCosting(
     java.time.Instant capturedAt,
     String costSource,
     String coverage,
-    boolean stale) {
+    boolean stale,
+    Integer folderId) {
   public RecipeCosting(
       int recipeId,
       String name,
@@ -66,6 +67,7 @@ public record RecipeCosting(
         null,
         "UNKNOWN",
         "UNKNOWN",
-        false);
+        false,
+        null);
   }
 }

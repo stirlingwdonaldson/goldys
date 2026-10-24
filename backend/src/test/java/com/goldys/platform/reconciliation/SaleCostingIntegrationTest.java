@@ -98,7 +98,8 @@ class SaleCostingIntegrationTest {
         Instant.parse("2026-10-23T00:00:00Z"),
         "CTB complete refresh",
         "COMPLETE",
-        stale);
+        stale,
+        null);
   }
 
   @Test

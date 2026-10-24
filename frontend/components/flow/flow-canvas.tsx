@@ -17,9 +17,18 @@ import {
 import { layoutColumns, type FlowDirection } from "./layout";
 import { ColumnHeading } from "./column-heading";
 import { StepNodeView } from "./step-node";
-import type { ColumnGraph, FlowEdge, FlowNode, StepNode, StepNodeData } from "./types";
+import type {
+  ColumnGraph,
+  FlowEdge,
+  FlowNode,
+  StepNode,
+  StepNodeData,
+} from "./types";
 
-const nodeTypes: NodeTypes = { step: StepNodeView, columnHeading: ColumnHeading };
+const nodeTypes: NodeTypes = {
+  step: StepNodeView,
+  columnHeading: ColumnHeading,
+};
 
 /**
  * Decides what a node click does: a node with a `drill` id and an `onDrill` handler drills in;
@@ -59,6 +68,8 @@ interface FlowCanvasProps {
   /** Accessible name for the canvas region; the graph itself is decorative to screen readers. */
   ariaLabel: string;
   height?: number;
+  /** Large folder trees need a wider zoom range than small workflow diagrams. */
+  minZoom?: number;
   /** When set, clicking a node with `data.drill` calls this instead of navigating. */
   onDrill?: (id: string) => void;
   /** Pre-positioned nodes/edges; takes precedence over `graph`. */
@@ -86,6 +97,7 @@ function FlowCanvasInner({
   graph,
   ariaLabel,
   height = 360,
+  minZoom = 0.3,
   onDrill,
   laidOut,
   columnGap,
@@ -93,17 +105,28 @@ function FlowCanvasInner({
 }: FlowCanvasProps) {
   const router = useRouter();
   const laid = useMemo(
-    () => laidOut ?? layoutColumns(graph ?? EMPTY_GRAPH, { columnGap, direction }),
+    () =>
+      laidOut ?? layoutColumns(graph ?? EMPTY_GRAPH, { columnGap, direction }),
     [laidOut, graph, columnGap, direction],
   );
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(laid.nodes);
+  const accessibleNodes = useMemo(
+    () =>
+      laid.nodes.map((node) =>
+        node.type === "step" && (node.data.href || node.data.drill)
+          ? { ...node, ariaRole: "button", ariaLabel: node.data.title }
+          : node,
+      ),
+    [laid.nodes],
+  );
+  const [nodes, setNodes, onNodesChange] =
+    useNodesState<FlowNode>(accessibleNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(laid.edges);
 
   // Re-seed when the data behind the graph changes (e.g. after a reload); drag positions reset.
   useEffect(() => {
-    setNodes(laid.nodes);
+    setNodes(accessibleNodes);
     setEdges(laid.edges);
-  }, [laid, setNodes, setEdges]);
+  }, [laid, accessibleNodes, setNodes, setEdges]);
 
   return (
     <div
@@ -111,6 +134,21 @@ function FlowCanvasInner({
       aria-label={ariaLabel}
       className="overflow-hidden rounded-lg border bg-muted/30"
       style={{ height }}
+      onKeyDownCapture={(event) => {
+        // React Flow selects on Enter; linked nodes and folder toggles should activate.
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const element = (event.target as HTMLElement).closest(
+          ".react-flow__node",
+        );
+        const node = nodes.find(
+          (candidate) => candidate.id === element?.getAttribute("data-id"),
+        );
+        if (node?.type !== "step" || (!node.data.href && !node.data.drill))
+          return;
+        event.preventDefault();
+        event.stopPropagation();
+        resolveNodeClick(node.data, onDrill, (href) => router.push(href));
+      }}
     >
       <ReactFlow
         nodes={nodes}
@@ -130,7 +168,7 @@ function FlowCanvasInner({
         panOnScroll={false}
         fitView
         fitViewOptions={{ padding: 0.15, maxZoom: 1 }}
-        minZoom={0.3}
+        minZoom={minZoom}
         maxZoom={1.5}
         proOptions={{ hideAttribution: true }}
       >

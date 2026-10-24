@@ -77,11 +77,21 @@ async function isolate(page: Page, demo = false) {
         department: "ALL",
         seniority: "OWNER",
       };
+    else if (path === "/api/recipes/folders")
+      json = {
+        folders: [
+          { folderId: 0, parentId: null, name: "Recipes" },
+          { folderId: 1, parentId: 0, name: "Browser recipe fixtures" },
+        ],
+        allocations: [],
+        observedAt: "2026-10-23T18:00:00Z",
+      };
     else if (path === "/api/recipes")
       json = observations.map((r) => ({
         recipeId: r.recipeId,
         name: r.name,
         folder: "Browser recipe fixtures",
+        folderId: 1,
         portionSize: `${r.portionCount} × ${r.portionSize} ${r.unit}`,
         costPerPortion: null,
         menuPrice: null,
@@ -185,18 +195,38 @@ for (const width of [1440, 390]) {
     await page.goto("/recipes?search=Fairy&folder=Browser+recipe+fixtures");
     await expect(page.getByRole("columnheader")).toHaveCount(6);
     await noWrap(page);
-    await page
-      .getByRole("link", { name: "Fairy Bread Pudding", exact: true })
+    const folders = page.getByRole("region", {
+      name: "Recipe folders and nested recipes",
+    });
+    await expect(folders.locator(".react-flow__node")).toHaveCount(2);
+    const branch = folders.getByRole("button", {
+      name: "Browser recipe fixtures",
+      exact: true,
+    });
+    await branch.focus();
+    await page.keyboard.press("Enter");
+    await expect(folders.locator(".react-flow__node")).toHaveCount(9);
+    await folders
+      .getByRole("button", { name: "Fairy Bread Pudding", exact: true })
       .click();
     await expect(
       page.getByRole("heading", { name: "Fairy Bread Pudding", exact: true }),
     ).toBeVisible();
-    await expect(page.getByText("200 grams", { exact: true })).toBeVisible();
-    await expect(page.getByText("50 ml", { exact: true })).toBeVisible();
+    await expect(
+      page.locator("table").getByText("200 grams", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.locator("table").getByText("50 ml", { exact: true }),
+    ).toBeVisible();
     await noWrap(page);
     await expect(page.locator("#source-details")).not.toHaveAttribute("open");
-    await page
-      .getByRole("link", { name: "Vanilla custard", exact: true })
+    const ingredientGraph = page.getByRole("region", {
+      name: "Recipe ingredients and sub-recipes",
+    });
+    await expect(ingredientGraph.locator(".react-flow__node")).toHaveCount(3);
+
+    await ingredientGraph
+      .getByRole("button", { name: "Vanilla custard", exact: true })
       .click();
     await expect(
       page.getByRole("heading", { name: "Vanilla custard", exact: true }),
@@ -213,7 +243,9 @@ for (const width of [1440, 390]) {
     await expect(page.getByLabel("Search recipes")).toHaveValue("Fairy");
     await page.goto("/recipes/314");
     await expect(
-      page.getByText("BELVEDERE PURE VODKA : 700 ml", { exact: true }),
+      page
+        .locator("table")
+        .getByText("BELVEDERE PURE VODKA : 700 ml", { exact: true }),
     ).toBeVisible();
     await expect(page.locator("tbody tr")).toHaveCount(3);
     await noWrap(page);

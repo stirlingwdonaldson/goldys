@@ -2138,7 +2138,7 @@ export const demoApi: Api = {
 
   async getRecipeCatalog(options?: {signal?:AbortSignal}): Promise<import("./types").RecipeCatalog | null> {
     await delay(300, options?.signal);
-    return { folders: [{ folderId: 1, parentId: null, name: "Mains" }], allocations: [], observedAt: new Date().toISOString() };
+    return { folders: [{ folderId: 0, parentId: null, name: "Recipes" }, { folderId: 1, parentId: 0, name: "Mains" }, { folderId: 2, parentId: 0, name: "Kids" }, { folderId: 3, parentId: 0, name: "Dessert" }, { folderId: 4, parentId: 0, name: "Prep" }], allocations: [], observedAt: new Date().toISOString() };
   },
 
   async getRecipes(options?: { signal?: AbortSignal }): Promise<RecipeCosting[]> {
@@ -2152,7 +2152,7 @@ export const demoApi: Api = {
       { recipeId: 6, name: "Pickle Brine", folder: "Prep", portionSize: "1", costPerPortion: 0.8, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
       { recipeId: 7, name: "", folder: "", portionSize: "1", costPerPortion: 0, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
       { recipeId: 8, name: "Burger sauce", folder: "Prep", portionSize: "2 litres", costPerPortion: 17, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
-    ] satisfies RecipeCosting[]).map(recipe => ({...recipe, coverage: [3,8].includes(recipe.recipeId) ? "COMPLETE" : recipe.recipeId === 7 ? "DETAILS_MISSING" : "LEGACY", capturedAt: [3,8].includes(recipe.recipeId) ? "2026-10-20T02:00:00Z" : null, stale: recipe.recipeId === 3, costSource: "CTB", menuState: "UNKNOWN", margin: null, gpPercent: null, costGap: null}));
+    ] satisfies RecipeCosting[]).map(recipe => ({...recipe, folderId: ({Mains:1, Kids:2, Dessert:3, Prep:4} as Record<string,number>)[recipe.folder ?? ""] ?? null, coverage: [3,8].includes(recipe.recipeId) ? "COMPLETE" : recipe.recipeId === 7 ? "DETAILS_MISSING" : "LEGACY", capturedAt: [3,8].includes(recipe.recipeId) ? "2026-10-20T02:00:00Z" : null, stale: recipe.recipeId === 3, costSource: "CTB", menuState: "UNKNOWN", margin: null, gpPercent: null, costGap: null}));
   },
 
   async getRecipeIngredients(recipeId: number, options?: { signal?: AbortSignal }): Promise<RecipeIngredient[]> {
