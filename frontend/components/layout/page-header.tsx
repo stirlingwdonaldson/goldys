@@ -14,13 +14,13 @@ export function PageHeader({ title, description, actions, status }: PageHeaderPr
   return (
     <div className="flex flex-wrap items-end gap-4">
       <div className="min-w-0">
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           {status}
         </div>
         {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
       </div>
-      {actions ? <div className="ml-auto flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   );
 }

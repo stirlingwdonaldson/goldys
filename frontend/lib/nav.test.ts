@@ -19,6 +19,10 @@ describe("findNav", () => {
     const titles = NAV_GROUPS.find((g) => g.label === "Performance")?.items.map((i) => i.title) ?? [];
     expect(titles.indexOf("Sales detail")).toBe(titles.indexOf("Sales") + 1);
   });
+  it("labels shipped Recipes as evidence rather than coming soon", () => {
+    expect(findNav("/recipes")?.group).toBe("Recipe evidence");
+    expect(NAV_GROUPS.find(group => group.items.some(item => item.href === "/recipes"))?.comingSoon).not.toBe(true);
+  });
   it("does not prefix-match a different page", () => {
     // "/dashboards" must not resolve to Home ("/dashboard").
     expect(findNav("/dashboards")?.item.title).toBe("Custom dashboards");

@@ -178,7 +178,7 @@ function InvoicesContent() {
               setSupplier(e.target.value);
               setPage(0);
             }}
-            className="w-56"
+            className="w-56 max-w-full"
           />
           <TimeRangeSelector
             value={range}
@@ -189,6 +189,11 @@ function InvoicesContent() {
           />
         </div>
 
+        <p className="text-sm text-muted-foreground">{range.from} to {range.to}, inclusive · invoice dates. No comparison period is shown.</p>
+        <details className="rounded-lg border p-3 text-sm">
+          <summary className="cursor-pointer font-medium">How to inspect invoice evidence</summary>
+          <p className="mt-2 text-muted-foreground">Open an invoice to inspect its recorded lines and, where available, download the source PDF. Invoice purchases do not establish consumed food cost or current usable stock. Missing PDFs or values remain unavailable; they are not zero.</p>
+        </details>
         {items.length === 0 ? (
           <EmptyState
             title="No invoices"

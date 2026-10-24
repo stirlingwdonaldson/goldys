@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { useApi } from "@/lib/demo-mode";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "@/components/app-shell/current-user-provider";
@@ -51,7 +53,7 @@ export default function DashboardPage() {
       <PageHeader
         title="Home"
         description="Resolved sales and source qualifications."
-        actions={<FocusSwitcher value={focus} onChange={setFocus} />}
+        actions={<><Button asChild variant="outline" size="sm"><Link href="/my-work">View attention work</Link></Button><FocusSwitcher value={focus} onChange={setFocus} /></>}
       />
 
       <FocusShortcuts focus={focus} />

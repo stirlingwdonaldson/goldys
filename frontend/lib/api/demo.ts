@@ -1392,7 +1392,7 @@ export const demoApi: Api = {
     size: number,
   options?: { signal?: AbortSignal }): Promise<DataPage<ReconciliationException>> {
     await delay(400, options?.signal);
-    return { items: productExceptions, total: productExceptions.length, page, size };
+    return { items: productExceptions.slice(page * size, (page + 1) * size), total: productExceptions.length, page, size };
   },
 
   async saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult> {

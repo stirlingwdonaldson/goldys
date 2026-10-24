@@ -91,11 +91,11 @@ export function BusinessKpiGrid({
           footer={
             // Missing receipts and unresolved amounts both remain unavailable, never zero.
             unavailableDays > 0 ? (
-              <Badge variant="conflict">
+              <Badge variant="conflict" className="max-w-full whitespace-normal">
                 {unavailableDays} {unavailableDays === 1 ? "day" : "days"} unavailable
               </Badge>
             ) : salesTrend.length > 0 ? (
-              <Badge variant="outline">Coverage unverified</Badge>
+              <Badge variant="outline" className="max-w-full whitespace-normal">Coverage unverified</Badge>
             ) : null
           }
         />

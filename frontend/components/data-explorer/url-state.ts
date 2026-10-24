@@ -1,21 +1,4 @@
-export const EXPLORER_PAGE_SIZES = [10, 25, 50, 100] as const;
-
-/** Invalid URL values have bounded defaults; the server still validates every request. */
-export function explorerPage(params: URLSearchParams) {
-  const rawPage = params.get("page");
-  const page = rawPage !== null && /^\d+$/.test(rawPage) ? Number(rawPage) : 0;
-  const size = Number(params.get("size"));
-  return { page: Number.isSafeInteger(page) && page >= 0 && page <= 1_000_000 ? page : 0,
-    pageSize: EXPLORER_PAGE_SIZES.some(value => value === size) ? size : 10 };
-}
-
-export function explorerUrl(current: URLSearchParams, patch: Record<string, string | null>) {
-  const next = new URLSearchParams(current);
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === null || value === "") next.delete(key); else next.set(key, value);
-  }
-  return next.toString();
-}
+export { LIST_PAGE_SIZES as EXPLORER_PAGE_SIZES, listPage as explorerPage, listUrl as explorerUrl } from "@/lib/list-url";
 
 export function validRawTime(value: string | null) {
   return value && /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value)) ? value : "";

@@ -12,6 +12,7 @@ Many specs still carry their original `Status: Draft` or `In review` header. The
 
 | Date | Topic | Spec | Plan | Outcome |
 |---|---|---|---|---|
+| 10-24 | UX navigation, scope and help (no rostering) | [design](specs/2026-10-24-ux-navigation-scope-design.md) | [plan](plans/2026-10-24-ux-ui-remediation.md) | Priority 1.4–1.9 verified locally: frontend gate, 707 unit tests, 31 browser checks; account recovery gated |
 | 10-24 | UX recovery and accessibility (no rostering) | [design](specs/2026-10-24-ux-recovery-accessibility-design.md) | [plan](plans/2026-10-24-ux-ui-remediation.md) | Priority 1.1–1.3 verified locally: frontend gate, 697 unit tests, 16 browser checks |
 | 10-24 | UX trust fixes and prioritised UX/UI remediation (rostering excluded) | [design](specs/2026-10-24-ux-trust-fixes-design.md) | [plan](plans/2026-10-24-ux-ui-remediation.md) | First trust batch verified locally; not pushed or deployed |
 | 10-23 | Sale recipe costing, adjustments and payment indicators | [spec](specs/2026-10-23-sale-recipe-costing-design.md) | [plan](plans/2026-10-23-sale-recipe-costing.md) | Implemented locally; recipe costs assumed ex-GST via a reversible setting, disclosed on sale estimates |

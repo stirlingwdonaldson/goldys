@@ -55,12 +55,12 @@ its callers/tests, before moving on; a screen that opens is not a passed user st
 | 1.1 local | F14; US-18; H1/9 | Keep typed auth/denied/network/server outcomes through the existing Ask hook/stream/answer path; retain failed question and provide retry | A 503 offers recovery rather than an access-denied title; true denial remains denial; retry needs no retyping; cancellation still blocks stale output |
 | 1.2 local | F17; US-17/21; H3/4/7/9 | Give invoice rows a real named link/button; add persistent labels to auth/Ask inputs; add equivalent exact values to shared chart widgets | Keyboard-only invoice opening/closing restores focus; inputs retain visible names after typing; resolved chart values and gaps are available without pointer/visual inference |
 | 1.3 local | F12 recovery subset; US-12; H1/9 | Expose polling/run-load failure, last-known status and Retry in existing Forecasting; preserve issued run identity | Interrupted checks visibly become last-known/unknown; retry recovers the same run; no new forecast model, product picker or assumptions are invented |
-| 1.4 next | F15; US-04/16; H3/4/7 | Apply existing invoice/recipe/reconciliation URL-state pattern to Sales and Reservations provenance sheets | Copy/reload restores permitted metric/date selection; Back/Escape returns to parent filter/page and focus |
-| 1.5 next | F19; US-07/20; H1/4/6/10 | Stop calling shipped Recipes “Coming soon”; use a truthful evidence label within the existing menu | Existing recipe evidence is discoverable without a future-features label; no speculative primary navigation redesign |
-| 1.6 next | F08 existing-scope subset; US-04; H2/4/6 | Display actual ranges/calendars/comparators already returned by Sales/Reservations/Invoices and fix overstated entry copy | Fixed windows and incompatible comparisons are explicit; screen promises only content it actually provides; no invented shared backend range support |
-| 1.7 next | F18 presentation subset; US-17; H1/6/8 | Add a direct route/jump to existing attention work on phones; preserve material caveats and scope; check long labels, tables and header width | A quick check reaches known issues without scanning unrelated evidence; no page-level overflow at 390 px; warnings remain readable at zoom; no unvalidated KPI/context ranking |
-| 1.8 next | F04 remaining pagination; US-05/16; H1/7 | Inspect existing paged exception contracts; remove Reconciliation's assumption that its first 200 rows are exhaustive; preserve filters/search semantics | More than 200 real or controlled exceptions are reachable; counts/filter scope are explicit; failed/denied product reads differ from empty results; no unbounded fetch loop |
-| 1.9 next | F16 available-help subset; US-20/21; H6/10 | Explain existing measure/state/trace tasks at their entry points; expose an account-recovery route only if the real supported process can be verified | Non-owner can interpret the current task and get a concrete permitted next step; no fabricated reset/support capability; unresolved support process is recorded |
+| 1.4 local | F15; US-04/16; H3/4/7 | Apply existing invoice/recipe/reconciliation URL-state pattern to Sales and Reservations provenance sheets | Copy/reload restores permitted metric/date selection; Back/Escape returns to parent filter/page and focus |
+| 1.5 local | F19; US-07/20; H1/4/6/10 | Stop calling shipped Recipes “Coming soon”; use a truthful evidence label within the existing menu | Existing recipe evidence is discoverable without a future-features label; no speculative primary navigation redesign |
+| 1.6 local | F08 existing-scope subset; US-04; H2/4/6 | Display actual ranges/calendars/comparators already returned by Sales/Reservations/Invoices and fix overstated entry copy | Fixed windows and incompatible comparisons are explicit; screen promises only content it actually provides; no invented shared backend range support |
+| 1.7 local | F18 presentation subset; US-17; H1/6/8 | Add a direct route/jump to existing attention work on phones; preserve material caveats and scope; check long labels, tables and header width | A quick check reaches known issues without scanning unrelated evidence; no page-level overflow at 390 px; warnings remain readable at zoom; no unvalidated KPI/context ranking |
+| 1.8 local | F04 remaining pagination; US-05/16; H1/7 | Inspect existing paged exception contracts; remove Reconciliation's assumption that its first 200 rows are exhaustive; preserve filters/search semantics | More than 200 real or controlled exceptions are reachable; counts/filter scope are explicit; failed/denied product reads differ from empty results; no unbounded fetch loop |
+| 1.9 local | F16 available-help subset; US-20/21; H6/10 | Explain existing measure/state/trace tasks at their entry points; expose an account-recovery route only if the real supported process can be verified | Non-owner can interpret the current task and get a concrete permitted next step; no fabricated reset/support capability; unresolved support process is recorded |
 
 No new backend API is assumed by this list. If tracing a row reveals an API/data
 requirement, split out that dependent part and record its gate rather than faking it.
@@ -138,3 +138,67 @@ Verification:
 Push, PR, CI, merge and deployment remain outside this local implementation.
 Browser checks use controlled API/demo fixtures; live backend behaviour, actual user
 acceptance and formal accessibility conformance remain untested.
+
+
+## Third implementation batch — Priority 1.4–1.9
+
+[Design and boundaries](../specs/2026-10-24-ux-navigation-scope-design.md).
+
+- Reconciliation now requests bounded server pages in both categories; totals use
+  response metadata and local filters explicitly apply to the current page. A
+  filtered-empty page retains the pager. Failed/denied product reads cannot appear
+  reconciled; audit read failures also offer Retry. Demo product paging matches.
+- Sales/Reservations evidence selection and parent page/size live in the URL;
+  Sales source filter is preserved too. Back/Forward/reload/close retain scope and
+  closing restores focus. Metric/date URL input is validated for the report.
+- Sales separates resolved net trend from all-history source observations;
+  Reservations states summary date, covers range and browser-calendar basis;
+  Invoices states inclusive invoice-date range. Home shortcut descriptions no
+  longer promise prior-period comparisons or forward bookings on those screens.
+  Sales source filtering accepts both raw names (CTB) and display names. No
+  comparison period is implied.
+- Recipes is labelled Recipe evidence in the existing menu. Home offers View
+  attention work beside its initial controls. Entry-point disclosures explain
+  existing measures, source evidence and local decisions; provenance load failure
+  offers Retry. Header titles/statuses can wrap on narrow layouts. Measured
+  clipping at 390 px / 200% root text also required wrapping focus/exception/page
+  controls, bounded invoice-filter/loading widths, adaptive reservation cards and
+  wrapping KPI footers, ranked-list values and attention actions.
+- Verified password recovery/support process remains an open gate: current auth
+  code exposes no reset route and operations docs establish no recovery process.
+  No reset/support link or invented account-administration capability was added.
+- Shared page/query parsing was moved unchanged out of the Data Explorer-specific
+  module; compatibility re-exports preserve its existing callers/tests. No backend
+  contract, permissions, data source, dependency or rostering change.
+
+Verification:
+
+- Final `bun run typecheck`, `bun run lint`, `bun run test` (127 files / 707 tests)
+  and `bun run build` passed after the responsive corrections.
+- Targeted enlarged-text/mobile checks: seven Playwright tests passed, including
+  checks for clipping inside the main content as well as page-level overflow.
+- Final combined Playwright run: 31 tests passed across `ux-navigation.spec.ts`,
+  `ux-recovery.spec.ts`, `audit-regressions.spec.ts` and `ux-trust.spec.ts`. Covers
+  >200 daily/product exceptions, page-local filtering, product denial/outage,
+  Sales/Reservations URL history/reload/focus, evidence retry, scope/help, recipe
+  navigation, early mobile attention access, 390 px / 200% text and long product
+  labels, plus earlier recovery/trust regressions. The first browser runs caught
+  the CTB/display-name mismatch and clipped enlarged-text controls; both were
+  corrected before this final passing run.
+- Ripwire quality delta: zero gating findings after 15 explicit acknowledgements
+  for established small Suspense/history/Array.slice patterns and expected churn.
+  Sixteen advisory findings remain: seven TSX/property-call dead-code false
+  positives, two new component-length signals, and seven minor existing-component
+  complexity/length/churn signals. Reconciliation page complexity was reduced by
+  separating exception reads, status and error presentation. Shared sheet, pager
+  and demo paging contracts/callers were reviewed; incomplete TSX resolution and a
+  capped PR-context report prevent treating the graph as exhaustive. Manual caller
+  checks and the frontend/browser suites provide the verification.
+- `git diff --check` passed. Build API rewrites target closed local port 9 and all
+  browser API requests use controlled/demo fixtures.
+
+Release remains local: no push, PR, CI, merge or deployment. No backend tests were
+run because no backend code changed. Live-backend behaviour, representative-user
+acceptance, cross-browser coverage and formal accessibility conformance remain
+unverified. Page-local reconciliation search is an explicit existing-API limit;
+there is no claim of global search. Password recovery remains gated as above.

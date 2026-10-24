@@ -42,7 +42,7 @@ export function AttentionPanel({ items, loading, openConflicts, notices = [] }: 
         <h2 className="text-sm font-semibold">Needs attention</h2>
         <Badge variant="conflict">{items.length} shown</Badge>
         {urgent > 0 ? <Badge variant="failed">{urgent} urgent</Badge> : null}
-        <Button asChild variant="brand" size="sm" className="ml-auto">
+        <Button asChild variant="brand" size="sm" className="ml-auto h-auto min-h-8 max-w-full whitespace-normal py-1">
           <Link href="/my-work">
             Open My work
             <ArrowRight aria-hidden="true" />

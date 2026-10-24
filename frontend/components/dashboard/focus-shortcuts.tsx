@@ -27,25 +27,25 @@ interface Shortcut {
  */
 export const SHORTCUTS: Record<Focus, Shortcut[]> = {
   business: [
-    { title: "Sales", description: "Trading against prior periods", href: "/sales", icon: TrendingUp },
+    { title: "Sales", description: "Resolved trend and source totals", href: "/sales", icon: TrendingUp },
     { title: "Staff & labour", description: "Hours and labour cost", href: "/staff", icon: Users },
     { title: "Custom dashboards", description: "Saved views and packs", href: "/dashboards", icon: LayoutGrid },
     { title: "Reconciliation", description: "Figures awaiting a decision", href: "/reconciliation", icon: Scale },
   ],
   venue: [
-    { title: "Sales", description: "Today and this week", href: "/sales", icon: TrendingUp },
-    { title: "Reservations", description: "Covers and bookings ahead", href: "/reservations", icon: CalendarDays },
+    { title: "Sales", description: "Resolved trend and source totals", href: "/sales", icon: TrendingUp },
+    { title: "Reservations", description: "Daily summary and recent covers", href: "/reservations", icon: CalendarDays },
     { title: "Staff & labour", description: "Who's on and hours worked", href: "/staff", icon: Users },
     { title: "Kitchen", description: "Invoice purchases", href: "/kitchen", icon: ChefHat },
   ],
   kitchen: [
     { title: "Kitchen", description: "Purchases, suppliers, invoices", href: "/kitchen", icon: ChefHat },
     { title: "Sales detail", description: "What sold, item by item", href: "/sales-detail", icon: ReceiptText },
-    { title: "Reservations", description: "Covers to prep for", href: "/reservations", icon: CalendarDays },
+    { title: "Reservations", description: "Daily summary and recent covers", href: "/reservations", icon: CalendarDays },
     { title: "Flow lab", description: "Ingredient and supplier impact", href: "/flow-lab?d=recipe-impact", icon: Workflow },
   ],
   foh: [
-    { title: "Reservations", description: "Tonight's bookings", href: "/reservations", icon: CalendarDays },
+    { title: "Reservations", description: "Daily summary and recent covers", href: "/reservations", icon: CalendarDays },
     { title: "Sales detail", description: "Payments, voids, line items", href: "/sales-detail", icon: ReceiptText },
     { title: "Sales", description: "How trading is tracking", href: "/sales", icon: TrendingUp },
     { title: "Staff & labour", description: "Who's on shift", href: "/staff", icon: Users },
