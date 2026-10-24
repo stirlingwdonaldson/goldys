@@ -7,9 +7,9 @@ describe("BusinessKpiGrid", () => {
     render(<BusinessKpiGrid seniority="OWNER" />);
     expect(screen.getByText("Sales")).toBeInTheDocument();
     expect(screen.getByText("Labour cost %")).toBeInTheDocument();
-    expect(screen.getByText("Covers today")).toBeInTheDocument();
+    expect(screen.getByText("Attendance proxy today")).toBeInTheDocument();
     expect(screen.getByText("Top sellers")).toBeInTheDocument();
-    expect(screen.getByText("Food cost")).toBeInTheDocument();
+    expect(screen.getByText("Invoice purchases")).toBeInTheDocument();
     expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
   });
 
@@ -18,7 +18,7 @@ describe("BusinessKpiGrid", () => {
     expect(screen.getByText(/awaiting deputy reporting/i)).toBeInTheDocument();
     expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
     expect(screen.getByText("Sales")).toBeInTheDocument();
-    expect(screen.getByText("Covers today")).toBeInTheDocument();
+    expect(screen.getByText("Attendance proxy today")).toBeInTheDocument();
   });
 
   it("locks the labor tile for any value other than Owner", () => {
@@ -45,7 +45,7 @@ describe("BusinessKpiGrid", () => {
     expect(screen.queryByText(/\$10,?865/)).not.toBeInTheDocument();
   });
 
-  it("shows resolved covers, top seller, and food cost once data lands", () => {
+  it("shows qualified attendance, top seller and purchases without claiming consumed cost", () => {
     render(
       <BusinessKpiGrid
         seniority="OWNER"
@@ -56,8 +56,16 @@ describe("BusinessKpiGrid", () => {
     );
     expect(screen.getByText("132")).toBeInTheDocument();
     expect(screen.getByText(/98 bookings/)).toBeInTheDocument();
-    expect(screen.getByText("31%")).toBeInTheDocument();
+    expect(screen.queryByText("31%")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^COGS/)).not.toBeInTheDocument();
+    expect(screen.getByText("$15,842.60")).toBeInTheDocument();
     expect(screen.getByText("$5,591.50")).toBeInTheDocument();
     expect(screen.getByText("chicken schnitzel")).toBeInTheDocument();
+  });
+  it("keeps unknown subcounts distinct from real zero", () => {
+    const { rerender } = render(<BusinessKpiGrid coversToday={{ covers: 10, bookings: null, noShows: null }} />);
+    expect(screen.getByText("— bookings · — declared no-shows")).toBeInTheDocument();
+    rerender(<BusinessKpiGrid coversToday={{ covers: 10, bookings: 0, noShows: 0 }} />);
+    expect(screen.getByText("0 bookings · 0 declared no-shows")).toBeInTheDocument();
   });
 });

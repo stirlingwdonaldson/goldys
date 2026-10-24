@@ -6,36 +6,33 @@ import { formatRecentTime } from "@/lib/format";
 import { StatusDot } from "@/components/ui/status-dot";
 import { isFailing, useShellStatus } from "./shell-status";
 
-/**
- * "Data as of 6:15 am · All sources healthy" in every page header, so nobody
- * has to visit Data health to know whether the numbers are current (heuristic 1).
- * Turns red when a source has failed and links to the page that explains it.
- * Never wraps: on narrower headers it collapses to the dot plus "3/4 healthy",
- * with the full sentence kept in the tooltip and accessible name.
- */
+/** Collection activity is separate from the age and completeness of business evidence. */
 export function FreshnessChip() {
   const { connectors } = useShellStatus();
   if (!connectors || connectors.length === 0) return null;
 
   const failing = connectors.filter(isFailing).length;
-  const healthy = connectors.length - failing;
+  const completed = connectors.filter((c) =>
+    c.lastRunAt != null && (c.status === "success" || c.status === "no_new_data")
+  ).length;
+  const statuses = connectors.map((c) => `${c.source}: ${c.status.replaceAll("_", " ")}`).join("; ");
   const latest = connectors
     .map((c) => c.lastRunAt)
     .filter((t): t is string => t != null)
     .sort()
     .at(-1);
-  const asOf = latest ? `Data as of ${formatRecentTime(latest)}` : "No runs yet";
-  const health = failing ? `${healthy} of ${connectors.length} sources healthy` : "All sources healthy";
-  const short = failing ? `${healthy}/${connectors.length} healthy` : "Healthy";
+  const asOf = latest ? `Last collection run ${formatRecentTime(latest)}` : "No collection runs recorded";
+  const health = `${completed} of ${connectors.length} latest runs completed without errors`;
+  const short = `${completed}/${connectors.length} runs completed`;
 
   return (
     <Link
       href="/data-health"
-      title={`${asOf} · ${health}`}
-      aria-label={`${asOf}. ${health}. Open Data health.`}
+      title={`${asOf} · ${health}. ${statuses}`}
+      aria-label={`${asOf}. ${health}. ${statuses}. Evidence freshness and completeness are separate. Open Data health.`}
       className="inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border pl-2.5 pr-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
     >
-      <StatusDot tone={failing ? "failed" : "success"} />
+      <StatusDot tone={failing ? "failed" : completed < connectors.length ? "missing" : "success"} />
       <span className="hidden xl:inline">{asOf}</span>
       <span aria-hidden="true" className="hidden xl:inline">
         ·

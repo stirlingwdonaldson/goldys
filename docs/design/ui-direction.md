@@ -68,7 +68,7 @@ doesn't fit, collapse it:
   cookie. It auto-collapses below 1024px and re-expands on widening if it
   was auto-collapsed. Below 768px it becomes the shadcn mobile sheet.
 - **Header:** the breadcrumb drops the section crumb below `md` and
-  truncates the page name. The freshness chip shows "3/4 healthy" below `xl`
+  truncates the page name. The collection chip shows "3/4 runs completed" below `xl`
   and the full sentence at `xl`, with the full text in its tooltip. Ask
   Goldy's is icon-only below `lg`.
 - **Tables:** headers and cells never wrap. Use the shared `Table` primitive so
@@ -117,7 +117,7 @@ values like `text-[13px]` or raw palette colours like `amber-700`.
 
 ## Heuristic rules of thumb
 
-- **H1:** Every page shows data freshness and the open-decision count without
+- **H1:** The header shows collection activity, separately from result-specific evidence age and coverage, and the open-decision count without
   a visit to Data health. Async buttons show a pending state.
 - **H2:** Use venue language and Australian spelling ("Labour", "Overview",
   "Custom dashboards"). Colour deltas by meaning.
@@ -151,3 +151,8 @@ values like `text-[13px]` or raw palette colours like `amber-700`.
   only, gated on the PRD's open entity-matching question.
 - **Global period picker** ("Last 7 days vs prior"). It needs reporting
   endpoints that take a period.
+
+Result qualifications are always visible beside their result; no display preference
+hides incomplete-data warnings. Home labels booking-size attendance as a proxy and
+invoice purchases separately from consumed cost. A zero reconciliation count does
+not establish verified or complete evidence.

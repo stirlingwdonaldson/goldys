@@ -55,8 +55,8 @@ export default function MyWorkPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="My work"
-        description="Everything that needs a decision or a fix, most urgent first."
-        status={inFocus.length > 0 ? <Badge variant="conflict">{inFocus.length} open</Badge> : null}
+        description="Known items needing a decision or a fix, ordered by the available signals."
+        status={inFocus.length > 0 ? <Badge variant="conflict">{inFocus.length} shown</Badge> : null}
         actions={<FocusSwitcher value={focus} onChange={setFocus} />}
       />
 
@@ -67,6 +67,12 @@ export default function MyWorkPage() {
             Not included: {data.unavailable.join(", ")}. Your role may not cover them, or they couldn&apos;t be
             reached.
           </span>
+        </p>
+      ) : null}
+
+      {data.truncated.length > 0 ? (
+        <p role="status" className="rounded-lg border px-3 py-2 text-sm">
+          Showing the first 200 {data.truncated.join(" and ")}. Additional decisions are not included in this queue.
         </p>
       ) : null}
 
@@ -91,10 +97,10 @@ export default function MyWorkPage() {
       {visible.length === 0 ? (
         <EmptyState
           icon={CircleCheck}
-          title="Nothing needs you right now"
+          title="No known items in this view"
           description={
             inFocus.length === 0
-              ? "Every figure in this view reconciles and every feed is delivering."
+              ? "No items were found in the available signals for this focus. This does not establish that every source was checked or every figure reconciles."
               : "Nothing of this kind is open. Try another filter."
           }
         />

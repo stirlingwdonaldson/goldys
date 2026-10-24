@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { AwaitingData } from "@/components/states/awaiting-data";
 import { OwnerOnlyTile } from "@/components/states/owner-only";
 import { StatCard, type StatDelta } from "@/components/data-display/stat-card";
-import { formatCurrency, formatDay, formatNumber, formatPercent, toNumber } from "@/lib/format";
+import { formatCurrency, formatDay, formatNumber, toNumber } from "@/lib/format";
 import { isOwner } from "@/lib/roles";
 import type { CoversToday, FoodCost, SalesTrendPoint, TopSeller } from "@/lib/api";
 
@@ -112,18 +112,18 @@ export function BusinessKpiGrid({
       )}
       {coversToday?.covers == null ? (
         <AwaitingData
-          label="Covers today"
-          description="Today's covers, bookings, and no-shows."
-          reason="No resolved covers yet."
+          label="Attendance proxy today"
+          description="Today's booking-size attendance proxy, bookings and declared no-shows."
+          reason="No resolved attendance proxy yet."
           icon={CalendarDays}
         />
       ) : (
         <StatCard
-          label="Covers today"
+          label="Attendance proxy today"
           value={formatNumber(coversToday.covers)}
-          hint={`${formatNumber(coversToday.bookings ?? 0)} bookings · ${formatNumber(coversToday.noShows ?? 0)} no-shows`}
+          hint={`${formatNumber(coversToday.bookings)} bookings · ${formatNumber(coversToday.noShows)} declared no-shows`}
           icon={CalendarDays}
-          help="Resolved covers for today, summed across service periods."
+          help="Booking-size attendance proxy for today, summed across service periods; not observed actual covers. A dash means unavailable."
         />
       )}
       {topSellers.length === 0 ? (
@@ -142,20 +142,20 @@ export function BusinessKpiGrid({
           help="The highest-revenue product over the trailing 30 days."
         />
       )}
-      {foodCost?.foodCostPercent == null ? (
+      {foodCost?.purchases == null ? (
         <AwaitingData
-          label="Food cost"
-          description="Cost of goods, stock, and wastage."
+          label="Invoice purchases"
+          description="Invoiced stock purchases, not cost of goods consumed."
           reason="No resolved inventory data yet."
           icon={Utensils}
         />
       ) : (
         <StatCard
-          label="Food cost"
-          value={formatPercent(foodCost.foodCostPercent)}
-          hint={`COGS ${formatCurrency(foodCost.purchases)} · wastage ${formatCurrency(foodCost.wastage)}`}
+          label="Invoice purchases"
+          value={formatCurrency(foodCost.purchases)}
+          hint={`Recorded waste ${formatCurrency(foodCost.wastage)} · last 30 days`}
           icon={Utensils}
-          help="Cost of goods sold as a share of gross sales over the trailing 30 days."
+          help="Invoice purchases are not COGS. Food cost % is unavailable until consumed cost and valuation are evidenced."
         />
       )}
     </div>

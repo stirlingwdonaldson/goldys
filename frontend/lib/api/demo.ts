@@ -1240,7 +1240,7 @@ export const demoApi: Api = {
       activity: activityFixture(),
       topSellers: demoTopSellers(),
       coversToday: { covers: 132, bookings: 98, noShows: 4 },
-      foodCost: { foodCostPercent: 0.3125, purchases: 15842.6, wastage: 214.5 },
+      foodCost: { foodCostPercent: null, purchases: 6950.5, wastage: 412.8 },
     };
   },
 
