@@ -68,7 +68,7 @@ actually being built:
 | Staff & Labor | Requirement 3 | 30-day hours (scheduled, actual, variance, per cover) for all roles; labor cost and FOH/BOH % Owner-only (fails closed). `AwaitingData` when nothing resolved |
 | Reservations | Goals 1–2 | Today's summary stats + 30-day daily covers data table with a source-disagreement badge and "Trace" |
 | Kitchen | — | 30-day purchases, wastage, food cost % + unit-cost-per-measure and spend-by-supplier data tables (from enriched invoices) |
-| Recipes | — | Searchable catalogue; linked direct ingredients and sub-recipes, yield, method, source costing, dietary selections and expandable evidence. CTB estimates stay separate from POS observations |
+| Recipes | — | Searchable catalogue with an expandable React Flow folder tree; recipe diagrams link direct ingredients and sub-recipes alongside yield, method, source costing, dietary selections and expandable evidence. CTB estimates stay separate from POS observations |
 | Reconciliation view | Requirement 5 | Exception-first summary + drill-in comparison. See §6 |
 | Data health / ingestion health | Requirement 6 | Connector status, ingestion completeness, run activity, and the pipeline node graph (§6); failure states visually distinct from "no new data" |
 | Permission-denied state | Requirement 3 | Explicit "not permitted" — never a silently filtered or partial-looking view |

@@ -28,7 +28,8 @@ class SaleRecipeMatcherTest {
         java.time.Instant.now(),
         "CTB",
         "COMPLETE",
-        false);
+        false,
+        null);
   }
 
   @Test

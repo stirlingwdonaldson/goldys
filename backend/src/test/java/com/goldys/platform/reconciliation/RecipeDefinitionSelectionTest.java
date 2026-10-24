@@ -11,6 +11,36 @@ import org.junit.jupiter.api.Test;
 
 class RecipeDefinitionSelectionTest {
   @Test
+  void folderIdentityComesFromTheResolvedDefinitionNotItsDisplayName() {
+    var definition = definition("first_314");
+    var definitions = mock(ResolvedRecipeDefinitionRepository.class);
+    var folders = mock(ResolvedRecipeCatalogRepository.class);
+    when(definitions.findById(314))
+        .thenReturn(Optional.of(new ResolvedRecipeDefinition(definition)));
+    var adapter = new RecipeDefinitionReadAdapter(definitions, folders);
+    var recipe =
+        new RecipeCosting(
+            314,
+            "Martini",
+            "Duplicate folder name",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "UNKNOWN",
+            "NONE",
+            null,
+            null,
+            null);
+    assertThat(adapter.status(recipe).folderId()).isEqualTo(definition.header().folderId());
+    when(definitions.findById(314)).thenReturn(Optional.empty());
+    assertThat(adapter.status(recipe).folderId()).isNull();
+  }
+
+  @Test
   void comparesActualCaptureTimeAndNeverUsesProjectionRebuildTime() {
     var definition = definition("third_696");
     var definitions = mock(ResolvedRecipeDefinitionRepository.class);

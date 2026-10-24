@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { demoRecipeComposition } from "@/lib/api/demo-recipe-composition";
 import { RecipeCompositionPanel } from "./recipe-composition-panel";
+vi.mock("./recipe-ingredient-diagram", () => ({
+  RecipeIngredientDiagram: () => null,
+}));
 
 describe("RecipeCompositionPanel", () => {
   it("keeps tax bases separate and links an explicitly measured child", () => {

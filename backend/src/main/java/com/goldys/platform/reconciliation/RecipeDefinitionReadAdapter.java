@@ -183,7 +183,8 @@ class RecipeDefinitionReadAdapter {
         captured,
         source,
         coverage,
-        captured != null && captured.isBefore(java.time.Instant.now().minus(maxAge)));
+        captured != null && captured.isBefore(java.time.Instant.now().minus(maxAge)),
+        snapshot.map(row -> row.definition().header().folderId()).orElse(null));
   }
 
   static boolean legacyIsNewer(ResolvedRecipe old, RecipeDefinition value) {

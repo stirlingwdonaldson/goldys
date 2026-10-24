@@ -83,6 +83,7 @@ public class ResolvedRecipeQuery implements RecipeMetricsQuery {
             .orElse(null),
         "CTB",
         r.costPerPortion() == null ? "DETAILS_MISSING" : "LEGACY_OR_COMPLETE",
-        false);
+        false,
+        null);
   }
 }

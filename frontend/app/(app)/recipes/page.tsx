@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { RecipeFolderDiagram } from "@/components/recipes/recipe-folder-diagram";
 import { Suspense, useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -143,6 +144,7 @@ function RecipesContent() {
               value={String(rows.filter((r) => r.stale).length)}
             />
           </div>
+          <RecipeFolderDiagram recipes={rows} listHref={returnTo}/>
           <Section
             title="Recipe catalogue"
             description="CTB source costs and separate POS price observations. POS observations do not establish current menu availability."

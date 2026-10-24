@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { RecipeIngredientDiagram } from "./recipe-ingredient-diagram";
 import { recipeHref } from "./recipe-presentation";
 import type {
   RecipeComposition,
@@ -56,6 +57,7 @@ export function RecipeCompositionPanel({
           <span>{formatNumber(header.preparationMinutes)} min preparation</span>
         ) : null}
       </div>
+      <RecipeIngredientDiagram data={data} listHref={listHref}/>
       <Section
         title="Ingredients"
         description="Quantities and contributions reported by CTB for this batch."

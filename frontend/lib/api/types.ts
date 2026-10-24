@@ -344,6 +344,8 @@ export interface LatestSales {
 
 /** Per-dish costing: CTB recipe cost vs Lightspeed price/cost (mirrors backend `RecipeCosting`). */
 export interface RecipeCosting {
+  /** Explicit CTB folder identity; unavailable for legacy-only observations. */
+  folderId?: number | null;
   capturedAt?: string | null;
   costSource?: string;
   coverage?: string;
