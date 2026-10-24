@@ -1,118 +1,93 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Play, RefreshCw, Save } from "lucide-react";
 import { useApi } from "@/lib/demo-mode";
-import { useQuery } from "@tanstack/react-query";
-import { isApiError, ApiError } from "@/lib/api";
-import { DataQualifications } from "@/components/data-display/data-qualifications";
-import { EMPTY, formatNumber } from "@/lib/format";
 import type {
-  QueryAggregate,
   QueryDataset,
   QueryField,
-  QueryFilterNode,
-  QueryFilterOp,
-  QueryGroupByItem,
-  QueryOrderByItem,
   QueryPlan,
-  QueryPredicate,
-  QueryResult,
-  QuerySelectItem,
+  QueryRelationship,
   SavedQueryDetail,
 } from "@/lib/api/types";
+import { humanizeKey } from "@/lib/format";
+import { useToast } from "@/components/feedback/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { SelectItem } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { LoadingState } from "@/components/states/loading-state";
 import { ErrorState } from "@/components/states/error-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
+import {
+  FieldSelector,
+  FilterBuilder,
+  GroupByPicker,
+  OrderByPicker,
+  QuerySelect,
+} from "./query-controls";
+import { QueryResultView } from "./query-result";
 
-const AGGREGATES: QueryAggregate[] = ["SUM", "AVG", "MIN", "MAX", "COUNT", "COUNT_DISTINCT"];
-const OPS: QueryFilterOp[] = ["EQ", "NE", "GT", "GTE", "LT", "LTE", "BETWEEN", "IN", "IS_NULL"];
+/** Defaults use authorised field metadata, so newly registered datasets need no UI configuration. */
+export function defaultQuery(dataset: string, fields: QueryField[]): QueryPlan {
+  const required = fields.filter((field) => !field.nullable);
+  const optional = fields.filter((field) => field.nullable);
+  return {
+    version: 1,
+    dataset,
+    select: [...required, ...optional]
+      .slice(0, 4)
+      .map((field) => ({ field: field.name, aggregate: null })),
+    joins: [],
+    groupBy: [],
+    orderBy: [],
+    filter: null,
+    limit: 100,
+    offset: 0,
+  };
+}
 
-/** The relational query builder: discover → build → run → render, plus save/load. */
 export function QueryBuilder() {
-  const queryApi = useApi();
   const api = useApi();
-  const datasets = useQuery({ queryKey: ["listQueryDatasets"], queryFn: ({ signal }) => queryApi.listQueryDatasets({ signal }) });
-  const relationships = useQuery({ queryKey: ["listQueryRelationships"], queryFn: ({ signal }) => queryApi.listQueryRelationships({ signal }) });
-  const saved = useQuery({ queryKey: ["listSavedQueries"], queryFn: ({ signal }) => queryApi.listSavedQueries({ signal }) });
+  const datasets = useQuery({
+    queryKey: ["listQueryDatasets"],
+    queryFn: ({ signal }) => api.listQueryDatasets({ signal }),
+  });
+  const relationships = useQuery({
+    queryKey: ["listQueryRelationships"],
+    queryFn: ({ signal }) => api.listQueryRelationships({ signal }),
+  });
+  const saved = useQuery({
+    queryKey: ["listSavedQueries"],
+    queryFn: ({ signal }) => api.listSavedQueries({ signal }),
+  });
+  const [datasetId, setDatasetId] = useState("");
+  const [loadVersion, setLoadVersion] = useState(0);
+  const [loaded, setLoaded] = useState<SavedQueryDetail | null>(null);
+  const selected =
+    datasets.data?.find((dataset) => dataset.id === datasetId) ??
+    datasets.data?.[0];
+  const load = useMutation({
+    mutationFn: (id: string) => api.getSavedQuery(id),
+    onSuccess: (detail) => {
+      setLoaded(detail);
+      setDatasetId(detail.plan.dataset);
+      setLoadVersion((version) => version + 1);
+    },
+  });
 
-  const [dataset, setDataset] = useState("");
-  const fields = useQuery({ queryKey: ["listQueryFields", dataset], queryFn: ({ signal }) => (dataset ? queryApi.listQueryFields(dataset, { signal }) : Promise.resolve([])) });
-  const selectedDataset = datasets.data?.find((d) => d.id === dataset);
-
-  const [select, setSelect] = useState<QuerySelectItem[]>([]);
-  const [filters, setFilters] = useState<QueryPredicate[]>([]);
-  const [groupBy, setGroupBy] = useState<QueryGroupByItem[]>([]);
-  const [orderBy, setOrderBy] = useState<QueryOrderByItem[]>([]);
-  const [joins, setJoins] = useState<string[]>([]);
-  const [limit, setLimit] = useState(100);
-  const [title, setTitle] = useState("");
-
-  const [result, setResult] = useState<QueryResult | null>(null);
-  const [running, setRunning] = useState(false);
-  const [error, setError] = useState<ApiError | null>(null);
-
-  function plan(): QueryPlan {
-    return { version: 1, dataset, joins, select, groupBy, orderBy, limit, offset: 0, filter: andFilter(filters) };
-  }
-
-  async function run() {
-    setRunning(true);
-    setError(null);
-    setResult(null);
-    try {
-      setResult(await api.runQuery(plan()));
-    } catch (e) {
-      setError(isApiError(e) ? e : new ApiError("UNEXPECTED_STATUS", "Something went wrong."));
-    } finally {
-      setRunning(false);
-    }
-  }
-
-  async function save() {
-    const t = title.trim() || `Query ${new Date().toLocaleDateString()}`;
-    const created = await api.createSavedQuery({ title: t, plan: plan() });
-    setTitle("");
-    await saved.refetch();
-    await loadSaved(created);
-  }
-
-  async function loadSaved(detail: SavedQueryDetail) {
-    setDataset(detail.plan.dataset);
-    setSelect(detail.plan.select);
-    setJoins(detail.plan.joins ?? []);
-    setGroupBy(detail.plan.groupBy ?? []);
-    setOrderBy(detail.plan.orderBy ?? []);
-    setLimit(detail.plan.limit);
-    setFilters(flattenAnd(detail.plan.filter));
-    setResult(null);
-    setError(null);
-  }
-
-  const joinOptions = relationships.data?.filter((r) => r.from === dataset) ?? [];
-  const dimensionFields = fields.data?.filter((f) => f.kind === "DIMENSION") ?? [];
-
-  if (datasets.isPending || relationships.isPending) return <LoadingState rows={4} />;
-  if (datasets.isLoadingError) {
-    if (datasets.error.code === "NOT_PERMITTED")
-      return (
-        <PermissionDenied
-          subject="query datasets"
-          message="No datasets are available to your role."
-        />
-      );
+  if (datasets.isPending) return <LoadingState rows={4} />;
+  if (datasets.error)
     return (
       <ErrorState
         title="Couldn't load datasets"
@@ -120,547 +95,464 @@ export function QueryBuilder() {
         onRetry={datasets.refetch}
       />
     );
-  }
+  if (!selected)
+    return (
+      <PermissionDenied
+        subject="query datasets"
+        message="No datasets are available to your role."
+      />
+    );
+  const unavailable =
+    loaded &&
+    !datasets.data?.some((dataset) => dataset.id === loaded.plan.dataset);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-5">
       <Card>
         <CardHeader>
           <CardTitle>Relational query</CardTitle>
+          <CardDescription>
+            Explore rows or build a custom summary. Choose your columns, narrow
+            the data, then run a read-only query.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <DatasetPicker
-            datasets={datasets.data ?? []}
-            value={dataset}
-            onChange={(v) => {
-              setDataset(v);
-              setSelect([]);
-              setGroupBy([]);
-              setFilters([]);
-              setJoins([]);
-              setOrderBy([]);
-              setResult(null);
-            }}
-          />
-
-          {selectedDataset ? <DatasetMeta dataset={selectedDataset} /> : null}
-
-          {fields.isPending ? <LoadingState rows={3} /> : null}
-          {fields.error ? (
-            fields.error.code === "NOT_PERMITTED" ? (
-              <PermissionDenied message={fields.error.message} />
-            ) : (
-              <ErrorState title="Couldn't load fields" message={fields.error.message} onRetry={fields.refetch} />
-            )
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <QuerySelect
+              label="Dataset"
+              description="The starting set of records for your query."
+              value={selected.id}
+              onChange={(id) => {
+                setDatasetId(id);
+                setLoaded(null);
+                load.reset();
+              }}
+              disabled={load.isPending}
+            >
+              {datasets.data?.map((dataset) => (
+                <SelectItem key={dataset.id} value={dataset.id}>
+                  {humanizeKey(dataset.id)}
+                </SelectItem>
+              ))}
+            </QuerySelect>
+            <QuerySelect
+              label="Load saved query"
+              description="Loads the saved setup. Run it to fetch current data."
+              value=""
+              onChange={(id) => load.mutate(id)}
+              placeholder={
+                load.isPending ? "Loading…" : "Choose a saved query…"
+              }
+              disabled={load.isPending || !saved.data?.length}
+            >
+              {saved.data?.map((query) => (
+                <SelectItem key={query.id} value={query.id}>
+                  {query.title}
+                </SelectItem>
+              ))}
+            </QuerySelect>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Badge
+              variant={selected.readMode === "RESOLVED" ? "info" : "neutral"}
+            >
+              {selected.readMode === "RESOLVED"
+                ? "Resolved data"
+                : "Source observations"}
+            </Badge>
+            <span>One row represents {selected.grain}.</span>
+          </div>
+          {selected.readMode === "CANONICAL_DIRECT" ? (
+            <p className="text-xs text-muted-foreground">
+              These are source observations with unverified coverage. They are
+              not reconciled business metrics.
+            </p>
           ) : null}
-
-          {fields.data && fields.data.length > 0 ? (
-            <>
-              <FieldSelector
-                fields={fields.data}
-                select={select}
-                onChange={setSelect}
-              />
-              <FilterBuilder
-                fields={fields.data}
-                filters={filters}
-                onChange={setFilters}
-              />
-              <div className="flex flex-wrap items-end gap-4">
-                <GroupByPicker
-                  fields={dimensionFields}
-                  groupBy={groupBy}
-                  onChange={setGroupBy}
-                />
-                <OrderByPicker
-                  fields={fields.data}
-                  orderBy={orderBy}
-                  onChange={setOrderBy}
-                />
-                {joinOptions.length > 0 ? (
-                  <JoinPicker
-                    relationships={joinOptions}
-                    joins={joins}
-                    onChange={setJoins}
-                  />
-                ) : null}
-                <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                  Limit
-                  <Input
-                    type="number"
-                    min={1}
-                    max={1000}
-                    value={limit}
-                    onChange={(e) => setLimit(Number(e.target.value) || 100)}
-                    className="w-24"
-                  />
-                </label>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button onClick={run} disabled={running || !dataset || select.length === 0}>
-                  {running ? "Running…" : "Run query"}
-                </Button>
-                <Input
-                  aria-label="Saved query title"
-                  placeholder="Save as…"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-48"
-                />
-                <Button variant="outline" onClick={save} disabled={!dataset || select.length === 0}>
-                  Save
-                </Button>
-                {saved.data && saved.data.length > 0 ? (
-                  <select
-                    aria-label="Load saved query"
-                    defaultValue=""
-                    onChange={async (e) => {
-                      const id = e.target.value;
-                      if (!id) return;
-                      const detail = await api.getSavedQuery(id);
-                      await loadSaved(detail);
-                    }}
-                    className="rounded-md border bg-background px-2 py-1 text-sm"
-                  >
-                    <option value="">Load saved query…</option>
-                    {saved.data.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.title}
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
-              </div>
-            </>
+          {saved.error ? (
+            <p role="alert" className="text-sm text-destructive">
+              Saved queries could not be listed.{" "}
+              <Button variant="link" onClick={() => saved.refetch()}>
+                Retry
+              </Button>
+            </p>
           ) : null}
+          {load.error ? (
+            <p role="alert" className="text-sm text-destructive">
+              Could not load query: {load.error.message}
+            </p>
+          ) : null}
+          {unavailable ? (
+            <p role="alert" className="text-sm text-destructive">
+              This saved query’s dataset is no longer available to your role.
+              Choose an available dataset to continue.
+            </p>
+          ) : (
+            <DatasetEditor
+              key={`${selected.id}:${loaded?.id ?? "new"}:${loadVersion}`}
+              dataset={selected}
+              initial={loaded?.plan}
+              relationships={relationships.data ?? []}
+              relationshipsError={relationships.error?.message}
+              retryRelationships={() => {
+                void relationships.refetch();
+              }}
+            />
+          )}
         </CardContent>
       </Card>
-
-      {error ? <QueryError error={error} /> : null}
-      {result ? <QueryResultView result={result} /> : null}
     </div>
   );
 }
 
-function andFilter(filters: QueryPredicate[]): QueryFilterNode | null {
-  if (filters.length === 0) return null;
-  return { logic: "AND", children: filters.map((p) => ({ predicate: p })) };
-}
-
-function flattenAnd(filter: QueryPlan["filter"]): QueryPredicate[] {
-  if (!filter) return [];
-  if (filter.logic === "AND" && filter.children) {
-    return filter.children.map((c) => c.predicate).filter((p): p is QueryPredicate => !!p);
-  }
-  return filter.predicate ? [filter.predicate] : [];
-}
-
-function DatasetPicker({
-  datasets,
-  value,
-  onChange,
-}: {
-  datasets: QueryDataset[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      Dataset
-      <select aria-label="Dataset" value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">Choose a dataset…</option>
-        {datasets.map((d) => (
-          <option key={d.id} value={d.id}>
-            {d.id}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function DatasetMeta({ dataset }: { dataset: QueryDataset }) {
-  return (
-    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-      <Badge variant="outline">{dataset.readMode}</Badge>
-      <span>grain: {dataset.grain}</span>
-      {dataset.currentFact ? <span>current-fact</span> : null}
-      <span>{dataset.fields.length} fields</span>
-    </div>
-  );
-}
-
-function FieldSelector({
-  fields,
-  select,
-  onChange,
-}: {
-  fields: QueryField[];
-  select: QuerySelectItem[];
-  onChange: (v: QuerySelectItem[]) => void;
-}) {
-  function toggle(field: QueryField) {
-    const existing = select.find((s) => s.field === field.name);
-    if (existing) onChange(select.filter((s) => s.field !== field.name));
-    else
-      onChange([
-        ...select,
-        { field: field.name, aggregate: field.kind === "MEASURE" ? "SUM" : null, distinct: false },
-      ]);
-  }
-  function setAggregate(field: string, aggregate: QueryAggregate | null) {
-    onChange(select.map((s) => (s.field === field ? { ...s, aggregate } : s)));
-  }
-  function setDistinct(field: string, distinct: boolean) {
-    onChange(select.map((s) => (s.field === field ? { ...s, distinct } : s)));
-  }
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium text-muted-foreground">Columns</span>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {fields.map((f) => {
-          const sel = select.find((s) => s.field === f.name);
-          return (
-            <div key={f.name} className="flex items-center gap-2 rounded border px-2 py-1">
-              <input
-                type="checkbox"
-                aria-label={`Select ${f.name}`}
-                checked={!!sel}
-                onChange={() => toggle(f)}
-              />
-              <span className="flex-1 text-sm">
-                {f.name}
-                {f.unit ? <span className="text-xs text-muted-foreground"> ({f.unit})</span> : null}
-              </span>
-              <Badge variant="secondary" className="text-[10px]">
-                {f.type}
-              </Badge>
-              {sel ? (
-                <select
-                  aria-label={`Aggregate for ${f.name}`}
-                  value={sel.aggregate ?? ""}
-                  onChange={(e) => setAggregate(f.name, (e.target.value || null) as QueryAggregate | null)}
-                  className="w-24"
-                >
-                  <option value="">none</option>
-                  {AGGREGATES.map((a) => (
-                    <option key={a} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-              {sel?.aggregate ? (
-                <label className="text-[10px] text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    aria-label={`Distinct ${f.name}`}
-                    checked={!!sel.distinct}
-                    onChange={(e) => setDistinct(f.name, e.target.checked)}
-                  />{" "}
-                  distinct
-                </label>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function FilterBuilder({
-  fields,
-  filters,
-  onChange,
-}: {
-  fields: QueryField[];
-  filters: QueryPredicate[];
-  onChange: (v: QueryPredicate[]) => void;
-}) {
-  const [field, setField] = useState("");
-  const [op, setOp] = useState<QueryFilterOp>("EQ");
-  const [value, setValue] = useState("");
-  const [value2, setValue2] = useState("");
-
-  function add() {
-    if (!field) return;
-    const typed = fields.find((f) => f.name === field);
-    let v: QueryPredicate["value"] = value;
-    if (op === "BETWEEN") v = [value, value2];
-    if (op === "IN") v = value.split(",").map((s) => s.trim());
-    if (op === "IS_NULL") v = null;
-    if (typed?.type === "BOOLEAN" && op !== "IS_NULL") v = value === "true";
-    onChange([...filters, { field, op, value: v }]);
-    setValue("");
-    setValue2("");
-  }
-  function remove(index: number) {
-    onChange(filters.filter((_, i) => i !== index));
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium text-muted-foreground">Filters (AND)</span>
-      {filters.map((f, i) => (
-        <div key={i} className="flex items-center gap-2 text-sm">
-          <span className="font-mono text-xs">{f.field} {f.op}</span>
-          <span className="font-mono text-xs">{JSON.stringify(f.value)}</span>
-          <Button variant="ghost" size="sm" onClick={() => remove(i)}>
-            remove
-          </Button>
-        </div>
-      ))}
-      <div className="flex flex-wrap items-center gap-2">
-        <select aria-label="Filter field" value={field} onChange={(e) => setField(e.target.value)} className="w-40">
-          <option value="">field…</option>
-          {fields.map((f) => (
-            <option key={f.name} value={f.name}>
-              {f.name}
-            </option>
-          ))}
-        </select>
-        <select aria-label="Filter op" value={op} onChange={(e) => setOp(e.target.value as QueryFilterOp)} className="w-32">
-          {OPS.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-        {op !== "IS_NULL" ? (
-          <>
-            <Input
-              aria-label="Filter value"
-              placeholder={op === "IN" ? "a, b, c" : "value"}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className="w-40"
-            />
-            {op === "BETWEEN" ? (
-              <Input
-                aria-label="Filter value 2"
-                placeholder="to"
-                value={value2}
-                onChange={(e) => setValue2(e.target.value)}
-                className="w-40"
-              />
-            ) : null}
-          </>
-        ) : null}
-        <Button variant="outline" size="sm" onClick={add} disabled={!field}>
-          Add filter
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function GroupByPicker({
-  fields,
-  groupBy,
-  onChange,
-}: {
-  fields: QueryField[];
-  groupBy: QueryGroupByItem[];
-  onChange: (v: QueryGroupByItem[]) => void;
-}) {
-  function toggle(field: QueryField) {
-    if (groupBy.some((g) => g.field === field.name))
-      onChange(groupBy.filter((g) => g.field !== field.name));
-    else onChange([...groupBy, { field: field.name, grain: field.type === "DATE" ? "DAY" : null }]);
-  }
-  function setGrain(field: string, grain: "DAY" | "MONTH" | null) {
-    onChange(groupBy.map((g) => (g.field === field ? { ...g, grain } : g)));
-  }
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-muted-foreground">Group by</span>
-      {fields.map((f) => {
-        const g = groupBy.find((x) => x.field === f.name);
-        return (
-          <label key={f.name} className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={!!g} onChange={() => toggle(f)} />
-            {f.name}
-            {g && f.type === "DATE" ? (
-              <select
-                aria-label={`Grain for ${f.name}`}
-                value={g.grain ?? "DAY"}
-                onChange={(e) => setGrain(f.name, (e.target.value || null) as "DAY" | "MONTH" | null)}
-                className="w-24"
-              >
-                <option value="DAY">DAY</option>
-                <option value="MONTH">MONTH</option>
-              </select>
-            ) : null}
-          </label>
-        );
-      })}
-    </div>
-  );
-}
-
-function OrderByPicker({
-  fields,
-  orderBy,
-  onChange,
-}: {
-  fields: QueryField[];
-  orderBy: QueryOrderByItem[];
-  onChange: (v: QueryOrderByItem[]) => void;
-}) {
-  const [field, setField] = useState("");
-  const [direction, setDirection] = useState<"ASC" | "DESC">("DESC");
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-muted-foreground">Order by</span>
-      {orderBy.map((o, i) => (
-        <div key={i} className="text-sm">
-          {o.field} {o.direction}{" "}
-          <Button variant="ghost" size="sm" onClick={() => onChange(orderBy.filter((_, j) => j !== i))}>
-            ×
-          </Button>
-        </div>
-      ))}
-      <div className="flex items-center gap-2">
-        <select aria-label="Order field" value={field} onChange={(e) => setField(e.target.value)} className="w-40">
-          <option value="">field…</option>
-          {fields.map((f) => (
-            <option key={f.name} value={f.name}>
-              {f.name}
-            </option>
-          ))}
-        </select>
-        <select aria-label="Order direction" value={direction} onChange={(e) => setDirection(e.target.value as "ASC" | "DESC")} className="w-24">
-          <option value="DESC">DESC</option>
-          <option value="ASC">ASC</option>
-        </select>
-        <Button variant="outline" size="sm" onClick={() => field && onChange([...orderBy, { field, direction }])}>
-          Add
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function JoinPicker({
+function DatasetEditor({
+  dataset,
+  initial,
   relationships,
-  joins,
-  onChange,
+  relationshipsError,
+  retryRelationships,
 }: {
-  relationships: { id: string; to: string; cardinality: string; fanoutRisk: boolean }[];
-  joins: string[];
-  onChange: (v: string[]) => void;
+  dataset: QueryDataset;
+  initial?: QueryPlan;
+  relationships: QueryRelationship[];
+  relationshipsError?: string;
+  retryRelationships: () => void;
 }) {
-  function toggle(id: string) {
-    if (joins.includes(id)) onChange(joins.filter((j) => j !== id));
-    else onChange([...joins, id]);
+  const api = useApi();
+  const fields = useQuery({
+    queryKey: ["listQueryFields", dataset.id],
+    queryFn: ({ signal }) => api.listQueryFields(dataset.id, { signal }),
+  });
+  if (fields.isPending) return <LoadingState rows={3} />;
+  if (fields.error)
+    return fields.error.code === "NOT_PERMITTED" ? (
+      <PermissionDenied message={fields.error.message} />
+    ) : (
+      <ErrorState
+        title="Couldn't load fields"
+        message={fields.error.message}
+        onRetry={fields.refetch}
+      />
+    );
+  if (!fields.data.length)
+    return (
+      <p className="text-sm text-muted-foreground">
+        No fields are available to your role in this dataset.
+      </p>
+    );
+  return (
+    <QueryEditor
+      dataset={dataset}
+      fields={fields.data}
+      initial={initial}
+      relationships={relationships}
+      relationshipsError={relationshipsError}
+      retryRelationships={retryRelationships}
+    />
+  );
+}
+
+function QueryEditor({
+  dataset,
+  fields,
+  initial,
+  relationships,
+  relationshipsError,
+  retryRelationships,
+}: {
+  dataset: QueryDataset;
+  fields: QueryField[];
+  initial?: QueryPlan;
+  relationships: QueryRelationship[];
+  relationshipsError?: string;
+  retryRelationships: () => void;
+}) {
+  const api = useApi();
+  const { toast } = useToast();
+  const cache = useQueryClient();
+  const [draft, setDraft] = useState<QueryPlan>(
+    () => initial ?? defaultQuery(dataset.id, fields),
+  );
+  const [applied, setApplied] = useState<QueryPlan | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [title, setTitle] = useState("");
+  const result = useQuery({
+    queryKey: ["relationalQuery", applied],
+    queryFn: () => api.runQuery(applied!),
+    enabled: applied !== null,
+    staleTime: 0,
+    refetchInterval: autoRefresh && applied ? 30_000 : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  const save = useMutation({
+    mutationFn: () =>
+      api.createSavedQuery({
+        title: title.trim() || `${humanizeKey(dataset.id)} query`,
+        plan: draft,
+      }),
+    onSuccess: () => {
+      void cache.invalidateQueries({ queryKey: ["listSavedQueries"] });
+      setTitle("");
+      toast({
+        title: "Query saved",
+        description:
+          "The setup is saved; results are fetched each time you run it.",
+        tone: "success",
+      });
+    },
+  });
+  const selectedFields = fields.filter((field) =>
+    draft.select.some((item) => item.field === field.name),
+  );
+  const aggregate = draft.select.some((item) => item.aggregate);
+  const ungrouped =
+    aggregate &&
+    draft.select.some(
+      (item) =>
+        !item.aggregate &&
+        !draft.groupBy?.some((group) => group.field === item.field),
+    );
+  const invalid =
+    !draft.select.length ||
+    draft.select.length > 20 ||
+    !Number.isInteger(draft.limit) ||
+    draft.limit < 1 ||
+    draft.limit > 1000 ||
+    ungrouped ||
+    (!aggregate && !!draft.groupBy?.length);
+  const changed =
+    applied !== null && JSON.stringify(draft) !== JSON.stringify(applied);
+  const joinOptions = relationships.filter(
+    (relationship) => relationship.from === dataset.id,
+  );
+
+  function run() {
+    if (invalid) return;
+    if (JSON.stringify(draft) === JSON.stringify(applied))
+      void result.refetch();
+    else setApplied(draft);
   }
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-muted-foreground">Join</span>
-      {relationships.map((r) => (
-        <label key={r.id} className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={joins.includes(r.id)} onChange={() => toggle(r.id)} />
-          → {r.to}
-          <Badge variant="outline" className="text-[10px]">
-            {r.cardinality}
-          </Badge>
-          {r.fanoutRisk ? (
-            <Badge variant="secondary" className="text-[10px]">
-              fanout
-            </Badge>
-          ) : null}
-        </label>
-      ))}
-    </div>
-  );
-}
 
-function QueryError({ error }: { error: ApiError }) {
-  if (error.code === "NOT_PERMITTED") return <PermissionDenied message={error.message} />;
   return (
-    <Card className="border-destructive">
-      <CardHeader>
-        <CardTitle className="text-destructive">{error.code}</CardTitle>
-      </CardHeader>
-      <CardContent className="text-sm">{error.message}</CardContent>
-    </Card>
-  );
-}
-
-function QueryResultView({ result }: { result: QueryResult }) {
-  const [view, setView] = useState<"table" | "chart">("table");
-  const canChart = result.columns.length === 2;
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Result</CardTitle>
-          <div className="flex items-center gap-2">
-            {canChart ? (
-              <Button variant="outline" size="sm" onClick={() => setView(view === "table" ? "chart" : "table")}>
-                {view === "table" ? "Chart" : "Table"}
-              </Button>
-            ) : null}
-            <Badge variant="outline">{result.semantics.readMode}</Badge>
-            <span className="text-xs text-muted-foreground">grain: {result.semantics.grain}</span>
-            {result.pagination.truncated ? <Badge variant="secondary">truncated</Badge> : null}
-          </div>
+    <div className="space-y-6 border-t pt-5">
+      <section className="space-y-3" aria-label="Columns">
+        <div>
+          <h3 className="text-sm font-semibold">
+            Columns{" "}
+            <span className="font-normal text-muted-foreground">
+              {draft.select.length} selected
+            </span>
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Start with up to four fields, preferring fields required by the
+            schema. Original values show individual rows; calculations summarise
+            them. Select up to 20 columns.
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <DataQualifications notices={result.notices} />
-        {view === "table" || !canChart ? (
-          <div className="overflow-auto rounded border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                  {result.columns.map((c) => (
-                    <th key={c.name} className="px-3 py-2 font-medium">
-                      {c.name}
-                      {c.unit ? ` (${c.unit})` : ""}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {result.rows.map((row, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    {row.map((cell, j) => (
-                      <td key={j} className="px-3 py-2 font-mono text-xs">
-                        {cell == null ? EMPTY : typeof cell === "number" ? formatNumber(cell, 2) : String(cell)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <ChartView result={result} />
-        )}
-        {result.rows.length === 0 ? <p className="text-sm text-muted-foreground">No rows.</p> : null}
-      </CardContent>
-    </Card>
-  );
-}
-
-function ChartView({ result }: { result: QueryResult }) {
-  const data = result.rows.map((row) => ({
-    x: String(row[0]),
-    y: typeof row[1] === "number" ? row[1] : 0,
-  }));
-  return (
-    <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="x" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="y" fill="hsl(var(--chart-1))" />
-        </BarChart>
-      </ResponsiveContainer>
+        <FieldSelector
+          fields={fields}
+          select={draft.select}
+          onChange={(select) =>
+            setDraft({
+              ...draft,
+              select,
+              orderBy: draft.orderBy?.filter((item) =>
+                select.some((column) => column.field === item.field),
+              ),
+            })
+          }
+        />
+      </section>
+      <section className="space-y-3 border-t pt-5" aria-label="Filters">
+        <div>
+          <h3 className="text-sm font-semibold">Filters (AND)</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Keep only records that match every filter. No filters includes all
+            available dates and records.
+          </p>
+        </div>
+        <FilterBuilder
+          fields={fields}
+          filter={draft.filter}
+          onChange={(filter) => setDraft({ ...draft, filter })}
+        />
+      </section>
+      <div className="grid gap-5 border-t pt-5 md:grid-cols-2 xl:grid-cols-3">
+        <section className="space-y-3" aria-label="Grouping">
+          <h3 className="text-sm font-semibold">Group by</h3>
+          <GroupByPicker
+            fields={fields.filter((field) => field.kind === "DIMENSION")}
+            groupBy={draft.groupBy ?? []}
+            onChange={(groupBy) => setDraft({ ...draft, groupBy })}
+          />
+        </section>
+        <section className="space-y-3" aria-label="Sorting">
+          <h3 className="text-sm font-semibold">Order by</h3>
+          <OrderByPicker
+            fields={selectedFields}
+            orderBy={draft.orderBy ?? []}
+            onChange={(orderBy) => setDraft({ ...draft, orderBy })}
+          />
+        </section>
+        <section className="space-y-3" aria-label="Result size">
+          <h3 className="text-sm font-semibold">Row limit</h3>
+          <p id="query-limit-help" className="text-xs text-muted-foreground">
+            Maximum result rows, from 1 to 1,000. For summaries this limits
+            groups, not the records used to calculate each group.
+          </p>
+          <Input
+            aria-label="Row limit"
+            aria-describedby="query-limit-help"
+            type="number"
+            min={1}
+            max={1000}
+            step={1}
+            value={draft.limit || ""}
+            onChange={(event) =>
+              setDraft({ ...draft, limit: Number(event.target.value) })
+            }
+          />
+        </section>
+      </div>
+      {joinOptions.length || relationshipsError ? (
+        <section className="space-y-3 border-t pt-5" aria-label="Relationships">
+          <h3 className="text-sm font-semibold">Join related data</h3>
+          <p className="text-xs text-muted-foreground">
+            Joins match related records using predefined keys. One-to-many joins
+            can repeat a starting record; the server rejects calculations that
+            would double-count it. Maximum two joins.
+          </p>
+          {relationshipsError ? (
+            <p role="alert" className="text-sm text-destructive">
+              Relationships could not be loaded.{" "}
+              <Button variant="link" onClick={retryRelationships}>
+                Retry
+              </Button>
+            </p>
+          ) : null}
+          {joinOptions.map((relationship) => (
+            <label
+              key={relationship.id}
+              className="flex items-start gap-3 rounded-lg border p-3 text-sm"
+            >
+              <Checkbox
+                checked={draft.joins?.includes(relationship.id) ?? false}
+                disabled={
+                  !draft.joins?.includes(relationship.id) &&
+                  (draft.joins?.length ?? 0) >= 2
+                }
+                onCheckedChange={(checked) =>
+                  setDraft({
+                    ...draft,
+                    joins: checked
+                      ? [...(draft.joins ?? []), relationship.id]
+                      : draft.joins?.filter((id) => id !== relationship.id),
+                  })
+                }
+              />
+              <span>
+                {humanizeKey(relationship.to)}
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {humanizeKey(relationship.cardinality)}
+                  {relationship.fanoutRisk ? " · May repeat starting rows" : ""}
+                </span>
+              </span>
+            </label>
+          ))}
+        </section>
+      ) : null}
+      <div className="space-y-3 rounded-lg bg-muted/40 p-4">
+        {ungrouped ? (
+          <p role="status" className="text-sm">
+            Group every original-value column before combining it with a
+            calculation.
+          </p>
+        ) : null}
+        {!aggregate && draft.groupBy?.length ? (
+          <p role="status" className="text-sm">
+            Choose a calculation on at least one column to use grouping.
+          </p>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-4">
+          <Button
+            variant="brand"
+            onClick={run}
+            disabled={!!invalid || result.isFetching}
+          >
+            <span className="mr-2">
+              {result.isFetching ? (
+                <RefreshCw className="size-4 animate-spin" />
+              ) : (
+                <Play className="size-4" />
+              )}
+            </span>
+            {result.isFetching ? "Running…" : "Run query"}
+          </Button>
+          <label className="flex items-center gap-2 text-sm">
+            <Switch
+              checked={autoRefresh}
+              onCheckedChange={setAutoRefresh}
+              aria-label="Auto-refresh every 30 seconds"
+            />
+            Auto-refresh every 30 seconds
+          </label>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Auto-refresh reruns the last submitted query while this page is
+          visible. Run query to apply edits. It refreshes stored data; it does
+          not pull new records from source systems.
+        </p>
+        <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+          <Input
+            aria-label="Saved query title"
+            placeholder="Name this query…"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="w-full sm:w-64"
+          />
+          <Button
+            variant="outline"
+            disabled={!!invalid || save.isPending}
+            onClick={() => save.mutate()}
+          >
+            <Save className="mr-2 size-4" />
+            {save.isPending ? "Saving…" : "Save query"}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Saves the current setup, including edits.
+          </span>
+        </div>
+        {save.error ? (
+          <p role="alert" className="text-sm text-destructive">
+            Could not save query: {save.error.message}
+          </p>
+        ) : null}
+      </div>
+      {changed ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          You have unapplied changes. Results and auto-refresh use the last
+          submitted query.
+        </p>
+      ) : null}
+      {result.error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {result.data
+            ? "Refresh failed; showing the last successful result. "
+            : "Query failed. "}
+          {result.error.message}
+        </p>
+      ) : null}
+      {result.data ? (
+        <QueryResultView
+          result={result.data}
+          refreshedAt={result.dataUpdatedAt}
+        />
+      ) : !result.isFetching ? (
+        <p className="text-sm text-muted-foreground">
+          Your query is ready. Run it to preview the results.
+        </p>
+      ) : null}
     </div>
   );
 }

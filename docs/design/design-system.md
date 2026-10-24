@@ -74,7 +74,7 @@ actually being built:
 | Permission-denied state | Requirement 3 | Explicit "not permitted" — never a silently filtered or partial-looking view |
 | Role/permission admin (future) | Requirement 3 | Not scheduled yet; deferred design |
 | Resolution rules | Requirement 8 (Phase 2) | Source-priority rules per field, with audit history; changes trigger recompute |
-| Data explorer | Requirement 6 | Raw / canonical / resolved browsing with server-side paging; raw payload detail |
+| Data explorer | Requirement 6 | Raw / canonical / resolved browsing with server-side paging; raw payload detail; relational query builder with shared shadcn controls and result table |
 | Logs | Requirement 6 | Ingestion run and failure log viewer |
 | Ask Goldy's / Conversations | Requirement 9 (Phase 2) | Chat over the fixed reporting-tool set; answers render through the shared widget registry; threads persist |
 | Custom dashboards | Requirement 9 (Phase 2) | Saved widget documents (query config only, re-rendered live), templates, sharing, revisions |
@@ -195,6 +195,20 @@ from earlier drafts still hold:
   `aria-hidden`; the same nodes are always in the DOM as `NetworkList`, which is
   the only view on a phone. Cap what the backend sends (top-N, per-node edge
   limits): a graph everyone can read beats a complete hairball.
+
+### Relational query builder
+
+The Data explorer Query tab starts with the first authorised dataset and up to four
+fields from its authorised field endpoint, preferring non-nullable fields. Defaults
+show original row values rather than implicit aggregates. Labels and inline help explain
+filters, grouping, sorting, relationships and row limits. Saved advanced filter trees
+are retained unchanged; the simple filter editor offers a clear action to replace them.
+
+Optional 30-second auto-refresh reruns the last submitted query while the page is
+visible. Draft edits require Run query; polling never applies unfinished edits or
+triggers source ingestion. Results show refresh time, qualifications and limit notices;
+a failed refresh keeps the last successful result with a visible error. Saving stores
+the current setup, not a result snapshot.
 
 ## 7. Open items
 
