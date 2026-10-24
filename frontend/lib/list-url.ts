@@ -16,4 +16,3 @@ export function listUrl(current: URLSearchParams, patch: Record<string, string |
   }
   return next.toString();
 }
-
