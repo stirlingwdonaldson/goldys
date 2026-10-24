@@ -172,6 +172,26 @@ describe("QueryBuilder", () => {
       api.runQuery.mock.calls[0][0].filter.children[0].predicate.value,
     ).toEqual(["2026-10-01", "2026-10-23"]);
   });
+  it.each(["Equals", "Between (inclusive)", "Is one of"])("submits ISO instants for timestamp condition %s", async (condition) => {
+    api.listQueryFields.mockResolvedValue([{ ...fields[1], name: "recorded_at", type: "TIMESTAMP" }]);
+    await ready();
+    await choose("Filter field", "Recorded at");
+    await choose("Condition", condition);
+    const start = "2026-10-24T12:30";
+    const end = "2026-10-24T13:30";
+    if (condition === "Is one of") {
+      fireEvent.change(screen.getByLabelText("Filter value"), { target: { value: "invalid" } });
+      expect(screen.getByRole("button", { name: "Add filter" })).toBeDisabled();
+    }
+    fireEvent.change(screen.getByLabelText("Filter value"), { target: { value: condition === "Is one of" ? `${start},${end}` : start } });
+    if (condition === "Between (inclusive)") {
+      fireEvent.change(screen.getByLabelText("Filter value 2"), { target: { value: end } });
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Add filter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run query" }));
+    await waitFor(() => expect(api.runQuery).toHaveBeenCalled());
+    expect(api.runQuery.mock.calls[0][0].filter.children[0].predicate.value).toEqual(condition === "Equals" ? new Date(start).toISOString() : [new Date(start).toISOString(), new Date(end).toISOString()]);
+  });
   it("refreshes the submitted plan while edits remain a draft and stops after toggling or unmounting", async () => {
     await ready();
     fireEvent.click(screen.getByRole("button", { name: "Run query" }));

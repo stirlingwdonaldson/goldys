@@ -217,10 +217,23 @@ export function FilterBuilder({
   const operators: QueryFilterOp[] = boolean
     ? ["EQ", "NE", "IS_NULL"]
     : (Object.keys(OPS) as QueryFilterOp[]);
+  const values =
+    op === "BETWEEN"
+      ? [value, value2]
+      : op === "IN"
+        ? value.split(",").map((item) => item.trim())
+        : [value];
+  const validTimestamp =
+    selected?.type !== "TIMESTAMP" ||
+    values.every(
+      (item) => item.trim() !== "" && Number.isFinite(new Date(item).getTime()),
+    );
   const ready =
     !!selected &&
     (op === "IS_NULL" ||
-      (value.trim() !== "" && (op !== "BETWEEN" || value2.trim() !== "")));
+      (validTimestamp &&
+        value.trim() !== "" &&
+        (op !== "BETWEEN" || value2.trim() !== "")));
 
   function update(items: QueryPredicate[]) {
     onChange(
@@ -234,6 +247,10 @@ export function FilterBuilder({
     let typedValue: QueryPredicate["value"] = value;
     if (op === "BETWEEN") typedValue = [value, value2];
     if (op === "IN") typedValue = value.split(",").map((item) => item.trim());
+    if (selected?.type === "TIMESTAMP" && op !== "IS_NULL") {
+      const instants = values.map((item) => new Date(item).toISOString());
+      typedValue = op === "BETWEEN" || op === "IN" ? instants : instants[0];
+    }
     if (boolean) typedValue = value === "true";
     if (op === "IS_NULL") typedValue = null;
     update([...predicates, { field, op, value: typedValue }]);
@@ -357,6 +374,11 @@ export function FilterBuilder({
           </label>
         ) : null}
       </div>
+      {selected?.type === "TIMESTAMP" && op !== "IS_NULL" ? (
+        <p className="text-xs text-muted-foreground">
+          Times use your browser’s local timezone unless an offset is supplied.
+        </p>
+      ) : null}
       <Button variant="outline" size="sm" onClick={add} disabled={!ready}>
         <Plus className="mr-1.5 size-4" />
         Add filter
