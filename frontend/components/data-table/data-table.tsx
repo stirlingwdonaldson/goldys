@@ -39,7 +39,18 @@ import {
 import { cn } from "@/lib/utils";
 import { DEFAULT_PAGE_SIZE, TablePagination } from "./table-pagination";
 
+type TableState = {
+  sorting: SortingState;
+  columnFilters: ColumnFiltersState;
+  columnVisibility: VisibilityState;
+  pagination: PaginationState;
+};
+// Keep list position across client navigation without persisting user data to disk.
+const retainedStates = new Map<string, TableState>();
+
 interface DataTableProps<TData, TValue> {
+  /** Retain this list's sort, filters, visible columns and page across client navigation. */
+  stateKey?: string;
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   /** Column id the toolbar's text filter applies to. Omit to hide the filter input. */
@@ -85,6 +96,7 @@ interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
   columns,
   data,
+  stateKey,
   filterColumn,
   filterPlaceholder = "Filter…",
   pageSize = DEFAULT_PAGE_SIZE,
@@ -99,15 +111,23 @@ export function DataTable<TData, TValue>({
   selectable = false,
   onSelectedRowsChange,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>(initialSorting);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const retained = stateKey ? retainedStates.get(stateKey) : undefined;
+  const [sorting, setSorting] = useState<SortingState>(retained?.sorting ?? initialSorting);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(retained?.columnFilters ?? []);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(retained?.columnVisibility ?? {});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const paginated = pageSize !== false;
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: pageSize === false ? DEFAULT_PAGE_SIZE : pageSize,
+  const [pagination, setPagination] = useState<PaginationState>(() => {
+    const initial = retained?.pagination ?? {
+      pageIndex: 0,
+      pageSize: pageSize === false ? DEFAULT_PAGE_SIZE : pageSize,
+    };
+    return { ...initial, pageIndex: Math.min(initial.pageIndex, Math.max(0, Math.ceil(data.length / initial.pageSize) - 1)) };
   });
+
+  useEffect(() => {
+    if (stateKey) retainedStates.set(stateKey, { sorting, columnFilters, columnVisibility, pagination });
+  }, [stateKey, sorting, columnFilters, columnVisibility, pagination]);
 
   // Leading checkbox column for bulk selection (opt-in via `selectable`).
   const selectionColumn: ColumnDef<TData, TValue> = useMemo(
@@ -210,7 +230,7 @@ export function DataTable<TData, TValue>({
   }, [selectedRowKey]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         {filter ? (
           <Input

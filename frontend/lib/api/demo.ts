@@ -2128,7 +2128,8 @@ export const demoApi: Api = {
 
   async getRecipeDetails(recipeId: number, options?: {signal?:AbortSignal}): Promise<import("./types").RecipeDetails | null> {
     await delay(300, options?.signal);
-    return (await import("./demo-recipe-details")).demoRecipeDetails(recipeId);
+    const { demoRecipeDetails } = await import("./demo-recipe-details");
+    return demoRecipeDetails(recipeId) ?? demoRecipeDetails(recipeId, (await demoApi.getRecipes(options)).find(recipe => recipe.recipeId === recipeId));
   },
   async getRecipeComposition(recipeId: number, options?: {signal?:AbortSignal}): Promise<import("./types").RecipeComposition | null> {
     await delay(300, options?.signal);
@@ -2142,7 +2143,7 @@ export const demoApi: Api = {
 
   async getRecipes(options?: { signal?: AbortSignal }): Promise<RecipeCosting[]> {
     await delay(300, options?.signal);
-    return [
+    return ([
       { recipeId: 1, name: "Parma", folder: "Mains", portionSize: "1", costPerPortion: 6.0, actualCost: 7.2, costGap: 1.2, menuPrice: 18.5, margin: 12.5, gpPercent: 0.6757, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
       { recipeId: 2, name: "Kids Fish & Chippies", folder: "Kids", portionSize: "1 serve", costPerPortion: 4.1, actualCost: 4.5, costGap: 0.4, menuPrice: 12.0, margin: 7.9, gpPercent: 0.6583, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
       { recipeId: 3, name: "Cheeseburger", folder: "Mains", portionSize: "1", costPerPortion: 5.4, actualCost: 5.9, costGap: 0.5, menuPrice: 19.0, margin: 13.6, gpPercent: 0.7158, menuState: "ON_MENU", priceSource: "CURRENT", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
@@ -2150,7 +2151,8 @@ export const demoApi: Api = {
       { recipeId: 5, name: "Eggplant Parmigiana", folder: "Mains", portionSize: "1", costPerPortion: 4.2, actualCost: null, costGap: 0.6, menuPrice: null, margin: 12.8, gpPercent: 0.7529, menuState: "OFF_MENU", priceSource: "HISTORICAL", lastSoldPrice: 17.0, lastSoldCost: 4.8, lastSoldDate: "2026-09-14" },
       { recipeId: 6, name: "Pickle Brine", folder: "Prep", portionSize: "1", costPerPortion: 0.8, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
       { recipeId: 7, name: "", folder: "", portionSize: "1", costPerPortion: 0, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
-    ];
+      { recipeId: 8, name: "Burger sauce", folder: "Prep", portionSize: "2 litres", costPerPortion: 17, actualCost: null, costGap: null, menuPrice: null, margin: null, gpPercent: null, menuState: "UNKNOWN", priceSource: "NONE", lastSoldPrice: null, lastSoldCost: null, lastSoldDate: null },
+    ] satisfies RecipeCosting[]).map(recipe => ({...recipe, coverage: [3,8].includes(recipe.recipeId) ? "COMPLETE" : recipe.recipeId === 7 ? "DETAILS_MISSING" : "LEGACY", capturedAt: [3,8].includes(recipe.recipeId) ? "2026-10-20T02:00:00Z" : null, stale: recipe.recipeId === 3, costSource: "CTB", menuState: "UNKNOWN", margin: null, gpPercent: null, costGap: null}));
   },
 
   async getRecipeIngredients(recipeId: number, options?: { signal?: AbortSignal }): Promise<RecipeIngredient[]> {

@@ -1,5 +1,7 @@
 "use client";
 
+import { Table } from "@/components/ui/table";
+
 import { TablePagination, useClientPagination } from "@/components/data-table/table-pagination";
 import type { TableWidget } from "./types";
 import { WidgetShell } from "./widget-shell";
@@ -16,7 +18,7 @@ export function TableWidgetView({ widget }: { widget: TableWidget }) {
   return (
     <WidgetShell title={widget.title} description={widget.description}>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <Table className="w-full text-sm">
           <thead>
             <tr>
               {widget.columns.map((c) => (
@@ -37,7 +39,7 @@ export function TableWidgetView({ widget }: { widget: TableWidget }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </Table>
       </div>
       <TablePagination {...pagination} className="mt-3" />
     </WidgetShell>

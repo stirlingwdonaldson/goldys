@@ -1,5 +1,7 @@
 "use client";
 
+import { Table } from "@/components/ui/table";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TablePagination, useClientPagination } from "@/components/data-table/table-pagination";
@@ -117,7 +119,7 @@ function ForecastTable({ rows }: { rows: ForecastDayRow[] }) {
   const { pageRows, pagination } = useClientPagination(rows);
   return (
     <div className="flex flex-col gap-3">
-      <table className="w-full text-sm">
+      <Table className="w-full text-sm">
         <thead>
           <tr className="text-left text-muted-foreground">
             <th className="font-medium">Date</th>
@@ -146,7 +148,7 @@ function ForecastTable({ rows }: { rows: ForecastDayRow[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
       <TablePagination {...pagination} />
     </div>
   );
@@ -159,7 +161,7 @@ function AccuracyComparisonTable({ diagnostics }: { diagnostics: ForecastDiagnos
     { label: "Cross-validation", model: diagnostics.cvNetXgboost, baseline: diagnostics.cvNetBaseline },
   ];
   return (
-    <table className="w-full text-sm">
+    <Table className="w-full text-sm">
       <thead>
         <tr className="text-left text-muted-foreground">
           <th className="font-medium">Set</th>
@@ -180,7 +182,7 @@ function AccuracyComparisonTable({ diagnostics }: { diagnostics: ForecastDiagnos
           </tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 }
 
@@ -204,7 +206,7 @@ function BeatsBaselineBanner({ beatsBaseline }: { beatsBaseline: boolean | null 
 /** Error by weekday: where the model is systematically weak. */
 function WeekdayErrorTable({ rows }: { rows: WeekdayErrorRow[] }) {
   return (
-    <table className="w-full text-sm">
+    <Table className="w-full text-sm">
       <thead>
         <tr className="text-left text-muted-foreground">
           <th className="font-medium">Day</th>
@@ -223,14 +225,14 @@ function WeekdayErrorTable({ rows }: { rows: WeekdayErrorRow[] }) {
           </tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 }
 
 /** The backtest days the model missed worst, largest absolute percentage error first. */
 function WorstMissesTable({ rows }: { rows: BacktestRow[] }) {
   return (
-    <table className="w-full text-sm">
+    <Table className="w-full text-sm">
       <thead>
         <tr className="text-left text-muted-foreground">
           <th className="font-medium">Date</th>
@@ -251,7 +253,7 @@ function WorstMissesTable({ rows }: { rows: BacktestRow[] }) {
           </tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 }
 
@@ -269,7 +271,7 @@ function ComparisonTable({ points }: { points: ComparisonPoint[] }) {
   const { pageRows, pagination } = useClientPagination(points);
   return (
     <div className="flex flex-col gap-3">
-      <table className="w-full text-sm">
+      <Table className="w-full text-sm">
         <thead>
           <tr className="text-left text-muted-foreground">
             <th className="font-medium">Date</th>
@@ -286,7 +288,7 @@ function ComparisonTable({ points }: { points: ComparisonPoint[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
       <TablePagination {...pagination} />
     </div>
   );

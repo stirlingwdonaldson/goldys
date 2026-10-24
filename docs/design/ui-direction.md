@@ -71,6 +71,10 @@ doesn't fit, collapse it:
   truncates the page name. The freshness chip shows "3/4 healthy" below `xl`
   and the full sentence at `xl`, with the full text in its tooltip. Ask
   Goldy's is icon-only below `lg`.
+- **Tables:** headers and cells never wrap. Use the shared `Table` primitive so
+  wide tables scroll inside their container. Keep cell metadata inline; put long
+  descriptions and source detail outside the row or in an accessible popover.
+  Do not override the global no-wrap rule or insert forced line breaks in cells.
 - **Lists:** reconciliation rows put the source values on their own line
   below `lg` instead of wrapping inside a cell. Status pills stay short
   ("Missing data"), and the detail goes in the tooltip.

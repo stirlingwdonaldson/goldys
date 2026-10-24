@@ -1,5 +1,7 @@
 "use client";
 
+import { Table } from "@/components/ui/table";
+
 import { useState } from "react";
 import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Download, ExternalLink } from "lucide-react";
@@ -190,7 +192,7 @@ export function InvoiceLinesTable({
   return (
     <div className="flex flex-col gap-2">
       <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
+        <Table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
               <th className="px-3 py-2 font-medium">Product</th>
@@ -220,7 +222,7 @@ export function InvoiceLinesTable({
               </td>
             </tr>
           </tfoot>
-        </table>
+        </Table>
       </div>
       {totals && !totals.matches ? (
         <p className="flex items-start gap-2 rounded-lg bg-status-conflict-soft px-3 py-2 text-xs text-status-conflict">
@@ -258,20 +260,20 @@ function InvoiceLineRow({
   return (
     <tr className={cn("border-b align-top last:border-0", flagged && "bg-status-conflict-soft/60")}>
       <td className="px-3 py-2">
-        <span className="flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1.5">
           {flagged ? (
             <AlertTriangle className="size-3.5 shrink-0 text-status-conflict" aria-label="Flagged line" />
           ) : null}
           {displayProductName(line.productNameKey)}
         </span>
-        {code ? <span className="block font-mono text-[11px] text-muted-foreground">{code}</span> : null}
+        {code ? <span className="ml-2 font-mono text-[11px] text-muted-foreground">{code}</span> : null}
       </td>
       <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
         {formatNumber(line.quantity, 3)}
         {line.uom ? <span className="ml-1 text-xs text-muted-foreground">{line.uom.toLowerCase()}</span> : null}
       </td>
       <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
-        <span className="flex flex-col items-end gap-0.5">
+        <span className="inline-flex items-center gap-2">
           {formatCurrency(line.unitCost)}
           {change ? <PriceChangeBadge change={change} previousLabel={previousLabel} /> : null}
         </span>
@@ -279,7 +281,7 @@ function InvoiceLineRow({
       <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">
         {formatCurrency(line.lineTotal)}
         {line.lineGstAmount != null || line.lineTaxRate != null || line.incGst != null ? (
-          <span className="block text-[11px] font-normal text-muted-foreground">
+          <span className="ml-2 text-[11px] font-normal text-muted-foreground">
             {line.incGst === true ? "incl GST" : line.incGst === false ? "ex GST" : ""}
             {line.lineGstAmount != null ? ` · GST ${formatCurrency(line.lineGstAmount)}` : ""}
             {line.lineTaxRate != null ? ` · ${line.lineTaxRate}%` : ""}

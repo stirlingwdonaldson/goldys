@@ -1,5 +1,7 @@
 "use client";
 
+import { Table } from "@/components/ui/table";
+
 import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -171,7 +173,7 @@ function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }
 
       {rows.data && rows.data.items.length > 0 ? (
         <div className="rounded-lg border">
-          <table className="w-full text-sm">
+          <Table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
                 <th className="px-3 py-2 font-medium">Source</th>
@@ -191,7 +193,7 @@ function RawSection({ initialExpandedId }: { initialExpandedId?: string | null }
                 />
               ))}
             </tbody>
-          </table>
+          </Table>
         </div>
       ) : null}
 
@@ -252,7 +254,7 @@ function RawPayload({ id }: { id: string }) {
         sha256 {detail.data.sha256}
         {detail.data.isJson ? "" : " · non-JSON payload (base64)"}
       </p>
-      <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded bg-muted p-2 text-xs">
+      <pre className="max-h-96 overflow-auto whitespace-pre rounded bg-muted p-2 text-xs">
         {body}
       </pre>
     </div>

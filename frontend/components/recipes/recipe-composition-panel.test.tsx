@@ -1,38 +1,49 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { demoRecipeComposition } from "@/lib/api/demo-recipe-composition";
-import type { RecipeComposition } from "@/lib/api/types";
 import { RecipeCompositionPanel } from "./recipe-composition-panel";
 
-const state = vi.hoisted(() => ({ data: null as RecipeComposition | null, error: null as { message: string } | null }));
-vi.mock("@/lib/demo-mode",()=>({useApi:()=>({})}));
-vi.mock("@tanstack/react-query", async (importOriginal) => ({
-  ...await importOriginal<typeof import("@tanstack/react-query")>(),
-  useQuery: () => ({ ...state, isPending: false, isLoadingError:!!state.error, refetch: async () => {} }),
-}));
-
 describe("RecipeCompositionPanel", () => {
-  beforeEach(() => { state.data = null; state.error = null; });
-
-  it("shows missing details without fabricating an empty recipe", () => {
-    render(<RecipeCompositionPanel recipeId={3} />);
-    expect(screen.getByText(/Complete recipe details have not been received/)).toBeInTheDocument();
-  });
-
-  it("keeps CTB tax bases separate and exposes stale and incomplete estimates", () => {
-    state.data = demoRecipeComposition(3);
-    render(<RecipeCompositionPanel recipeId={3} />);
+  it("keeps tax bases separate and links an explicitly measured child", () => {
+    const data = demoRecipeComposition(3)!;
+    data.calculatedTotal = null;
+    data.issues.push("MISSING_SUB_RECIPE:8");
+    render(<RecipeCompositionPanel data={data} />);
     expect(screen.getByText("CTB selling price incl. GST")).toBeInTheDocument();
     expect(screen.getByText("CTB revenue excl. GST")).toBeInTheDocument();
-    expect(screen.getByText(/Refresh overdue/)).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("A complete cost estimate is unavailable");
-    expect(screen.getByRole("link", {name:"Burger sauce"})).toHaveAttribute("href", "/recipes/8");
-    expect(screen.getByRole("listitem")).toHaveTextContent("Burger sauce: 60 ml from a 2 litres yield");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "A complete cost estimate is unavailable",
+    );
+    expect(screen.getByRole("link", { name: "Burger sauce" })).toHaveAttribute(
+      "href",
+      "/recipes/8",
+    );
+    expect(screen.getByText("60 ml")).toBeInTheDocument();
+    expect(screen.getByText("From 2 litres yield")).toBeInTheDocument();
   });
-
-  it("shows an explicit permission error", () => {
-    state.error = { message: "Not permitted" };
-    render(<RecipeCompositionPanel recipeId={3} />);
-    expect(screen.getByRole("alert")).toHaveTextContent("Not permitted");
+  it("retains negative adjustments and does not call child-only compositions empty", () => {
+    const data = demoRecipeComposition(3)!;
+    data.definition.stocks = [];
+    data.definition.usages[0].quantity = -15;
+    data.definition.usages[0].unit = "litres";
+    render(<RecipeCompositionPanel data={data} />);
+    expect(screen.getByText("Adjustment")).toBeInTheDocument();
+    expect(screen.getByText(/-15 litres/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/No ingredient or sub-recipe lines/),
+    ).not.toBeInTheDocument();
+  });
+  it("labels a captured empty composition and stock export without inventing a method", () => {
+    const data = demoRecipeComposition(3)!;
+    data.definition.stocks = [];
+    data.definition.usages = [];
+    data.definition.header.description =
+      "This recipe is exported from a stock item";
+    render(<RecipeCompositionPanel data={data} />);
+    expect(
+      screen.getByText(/No ingredient or sub-recipe lines/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Stock-derived recipe")).toBeInTheDocument();
+    expect(screen.getByText(/no cooking method supplied/)).toBeInTheDocument();
   });
 });
