@@ -1,5 +1,7 @@
 "use client";
 
+import { Table } from "@/components/ui/table";
+
 import { useState } from "react";
 import { Copy } from "lucide-react";
 import { useApi } from "@/lib/demo-mode";
@@ -55,7 +57,7 @@ export default function LogsPage() {
       />
 
       <div className="rounded-lg border">
-        <table className="w-full text-sm">
+        <Table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs text-muted-foreground">
               <th className="px-4 py-2 font-medium">Source</th>
@@ -79,7 +81,7 @@ export default function LogsPage() {
               );
             })}
           </tbody>
-        </table>
+        </Table>
       </div>
     </div>
   );
@@ -134,7 +136,7 @@ function FragmentRow({
       {isOpen && c.failure?.stackTrace ? (
         <tr className="border-b bg-muted/20">
           <td colSpan={6} className="px-4 py-3">
-            <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
+            <pre className="whitespace-pre text-xs text-muted-foreground">
               {c.failure.stackTrace}
             </pre>
           </td>

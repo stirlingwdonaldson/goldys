@@ -1,5 +1,7 @@
 "use client";
 
+import { Table } from "@/components/ui/table";
+
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PermissionDenied } from "@/components/states/permission-denied";
@@ -266,14 +268,14 @@ function ReceiptTable({
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">{empty}</p>
       ) : (
-        <table className="w-full text-sm">
+        <Table className="w-full text-sm">
           <caption className="sr-only">{title}</caption>
           <tbody>
             {rows.map((r) => (
               <tr key={r.key} className="border-b border-dashed last:border-0">
                 <td className="py-1.5 pr-3 align-top">
-                  <div className="font-medium">{r.primary}</div>
-                  {r.secondary ? <div className="text-xs text-muted-foreground">{r.secondary}</div> : null}
+                  <span className="font-medium">{r.primary}</span>
+                  {r.secondary ? <span className="ml-2 text-xs text-muted-foreground">{r.secondary}</span> : null}
                 </td>
                 <td className="py-1.5 text-right align-top tabular-nums">{r.amount}</td>
               </tr>
@@ -287,7 +289,7 @@ function ReceiptTable({
               <td className="pt-2 text-right font-semibold tabular-nums">{formatCurrency(total)}</td>
             </tr>
           </tfoot>
-        </table>
+        </Table>
       )}
     </div>
   );

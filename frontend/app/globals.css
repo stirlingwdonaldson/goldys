@@ -93,3 +93,15 @@
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
+
+/* Tables keep values on one line; their containers provide horizontal scrolling. */
+@layer base {
+  th,
+  td {
+    white-space: nowrap;
+  }
+  th *,
+  td * {
+    white-space: inherit;
+  }
+}
