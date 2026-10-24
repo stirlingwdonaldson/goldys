@@ -9,17 +9,26 @@ test.beforeEach(async ({ page }) => {
       : [] }));
 });
 
-test("qualifications survive the old hidden preference, reload and navigation", async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem("goldys-show-incomplete-notices", "false"));
-  await page.goto("/kitchen");
-  await expect(page.getByText(/Incomplete example observations/)).toBeVisible();
-  await page.reload();
-  await expect(page.getByText(/Incomplete example observations/)).toBeVisible();
+test("incomplete notice preference defaults off and persists across navigation and reload", async ({ page }) => {
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading", { name: "Home", exact: true })).toBeVisible();
+  await expect(page.getByText("Incomplete — known subtotals only.", { exact: true })).toHaveCount(0);
   await page.goto("/settings");
-  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
-  await expect(page.getByRole("switch", { name: "Show incomplete data notices" })).toHaveCount(0);
-  await page.goto("/kitchen");
-  await expect(page.getByText(/Incomplete example observations/)).toBeVisible();
+  const toggle = page.getByRole("switch", { name: "Show incomplete data notices" });
+  await expect(toggle).toHaveAttribute("aria-checked", "false");
+  await toggle.click();
+  await page.reload();
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("link", { name: "Home", exact: true }).first().click();
+  await expect(page.getByText("Incomplete — known subtotals only.", { exact: true }).first()).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("Incomplete — known subtotals only.", { exact: true }).first()).toBeVisible();
+  await page.goto("/settings");
+  await toggle.click();
+  await page.getByRole("link", { name: "Home", exact: true }).first().click();
+  await expect(page.getByText("Incomplete — known subtotals only.", { exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText("Incomplete — known subtotals only.", { exact: true })).toHaveCount(0);
 });
 
 test("kitchen observations use shared controls and table", async ({ page }) => {

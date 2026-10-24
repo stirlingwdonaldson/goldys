@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
+import { IncompleteNoticesProvider } from "@/lib/incomplete-notices";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { SalesTrend } from "./sales-trend";
 import { TopSellers } from "./top-sellers";
@@ -9,9 +10,11 @@ vi.mock("@/components/widgets/widget-renderer", () => ({
 }));
 
 describe("dashboard coverage", () => {
+  beforeEach(() => localStorage.setItem("goldys-show-incomplete-notices", "true"));
+  afterEach(() => localStorage.removeItem("goldys-show-incomplete-notices"));
   it("labels net sales, keeps zero and null distinct, and qualifies gaps", () => {
-    render(<SalesTrend points={[{ date: "2026-10-01", total: 0 }, { date: "2026-10-02", total: null }]}
-      notices={["Incomplete subtotal: one date without a resolved record"]} />);
+    render(<IncompleteNoticesProvider><SalesTrend points={[{ date: "2026-10-01", total: 0 }, { date: "2026-10-02", total: null }]}
+      notices={["Incomplete subtotal: one date without a resolved record"]} /></IncompleteNoticesProvider>);
     const spec = JSON.parse(screen.getByTestId("widget").textContent!);
     expect(spec.title).toContain("Net sales");
     expect(spec.title).toContain("ex GST");
@@ -21,8 +24,8 @@ describe("dashboard coverage", () => {
   });
 
   it("qualifies empty rankings rather than implying no sales", () => {
-    render(<TopSellers items={[]} notices={["Incomplete subtotal: no resolved records"]}
-      coverage={{ from: "2026-10-01", to: "2026-10-02", observedDates: [], unresolvedDates: [], absentDates: ["2026-10-01", "2026-10-02"], expectedTradingPopulationKnown: false }} />);
+    render(<IncompleteNoticesProvider><TopSellers items={[]} notices={["Incomplete subtotal: no resolved records"]}
+      coverage={{ from: "2026-10-01", to: "2026-10-02", observedDates: [], unresolvedDates: [], absentDates: ["2026-10-01", "2026-10-02"], expectedTradingPopulationKnown: false }} /></IncompleteNoticesProvider>);
     const spec = JSON.parse(screen.getByTestId("widget").textContent!);
     expect(spec.description).toContain("Ranked by known sales; full-period ranking unverified.");
     expect(spec.description).toContain("2026-10-01 to 2026-10-02");

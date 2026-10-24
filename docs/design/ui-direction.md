@@ -152,7 +152,9 @@ values like `text-[13px]` or raw palette colours like `amber-700`.
 - **Global period picker** ("Last 7 days vs prior"). It needs reporting
   endpoints that take a period.
 
-Result qualifications are always visible beside their result; no display preference
-hides incomplete-data warnings. Home labels booking-size attendance as a proxy and
+The Settings switch “Show incomplete data notices” controls explanatory cards
+about missing inputs and partial coverage. It defaults off and persists in browser
+storage; other qualification cards remain visible. This is an intentional user
+preference, restored after the UX audit removed it. Home labels booking-size attendance as a proxy and
 invoice purchases separately from consumed cost. A zero reconciliation count does
 not establish verified or complete evidence.

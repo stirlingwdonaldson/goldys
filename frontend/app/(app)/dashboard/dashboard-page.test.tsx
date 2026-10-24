@@ -1,3 +1,4 @@
+import { IncompleteNoticesProvider } from "@/lib/incomplete-notices";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import DashboardPage from "./page";
@@ -38,7 +39,9 @@ vi.mock("@/components/app-shell/current-user-provider", async (importOriginal) =
 
 describe("DashboardPage", () => {
   it("renders the resolved latest-sales total rather than summing per-source rows", () => {
-    render(<DashboardPage />);
+    localStorage.setItem("goldys-show-incomplete-notices", "true");
+    render(<IncompleteNoticesProvider><DashboardPage /></IncompleteNoticesProvider>);
+    localStorage.removeItem("goldys-show-incomplete-notices");
     // The KPI grid renders the single resolved value; if the page reverted to
     // summing `listDailySales` rows, this resolved figure would not appear.
     expect(screen.getByText("$10,865.72")).toBeInTheDocument();

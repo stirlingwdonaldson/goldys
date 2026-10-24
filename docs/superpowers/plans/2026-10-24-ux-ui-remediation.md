@@ -35,7 +35,7 @@ are invented for gated work.
 
 | Order / status | Audit trace | Smallest complete change / affected surfaces | Acceptance check |
 |---|---|---|---|
-| 0.1 local | F01; US-05; H1/5/8 | Always render returned qualifications in the shared component; remove obsolete hide preference/provider/Settings switch; update all dependent tests | With the old preference false, incomplete and companion notices remain beside sales, inventory, dashboard/query/forecast results after reload/navigation; no regex can suppress a notice group |
+| 0.1 user correction | F01; US-05; H1/5/8 | Restore the intentional Settings switch and persisted default-off incomplete-notices preference per user request; preserve other trust corrections | Toggling shows/hides the original incomplete-notice cards, survives navigation/reload, honours saved choices, and works for the session when storage is unavailable; unrelated qualification cards remain visible |
 | 0.2 local | F02; US-05; H1/2/5 | Correct header collection labels/counts and status explanation using current ConnectorStatus fields | Partial, failed, running and never-run states never count as successful completed collection; newest run is not called evidence as-of; missing timestamps do not imply success |
 | 0.3 local | F03; US-05/09; H1/2/5 | Remove null-to-zero fallbacks from Home subcounts | Unknown subcounts display unavailable values; explicit zero remains zero |
 | 0.4 local | F04; US-01/05/14; H1/5/9 | Disclose failed and truncated queue reads on My work and Home; qualify counts and empty/zero summary copy | Failed discovery cannot say every feed delivers; server total beyond the returned page produces a persistent limit notice; zero open decisions does not imply verification |
@@ -202,3 +202,31 @@ run because no backend code changed. Live-backend behaviour, representative-user
 acceptance, cross-browser coverage and formal accessibility conformance remain
 unverified. Page-local reconciliation search is an explicit existing-API limit;
 there is no claim of global search. Password recovery remains gated as above.
+
+
+## User correction — restore incomplete-notices preference
+
+On 24 October 2026 the user identified the removed Settings boolean as a desired
+feature and explicitly requested restoration. Prior statements in the audit/design
+and verification records calling it obsolete or requiring always-visible incomplete
+cards are superseded by that instruction, not acceptance criteria for future work.
+
+Restore `Show incomplete data notices`, its original default-off state, the
+`goldys-show-incomplete-notices` storage key, provider and original notice matching.
+Existing saved true/false preferences work again. The switch only affects the
+original explanatory cards; other qualification cards, numeric unknowns, status
+labels, error handling and pagination retain the UX corrections. No backend,
+permission, schema, dependency or rostering changes.
+
+Verification: frontend typecheck, lint, production build and 710 unit tests in 127
+files passed. The controlled browser run passed 31 UX regressions plus three
+existing small-fix checks; the preference assertion initially referenced a
+Kitchen-specific message on Home. After correcting it to the shared incomplete
+notice heading, all four small-fix browser checks passed, including default off,
+on/off navigation and reload. No application code changed after the full gate.
+Browser calls used demo/controlled fixtures and a closed-port build rewrite.
+`git diff --check` passed. Ripwire reported zero gating regressions; its seven
+advisories cover TSX/property-call resolution, expected churn and the intentional,
+tested session fallback when browser storage throws. No backend tests were run;
+no backend code changed. Live backend/user validation remains untested. No merge
+or deployment is included in this restoration.

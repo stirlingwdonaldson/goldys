@@ -13,7 +13,7 @@ const bootstrap = {
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("goldys-demo-mode", "false");
-    localStorage.setItem("goldys-show-incomplete-notices", "false");
+    localStorage.setItem("goldys-show-incomplete-notices", "true");
   });
   await page.route("**/monitoring**", route => route.fulfill({ status: 204 }));
   await page.route("**/api/**", route => {
@@ -30,7 +30,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 for (const width of [1440, 390]) {
-  test(`Home keeps caveats, unknowns and purchase basis at ${width}px`, async ({ page }) => {
+  test(`Home shows enabled caveats, unknowns and purchase basis at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/dashboard");
     await expect(page.getByText("Incomplete sales subtotal", { exact: true })).toBeVisible();
