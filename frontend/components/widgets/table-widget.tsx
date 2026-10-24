@@ -19,6 +19,7 @@ export function TableWidgetView({ widget }: { widget: TableWidget }) {
     <WidgetShell title={widget.title} description={widget.description}>
       <div className="overflow-x-auto">
         <Table className="w-full text-sm">
+          <caption className="sr-only">{widget.title}</caption>
           <thead>
             <tr>
               {widget.columns.map((c) => (

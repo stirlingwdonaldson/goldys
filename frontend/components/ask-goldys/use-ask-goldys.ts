@@ -11,7 +11,7 @@ export interface UseAskGoldys {
   messages: ChatMessage[];
   summary: string;
   answer: AnswerPayload | null;
-  error: string | null;
+  error: Error | null;
   working: boolean;
   ask: (question: string) => void;
   reset: () => void;
@@ -31,7 +31,7 @@ export function useAskGoldys(): UseAskGoldys {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [summary, setSummary] = useState("");
   const [answer, setAnswer] = useState<AnswerPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [working, setWorking] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
 
@@ -63,9 +63,9 @@ export function useAskGoldys(): UseAskGoldys {
           setSummary(accumulated);
         },
         onAnswer: (payload) => { if (current === generation.current && !controller.signal.aborted) setAnswer(payload); },
-        onError: (message) => { if (current === generation.current && !controller.signal.aborted) setError(message); },
+        onError: (message) => { if (current === generation.current && !controller.signal.aborted) setError(new Error(message)); },
       })
-        .catch((error: unknown) => { if (current === generation.current && !isAbortError(error)) setError(error instanceof Error ? error.message : "Could not reach the server."); })
+        .catch((error: unknown) => { if (current === generation.current && !isAbortError(error)) setError(error instanceof Error ? error : new Error("Could not reach the server.")); })
         .finally(() => {
           release();
           if (current !== generation.current) return;

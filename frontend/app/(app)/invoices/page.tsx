@@ -24,57 +24,66 @@ import type { InvoiceSummary } from "@/lib/api/types";
 
 const PAGE_SIZE = 25;
 
-const columns: ColumnDef<InvoiceSummary>[] = [
-  {
-    accessorKey: "supplierName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Supplier" />,
-    // One line per row: long supplier names truncate (full name on hover) instead of wrapping.
-    cell: ({ getValue }) => (
-      <span className="block max-w-56 truncate" title={getValue<string>()}>
-        {getValue<string>()}
-      </span>
-    ),
-    meta: { title: "Supplier" },
-    enableHiding: false,
-  },
-  {
-    accessorKey: "invoiceNumber",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Invoice" />,
-    meta: { title: "Invoice" },
-    enableHiding: false,
-  },
-  dateColumn("invoiceDate", "Date"),
-  {
-    id: "dueDate",
-    accessorFn: (r) => r.dueDate ?? "",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Due" />,
-    cell: ({ getValue }) => {
-      const v = getValue<string>();
-      return <span className="whitespace-nowrap">{v ? formatDay(v) : "—"}</span>;
-    },
-    meta: { title: "Due" },
-    enableHiding: false,
-  },
-  currencyColumn("totalAmount", "Total", (r) => r.totalAmount),
-  {
-    accessorKey: "purchaseNumber",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Purchase" />,
-    cell: ({ getValue }) => (getValue<string | null>() ?? "—"),
-    meta: { title: "Purchase" },
-  },
-  {
-    id: "pdf",
-    accessorFn: (r) => (r.hasPdf ? "Yes" : "No"),
-    header: ({ column }) => <DataTableColumnHeader column={column} title="PDF" />,
-    cell: ({ row }) =>
-      row.original.hasPdf ? (
-        <Badge variant="secondary">Yes</Badge>
-      ) : (
-        <span className="text-muted-foreground">—</span>
+function invoiceColumns(onOpen: (reference: string) => void): ColumnDef<InvoiceSummary>[] {
+  return [
+    {
+      accessorKey: "supplierName",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Supplier" />,
+      // One line per row: long supplier names truncate (full name on hover) instead of wrapping.
+      cell: ({ getValue }) => (
+        <span className="block max-w-56 truncate" title={getValue<string>()}>
+          {getValue<string>()}
+        </span>
       ),
-    meta: { title: "PDF" },
-  },
-];
+      meta: { title: "Supplier" },
+      enableHiding: false,
+    },
+    {
+      accessorKey: "invoiceNumber",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Invoice" />,
+      cell: ({ row }) => (
+        <Button id={`invoice-${encodeURIComponent(invoiceReference(row.original))}`} variant="link" className="h-auto p-0 underline"
+          aria-label={`Open invoice ${row.original.invoiceNumber ?? "without a number"} from ${row.original.supplierName}`}
+          onClick={(event) => { event.stopPropagation(); onOpen(invoiceReference(row.original)); }}>
+          {row.original.invoiceNumber ?? "View invoice"}
+        </Button>
+      ),
+      meta: { title: "Invoice" },
+      enableHiding: false,
+    },
+    dateColumn("invoiceDate", "Date"),
+    {
+      id: "dueDate",
+      accessorFn: (r) => r.dueDate ?? "",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Due" />,
+      cell: ({ getValue }) => {
+        const v = getValue<string>();
+        return <span className="whitespace-nowrap">{v ? formatDay(v) : "—"}</span>;
+      },
+      meta: { title: "Due" },
+      enableHiding: false,
+    },
+    currencyColumn("totalAmount", "Total", (r) => r.totalAmount),
+    {
+      accessorKey: "purchaseNumber",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Purchase" />,
+      cell: ({ getValue }) => (getValue<string | null>() ?? "—"),
+      meta: { title: "Purchase" },
+    },
+    {
+      id: "pdf",
+      accessorFn: (r) => (r.hasPdf ? "Yes" : "No"),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="PDF" />,
+      cell: ({ row }) =>
+        row.original.hasPdf ? (
+          <Badge variant="secondary">Yes</Badge>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+      meta: { title: "PDF" },
+    },
+  ];
+}
 
 export default function InvoicesPage() {
   return (
@@ -113,7 +122,9 @@ function InvoicesContent() {
     [params, pathname, router],
   );
 
+  const invoiceTrigger = useRef("");
   function openInvoice(invoiceNumber: string) {
+    if (!selected) invoiceTrigger.current = `invoice-${encodeURIComponent(invoiceNumber)}`;
     if (selected) {
       // Already open: switch in place rather than stacking history entries.
       setSelected(invoiceNumber, "replace");
@@ -185,7 +196,7 @@ function InvoicesContent() {
           />
         ) : (
           <DataTable
-            columns={columns}
+            columns={invoiceColumns(openInvoice)}
             data={items}
             pageSize={false}
             initialSorting={[{ id: "invoiceDate", desc: true }]}
@@ -205,6 +216,7 @@ function InvoicesContent() {
         order={order}
         onNavigate={(n) => setSelected(n, "replace")}
         onClose={closeInvoice}
+        onRestoreFocus={() => document.getElementById(invoiceTrigger.current)?.focus()}
       />
     </div>
   );

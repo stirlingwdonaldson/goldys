@@ -52,9 +52,9 @@ its callers/tests, before moving on; a screen that opens is not a passed user st
 
 | Order / status | Audit trace | Change and reuse boundary | Acceptance check |
 |---|---|---|---|
-| 1.1 next | F14; US-18; H1/9 | Keep typed auth/denied/network/server outcomes through the existing Ask hook/stream/answer path; retain failed question and provide retry | A 503 offers recovery rather than an access-denied title; true denial remains denial; retry needs no retyping; cancellation still blocks stale output |
-| 1.2 next | F17; US-17/21; H3/4/7/9 | Give invoice rows a real named link/button; add persistent labels to auth/Ask inputs; add equivalent exact values to shared chart widgets | Keyboard-only invoice opening/closing restores focus; inputs retain visible names after typing; resolved chart values and gaps are available without pointer/visual inference |
-| 1.3 next | F12 recovery subset; US-12; H1/9 | Expose polling/run-load failure, last-known status and Retry in existing Forecasting; preserve issued run identity | Interrupted checks visibly become last-known/unknown; retry recovers the same run; no new forecast model, product picker or assumptions are invented |
+| 1.1 local | F14; US-18; H1/9 | Keep typed auth/denied/network/server outcomes through the existing Ask hook/stream/answer path; retain failed question and provide retry | A 503 offers recovery rather than an access-denied title; true denial remains denial; retry needs no retyping; cancellation still blocks stale output |
+| 1.2 local | F17; US-17/21; H3/4/7/9 | Give invoice rows a real named link/button; add persistent labels to auth/Ask inputs; add equivalent exact values to shared chart widgets | Keyboard-only invoice opening/closing restores focus; inputs retain visible names after typing; resolved chart values and gaps are available without pointer/visual inference |
+| 1.3 local | F12 recovery subset; US-12; H1/9 | Expose polling/run-load failure, last-known status and Retry in existing Forecasting; preserve issued run identity | Interrupted checks visibly become last-known/unknown; retry recovers the same run; no new forecast model, product picker or assumptions are invented |
 | 1.4 next | F15; US-04/16; H3/4/7 | Apply existing invoice/recipe/reconciliation URL-state pattern to Sales and Reservations provenance sheets | Copy/reload restores permitted metric/date selection; Back/Escape returns to parent filter/page and focus |
 | 1.5 next | F19; US-07/20; H1/4/6/10 | Stop calling shipped Recipes “Coming soon”; use a truthful evidence label within the existing menu | Existing recipe evidence is discoverable without a future-features label; no speculative primary navigation redesign |
 | 1.6 next | F08 existing-scope subset; US-04; H2/4/6 | Display actual ranges/calendars/comparators already returned by Sales/Reservations/Invoices and fix overstated entry copy | Fixed windows and incompatible comparisons are explicit; screen promises only content it actually provides; no invented shared backend range support |
@@ -119,3 +119,22 @@ stock, an order quantity, consumed cost or a transferable new-site forecast.
 Only mark a local batch verified after command output from this session. These
 checks establish implementation behaviour, not live source completeness, financial
 validity, stakeholder acceptance or formal accessibility conformance.
+
+## Second implementation batch — Priority 1.1–1.3
+
+[Design and boundaries](../specs/2026-10-24-ux-recovery-accessibility-design.md).
+Implemented typed chat errors/retry, visible auth/Ask labels, a keyboard invoice
+button with focus restoration, table equivalents for shared charts, and recoverable
+forecast status/history reads with stale-response protection. No rostering work.
+
+Verification:
+
+- Full frontend unit suite: 123 files / 697 tests passed after the invoice focus correction. Two earlier assertions were narrowed to their transaction rows because exact chart values now also appear in accessible tables.
+- Invoice keyboard opening/Escape/focus regression passed after fixing restoration to locate the current invoice button by stable ID; URL-driven table renders can replace the original DOM node.
+- Final `bun run typecheck`, `bun run lint` and `bun run build` passed. Combined Playwright run: 16 tests passed across `ux-recovery.spec.ts`, `audit-regressions.spec.ts` and `ux-trust.spec.ts`, covering the new recovery/keyboard paths plus dirty-save/history/cancellation and prior trust fixes at 1440/390 px. The build rewrites point to a closed local backend port; requests were intercepted by fixtures. `git diff --check` passed.
+- Ripwire quality review: zero gating regressions after eight explicit historical-churn acknowledgements. Eight advisory findings remain: forecast hook complexity/length, two TSX call-resolution false positives for rendered/tested components and four small component length increases. Forecast selection/polling state lives in a dedicated hook; its caller and stale-response tests were checked. TSX graph coverage is incomplete, so this supplements manual review and tests.
+- No backend, API, schema, dependencies, permission grants or rostering changes.
+
+Push, PR, CI, merge and deployment remain outside this local implementation.
+Browser checks use controlled API/demo fixtures; live backend behaviour, actual user
+acceptance and formal accessibility conformance remain untested.

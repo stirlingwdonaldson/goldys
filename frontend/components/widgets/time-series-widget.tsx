@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartDataTable } from "./chart-data-table";
 import { flattenSeries } from "./flatten";
 import { formatValue } from "./format";
 import { CHART_TOOLTIP_PROPS, SERIES_COLORS, compactAxis, formatXTick, AXIS_TICK } from "./chart-style";
@@ -66,6 +67,7 @@ export function TimeSeriesWidgetView({ widget }: { widget: TimeSeriesWidget }) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      <ChartDataTable widget={widget} />
     </WidgetShell>
   );
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { ApiError } from "@/lib/api/errors";
 import { AnswerBlock } from "./answer-block";
 import type { DashboardDraft, AnswerPayload } from "./types";
 import type { Api, DashboardDocument, SavedWidget } from "@/lib/api/types";
@@ -74,7 +75,7 @@ describe("AnswerBlock", () => {
 
   it("shows the error message when present", () => {
     render(
-      <AnswerBlock summary="" answer={null} error="You don't have access to that data." api={stubApi()} />,
+      <AnswerBlock summary="" answer={null} error={new ApiError("NOT_PERMITTED", "You don't have access to that data.")} api={stubApi()} />,
     );
     // PermissionDenied renders both a heading and the message; assert the unique message text.
     expect(screen.getByText(/that data/i)).toBeInTheDocument();
@@ -300,4 +301,24 @@ describe("AnswerBlock", () => {
 
     expect(await screen.findByText(/dashboard saved/i)).toBeInTheDocument();
   });
+});
+
+it("offers retry for a server failure without presenting it as denied access", () => {
+  const retry = vi.fn();
+  render(<AnswerBlock summary="" answer={null} error={new ApiError("UNEXPECTED_STATUS", "Temporary outage", undefined, undefined, { status: 503 })} api={stubApi()} onRetry={retry} />);
+  expect(screen.getByText("Couldn't answer your question")).toBeInTheDocument();
+  expect(screen.queryByText(/You don't have access to this data/)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(retry).toHaveBeenCalledOnce();
+});
+
+it("provides sign-in recovery for an expired session", () => {
+  render(<AnswerBlock summary="" answer={null} error={new ApiError("AUTH_REQUIRED", "Session expired", undefined, undefined, { status: 401 })} api={stubApi()} />);
+  expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+  expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+});
+
+it("does not infer a permission code from an unstructured stream message", () => {
+  render(<AnswerBlock summary="" answer={null} error={new Error("A source said access was denied")} api={stubApi()} />);
+  expect(screen.getByText("Couldn't answer your question")).toBeInTheDocument();
 });

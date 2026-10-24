@@ -21,18 +21,20 @@ interface InvoiceSheetProps {
   order: string[];
   onNavigate: (invoiceNumber: string) => void;
   onClose: () => void;
+  onRestoreFocus?: () => void;
 }
 
 /**
  * A right-hand slide-over for one invoice. It floats over the list, so it stays in view however
  * far the list is scrolled. ↑/↓ (or k/j) step through the list without closing; Esc closes.
  */
-export function InvoiceSheet({ invoiceNumber, order, onNavigate, onClose }: InvoiceSheetProps) {
+export function InvoiceSheet({ invoiceNumber, order, onNavigate, onClose, onRestoreFocus }: InvoiceSheetProps) {
   return (
     <Sheet open={invoiceNumber != null} onOpenChange={(open) => (open ? undefined : onClose())}>
       <SheetContent
         side="right"
         hideClose
+        onCloseAutoFocus={(event) => { if (onRestoreFocus) { event.preventDefault(); onRestoreFocus(); } }}
         className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-5xl"
       >
         {invoiceNumber ? (
