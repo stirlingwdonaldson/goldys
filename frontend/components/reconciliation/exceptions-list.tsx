@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
@@ -14,7 +14,7 @@ import { difference, parseAmount } from "./source-values";
 
 export type StatusFilter = "all" | "conflict" | "missing";
 
-interface ExceptionsListProps {
+export interface ExceptionsListProps {
   kind: "daily" | "product";
   exceptions: ReconciliationException[];
   status: StatusFilter;
@@ -23,6 +23,7 @@ interface ExceptionsListProps {
   onReview: (ex: ReconciliationException) => void;
   /** J/K/Enter only act while no sheet or dialog is open. */
   keyboardEnabled: boolean;
+  pagination?: ComponentProps<typeof TablePagination>;
 }
 
 /** Counts (quantity sold, covers) are not money, so only other numeric fields get "$". */
@@ -77,6 +78,7 @@ export function ExceptionsList({
   selectedId,
   onReview,
   keyboardEnabled,
+  pagination,
 }: ExceptionsListProps) {
   // Changing the filter starts a new result set, so it returns to the first page.
   const { page, setPage, pageSize, setPageSize } = usePageState(`${status}|${query}|${kind}`);
@@ -88,12 +90,12 @@ export function ExceptionsList({
   // Clamp: deciding an item can shrink the list under the current page.
   const safePage = Math.min(page, pageCount - 1);
   const start = safePage * pageSize;
-  const rows = filtered.slice(start, start + pageSize);
+  const rows = pagination ? filtered : filtered.slice(start, start + pageSize);
 
   // A new page of rows starts the J/K cursor at the top.
   useEffect(() => {
     setActive(0);
-  }, [status, query, kind, safePage, pageSize]);
+  }, [status, query, kind, safePage, pageSize, pagination?.page]);
 
   // J/K to move, Enter to open: a long queue shouldn't need the mouse (heuristic 7).
   useEffect(() => {
@@ -117,13 +119,13 @@ export function ExceptionsList({
     return () => window.removeEventListener("keydown", onKey);
   }, [keyboardEnabled, rows, active, onReview]);
 
-  if (exceptions.length === 0) {
+  if (exceptions.length === 0 && (!pagination || pagination.total === 0)) {
     return (
       <div className="flex flex-col items-center rounded-xl border border-dashed px-6 py-12 text-center">
         <CheckCircle2 className="size-6 text-status-success" aria-hidden="true" />
         <p className="mt-3 text-sm font-semibold">All reconciled</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          No {kind === "daily" ? "daily-sales" : "product-sales"} items need a decision right now.
+          No open {kind === "daily" ? "daily-sales" : "product-sales"} exceptions were returned. This does not verify source completeness.
         </p>
       </div>
     );
@@ -134,7 +136,7 @@ export function ExceptionsList({
       <div className="overflow-hidden rounded-xl border">
         {rows.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-            Nothing matches these filters.
+            No matches on this page. Try another page or change the filters.
           </p>
         ) : (
           <ul>
@@ -200,13 +202,10 @@ export function ExceptionsList({
           </ul>
         )}
       </div>
-      <TablePagination
-        page={safePage}
-        pageSize={pageSize}
-        total={filtered.length}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-      />
+      <TablePagination {...(pagination ?? {
+        page: safePage, pageSize, total: filtered.length,
+        onPageChange: setPage, onPageSizeChange: setPageSize,
+      })} />
       <p className="hidden items-center gap-1.5 px-1 text-xs text-muted-foreground md:flex">
         <Kbd>J</Kbd>
         <Kbd>K</Kbd> move · <Kbd>Enter</Kbd> open · <Kbd>Esc</Kbd> close

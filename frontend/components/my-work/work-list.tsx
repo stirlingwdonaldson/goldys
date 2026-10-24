@@ -78,6 +78,7 @@ export function FocusSwitcher({ value, onChange }: { value: Focus; onChange: (f:
       attached
       value={value}
       onValueChange={(v) => v && onChange(v as Focus)}
+      className="max-w-full flex-wrap"
       aria-label="View as"
     >
       {FOCUS_OPTIONS.map((o) => (

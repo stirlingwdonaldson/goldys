@@ -11,6 +11,7 @@ export interface WorkQueueResult {
   items: WorkItem[];
   /** Signals that couldn't be read (not permitted, or the request failed), in plain words. */
   unavailable: string[];
+  truncated: string[];
 }
 
 /**
@@ -19,6 +20,7 @@ export interface WorkQueueResult {
  * says which part is missing instead of failing outright.
  */
 export async function loadWorkQueue(api: Api, signal?: AbortSignal): Promise<WorkQueueResult> {
+  // shortcut: each decision category reads 200 items; add paging when the queue supports navigation.
   const [daily, product, connectors, flags, recompute] = await Promise.allSettled([
     api.listReconciliationExceptions(0, 200, { signal }),
     api.listProductExceptions(0, 200, { signal }),
@@ -43,6 +45,10 @@ export async function loadWorkQueue(api: Api, signal?: AbortSignal): Promise<Wor
       recompute: value(recompute),
     }),
     unavailable,
+    truncated: [
+      daily.status === "fulfilled" && daily.value.total > daily.value.items.length ? "daily-sales decisions" : null,
+      product.status === "fulfilled" && product.value.total > product.value.items.length ? "product-sales decisions" : null,
+    ].filter((label): label is string => label !== null),
   };
 }
 

@@ -1240,7 +1240,7 @@ export const demoApi: Api = {
       activity: activityFixture(),
       topSellers: demoTopSellers(),
       coversToday: { covers: 132, bookings: 98, noShows: 4 },
-      foodCost: { foodCostPercent: 0.3125, purchases: 15842.6, wastage: 214.5 },
+      foodCost: { foodCostPercent: null, purchases: 6950.5, wastage: 412.8 },
     };
   },
 
@@ -1392,7 +1392,7 @@ export const demoApi: Api = {
     size: number,
   options?: { signal?: AbortSignal }): Promise<DataPage<ReconciliationException>> {
     await delay(400, options?.signal);
-    return { items: productExceptions, total: productExceptions.length, page, size };
+    return { items: productExceptions.slice(page * size, (page + 1) * size), total: productExceptions.length, page, size };
   },
 
   async saveProductOverride(input: ProductOverrideInput): Promise<OverrideResult> {

@@ -9,19 +9,17 @@ test.beforeEach(async ({ page }) => {
       : [] }));
 });
 
-test("incomplete notices default off, persist on refresh and follow navigation", async ({ page }) => {
-  await page.goto("/dashboard");
-  await expect(page.getByRole("heading", { name: "Home", exact: true })).toBeVisible();
-  await expect(page.getByText("Connector activity", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Incomplete — known subtotals only.", { exact: true })).toHaveCount(0);
-  await page.goto("/settings");
-  const toggle = page.getByRole("switch", { name: "Show incomplete data notices" });
-  await expect(toggle).toHaveAttribute("aria-checked", "false");
-  await toggle.click();
+test("qualifications survive the old hidden preference, reload and navigation", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("goldys-show-incomplete-notices", "false"));
+  await page.goto("/kitchen");
+  await expect(page.getByText(/Incomplete example observations/)).toBeVisible();
   await page.reload();
-  await expect(toggle).toHaveAttribute("aria-checked", "true");
-  await page.getByRole("link", { name: "Home", exact: true }).first().click();
-  await expect(page.getByText("Incomplete — known subtotals only.", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/Incomplete example observations/)).toBeVisible();
+  await page.goto("/settings");
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+  await expect(page.getByRole("switch", { name: "Show incomplete data notices" })).toHaveCount(0);
+  await page.goto("/kitchen");
+  await expect(page.getByText(/Incomplete example observations/)).toBeVisible();
 });
 
 test("kitchen observations use shared controls and table", async ({ page }) => {

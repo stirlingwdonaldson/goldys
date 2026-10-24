@@ -1,7 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import SalesPage from "./page";
 import type { SalesTrendPoint } from "@/lib/api";
+
+const navigation = vi.hoisted(() => ({ query: "" }));
+beforeEach(() => { navigation.query = ""; });
 
 // Two sources share a date; summing them would double-count to $20,000.
 // The resolved trend must instead show the reconciled $12,000 (audit F01).
@@ -48,6 +51,13 @@ describe("SalesPage", () => {
     expect(trendEl.textContent).not.toContain("20000");
   });
 
+  it("matches a familiar source abbreviation as well as its display name", () => {
+    navigation.query = "source=CTB";
+    render(<SalesPage />);
+    expect(screen.getByText("$12,000.00")).toBeInTheDocument();
+    expect(screen.queryByText("$8,000.00")).not.toBeInTheDocument();
+  });
+
   it("still renders the per-source breakdown table for comparison", () => {
     render(<SalesPage />);
     expect(screen.getAllByText(/5 Oct/)).toHaveLength(2);
@@ -57,3 +67,5 @@ describe("SalesPage", () => {
 });
 
 vi.mock("@/lib/demo-mode", () => ({ useApi: () => ({}), useDemoMode: () => ({ demo: true }) }));
+
+vi.mock("next/navigation", () => ({ usePathname: () => "/sales", useSearchParams: () => new URLSearchParams(navigation.query), useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }) }));

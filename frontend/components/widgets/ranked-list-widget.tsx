@@ -19,13 +19,13 @@ export function RankedListWidgetView({ widget }: { widget: RankedListWidget }) {
     <WidgetShell title={widget.title} description={widget.description}>
       <ol className="divide-y">
         {widget.items.map((item, i) => (
-          <li key={item.label} className="flex items-center justify-between gap-3 py-2.5">
-            <span className="flex min-w-0 items-center gap-2.5 text-sm">
+          <li key={item.label} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
+            <span className="flex min-w-0 flex-wrap items-center gap-2.5 text-sm">
               <span className="w-4 text-right text-xs tabular-nums text-muted-foreground">{i + 1}</span>
               <span className="truncate">{item.label}</span>
               {item.badge ? <Badge variant="conflict">{item.badge}</Badge> : null}
             </span>
-            <span className="text-sm tabular-nums text-muted-foreground">{values(item)}</span>
+            <span className="min-w-0 text-sm tabular-nums text-muted-foreground [overflow-wrap:anywhere]">{values(item)}</span>
           </li>
         ))}
       </ol>

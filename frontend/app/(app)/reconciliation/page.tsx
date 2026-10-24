@@ -2,7 +2,7 @@
 
 import { invalidateBusinessReads } from "@/lib/query/invalidation";
 
-import { Suspense, useCallback, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { History, Search } from "lucide-react";
 import { useApi } from "@/lib/demo-mode";
@@ -10,7 +10,6 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/components/feedback/toast";
 import { useShellStatus } from "@/components/app-shell/shell-status";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -18,11 +17,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
-import { PermissionDenied } from "@/components/states/permission-denied";
 import { ReconciliationDrillIn } from "@/components/reconciliation/drill-in";
-import { ExceptionsList, type StatusFilter } from "@/components/reconciliation/exceptions-list";
+import { type StatusFilter } from "@/components/reconciliation/exceptions-list";
 import { ReconciliationAudit } from "@/components/reconciliation/reconciliation-audit";
 import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
+import { useExceptionPages, ExceptionStatus, ExceptionResults } from "@/components/reconciliation/exception-page";
 import type { ReconciliationException } from "@/lib/api";
 
 export default function ReconciliationPage() {
@@ -33,15 +32,12 @@ export default function ReconciliationPage() {
   );
 }
 
-type Tab = "daily" | "product";
-
 /**
  * All view state lives in the URL (tab, filter, search, open record), so Back
  * closes the sheet instead of leaving the page, and any view can be bookmarked
  * or shared (heuristics 3 and 7).
  */
 function ReconciliationContent() {
-  const queryApi = useApi();
   const api = useApi();
   const queryClient = useQueryClient();
   const saveDaily = useMutation({ mutationFn: api.saveOverride });
@@ -52,16 +48,11 @@ function ReconciliationContent() {
   const { toast } = useToast();
   const shell = useShellStatus();
 
-  // Exceptions are bounded open conflicts, so one page (capped at the backend's 200) is the whole
-  // set; ExceptionsList then filters and pages client-side over it. Audit, by contrast, grows
-  // forever, so it pages on the server.
-  const { data: exceptions, isPending: loading, error, refetch: reload } = useQuery({ queryKey: ["listReconciliationExceptions", 0, 200], queryFn: ({ signal }) => queryApi.listReconciliationExceptions(0, 200, { signal }) });
-  const { data: productExceptions } = useQuery({ queryKey: ["listProductExceptions", 0, 200], queryFn: ({ signal }) => queryApi.listProductExceptions(0, 200, { signal }) });
+  const { page, pageSize, tab, daily: dailyQuery, product: productQuery, current: currentQuery } = useExceptionPages(new URLSearchParams(params.toString()));
   const { page: auditPage, setPage: setAuditPage, pageSize: auditPageSize, setPageSize: setAuditPageSize } =
     usePageState("audit");
-  const { data: audit } = useQuery({ queryKey: ["listReconciliationAudit", auditPage, auditPageSize], queryFn: ({ signal }) => queryApi.listReconciliationAudit(auditPage, auditPageSize, { signal }) });
+  const auditQuery = useQuery({ queryKey: ["listReconciliationAudit", auditPage, auditPageSize], queryFn: ({ signal }) => api.listReconciliationAudit(auditPage, auditPageSize, { signal }) });
 
-  const tab: Tab = params.get("tab") === "product" ? "product" : "daily";
   const statusParam = params.get("status");
   const status: StatusFilter = statusParam === "conflict" || statusParam === "missing" ? statusParam : "all";
   const query = params.get("q") ?? "";
@@ -89,6 +80,12 @@ function ReconciliationContent() {
     },
     [params, pathname, router],
   );
+
+  useEffect(() => {
+    if (!currentQuery.data) return;
+    const last = Math.max(0, Math.ceil(currentQuery.data.total / pageSize) - 1);
+    if (page > last) setParams({ page: String(last) });
+  }, [currentQuery.data, page, pageSize, setParams]);
 
   const openRecord = useCallback(
     (ex: ReconciliationException) => {
@@ -136,23 +133,7 @@ function ReconciliationContent() {
     }
   }
 
-  if (loading) return <LoadingState rows={4} />;
-  if (error && !exceptions) {
-    if (error.code === "NOT_PERMITTED") return <PermissionDenied subject="reconciliation data" />;
-    return (
-      <ErrorState
-        title="Couldn't load exceptions"
-        message={error.message}
-        correlationId={error.correlationId}
-        onRetry={reload}
-      />
-    );
-  }
-
-  const daily = exceptions?.items ?? [];
-  const products = productExceptions?.items ?? [];
-  const total = daily.length + products.length;
-  const current = tab === "daily" ? daily : products;
+  const current = currentQuery.data?.items ?? [];
   const counts = {
     all: current.length,
     conflict: current.filter((e) => e.status === "conflict").length,
@@ -163,8 +144,8 @@ function ReconciliationContent() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Reconciliation"
-        status={total > 0 ? <Badge variant="conflict">{total} open</Badge> : <Badge variant="success">All clear</Badge>}
-        description="Figures where your sources disagree or one is missing. Fields that agree are hidden."
+        status={<ExceptionStatus daily={dailyQuery} product={productQuery} />}
+        description="Figures where your sources disagree or one is missing. Fields that agree are hidden. Open totals cover these exception lists, not source completeness."
         actions={
           <Button variant="ghost" size="sm" onClick={() => setHistoryOpen(true)}>
             <History aria-hidden="true" />
@@ -174,13 +155,13 @@ function ReconciliationContent() {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <Tabs value={tab} onValueChange={(v) => setParams({ tab: v === "daily" ? null : v, status: null })}>
-          <TabsList aria-label="Reconciliation categories">
+        <Tabs className="max-w-full" value={tab} onValueChange={(v) => setParams({ tab: v === "daily" ? null : v, status: null, page: null })}>
+          <TabsList className="h-auto max-w-full flex-wrap" aria-label="Reconciliation categories">
             <TabsTrigger value="daily">
-              Daily sales <span className="tabular-nums text-muted-foreground">{daily.length}</span>
+              Daily sales <span className="tabular-nums text-muted-foreground">{dailyQuery.data?.total ?? "—"}</span>
             </TabsTrigger>
             <TabsTrigger value="product">
-              Product sales <span className="tabular-nums text-muted-foreground">{products.length}</span>
+              Product sales <span className="tabular-nums text-muted-foreground">{productQuery.data?.total ?? "—"}</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -192,7 +173,8 @@ function ReconciliationContent() {
           attached
           value={status}
           onValueChange={(v) => v && setParams({ status: v === "all" ? null : v })}
-          aria-label="Filter by status"
+          className="max-w-full flex-wrap"
+          aria-label="Filter this page by status"
         >
           <ToggleGroupItem value="all">All {counts.all}</ToggleGroupItem>
           <ToggleGroupItem value="conflict">Conflicts {counts.conflict}</ToggleGroupItem>
@@ -212,14 +194,21 @@ function ReconciliationContent() {
         </div>
       </div>
 
-      <ExceptionsList
+      <details className="rounded-lg border p-3 text-sm">
+        <summary className="cursor-pointer font-medium">How to review exceptions</summary>
+        <p className="mt-2 text-muted-foreground">Conflict means sources report different values; missing means a source has no value. Review the source evidence before deciding. Saving a choice changes Goldy&apos;s resolved view and records your reason; it does not correct the source system.</p>
+      </details>
+      <p className="text-sm text-muted-foreground">Status counts and search apply to this page only. Use the page controls to inspect other exceptions. A page with no matches does not establish that the other pages have no matches.</p>
+      <ExceptionResults result={currentQuery}
         kind={tab}
-        exceptions={current}
         status={status}
         query={query}
         selectedId={tab === "daily" ? recordId : product}
         onReview={openRecord}
         keyboardEnabled={!sheetOpen && !historyOpen}
+        pagination={{ page, pageSize, total: currentQuery.data?.total ?? 0,
+          onPageChange: (value) => setParams({ page: String(value) }),
+          onPageSizeChange: (value) => setParams({ size: String(value), page: null }) }}
       />
 
       <Sheet open={sheetOpen} onOpenChange={(o) => !o && closeRecord()}>
@@ -249,11 +238,13 @@ function ReconciliationContent() {
             <SheetTitle>Change history</SheetTitle>
             <SheetDescription>Every rule change and manual decision, newest first.</SheetDescription>
           </SheetHeader>
-          <ReconciliationAudit entries={audit?.items ?? []} />
+          {auditQuery.isPending ? <LoadingState rows={3} /> : auditQuery.isError ?
+            <ErrorState title="Couldn't load change history" message={auditQuery.error.message} onRetry={auditQuery.refetch} /> :
+            <ReconciliationAudit entries={auditQuery.data?.items ?? []} /> }
           <TablePagination
             page={auditPage}
             pageSize={auditPageSize}
-            total={audit?.total ?? 0}
+            total={auditQuery.data?.total ?? 0}
             onPageChange={setAuditPage}
             onPageSizeChange={setAuditPageSize}
           />

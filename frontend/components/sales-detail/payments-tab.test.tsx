@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { DemoModeProvider } from "@/lib/demo-mode";
 import { ApiError, type Api } from "@/lib/api";
 import { PaymentsTab } from "./payments-tab";
@@ -89,11 +89,12 @@ describe("PaymentsTab", () => {
     expect(screen.getByText("Main Bar")).toBeInTheDocument();
     expect(screen.getByText("Stirling Donaldson")).toBeInTheDocument();
 
+    const transaction = screen.getByText("SALE-1001").closest("tr")!;
     // Currency columns are formatted (amount, tip, surcharge, tendered).
-    expect(screen.getByText("$45.50")).toBeInTheDocument();
-    expect(screen.getByText("$2.00")).toBeInTheDocument();
-    expect(screen.getByText("$0.35")).toBeInTheDocument();
-    expect(screen.getByText("$47.50")).toBeInTheDocument();
+    expect(within(transaction).getByText("$45.50")).toBeInTheDocument();
+    expect(within(transaction).getByText("$2.00")).toBeInTheDocument();
+    expect(within(transaction).getByText("$0.35")).toBeInTheDocument();
+    expect(within(transaction).getByText("$47.50")).toBeInTheDocument();
 
     // Nullable text falls back to an em dash (SALE-1002 has no register or staff).
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);

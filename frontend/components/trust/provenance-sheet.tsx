@@ -19,19 +19,21 @@ export interface ProvenanceTarget {
 }
 
 /**
- * A side sheet that traces one figure back to its sources. Screens hold the `target` in state
+ * A side sheet that traces one figure back to its sources. Screens provide a `target` from local or URL state
  * and set it from a table row's "Trace" action; `null` closes the sheet.
  */
 export function ProvenanceSheet({
   target,
   onClose,
+  onRestoreFocus,
 }: {
   target: ProvenanceTarget | null;
   onClose: () => void;
+  onRestoreFocus?: () => void;
 }) {
   return (
     <Sheet open={target != null} onOpenChange={(open) => (open ? undefined : onClose())}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
+      <SheetContent onCloseAutoFocus={onRestoreFocus ? (event) => { event.preventDefault(); onRestoreFocus(); } : undefined} side="right" className="w-full overflow-y-auto sm:max-w-2xl">
         {target ? (
           <>
             <SheetHeader>
@@ -39,7 +41,7 @@ export function ProvenanceSheet({
                 {target.metricLabel} · {target.date}
               </SheetTitle>
               <SheetDescription>
-                What each source reported, how the difference was settled, and the figure we show.
+                What each source reported, how the difference was settled, and the figure we show. Missing evidence is not zero. If access is denied, ask the person responsible for your account permissions.
               </SheetDescription>
             </SheetHeader>
             <Tabs defaultValue="sources" className="mt-6">

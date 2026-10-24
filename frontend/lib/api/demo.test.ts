@@ -496,3 +496,8 @@ describe("demo dashboard qualifications", () => {
     expect(empty.notices).toContain("Ranked by known sales; full-period ranking unverified.");
   });
 });
+
+it("keeps Home and Kitchen purchases on the same qualified demo basis", async () => {
+  const [home, kitchen] = await Promise.all([demoApi.getDashboardBootstrap(), demoApi.getInventorySummary("2026-09-25", "2026-10-24")]);
+  expect(home.foodCost).toEqual({ purchases: kitchen.purchases, wastage: kitchen.wastage, foodCostPercent: null });
+});

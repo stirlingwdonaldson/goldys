@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartDataTable } from "./chart-data-table";
 import { flattenSeries } from "./flatten";
 import type { BarChartWidget } from "./types";
 import { WidgetShell } from "./widget-shell";
@@ -63,6 +64,7 @@ export function BarChartWidgetView({ widget }: { widget: BarChartWidget }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      <ChartDataTable widget={widget} />
     </WidgetShell>
   );
 }

@@ -113,8 +113,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Coming soon",
-    comingSoon: true,
+    label: "Recipe evidence",
     collapsible: true,
     items: [
       { title: "Recipes", href: "/recipes", icon: BookOpen, keywords: ["costing"] },

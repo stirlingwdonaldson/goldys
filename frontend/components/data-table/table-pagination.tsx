@@ -39,7 +39,7 @@ export function TablePagination({ page, pageSize, total, onPageChange, onPageSiz
 
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground", className)}>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span id="rows-per-page-label">Rows per page</span>
         <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
           <SelectTrigger className="h-8 w-[4.5rem]" aria-labelledby="rows-per-page-label">
@@ -54,7 +54,7 @@ export function TablePagination({ page, pageSize, total, onPageChange, onPageSiz
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-1">
         <span className="mr-2 tabular-nums">
           {from}–{to} of {total}
         </span>

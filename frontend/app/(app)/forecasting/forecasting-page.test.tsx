@@ -136,7 +136,7 @@ async function runForecast() {
 
 describe("ForecastingPage", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mocks.api.listForecastMetrics.mockResolvedValue(metrics);
     mocks.api.listForecastRuns.mockResolvedValue([succeededRun, queuedRun]);
     mocks.api.createForecastRun.mockResolvedValue({ ...queuedRun, id: "fc-new" });
@@ -297,4 +297,49 @@ describe("ForecastingPage", () => {
     expect(screen.getByText("MAE 512.4")).toBeInTheDocument();
     expect(screen.getByText("9,254")).toBeInTheDocument();
   });
+});
+
+it("marks a failed poll as unknown and retries the same issued run without creating another", async () => {
+  vi.resetAllMocks();
+  mocks.api.listForecastMetrics.mockResolvedValue(metrics);
+  mocks.api.listForecastRuns.mockResolvedValue([succeededRun]);
+  mocks.api.createForecastRun.mockResolvedValue({ ...queuedRun, id: "fc-retry" });
+  mocks.api.getForecastRun.mockRejectedValueOnce(new Error("Connection interrupted")).mockResolvedValueOnce({ ...succeededRun, id: "fc-retry" });
+  await renderLoaded();
+  fireEvent.click(screen.getByRole("button", { name: "Run forecast" }));
+  expect(await screen.findByText(/Current status is unknown/)).toBeInTheDocument();
+  expect(screen.getByText(/Last known status; current status is unconfirmed/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  await screen.findByTestId("forecast-vs-baseline-chart");
+  expect(mocks.api.getForecastRun).toHaveBeenLastCalledWith("fc-retry");
+  expect(mocks.api.createForecastRun).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText(/Current status is unknown/)).not.toBeInTheDocument();
+});
+
+it("shows a retryable error when run history cannot load", async () => {
+  vi.resetAllMocks();
+  mocks.api.listForecastMetrics.mockResolvedValue(metrics);
+  mocks.api.listForecastRuns.mockRejectedValue(new Error("History unavailable"));
+  await renderLoaded();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Runs" }), { button: 0 });
+  expect(await screen.findByText("Couldn't load forecast runs")).toBeInTheDocument();
+  expect(screen.queryByText("No runs yet.")).not.toBeInTheDocument();
+});
+
+it("ignores a late result from a previously selected run", async () => {
+  vi.resetAllMocks();
+  mocks.api.listForecastMetrics.mockResolvedValue(metrics);
+  mocks.api.listForecastRuns.mockResolvedValue([succeededRun]);
+  let finish!: (run: ForecastRun) => void;
+  mocks.api.getForecastRun.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  mocks.api.createForecastRun.mockResolvedValue({ ...succeededRun, id: "new-selection", horizonDays: 30 });
+  await renderLoaded();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Runs" }), { button: 0 });
+  const runs = await screen.findByTestId("runs-list");
+  fireEvent.click(within(runs).getByRole("button", { name: "View" }));
+  fireEvent.click(screen.getByRole("button", { name: "Run forecast" }));
+  await screen.findByText(/30-day forecast/);
+  await act(async () => finish({ ...succeededRun, horizonDays: 7 }));
+  expect(screen.getByText(/30-day forecast/)).toBeInTheDocument();
+  expect(screen.queryByText(/7-day forecast/)).not.toBeInTheDocument();
 });

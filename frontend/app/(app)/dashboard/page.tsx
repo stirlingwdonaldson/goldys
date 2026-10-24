@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { useApi } from "@/lib/demo-mode";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "@/components/app-shell/current-user-provider";
@@ -51,7 +53,7 @@ export default function DashboardPage() {
       <PageHeader
         title="Home"
         description="Resolved sales and source qualifications."
-        actions={<FocusSwitcher value={focus} onChange={setFocus} />}
+        actions={<><Button asChild variant="outline" size="sm"><Link href="/my-work">View attention work</Link></Button><FocusSwitcher value={focus} onChange={setFocus} /></>}
       />
 
       <FocusShortcuts focus={focus} />
@@ -71,9 +73,12 @@ export default function DashboardPage() {
 
       <TopSellers items={data.topSellers.items} notices={data.topSellers.notices} coverage={data.topSellers.coverage} />
 
-      {/* Below the fold: the attention queue sits under the headline numbers so the
-          dashboard reads top-down as "how is the business, then what needs doing". */}
       <AttentionPanel
+        notices={[
+          ...(queue.data?.unavailable.length ? [`Not checked: ${queue.data.unavailable.join(", ")}.`] : []),
+          ...(queue.data?.truncated.length ? [`Only the first 200 ${queue.data.truncated.join(" and ")} are included. Additional decisions are not included in this queue.`] : []),
+          ...(queue.error ? ["The work queue could not be checked. Retry from My work."] : []),
+        ]}
         items={queue.data ? filterByFocus(queue.data.items, focus) : null}
         loading={queue.isPending}
         openConflicts={data.summary.openConflicts}

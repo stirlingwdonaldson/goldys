@@ -2,7 +2,7 @@
 
 import { Table } from "@/components/ui/table";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TablePagination, useClientPagination } from "@/components/data-table/table-pagination";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import { useApi } from "@/lib/demo-mode";
 import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateTime, formatDay, formatNumber } from "@/lib/format";
+import { useForecastRun } from "@/components/forecasting/use-forecast-run";
 import { ForecastVsBaselineChart } from "@/components/forecasting/forecast-vs-baseline-chart";
 import { FoodBevSplitChart } from "@/components/forecasting/food-bev-split-chart";
 import { FeatureImportanceChart } from "@/components/forecasting/feature-importance-chart";
@@ -302,11 +303,8 @@ export default function ForecastingPage() {
 
   const [tab, setTab] = useState<Tab>("forecast");
   const [horizon, setHorizon] = useState<number>(7);
-  const [activeRun, setActiveRun] = useState<ForecastRun | null>(null);
-  const [starting, setStarting] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
+  const { activeRun, starting, createError, runError, lastCheckedAt, loadingRun, createRun, viewRun } = useForecastRun();
   const [comparison, setComparison] = useState<ComparisonState | null>(null);
-  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const metrics = useMemo(() => metricsQuery.data ?? [], [metricsQuery.data]);
   const runs = runsQuery.data ?? [];
@@ -318,61 +316,14 @@ export default function ForecastingPage() {
     return m ? `${m.name} — ${m.sourceDomain} · ${m.unit}` : key;
   };
 
-  useEffect(() => {
-    return () => {
-      if (pollTimer.current) clearTimeout(pollTimer.current);
-    };
-  }, []);
-
-  async function pollRun(id: string) {
-    try {
-      const run = await api.getForecastRun(id);
-      setActiveRun(run);
-      if (run.status === "QUEUED" || run.status === "RUNNING") {
-        pollTimer.current = setTimeout(() => {
-          void pollRun(id);
-        }, 2000);
-      } else {
-        void runsQuery.refetch();
-      }
-    } catch {
-      // The run stays at its last known status; a later refresh of the runs list recovers it.
-    }
-  }
-
   async function handleRun() {
-    setStarting(true);
-    setCreateError(null);
-    setActiveRun(null);
     setComparison(null);
-    try {
-      const run = await api.createForecastRun({
-        target: TARGET_METRIC,
-        covariates: [],
-        historyFrom: oneYearAgoISO(),
-        horizonDays: horizon,
-      });
-      setActiveRun(run);
-      if (run.status === "QUEUED" || run.status === "RUNNING") {
-        void pollRun(run.id);
-      } else {
-        void runsQuery.refetch();
-      }
-    } catch (e) {
-      setCreateError(e instanceof Error ? e.message : "Couldn't start the forecast.");
-    } finally {
-      setStarting(false);
-    }
+    await createRun({ target: TARGET_METRIC, covariates: [], historyFrom: oneYearAgoISO(), horizonDays: horizon });
   }
 
-  async function handleViewRun(id: string) {
-    try {
-      const run = await api.getForecastRun(id);
-      setActiveRun(run);
-      setTab("forecast");
-    } catch {
-      // The runs list still shows the run's status; a later refresh recovers it.
-    }
+  function handleViewRun(id: string) {
+    setTab("forecast");
+    void viewRun(id);
   }
 
   async function handleCompare(id: string) {
@@ -420,6 +371,11 @@ export default function ForecastingPage() {
         title="Forecasting"
         description="Forecast revenue forward from the bookings, covers and demand signals the pub knows ahead of time."
       />
+
+      {loadingRun ? <p role="status" className="text-sm">Checking forecast run…</p> : null}
+      {runError ? <ErrorState title="Couldn't check forecast run"
+        message={`${runError.message} Current status is unknown. ${lastCheckedAt ? `Last confirmed ${formatDateTime(lastCheckedAt)}.` : "No status check has completed."}`}
+        onRetry={() => { void handleViewRun(runError.id); }} /> : null}
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList aria-label="Forecasting views">
@@ -492,7 +448,7 @@ export default function ForecastingPage() {
               <Card>
                 <CardContent className="flex items-center gap-3 py-4">
                   <Badge variant={STATUS_VARIANT[activeRun.status]}>{activeRun.status}</Badge>
-                  <p className="text-sm text-muted-foreground">Forecast is running — this can take a moment.</p>
+                  <p className="text-sm text-muted-foreground">{runError || loadingRun ? "Last known status; current status is unconfirmed." : "Forecast is running — this can take a moment."}</p>
                 </CardContent>
               </Card>
             ) : null}
@@ -694,6 +650,8 @@ export default function ForecastingPage() {
               <CardContent>
                 {runsQuery.isPending ? (
                   <p className="text-sm text-muted-foreground">Loading runs…</p>
+                ) : runsQuery.isLoadingError ? (
+                  <ErrorState title="Couldn't load forecast runs" message={runsQuery.error.message} onRetry={runsQuery.refetch} />
                 ) : runs.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No runs yet.</p>
                 ) : (

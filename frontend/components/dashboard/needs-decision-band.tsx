@@ -37,12 +37,12 @@ export function NeedsDecisionBand({ openCount, href = "/reconciliation" }: Needs
           <p className="text-sm font-semibold">
             {hasConflicts
               ? `${openCount} ${openCount === 1 ? "number needs" : "numbers need"} a decision`
-              : "All numbers reconcile"}
+              : "No open reconciliation decisions reported"}
           </p>
           <p className="text-sm text-muted-foreground">
             {hasConflicts
               ? "These figures will show as disputed in your reports until resolved."
-              : "Every reported figure currently agrees across your sources."}
+              : "This count does not establish complete source coverage or verified figures."}
           </p>
         </div>
       </div>

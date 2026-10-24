@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { AuthFeedback } from "@/components/auth/auth-feedback";
 import { SignupRecovery } from "./signup-recovery";
@@ -72,33 +73,45 @@ export default function SignupPage() {
           {creationOutcome !== "editing" ? (
             <SignupRecovery outcome={creationOutcome} submitting={submitting} error={error} />
           ) : <form onSubmit={onSubmit} className="space-y-4">
-            <Input
-              aria-label="Full name"
-              autoComplete="name"
-              placeholder="Full name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-            />
-            <Input
-              type="email"
-              aria-label="Work email"
-              autoComplete="email"
-              placeholder="Work email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <Input
-              type="password"
-              aria-label="Password"
-              autoComplete="new-password"
-              placeholder="Password (at least 8 characters)"
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-name">Full name</Label>
+              <Input
+                id="signup-name"
+                aria-label="Full name"
+                autoComplete="name"
+                placeholder="Full name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-email">Work email</Label>
+              <Input
+                id="signup-email"
+                type="email"
+                aria-label="Work email"
+                autoComplete="email"
+                placeholder="Work email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-password">Password</Label>
+              <Input
+                id="signup-password"
+                type="password"
+                aria-label="Password"
+                autoComplete="new-password"
+                placeholder="Password (at least 8 characters)"
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
             <AuthFeedback error={error} />
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Creating account…" : "Sign up"}

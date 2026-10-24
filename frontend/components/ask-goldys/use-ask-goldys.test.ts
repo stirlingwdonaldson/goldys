@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
+import { ApiError } from "@/lib/api/errors";
 import { useAskGoldys } from "./use-ask-goldys";
 import { streamChat } from "./stream";
 
@@ -112,4 +113,14 @@ it("ignores late callbacks and completion from a reset/replaced turn", async () 
   const active = vi.mocked(streamChat).mock.calls.at(-1)![2].signal;
   unmount();
   expect(active?.aborted).toBe(true);
+});
+
+it("retains the typed HTTP failure and submitted question", async () => {
+  const error = new ApiError("UNEXPECTED_STATUS", "Temporary outage", undefined, undefined, { status: 503 });
+  vi.mocked(streamChat).mockRejectedValueOnce(error);
+  const { result } = renderHook(() => useAskGoldys());
+  await act(async () => result.current.ask("Sales last week?"));
+  await waitFor(() => expect(result.current.working).toBe(false));
+  expect(result.current.error).toBe(error);
+  expect(result.current.messages).toEqual([{ role: "user", content: "Sales last week?" }]);
 });

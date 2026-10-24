@@ -6,6 +6,7 @@ import { useApi } from "@/lib/demo-mode";
 import { useQuery } from "@tanstack/react-query";
 import { FlowCanvas } from "@/components/flow/flow-canvas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/states/error-state";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import type { Provenance } from "@/lib/api/types";
 import { buildProvenanceGraph } from "./provenance-graph";
@@ -27,11 +28,7 @@ export function ProvenanceView({ metricId, metricLabel, date }: ProvenanceViewPr
   if (result.isPending) return <Skeleton className="h-[280px] w-full" />;
   if (result.isLoadingError) {
     if (result.error.code === "NOT_PERMITTED") return <PermissionDenied subject="this figure's sources" />;
-    return (
-      <p role="alert" className="text-sm text-destructive">
-        Couldn&apos;t load where this figure came from. {result.error.message}
-      </p>
-    );
+    return <ErrorState title="Couldn't load where this figure came from" message={result.error.message} onRetry={result.refetch} />;
   }
   if (!result.data) return null;
   return <ProvenanceDetail provenance={result.data} metricLabel={metricLabel} />;

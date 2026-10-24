@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { DemoModeProvider } from "@/lib/demo-mode";
 import { ApiError, type Api } from "@/lib/api";
 import type { DeletedSaleDay, DeletedSaleRow } from "@/lib/api/types";
@@ -85,11 +85,12 @@ describe("DeletedOrdersTab", () => {
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("$185.50")).toBeInTheDocument();
 
+    const transaction = screen.getByText("SALE-999").closest("tr")!;
     // Currency columns are formatted (inc tax, ex tax, tax, cost).
-    expect(screen.getByText("$120.00")).toBeInTheDocument();
-    expect(screen.getByText("$109.09")).toBeInTheDocument();
-    expect(screen.getByText("$10.91")).toBeInTheDocument();
-    expect(screen.getByText("$40.00")).toBeInTheDocument();
+    expect(within(transaction).getByText("$120.00")).toBeInTheDocument();
+    expect(within(transaction).getByText("$109.09")).toBeInTheDocument();
+    expect(within(transaction).getByText("$10.91")).toBeInTheDocument();
+    expect(within(transaction).getByText("$40.00")).toBeInTheDocument();
 
     // Nullable text and cost fall back to an em dash (SALE-998 has no note, table or cost).
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);

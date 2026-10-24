@@ -35,7 +35,7 @@ export function StatCard({ label, value, hint, icon: Icon, help, delta, spark, f
     <Card className="flex min-w-0 flex-col gap-1.5 p-4">
       <div className="flex items-center gap-2 text-ui text-muted-foreground">
         {Icon ? <Icon className="size-4" aria-hidden="true" /> : null}
-        <span>{label}</span>
+        <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
         {help ? (
           <HoverCard openDelay={150}>
             <HoverCardTrigger asChild>
@@ -62,7 +62,7 @@ export function StatCard({ label, value, hint, icon: Icon, help, delta, spark, f
         </div>
       ) : null}
       {spark ? <Sparkline values={spark} className="mt-1 h-9 w-full" /> : null}
-      {footer ? <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">{footer}</div> : null}
+      {footer ? <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1.5">{footer}</div> : null}
     </Card>
   );
 }

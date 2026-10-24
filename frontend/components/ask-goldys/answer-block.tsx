@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
+import { ErrorState } from "@/components/states/error-state";
+import { isApiError } from "@/lib/api/errors";
 import { PermissionDenied } from "@/components/states/permission-denied";
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import { parseWidgetSpecs } from "@/components/widgets/parse";
@@ -22,7 +24,8 @@ import type { AnswerPayload, MetricProvenance } from "./types";
 interface AnswerBlockProps {
   summary: string;
   answer: AnswerPayload | null;
-  error: string | null;
+  error: Error | null;
+  onRetry?: () => void;
   api: Api;
 }
 
@@ -80,8 +83,23 @@ function worstTrust(trusts: (TrustSummary | null)[]): TrustSummary | null {
   return worst.freshness === worstFreshness ? worst : { ...worst, freshness: worstFreshness };
 }
 
+function AnswerError({ error, onRetry }: { error: Error; onRetry?: () => void }) {
+  if (isApiError(error) && (error.code === "AUTH_REQUIRED" || error.status === 401)) {
+    return (
+      <div className="space-y-2">
+        <ErrorState title="Sign in to continue" message={error.message} />
+        <Link href="/login" className="underline">Sign in</Link>
+      </div>
+    );
+  }
+  if (isApiError(error) && (error.code === "NOT_PERMITTED" || error.status === 403)) {
+    return <PermissionDenied subject="this data" message={error.message} />;
+  }
+  return <ErrorState title="Couldn't answer your question" message={error.message} onRetry={onRetry} />;
+}
+
 /** The answer anatomy: summary + widgets + "How I got this" trace + "as of" + notices + draft. */
-export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
+export function AnswerBlock({ summary, answer, error, api, onRetry }: AnswerBlockProps) {
   const queryClient = useQueryClient();
   const saveMutation = useMutation({ mutationFn: ({ id, input }: { id?: string | null; input: SaveDashboardInput }) => id ? api.updateDashboard(id, input) : api.saveDashboard(input) });
   const [saving, setSaving] = useState(false);
@@ -114,9 +132,7 @@ export function AnswerBlock({ summary, answer, error, api }: AnswerBlockProps) {
     }
   }
 
-  if (error) {
-    return <PermissionDenied subject="this data" message={error} />;
-  }
+  if (error) return <AnswerError error={error} onRetry={onRetry} />;
   return (
     <div className="space-y-4">
       {summary ? <p className="text-sm">{summary}</p> : null}

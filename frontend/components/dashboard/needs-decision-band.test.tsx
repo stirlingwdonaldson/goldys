@@ -16,9 +16,10 @@ describe("NeedsDecisionBand", () => {
     expect(screen.getByText("1 number needs a decision")).toBeInTheDocument();
   });
 
-  it("shows the all-reconcile success state when there are no conflicts", () => {
+  it("does not infer verification from zero open decisions", () => {
     render(<NeedsDecisionBand openCount={0} />);
-    expect(screen.getByText("All numbers reconcile")).toBeInTheDocument();
+    expect(screen.getByText("No open reconciliation decisions reported")).toBeInTheDocument();
+    expect(screen.getByText(/does not establish complete source coverage/)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /open reconciliation/i }),
     ).toHaveAttribute("href", "/reconciliation");

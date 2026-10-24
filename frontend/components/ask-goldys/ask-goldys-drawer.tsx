@@ -10,6 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { isOwner } from "@/lib/roles";
 import { useApi } from "@/lib/demo-mode";
@@ -33,10 +34,18 @@ const SUGGESTIONS = [
 export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
   const isOwnerRole = isOwner(seniority);
   const [open, setOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [submittedQuestion, setSubmittedQuestion] = useState("");
   const api = useApi();
   const { summary, answer, error, working, ask, reset } = useAskGoldys();
 
-  useEffect(() => { if (!open) reset(); }, [open, reset]);
+  useEffect(() => { if (!open) { reset(); setQuestion(""); setSubmittedQuestion(""); } }, [open, reset]);
+
+  function submitQuestion(value: string) {
+    setQuestion(value);
+    setSubmittedQuestion(value);
+    ask(value);
+  }
 
   // ⌘J toggles the drawer (⌘K belongs to the command palette, which can also
   // open this drawer by dispatching OPEN_ASK_EVENT).
@@ -79,7 +88,7 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
-                  onClick={() => ask(s)}
+                  onClick={() => submitQuestion(s)}
                   className="block w-full rounded-md border px-3 py-2 text-left text-sm hover:bg-muted"
                 >
                   {s}
@@ -91,21 +100,22 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
           {working ? <p className="text-sm text-muted-foreground">Working…</p> : null}
 
           {summary || answer || error ? (
-            <AnswerBlock summary={summary} answer={answer} error={error} api={api} />
+            <AnswerBlock summary={summary} answer={answer} error={error} api={api} onRetry={() => ask(submittedQuestion)} />
           ) : null}
         </div>
 
+        <Label htmlFor="ask-question">Reporting question</Label>
         <form
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            const input = e.currentTarget.elements.namedItem("question") as HTMLInputElement;
-            const q = input.value.trim();
-            if (q) ask(q);
-            input.value = "";
+            const q = question.trim();
+            if (q && !working) submitQuestion(q);
           }}
         >
-          <Input name="question" placeholder="e.g. What were sales last week?" />
+          <Input id="ask-question" name="question" value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            placeholder="e.g. What were sales last week?" />
           <Button type="submit" disabled={working}>
             Ask
           </Button>

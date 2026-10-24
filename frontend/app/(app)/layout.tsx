@@ -4,7 +4,6 @@ import { AppShell } from "@/components/app-shell/app-shell";
 import { AuthGate } from "@/components/app-shell/auth-gate";
 import { CurrentUserProvider } from "@/components/app-shell/current-user-provider";
 import { ToastProvider } from "@/components/feedback/toast";
-import { IncompleteNoticesProvider } from "@/lib/incomplete-notices";
 import { DemoModeProvider } from "@/lib/demo-mode";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -15,11 +14,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <CurrentUserProvider>
       <AuthGate>
         <DemoModeProvider>
-          <IncompleteNoticesProvider>
-            <ToastProvider>
-              <AppShell defaultSidebarOpen={sidebarOpen}>{children}</AppShell>
-            </ToastProvider>
-          </IncompleteNoticesProvider>
+          <ToastProvider>
+            <AppShell defaultSidebarOpen={sidebarOpen}>{children}</AppShell>
+          </ToastProvider>
         </DemoModeProvider>
       </AuthGate>
     </CurrentUserProvider>
