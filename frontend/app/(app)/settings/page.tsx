@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IdentityCard } from "@/components/app-shell/identity-card";
+import { IncompleteNoticesToggle } from "@/components/settings/incomplete-notices-toggle";
 import { DemoModeToggle } from "@/components/settings/demo-mode-toggle";
 import { PageHeader } from "@/components/layout/page-header";
 
@@ -11,6 +12,7 @@ export default function SettingsPage() {
       <PageHeader title="Settings" description="Account and access." />
       <IdentityCard />
       <DemoModeToggle />
+      <IncompleteNoticesToggle />
       <p className="text-sm text-muted-foreground">
         Role and permission administration is not available yet.
       </p>
