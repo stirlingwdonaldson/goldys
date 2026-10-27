@@ -162,7 +162,7 @@ public class LightspeedSaleItemIngestService {
     }
   }
 
-  private static SaleItemInput input(LightspeedSaleItem it, UUID rawId) {
+  static SaleItemInput input(LightspeedSaleItem it, UUID rawId) {
     return new SaleItemInput(
         "LIGHTSPEED",
         it.receiptLineId(),

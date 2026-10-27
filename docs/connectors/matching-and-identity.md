@@ -1,5 +1,10 @@
 # Matching & Identity Strategies
 
+The [bounded five-day Lightspeed repair](../operations/lightspeed-five-day-repair.md)
+uses the existing `LIGHTSPEED` receipt-line identity. Missing keys may be inserted;
+only the documented sauce quantity correction may supersede an existing version,
+preserving its metadata and valid-time interval. All other differences are held.
+
 How the platform decides that two source records describe the same real-world entity, and how
 identity is assigned when no source shares a common ID. This is the design artifact the
 Reconciliation Engine assumes exists before any comparison logic is written (PRD Requirement 7).

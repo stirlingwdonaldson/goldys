@@ -1,5 +1,10 @@
 # Source Access & Ingestion Paths
 
+The explicit five-file Lightspeed historical repair is documented in
+[`../operations/lightspeed-five-day-repair.md`](../operations/lightspeed-five-day-repair.md).
+Its authenticated preview/apply routes are separate from scheduled webhooks; they
+never run automatically and do not change source reports or schedules.
+
 How each Phase 1 source is reached and what data it exposes. This is the
 discovery reference for the connector adapters — it records login flows,
 endpoints, and export mechanics, **never credentials**. Credentials are supplied

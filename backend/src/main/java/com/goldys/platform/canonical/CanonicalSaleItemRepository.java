@@ -13,6 +13,11 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 interface CanonicalSaleItemRepository extends BitemporalRepository<CanonicalSaleItem> {
+  @Query(
+      "select s from CanonicalSaleItem s where s.sourceSystem = :source and s.supersededAt is null "
+          + "and (s.tradingDate = :day or s.sourceRecordRef in :refs)")
+  List<CanonicalSaleItem> repairSnapshot(String source, LocalDate day, Collection<String> refs);
+
   List<CanonicalSaleItem> findAllBySourceSystemAndSourceRecordRefOrderByRecordedAt(
       String sourceSystem, String sourceRecordRef);
 
