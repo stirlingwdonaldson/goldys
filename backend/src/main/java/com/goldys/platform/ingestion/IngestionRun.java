@@ -101,6 +101,13 @@ class IngestionRun {
     failureSummary = "Processing failed at " + stage.name();
   }
 
+  void qualify(String detail) {
+    if (status == IngestionStatus.SUCCESS || status == IngestionStatus.NO_NEW_DATA) {
+      status = IngestionStatus.PARTIAL;
+      failureSummary = detail;
+    }
+  }
+
   private void requireRunning() {
     if (status != IngestionStatus.RUNNING) {
       throw new RunAlreadyCompletedException("Ingestion run " + id + " is already " + status);

@@ -74,6 +74,22 @@ public class LightspeedSaleItemIngestService {
         IngestionStageKind.PARSED,
         items.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
 
+    long missingReceipts =
+        items.stream().filter(it -> it.saleNumber() == null || it.saleNumber().isBlank()).count();
+    long missingStaff =
+        items.stream().filter(it -> it.staffName() == null || it.staffName().isBlank()).count();
+    if (missingReceipts > 0 || missingStaff > 0) {
+      ingestion.recordQualification(
+          rawId,
+          "SALE_ITEM_METADATA_UNOBSERVED",
+          "Delivery has "
+              + missingReceipts
+              + " lines without receipt number and "
+              + missingStaff
+              + " without staff name; prior values are retained where available, otherwise unknown."
+              + " Receipt-specific coverage remains unverified.");
+    }
+
     try {
       recordItems(items, rawId);
     } catch (RuntimeException e) {

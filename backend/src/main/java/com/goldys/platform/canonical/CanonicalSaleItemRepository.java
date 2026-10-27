@@ -13,6 +13,17 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 interface CanonicalSaleItemRepository extends BitemporalRepository<CanonicalSaleItem> {
+  // Take the table lock first so a bounded repair cannot deadlock with an identity-lock holder.
+  @org.springframework.data.jpa.repository.Modifying
+  @Query(value = "LOCK TABLE canonical_sale_item IN ROW EXCLUSIVE MODE", nativeQuery = true)
+  void lockForWrite();
+
+  @Query(
+      value =
+          "select count(*) from pg_advisory_xact_lock(hashtextextended('sale-item:' || :source || ':' || :ref, 0))",
+      nativeQuery = true)
+  long lockSourceIdentity(String source, String ref);
+
   @Query(
       "select s from CanonicalSaleItem s where s.sourceSystem = :source and s.supersededAt is null "
           + "and (s.tradingDate = :day or s.sourceRecordRef in :refs)")

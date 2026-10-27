@@ -37,6 +37,7 @@ class CanonicalSaleItemService {
   /** Recovery only inserts missing keys; it must not overwrite a newer observation. */
   @Transactional
   boolean recordMissing(SaleItemInput input) {
+    lockIdentity(input);
     if (repository.lockCurrentSourceFact(input.sourceSystem(), input.receiptLineId()).isPresent())
       return false;
     recordAt(input, CLOCK.instant());
@@ -46,10 +47,19 @@ class CanonicalSaleItemService {
 
   @Transactional
   CanonicalSaleItem recordAt(SaleItemInput input, Instant recordedAt) {
+    lockIdentity(input);
     String ref = input.receiptLineId();
     UUID logicalId = UUID.nameUUIDFromBytes(("sale-item:" + ref).getBytes(StandardCharsets.UTF_8));
     Optional<CanonicalSaleItem> current =
         repository.lockCurrentSourceFact(input.sourceSystem(), ref);
+
+    // Safe reports may omit these fields; absence is not evidence that prior metadata was cleared.
+    if ("LIGHTSPEED".equals(input.sourceSystem())) {
+      input =
+          input.preserveUnobservedMetadata(
+              current.map(CanonicalSaleItem::saleNumber).orElse(null),
+              current.map(CanonicalSaleItem::staffName).orElse(null));
+    }
 
     if (current.isPresent()) {
       CanonicalSaleItem existing = current.get();
@@ -80,5 +90,10 @@ class CanonicalSaleItemService {
             recordedAt,
             recordedAt,
             input));
+  }
+
+  private void lockIdentity(SaleItemInput input) {
+    repository.lockForWrite();
+    repository.lockSourceIdentity(input.sourceSystem(), input.receiptLineId());
   }
 }

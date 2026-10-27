@@ -25,4 +25,33 @@ public record SaleItemInput(
     String registerName,
     String tableNumber,
     UUID rawRecordId,
-    com.goldys.platform.semantic.SaleAdjustment adjustment) {}
+    com.goldys.platform.semantic.SaleAdjustment adjustment) {
+  SaleItemInput preserveUnobservedMetadata(String previousSaleNumber, String previousStaffName) {
+    return new SaleItemInput(
+        sourceSystem,
+        receiptLineId,
+        tradingDate,
+        observedOrPrevious(saleNumber, previousSaleNumber),
+        itemName,
+        productNumber,
+        sku,
+        categoryName,
+        quantitySold,
+        amount,
+        soldPriceIncTax,
+        totalTax,
+        costIncTax,
+        orderType,
+        saleType,
+        observedOrPrevious(staffName, previousStaffName),
+        registerName,
+        tableNumber,
+        rawRecordId,
+        adjustment);
+  }
+
+  private static String observedOrPrevious(String observation, String previous) {
+    if (observation != null && !observation.isBlank()) return observation;
+    return previous == null || previous.isBlank() ? null : previous;
+  }
+}

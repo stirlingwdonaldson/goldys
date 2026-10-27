@@ -471,3 +471,29 @@ reject canonical product publication after all complete pages have been retained
 site-0 interpretation, name-based merge or product classification follows from these observations.
 Lightspeed payment-joined sale numbers do not establish safe merchandise grain. The tested
 receipt-line report omits that field; a missing sale number is not reconstructed from an ID prefix.
+
+### Lightspeed ongoing-feed receipt/staff metadata (27 October 2026)
+
+For the same Lightspeed receipt-line identity, an absent, null or blank receipt number or
+sale-closed staff name means **unobserved**, not an instruction to clear a stored value.
+A transaction-scoped source/line identity lock serializes writers, including new keys. It is
+acquired after a ROW EXCLUSIVE table lock, preserving the bounded repair lock order. The
+canonical writer merges just these two fields from the locked current version before
+comparison/version creation. Nonblank observations still replace prior values using normal
+supersession. Other fields, including financial measures, retain their existing update semantics.
+A new line without metadata stores null; no receipt number is inferred from its line ID.
+
+The successor's raw ID identifies its incoming financial observation. Carried metadata comes
+from the prior version chain and its raw references, not necessarily that successor's payload.
+No-op deliveries create raw evidence but no extra canonical version. The merge preserves
+observed values; it does not certify old metadata or restore values already lost before this fix.
+Explicit source clearing and source-effective revision ordering remain unverified.
+
+Live webhook deliveries with missing receipt/staff observations receive a durable
+`SALE_ITEM_METADATA_UNOBSERVED` ingestion-failure qualification with counts only, marking the
+run PARTIAL while successful canonicalization still records SUCCESS. This flags missing incoming
+observations even when prior metadata is available; it is not a count of current unknown values.
+Receipt-specific drill-down/costing remains incomplete for lines without a verified receipt
+number. This change neither supplies a safe receipt mapping nor permits unsafe payment joins.
+The report-grain rejection, report configuration, webhook authentication, schedules and historical
+repair approval boundary are unchanged. No migration or automatic repair/replay is required.

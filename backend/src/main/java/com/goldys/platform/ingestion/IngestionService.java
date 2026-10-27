@@ -218,6 +218,15 @@ public class IngestionService {
     }
   }
 
+  /** Record a safe, operator-facing qualification without rejecting successfully parsed facts. */
+  public void recordQualification(UUID rawId, String type, String detail) {
+    RawRecord record =
+        rawRecords
+            .findById(rawId)
+            .orElseThrow(() -> new IllegalArgumentException("Unknown raw record " + rawId));
+    runs.recordQualification(record.ingestionRunId(), type, detail, CLOCK.instant());
+  }
+
   /** The latest run for each source. One query, indexed, regardless of ledger size. */
   public List<IngestionRunSummary> latestRunPerSource() {
     return runRepository.latestPerSource().stream().map(this::toSummary).toList();
