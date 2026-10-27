@@ -40,9 +40,9 @@ public class CanonicalSaleItemRepair {
 
   @Transactional(propagation = Propagation.MANDATORY)
   public void lockForRepair() {
-    // Include absent keys: row locks alone cannot prevent concurrent inserts after preview.
+    // Block SELECT FOR UPDATE too, so row-lock holders cannot deadlock the subsequent writes.
     jdbc.execute("SET LOCAL lock_timeout = '10s'");
-    jdbc.execute("LOCK TABLE canonical_sale_item IN SHARE ROW EXCLUSIVE MODE");
+    jdbc.execute("LOCK TABLE canonical_sale_item IN EXCLUSIVE MODE");
   }
 
   @Transactional(propagation = Propagation.MANDATORY)

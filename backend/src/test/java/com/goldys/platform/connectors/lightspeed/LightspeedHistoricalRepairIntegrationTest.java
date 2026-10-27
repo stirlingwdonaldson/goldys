@@ -376,13 +376,16 @@ class LightspeedHistoricalRepairIntegrationTest {
         new UsernamePasswordAuthenticationToken(user, "unused", user.getAuthorities()));
   }
 
-  @Test
-  void repairLockAlsoSerializesConcurrentInsertsForPreviouslyMissingKeys() throws Exception {
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+  void repairLockSerializesBothMissingKeyInsertsAndExistingRowLockHolders(boolean existing)
+      throws Exception {
     var acquired = new java.util.concurrent.CountDownLatch(1);
     var release = new java.util.concurrent.CountDownLatch(1);
     var started = new java.util.concurrent.CountDownLatch(1);
     var first = parser.parse(csv("2025-12-01")).getFirst();
     UUID raw = raw(csv("2025-12-01"));
+    if (existing) canonical.record(LightspeedSaleItemIngestService.input(first, raw));
     try (var pool = java.util.concurrent.Executors.newFixedThreadPool(2)) {
       var locked =
           pool.submit(

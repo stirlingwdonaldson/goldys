@@ -78,10 +78,12 @@ flags, not a new reconciliation UI. Qualifications remain in every preview.
 
 ## Transactions and limits
 
-Apply takes a PostgreSQL `SHARE ROW EXCLUSIVE` lock on `canonical_sale_item`, with
+Apply takes a PostgreSQL `EXCLUSIVE` lock on `canonical_sale_item`, with
 a 10-second acquisition timeout, before regenerating the preview. This blocks
-concurrent writers, including inserts into absent keys, for the bounded repair;
-ordinary reads remain available. Expect brief writer contention.
+concurrent writers and `SELECT FOR UPDATE` readers, including inserts into absent
+keys, for the bounded repair; blocking row-lock acquisition also avoids writer
+deadlocks during the batch. Ordinary reads remain available. Expect brief writer
+contention.
 
 Original CSV bytes and the approved plan commit as raw evidence before canonical
 writes. Canonical changes for the file share one transaction. An exception rolls
