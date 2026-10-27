@@ -47,6 +47,17 @@ public abstract class BitemporalEntity {
 
   protected BitemporalEntity() {}
 
+  protected BitemporalEntity(BitemporalEntity previous, UUID rawRecordId, Instant recordedAt) {
+    this(
+        previous.logicalEntityId,
+        previous.sourceSystem,
+        previous.sourceRecordRef,
+        rawRecordId,
+        previous.validFrom,
+        recordedAt);
+    this.validTo = previous.validTo;
+  }
+
   protected BitemporalEntity(
       UUID logicalEntityId,
       String sourceSystem,

@@ -76,6 +76,26 @@ public class LightspeedSaleItemCsvParser {
     return out;
   }
 
+  /** Payment joins can multiply measures even when every receipt-line ID is unique. */
+  void requireReceiptLineGrain(byte[] csv) {
+    try (var in = new InputStreamReader(new ByteArrayInputStream(csv), StandardCharsets.UTF_8);
+        var records = CSVFormat.DEFAULT.parse(in)) {
+      var rows = records.iterator();
+      if (!rows.hasNext()) return;
+      for (String column : rows.next()) {
+        String name = column.trim();
+        if (name.startsWith("Saleline Payments ")
+            || name.startsWith("Payment Data ")
+            || name.equals("Product Salelines Product ID"))
+          throw new ConnectorFetchException(
+              "UNSAFE_REPORT_GRAIN",
+              "Sale-item report includes an unsafe payment/product join; retain raw evidence and review the source report");
+      }
+    } catch (IOException e) {
+      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Malformed sale-item CSV", e);
+    }
+  }
+
   private static List<CSVRecord> readAll(byte[] csv) {
     try (var in = new InputStreamReader(new ByteArrayInputStream(csv), StandardCharsets.UTF_8)) {
       return CSVFormat.DEFAULT.parse(in).getRecords();

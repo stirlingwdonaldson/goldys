@@ -40,5 +40,7 @@ public enum InvoiceIngestFlagType {
    * run still succeeds and the unknown columns are preserved in the raw ledger, but the drift is
    * surfaced here so a source change is never silently absorbed.
    */
-  SCHEMA_DRIFT
+  SCHEMA_DRIFT,
+  /** Source discount/amount semantics are unresolved; no automatic amount or PDF-gap correction. */
+  INVOICE_AMOUNT_BASIS_UNVERIFIED
 }

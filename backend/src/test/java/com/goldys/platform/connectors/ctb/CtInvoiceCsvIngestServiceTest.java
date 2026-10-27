@@ -65,6 +65,32 @@ class CtInvoiceCsvIngestServiceTest {
   }
 
   @Test
+  void discountedSourceAmountsStayUnchangedAndFlaggedWithoutPruningPdfEvidence() throws Exception {
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(UUID.randomUUID());
+    service()
+        .ingest(
+            java.nio.file.Files.readAllBytes(
+                java.nio.file.Path.of(
+                    "src/test/resources/fixtures/ctb/invoice-semantics-evidence.csv")));
+    verify(flags)
+        .flag(
+            eq(InvoiceIngestFlagType.INVOICE_AMOUNT_BASIS_UNVERIFIED),
+            eq("INV8365286"),
+            any(),
+            isNull(),
+            any());
+    assertThat(recordedLines())
+        .anySatisfy(
+            line -> {
+              assertThat(line.invoiceNumber()).isEqualTo("INV8365286");
+              assertThat(line.lineTotal()).isEqualByComparingTo("459.77");
+            });
+    verify(lineCanonical, never()).supersedePdfOriginLines(any(UUID.class));
+    verify(lineCanonical, never()).prunePdfOriginLines(any(UUID.class), any(), any());
+  }
+
+  @Test
   void canonicalizesHeaderAndEveryLine() {
     when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(UUID.randomUUID());

@@ -267,31 +267,53 @@ public class CtbConnector implements SourceConnector {
     int start = 0;
     int pages = 0;
     int total = -1;
-    CtbProductSalesBatch batch = new CtbProductSalesBatch(day);
+    List<SaleItemPage> captured = new ArrayList<>();
     UUID lastRawId = null;
     while (pages < MAX_PAGES) {
       CtbClient.CtbPage page =
           client.searchSaleItems(day.toString(), day.toString(), start, PAGE_SIZE);
-      // The sale-item payload carries no date (saleDate is null on every row); the trading day is
-      // the request window. Persist it out-of-band so a later replay can recover the date durably.
       UUID rawId = writeRaw(page.json(), "ctb-revenue", "sale-items:" + day, sink);
-
-      lastRawId = rawId;
-      for (CtbSaleItem item : saleItemParser.parse(page.json().getBytes(StandardCharsets.UTF_8))) {
-        batch.add(item, rawId);
-      }
-
+      List<CtbSaleItem> items = saleItemParser.parse(page.json().getBytes(StandardCharsets.UTF_8));
+      writeRaw(
+          MAPPER
+              .valueToTree(
+                  Map.of(
+                      "endpoint", "Sale/SearchSaleItemsByDateRange",
+                      "fromDate", day.toString(),
+                      "toDate", day.toString(),
+                      "searchType", CtbClient.SALE_ITEMS_SEARCH_TYPE,
+                      "start", start,
+                      "limit", PAGE_SIZE,
+                      "responseRawId", rawId.toString(),
+                      "returnedRows", items.size(),
+                      "totalCount", page.totalCount()))
+              .toString(),
+          "ctb-sale-items-request",
+          "sale-items:" + day,
+          sink);
+      if (page.totalCount() < 0 || (total >= 0 && total != page.totalCount()))
+        throw new ConnectorFetchException(
+            "CONNECTOR_TRUNCATED", "Sale-item total changed within the fetched day");
       total = page.totalCount();
+      if (items.size() != Math.min(PAGE_SIZE, total - start))
+        throw new ConnectorFetchException(
+            "CONNECTOR_TRUNCATED", "Sale-item returned count differs from the advertised page");
+      captured.add(new SaleItemPage(items, rawId));
+      lastRawId = rawId;
       pages++;
-      if (start + PAGE_SIZE >= total) {
-        break;
-      }
+      if (start + PAGE_SIZE >= total) break;
       start += PAGE_SIZE;
     }
-
     throwIfTruncated("sale-items for " + day, pages, start, total);
 
+    // Capture every page before unresolved product identity can reject the day.
+    CtbProductSalesBatch batch = new CtbProductSalesBatch(day);
+    for (SaleItemPage page : captured)
+      for (CtbSaleItem item : page.items()) batch.add(item, page.rawId());
     List<SourceProductSaleFactInput> facts = batch.sourceFacts();
+    if (facts.size() != total)
+      throw new ConnectorFetchException(
+          "CONNECTOR_TRUNCATED", "Sale-item pages repeat observations; report is incomplete");
     if (!facts.isEmpty()) {
       if (facts.stream().allMatch(f -> f.sourceRecordRef().startsWith("ctb-row:")))
         sourceSaleFact.recordReport(facts, lastRawId);
@@ -511,6 +533,8 @@ public class CtbConnector implements SourceConnector {
     }
     return venueClock.today();
   }
+
+  private record SaleItemPage(List<CtbSaleItem> items, UUID rawId) {}
 
   private static final class Totals {
     BigDecimal total = BigDecimal.ZERO;

@@ -1,5 +1,10 @@
 # Matching & Identity Strategies
 
+The [bounded five-day Lightspeed repair](../operations/lightspeed-five-day-repair.md)
+uses the existing `LIGHTSPEED` receipt-line identity. Missing keys may be inserted;
+only the documented sauce quantity correction may supersede an existing version,
+preserving its metadata and valid-time interval. All other differences are held.
+
 How the platform decides that two source records describe the same real-world entity, and how
 identity is assigned when no source shares a common ID. This is the design artifact the
 Reconciliation Engine assumes exists before any comparison logic is written (PRD Requirement 7).
@@ -457,3 +462,12 @@ receipt ID; conflicting rows for that ID fail explicitly after raw persistence. 
 components need a verified source grouping contract before they can be combined. Final line
 revenue already includes the observed adjustments; never apply them again. The source sold-price
 measure is not consistently per unit and cannot establish a discount or substitute for line total.
+
+### Evidence constraints (27 October 2026)
+
+CTB `parentStockCode` is retained as source context, never substituted for a blank row's own code.
+Report-local `uniqueId` does not establish permanent product identity. Unknown blank rows still
+reject canonical product publication after all complete pages have been retained. No new mapping,
+site-0 interpretation, name-based merge or product classification follows from these observations.
+Lightspeed payment-joined sale numbers do not establish safe merchandise grain. The tested
+receipt-line report omits that field; a missing sale number is not reconstructed from an ID prefix.

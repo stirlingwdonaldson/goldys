@@ -8,4 +8,21 @@ public record CtInvoiceLine(
     String description, // StockDescription
     String rawQuantity, // LineQuantity (coarse; COGS uses lineTotalExTax, not this)
     BigDecimal unitCostExTax, // LineUnitCostExTax
-    BigDecimal lineTotalExTax) {} // LineTotalExTax — the COGS driver
+    BigDecimal lineTotalExTax,
+    BigDecimal unitCostIncTax,
+    BigDecimal lineTotalIncTax,
+    BigDecimal lineTax,
+    BigDecimal lineDiscount,
+    String lineTaxFlag) {
+  boolean hasUnverifiedAmountBasis() {
+    if (lineDiscount != null && lineDiscount.signum() != 0) return true;
+    return lineTotalIncTax != null
+        && lineTax != null
+        && lineTotalIncTax
+                .subtract(lineTotalExTax)
+                .subtract(lineTax)
+                .abs()
+                .compareTo(new BigDecimal("0.02"))
+            > 0;
+  }
+}

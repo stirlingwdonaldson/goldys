@@ -66,6 +66,9 @@ class CanonicalSaleItem extends BitemporalEntity {
   @Column(name = "table_number", updatable = false)
   private String tableNumber;
 
+  @Column(name = "sale_closed_time", updatable = false)
+  private java.time.LocalTime saleClosedTime;
+
   @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
   @Column(name = "adjustment", columnDefinition = "jsonb", updatable = false)
   private com.goldys.platform.semantic.SaleAdjustment adjustment;
@@ -75,6 +78,56 @@ class CanonicalSaleItem extends BitemporalEntity {
   }
 
   protected CanonicalSaleItem() {}
+
+  CanonicalSaleItem(CanonicalSaleItem previous, BigDecimal quantity, UUID rawId, Instant at) {
+    super(previous, rawId, at);
+    tradingDate = previous.tradingDate;
+    saleNumber = previous.saleNumber;
+    itemName = previous.itemName;
+    productNumber = previous.productNumber;
+    sku = previous.sku;
+    categoryName = previous.categoryName;
+    quantitySold = quantity;
+    amount = previous.amount;
+    soldPriceIncTax = previous.soldPriceIncTax;
+    totalTax = previous.totalTax;
+    costIncTax = previous.costIncTax;
+    orderType = previous.orderType;
+    saleType = previous.saleType;
+    staffName = previous.staffName;
+    registerName = previous.registerName;
+    tableNumber = previous.tableNumber;
+    saleClosedTime = previous.saleClosedTime;
+    adjustment = previous.adjustment;
+  }
+
+  SaleItemInput repairInput() {
+    return new SaleItemInput(
+        sourceSystem(),
+        sourceRecordRef(),
+        tradingDate,
+        saleNumber,
+        itemName,
+        productNumber,
+        sku,
+        categoryName,
+        quantitySold,
+        amount,
+        soldPriceIncTax,
+        totalTax,
+        costIncTax,
+        orderType,
+        saleType,
+        staffName,
+        registerName,
+        tableNumber,
+        rawRecordId(),
+        adjustment);
+  }
+
+  java.time.LocalTime saleClosedTime() {
+    return saleClosedTime;
+  }
 
   private CanonicalSaleItem(
       UUID logicalEntityId,

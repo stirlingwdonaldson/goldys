@@ -140,7 +140,17 @@ public class CtInvoiceCsvIngestService {
         for (CtInvoiceLine line : invoice.lines())
           recordStockItem(
               identity, line.stockCode(), ProductNameKey.normalize(line.description()), rawId);
-        convergePdfLinesAfterCsvIngest(identity.logicalEntityId(), invoice.invoiceNumber());
+        boolean unverifiedBasis =
+            invoice.lines().stream().anyMatch(CtInvoiceLine::hasUnverifiedAmountBasis);
+        if (unverifiedBasis)
+          flags.flag(
+              InvoiceIngestFlagType.INVOICE_AMOUNT_BASIS_UNVERIFIED,
+              invoice.invoiceNumber(),
+              firstPdfFilename(invoice),
+              null,
+              "Source discount or line amount basis requires review; original amounts retained, no automatic balancing or PDF convergence");
+        if (!unverifiedBasis && !flags.hasUnverifiedAmountBasis(invoice.invoiceNumber()))
+          convergePdfLinesAfterCsvIngest(identity.logicalEntityId(), invoice.invoiceNumber());
       }
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);

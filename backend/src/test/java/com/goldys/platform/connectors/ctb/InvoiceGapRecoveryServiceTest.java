@@ -56,6 +56,13 @@ class InvoiceGapRecoveryServiceTest {
   }
 
   @Test
+  void unverifiedInvoiceBasisCannotAuthorizePdfGapInserts() {
+    when(flags.hasUnverifiedAmountBasis("INV-7200")).thenReturn(true);
+    service().recover("INV-7200", "a.pdf", pdf, rawId, List.of(), Set.of());
+    verifyNoInteractions(lineIngest, invoiceQuery, inventoryQuery);
+  }
+
+  @Test
   void createsPdfLinesWhenPdfReconcilesAndCsvIsShort() {
     header("100.00");
     when(inventoryQuery.currentCsvLineTotalForInvoice("INV-7200"))
@@ -94,7 +101,7 @@ class InvoiceGapRecoveryServiceTest {
     service().recover("INV-7200", "a.pdf", pdf, rawId, List.of(line), Set.of(0));
 
     verifyNoInteractions(lineIngest);
-    verifyNoInteractions(flags);
+    verify(flags, times(0)).flag(any(), any(), any(), any(), anyString());
   }
 
   @Test

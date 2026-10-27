@@ -20,6 +20,70 @@ class CtInvoiceCsvParserTest {
           + "StockCode,StockDescription,LineQuantity,LineUnitCostExTax,LineTotalExTax,LineTaxFlag\n";
 
   @Test
+  void retainsObservedInvoiceSemanticsWithoutManufacturingBalancedAmounts() throws Exception {
+    var invoices =
+        new CtInvoiceCsvParser()
+            .parse(
+                java.nio.file.Files.readAllBytes(
+                    java.nio.file.Path.of(
+                        "src/test/resources/fixtures/ctb/invoice-semantics-evidence.csv")))
+            .invoices();
+    assertThat(invoices).hasSize(7);
+    var bridge =
+        invoices.stream()
+            .filter(v -> v.invoiceNumber().equals("INV8365286"))
+            .findFirst()
+            .orElseThrow();
+    var line = bridge.lines().getFirst();
+    assertThat(line.lineTotalExTax()).isEqualByComparingTo("459.77");
+    assertThat(line.lineDiscount()).isEqualByComparingTo("59.77");
+    assertThat(line.lineTotalIncTax()).isEqualByComparingTo("440");
+    assertThat(line.hasUnverifiedAmountBasis()).isTrue();
+    var credit =
+        invoices.stream()
+            .filter(v -> v.invoiceNumber().equals("5674251"))
+            .findFirst()
+            .orElseThrow();
+    assertThat(credit.documentType()).isEqualTo("Return");
+    assertThat(credit.lines().getFirst().rawQuantity()).isEqualTo("-1");
+    assertThat(credit.lines().getFirst().lineTax()).isEqualByComparingTo("-20.03");
+    assertThat(credit.lines().getFirst().lineDiscount()).isZero();
+    assertThat(credit.lines().getFirst().hasUnverifiedAmountBasis()).isFalse();
+    assertThat(credit.lines().get(1).lineTotalExTax()).isEqualByComparingTo("0.24");
+    var astro =
+        invoices.stream()
+            .filter(v -> v.invoiceNumber().equals("00003794"))
+            .findFirst()
+            .orElseThrow();
+    assertThat(astro.invoiceNumber()).startsWith("0000");
+    assertThat(astro.freightAmountExTax()).isEqualByComparingTo("11");
+    var principal =
+        invoices.stream()
+            .filter(v -> v.invoiceNumber().equals("INV-57074"))
+            .findFirst()
+            .orElseThrow();
+    assertThat(principal.lines().get(1).stockCode()).isEqualTo("LHPN241275");
+    assertThat(principal.lines().get(1).lineDiscount()).isEqualByComparingTo("44.55");
+  }
+
+  @Test
+  void absentContextIsUnknownRatherThanZeroAndPrecisionIsUnchanged() {
+    var invoice =
+        new CtInvoiceCsvParser()
+            .parse(
+                ("Invoice,Supplier,Date,StockCode,StockDescription,LineTotalExTax,LineTax,LineDiscount\n"
+                        + "X,Test,2026-10-27,C,Item,1.123456,,0.000000\n")
+                    .getBytes(java.nio.charset.StandardCharsets.UTF_8))
+            .invoices()
+            .getFirst();
+    var line = invoice.lines().getFirst();
+    assertThat(line.lineTotalExTax().toPlainString()).isEqualTo("1.123456");
+    assertThat(line.lineTax()).isNull();
+    assertThat(line.lineDiscount().toPlainString()).isEqualTo("0.000000");
+    assertThat(invoice.freightAmountExTax()).isNull();
+  }
+
+  @Test
   void parsesHeaderAndLines() {
     byte[] csv =
         (HEADER

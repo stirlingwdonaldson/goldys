@@ -103,6 +103,11 @@ public class InvoiceIngestFlagService {
         .toList();
   }
 
+  public boolean hasUnverifiedAmountBasis(String invoiceNumber) {
+    return repository.existsByFlagTypeAndInvoiceNumberAndResolvedAtIsNull(
+        InvoiceIngestFlagType.INVOICE_AMOUNT_BASIS_UNVERIFIED, invoiceNumber);
+  }
+
   /** Retires a flag once a better matcher/replay resolves it. Idempotent. */
   @Transactional
   public void resolve(UUID id) {

@@ -61,7 +61,8 @@ class CtbProductSalesBatchTest {
                         changed.unitPrice(),
                         changed.uniqueGroupId(),
                         changed.siteNumber(),
-                        changed.uniqueId()),
+                        changed.uniqueId(),
+                        changed.parentStockCode()),
                     overlap))
         .hasMessageContaining("group changed");
     assertThatThrownBy(() -> batch.add(item("X", null, "1"), overlap))

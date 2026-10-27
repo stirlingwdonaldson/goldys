@@ -21,15 +21,16 @@ public class CtbSaleItemParser {
       throw new ConnectorFetchException(
           "CONNECTOR_SCHEMA_MISMATCH", "Not JSON: " + e.getMessage(), e);
     }
-    JsonNode data = root.get("data");
+    JsonNode data = root == null ? null : root.get("data");
     if (data == null || !data.isArray()) {
-      return List.of();
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Sale-item data is not an array");
     }
     List<CtbSaleItem> out = new ArrayList<>();
     for (JsonNode n : data) {
       out.add(
           new CtbSaleItem(
-              n.path("stockCode").asText(),
+              text(n, "stockCode"),
               n.path("stockDescription").asText(),
               decimal(n, "quantitySold"),
               decimal(n, "amount"),
@@ -42,7 +43,8 @@ public class CtbSaleItemParser {
               decimal(n, "unitPrice"),
               text(n, "uniqueGroupId"),
               n.path("siteNumber").isIntegralNumber() ? n.path("siteNumber").intValue() : null,
-              rowId(n)));
+              rowId(n),
+              text(n, "parentStockCode")));
     }
     return out;
   }

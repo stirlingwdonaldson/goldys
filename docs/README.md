@@ -70,6 +70,8 @@ consequences, status).
 - [operations/deployment.md](operations/deployment.md): dev, production, staging, accounts,
   SFTP drop, Sentry, upgrade and rollback.
 - [operations/testing.md](operations/testing.md): local checks, test layout, CI.
+- [operations/lightspeed-five-day-repair.md](operations/lightspeed-five-day-repair.md):
+  exact-file historical sale-line preview, approval and bounded repair.
 - [operations/performance.md](operations/performance.md): performance baseline, changes
   made, and operational metrics.
 

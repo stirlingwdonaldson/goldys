@@ -26,4 +26,9 @@ public record CtInvoice(
     BigDecimal freightAmount, // InvoiceFreight
     BigDecimal incTaxAmount, // Total
     List<String> pdfFilenames, // distinct PDF column values, first-seen order
-    List<CtInvoiceLine> lines) {}
+    List<CtInvoiceLine> lines,
+    BigDecimal freightAmountExTax,
+    String invoiceTaxFlag,
+    String documentType,
+    String outletCode,
+    String outletName) {}

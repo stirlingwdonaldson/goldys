@@ -7,7 +7,7 @@
     "fetchMethod": "FILE_EXPORT",
     "contentType": "text/csv"
   },
-  "schemaVersion": "2.0",
+  "schemaVersion": "2.1",
   "compatibility": {
     "policy": "semver",
     "breakingBumps": "MAJOR",
@@ -33,6 +33,11 @@
       "freightAmount": { "type": ["number", "null"] },
       "incTaxAmount": { "type": ["number", "null"] },
       "pdfFilenames": { "type": "array", "items": { "type": "string" } },
+      "freightAmountExTax": { "type": ["number", "null"] },
+      "invoiceTaxFlag": { "type": ["string", "null"] },
+      "documentType": { "type": ["string", "null"] },
+      "outletCode": { "type": ["string", "null"] },
+      "outletName": { "type": ["string", "null"] },
       "lines": {
         "type": "array",
         "items": {
@@ -44,7 +49,12 @@
             "description": { "type": "string" },
             "rawQuantity": { "type": ["string", "null"] },
             "unitCostExTax": { "type": ["number", "null"] },
-            "lineTotalExTax": { "type": "number" }
+            "lineTotalExTax": { "type": "number" },
+            "unitCostIncTax": { "type": ["number", "null"] },
+            "lineTotalIncTax": { "type": ["number", "null"] },
+            "lineTax": { "type": ["number", "null"] },
+            "lineDiscount": { "type": ["number", "null"] },
+            "lineTaxFlag": { "type": ["string", "null"] }
           }
         }
       }
@@ -119,10 +129,10 @@
   ],
 
   "unmapped": [
-    { "rawColumn": "OutletCode / OutletName", "policy": "preserved in raw ledger; not canonicalised (venue identity deferred to a later slice)" },
+    { "rawColumn": "OutletCode / OutletName", "policy": "retained as parsed source context and in raw ledger; not canonicalised (venue identity deferred)" },
     { "rawColumn": "SupplierGLCode / StockGLCode", "policy": "preserved in raw ledger; candidate category mapping, currently unused" },
-    { "rawColumn": "LineTax / LineDiscount / LineTaxFlag", "policy": "preserved in raw ledger; not canonicalised (PDF supplies tax treatment)" },
+    { "rawColumn": "LineTax / LineDiscount / LineTaxFlag", "policy": "retained as parsed source context and in raw ledger; source/PDF tax and discount bases remain independent" },
     { "rawColumn": "InvoiceCreatedDate / InvoiceUpdatedDate", "policy": "preserved in raw ledger; source correction times not yet modelled" },
-    { "rawColumn": "LineUnitCost / LineTotal", "policy": "preserved in raw ledger; LineUnitCostExTax / LineTotalExTax are the authoritative ex-tax figures" }
+    { "rawColumn": "LineUnitCost / LineTotal", "policy": "retained as parsed source context and in raw ledger; LineTotalExTax remains the source observation and may be before discounts, not a verified final purchase amount" }
   ]
 }

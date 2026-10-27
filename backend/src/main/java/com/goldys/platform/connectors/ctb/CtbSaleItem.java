@@ -25,7 +25,8 @@ public record CtbSaleItem(
     BigDecimal unitPrice,
     String uniqueGroupId,
     Integer siteNumber,
-    String uniqueId) {
+    String uniqueId,
+    String parentStockCode) {
   public CtbSaleItem(
       String code,
       String name,
@@ -40,7 +41,9 @@ public record CtbSaleItem(
       BigDecimal price,
       String group,
       Integer site) {
-    this(code, name, qty, amount, cpu, fc, tfc, profit, discount, tax, price, group, site, null);
+    this(
+        code, name, qty, amount, cpu, fc, tfc, profit, discount, tax, price, group, site, null,
+        null);
   }
 
   SourceProductSaleFactInput sourceFact(LocalDate day, UUID rawId) {

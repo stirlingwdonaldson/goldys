@@ -93,21 +93,7 @@ public class CtInvoiceCsvParser {
             "Invoice appears in multiple outlet/document contexts; source identity requires review");
       }
 
-      Group g =
-          groups.computeIfAbsent(
-              groupKey,
-              k ->
-                  new Group(
-                      supplierCode,
-                      supplierName,
-                      optionalString(columns, r, "PONumber"),
-                      date(columns, r, "Date"),
-                      invoiceNumber,
-                      optionalDate(columns, r, "InvoiceDueDate"),
-                      optionalMoney(columns, r, "InvoiceTotalExTax"),
-                      optionalMoney(columns, r, "GST"),
-                      optionalMoney(columns, r, "InvoiceFreight"),
-                      optionalMoney(columns, r, "Total")));
+      Group g = groups.computeIfAbsent(groupKey, k -> new Group(columns, r));
       String pdfFilename = optionalString(columns, r, "PDF");
       if (pdfFilename != null) {
         g.pdfFilenames.add(pdfFilename);
@@ -118,7 +104,12 @@ public class CtInvoiceCsvParser {
               description,
               optionalString(columns, r, "LineQuantity"),
               optionalMoney(columns, r, "LineUnitCostExTax"),
-              money(columns, r, "LineTotalExTax")));
+              money(columns, r, "LineTotalExTax"),
+              optionalMoney(columns, r, "LineUnitCost"),
+              optionalMoney(columns, r, "LineTotal"),
+              optionalMoney(columns, r, "LineTax"),
+              optionalMoney(columns, r, "LineDiscount"),
+              optionalString(columns, r, "LineTaxFlag")));
     }
 
     List<CtInvoice> out = new ArrayList<>();
@@ -136,7 +127,12 @@ public class CtInvoiceCsvParser {
               g.freightAmount,
               g.incTaxAmount,
               List.copyOf(g.pdfFilenames),
-              g.lines));
+              g.lines,
+              g.freightAmountExTax,
+              g.invoiceTaxFlag,
+              g.documentType,
+              g.outletCode,
+              g.outletName));
     }
     for (CtInvoice invoice : out) {
       if (!validator.validateOutput(CONTRACT, OUTPUT_MAPPER.valueToTree(invoice)).isEmpty()) {
@@ -159,30 +155,30 @@ public class CtInvoiceCsvParser {
     final BigDecimal gstAmount;
     final BigDecimal freightAmount;
     final BigDecimal incTaxAmount;
+    final BigDecimal freightAmountExTax;
+    final String invoiceTaxFlag;
+    final String documentType;
+    final String outletCode;
+    final String outletName;
     final List<CtInvoiceLine> lines = new ArrayList<>();
     final LinkedHashSet<String> pdfFilenames = new LinkedHashSet<>();
 
-    Group(
-        String supplierCode,
-        String supplierName,
-        String purchaseNumber,
-        LocalDate invoiceDate,
-        String invoiceNumber,
-        LocalDate dueDate,
-        BigDecimal amountExTax,
-        BigDecimal gstAmount,
-        BigDecimal freightAmount,
-        BigDecimal incTaxAmount) {
-      this.supplierCode = supplierCode;
-      this.supplierName = supplierName;
-      this.purchaseNumber = purchaseNumber;
-      this.invoiceDate = invoiceDate;
-      this.invoiceNumber = invoiceNumber;
-      this.dueDate = dueDate;
-      this.amountExTax = amountExTax;
-      this.gstAmount = gstAmount;
-      this.freightAmount = freightAmount;
-      this.incTaxAmount = incTaxAmount;
+    Group(Map<String, Integer> columns, CSVRecord row) {
+      supplierCode = optionalString(columns, row, "SupplierCode");
+      supplierName = requireValue(columns, row, "Supplier");
+      purchaseNumber = optionalString(columns, row, "PONumber");
+      invoiceDate = date(columns, row, "Date");
+      invoiceNumber = requireValue(columns, row, "Invoice");
+      dueDate = optionalDate(columns, row, "InvoiceDueDate");
+      amountExTax = optionalMoney(columns, row, "InvoiceTotalExTax");
+      gstAmount = optionalMoney(columns, row, "GST");
+      freightAmount = optionalMoney(columns, row, "InvoiceFreight");
+      incTaxAmount = optionalMoney(columns, row, "Total");
+      freightAmountExTax = optionalMoney(columns, row, "InvoiceFreightExTax");
+      invoiceTaxFlag = optionalString(columns, row, "InvoiceTaxFlag");
+      documentType = optionalString(columns, row, "DocumentType");
+      outletCode = optionalString(columns, row, "OutletCode");
+      outletName = optionalString(columns, row, "OutletName");
     }
   }
 
