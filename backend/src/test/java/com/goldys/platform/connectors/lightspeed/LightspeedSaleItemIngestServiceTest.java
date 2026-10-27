@@ -62,6 +62,80 @@ class LightspeedSaleItemIngestServiceTest {
   }
 
   @Test
+  void uniqueButMultipliedSaleNumberReportIsHeldAfterRawPersistence() throws Exception {
+    var raw = UUID.randomUUID();
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any())).thenReturn(raw);
+    var realParser = new LightspeedSaleItemCsvParser();
+    byte[] csv =
+        java.nio.file.Files.readAllBytes(
+            java.nio.file.Path.of(
+                "src/test/resources/fixtures/lightspeed/sale-items-unsafe-sale-number.csv"));
+    assertThatThrownBy(
+            () ->
+                new LightspeedSaleItemIngestService(ingestion, canonical, realParser)
+                    .ingest(
+                        new com.fasterxml.jackson.databind.ObjectMapper()
+                            .writeValueAsBytes(
+                                java.util.Map.of(
+                                    "attachment",
+                                    java.util.Map.of(
+                                        "data", new String(csv, StandardCharsets.UTF_8))))))
+        .hasFieldOrPropertyWithValue("failureType", "UNSAFE_REPORT_GRAIN");
+    verify(ingestion).recordStage(raw, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
+    verify(canonical, never()).record(any());
+    assertThatThrownBy(
+            () ->
+                new LightspeedSaleItemIngestService(ingestion, canonical, realParser)
+                    .preview(
+                        new RawLedgerQuery.RawPayload(
+                            raw,
+                            new com.fasterxml.jackson.databind.ObjectMapper()
+                                .writeValueAsBytes(
+                                    java.util.Map.of(
+                                        "attachment",
+                                        java.util.Map.of(
+                                            "data", new String(csv, StandardCharsets.UTF_8)))))))
+        .hasFieldOrPropertyWithValue("failureType", "UNSAFE_REPORT_GRAIN");
+  }
+
+  @Test
+  void verifiedAdjustmentsAreNotAppliedTwiceAndRefundSignsArePreserved() throws Exception {
+    var raw = UUID.randomUUID();
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any())).thenReturn(raw);
+    String csv =
+        java.nio.file.Files.readString(
+            java.nio.file.Path.of(
+                "src/test/resources/fixtures/lightspeed/sale-items-verified-adjustments.csv"));
+    new LightspeedSaleItemIngestService(ingestion, canonical, new LightspeedSaleItemCsvParser())
+        .ingest(
+            new com.fasterxml.jackson.databind.ObjectMapper()
+                .writeValueAsBytes(java.util.Map.of("attachment", java.util.Map.of("data", csv))));
+    var inputs = org.mockito.ArgumentCaptor.forClass(SaleItemInput.class);
+    verify(canonical, org.mockito.Mockito.times(9)).record(inputs.capture());
+    org.assertj.core.api.Assertions.assertThat(inputs.getAllValues())
+        .filteredOn(v -> v.receiptLineId().equals("27919574010001"))
+        .singleElement()
+        .satisfies(
+            v -> {
+              org.assertj.core.api.Assertions.assertThat(v.amount()).isEqualByComparingTo("39.6");
+              org.assertj.core.api.Assertions.assertThat(v.saleNumber()).isNull();
+              org.assertj.core.api.Assertions.assertThat(v.adjustment().amountIncTax())
+                  .isEqualByComparingTo("-26.4");
+            });
+    org.assertj.core.api.Assertions.assertThat(inputs.getAllValues())
+        .filteredOn(v -> v.receiptLineId().equals("27902006600001"))
+        .singleElement()
+        .satisfies(
+            v -> {
+              org.assertj.core.api.Assertions.assertThat(v.quantitySold())
+                  .isEqualByComparingTo("-1");
+              org.assertj.core.api.Assertions.assertThat(v.amount()).isEqualByComparingTo("-85.43");
+              org.assertj.core.api.Assertions.assertThat(v.adjustment().type())
+                  .isEqualTo("Surcharge");
+            });
+  }
+
+  @Test
   void persistsRawThenParsesAndCanonicalizes() {
     UUID rawId = UUID.randomUUID();
     when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any())).thenReturn(rawId);

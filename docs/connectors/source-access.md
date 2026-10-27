@@ -332,3 +332,36 @@ no dietary suitability is inferred from names or unchecked fields.
 Composition/catalog reads return HTTP 204 until a complete snapshot exists. The typed
 frontend normalizes this optional response to null; it does not treat absence as an
 empty recipe or a malformed server response.
+
+### Source evidence guards (27 October 2026)
+
+Development changes only: no source reports/settings, production records or recovery jobs are changed.
+
+Lightspeed sale-item ingestion and recovery preview reject CSV headers under `Saleline Payments`
+or `Payment Data`, and `Product Salelines Product ID`, with `UNSAFE_REPORT_GRAIN`. The original
+webhook is persisted first; a failed processing stage remains visible in ingestion health. The raw
+CSV parser can still inspect historical evidence, but inspection does not authorize canonicalization.
+Even Sale Number alone multiplied all four merchandise measures while keeping IDs unique (13/13).
+A report containing these fields needs source review before deployment; removing duplicate rows or
+dividing by payment counts is not a correction contract. Missing sale number stays unknown. Receipt-number lookup/costing cannot associate those new lines
+until a separately verified sale identifier is available; no ID-prefix reconstruction is introduced.
+
+CTB sale-item pages retain their original raw response and a separate `ctb-sale-items-request`
+JSON observation with endpoint, date parameters, searchType, offset, limit, raw response ID and
+advertised/returned counts. Existing `ctb-revenue` / `sale-items:<day>` provenance is unchanged.
+The connector keeps its verified date-only / searchType=-1 request; it does not switch to browser
+searchType=1. It captures all complete pages before validating product identity. Short/empty pages,
+changing or invalid totals and repeated observations reject complete-day publication. Blank codes
+remain unresolved even when `parentStockCode` is present. Legacy replay must not group pages merely
+by adjacent timestamps or day: explicit report membership and completeness are required.
+
+The invoice parser retains source `LineUnitCost`, `LineTotal`, `LineTax`, `LineDiscount`,
+`LineTaxFlag`, `InvoiceFreightExTax`, `InvoiceTaxFlag`, `DocumentType` and outlet context without
+rounding or calculating replacements. These contextual fields remain in immutable raw evidence;
+this change adds no canonical columns or migration. Nonzero discounts and line amount residuals
+above two cents produce `INVOICE_AMOUNT_BASIS_UNVERIFIED`. That flag is not a claim of source error:
+amount-vs-percentage settings, pre-discount bases and WET/rounding remain unresolved. Original
+canonical source amounts stay unchanged and purchase summaries explicitly qualify that basis.
+Open holds prevent automatic PDF-gap inserts and CSV-driven PDF-line pruning; a later observation
+does not silently clear an earlier hold. Credits retain supplied signs, never an inferred flip.
+Invoice replacement/deletion semantics and individual PDF/source discrepancies remain unresolved.

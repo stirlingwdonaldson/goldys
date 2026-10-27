@@ -8,6 +8,9 @@ import org.springframework.data.repository.query.Param;
 
 interface InvoiceIngestFlagRepository extends JpaRepository<InvoiceIngestFlag, UUID> {
 
+  boolean existsByFlagTypeAndInvoiceNumberAndResolvedAtIsNull(
+      InvoiceIngestFlagType flagType, String invoiceNumber);
+
   /** All flags, most recent first, for the read API. */
   List<InvoiceIngestFlag> findAllByOrderByOccurredAtDesc();
 

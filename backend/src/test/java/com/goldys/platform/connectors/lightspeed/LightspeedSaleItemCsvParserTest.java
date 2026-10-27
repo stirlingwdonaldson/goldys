@@ -14,6 +14,40 @@ import org.junit.jupiter.api.Test;
 class LightspeedSaleItemCsvParserTest {
 
   @Test
+  void verifiedThirteenLinesRetainSourceAmountsAndSeparateSameNameComponents() throws Exception {
+    var parser = new LightspeedSaleItemCsvParser();
+    byte[] csv =
+        Files.readAllBytes(
+            Path.of("src/test/resources/fixtures/lightspeed/sale-items-verified-thirteen.csv"));
+    parser.requireReceiptLineGrain(csv);
+    var items = parser.parse(csv);
+    assertThat(items).hasSize(13);
+    assertThat(items.stream().map(LightspeedSaleItem::receiptLineId).distinct()).hasSize(13);
+    assertThat(items).allSatisfy(v -> assertThat(v.saleNumber()).isNull());
+    assertThat(
+            items.stream()
+                .map(LightspeedSaleItem::amount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add))
+        .isEqualByComparingTo("406");
+    assertThat(items).filteredOn(v -> v.itemName().equals("Peppercorn Sauce")).hasSize(2);
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(
+      strings = {
+        "Saleline Payments Sale Number",
+        "Payment Data Payment Type Code",
+        "Product Salelines Product ID"
+      })
+  void unsafeJoinColumnsAreRejectedEvenWithOnlyOneUniqueLine(String field) {
+    byte[] csv =
+        ("Sales Data Receipt Line ID,Sales Data Sale Closed Date," + field + "\nL1,2025-07-25,X\n")
+            .getBytes(StandardCharsets.UTF_8);
+    assertThatThrownBy(() -> new LightspeedSaleItemCsvParser().requireReceiptLineGrain(csv))
+        .hasFieldOrPropertyWithValue("failureType", "UNSAFE_REPORT_GRAIN");
+  }
+
+  @Test
   void parsesRowsByHeaderName() throws Exception {
     byte[] csv =
         Files.readAllBytes(Path.of("src/test/resources/fixtures/lightspeed/sale_items_sample.csv"));

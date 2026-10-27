@@ -132,7 +132,9 @@ public class LightspeedSaleItemIngestService {
   }
 
   private List<LightspeedSaleItem> parseRows(byte[] body) {
-    return parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+    byte[] csv = extractCsv(body).getBytes(StandardCharsets.UTF_8);
+    parser.requireReceiptLineGrain(csv);
+    return parser.parse(csv);
   }
 
   private List<LightspeedSaleItem> parseItems(byte[] body) {

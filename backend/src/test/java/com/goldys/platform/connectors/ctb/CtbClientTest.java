@@ -6,6 +6,37 @@ import org.junit.jupiter.api.Test;
 
 class CtbClientTest {
 
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(
+      strings = {
+        "{}",
+        "{\"totalCount\":null}",
+        "{\"totalCount\":\"206\"}",
+        "{\"totalCount\":2147483648}"
+      })
+  void saleItemMissingOrInvalidCountsCannotLookComplete(String body) throws Exception {
+    var server =
+        com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+    server.createContext(
+        "/Sale/SearchSaleItemsByDateRange",
+        exchange -> {
+          byte[] response = body.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+          exchange.getResponseHeaders().set("Content-Type", "application/json");
+          exchange.sendResponseHeaders(200, response.length);
+          try (var out = exchange.getResponseBody()) {
+            out.write(response);
+          }
+        });
+    server.start();
+    try {
+      var client = new CtbClient("http://127.0.0.1:" + server.getAddress().getPort());
+      assertThat(client.searchSaleItems("2026-09-05", "2026-09-05", 0, 200).totalCount())
+          .isNegative();
+    } finally {
+      server.stop(0);
+    }
+  }
+
   @Test
   void loginUsesTopLevelIsSuccess() {
     assertThat(CtbClient.isSuccess("{\"IsSuccess\": true, \"AdditionalData\": {}}")).isTrue();

@@ -35,6 +35,133 @@ import org.mockito.ArgumentCaptor;
 
 class CtbConnectorTest {
   @Test
+  void capturesBothRealPagesBeforeRejectingTheUnidentifiedRow() throws Exception {
+    var client = emptyClient();
+    String first = evidencePage(1), second = evidencePage(2);
+    when(client.searchSaleItems("2026-09-05", "2026-09-05", 0, 200))
+        .thenReturn(new CtbClient.CtbPage(first, 206));
+    when(client.searchSaleItems("2026-09-05", "2026-09-05", 200, 200))
+        .thenReturn(new CtbClient.CtbPage(second, 206));
+    var products = mock(CanonicalProductSalesIngest.class);
+    var facts = mock(SourceProductSaleFactIngest.class);
+    var connector =
+        connector(
+            client,
+            emptyRevenueParser(),
+            new CtbSaleItemParser(),
+            mock(CtbSaleRecipeLinkParser.class),
+            mock(SaleRecipeLinkIngest.class),
+            products,
+            facts);
+    List<FetchedPayload> raw = new ArrayList<>();
+    assertThatThrownBy(
+            () ->
+                connector.fetch(
+                    "2026-10-24",
+                    payload -> {
+                      raw.add(payload);
+                      return UUID.randomUUID();
+                    }))
+        .hasMessageContaining("2026-09-05")
+        .hasMessageContaining("identity");
+    verify(client).searchSaleItems("2026-09-05", "2026-09-05", 200, 200);
+    assertThat(raw)
+        .anySatisfy(
+            p ->
+                assertThat(new String(p.bytes(), java.nio.charset.StandardCharsets.UTF_8))
+                    .isEqualTo(second));
+    var requests =
+        raw.stream()
+            .filter(
+                p ->
+                    p.fetcherIdentity().equals("ctb-sale-items-request")
+                        && "sale-items:2026-09-05".equals(p.sourceRecordRef()))
+            .toList();
+    assertThat(requests).hasSize(2);
+    var metadata =
+        new com.fasterxml.jackson.databind.ObjectMapper().readTree(requests.get(1).bytes());
+    assertThat(metadata.path("start").asInt()).isEqualTo(200);
+    assertThat(metadata.path("returnedRows").asInt()).isEqualTo(6);
+    assertThat(metadata.path("searchType").asText()).isEqualTo("-1");
+    verify(facts, never()).recordReport(any(), any());
+    verify(products, never()).recordAll(org.mockito.ArgumentMatchers.argThat(v -> !v.isEmpty()));
+  }
+
+  @Test
+  void complete206RowReportPublishesOnlyAfterBothPages() throws Exception {
+    var client = emptyClient();
+    String first = identifiedEvidencePage();
+    when(client.searchSaleItems("2026-09-05", "2026-09-05", 0, 200))
+        .thenReturn(new CtbClient.CtbPage(first, 206));
+    when(client.searchSaleItems("2026-09-05", "2026-09-05", 200, 200))
+        .thenReturn(new CtbClient.CtbPage(evidencePage(2), 206));
+    var facts = mock(SourceProductSaleFactIngest.class);
+    var connector =
+        connector(
+            client,
+            emptyRevenueParser(),
+            new CtbSaleItemParser(),
+            mock(CtbSaleRecipeLinkParser.class),
+            mock(SaleRecipeLinkIngest.class),
+            mock(CanonicalProductSalesIngest.class),
+            facts);
+    connector.fetch("2026-10-24", p -> UUID.randomUUID());
+    var order = org.mockito.Mockito.inOrder(client, facts);
+    order.verify(client).searchSaleItems("2026-09-05", "2026-09-05", 200, 200);
+    order
+        .verify(facts)
+        .recordReport(org.mockito.ArgumentMatchers.argThat(v -> v.size() == 206), any());
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(
+      strings = {"empty", "short", "changed-total", "repeated", "overlong"})
+  void incompleteOrRepeatedSecondPagesNeverPublishAReport(String scenario) throws Exception {
+    var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+    var second = (com.fasterxml.jackson.databind.node.ObjectNode) mapper.readTree(evidencePage(2));
+    var data = (com.fasterxml.jackson.databind.node.ArrayNode) second.path("data");
+    if (scenario.equals("empty")) data.removeAll();
+    if (scenario.equals("short")) data.remove(5);
+    if (scenario.equals("overlong")) data.add(data.get(0).deepCopy());
+    if (scenario.equals("repeated")) {
+      var first = mapper.readTree(identifiedEvidencePage()).path("data");
+      for (int n = 0; n < 6; n++) data.set(n, first.get(n).deepCopy());
+    }
+    var client = emptyClient();
+    when(client.searchSaleItems("2026-09-05", "2026-09-05", 0, 200))
+        .thenReturn(new CtbClient.CtbPage(identifiedEvidencePage(), 206));
+    when(client.searchSaleItems("2026-09-05", "2026-09-05", 200, 200))
+        .thenReturn(
+            new CtbClient.CtbPage(second.toString(), scenario.equals("changed-total") ? 207 : 206));
+    var facts = mock(SourceProductSaleFactIngest.class);
+    var connector =
+        connector(
+            client,
+            emptyRevenueParser(),
+            new CtbSaleItemParser(),
+            mock(CtbSaleRecipeLinkParser.class),
+            mock(SaleRecipeLinkIngest.class),
+            mock(CanonicalProductSalesIngest.class),
+            facts);
+    assertThatThrownBy(() -> connector.fetch("2026-10-24", p -> UUID.randomUUID()))
+        .hasFieldOrPropertyWithValue("failureType", "CONNECTOR_TRUNCATED");
+    verify(facts, never()).recordReport(any(), any());
+  }
+
+  private static String evidencePage(int page) throws Exception {
+    return Files.readString(
+        Path.of("src/test/resources/fixtures/ctb/sale-items-206-page" + page + ".json"));
+  }
+
+  private static String identifiedEvidencePage() throws Exception {
+    var json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(evidencePage(1));
+    // Test-only known identity variant; the real blank row remains unresolved.
+    ((com.fasterxml.jackson.databind.node.ObjectNode) json.path("data").get(6))
+        .put("stockCode", "TEST-KNOWN-IDENTITY");
+    return json.toString();
+  }
+
+  @Test
   void conflictingDayDoesNotBlockLaterDaysAndFailureIncludesItsDate() {
     CtbClient client = emptyClient();
     when(client.searchSaleItems(eq("2026-07-25"), eq("2026-07-25"), anyInt(), anyInt()))

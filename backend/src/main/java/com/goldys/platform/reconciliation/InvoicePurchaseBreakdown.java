@@ -51,6 +51,8 @@ final class InvoicePurchaseBreakdown {
           List<String> notices = new ArrayList<>();
           notices.add(
               "Incomplete: known ex-tax invoice-line purchases only; source coverage is unverified");
+          notices.add(
+              "Source line amounts may precede discounts; final purchase costs are unverified");
           if (b.missingLines > 0)
             notices.add(
                 b.missingLines

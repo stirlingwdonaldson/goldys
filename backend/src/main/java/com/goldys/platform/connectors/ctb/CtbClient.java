@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
  * failure from a parse error or a generic fetch failure.
  */
 public class CtbClient {
+  static final String SALE_ITEMS_SEARCH_TYPE = "-1";
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final Logger log = LoggerFactory.getLogger(CtbClient.class);
 
@@ -105,7 +106,7 @@ public class CtbClient {
                 "toDate",
                 toDate,
                 "searchType",
-                "-1",
+                SALE_ITEMS_SEARCH_TYPE,
                 "start",
                 String.valueOf(start),
                 "limit",
@@ -370,6 +371,9 @@ public class CtbClient {
           "CTB " + action + " failed (HTTP " + response.status() + "): " + truncate(body, 500));
     }
     int total = json.path("totalCount").asInt(json.path("data").size());
+    if (action.equals("Sale/SearchSaleItemsByDateRange")
+        && (!json.path("totalCount").isIntegralNumber()
+            || !json.path("totalCount").canConvertToInt())) total = -1;
     return new CtbPage(body, total);
   }
 

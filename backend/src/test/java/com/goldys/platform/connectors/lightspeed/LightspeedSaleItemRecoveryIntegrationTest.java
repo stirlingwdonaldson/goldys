@@ -26,6 +26,36 @@ class LightspeedSaleItemRecoveryIntegrationTest {
   @Autowired JdbcTemplate jdbc;
 
   @Test
+  void unsafeReportPersistsRawEvidenceAndPartialFailureWithoutCanonicalWrites() throws Exception {
+    String csv =
+        java.nio.file.Files.readString(
+            java.nio.file.Path.of(
+                "src/test/resources/fixtures/lightspeed/sale-items-unsafe-sale-number.csv"));
+    byte[] bytes = new ObjectMapper().writeValueAsBytes(Map.of("attachment", Map.of("data", csv)));
+    long versions = count("canonical_sale_item");
+    assertThatThrownBy(() -> service.ingest(bytes))
+        .hasFieldOrPropertyWithValue("failureType", "UNSAFE_REPORT_GRAIN");
+    var id =
+        jdbc.queryForObject(
+            "select id from raw_record where fetcher_identity='lightspeed-sale-items' order by fetched_at desc limit 1",
+            UUID.class);
+    assertThat(ledger.payloadBytes(id)).containsExactly(bytes);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from ingestion_stage where ingestion_run_id=(select ingestion_run_id from raw_record where id=?) and outcome='FAILED'",
+                Integer.class,
+                id))
+        .isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject(
+                "select status from ingestion_run where id=(select ingestion_run_id from raw_record where id=?)",
+                String.class,
+                id))
+        .isEqualTo("PARTIAL");
+    assertThat(count("canonical_sale_item")).isEqualTo(versions);
+  }
+
+  @Test
   void previewDoesNotWriteAndRecoveryPreservesNewerFactsAndIsRepeatable() throws Exception {
     String prefix = UUID.randomUUID().toString();
     UUID old = store(body(prefix, "10", true));
@@ -79,7 +109,7 @@ class LightspeedSaleItemRecoveryIntegrationTest {
     String csv =
         tree.path("attachment").path("data").asText()
             + prefix
-            + "-1,2025-01-02,SALE,Product,Food,2,20\n";
+            + "-1,2025-01-02,Product,Food,2,20\n";
     UUID raw = store(mapper.writeValueAsBytes(Map.of("attachment", Map.of("data", csv))));
     var preview = runner(raw, true, 2).recover();
     assertThat(preview.conflictingKeys()).isEqualTo(1);
@@ -119,12 +149,12 @@ class LightspeedSaleItemRecoveryIntegrationTest {
 
   private byte[] body(String prefix, String amount, boolean second) throws Exception {
     String csv =
-        "Sales Data Receipt Line ID,Sales Data Sale Closed Date,Saleline Payments Sale Number,Products Product Name,Products POS Category Name,Sales Data Product Quantity,Sales Data Total Inc Tax\n"
+        "Sales Data Receipt Line ID,Sales Data Sale Closed Date,Products Product Name,Products POS Category Name,Sales Data Product Quantity,Sales Data Total Inc Tax\n"
             + prefix
-            + "-1,2025-01-02,SALE,Product,Food,1,"
+            + "-1,2025-01-02,Product,Food,1,"
             + amount
             + "\n"
-            + (second ? prefix + "-2,2025-01-02,SALE,Product,Food,1,5\n" : "");
+            + (second ? prefix + "-2,2025-01-02,Product,Food,1,5\n" : "");
     return new ObjectMapper().writeValueAsBytes(Map.of("attachment", Map.of("data", csv)));
   }
 }

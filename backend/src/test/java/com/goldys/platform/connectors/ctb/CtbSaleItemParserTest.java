@@ -13,6 +13,36 @@ class CtbSaleItemParserTest {
   private final CtbSaleItemParser parser = new CtbSaleItemParser();
 
   @Test
+  void retainsParentReferenceWithoutUsingItAsTheBlankRowsOwnIdentity() throws Exception {
+    var items =
+        new CtbSaleItemParser()
+            .parse(
+                Files.readAllBytes(
+                    Path.of("src/test/resources/fixtures/ctb/sale-items-206-page1.json")));
+    assertThat(items).hasSize(200);
+    var blank = items.get(6);
+    assertThat(blank.stockCode()).isEmpty();
+    assertThat(blank.parentStockCode()).isEqualTo("22471901");
+    assertThat(blank.uniqueId()).isEqualTo("51");
+    assertThatThrownBy(
+            () ->
+                new CtbProductSalesBatch(java.time.LocalDate.of(2026, 9, 5))
+                    .add(blank, java.util.UUID.randomUUID()))
+        .hasMessageContaining("identity");
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(
+      strings = {"{}", "null", "{\"data\":null}", "{\"data\":{}}"})
+  void malformedEnvelopesCannotBecomeEmptySuccess(String json) {
+    assertThatThrownBy(
+            () ->
+                new CtbSaleItemParser()
+                    .parse(json.getBytes(java.nio.charset.StandardCharsets.UTF_8)))
+        .hasFieldOrPropertyWithValue("failureType", "CONNECTOR_SCHEMA_MISMATCH");
+  }
+
+  @Test
   void rejectsInvalidReportRowIds() {
     for (String id : new String[] {"-1", "1.5", "\"1\""}) {
       assertThatThrownBy(

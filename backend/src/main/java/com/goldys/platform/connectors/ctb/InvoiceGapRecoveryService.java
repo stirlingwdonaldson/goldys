@@ -62,6 +62,7 @@ public class InvoiceGapRecoveryService {
       UUID pdfRawRecordId,
       List<PdfExtractedLine> pdfLines,
       Set<Integer> unmatchedIndexes) {
+    if (flags.hasUnverifiedAmountBasis(invoiceNumber)) return;
     BigDecimal header = invoiceQuery.amountExTaxForInvoiceNumber(invoiceNumber).orElse(null);
     if (header == null) {
       flags.flag(

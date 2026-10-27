@@ -24,6 +24,16 @@ class InvoiceIngestFlagIntegrationTest {
   }
 
   @Test
+  void amountBasisHoldPersistsAndIsNotClearedByAnotherObservation() {
+    flags.flag(
+        InvoiceIngestFlagType.INVOICE_AMOUNT_BASIS_UNVERIFIED, "INV-HOLD", null, null, "review");
+    assertThat(flags.hasUnverifiedAmountBasis("INV-HOLD")).isTrue();
+    assertThat(flags.hasUnverifiedAmountBasis("OTHER")).isFalse();
+    flags.flag(InvoiceIngestFlagType.MISSING_PDF, "INV-HOLD", null, null, "missing");
+    assertThat(flags.hasUnverifiedAmountBasis("INV-HOLD")).isTrue();
+  }
+
+  @Test
   void persistsAFlagWithNullableIdentityColumns() {
     flags.flag(InvoiceIngestFlagType.PDF_UNPARSEABLE, null, null, null, "no text");
 
