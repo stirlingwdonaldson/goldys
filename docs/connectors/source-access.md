@@ -370,3 +370,13 @@ canonical source amounts stay unchanged and purchase summaries explicitly qualif
 Open holds prevent automatic PDF-gap inserts and CSV-driven PDF-line pruning; a later observation
 does not silently clear an earlier hold. Credits retain supplied signs, never an inferred flip.
 Invoice replacement/deletion semantics and individual PDF/source discrepancies remain unresolved.
+
+## Lightspeed ongoing sale-line metadata qualification
+
+The Lightspeed sale-items writer preserves existing receipt number and sale-closed staff name
+when a later safe report omits or blanks those fields. Other incoming facts still update normally.
+Deliveries missing either observation are marked PARTIAL with the durable
+`SALE_ITEM_METADATA_UNOBSERVED` qualification; successful financial processing remains a SUCCESS
+canonicalization stage. New unknown metadata remains null. See
+[matching and identity](matching-and-identity.md#lightspeed-ongoing-feed-receiptstaff-metadata-27-october-2026).
+This backend behavior does not authorize activating a candidate report or changing delivery settings.

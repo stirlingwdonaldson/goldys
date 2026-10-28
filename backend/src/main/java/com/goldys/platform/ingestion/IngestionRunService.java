@@ -77,6 +77,15 @@ class IngestionRunService {
     runs.save(run);
   }
 
+  /** A source qualification remains visible even when canonicalization succeeds. */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  void recordQualification(UUID runId, String type, String detail, Instant at) {
+    IngestionRun run = require(runId);
+    failures.save(IngestionFailure.record(runId, run.sourceSystem(), type, detail, null, at));
+    run.qualify(detail);
+    runs.save(run);
+  }
+
   /** Closes the run and returns the terminal status it was given. */
   @Transactional
   IngestionStatus complete(UUID ingestionRunId, String outputWatermark, Instant completedAt) {
