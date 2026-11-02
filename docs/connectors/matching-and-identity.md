@@ -497,3 +497,18 @@ Receipt-specific drill-down/costing remains incomplete for lines without a verif
 number. This change neither supplies a safe receipt mapping nor permits unsafe payment joins.
 The report-grain rejection, report configuration, webhook authentication, schedules and historical
 repair approval boundary are unchanged. No migration or automatic repair/replay is required.
+
+### Separate receipt-group observations (2 November 2026)
+
+Receipt mapping joins use LIGHTSPEED plus explicitly observed site, line ID and sale-closed date.
+Receipt numbers are source group labels, never unique transaction keys. Canonical evidence batches
+retain scope/raw provenance independently of financial rows; identical observations collapse only
+in resolved reads. Different numbers/dates for one site/line remain held. Source-effective revision
+ordering is unknown, so later conflicting transaction facts are retained, not silently selected.
+
+Sales Feed SaleID and LinkedSaleID remain explicit source transaction/link observations within
+the configured company and declared site. Source timestamps stay local without an inferred offset.
+Missing link targets are allowed; absent rows never retract prior observations. Transaction identity
+can reveal an ambiguous receipt group across import windows but cannot assign its merchandise
+lines. Per-line recipe estimates remain available; transaction-specific costing totals are withheld
+until a real bridge is verified. See [operations](../operations/lightspeed-separated-feeds.md).

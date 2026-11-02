@@ -103,26 +103,26 @@ class SaleCostingIntegrationTest {
   }
 
   @Test
-  void scalesRecipeCostsAndComputesAnExplicitlyAssumedExGstMargin() {
+  void scalesLineRecipeEstimatesButWithholdsUnverifiedTransactionTotals() {
     line("steak", "$28 Steak Frites", new BigDecimal("2"));
     // Synthetic zero is deliberate: test verified zero recipe cost, not the POS zero placeholder.
     when(recipes.costing()).thenReturn(List.of(recipe(722, "$28 Steak Frites", "0", false)));
     var result = query.costing("SP-100 1021082623", DAY, DAY);
-    assertThat(result.complete()).isTrue();
+    assertThat(result.complete()).isFalse();
     assertThat(result.lines().getFirst().recipeId()).isEqualTo(722);
-    assertThat(result.recipeCost()).isZero();
-    assertThat(result.margin()).isEqualByComparingTo("1");
-    assertThat(result.grossProfit()).isEqualByComparingTo("25.45");
-    assertThat(result.qualification()).isEqualTo("EX_GST_COST_ASSUMED");
+    assertThat(result.recipeCost()).isNull();
+    assertThat(result.lines().getFirst().recipeCost()).isZero();
+    assertThat(result.margin()).isNull();
+    assertThat(result.grossProfit()).isNull();
+    assertThat(result.qualification()).isEqualTo("TRANSACTION_IDENTITY_UNVERIFIED");
     assertThat(result.recipeCostTaxBasis()).isEqualTo("ASSUMED_EX_GST");
     when(recipes.costing()).thenReturn(List.of(recipe(722, "$28 Steak Frites", "8.50", false)));
     var costed = query.costing("SP-100 1021082623", DAY, DAY);
-    assertThat(costed.recipeCost()).isEqualByComparingTo("17.00");
-    assertThat(costed.grossProfit()).isEqualByComparingTo("8.45");
-    assertThat(costed.margin()).isEqualByComparingTo("0.33202358");
+    assertThat(costed.recipeCost()).isNull();
+    assertThat(costed.grossProfit()).isNull();
+    assertThat(costed.margin()).isNull();
     line("steak", "$28 Steak Frites", new BigDecimal("-1"));
-    assertThat(query.costing("SP-100 1021082623", DAY, DAY).recipeCost())
-        .isEqualByComparingTo("-8.50");
+    assertThat(query.costing("SP-100 1021082623", DAY, DAY).recipeCost()).isNull();
   }
 
   @Test
@@ -152,11 +152,12 @@ class SaleCostingIntegrationTest {
     line("steak", "$28 Steak Frites", BigDecimal.ONE);
     when(recipes.costing()).thenReturn(List.of(recipe(722, "$28 Steak Frites", "8.50", false)));
     var disabled =
-        new ResolvedSaleCostingQuery(jdbc, recipes, false).costing("SP-100 1021082623", DAY, DAY);
-    assertThat(disabled.recipeCost()).isEqualByComparingTo("8.50");
+        new ResolvedSaleCostingQuery(jdbc, recipes, new ResolvedReceiptGroupQuery(jdbc), false)
+            .costing("SP-100 1021082623", DAY, DAY);
+    assertThat(disabled.recipeCost()).isNull();
     assertThat(disabled.margin()).isNull();
     assertThat(disabled.grossProfit()).isNull();
-    assertThat(disabled.qualification()).isEqualTo("TAX_BASIS_UNVERIFIED");
+    assertThat(disabled.qualification()).isEqualTo("TRANSACTION_IDENTITY_UNVERIFIED");
     assertThat(disabled.recipeCostTaxBasis()).isEqualTo("UNVERIFIED");
   }
 
@@ -165,12 +166,12 @@ class SaleCostingIntegrationTest {
     when(recipes.costing()).thenReturn(List.of(recipe(722, "$28 Steak Frites", "8.50", false)));
     line("steak", "$28 Steak Frites", BigDecimal.ONE, "0", "0");
     var comp = query.costing("SP-100 1021082623", DAY, DAY);
-    assertThat(comp.grossProfit()).isEqualByComparingTo("-8.50");
+    assertThat(comp.grossProfit()).isNull();
     assertThat(comp.margin()).isNull();
-    assertThat(comp.qualification()).isEqualTo("ZERO_NET_REVENUE");
+    assertThat(comp.qualification()).isEqualTo("TRANSACTION_IDENTITY_UNVERIFIED");
     line("steak", "$28 Steak Frites", BigDecimal.ONE, "28", null);
     assertThat(query.costing("SP-100 1021082623", DAY, DAY).qualification())
-        .isEqualTo("REVENUE_MISSING");
+        .isEqualTo("TRANSACTION_IDENTITY_UNVERIFIED");
     line("steak", "$28 Steak Frites", BigDecimal.ONE, "-28", "-2.55");
     assertThat(query.costing("SP-100 1021082623", DAY, DAY).complete()).isFalse();
   }

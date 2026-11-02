@@ -4,8 +4,8 @@ import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.auth.ResourceKey;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.canonical.CanonicalSaleItemQuery;
 import com.goldys.platform.semantic.DataPage;
+import com.goldys.platform.semantic.SaleItemListQuery;
 import com.goldys.platform.semantic.SaleItemMetricsQuery;
 import com.goldys.platform.semantic.SaleItemMix;
 import com.goldys.platform.semantic.SaleItemRow;
@@ -19,13 +19,11 @@ public class SaleItemReportingService {
   private static final ResourceKey RESOURCE = new ResourceKey("sale-items.metrics");
 
   private final SaleItemMetricsQuery metrics;
-  private final CanonicalSaleItemQuery saleItems;
+  private final SaleItemListQuery saleItems;
   private final PermissionService permissions;
 
   public SaleItemReportingService(
-      SaleItemMetricsQuery metrics,
-      CanonicalSaleItemQuery saleItems,
-      PermissionService permissions) {
+      SaleItemMetricsQuery metrics, SaleItemListQuery saleItems, PermissionService permissions) {
     this.metrics = metrics;
     this.saleItems = saleItems;
     this.permissions = permissions;

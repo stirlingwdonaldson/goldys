@@ -22,6 +22,7 @@ public class SaleCostingService {
   public SaleCosting costing(UserRole role, String saleNumber, LocalDate from, LocalDate to) {
     permissions.require(role, new ResourceKey("sale-items.metrics"), PermissionAction.READ);
     permissions.require(role, new ResourceKey("recipes.cost"), PermissionAction.READ);
+    permissions.require(role, new ResourceKey("payments.metrics"), PermissionAction.READ);
     if (saleNumber == null
         || saleNumber.isBlank()
         || saleNumber.length() > 255

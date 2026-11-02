@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 class SaleCostingServiceTest {
   @Test
-  void requiresBothPermissionsBeforeReadingAndValidatesTheBoundedQuery() {
+  void requiresAllOperandPermissionsBeforeReadingAndValidatesTheBoundedQuery() {
     var query = mock(SaleCostingQuery.class);
     var permissions = mock(PermissionService.class);
     var service = new SaleCostingService(query, permissions);
@@ -19,6 +19,7 @@ class SaleCostingServiceTest {
     service.costing(role, "SP-100 1021082623", day, day);
     verify(permissions).require(role, new ResourceKey("sale-items.metrics"), PermissionAction.READ);
     verify(permissions).require(role, new ResourceKey("recipes.cost"), PermissionAction.READ);
+    verify(permissions).require(role, new ResourceKey("payments.metrics"), PermissionAction.READ);
     reset(query);
     doThrow(AccessDeniedException.forResource("recipes.cost"))
         .when(permissions)

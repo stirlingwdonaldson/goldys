@@ -52,19 +52,27 @@ public class LightspeedSaleItemIngestService {
   }
 
   public void ingest(byte[] body) {
+    ingest(body, false);
+  }
+
+  public void ingestCsv(byte[] body) {
+    ingest(body, true);
+  }
+
+  private void ingest(byte[] body, boolean csv) {
     UUID rawId =
         ingestion.ingestPush(
             "LIGHTSPEED",
             "lightspeed-sale-items",
-            FetchMethod.FILE_EXPORT,
-            "application/json",
+            csv ? FetchMethod.MANUAL : FetchMethod.FILE_EXPORT,
+            csv ? "text/csv" : "application/json",
             body,
             StandardCharsets.UTF_8.name(),
             "lightspeed-sale-items");
 
     List<LightspeedSaleItem> items;
     try {
-      items = parseItems(body);
+      items = csv ? validateItems(body) : parseItems(body);
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
       throw e;
@@ -154,10 +162,18 @@ public class LightspeedSaleItemIngestService {
   }
 
   private List<LightspeedSaleItem> parseItems(byte[] body) {
-    List<LightspeedSaleItem> out = parseRows(body);
+    return validateItems(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+  }
+
+  private List<LightspeedSaleItem> validateItems(byte[] csv) {
+    parser.requireReceiptLineGrain(csv);
+    List<LightspeedSaleItem> out = parser.parse(csv);
     // Tender joins repeat whole items. Distinct components need a verified aggregation contract.
     java.util.Map<String, LightspeedSaleItem> distinct = new java.util.LinkedHashMap<>();
     for (LightspeedSaleItem item : out) {
+      if (item.quantity() == null || item.amount() == null)
+        throw new ConnectorFetchException(
+            "CONNECTOR_SCHEMA_MISMATCH", "Sale-item quantity or amount is missing");
       LightspeedSaleItem previous = distinct.putIfAbsent(item.receiptLineId(), item);
       if (previous != null && !previous.equals(item)) {
         throw new ConnectorFetchException(
@@ -199,10 +215,11 @@ public class LightspeedSaleItemIngestService {
         it.registerName(),
         it.tableNumber(),
         rawId,
-        it.adjustment());
+        it.adjustment(),
+        it.siteNumber());
   }
 
-  private static String extractCsv(byte[] body) {
+  static String extractCsv(byte[] body) {
     try {
       JsonNode root = MAPPER.readTree(body);
       String data = root.path("attachment").path("data").asText(null);

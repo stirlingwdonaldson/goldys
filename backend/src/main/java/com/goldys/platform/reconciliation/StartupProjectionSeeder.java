@@ -12,6 +12,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
   private static final Logger log = LoggerFactory.getLogger(StartupProjectionSeeder.class);
 
   private final RecipeSectionProjector recipeSectionProjector;
+  private final ReceiptEvidenceProjector receiptEvidenceProjector;
 
   private final DailySalesProjector projector;
   private final ProductSalesProjector productProjector;
@@ -37,8 +38,10 @@ public class StartupProjectionSeeder implements ApplicationRunner {
       RecipeProjector recipeProjector,
       RecipeIngredientProjector recipeIngredientProjector,
       RecipeDefinitionProjector recipeDefinitionProjector,
-      RecipeSectionProjector recipeSectionProjector) {
+      RecipeSectionProjector recipeSectionProjector,
+      ReceiptEvidenceProjector receiptEvidenceProjector) {
     this.projector = projector;
+    this.receiptEvidenceProjector = receiptEvidenceProjector;
     this.recipeSectionProjector = recipeSectionProjector;
     this.productProjector = productProjector;
     this.reservationProjector = reservationProjector;
@@ -56,6 +59,7 @@ public class StartupProjectionSeeder implements ApplicationRunner {
   public void run(ApplicationArguments args) {
     // Changed resolver semantics must reach populated history after deployment too. Rebuild only
     // the disposable projection; source facts, raw evidence, overrides and rules are retained.
+    receiptEvidenceProjector.recomputeAll();
     projector.recomputeAll();
     // Product, reservation, labour, inventory, payment, deleted-sale, sale-item, recipe and
     // recipe-ingredient projections are backfilled on every boot: "no conflicts" and "never seeded"

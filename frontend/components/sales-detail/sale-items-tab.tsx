@@ -72,6 +72,18 @@ function saleItemColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<S
     dateColumn<SaleItemRow>("tradingDate", "Date"),
     textColumn<SaleItemRow>("saleNumber", "Sale"),
     textColumn<SaleItemRow>("receiptLineId", "Receipt line"),
+    {
+      accessorKey: "receiptAssociation",
+      header: "Receipt association",
+      cell: ({ row }) => ({
+        MAPPING_MISSING: "Receipt mapping missing",
+        SITE_UNOBSERVED: "Site not observed",
+        MAPPING_CONFLICT: "Conflicting receipt mappings",
+        RECEIPT_GROUP: "Receipt group; transaction unverified",
+        LEGACY_RECEIPT_GROUP: "Prior receipt number; transaction unverified",
+      }[row.original.receiptAssociation ?? "LEGACY_RECEIPT_GROUP"] ?? "Association needs review"),
+      meta: { title: "Receipt association" },
+    },
     textColumn<SaleItemRow>("itemName", "Item"),
     textColumn<SaleItemRow>("productNumber", "Product no."),
     textColumn<SaleItemRow>("sku", "SKU"),

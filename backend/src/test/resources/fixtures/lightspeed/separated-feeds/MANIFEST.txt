@@ -1,0 +1,45 @@
+# Evidence manifest
+
+Created on the Mac. No bundle upload or transfer has occurred. File modification times below are local capture-time proxies, not authoritative server timestamps. See SOURCE_TIMES.txt for derivative-to-original mapping.
+
+Scope: 2026-10-26 through 2026-11-01 inclusive; Goldy’s Tavern, site 96181. Mapping Look 9517 / query nw9xzS8CRuUXxzwSZZa8r5, date >= 2026-10-26 and < 2026-11-02, explicit site filter. Financial Look 9515 / query XSnovAg3XsFgcE48bPm3Fs, same date bounds, no explicit site filter, all returned rows site 96181. Both Insights exports: Australia/Sydney, CSV formatted, As displayed in data table, All results. UI table limit is not proof of export cap; source hard maximum unknown.
+
+Transaction source: authenticated Back Office > Reports > Sales Feed > Sales Filter, selected site 96181, All Registers, All Payments, empty customer, Hide deleted options selected, start 26/10/2026 00 and end 01/11/2026 23. CSV captures in original download timestamps below; no source-side row limit or report ID observed. Sales Feed timestamp timezone and second-level filter inclusivity remain unknown. Grid shows 5411; CSV has 5415 transaction rows and unique nonblank SaleIDs.
+
+Transformations: minimized CSVs preserve exact listed original header values and select only required columns; no pseudonymization, inferred identifiers or changed values. Daily and repeat files are minimized independently from listed original downloads. Example files are row/column selections. Original files are not included. See SCHEMA_AND_CONTRACT.md and VALIDATION.md.
+
+## Bundle files and SHA-256 (manifest excludes itself)
+- SCHEMA_AND_CONTRACT.md  SHA256 da0515cfb83fd5260a14fad86a20f41d8bc81825c39c48885dcfe4805f53b973
+- SOURCE_TIMES.txt  SHA256 98d93f897da28fdf2c0a951bcf99fd5b82cadac40ef063b5a0c42c3af62eb203
+- VALIDATION.md  SHA256 fb89e55ddf8d3f53c361cf54faf4c6b8ff07c891e34526aea17c14ca438e0f21
+- example-split-payment-observations.csv  SHA256 8fd26109609aca1a42f7527cbee5f3e309006e73be5a01ed700238b25b2cda49; rows=2; distinct Sales Data Receipt Line ID=1
+- example-transactions.csv  SHA256 385fe7e9f3e24d680559ccf4add16d52230c11adf60ede914bf27bb4717b4fe6; rows=6; distinct SaleID=6
+- minimal-goldys-financial-2026-10-26-to-11-01.csv  SHA256 493053dceaca7211fd623b9e1ed836bd20136614b0eafdb9d8b8eb6a2fc9de10; rows=9405; distinct Sales Data Receipt Line ID=9405
+- minimal-goldys-mapping-2026-10-26-to-11-01.csv  SHA256 142026381734f888ec2c26376e9b615e812645fa13d4fca0c93076acc629f98e; rows=9483; distinct Sales Data Receipt Line ID=9405
+- minimal-sales_feed_20261102_export.csv  SHA256 685dd3cb14836894c7936dc4295c5dc47b0d1289a43d09f7a85879f95d3a95d6; rows=5415; distinct SaleID=5415
+- transactions-2026-10-26.csv  SHA256 c8287f98e75d990a72f86411510ec1475bbbfa0f26c8984b8c637291fd3b7ce6; rows=413; distinct SaleID=413
+- transactions-2026-10-27.csv  SHA256 4bf42cdf8d3c74271cc67073271068f4cae52337d35ed8444a2b8ae4287b6f13; rows=319; distinct SaleID=319
+- transactions-2026-10-28.csv  SHA256 df3eaf421dd0eb71c48e157108c0583ebd69c3fe2151d8b5c9dcc30e80c7e62b; rows=638; distinct SaleID=638
+- transactions-2026-10-29.csv  SHA256 7c6c0adeea44bf1525d79cccc74ec7699bb2b36e3da05ba653ee5a6227ac4524; rows=508; distinct SaleID=508
+- transactions-2026-10-30.csv  SHA256 c30fac920ff7bd472b5e75f3d4ef7dbd36ef454819c6eaf7223ffbb8e30ceb81; rows=1340; distinct SaleID=1340
+- transactions-2026-10-31.csv  SHA256 4b3ea124a24234b4eb5a625db3e25ef17a3ac7b77f853ac4a75a41df4b6a90f0; rows=1438; distinct SaleID=1438
+- transactions-2026-11-01.csv  SHA256 4b04fc54f836e3b7634a1bf304c1a1fbaf1d48e5f24416f91f5b8a46deb1a7ec; rows=759; distinct SaleID=759
+- transactions-repeat-1.csv  SHA256 685dd3cb14836894c7936dc4295c5dc47b0d1289a43d09f7a85879f95d3a95d6; rows=5415; distinct SaleID=5415
+- transactions-repeat-2.csv  SHA256 685dd3cb14836894c7936dc4295c5dc47b0d1289a43d09f7a85879f95d3a95d6; rows=5415; distinct SaleID=5415
+- validate.py  SHA256 8c1e1e227843c11990504640f07e029cac6caa0a638417b90385c4ec536aab9a
+- validation-output.txt  SHA256 bb99d8612971cdce337a2ddb318a0f0331c89028230df9c033445e88bf8f6baf
+
+## Original downloads and SHA-256 (not bundled; may contain personal data)
+- goldys-financial-2026-10-26-to-11-01.csv  captured approximately 2026-11-02T15:47:03.227487+11:00; SHA256 baac1d92f701281975e18010534aea1233bddd059fc04cfe3ce42d4391a0221a
+- goldys-mapping-2026-10-26-to-11-01.csv  captured approximately 2026-11-02T15:42:19.329813+11:00; SHA256 004bb33becb945c81f91308de9f9bfb0a2f6cdff2afa8d157d15f3d50b54e886
+- sales_feed_20261102_export (2).csv  captured approximately 2026-11-02T15:45:08.294811+11:00; SHA256 2b613063a5f42bfd3cf26f04594c3b0db4243f690865ef27ea57e11d62156334
+- sales_feed_20261102_export (3).csv  captured approximately 2026-11-02T15:52:12.526040+11:00; SHA256 2b613063a5f42bfd3cf26f04594c3b0db4243f690865ef27ea57e11d62156334
+- sales_feed_20261102_export (4).csv  captured approximately 2026-11-02T15:52:17.863847+11:00; SHA256 2b613063a5f42bfd3cf26f04594c3b0db4243f690865ef27ea57e11d62156334
+- sales_feed_20261102_export (5).csv  captured approximately 2026-11-02T15:53:17.278547+11:00; SHA256 1c4014c88f2d9bd031032f4139e7767bbf585147b8e72bfd72630b8e9ead6ec5
+- sales_feed_20261102_export (6).csv  captured approximately 2026-11-02T15:53:53.616909+11:00; SHA256 92c12c587fcc11e64bae9a05b912c40b9f9b10ac2c0a183994ffdc286c687963
+- sales_feed_20261102_export.csv  captured approximately 2026-11-02T15:13:24.167935+11:00; SHA256 fe07a2f78d226dfdf8f9e0df96b94a1ea513744424cf2da6cd4b0b41d2655f55
+- sales_feed_20261102_export (1).csv  captured approximately 2026-11-02T15:22:56.852414+11:00; SHA256 0db5192ca8bf2f50bd98dd649e000561dab5bb8245739b53584f97709e5be154
+- sales_feed_20261102_export (7).csv  captured approximately 2026-11-02T15:54:04.340888+11:00; SHA256 d6d1ddc0ecb8fd4d9a8ee92bcd197cc86a0de7d34deb0f100c05e186a0dd3bb8
+- sales_feed_20261102_export (8).csv  captured approximately 2026-11-02T15:54:13.849977+11:00; SHA256 78b556f116660b9663304028515cd979de4784a7d4ced3c48255a531b9f76636
+- sales_feed_20261102_export (10).csv  captured approximately 2026-11-02T15:54:43.316143+11:00; SHA256 fe8d72a4a9f62810747cfff2c4657900a70a512ebfd43868c27a28c79a81b2ba
+- insights salelines 2026-11-02T1501.csv  captured approximately 2026-11-02T15:02:25.468025+11:00; SHA256 95437fc80a695268116782adbbfa0ff1601f53b88c3186493e4baa71f9058625

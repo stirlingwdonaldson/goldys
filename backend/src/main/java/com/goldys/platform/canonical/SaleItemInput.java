@@ -25,8 +25,55 @@ public record SaleItemInput(
     String registerName,
     String tableNumber,
     UUID rawRecordId,
-    com.goldys.platform.semantic.SaleAdjustment adjustment) {
-  SaleItemInput preserveUnobservedMetadata(String previousSaleNumber, String previousStaffName) {
+    com.goldys.platform.semantic.SaleAdjustment adjustment,
+    Long siteNumber) {
+  public SaleItemInput(
+      String sourceSystem,
+      String receiptLineId,
+      LocalDate tradingDate,
+      String saleNumber,
+      String itemName,
+      String productNumber,
+      String sku,
+      String categoryName,
+      BigDecimal quantitySold,
+      BigDecimal amount,
+      BigDecimal soldPriceIncTax,
+      BigDecimal totalTax,
+      BigDecimal costIncTax,
+      String orderType,
+      String saleType,
+      String staffName,
+      String registerName,
+      String tableNumber,
+      UUID rawRecordId,
+      com.goldys.platform.semantic.SaleAdjustment adjustment) {
+    this(
+        sourceSystem,
+        receiptLineId,
+        tradingDate,
+        saleNumber,
+        itemName,
+        productNumber,
+        sku,
+        categoryName,
+        quantitySold,
+        amount,
+        soldPriceIncTax,
+        totalTax,
+        costIncTax,
+        orderType,
+        saleType,
+        staffName,
+        registerName,
+        tableNumber,
+        rawRecordId,
+        adjustment,
+        null);
+  }
+
+  SaleItemInput preserveUnobservedMetadata(
+      String previousSaleNumber, String previousStaffName, Long previousSiteNumber) {
     return new SaleItemInput(
         sourceSystem,
         receiptLineId,
@@ -47,7 +94,8 @@ public record SaleItemInput(
         registerName,
         tableNumber,
         rawRecordId,
-        adjustment);
+        adjustment,
+        siteNumber == null ? previousSiteNumber : siteNumber);
   }
 
   private static String observedOrPrevious(String observation, String previous) {

@@ -71,7 +71,8 @@ public class LightspeedSaleItemCsvParser {
                   text(r, columns, "Sales Adjustments Adjustment Type"),
                   text(r, columns, "Sales Adjustments Adjustment Reason"),
                   text(r, columns, "Sales Adjustments Adjustment Level"),
-                  text(r, columns, "Sales Adjustments Promotion Name"))));
+                  text(r, columns, "Sales Adjustments Promotion Name")),
+              siteNumber(r, columns)));
     }
     return out;
   }
@@ -93,6 +94,19 @@ public class LightspeedSaleItemCsvParser {
       }
     } catch (IOException e) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Malformed sale-item CSV", e);
+    }
+  }
+
+  private static Long siteNumber(CSVRecord row, Map<String, Integer> columns) {
+    String value = text(row, columns, "Site Numeric ID");
+    if (value == null) return null;
+    try {
+      long site = Long.parseLong(value);
+      if (site <= 0) throw new NumberFormatException();
+      return site;
+    } catch (NumberFormatException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Invalid site identifier in sale-item CSV");
     }
   }
 

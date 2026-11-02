@@ -380,3 +380,13 @@ Deliveries missing either observation are marked PARTIAL with the durable
 canonicalization stage. New unknown metadata remains null. See
 [matching and identity](matching-and-identity.md#lightspeed-ongoing-feed-receiptstaff-metadata-27-october-2026).
 This backend behavior does not authorize activating a candidate report or changing delivery settings.
+
+### Separate financial and receipt evidence (2 November 2026)
+
+The safe sale-item financial report excludes payment-join fields. A separate four-column
+mapping observation (line ID, receipt number, site, sale-closed date) and a manual Back Office
+Sales Feed CSV import supply receipt-group evidence independently. Both have authenticated,
+scoped upload surfaces; a token-gated mapping webhook adapter is implemented but not activated.
+The transaction source path is manual authenticated export, not a proven automated connector.
+See [operations and evidence](../operations/lightspeed-separated-feeds.md) for exact schemas,
+real-sample hit rates, export discrepancy and activation gates.

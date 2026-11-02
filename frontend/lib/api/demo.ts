@@ -1298,6 +1298,19 @@ export const demoApi: Api = {
     return existing;
   },
 
+  async uploadLightspeedReceiptCsv() {
+    await delay(300);
+    return { rawId: "demo-receipt-import", distinctObservations: 2, qualification: "SOURCE_COVERAGE_UNVERIFIED" };
+  },
+  async getReceiptGroup(saleNumber, from, to, options) {
+    await delay(300, options?.signal);
+    return { receiptNumber: saleNumber, association: saleNumber === "DEMO-AMBIGUOUS" ? "AMBIGUOUS_TRANSACTION" : "TRANSACTION_IDENTITY_UNVERIFIED",
+      coverage: "SOURCE_COVERAGE_UNVERIFIED", lineCount: demoSaleItems.filter(s => s.saleNumber === saleNumber && inDateRange(s.tradingDate, from, to)).length,
+      transactions: saleNumber === "DEMO-AMBIGUOUS" ? [
+        { siteNumber: 1, transactionId: "demo-sale", linkedTransactionId: "demo-refund", sourceLocalTime: "2026-10-28T19:49:15", net: 10, tax: 1, tip: 0, total: 11 },
+        { siteNumber: 1, transactionId: "demo-refund", linkedTransactionId: "demo-sale", sourceLocalTime: "2026-10-28T20:55:51", net: -10, tax: -1, tip: 0, total: -11 },
+      ] : [] };
+  },
   async uploadConnectorCsv(connectorName: string, _file: File): Promise<void> {
     void _file; // demo no-op: nothing to upload
     await delay(600);
@@ -2057,7 +2070,7 @@ export const demoApi: Api = {
         costObservedAt: s.receiptLineId === "LINE-3" ? "2026-10-05T04:00:00Z" : null,
         costSource: s.receiptLineId === "LINE-3" ? "CTB complete refresh" : null,
         status: s.receiptLineId === "LINE-3" ? "STALE_COST" : "UNMATCHED" }));
-    return { lines, complete: false, recipeCost: null, grossProfit: null, margin: null, qualification: "INCOMPLETE_COSTING", recipeCostTaxBasis: "ASSUMED_EX_GST" };
+    return { lines, complete: false, recipeCost: null, grossProfit: null, margin: null, qualification: "TRANSACTION_IDENTITY_UNVERIFIED", recipeCostTaxBasis: "ASSUMED_EX_GST" };
   },
 
   async listSaleItems(

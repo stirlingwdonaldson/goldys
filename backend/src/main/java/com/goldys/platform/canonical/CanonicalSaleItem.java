@@ -24,6 +24,9 @@ class CanonicalSaleItem extends BitemporalEntity {
   @Column(name = "sale_number", updatable = false)
   private String saleNumber;
 
+  @Column(name = "site_number", updatable = false)
+  private Long siteNumber;
+
   @Column(name = "item_name", updatable = false, length = 255)
   private String itemName;
 
@@ -83,6 +86,7 @@ class CanonicalSaleItem extends BitemporalEntity {
     super(previous, rawId, at);
     tradingDate = previous.tradingDate;
     saleNumber = previous.saleNumber;
+    siteNumber = previous.siteNumber;
     itemName = previous.itemName;
     productNumber = previous.productNumber;
     sku = previous.sku;
@@ -122,7 +126,8 @@ class CanonicalSaleItem extends BitemporalEntity {
         registerName,
         tableNumber,
         rawRecordId(),
-        adjustment);
+        adjustment,
+        siteNumber);
   }
 
   java.time.LocalTime saleClosedTime() {
@@ -140,6 +145,7 @@ class CanonicalSaleItem extends BitemporalEntity {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
     this.tradingDate = input.tradingDate();
     this.saleNumber = input.saleNumber();
+    this.siteNumber = input.siteNumber();
     this.itemName = input.itemName();
     this.productNumber = input.productNumber();
     this.sku = input.sku();
@@ -170,7 +176,8 @@ class CanonicalSaleItem extends BitemporalEntity {
   }
 
   boolean sameFact(SaleItemInput input) {
-    return Objects.equals(tradingDate, input.tradingDate())
+    return Objects.equals(siteNumber, input.siteNumber())
+        && Objects.equals(tradingDate, input.tradingDate())
         && Objects.equals(saleNumber, input.saleNumber())
         && Objects.equals(itemName, input.itemName())
         && Objects.equals(productNumber, input.productNumber())
@@ -198,6 +205,10 @@ class CanonicalSaleItem extends BitemporalEntity {
 
   LocalDate tradingDate() {
     return tradingDate;
+  }
+
+  Long siteNumber() {
+    return siteNumber;
   }
 
   String saleNumber() {

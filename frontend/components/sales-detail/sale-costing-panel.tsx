@@ -18,6 +18,11 @@ const STATUS: Record<string, string> = {
 };
 
 const QUALIFICATIONS: Record<string, string> = {
+  TRANSACTION_IDENTITY_UNVERIFIED: "Transaction-specific costing is unavailable: receipt numbers do not establish which transaction owns each item. Line recipe estimates are shown separately.",
+  AMBIGUOUS_TRANSACTION: "Several transactions share this receipt number. Transaction-specific totals and costing are unavailable.",
+  MAPPING_CONFLICT: "Receipt mappings conflict. Transaction-specific costing is unavailable.",
+  TRANSACTION_CONFLICT: "Transaction observations conflict. Transaction-specific costing is unavailable.",
+  TRANSACTION_LIMIT_EXCEEDED: "Transaction evidence exceeds the display limit. Transaction-specific costing is unavailable.",
   SALE_TOO_LARGE: "This sale exceeds the costing limit. Complete costing is unavailable.",
   ZERO_NET_REVENUE: "Net sale revenue is zero, so no margin percentage can be calculated.",
   REVENUE_MISSING: "Ex-GST sale revenue is missing, so gross margin is unavailable.",
