@@ -338,7 +338,8 @@ never the source identity. Source group observations retain quantity, amount, or
 and financial fields. Every contributing page is linked in `product_sales_contributor`.
 
 Repeated `(site, code, uniqueGroupId)` observations within a fetched day contribute once. Inconsistent
-repeats or missing code/quantity/amount reject the batch; raw receipts remain retained.
+repeats or missing code/quantity/amount reject the batch; raw receipts remain retained,
+except for the narrowly qualified uncoded free modifiers described below.
 `uniqueGroupId` is optional: all 954 rows in seven dated production pages inspected on
 23 October 2026 have null/blank group IDs, with unique `(siteNumber, stockCode)` keys per page.
 A null/blank group denotes the ungrouped product/site observation, not a missing identity.
@@ -523,3 +524,17 @@ this input rejects any other site rather than combining venues. Changed facts su
 facts are reused. Raw evidence retains adjustment measures and the original envelope. Reconciliation
 rules and overrides continue to choose the resolved source. No historical date cleanup or receipt
 identity inference is automatic. See [the runbook](../operations/lightspeed-headline-sales.md).
+
+### CTB uncoded free modifiers (2 November 2026)
+
+The latest inspected partial pull contains 12,795 sale rows, including seven uncoded
+modifiers across six days. These rows carry report-local `uniqueId`, a nonblank
+`parentStockCode`, description and quantity, with amount, unit price, tax, discount,
+cost per unit, food cost and total food cost all explicitly zero. They remain in
+the immutable raw report and count towards pagination completeness and duplicate
+checks, but create no product mapping, product total or source financial fact.
+Neither the description nor the parent code is substituted for the missing product
+code. Uncoded rows with monetary/cost values, missing fields or missing report/parent
+identity still reject the day. Complete coded rows from the same report are published.
+The same batch rule applies to the existing complete-envelope source-fact backfill;
+its existing multi-page replay limit is unchanged. Recovery uses a normal dated pull.

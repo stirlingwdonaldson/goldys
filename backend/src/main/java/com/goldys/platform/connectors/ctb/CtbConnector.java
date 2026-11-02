@@ -311,9 +311,14 @@ public class CtbConnector implements SourceConnector {
     for (SaleItemPage page : captured)
       for (CtbSaleItem item : page.items()) batch.add(item, page.rawId());
     List<SourceProductSaleFactInput> facts = batch.sourceFacts();
-    if (facts.size() != total)
+    if (batch.rowCount() != total)
       throw new ConnectorFetchException(
           "CONNECTOR_TRUNCATED", "Sale-item pages repeat observations; report is incomplete");
+    if (batch.rowCount() > facts.size())
+      log.info(
+          "CTB sale-items {} retained {} uncoded free modifiers in raw evidence",
+          day,
+          batch.rowCount() - facts.size());
     if (!facts.isEmpty()) {
       if (facts.stream().allMatch(f -> f.sourceRecordRef().startsWith("ctb-row:")))
         sourceSaleFact.recordReport(facts, lastRawId);
