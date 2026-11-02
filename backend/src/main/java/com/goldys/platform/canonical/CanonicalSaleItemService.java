@@ -53,12 +53,20 @@ class CanonicalSaleItemService {
     Optional<CanonicalSaleItem> current =
         repository.lockCurrentSourceFact(input.sourceSystem(), ref);
 
+    if (current.isPresent()
+        && current.get().siteNumber() != null
+        && input.siteNumber() != null
+        && !current.get().siteNumber().equals(input.siteNumber()))
+      throw new IllegalArgumentException(
+          "Conflicting site observations for an existing receipt-line identity");
+
     // Safe reports may omit these fields; absence is not evidence that prior metadata was cleared.
     if ("LIGHTSPEED".equals(input.sourceSystem())) {
       input =
           input.preserveUnobservedMetadata(
               current.map(CanonicalSaleItem::saleNumber).orElse(null),
-              current.map(CanonicalSaleItem::staffName).orElse(null));
+              current.map(CanonicalSaleItem::staffName).orElse(null),
+              current.map(CanonicalSaleItem::siteNumber).orElse(null));
     }
 
     if (current.isPresent()) {

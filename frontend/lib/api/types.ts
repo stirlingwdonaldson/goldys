@@ -908,6 +908,8 @@ export interface SaleItemRow {
   adjustment?: SaleAdjustment | null;
   tradingDate: string;
   saleNumber: string | null;
+  siteNumber?: number | null;
+  receiptAssociation?: string;
   /** The Lightspeed receipt-line id (the backend's `source_record_ref`). */
   receiptLineId: string;
   itemName: string | null;
@@ -1262,7 +1264,29 @@ export interface ReviewFilter {
 }
 
 /** The data contract the screens depend on. `demoApi` and `liveApi` both implement it. */
+export interface ReceiptImportScope {
+  siteNumber: number;
+  siteName: string;
+  from: string;
+  to: string;
+}
+export interface ReceiptImportResult {
+  rawId: string;
+  distinctObservations: number;
+  qualification: string;
+}
+export interface ReceiptGroup {
+  receiptNumber: string;
+  association: string;
+  coverage: string;
+  lineCount: number;
+  transactions: { siteNumber: number; transactionId: string; linkedTransactionId: string | null;
+    sourceLocalTime: string; net: number; tax: number; tip: number; total: number }[];
+}
+
 export interface Api {
+  uploadLightspeedReceiptCsv(dataset: "mapping" | "transactions", file: File, scope: ReceiptImportScope): Promise<ReceiptImportResult>;
+  getReceiptGroup(saleNumber: string, from: string, to: string, options?: { signal?: AbortSignal }): Promise<ReceiptGroup>;
   getDashboardBootstrap(options?: { signal?: AbortSignal }): Promise<DashboardBootstrap>;
   getDashboardSummary(options?: { signal?: AbortSignal }): Promise<DashboardSummary>;
   getDashboardActivity(from?: string, to?: string, options?: { signal?: AbortSignal }): Promise<ActivityPoint[]>;

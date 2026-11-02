@@ -97,3 +97,5 @@ behind a feature, not as a description of current code.
 Tracked in [prd.md](prd.md#open-questions). Still open: the field-to-role permission
 mapping and the full list of department/seniority values. Until they're answered,
 permission resources are seeded for `ALL × OWNER` only.
+
+- [Lightspeed separated financial and receipt evidence](operations/lightspeed-separated-feeds.md): scoped imports, ambiguity handling, evidence and activation gates.

@@ -4,7 +4,6 @@ import com.goldys.platform.semantic.RecipeMetricsQuery;
 import com.goldys.platform.semantic.SaleCosting;
 import com.goldys.platform.semantic.SaleCostingQuery;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,11 +22,15 @@ public class ResolvedSaleCostingQuery implements SaleCostingQuery {
   private final JdbcTemplate jdbc;
   private final RecipeMetricsQuery recipes;
   private final boolean costsExcludeGst;
+  private final com.goldys.platform.semantic.ReceiptGroupQuery groups;
 
+  @org.springframework.beans.factory.annotation.Autowired
   public ResolvedSaleCostingQuery(
       JdbcTemplate jdbc,
       RecipeMetricsQuery recipes,
+      com.goldys.platform.semantic.ReceiptGroupQuery groups,
       @Value("${ctb.recipes.costs-exclude-gst:true}") boolean costsExcludeGst) {
+    this.groups = groups;
     this.jdbc = jdbc;
     this.recipes = recipes;
     this.costsExcludeGst = costsExcludeGst;
@@ -65,46 +68,15 @@ public class ResolvedSaleCostingQuery implements SaleCostingQuery {
             from,
             to,
             MAX_LINES + 1);
-    return summarise(lines, costsExcludeGst);
-  }
-
-  private static SaleCosting summarise(List<SaleCosting.Line> lines, boolean costsExcludeGst) {
-    boolean complete =
-        !lines.isEmpty()
-            && lines.size() <= MAX_LINES
-            && lines.stream().allMatch(l -> l.status().equals("CURRENT_RECIPE_ESTIMATE"));
-    BigDecimal total =
-        complete
-            ? lines.stream()
-                .map(SaleCosting.Line::recipeCost)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-            : null;
-    boolean revenueKnown = lines.stream().allMatch(l -> l.revenueExTax() != null);
-    BigDecimal revenue =
-        revenueKnown
-            ? lines.stream()
-                .map(SaleCosting.Line::revenueExTax)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-            : null;
-    // Owner assumption (23 Oct 2026): CTB costs exclude GST; margins are current-recipe estimates.
-    BigDecimal profit =
-        complete && costsExcludeGst && revenueKnown ? revenue.subtract(total) : null;
-    BigDecimal margin =
-        profit != null && revenue.signum() != 0
-            ? profit.divide(revenue, 8, RoundingMode.HALF_UP)
-            : null;
-    String qualification = "EX_GST_COST_ASSUMED";
-    if (!complete) qualification = "INCOMPLETE_COSTING";
-    else if (!costsExcludeGst) qualification = "TAX_BASIS_UNVERIFIED";
-    else if (!revenueKnown) qualification = "REVENUE_MISSING";
-    else if (revenue.signum() == 0) qualification = "ZERO_NET_REVENUE";
+    // Line recipe estimates remain useful, but receipt-number equality is not transaction identity.
+    var group = groups.group(saleNumber, from, to);
     return new SaleCosting(
         lines.stream().limit(MAX_LINES).toList(),
-        complete,
-        total,
-        profit,
-        margin,
-        lines.size() > MAX_LINES ? "SALE_TOO_LARGE" : qualification,
+        false,
+        null,
+        null,
+        null,
+        lines.size() > MAX_LINES ? "SALE_TOO_LARGE" : group.association(),
         costsExcludeGst ? "ASSUMED_EX_GST" : "UNVERIFIED");
   }
 

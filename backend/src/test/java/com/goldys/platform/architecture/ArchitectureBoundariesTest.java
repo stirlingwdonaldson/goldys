@@ -272,6 +272,22 @@ class ArchitectureBoundariesTest {
           .should()
           .resideInAPackage("..reconciliation..");
 
+  @ArchTest
+  static final ArchRule receiptGroupsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(com.goldys.platform.semantic.ReceiptGroupQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
+  @ArchTest
+  static final ArchRule saleItemListsImplementedInReconciliation =
+      classes()
+          .that()
+          .implement(com.goldys.platform.semantic.SaleItemListQuery.class)
+          .should()
+          .resideInAPackage("..reconciliation..");
+
   /** The recipe controller must not read canonical source facts directly. */
   @ArchTest
   static final ArchRule recipeControllerDoesNotReadCanonical =

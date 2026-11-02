@@ -13,6 +13,7 @@ import type { DeletedSaleRow, PaymentRow, SaleItemRow } from "@/lib/api/types";
 import { formatCurrency, formatDay, formatNumber } from "@/lib/format";
 import { useApi } from "@/lib/demo-mode";
 import { cn } from "@/lib/utils";
+import { ReceiptGroupNotice } from "./receipt-group-notice";
 import { SaleCostingPanel } from "./sale-costing-panel";
 import { summariseSale, type CheckTone, type SaleSummary, type SaleVerdict } from "./sale-summary";
 
@@ -125,6 +126,7 @@ export function SaleSummaryView({ saleNumber, apiOverride }: SaleSummaryViewProp
   }
 
   return <div className="flex flex-col gap-4">
+    <ReceiptGroupNotice saleNumber={saleNumber} api={apiOverride ?? api} />
     <SaleSummaryBody summary={summary} />
     {summary.lines.length > 0 ? <SaleCostingPanel saleNumber={saleNumber} api={apiOverride ?? api} /> : null}
   </div>;

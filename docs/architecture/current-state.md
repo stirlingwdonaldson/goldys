@@ -219,3 +219,13 @@ observation view and semantic/API authorization remain unchanged.
 Inventory replay now uses the existing lightweight raw reference query and loads bytes per payload;
 the former inventory-only bulk-payload/time facade and duplicate repository finder were removed
 after their only caller moved. No new ingestion port, domain, permission or frontend call is added.
+
+### Lightspeed receipt evidence (2 November 2026)
+
+CanonicalReceiptEvidenceBatch owns immutable typed mapping or transaction observations and retains
+both payload and scope raw IDs. Resolved SQL views expose independent mapping claims, held conflicts,
+transaction observations and enriched current sale lines. SaleItemListQuery and ReceiptGroupQuery
+are semantic ports; application services authorize their reads. Receipt-number queries explicitly
+return groups, with transaction-specific costing withheld without a source identity bridge.
+The existing merchandise payment-join guard remains unchanged. See
+[operations](../operations/lightspeed-separated-feeds.md) for the manual import and qualification contract.

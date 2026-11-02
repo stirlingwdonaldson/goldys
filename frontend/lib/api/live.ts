@@ -93,6 +93,14 @@ export const liveApi: Api = {
   listConnectorStatuses: (options?: { signal?: AbortSignal }) => fetchApi<ConnectorStatus[]>("/api/connectors", { signal: options?.signal }),
   runConnector: (source: string) =>
     fetchApi<ConnectorStatus>(`/api/connectors/${source}/run`, { method: "POST" }),
+  uploadLightspeedReceiptCsv: (dataset, file, scope) => {
+    const form = new FormData();
+    form.append("file", file);
+    for (const [key, value] of Object.entries(scope)) form.append(key, String(value));
+    return fetchApi<import("./types").ReceiptImportResult>(`/api/connectors/lightspeed-receipts/${dataset}/upload`, { method: "POST", body: form });
+  },
+  getReceiptGroup: (saleNumber, from, to, options) => fetchApi<import("./types").ReceiptGroup>(
+    `/api/sale-items/receipt-group?${new URLSearchParams({ saleNumber, from, to })}`, { signal: options?.signal }),
   uploadConnectorCsv: (connectorName: string, file: File) => {
     const form = new FormData();
     form.append("file", file);

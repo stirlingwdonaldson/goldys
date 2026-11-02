@@ -1,0 +1,14 @@
+financial lines=9405 mapping observations=9483 mapped IDs=9405
+repeat 1: 5415 IDs, identical modeled facts
+repeat 2: 5415 IDs, identical modeled facts
+transactions=5415 ambiguous site/number groups=3 mapped lines in groups=14
+date,lines,transactions,quantity,net,tax,gross,tip
+2026-10-26,712,413,775,10676.45,1064.33,11740.78,0
+2026-10-27,566,319,604,7809.16,779.23,8588.39,0
+2026-10-28,1042,638,1198,18269.42,1816.62,20086.04,0
+2026-10-29,918,508,1025,13161.88,1278.72,14440.60,0
+2026-10-30,2344,1340,2458,33283.84,3323.91,36607.75,0
+2026-10-31,2453,1438,2664,38077.35,3796.17,41873.52,0
+2026-11-01,1370,759,1470,21238.53,2119.96,23358.49,0
+linked rows= 8 linked targets outside period= 0
+PASS: bounded checks; no inference of source population completeness

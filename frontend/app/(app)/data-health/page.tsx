@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ConnectorStatusBadge } from "@/components/connectors/connector-status-badge";
+import { LightspeedReceiptImport } from "@/components/connectors/lightspeed-receipt-import";
 import { OpenTableSyncDialog } from "@/components/connectors/opentable-sync-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { StatCard } from "@/components/data-display/stat-card";
@@ -168,7 +169,7 @@ export default function DataHealthPage() {
     );
   }
 
-  const failing = connectors.data.filter((c) => c.status === "failed").length;
+  const failing = connectors.data.filter((c) => c.status === "failed" || c.status === "partial").length;
   const groups = groupConnectors(connectors.data);
 
   return (
@@ -179,7 +180,7 @@ export default function DataHealthPage() {
           status={
             failing > 0 ? (
               <Badge variant="failed">
-                {failing} {failing === 1 ? "source" : "sources"} failing
+                {failing} {failing === 1 ? "source needs" : "sources need"} attention
               </Badge>
             ) : (
               <Badge variant="success">All sources healthy</Badge>
@@ -187,6 +188,8 @@ export default function DataHealthPage() {
           }
           description="When each source last delivered data, and what to do when one stops."
         />
+
+        <LightspeedReceiptImport />
 
         {/* Hidden file input for the OpenTable CSV upload, triggered from its card. */}
         <input
