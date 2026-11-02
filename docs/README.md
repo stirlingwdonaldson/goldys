@@ -99,3 +99,5 @@ mapping and the full list of department/seniority values. Until they're answered
 permission resources are seeded for `ALL × OWNER` only.
 
 - [Lightspeed separated financial and receipt evidence](operations/lightspeed-separated-feeds.md): scoped imports, ambiguity handling, evidence and activation gates.
+
+- [Lightspeed headline sales correction](operations/lightspeed-headline-sales.md): sale-closed-date contract, real evidence, cutover and historical limits.

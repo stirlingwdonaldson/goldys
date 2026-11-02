@@ -4,110 +4,99 @@ import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 
 /**
- * Parses the CSV that Lightspeed Insights embeds in its scheduled-report webhook.
- *
- * <p>The CSV carries a leading row-number column (empty header) and currency-formatted amounts
- * ("$1.46"). The header is read from the CSV itself and the required columns are validated, so a
- * change to the report shape fails loudly instead of silently producing wrong totals.
+ * The verified sale-closed-date daily report; reconciliation-date reports cannot write headlines.
  */
 @Component
 public class LightspeedInsightsCsvParser {
+  private static final String DATE = "Sales Data Sale Closed Date";
+  private static final String SITE = "Site Numeric ID";
+  private static final String NET = "Sales Data Total Ex Tax";
+  private static final String GROSS = "Sales Data Total Inc Tax";
+  private static final String TAX = "Sales Data Total Tax";
+  private static final String ADJUSTMENT = "Sales Data Total Adjustment Inc Tax";
+  private static final Set<String> HEADERS = Set.of(DATE, SITE, NET, GROSS, TAX, ADJUSTMENT);
 
   public List<LightspeedInsightsSale> parse(byte[] csv) {
-    List<CSVRecord> records = readAll(csv);
-    if (records.isEmpty()) {
-      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Empty Lightspeed CSV");
-    }
-
-    Map<String, Integer> columns = columnIndex(records.get(0));
-    require(columns, "Reconciliation Date", "Total Inc Tax", "Total Tax");
-
-    List<LightspeedInsightsSale> out = new ArrayList<>();
-    for (int i = 1; i < records.size(); i++) {
-      CSVRecord r = records.get(i);
-      String reconciliationDate = get(columns, r, "Reconciliation Date");
-      if (reconciliationDate == null || reconciliationDate.isBlank()) {
-        // The CSV ends with a totals row (blank reconciliation date); skip it.
-        continue;
+    var decoder = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT);
+    try (var input = new InputStreamReader(new ByteArrayInputStream(csv), decoder);
+        var parser = CSVFormat.DEFAULT.parse(input)) {
+      var rows = parser.iterator();
+      if (!rows.hasNext()) throw mismatch("Daily sales CSV has no header");
+      Map<String, Integer> columns = columns(rows.next());
+      List<LightspeedInsightsSale> result = new ArrayList<>();
+      Set<LocalDate> dates = new HashSet<>();
+      while (rows.hasNext()) {
+        CSVRecord row = rows.next();
+        if (row.size() != HEADERS.size()) throw mismatch("Daily sales row has unexpected columns");
+        LocalDate date;
+        try {
+          date = LocalDate.parse(row.get(columns.get(DATE)));
+          // Daily sales identity has no site component: this contract is for Goldy's single venue.
+          if (Long.parseLong(row.get(columns.get(SITE))) != 96181)
+            throw mismatch("Daily sales report must contain only site 96181");
+        } catch (java.time.DateTimeException | NumberFormatException e) {
+          throw mismatch("Daily sales row has an invalid date or site");
+        }
+        if (!dates.add(date))
+          throw mismatch("Daily sales report must have one row per closed date");
+        BigDecimal net = money(row, columns, NET);
+        BigDecimal gross = money(row, columns, GROSS);
+        BigDecimal tax = money(row, columns, TAX);
+        if (net.add(tax).compareTo(gross) != 0)
+          throw mismatch("Daily sales net plus tax must equal gross");
+        result.add(
+            new LightspeedInsightsSale(date, net, gross, tax, money(row, columns, ADJUSTMENT)));
       }
-      out.add(
-          new LightspeedInsightsSale(
-              date(r, columns, "Reconciliation Date"),
-              money(r, columns, "Total Inc Tax"),
-              money(r, columns, "Total Tax"),
-              money(r, columns, "Total Adjustment Inc Tax"),
-              money(r, columns, "Total Adjustment Tax")));
-    }
-    return out;
-  }
-
-  private static List<CSVRecord> readAll(byte[] csv) {
-    try (var in = new InputStreamReader(new ByteArrayInputStream(csv), StandardCharsets.UTF_8)) {
-      return CSVFormat.DEFAULT.parse(in).getRecords();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      return result;
+    } catch (IOException | java.io.UncheckedIOException e) {
+      throw mismatch("Malformed daily sales CSV");
     }
   }
 
-  private static Map<String, Integer> columnIndex(CSVRecord header) {
-    Map<String, Integer> out = new HashMap<>();
+  private static Map<String, Integer> columns(CSVRecord header) {
+    Map<String, Integer> columns = new HashMap<>();
     for (int i = 0; i < header.size(); i++) {
       String name = header.get(i).trim();
-      if (i == 0 && name.isBlank()) {
-        name = "row_number";
-      }
-      out.put(name, i);
-    }
-    return out;
-  }
-
-  private static void require(Map<String, Integer> columns, String... names) {
-    for (String name : names) {
-      if (!columns.containsKey(name)) {
+      if (name.contains("Reconciliation"))
         throw new ConnectorFetchException(
-            "CONNECTOR_SCHEMA_MISMATCH", "Missing column '" + name + "' in Lightspeed CSV");
-      }
+            "UNSAFE_DAILY_SALES_BASIS",
+            "Reconciliation dates cannot identify sale-closed daily totals; use the verified sale-date report");
+      if (columns.put(name, i) != null) throw mismatch("Duplicate daily sales CSV header");
     }
+    if (!columns.keySet().equals(HEADERS))
+      throw mismatch("Daily sales requires exactly the six verified sale-date and site headers");
+    return columns;
   }
 
-  private static LocalDate date(CSVRecord r, Map<String, Integer> columns, String name) {
-    String value = r.get(columns.get(name));
+  private static BigDecimal money(CSVRecord row, Map<String, Integer> columns, String name) {
     try {
-      return LocalDate.parse(value);
-    } catch (RuntimeException e) {
-      throw new ConnectorFetchException(
-          "CONNECTOR_SCHEMA_MISMATCH", "Bad date '" + value + "' in Lightspeed CSV", e);
+      BigDecimal amount =
+          new BigDecimal(row.get(columns.get(name)).replace("$", "").replace(",", "").trim())
+              .setScale(4, RoundingMode.UNNECESSARY);
+      if (amount.precision() > 14) throw new ArithmeticException();
+      return amount;
+    } catch (ArithmeticException | NumberFormatException e) {
+      throw mismatch("Daily sales contains missing or invalid money");
     }
   }
 
-  private static BigDecimal money(CSVRecord r, Map<String, Integer> columns, String name) {
-    String value = get(columns, r, name);
-    if (value == null || value.isBlank()) {
-      return null;
-    }
-    try {
-      return new BigDecimal(value.replace("$", "").replace(",", "").trim());
-    } catch (NumberFormatException e) {
-      throw new ConnectorFetchException(
-          "CONNECTOR_SCHEMA_MISMATCH", "Bad amount '" + value + "' in Lightspeed CSV", e);
-    }
-  }
-
-  private static String get(Map<String, Integer> columns, CSVRecord r, String name) {
-    Integer i = columns.get(name);
-    return i == null ? null : r.get(i);
+  private static ConnectorFetchException mismatch(String message) {
+    return new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", message);
   }
 }

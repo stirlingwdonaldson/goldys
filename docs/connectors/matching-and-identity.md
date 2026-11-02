@@ -512,3 +512,14 @@ Missing link targets are allowed; absent rows never retract prior observations. 
 can reveal an ambiguous receipt group across import windows but cannot assign its merchandise
 lines. Per-line recipe estimates remain available; transaction-specific costing totals are withheld
 until a real bridge is verified. See [operations](../operations/lightspeed-separated-feeds.md).
+
+## Lightspeed headline daily identity (2 November 2026)
+
+The existing daily identity remains `(source_system, trading_date)`, shared across sources by
+trading-date logical UUID. The corrected Insights input uses explicit **sale-closed date**,
+site 96181, and already-adjusted source net/tax/gross. Reconciliation dates cannot identify those
+facts, and adjustment measures are never added again. Because daily identity has no site dimension,
+this input rejects any other site rather than combining venues. Changed facts supersede; unchanged
+facts are reused. Raw evidence retains adjustment measures and the original envelope. Reconciliation
+rules and overrides continue to choose the resolved source. No historical date cleanup or receipt
+identity inference is automatic. See [the runbook](../operations/lightspeed-headline-sales.md).
