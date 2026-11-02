@@ -390,3 +390,13 @@ scoped upload surfaces; a token-gated mapping webhook adapter is implemented but
 The transaction source path is manual authenticated export, not a proven automated connector.
 See [operations and evidence](../operations/lightspeed-separated-feeds.md) for exact schemas,
 real-sample hit rates, export discrepancy and activation gates.
+
+## Lightspeed sale-closed headline totals (2 November 2026)
+
+The corrected `/api/ingest/lightspeed` contract accepts the six-column site-96181 sale-closed-date
+CSV, not the legacy reconciliation-date Look 9365 output. Raw envelopes and explicit processing
+stages are retained; reported net/tax/gross are used directly, without applying adjustments again.
+The independently reconciled seven-day sample, exact headers, single-venue limit and coordinated
+report/deployment cutover are documented in [the headline-sales runbook](../operations/lightspeed-headline-sales.md).
+No report/schedule, production fact, historical replay or source-priority rule is changed by this
+implementation. Old daily reports will be rejected after deployment until the source is switched.

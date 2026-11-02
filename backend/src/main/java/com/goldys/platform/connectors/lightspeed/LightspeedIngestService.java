@@ -1,35 +1,20 @@
 package com.goldys.platform.connectors.lightspeed;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
+import com.goldys.platform.ingestion.IngestionStageKind;
+import com.goldys.platform.ingestion.IngestionStageOutcome;
 import com.goldys.platform.ingestion.RawLedgerQuery;
-import com.goldys.platform.ingestion.port.ConnectorFetchException;
-import com.goldys.platform.util.Nulls;
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-/**
- * Full Lightspeed webhook pipeline: persist the Looker envelope byte-faithfully, then parse the
- * embedded CSV and aggregate per-sale rows into canonical daily totals.
- */
+/** Retains the webhook before validating and publishing source-reported sale-date daily totals. */
 @Service
 public class LightspeedIngestService {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
-  private static final Logger log = LoggerFactory.getLogger(LightspeedIngestService.class);
-
   private final IngestionService ingestion;
   private final CanonicalDailySalesIngest canonical;
   private final LightspeedInsightsCsvParser parser;
@@ -56,7 +41,7 @@ public class LightspeedIngestService {
     parseAndRecord(body, rawId);
   }
 
-  /** Re-parse already-persisted raw payloads into canonical rows, without re-persisting them. */
+  /** Legacy reconciliation reports fail validation; this is not a historical correction route. */
   public void backfill(List<RawLedgerQuery.RawPayload> payloads) {
     for (RawLedgerQuery.RawPayload payload : payloads) {
       parseAndRecord(payload.bytes(), payload.id());
@@ -64,56 +49,39 @@ public class LightspeedIngestService {
   }
 
   private void parseAndRecord(byte[] body, UUID rawId) {
-    List<LightspeedInsightsSale> sales =
-        parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
-
-    if (sales.isEmpty()) {
-      // The scheduled report fired but returned no rows (header only). This is a Looker-side
-      // configuration issue — the report's date filter yields no transactions. Surface it clearly
-      // rather than a silent "SUCCESS with no data".
-      log.warn("Lightspeed webhook delivered an empty report (no data rows)");
-      return;
-    }
-
-    Map<LocalDate, Totals> byDate = new LinkedHashMap<>();
-    for (LightspeedInsightsSale sale : sales) {
-      byDate.computeIfAbsent(sale.reconciliationDate(), d -> new Totals()).add(sale);
-    }
-
-    for (Map.Entry<LocalDate, Totals> entry : byDate.entrySet()) {
-      Totals t = entry.getValue();
-      canonical.record(
-          new DailySalesInput(
-              "LIGHTSPEED", entry.getKey(), t.total, t.gst, t.total.subtract(t.gst), rawId));
-    }
-  }
-
-  private static String extractCsv(byte[] body) {
+    List<LightspeedInsightsSale> sales;
     try {
-      JsonNode root = MAPPER.readTree(body);
-      String data = root.path("attachment").path("data").asText(null);
-      if (data == null) {
-        throw new ConnectorFetchException(
-            "CONNECTOR_SCHEMA_MISMATCH", "No attachment.data in Lightspeed webhook payload");
+      sales =
+          parser.parse(
+              LightspeedSaleItemIngestService.extractCsv(body).getBytes(StandardCharsets.UTF_8));
+    } catch (RuntimeException e) {
+      ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
+      throw e;
+    }
+    IngestionStageOutcome outcome =
+        sales.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS;
+    ingestion.recordStage(rawId, IngestionStageKind.PARSED, outcome);
+    try {
+      for (LightspeedInsightsSale sale : sales) {
+        // Net, tax and gross already include adjustments; never add adjustment measures again.
+        canonical.record(
+            new DailySalesInput(
+                "LIGHTSPEED",
+                sale.saleClosedDate(),
+                sale.totalIncTax(),
+                sale.totalTax(),
+                sale.netTotal(),
+                rawId));
       }
-      return data;
-    } catch (IOException e) {
-      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON webhook payload", e);
+    } catch (RuntimeException e) {
+      ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
+      throw e;
     }
-  }
-
-  private static final class Totals {
-    BigDecimal total = BigDecimal.ZERO;
-    BigDecimal gst = BigDecimal.ZERO;
-
-    void add(LightspeedInsightsSale sale) {
-      total =
-          total
-              .add(Nulls.zeroIfNull(sale.totalIncTax()))
-              .add(Nulls.zeroIfNull(sale.totalAdjustmentIncTax()));
-      gst =
-          gst.add(Nulls.zeroIfNull(sale.totalTax()))
-              .add(Nulls.zeroIfNull(sale.totalAdjustmentTax()));
-    }
+    ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, outcome);
+    if (sales.isEmpty())
+      ingestion.recordQualification(
+          rawId,
+          "DAILY_SALES_EMPTY_UNVERIFIED",
+          "Empty report supplies no dated zero totals; previous daily facts remain unchanged.");
   }
 }

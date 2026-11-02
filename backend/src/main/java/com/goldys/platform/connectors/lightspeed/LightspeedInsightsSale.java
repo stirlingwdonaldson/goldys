@@ -3,10 +3,10 @@ package com.goldys.platform.connectors.lightspeed;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** One reconciliation-date aggregate row from the Lightspeed Insights scheduled CSV. */
+/** One site-96181 sale-closed-date total; adjustments are separate evidence, already in revenue. */
 public record LightspeedInsightsSale(
-    LocalDate reconciliationDate,
+    LocalDate saleClosedDate,
+    BigDecimal netTotal,
     BigDecimal totalIncTax,
     BigDecimal totalTax,
-    BigDecimal totalAdjustmentIncTax,
-    BigDecimal totalAdjustmentTax) {}
+    BigDecimal totalAdjustmentIncTax) {}
