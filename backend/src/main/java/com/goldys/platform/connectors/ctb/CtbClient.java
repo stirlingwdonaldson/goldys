@@ -363,6 +363,9 @@ public class CtbClient {
       throw new ConnectorFetchException(
           "CONNECTOR_PERMISSION_DENIED", "CTB permission denied: " + action);
     }
+    if (response.status() >= 400)
+      throw new ConnectorFetchException(
+          "CONNECTOR_FETCH_FAILED", "CTB " + action + " failed (HTTP " + response.status() + ")");
     JsonNode json = parse(action, response);
     if (!isSuccess(json)) {
       log.warn("CTB {} failed; response: {}", action, body);
@@ -413,7 +416,7 @@ public class CtbClient {
             .GET()
             .build();
     try {
-      return http.send(request, HttpResponse.BodyHandlers.ofString()).body();
+      return new String(send(request).body(), StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "CTB request failed: " + path, e);
     } catch (InterruptedException e) {
@@ -439,7 +442,7 @@ public class CtbClient {
             .POST(HttpRequest.BodyPublishers.ofString(body))
             .build();
     try {
-      HttpResponse<byte[]> response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
+      HttpResponse<byte[]> response = send(request);
       return new Response(
           response.body(),
           response.statusCode(),
@@ -449,6 +452,21 @@ public class CtbClient {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new ConnectorFetchException("CONNECTOR_FETCH_FAILED", "Interrupted: " + path, e);
+    }
+  }
+
+  private HttpResponse<byte[]> send(HttpRequest request) throws IOException, InterruptedException {
+    for (int attempt = 1; ; attempt++) {
+      try {
+        return http.send(request, HttpResponse.BodyHandlers.ofByteArray());
+      } catch (IOException e) {
+        if (attempt == 3) throw e;
+      }
+      log.warn(
+          "Retrying temporary CTB request failure: {} (attempt {})",
+          request.uri().getPath(),
+          attempt);
+      Thread.sleep(1000L * attempt);
     }
   }
 

@@ -35,7 +35,7 @@ import org.mockito.ArgumentCaptor;
 
 class CtbConnectorTest {
   @Test
-  void capturesBothRealPagesBeforeRejectingTheUnidentifiedRow() throws Exception {
+  void capturesBothRealPagesAndRecoversCodedProductsDespiteFreeModifier() throws Exception {
     var client = emptyClient();
     String first = evidencePage(1), second = evidencePage(2);
     when(client.searchSaleItems("2026-09-05", "2026-09-05", 0, 200))
@@ -54,16 +54,12 @@ class CtbConnectorTest {
             products,
             facts);
     List<FetchedPayload> raw = new ArrayList<>();
-    assertThatThrownBy(
-            () ->
-                connector.fetch(
-                    "2026-10-24",
-                    payload -> {
-                      raw.add(payload);
-                      return UUID.randomUUID();
-                    }))
-        .hasMessageContaining("2026-09-05")
-        .hasMessageContaining("identity");
+    connector.fetch(
+        "2026-10-24",
+        payload -> {
+          raw.add(payload);
+          return UUID.randomUUID();
+        });
     verify(client).searchSaleItems("2026-09-05", "2026-09-05", 200, 200);
     assertThat(raw)
         .anySatisfy(
@@ -83,8 +79,17 @@ class CtbConnectorTest {
     assertThat(metadata.path("start").asInt()).isEqualTo(200);
     assertThat(metadata.path("returnedRows").asInt()).isEqualTo(6);
     assertThat(metadata.path("searchType").asText()).isEqualTo("-1");
-    verify(facts, never()).recordReport(any(), any());
-    verify(products, never()).recordAll(org.mockito.ArgumentMatchers.argThat(v -> !v.isEmpty()));
+    verify(facts).recordReport(org.mockito.ArgumentMatchers.argThat(v -> v.size() == 205), any());
+    verify(products)
+        .recordAll(
+            org.mockito.ArgumentMatchers.argThat(
+                v ->
+                    v.size() == 205
+                        && v.stream()
+                                .map(t -> t.amount())
+                                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add)
+                                .compareTo(new java.math.BigDecimal("49115.2799"))
+                            == 0));
   }
 
   @Test
@@ -155,7 +160,7 @@ class CtbConnectorTest {
 
   private static String identifiedEvidencePage() throws Exception {
     var json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(evidencePage(1));
-    // Test-only known identity variant; the real blank row remains unresolved.
+    // Test-only variant where the modifier has a product identity.
     ((com.fasterxml.jackson.databind.node.ObjectNode) json.path("data").get(6))
         .put("stockCode", "TEST-KNOWN-IDENTITY");
     return json.toString();

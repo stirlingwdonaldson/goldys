@@ -24,7 +24,9 @@ final class CtbProductSalesBatch {
 
   void add(CtbSaleItem item, UUID rawId) {
     String identity = ProductSalesInput.sourceIdentity(item.stockCode(), item.siteNumber());
-    if (identity == null || item.quantitySold() == null || item.amount() == null)
+    if ((identity == null && !isUncodedModifier(item))
+        || item.quantitySold() == null
+        || item.amount() == null)
       throw mismatch("Sale item lacks a stable group/product identity or quantity/amount");
     boolean identified = item.uniqueId() != null;
     if (hasRowIds != null && hasRowIds != identified)
@@ -51,6 +53,7 @@ final class CtbProductSalesBatch {
     observations.forEach(
         (key, observation) -> {
           CtbSaleItem item = observation.item;
+          if (isUncodedModifier(item)) return;
           List<UUID> ids = List.copyOf(observation.rawIds);
           ProductSalesInput next =
               new ProductSalesInput(
@@ -87,8 +90,32 @@ final class CtbProductSalesBatch {
     return new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", message);
   }
 
+  int rowCount() {
+    return observations.size();
+  }
+
+  // CTB emits free modifiers without a product code; preserve them raw, never invent a product.
+  private static boolean isUncodedModifier(CtbSaleItem item) {
+    return (item.stockCode() == null || item.stockCode().isBlank())
+        && item.uniqueId() != null
+        && item.parentStockCode() != null
+        && !item.parentStockCode().isBlank()
+        && item.stockDescription() != null
+        && !item.stockDescription().isBlank()
+        && java.util.stream.Stream.of(
+                item.amount(),
+                item.costPerUnit(),
+                item.foodCost(),
+                item.totalFoodCost(),
+                item.discountedAmount(),
+                item.taxAmount(),
+                item.unitPrice())
+            .allMatch(value -> value != null && value.signum() == 0);
+  }
+
   List<SourceProductSaleFactInput> sourceFacts() {
     return observations.values().stream()
+        .filter(o -> !isUncodedModifier(o.item))
         .map(o -> o.item.sourceFact(date, o.rawIds.iterator().next()))
         .toList();
   }

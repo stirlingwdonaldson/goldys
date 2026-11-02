@@ -31,7 +31,7 @@ public class CtbSaleItemParser {
       out.add(
           new CtbSaleItem(
               text(n, "stockCode"),
-              n.path("stockDescription").asText(),
+              text(n, "stockDescription"),
               decimal(n, "quantitySold"),
               decimal(n, "amount"),
               decimal(n, "costPerUnit"),

@@ -24,11 +24,11 @@ class CtbSaleItemParserTest {
     assertThat(blank.stockCode()).isEmpty();
     assertThat(blank.parentStockCode()).isEqualTo("22471901");
     assertThat(blank.uniqueId()).isEqualTo("51");
-    assertThatThrownBy(
-            () ->
-                new CtbProductSalesBatch(java.time.LocalDate.of(2026, 9, 5))
-                    .add(blank, java.util.UUID.randomUUID()))
-        .hasMessageContaining("identity");
+    var batch = new CtbProductSalesBatch(java.time.LocalDate.of(2026, 9, 5));
+    batch.add(blank, java.util.UUID.randomUUID());
+    assertThat(batch.rowCount()).isEqualTo(1);
+    assertThat(batch.sourceFacts()).isEmpty();
+    assertThat(batch.totals()).isEmpty();
   }
 
   @org.junit.jupiter.params.ParameterizedTest
