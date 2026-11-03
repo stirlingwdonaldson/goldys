@@ -25,6 +25,7 @@ class ResolutionStateQueryTest {
   private ResolvedReservationDayRepository reservations;
   private ResolvedLabourDayRepository labour;
   private ResolvedInventoryDayRepository inventory;
+  private ResolvedPaymentDayRepository payments;
   private ResolutionStateQuery query;
 
   @BeforeEach
@@ -34,8 +35,32 @@ class ResolutionStateQueryTest {
     reservations = mock(ResolvedReservationDayRepository.class);
     labour = mock(ResolvedLabourDayRepository.class);
     inventory = mock(ResolvedInventoryDayRepository.class);
+    payments = mock(ResolvedPaymentDayRepository.class);
     query =
-        new ResolutionStateServiceImpl(dailySales, productSales, reservations, labour, inventory);
+        new ResolutionStateServiceImpl(
+            dailySales, productSales, reservations, labour, inventory, payments);
+  }
+
+  @Test
+  void paymentMetricsMapResolvedPaymentRows() {
+    Instant resolvedAt = Instant.parse("2026-09-13T10:15:30Z");
+    when(payments.findByTradingDateBetweenOrderByTradingDateAscPaymentTypeNameAsc(FROM, TO))
+        .thenReturn(
+            List.of(
+                new ResolvedPaymentDay(
+                    FROM,
+                    "Cash",
+                    new BigDecimal("110"),
+                    BigDecimal.TEN,
+                    2,
+                    "single",
+                    "LIGHTSPEED",
+                    false,
+                    resolvedAt)));
+    for (MetricId metric : List.of(MetricId.PAYMENTS_AMOUNT, MetricId.PAYMENTS_TIP)) {
+      assertThat(query.states(metric, FROM, TO))
+          .containsExactly(new ResolutionState(FROM, "single", "LIGHTSPEED", resolvedAt));
+    }
   }
 
   @Test

@@ -19,18 +19,21 @@ public class ResolutionStateServiceImpl implements ResolutionStateQuery {
   private final ResolvedReservationDayRepository reservations;
   private final ResolvedLabourDayRepository labour;
   private final ResolvedInventoryDayRepository inventory;
+  private final ResolvedPaymentDayRepository payments;
 
   public ResolutionStateServiceImpl(
       ResolvedDailySalesRepository dailySales,
       ResolvedProductSalesRepository productSales,
       ResolvedReservationDayRepository reservations,
       ResolvedLabourDayRepository labour,
-      ResolvedInventoryDayRepository inventory) {
+      ResolvedInventoryDayRepository inventory,
+      ResolvedPaymentDayRepository payments) {
     this.dailySales = dailySales;
     this.productSales = productSales;
     this.reservations = reservations;
     this.labour = labour;
     this.inventory = inventory;
+    this.payments = payments;
   }
 
   @Override
@@ -38,6 +41,18 @@ public class ResolutionStateServiceImpl implements ResolutionStateQuery {
     return switch (metric) {
       case SALES_GROSS, SALES_NET, SALES_GST ->
           dailySales.findByTradingDateBetweenOrderByTradingDateAsc(from, to).stream()
+              .map(
+                  r ->
+                      new ResolutionState(
+                          r.tradingDate(),
+                          r.resolutionType(),
+                          r.authoritativeSource(),
+                          r.resolvedAt()))
+              .toList();
+      case PAYMENTS_AMOUNT, PAYMENTS_TIP ->
+          payments
+              .findByTradingDateBetweenOrderByTradingDateAscPaymentTypeNameAsc(from, to)
+              .stream()
               .map(
                   r ->
                       new ResolutionState(
