@@ -18,6 +18,7 @@ import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -102,6 +103,8 @@ public class SecurityConfig {
     http.securityContext(context -> context.securityContextRepository(securityContexts));
 
     http.sessionManagement(session -> session.maximumSessions(-1).sessionRegistry(sessionRegistry));
+
+    http.addFilterAfter(new MustChangePasswordFilter(), AuthorizationFilter.class);
 
     http.formLogin(
         form ->

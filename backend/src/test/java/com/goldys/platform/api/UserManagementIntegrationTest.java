@@ -1,6 +1,5 @@
 package com.goldys.platform.api;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import com.goldys.platform.support.TestAccounts;
 import com.jayway.jsonpath.JsonPath;
+import jakarta.servlet.http.Cookie;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,9 +47,9 @@ class UserManagementIntegrationTest {
   @Test
   void anAccountWithoutTheUsersGrantIsDenied() throws Exception {
     testAccounts.createStaff("staff@example.com", "Staff", "password123");
-    MockHttpSession session = login("staff@example.com", "password123");
+    Login staff = login("staff@example.com", "password123");
 
-    mvc.perform(get("/api/users").session(session))
+    mvc.perform(get("/api/users").session(staff.session()))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("NOT_PERMITTED"));
   }
@@ -57,9 +57,9 @@ class UserManagementIntegrationTest {
   @Test
   void anOwnerListsCreatesRenamesAndDeactivatesAccounts() throws Exception {
     testAccounts.createOwner("owner@example.com", "Owner", "password123");
-    MockHttpSession session = login("owner@example.com", "password123");
+    Login owner = login("owner@example.com", "password123");
 
-    mvc.perform(get("/api/users").session(session))
+    mvc.perform(get("/api/users").session(owner.session()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].email").value("owner@example.com"))
         .andExpect(jsonPath("$[0].self").value(true));
@@ -67,8 +67,9 @@ class UserManagementIntegrationTest {
     MvcResult created =
         mvc.perform(
                 post("/api/users")
-                    .session(session)
-                    .with(csrf())
+                    .session(owner.session())
+                    .cookie(owner.xsrf())
+                    .header("X-XSRF-TOKEN", owner.xsrf().getValue())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         "{\"email\":\"New@Example.com\",\"displayName\":\"New User\","
@@ -80,8 +81,9 @@ class UserManagementIntegrationTest {
 
     mvc.perform(
             patch("/api/users/{id}", id)
-                .session(session)
-                .with(csrf())
+                .session(owner.session())
+                .cookie(owner.xsrf())
+                .header("X-XSRF-TOKEN", owner.xsrf().getValue())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"displayName\":\"Renamed\"}"))
         .andExpect(status().isOk())
@@ -89,8 +91,9 @@ class UserManagementIntegrationTest {
 
     mvc.perform(
             patch("/api/users/{id}", id)
-                .session(session)
-                .with(csrf())
+                .session(owner.session())
+                .cookie(owner.xsrf())
+                .header("X-XSRF-TOKEN", owner.xsrf().getValue())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"active\":false}"))
         .andExpect(status().isOk())
@@ -102,12 +105,13 @@ class UserManagementIntegrationTest {
   @Test
   void duplicateEmailIsRejectedRegardlessOfCase() throws Exception {
     testAccounts.createOwner("owner@example.com", "Owner", "password123");
-    MockHttpSession session = login("owner@example.com", "password123");
+    Login owner = login("owner@example.com", "password123");
 
     mvc.perform(
             post("/api/users")
-                .session(session)
-                .with(csrf())
+                .session(owner.session())
+                .cookie(owner.xsrf())
+                .header("X-XSRF-TOKEN", owner.xsrf().getValue())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     "{\"email\":\"OWNER@example.com\",\"displayName\":\"Duplicate\","
@@ -119,12 +123,13 @@ class UserManagementIntegrationTest {
   @Test
   void unknownAccountIsAValidationError() throws Exception {
     testAccounts.createOwner("owner@example.com", "Owner", "password123");
-    MockHttpSession session = login("owner@example.com", "password123");
+    Login owner = login("owner@example.com", "password123");
 
     mvc.perform(
             patch("/api/users/{id}", UUID.randomUUID())
-                .session(session)
-                .with(csrf())
+                .session(owner.session())
+                .cookie(owner.xsrf())
+                .header("X-XSRF-TOKEN", owner.xsrf().getValue())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"displayName\":\"Nobody\"}"))
         .andExpect(status().isBadRequest())
@@ -134,28 +139,34 @@ class UserManagementIntegrationTest {
   @Test
   void anOwnerCannotDeactivateThemselves() throws Exception {
     testAccounts.createOwner("owner@example.com", "Owner", "password123");
-    MockHttpSession session = login("owner@example.com", "password123");
+    Login owner = login("owner@example.com", "password123");
     String id =
         jdbc.queryForObject(
             "select id::text from user_account where email = 'owner@example.com'", String.class);
 
     mvc.perform(
             patch("/api/users/{id}", id)
-                .session(session)
-                .with(csrf())
+                .session(owner.session())
+                .cookie(owner.xsrf())
+                .header("X-XSRF-TOKEN", owner.xsrf().getValue())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"active\":false}"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("You cannot deactivate your own account"));
   }
 
-  private MockHttpSession login(String email, String password) throws Exception {
-    MvcResult result = loginExpecting(email, password, 200);
-    return (MockHttpSession) result.getRequest().getSession(false);
+  private Login login(String email, String password) throws Exception {
+    MockHttpSession session = new MockHttpSession();
+    MvcResult result = loginExpecting(email, password, 200, session);
+    return new Login(session, result.getResponse().getCookie("XSRF-TOKEN"));
   }
 
-  private MvcResult loginExpecting(String email, String password, int status) throws Exception {
-    MockHttpSession session = new MockHttpSession();
+  private void loginExpecting(String email, String password, int status) throws Exception {
+    loginExpecting(email, password, status, new MockHttpSession());
+  }
+
+  private MvcResult loginExpecting(
+      String email, String password, int status, MockHttpSession session) throws Exception {
     return mvc.perform(
             post("/api/auth/login")
                 .session(session)
@@ -165,4 +176,6 @@ class UserManagementIntegrationTest {
         .andExpect(status().is(status))
         .andReturn();
   }
+
+  private record Login(MockHttpSession session, Cookie xsrf) {}
 }
