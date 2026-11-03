@@ -1,4 +1,0 @@
-SELECT r.fetcher_identity,r.source_record_ref,r.fetched_at,(convert_from(r.payload_bytes,'UTF8')::jsonb)->'data'->0 AS first_row FROM raw_record r WHERE r.id IN (SELECT raw_record_id FROM source_product_sale_fact WHERE trading_date IN ('2026-07-28','2026-07-29') AND superseded_at IS NULL GROUP BY raw_record_id) ORDER BY r.fetched_at DESC LIMIT 4;
-SELECT r.fetcher_identity,r.fetched_at, left(convert_from(r.payload_bytes,'UTF8'),600) AS sample FROM raw_record r WHERE source_system='CTB' AND fetcher_identity='ctb-recipes' ORDER BY fetched_at DESC LIMIT 1;
-SELECT trading_date,sum(amount) line_gross,sum(total_tax) line_tax,count(adjustment) adjustments FROM resolved_sale_line WHERE trading_date BETWEEN '2026-10-26' AND '2026-11-01' GROUP BY 1 ORDER BY 1;
-SELECT adjustment FROM resolved_sale_line WHERE trading_date='2026-10-28' AND adjustment IS NOT NULL LIMIT 1;

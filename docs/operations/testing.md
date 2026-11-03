@@ -79,12 +79,10 @@ of live behaviour.
 | Job | Runs |
 |---|---|
 | Backend | `./gradlew test spotlessCheck build` on Temurin 25 |
-| Frontend | `bun install --frozen-lockfile`, then `typecheck`, `lint`, `build` |
+| Frontend | `bun install --frozen-lockfile`, then `typecheck`, `lint`, `test`, `build` |
 | Docker | builds the backend and frontend images |
 
-CI does **not** run `bun run test` yet (see finding F11 in
-[`../frontend/audit.md`](../frontend/audit.md)), so run Vitest locally before pushing
-frontend changes.
+Run the frontend tests locally before pushing frontend changes, as well as in CI.
 
 ## Local database
 

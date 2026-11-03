@@ -23,7 +23,7 @@ approval for the maintenance window/migrations/deployment and, separately, for a
 
 ## Measured baseline and stop conditions
 
-The [impact report](../audits/data-foundation/2026-10-16-release-impact.md) records the read-only baseline.
+The [impact report](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/audits/data-foundation/2026-10-16-release-impact.md) records the read-only baseline.
 Production was PostgreSQL 16.15, with 75 successful migrations through V82; every applied checksum
 matched. Before deployment, rerun the gate. Stop for any mismatch, V74–V80 history, failed migration,
 duplicate current product source reference, missing inventory raw reference, or role failure.

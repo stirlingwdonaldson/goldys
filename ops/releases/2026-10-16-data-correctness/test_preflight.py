@@ -3,6 +3,7 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location("preflight", Path(__file__).with_name("preflight.py"))
 p = importlib.util.module_from_spec(spec)
@@ -10,6 +11,28 @@ spec.loader.exec_module(p)
 
 
 class ReleaseGateTest(unittest.TestCase):
+    def test_sql_runner_preserves_read_only_guards(self):
+        with patch.object(p.subprocess, "run") as run:
+            run.return_value.returncode = 0
+            run.return_value.stdout = "result"
+            self.assertEqual(p.run_sql("fixture-db", "SELECT 1;"), "result")
+        args, kwargs = run.call_args
+        self.assertEqual(args[0][:4], ["docker", "exec", "-i", "fixture-db"])
+        self.assertIn("default_transaction_read_only=on", args[0][-1])
+        self.assertIn("statement_timeout=8000", args[0][-1])
+        self.assertIn("lock_timeout=1000", args[0][-1])
+        self.assertIn("idle_in_transaction_session_timeout=15000", args[0][-1])
+        self.assertIn("ON_ERROR_STOP=1", args[0][-1])
+        self.assertEqual(kwargs["input"], "BEGIN READ ONLY;\nSELECT 1;\nROLLBACK;\n")
+
+    def test_sql_runner_stops_on_failure(self):
+        with patch.object(p.subprocess, "run") as run, patch.object(p.sys, "stderr"):
+            run.return_value.returncode = 7
+            run.return_value.stderr = "query failed"
+            with self.assertRaises(SystemExit) as error:
+                p.run_sql("fixture-db", "SELECT 1;")
+        self.assertEqual(error.exception.code, 7)
+
     def test_checksum_ignores_bom_and_line_endings(self):
         with tempfile.TemporaryDirectory() as directory:
             a, b = Path(directory) / "a.sql", Path(directory) / "b.sql"

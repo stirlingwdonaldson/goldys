@@ -13,7 +13,7 @@ are computed from `canonical_invoice_line`, those invoices understate cost.
 
 This pack quantifies the gap and names the affected suppliers/invoices. It does **not** claim a
 total-dollar figure (that needs PDF line amounts reconciled to the invoice header — see
-`docs/superpowers/specs/2026-10-11-ctb-invoice-gap-recovery-design.md`).
+[historical design](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/superpowers/specs/2026-10-11-ctb-invoice-gap-recovery-design.md)).
 
 ## How it was measured
 
@@ -95,5 +95,5 @@ non-templated suppliers is the LLM fallback. Those codes can be hallucinated (`F
 low-frequency cadence (e.g. quarterly), sample a handful of `origin='PDF'` lines across the top gap
 suppliers and verify their codes/descriptions against the stored PDFs; where a supplier keeps
 producing bad codes, write a deterministic template extractor (see
-`docs/superpowers/specs/2026-10-13-supplier-pdf-templates-design.md`).
+[historical design](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/superpowers/specs/2026-10-13-supplier-pdf-templates-design.md)).
 
