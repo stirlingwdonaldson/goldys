@@ -1,0 +1,767 @@
+[
+  {
+    "name": "Apple Crumble",
+    "text": "POS name=Apple Crumble; source category=FOOD MENU | Uncategorised\nReceipt observations: first/last=2022-04-07/2025-08-17; observations=143",
+    "expected": "Food",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Food",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Food",
+          "confidence": 0.99,
+          "probabilities": {
+            "Food": 0.99,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.01
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1169,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "Beef Tartare",
+    "text": "POS name=Beef Tartare; source category=FOOD MENU | Uncategorised\nReceipt observations: first/last=2021-04-07/2023-07-02; observations=167",
+    "expected": "Food",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Food",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Food",
+          "confidence": 0.98,
+          "probabilities": {
+            "Food": 0.98,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.02
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1168,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "Can - Stone & Wood Pacific Ale (cafe)",
+    "text": "POS name=Can - Stone & Wood Pacific Ale (cafe); source category=Uncategorised\nReceipt observations: first/last=2021-10-28/2021-12-15; observations=23",
+    "expected": "Beer",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Beer",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Beer",
+          "confidence": 0.97,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.97,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.03
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1169,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "Coke (cafe)",
+    "text": "POS name=Coke (cafe); source category=Uncategorised\nReceipt observations: first/last=2021-10-28/2021-12-16; observations=39",
+    "expected": "Non-Alcoholic",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Non-Alcoholic",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Non-Alcoholic",
+          "confidence": 0.92,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.93,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.07
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1163,
+        "output_tokens": 104
+      }
+    }
+  },
+  {
+    "name": "Coke Zero - Mixer",
+    "text": "POS name=Coke Zero - Mixer; source category=SOFTIES\nReceipt observations: first/last=2021-01-07/2026-10-31; observations=1237",
+    "expected": "HOLD",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": true,
+    "observed": "HOLD",
+    "correct": true,
+    "response": null
+  },
+  {
+    "name": "Extra Shot",
+    "text": "POS name=Extra Shot; source category=Uncategorised\nReceipt observations: first/last=2020-12-02/2022-11-20; observations=2222",
+    "expected": "Modifiers",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Modifiers",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Modifiers",
+          "confidence": 0.77,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.01,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.01,
+            "Ingredients": 0.0,
+            "Modifiers": 0.79,
+            "Merchandise": 0.0,
+            "Unclassified": 0.19
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1164,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "Kids Fish & Chippies",
+    "text": "POS name=Kids Fish & Chippies; source category=Multiple Categories | Uncategorised\nReceipt observations: first/last=2023-10-19/2026-10-31; observations=1533",
+    "expected": "Food",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Food",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Food",
+          "confidence": 0.96,
+          "probabilities": {
+            "Food": 0.96,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.04
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1171,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "Latte - Small",
+    "text": "POS name=Latte - Small; source category=Uncategorised\nReceipt observations: first/last=2020-12-02/2022-12-09; observations=3555",
+    "expected": "Non-Alcoholic",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Non-Alcoholic",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Non-Alcoholic",
+          "confidence": 0.89,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.9,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1165,
+        "output_tokens": 104
+      }
+    }
+  },
+  {
+    "name": "Margarita",
+    "text": "POS name=Margarita; source category=COCKTAILS | Uncategorised\nReceipt observations: first/last=2020-12-12/2026-11-02; observations=7022\nCTB link=242; recipe=332; name=Margarita; folder=Classics; active=true; POS id=null",
+    "expected": "Cocktails",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Cocktails",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Cocktails",
+          "confidence": 0.96,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.96,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.04
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1202,
+        "output_tokens": 102
+      }
+    }
+  },
+  {
+    "name": "Oat milk",
+    "text": "POS name=Oat milk; source category=Uncategorised\nReceipt observations: first/last=2020-11-23/2022-08-14; observations=2902",
+    "expected": "Modifiers",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Unclassified",
+    "correct": false,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Unclassified",
+          "confidence": 0.47,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.01,
+            "Ingredients": 0.14,
+            "Modifiers": 0.33,
+            "Merchandise": 0.0,
+            "Unclassified": 0.52
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1164,
+        "output_tokens": 102
+      }
+    }
+  },
+  {
+    "name": "Parma (cafe)",
+    "text": "POS name=Parma (cafe); source category=Uncategorised\nReceipt observations: first/last=2021-10-30/2021-12-23; observations=187",
+    "expected": "Food",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Food",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Food",
+          "confidence": 0.94,
+          "probabilities": {
+            "Food": 0.95,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.05
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1165,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "Pint - Philter XPA",
+    "text": "POS name=Pint - Philter XPA; source category=FAST BAR | Uncategorised\nReceipt observations: first/last=2022-03-16/2026-11-02; observations=14646",
+    "expected": "HOLD",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": true,
+    "observed": "HOLD",
+    "correct": true,
+    "response": null
+  },
+  {
+    "name": "Porterhouse",
+    "text": "POS name=Porterhouse; source category=Uncategorised\nReceipt observations: first/last=2020-11-26/2026-10-06; observations=2667\nCTB link=299; recipe=461; name=Porterhouse; folder=All time classic; active=true; POS id=null",
+    "expected": "Food",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Food",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Food",
+          "confidence": 0.99,
+          "probabilities": {
+            "Food": 0.99,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.01
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1199,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "Porterhouse (250g )",
+    "text": "POS name=Porterhouse (250g ); source category=FOOD MENU\nReceipt observations: first/last=2022-08-17/2025-08-17; observations=9428",
+    "expected": "Food",
+    "basis": "source category and product description; role of Extra Shot/Oat milk inferred from menu names, not owner-certified",
+    "held": false,
+    "observed": "Food",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Food",
+          "confidence": 0.99,
+          "probabilities": {
+            "Food": 0.99,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.01
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1169,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "Goldy's Tea Towel Doggos of 2023",
+    "text": "POS name=Goldy's Tea Towel Doggos of 2023; source category=MERCH; first/last=2022-07-15/2024-12-17",
+    "expected": "Merchandise",
+    "basis": "MERCH source category and literal item name",
+    "held": false,
+    "observed": "Merchandise",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Merchandise",
+          "confidence": 0.98,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.98,
+            "Unclassified": 0.02
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1163,
+        "output_tokens": 103
+      }
+    }
+  },
+  {
+    "name": "Goldy's Tote",
+    "text": "POS name=Goldy's Tote; source category=MERCH; first/last=2021-04-24/2026-06-22",
+    "expected": "Merchandise",
+    "basis": "MERCH source category and literal item name",
+    "held": false,
+    "observed": "Merchandise",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Merchandise",
+          "confidence": 0.98,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.98,
+            "Unclassified": 0.02
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1153,
+        "output_tokens": 103
+      }
+    }
+  },
+  {
+    "name": "Large - Goldy's 'OG' Tee",
+    "text": "POS name=Large - Goldy's 'OG' Tee; source category=MERCH; first/last=2021-04-14/2026-07-29",
+    "expected": "Merchandise",
+    "basis": "MERCH source category and literal item name",
+    "held": false,
+    "observed": "Merchandise",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Merchandise",
+          "confidence": 0.99,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.0,
+            "Modifiers": 0.0,
+            "Merchandise": 0.99,
+            "Unclassified": 0.01
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1158,
+        "output_tokens": 103
+      }
+    }
+  },
+  {
+    "name": "12 x 80g dill pickle chappy s potato chips",
+    "text": "CTB wastage item=12 x 80g dill pickle chappy s potato chips; recipe ID=unknown; units=each; supplier=Tailor-Made Foods Pty Ltd; observations=1",
+    "expected": "Ingredients",
+    "basis": "stock pack / ingredient description; braised beef cheek has unknown sold-vs-preparation role",
+    "held": false,
+    "observed": "Food",
+    "correct": false,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Food",
+          "confidence": 0.44,
+          "probabilities": {
+            "Food": 0.5,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.16,
+            "Modifiers": 0.01,
+            "Merchandise": 0.0,
+            "Unclassified": 0.33
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1158,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "bay of fires clothbound cheddar",
+    "text": "CTB wastage item=bay of fires clothbound cheddar; recipe ID=unknown; units=kilograms; supplier=Savour and Grace; observations=1",
+    "expected": "Ingredients",
+    "basis": "stock pack / ingredient description; braised beef cheek has unknown sold-vs-preparation role",
+    "held": false,
+    "observed": "Ingredients",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Ingredients",
+          "confidence": 0.9,
+          "probabilities": {
+            "Food": 0.02,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.91,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.07
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1151,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "beef cheek denuded frozen order by kg",
+    "text": "CTB wastage item=beef cheek denuded frozen order by kg; recipe ID=unknown; units=kilograms; supplier=Grange Meat Co; observations=1",
+    "expected": "Ingredients",
+    "basis": "stock pack / ingredient description; braised beef cheek has unknown sold-vs-preparation role",
+    "held": false,
+    "observed": "Ingredients",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Ingredients",
+          "confidence": 0.9,
+          "probabilities": {
+            "Food": 0.02,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.91,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.07
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1151,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "braised beef cheek",
+    "text": "CTB wastage item=braised beef cheek; recipe ID=440; units=kilograms; supplier=; observations=1",
+    "expected": "Unclassified",
+    "basis": "stock pack / ingredient description; braised beef cheek has unknown sold-vs-preparation role",
+    "held": false,
+    "observed": "Food",
+    "correct": false,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Food",
+          "confidence": 0.71,
+          "probabilities": {
+            "Food": 0.74,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.15,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.11
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1143,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "breast fillet butterflied pc 200g",
+    "text": "CTB wastage item=breast fillet butterflied pc 200g; recipe ID=unknown; units=grams; supplier=G & T Chickens; observations=13",
+    "expected": "Ingredients",
+    "basis": "stock pack / ingredient description; braised beef cheek has unknown sold-vs-preparation role",
+    "held": false,
+    "observed": "Ingredients",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Ingredients",
+          "confidence": 0.91,
+          "probabilities": {
+            "Food": 0.02,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.92,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.06
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1158,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "bulla thickened cream",
+    "text": "CTB wastage item=bulla thickened cream; recipe ID=unknown; units=ml; supplier=GOLD ST MILK BAR / CAFE; observations=1",
+    "expected": "Ingredients",
+    "basis": "stock pack / ingredient description; braised beef cheek has unknown sold-vs-preparation role",
+    "held": false,
+    "observed": "Ingredients",
+    "correct": true,
+    "response": {
+      "model": "jev-1.14.0",
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "Ingredients",
+          "confidence": 0.93,
+          "probabilities": {
+            "Food": 0.0,
+            "Beer": 0.0,
+            "Wine": 0.0,
+            "Spirits": 0.0,
+            "Cocktails": 0.0,
+            "Non-Alcoholic": 0.0,
+            "Ingredients": 0.94,
+            "Modifiers": 0.0,
+            "Merchandise": 0.0,
+            "Unclassified": 0.06
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1151,
+        "output_tokens": 100
+      }
+    }
+  },
+  {
+    "name": "Vegan Option",
+    "text": "CTB links for Vegan Option include inactive recipe=-1 and active recipe=643 (vegan option - eggplant parma), folder=Extras and sides. Association conflicts.",
+    "expected": "HOLD",
+    "basis": "conflicting source associations",
+    "held": true,
+    "observed": "HOLD",
+    "correct": true,
+    "response": null
+  }
+]

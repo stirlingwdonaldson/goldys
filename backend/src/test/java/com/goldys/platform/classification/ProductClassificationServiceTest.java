@@ -277,8 +277,10 @@ class ProductClassificationServiceTest {
         .containsExactlyInAnyOrder("beef burger", "house salad");
     assertThat(manual.source()).isEqualTo(AssignmentSource.MANUAL);
     assertThat(manual.status()).isEqualTo(AssignmentStatus.ASSIGNED);
-    assertThat(assignmentStore.get("beef burger").status()).isEqualTo(AssignmentStatus.ASSIGNED);
-    assertThat(assignmentStore.get("beef burger").source()).isEqualTo(AssignmentSource.JEV);
+    assertThat(assignmentStore.get("beef burger").status()).isEqualTo(AssignmentStatus.UNASSIGNED);
+    assertThat(run.proposalSnapshot()).contains("beef burger", "NEEDS_REVIEW");
+    assertThat(run.contextSnapshot()).contains("approved business context", "manual corrections");
+    verify(assignments, never()).save(any());
   }
 
   @Test
@@ -303,11 +305,9 @@ class ProductClassificationServiceTest {
     ClassificationRun run = runStore.values().iterator().next();
     svc.execute(run.id());
 
-    ProductCategoryAssignment saved = assignmentStore.get("beef burger");
-    assertThat(saved.status()).isEqualTo(AssignmentStatus.NEEDS_REVIEW);
-    assertThat(saved.source()).isEqualTo(AssignmentSource.JEV);
-    assertThat(saved.confidence()).isEqualByComparingTo("0.2");
-    assertThat(saved.categoryId()).isEqualTo(category.id());
+    assertThat(assignmentStore).doesNotContainKey("beef burger");
+    assertThat(run.proposalSnapshot()).contains("beef burger", "NEEDS_REVIEW", "0.2");
+    verify(assignments, never()).save(any());
   }
 
   @Test
@@ -329,9 +329,9 @@ class ProductClassificationServiceTest {
     svc.execute(run.id());
 
     assertThat(classifier.requests()).isEmpty();
-    assertThat(assignmentStore.get("beef burger").status()).isEqualTo(AssignmentStatus.UNASSIGNED);
-    assertThat(assignmentStore.get("beef burger").categoryId()).isNull();
-    assertThat(assignmentStore.get("kids fish").status()).isEqualTo(AssignmentStatus.UNASSIGNED);
+    assertThat(assignmentStore.get("beef burger").status()).isEqualTo(AssignmentStatus.ASSIGNED);
+    assertThat(assignmentStore).doesNotContainKey("kids fish");
+    assertThat(run.proposalSnapshot()).contains("NO_TAXONOMY");
     assertThat(run.status()).isEqualTo(ClassificationRunStatus.SUCCEEDED);
     assertThat(run.productCount()).isEqualTo(2);
   }
@@ -452,7 +452,8 @@ class ProductClassificationServiceTest {
                 new SaleItemIdentityView("Beef Burger", "Burgers"),
                 new SaleItemIdentityView("Lemonade", "Drinks")));
     when(recipeLinks.currentLinks()).thenReturn(List.of());
-    when(namer.suggest(any())).thenReturn(List.of(new SuggestedCategory("Beer", "Drinks", null)));
+    when(namer.suggest(any(), any()))
+        .thenReturn(List.of(new SuggestedCategory("Beer", "Drinks", null)));
 
     ProductClassificationService svc =
         service(new FakeEmbeddingClient(), new FakeClassifier(req -> null), true);
@@ -484,7 +485,7 @@ class ProductClassificationServiceTest {
     svc.execute(run.id());
 
     assertThat(suggestionStore).isEmpty();
-    verify(namer, never()).suggest(any());
+    verify(namer, never()).suggest(any(), any());
     assertThat(run.status()).isEqualTo(ClassificationRunStatus.SUCCEEDED);
   }
 
@@ -497,7 +498,7 @@ class ProductClassificationServiceTest {
                 new SaleItemIdentityView("Beef Burger", "Burgers"),
                 new SaleItemIdentityView("Lemonade", "Drinks")));
     when(recipeLinks.currentLinks()).thenReturn(List.of());
-    when(namer.suggest(any())).thenThrow(new RuntimeException("boom"));
+    when(namer.suggest(any(), any())).thenThrow(new RuntimeException("boom"));
 
     ProductClassificationService svc =
         service(new FakeEmbeddingClient(), new FakeClassifier(req -> null), true);

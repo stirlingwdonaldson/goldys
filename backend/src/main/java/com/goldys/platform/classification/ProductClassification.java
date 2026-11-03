@@ -9,4 +9,12 @@ import java.util.UUID;
  * category keyed by category id, and the confidence assigned to the chosen category.
  */
 public record ProductClassification(
-    UUID categoryId, Map<UUID, BigDecimal> probabilities, BigDecimal confidence) {}
+    UUID categoryId,
+    Map<UUID, BigDecimal> probabilities,
+    BigDecimal confidence,
+    String responseModel) {
+  public ProductClassification(
+      UUID categoryId, Map<UUID, BigDecimal> probabilities, BigDecimal confidence) {
+    this(categoryId, probabilities, confidence, "unknown");
+  }
+}

@@ -41,10 +41,14 @@ public class OpenAiClusterNamer implements ClusterNamer {
           + "[{\"name\": string, \"group\": string|null, \"hint\": string|null}]\n"
           + "Rules:\n"
           + "- name: a short human-readable category name (1-3 words).\n"
-          + "- group: a parent group such as \"Beer\", \"Wine\", \"Food\", or null for a flat category.\n"
+          + "- group: a parent group such as \"Beverage\", \"Food\", or null for a flat category.\n"
           + "- hint: a short note only when you merged or split clusters (e.g. \"merges clusters 0 "
           + "and 2\"), otherwise null.\n"
           + "- Every cluster must be covered; do not invent products.";
+
+  static String schemaPrompt(String context) {
+    return context + "\n" + SCHEMA_PROMPT;
+  }
 
   private final ObjectProvider<ChatModel> chatModel;
   private final ObjectMapper mapper;
@@ -56,6 +60,11 @@ public class OpenAiClusterNamer implements ClusterNamer {
 
   @Override
   public List<SuggestedCategory> suggest(List<ClusterSummary> clusters) {
+    return suggest(clusters, ClassificationContext.TEXT);
+  }
+
+  @Override
+  public List<SuggestedCategory> suggest(List<ClusterSummary> clusters, String context) {
     ChatModel model = chatModel.getIfAvailable();
     if (model == null || clusters.isEmpty()) {
       return List.of();
@@ -65,7 +74,8 @@ public class OpenAiClusterNamer implements ClusterNamer {
           model.call(
               new Prompt(
                   List.<Message>of(
-                      new SystemMessage(SCHEMA_PROMPT), new UserMessage(clusterText(clusters))),
+                      new SystemMessage(schemaPrompt(context)),
+                      new UserMessage(clusterText(clusters))),
                   temperatureZero()));
       return parse(response.getResult().getOutput().getText());
     } catch (RuntimeException e) {
@@ -103,7 +113,18 @@ public class OpenAiClusterNamer implements ClusterNamer {
     try {
       List<SuggestedCategory> result =
           mapper.readValue(json, new TypeReference<List<SuggestedCategory>>() {});
-      return result == null ? List.of() : result;
+      if (result == null
+          || result.size() > 500
+          || result.stream()
+              .anyMatch(
+                  s ->
+                      s == null
+                          || s.name() == null
+                          || s.name().isBlank()
+                          || s.name().length() > 128
+                          || s.groupName() != null && s.groupName().length() > 128
+                          || s.hint() != null && s.hint().length() > 512)) return List.of();
+      return result;
     } catch (Exception e) {
       log.warn("Could not parse LLM category naming output as JSON", e);
       return List.of();

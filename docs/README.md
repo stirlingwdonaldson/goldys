@@ -106,3 +106,5 @@ permission resources are seeded for `ALL × OWNER` only.
 
 - [CTB failed pull and recovery, 2 November 2026](../ops/recovery/2026-11-02/README.md):
   uncoded free modifiers, bounded retries and the six-date recovery baseline.
+
+- [Product classification review](audits/product-classification-2026-11-03/README.md): real-data coverage, saved model previews, independent reporting dimensions and unapplied correction proposals.

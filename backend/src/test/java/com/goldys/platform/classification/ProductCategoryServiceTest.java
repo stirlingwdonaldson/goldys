@@ -45,6 +45,7 @@ class ProductCategoryServiceTest {
       ProductCategoryAssignmentRepository assignments,
       CategorySuggestionRepository suggestions,
       PermissionService permissions) {
+    when(categories.existsById(any())).thenReturn(true);
     return new ProductCategoryService(categories, assignments, suggestions, permissions);
   }
 

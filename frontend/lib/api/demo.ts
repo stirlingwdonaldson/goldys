@@ -2330,6 +2330,12 @@ export const demoApi: Api = {
     });
   },
 
+  async getClassificationPreview(id: string): Promise<import("./types").ClassificationPreview> {
+    await delay(300);
+    return { runId: id, contextSnapshot: JSON.stringify({ businessContext: "DEMO: historical café membership and closure dates remain uncertain.", categoryOptions: [{categoryId: "demo-food", name: "Food"}] }),
+      proposalSnapshot: JSON.stringify([{product: "porterhouse", categoryId: "demo-food", status: "NEEDS_REVIEW"}, {product: "ambiguous mixer", status: "AMBIGUOUS_IDENTITY_OR_RECIPE"}]), namingSnapshot: null };
+  },
+
   async listClassificationRuns(options?: { signal?: AbortSignal }): Promise<ClassificationRun[]> {
     await delay(300, options?.signal);
     // Advance any RUNNING run to SUCCEEDED so the poll loop observes completion, and refresh the

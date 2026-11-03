@@ -539,3 +539,25 @@ code. Uncoded rows with monetary/cost values, missing fields or missing report/p
 identity still reject the day. Complete coded rows from the same report are published.
 The same batch rule applies to the existing complete-envelope source-fact backfill;
 its existing multi-page replay limit is unchanged. Recovery uses a normal dated pull.
+
+
+## Classification review and reporting identities (3 November 2026)
+
+Normalized product names remain legacy browsing/reporting aliases, not cross-source identity.
+Classification discovery retains every source observation; conflicting qualified native product
+IDs within a source, multiple catalog refs within a source, or competing recipe IDs are held for
+review. No first recipe/category is selected. A duplicate association to the same recipe alone is
+not a new recipe conflict. Existing source-native facts and aliases are not merged or rewritten.
+
+Explicit reporting policy has scopes PRODUCT_NAME (RESOLVED compatibility alias), CTB_RECIPE,
+CTB_STOCK and WASTE_LINE (CTB exact source ref). A PRODUCT_NAME decision requires an observed
+unambiguous alias; conflicting names need reviewed source-identity/equivalence work before
+name-grain reporting can use them. Inventory never falls back to product-name classification:
+wastage joins only exact line refs or its positive observed recipe ID. It has no verified stock
+ID; CTB_STOCK mappings cannot be guessed onto it. Exact waste-line review takes precedence over
+recipe policy, including an UNKNOWN withdrawal. Revisions retain actor, reason and effective date;
+an earlier date is an explicit reporting restatement, not a source-effective fact inferred by code.
+
+Café closure around 2022 is an owner's hypothesis, not an approved effective date. Menu names,
+last sales or current recipe activity never automatically assign café membership or retirement.
+See [the measured investigation](../audits/product-classification-2026-11-03/README.md).

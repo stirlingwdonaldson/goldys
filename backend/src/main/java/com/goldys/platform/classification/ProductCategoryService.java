@@ -85,8 +85,18 @@ public class ProductCategoryService {
   }
 
   @Transactional
+  public void describe(UserRole role, UUID id, String description) {
+    permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    categories
+        .findById(id)
+        .orElseThrow(() -> new IllegalArgumentException("Unknown category"))
+        .describe(description);
+  }
+
+  @Transactional
   public void move(UserRole role, String productNameKey, UUID categoryId) {
     permissions.require(role, RESOURCE, PermissionAction.WRITE);
+    if (!categories.existsById(categoryId)) throw new IllegalArgumentException("Unknown category");
     Instant now = CLOCK.instant();
     ProductCategoryAssignment assignment =
         assignments

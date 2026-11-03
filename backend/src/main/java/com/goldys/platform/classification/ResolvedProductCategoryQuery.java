@@ -4,6 +4,8 @@ import com.goldys.platform.semantic.CategorySales;
 import com.goldys.platform.semantic.FoodBevSplit;
 import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
+import com.goldys.platform.semantic.ProductReportingMapping.SalesNature;
+import com.goldys.platform.semantic.ProductReportingMapping.Scope;
 import com.goldys.platform.semantic.ProductSalesMetric;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,9 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -26,37 +26,20 @@ import org.springframework.stereotype.Service;
 public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery {
 
   private static final String UNCATEGORISED = "Uncategorised";
-  private static final String FOOD_GROUP = "Food";
-  // Flat beverage categories are valid curated assignments too. A null parent does not mean
-  // that Wine/Beer sales are unclassified. Never treat an arbitrary non-food group as beverage.
-  private static final Set<String> BEVERAGE_CATEGORIES =
-      Set.of(
-          "beverage",
-          "beverages",
-          "drinks",
-          "beer",
-          "wine",
-          "spirits",
-          "liqueurs",
-          "cocktails",
-          "soft drinks",
-          "non-alcoholic",
-          "non alcoholic");
-  private static final Set<String> EXCLUDED_CATEGORIES =
-      Set.of(
-          "merchandise", "merch", "cash-out", "cash out", "cashout", "raffle tickets", "donations");
-
   private final ProductMetricsQuery productMetrics;
   private final ProductCategoryRepository categories;
   private final ProductCategoryAssignmentRepository assignments;
+  private final ProductReportingMappingService mappings;
 
   public ResolvedProductCategoryQuery(
       ProductMetricsQuery productMetrics,
       ProductCategoryRepository categories,
-      ProductCategoryAssignmentRepository assignments) {
+      ProductCategoryAssignmentRepository assignments,
+      ProductReportingMappingService mappings) {
     this.productMetrics = productMetrics;
     this.categories = categories;
     this.assignments = assignments;
+    this.mappings = mappings;
   }
 
   @Override
@@ -99,7 +82,7 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
 
   @Override
   public List<FoodBevSplit> dailyFoodBev(LocalDate from, LocalDate to) {
-    Classification classification = resolveClassification();
+    var revisions = mappings.revisions(to);
 
     // Emit a split for every date that has any resolved product-sales rows. A side with no rows in
     // its group that day is a real zero; a side with rows but a null (unresolved) amount is null,
@@ -107,14 +90,20 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
     Map<LocalDate, MutableSplit> byDay = new LinkedHashMap<>();
     for (ProductSalesMetric metric : productMetrics.productSales(from, to)) {
       MutableSplit split = byDay.computeIfAbsent(metric.tradingDate(), d -> new MutableSplit());
-      ProductCategory category = classification.leafFor(metric.productName());
-      String group = category == null ? "" : normalise(category.groupName());
-      String name = category == null ? "" : normalise(category.name());
-      if (EXCLUDED_CATEGORIES.contains(name) || EXCLUDED_CATEGORIES.contains(group)) {
-        continue;
-      }
-      boolean food = normalise(FOOD_GROUP).equals(group) || "food".equals(name);
-      boolean beverage = BEVERAGE_CATEGORIES.contains(group) || BEVERAGE_CATEGORIES.contains(name);
+      var mapping =
+          revisions.stream()
+              .filter(
+                  m ->
+                      m.scope() == Scope.PRODUCT_NAME
+                          && m.sourceSystem().equals("RESOLVED")
+                          && m.entityKey().equals(metric.productName())
+                          && !m.effectiveFrom().isAfter(metric.tradingDate()))
+              .findFirst()
+              .orElse(null);
+      var nature = mapping == null ? SalesNature.UNKNOWN : mapping.salesNature();
+      if (nature == SalesNature.OTHER) continue;
+      boolean food = nature == SalesNature.FOOD;
+      boolean beverage = nature == SalesNature.BEVERAGE;
       if (!food && !beverage) {
         // Unknown revenue cannot become a zero-drinks training observation. Retain its
         // magnitude so the daily classification coverage can be checked below.
@@ -162,10 +151,7 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
     return out;
   }
 
-  /**
-   * Builds the product → category/group lookup once per query, so {@link #salesByCategory} and
-   * {@link #dailyFoodBev} share the same assignment/category maps rather than rebuilding them.
-   */
+  /** Builds the approved browsing assignment lookup once for category sales totals. */
   private Classification resolveClassification() {
     Map<String, ProductCategoryAssignment> assignmentByProduct = new HashMap<>();
     for (ProductCategoryAssignment assignment : assignments.findAll()) {
@@ -188,10 +174,6 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
     return add == null ? null : current.add(add);
   }
 
-  private static String normalise(String value) {
-    return value == null ? "" : value.strip().toLowerCase(Locale.ROOT);
-  }
-
   /** The resolved product → category/group mapping for one query. */
   private record Classification(
       Map<String, ProductCategoryAssignment> assignmentByProduct,
@@ -200,15 +182,11 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
     /** The leaf category of a product, or null when unassigned or its category was deleted. */
     ProductCategory leafFor(String productName) {
       ProductCategoryAssignment assignment = assignmentByProduct.get(productName);
-      return assignment == null || assignment.categoryId() == null
+      return assignment == null
+              || assignment.status() != AssignmentStatus.ASSIGNED
+              || assignment.categoryId() == null
           ? null
           : categoryById.get(assignment.categoryId());
-    }
-
-    /** The group of a product, or null when unassigned, deleted, or flat (no parent group). */
-    String groupForProduct(String productName) {
-      ProductCategory leaf = leafFor(productName);
-      return leaf == null ? null : leaf.groupName();
     }
   }
 

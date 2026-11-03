@@ -1,0 +1,131 @@
+measure,n
+source_name_collisions,4
+total,product_number,sku
+1498758,51935,1116
+category_name,names,min,max
+Uncategorised,1506,2020-11-23,2026-11-02
+WINE BOTTLE,240,2021-05-25,2026-11-02
+FOOD MENU,186,2020-11-26,2026-11-02
+WINE GLASS,111,2021-04-02,2026-11-02
+COCKTAILS,89,2020-11-27,2026-11-02
+FAST BAR,88,2020-11-26,2026-11-02
+X- FUNCTIONS,87,2022-02-13,2026-10-16
+Multiple Categories,71,2021-01-07,2026-11-02
+SOFTIES,69,2020-11-26,2026-11-02
+Weekly Food Specials,56,2025-08-17,2026-11-02
+TINNIES,54,2020-11-27,2026-11-02
+SPIRITS,48,2020-12-20,2026-11-02
+LIQUEURS,32,2020-12-04,2026-11-02
+MERCH,29,2021-04-09,2026-10-21
+NON ALC,18,2021-10-22,2026-11-02
+SPECIALS,16,2020-11-26,2023-05-18
+FRIDAY FISH & CHIP SHOP,13,2026-05-29,2026-11-01
+RAFFLE TIX,2,2026-01-01,2026-10-29
+BAR SNACKS,1,2024-12-22,2024-12-22
+CASH OUT,1,2023-11-09,2026-11-01
+sale_item_stock_description,string_agg,string_agg,string_agg
+.5L - Jamsheed 'Flor de Corazon' CHILLED (Tap),"-1,700", | Jamsheed 'Flor de Corazon' Chilled Red 500ml Carafe,Jamsheed - Chilled Red (Flor de Corazon) NEW
+Apple Juice - Mixer,"-1,261", | Cloudy Apple Juice mixer,Cloudy Apple Juice
+B - Alkina 'Kin' Grenache 2024,"-1,691", | Alkina 'Kin' Grenache 2024 BTL,Sept Bev: Red BTL
+Coke Zero - Mixer,"-1,292", | No Sugar Cola Mixer,No Sugar Cola
+Vegan Option,"-1,643", | vegan option -  eggplant parma,Extras and sides
+item_name,categories,min,max,lines
+Porterhouse (250g ),FOOD MENU,2022-08-17,2025-08-17,9428
+G - NV Continental Platter Prosecco,Uncategorised,2024-10-23,2026-09-19,4692
+Latte - Small,Uncategorised,2020-12-02,2022-12-09,3555
+Oat milk,Uncategorised,2020-11-23,2022-08-14,2902
+Porterhouse,Uncategorised,2020-11-26,2026-10-06,2667
+Latte - Large,Uncategorised,2020-12-02,2022-11-19,2655
+Extra Shot,Uncategorised,2020-12-02,2022-11-20,2222
+Iced Latte,Uncategorised,2021-01-21,2022-12-03,639
+"Latte - Small, Take Away",Uncategorised,2020-12-02,2021-01-21,469
+B -NV Continental Platter Prosecco,Uncategorised,2024-10-22,2026-09-19,458
+"Latte - Large, Take Away",Uncategorised,2020-12-02,2021-02-01,395
+Chai Latte - Large,Uncategorised,2020-12-11,2022-05-22,340
+Iced Latte - Take Away,Uncategorised,2020-12-02,2021-01-21,233
+Chai Latte - Small,Uncategorised,2020-11-23,2022-09-16,218
+Parma (cafe),Uncategorised,2021-10-30,2021-12-23,187
+Piccolo Latte - Piccolo Latte,Uncategorised,2020-12-03,2021-07-03,170
+Kewpie Mayo (cafe),Uncategorised,2021-06-04,2021-12-22,139
+English Breakfast Tea,Uncategorised,2020-12-09,2022-12-16,124
+Cheeseburger (cafe),Uncategorised,2021-10-28,2021-12-23,124
+Iced Latte - Dine in,Uncategorised,2020-12-02,2021-01-20,101
+Chippies (cafe),Uncategorised,2021-10-28,2021-12-23,76
+Orange Juice (cafe),Uncategorised,2021-10-28,2021-12-21,59
+Piccolo Latte,Uncategorised,2021-07-14,2022-06-12,54
+Coke (cafe),Uncategorised,2021-10-28,2021-12-16,39
+Vegan cheezeburger (cafe),Uncategorised,2021-10-28,2021-12-23,39
+Eggplant Parma (Cafe),Uncategorised,2021-11-04,2021-12-23,37
+Mimosa - Gls (cafe),Uncategorised,2021-10-30,2022-02-26,35
+Boiled Eggs Side (Cafe),Uncategorised,2021-04-07,2021-05-26,33
+Piccolo Latte - Take Away,Uncategorised,2020-12-03,2021-01-21,32
+"Chai Latte - Large, Take Away",Uncategorised,2020-12-02,2021-01-21,25
+Coke Zero (cafe),Uncategorised,2021-10-31,2021-12-19,24
+Fish (cafe),Uncategorised,2021-04-07,2021-05-25,24
+Can - Stone & Wood Pacific Ale (cafe),Uncategorised,2021-10-28,2021-12-15,23
+Ploughman platter,Uncategorised,2021-04-11,2021-05-27,23
+Bloody Oath (cafe),Uncategorised,2021-10-28,2021-12-17,22
+product_name_key,quantity,cost,reason,unit_of_measurement_name,recipe_id
+12 x 80g dill pickle chappy s potato chips,0.0800,5.0000,"Damaged Pack
+",each,
+2023 cotier joy,1.0000,16.9800,,ml,
+2023 vinea marson rosato,1.0000,18.2800,,ml,
+aperol aperitif 700 ml,0.7143,27.8000,Dropped/Broken,ml,
+bay of fires clothbound cheddar,0.2000,54.5000,,kilograms,
+beef burger 150 gm 54 pcs,0.0556,121.5000,,each,
+beef burger 150 gm 54 pcs,0.0370,121.5000,,each,
+beef cheek denuded frozen order by kg,2.0000,26.9000,,kilograms,
+beef mince premium coarse cut,5.0000,15.2200,,kilograms,
+beef mince premium coarse cut,0.3000,15.2200,,kilograms,
+beef sirloin 250 gm steak pr angus order by each,0.7500,34.0000,,kilograms,
+beef sirloin 250 gm steak pr angus order by each,0.5000,34.0000,menu test,kilograms,
+beef sirloin pr order by kg,4.0000,26.5000,,each,
+beef sirloin pr order by kg,4.0000,30.0000,cooked too much with minimal sales/trim also,each,
+beef sirloin pr order by kg,8.0000,26.5000,,each,
+beef sirloin pr order by kg,2.0000,26.5000,sunday roast trim ,each,
+beyond burger plant base 40x113g vf,0.1000,167.8600,,each,
+bondar fiano 2025,1.0000,19.6600,,ml,
+braised beef cheek,0.0179,329.2200,,kilograms,440
+breast fillet butterflied pc 200g,1.0000,2.2000,,grams,
+breast fillet butterflied pc 200g,3.0000,2.4000,,grams,
+breast fillet butterflied pc 200g,2.0000,2.2000,,grams,
+breast fillet butterflied pc 200g,1.0000,2.2000,,grams,
+breast fillet butterflied pc 200g,1.0000,2.2000,,grams,
+breast fillet butterflied pc 200g,0.0100,2.2000,,grams,
+breast fillet butterflied pc 200g,1.0000,2.2000,,grams,
+breast fillet butterflied pc 200g,4.0000,2.2000,over cooked,grams,
+breast fillet butterflied pc 200g,1.0000,2.2000,,grams,
+breast fillet butterflied pc 200g,2.0000,2.2000,,grams,
+breast fillet butterflied pc 200g,12.5000,2.2000,Staff Meal,grams,
+breast fillet butterflied pc 200g,1.0000,2.2000,,grams,
+breast fillet butterflied pc 200g,1.0000,2.2000,burned,grams,
+bulla thickened cream,0.6667,4.5000,,ml,
+butternut pumpkin x kg,1.0000,3.9900,,kilograms,
+casarecce 25 500g 24 divella,4.0000,3.6000,,grams,
+definitions,active,production,folders
+674,674,0,96
+stocks,ids,suppliers
+1299,1299,1299
+status,name,names,absolute_amount
+ASSIGNED,Beer,190,57292.0539
+ASSIGNED,Weekly Specials,176,47534.7193
+ASSIGNED,Wine,116,15585.8750
+ASSIGNED,Spirits,63,9996.3900
+ASSIGNED,Cocktails,81,9900.8733
+ASSIGNED,Soft Drinks,104,3272.9328
+NEEDS_REVIEW,Weekly Specials,45,3146.3391
+NEEDS_REVIEW,Merchandise,74,2231.8267
+NEEDS_REVIEW,Beer,7,1296.7483
+ASSIGNED,Liqueurs,9,595.0000
+NEEDS_REVIEW,Soft Drinks,20,477.1100
+ASSIGNED,Non-Alcoholic,28,455.4800
+ASSIGNED,Wings,6,439.7879
+ASSIGNED,Raffle Tickets,2,344.0000
+NEEDS_REVIEW,Functions,9,215.9000
+NEEDS_REVIEW,Cocktails,7,200.0000
+ASSIGNED,Desserts,8,147.9700
+ASSIGNED,Merchandise,16,130.7700
+NEEDS_REVIEW,Non-Alcoholic,21,119.1600
+NEEDS_REVIEW,Wine,25,35.5200
+NEEDS_REVIEW,Desserts,5,32.4000
+NEEDS_REVIEW,Wings,2,7.5000

@@ -39,6 +39,7 @@ import { TaxonomyTree } from "@/components/classification/taxonomy-tree";
 import { DendrogramView, type DendroAction, type DendroSelection } from "@/components/classification/dendrogram-view";
 import { EmbeddingScatter } from "@/components/classification/embedding-scatter";
 import { PipelineFlow, type PipelineStage } from "@/components/classification/pipeline-flow";
+import { ClassificationPreviewPanel } from "@/components/classification/classification-preview";
 import { SuggestionsPanel } from "@/components/classification/suggestions-panel";
 
 type Tab = "categories" | "clusters" | "pipeline" | "suggestions";
@@ -464,7 +465,7 @@ const RUN_STATUS_VARIANT: Record<
 const RUN_KIND_LABEL: Record<ClassificationRunKind, string> = {
   FULL: "Full pipeline",
   CLUSTER: "Cluster only",
-  ASSIGN: "Assign only",
+  ASSIGN: "Assignment preview",
 };
 
 /**
@@ -778,6 +779,7 @@ export default function ProductsPage() {
       {writeError ? <InlineError>{writeError}</InlineError> : null}
       {runError ? <InlineError>{runError}</InlineError> : null}
       <RunStatusLine run={latestRun} />
+      {latestRun && latestRun.status !== "RUNNING" ? <ClassificationPreviewPanel key={latestRun.id} runId={latestRun.id} /> : null}
 
       {hasAny ? (
         <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>

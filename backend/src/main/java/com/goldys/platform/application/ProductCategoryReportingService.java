@@ -107,6 +107,11 @@ public class ProductCategoryReportingService {
     }
   }
 
+  public com.goldys.platform.semantic.ClassificationPreview preview(UserRole role, UUID id) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return classification.preview(id);
+  }
+
   /** The pending taxonomy draft, in display order. */
   public List<CategorySuggestionView> listSuggestions(UserRole role) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
@@ -145,6 +150,10 @@ public class ProductCategoryReportingService {
   /** Renames a category; the classification service enforces global name uniqueness. */
   public void rename(UserRole role, UUID id, String name) {
     categories.rename(role, id, name);
+  }
+
+  public void describe(UserRole role, UUID id, String description) {
+    categories.describe(role, id, description);
   }
 
   /** Moves a category under a (possibly null) group. */

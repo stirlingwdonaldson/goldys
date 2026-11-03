@@ -83,6 +83,14 @@ class ProductCategory {
     return displayOrder;
   }
 
+  public void describe(String value) {
+    if (value == null || value.isBlank() || value.length() > 512)
+      throw new IllegalArgumentException(
+          "Category criteria require 1–512 characters including exclusions");
+    this.description = value;
+    this.updatedAt = Instant.now();
+  }
+
   public String description() {
     return description;
   }
