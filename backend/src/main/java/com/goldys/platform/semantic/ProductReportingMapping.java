@@ -18,6 +18,7 @@ public record ProductReportingMapping(
     String reason) {
   public enum Scope {
     PRODUCT_NAME,
+    CTB_PRODUCT,
     CTB_RECIPE,
     CTB_STOCK,
     WASTE_LINE

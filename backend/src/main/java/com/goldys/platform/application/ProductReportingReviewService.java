@@ -45,6 +45,11 @@ public class ProductReportingReviewService {
     return wastage.lines(from, to, page * size, size);
   }
 
+  public com.goldys.platform.semantic.ReportingMappingPreview preview(
+      UserRole role, ProductReportingMapping mapping, LocalDate through) {
+    return mappings.preview(role, mapping, through);
+  }
+
   public void append(UserRole role, String actor, ProductReportingMapping mapping) {
     mappings.append(role, actor, mapping);
   }

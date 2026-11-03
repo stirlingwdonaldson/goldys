@@ -394,6 +394,10 @@ export const liveApi: Api = {
   getRecipes: (options?: { signal?: AbortSignal }) => fetchApi<import("./types").RecipeCosting[]>("/api/recipes", { signal: options?.signal }),
   getRecipeIngredients: (recipeId: number, options?: { signal?: AbortSignal }) =>
     fetchApi<import("./types").RecipeIngredient[]>(`/api/recipes/${recipeId}/ingredients`, { signal: options?.signal }),
+  getReportingMappings: (to) => fetchApi<import("./types").ReportingMapping[]>(`/api/products/categories/reporting-mappings?to=${encodeURIComponent(to)}`),
+  previewReportingMapping: (mapping, through) => fetchApi<import("./types").ReportingMappingPreview>(`/api/products/categories/reporting-mappings/preview?through=${encodeURIComponent(through)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(mapping) }),
+  saveReportingMapping: (mapping) => fetchApi<void>("/api/products/categories/reporting-mappings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(mapping) }, { responseType: "void" }),
+  getClassifiedWastage: (from, to, page) => fetchApi<import("./types").ClassifiedWasteLine[]>(`/api/products/categories/reporting-mappings/wastage?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&page=${page}&size=50`),
   getCategoryTaxonomy: (options?: { signal?: AbortSignal }) => fetchApi<CategoryNode[]>("/api/products/categories/taxonomy", { signal: options?.signal }),
   getCategoryDendrogram: (options?: { signal?: AbortSignal }) =>
     fetchApi<DendrogramNode[]>("/api/products/categories/dendrogram", { signal: options?.signal }),

@@ -25,6 +25,8 @@ class WeeklyReportServiceTest {
   private final WeeklyReportTargets targets = mock(WeeklyReportTargets.class);
   private final com.goldys.platform.semantic.WeeklyInventoryQuery inventory =
       mock(com.goldys.platform.semantic.WeeklyInventoryQuery.class);
+  private final com.goldys.platform.semantic.ReportingSalesQuery reportingSales =
+      mock(com.goldys.platform.semantic.ReportingSalesQuery.class);
   private final WeeklyReportService service =
       new WeeklyReportService(
           metrics,
@@ -33,7 +35,8 @@ class WeeklyReportServiceTest {
           permissions,
           VenueClock.fixed(ZoneId.of("Australia/Melbourne"), Instant.parse("2026-11-01T14:30:00Z")),
           targets,
-          inventory);
+          inventory,
+          reportingSales);
 
   @BeforeEach
   void data() {
@@ -122,13 +125,44 @@ class WeeklyReportServiceTest {
   }
 
   @Test
+  void classifiedActualsUseEffectiveFoodAndBeverageTargets() {
+    var observations =
+        new java.util.ArrayList<com.goldys.platform.semantic.ReportingSalesQuery.Sale>();
+    MONDAY
+        .datesUntil(MONDAY.plusDays(7))
+        .forEach(
+            d -> {
+              observations.add(
+                  new com.goldys.platform.semantic.ReportingSalesQuery.Sale(
+                      d, "food", new BigDecimal("110"), new BigDecimal("100"), "CTB", "FOOD"));
+              observations.add(
+                  new com.goldys.platform.semantic.ReportingSalesQuery.Sale(
+                      d, "drink", new BigDecimal("55"), new BigDecimal("50"), "CTB", "BEVERAGE"));
+            });
+    when(reportingSales.sales(any(), any())).thenReturn(observations);
+    when(targets.get(OWNER, MONDAY))
+        .thenReturn(
+            List.of(
+                new WeeklyReportTargets.Target(
+                    "food_target", new BigDecimal("800"), MONDAY, "reviewed"),
+                new WeeklyReportTargets.Target(
+                    "beverage_target", new BigDecimal("300"), MONDAY, "reviewed")));
+    var report = service.report(OWNER, MONDAY, 1);
+    assertThat(row(report, "food_sales").total()).isEqualByComparingTo("700");
+    assertThat(row(report, "beverage_sales").total()).isEqualByComparingTo("350");
+    assertThat(row(report, "food_difference").total()).isEqualByComparingTo("-100");
+    assertThat(row(report, "beverage_difference").total()).isEqualByComparingTo("50");
+    assertThat(row(report, "food_difference_percent").total()).isEqualByComparingTo("-0.125");
+  }
+
+  @Test
   void deniesBeforeReadingAnyData() {
     doThrow(AccessDeniedException.forResource("inventory.cost"))
         .when(permissions)
         .require(OWNER, new ResourceKey("inventory.cost"), PermissionAction.READ);
     assertThatThrownBy(() -> service.report(OWNER, MONDAY, 1))
         .isInstanceOf(AccessDeniedException.class);
-    verifyNoInteractions(metrics, reviews);
+    verifyNoInteractions(metrics, reviews, reportingSales, inventory, targets);
   }
 
   @Test

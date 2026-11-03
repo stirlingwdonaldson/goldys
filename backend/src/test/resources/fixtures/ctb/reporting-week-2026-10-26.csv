@@ -1,0 +1,1035 @@
+trading_date,name,stock_code,product_name,quantity_sold,amount,tax_amount,discounted_amount,site_number,source_record_ref
+2026-10-26,negroni,11589780,Negroni,2.0000,44.7200,4.0600,44.7200,0,ctb-row:site:0:code:8:11589780@2026-10-26:53
+2026-10-26,chippies,11791008,Chippies,17.0000,207.0000,18.8300,207.0000,0,ctb-row:site:0:code:8:11791008@2026-10-26:0
+2026-10-26,pot carlton draught,11801264,Pot - Carlton Draught,9.0000,54.2100,4.9000,54.2100,0,ctb-row:site:0:code:8:11801264@2026-10-26:54
+2026-10-26,pint carlton draught,11801266,Pint - Carlton Draught,110.0000,1478.8400,134.2200,1478.8400,0,ctb-row:site:0:code:8:11801266@2026-10-26:55
+2026-10-26,jug carlton draught,11801268,Jug - Carlton Draught,5.0000,160.0000,14.5500,160.0000,0,ctb-row:site:0:code:8:11801268@2026-10-26:56
+2026-10-26,frog in a pond,11814978,Frog In A Pond,6.0000,48.7800,4.4400,48.7800,0,ctb-row:site:0:code:8:11814978@2026-10-26:1
+2026-10-26,2 glasses,11829589,2 Glasses,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829589@2026-10-26:57
+2026-10-26,3 glasses,11829591,3 Glasses,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829591@2026-10-26:58
+2026-10-26,5 glasses,11829593,5 Glasses,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829593@2026-10-26:59
+2026-10-26,no glass,11829651,No Glass,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829651@2026-10-26:60
+2026-10-26,lemonade mixer,12026491,Lemonade - Mixer,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026491@2026-10-26:61
+2026-10-26,tonic mixer,12026532,Tonic - Mixer,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026532@2026-10-26:62
+2026-10-26,jameson 30ml,12027393,Jameson - 30ml,10.0000,140.0000,12.7100,140.0000,0,ctb-row:site:0:code:8:12027393@2026-10-26:63
+2026-10-26,sailor jerry 30ml,12027410,Sailor Jerry - 30ml,1.0000,14.0000,1.2700,14.0000,0,ctb-row:site:0:code:8:12027410@2026-10-26:64
+2026-10-26,apple juice gls,12042869,Apple Juice - Gls,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:12042869@2026-10-26:65
+2026-10-26,pint bodriggy speccy juice,12096194,Pint - Bodriggy Speccy Juice,29.0000,365.2100,33.1500,365.2100,0,ctb-row:site:0:code:8:12096194@2026-10-26:66
+2026-10-26,pot bodriggy speccy juice,12096195,Pot - Bodriggy Speccy Juice,7.0000,42.7500,3.8500,42.7500,0,ctb-row:site:0:code:8:12096195@2026-10-26:67
+2026-10-26,fernet branca 30ml,12538276,Fernet Branca - 30ml,6.0000,78.0000,7.0800,78.0000,0,ctb-row:site:0:code:8:12538276@2026-10-26:68
+2026-10-26,carlton draught can,12539172,Carlton Draught - Can,2.0000,12.0000,1.0900,12.0000,0,ctb-row:site:0:code:8:12539172@2026-10-26:69
+2026-10-26,bar pretzels,13442259,Bar Pretzels,2.0000,12.2000,1.1200,12.2000,0,ctb-row:site:0:code:8:13442259@2026-10-26:70
+2026-10-26,red wine jus,13494503,Red Wine Jus,1.0000,3.5500,0.3200,3.5500,0,ctb-row:site:0:code:8:13494503@2026-10-26:2
+2026-10-26,invalid stout btl,14036826,Invalid Stout - Btl,3.0000,39.6400,3.6000,39.6400,0,ctb-row:site:0:code:8:14036826@2026-10-26:71
+2026-10-26,virgin bloody oath,14125046,Virgin Bloody Oath,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:14125046@2026-10-26:72
+2026-10-26,gordans gin 30ml,14203742,Gordans Gin- 30ml,9.0000,117.6400,10.6700,117.6400,0,ctb-row:site:0:code:8:14203742@2026-10-26:73
+2026-10-26,house vodka 30ml,14263125,House Vodka - 30ml,2.0000,26.2200,2.3800,26.2200,0,ctb-row:site:0:code:8:14263125@2026-10-26:74
+2026-10-26,chappy s chips sea salt,15147349,Chappy's Chips (Sea Salt),1.0000,4.0000,0.3700,4.0000,0,ctb-row:site:0:code:8:15147349@2026-10-26:75
+2026-10-26,lyre s garden tonic,15301670,Lyre's Garden Tonic,1.0000,12.0000,1.0900,12.0000,0,ctb-row:site:0:code:8:15301670@2026-10-26:76
+2026-10-26,o brien gluten free pale ale can,15370026,O'Brien Gluten Free Pale Ale - Can,3.0000,36.2000,3.2900,36.2000,0,ctb-row:site:0:code:8:15370026@2026-10-26:77
+2026-10-26,no parma sauce,15866620,No Parma Sauce,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866620@2026-10-26:3
+2026-10-26,no cheese,15866622,No Cheese,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866622@2026-10-26:4
+2026-10-26,no ham,15866623,No Ham,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866623@2026-10-26:5
+2026-10-26,no salad,15995858,No Salad,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15995858@2026-10-26:6
+2026-10-26,no chips,15995860,No Chips,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15995860@2026-10-26:7
+2026-10-26,pineapple juice gls,16090144,Pineapple Juice - Gls,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:16090144@2026-10-26:78
+2026-10-26,vegan option,16457487,Vegan Option,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:16457487@2026-10-26:8
+2026-10-26,pot goldy s one off the wood lager,16470218,Pot - Goldy's 'One Off The Wood' Lager,3.0000,21.2600,1.9200,21.2600,0,ctb-row:site:0:code:8:16470218@2026-10-26:79
+2026-10-26,pint goldy s one off the wood lager,16470220,Pint - Goldy's 'One Off The Wood' Lager,44.0000,556.9200,50.5700,556.9200,0,ctb-row:site:0:code:8:16470220@2026-10-26:80
+2026-10-26,jug goldy s one off the wood lager,16470223,Jug - Goldy's 'One Off The Wood' Lager,11.0000,210.3300,19.1400,210.3300,0,ctb-row:site:0:code:8:16470223@2026-10-26:81
+2026-10-26,coke pot,16749341,Coke - Pot,4.0000,16.1900,1.4500,16.1900,0,ctb-row:site:0:code:8:16749341@2026-10-26:82
+2026-10-26,coke pint,16749346,Coke - Pint,3.0000,24.1300,2.2000,24.1300,0,ctb-row:site:0:code:8:16749346@2026-10-26:83
+2026-10-26,coke zero pot,16749434,Coke Zero - Pot,10.0000,40.4900,3.6600,40.4900,0,ctb-row:site:0:code:8:16749434@2026-10-26:84
+2026-10-26,coke zero pint,16749437,Coke Zero - Pint,2.0000,16.1300,1.4700,16.1300,0,ctb-row:site:0:code:8:16749437@2026-10-26:85
+2026-10-26,coke zero jug,16749441,Coke Zero - Jug,1.0000,12.0000,1.0900,12.0000,0,ctb-row:site:0:code:8:16749441@2026-10-26:86
+2026-10-26,lemonade pint,16749456,Lemonade - Pint,1.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:16749456@2026-10-26:87
+2026-10-26,rasp lem pot,16749465,Rasp Lem - Pot,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:16749465@2026-10-26:88
+2026-10-26,dry ginger ale pot,16749558,Dry Ginger Ale - Pot,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:16749558@2026-10-26:89
+2026-10-26,ginger beer pot,16749567,Ginger Beer - Pot,2.0000,8.1400,0.7400,8.1400,0,ctb-row:site:0:code:8:16749567@2026-10-26:90
+2026-10-26,ginger beer pint,16749569,Ginger Beer - Pint,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:16749569@2026-10-26:91
+2026-10-26,soda pot,16749705,Soda - Pot,3.0000,7.5400,0.6900,7.5400,0,ctb-row:site:0:code:8:16749705@2026-10-26:92
+2026-10-26,soda pint,16749706,Soda - Pint,2.0000,10.1600,0.9000,10.1600,0,ctb-row:site:0:code:8:16749706@2026-10-26:93
+2026-10-26,llb pot,16749736,LLB - Pot,13.0000,52.3500,4.7300,52.3500,0,ctb-row:site:0:code:8:16749736@2026-10-26:94
+2026-10-26,llb pint,16749737,LLB - Pint,2.0000,16.0000,1.4600,16.0000,0,ctb-row:site:0:code:8:16749737@2026-10-26:95
+2026-10-26,llb jug,16749739,LLB - Jug,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:16749739@2026-10-26:96
+2026-10-26,slb pot,16749748,SLB - Pot,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:16749748@2026-10-26:97
+2026-10-26,japanese slipper,16754732,Japanese Slipper,1.0000,21.3500,1.9400,21.3500,0,ctb-row:site:0:code:8:16754732@2026-10-26:98
+2026-10-26,g goldy s pinot grigio,17128306,G - Goldy's Pinot Grigio,8.0000,108.6900,9.8600,108.6900,0,ctb-row:site:0:code:8:17128306@2026-10-26:99
+2026-10-26,g goldy s rose,17128338,G - Goldy's Rose,4.0000,56.4600,5.1200,56.4600,0,ctb-row:site:0:code:8:17128338@2026-10-26:100
+2026-10-26,0 5l goldy s rose,17128342,0.5L - Goldy's Rose,1.0000,40.6600,3.7000,40.6600,0,ctb-row:site:0:code:8:17128342@2026-10-26:101
+2026-10-26,gluten free burger,17333419,Gluten Free - Burger,5.0000,10.0900,0.9000,10.0900,0,ctb-row:site:0:code:8:17333419@2026-10-26:9
+2026-10-26,ice cream,17890537,Ice cream,3.0000,21.3500,1.9500,21.3500,0,ctb-row:site:0:code:8:17890537@2026-10-26:10
+2026-10-26,doggie roo pop,17914464,Doggie - Roo Pop,1.0000,2.5400,0.2300,2.5400,0,ctb-row:site:0:code:8:17914464@2026-10-26:102
+2026-10-26,doggie chicken twist,17914665,Doggie - Chicken Twist,1.0000,2.0000,0.1800,2.0000,0,ctb-row:site:0:code:8:17914665@2026-10-26:103
+2026-10-26,t i n a,18093919,T.I.N.A,1.0000,15.0000,1.3600,15.0000,0,ctb-row:site:0:code:8:18093919@2026-10-26:104
+2026-10-26,garlic aioli,18244151,Garlic Aioli,11.0000,27.9400,2.5300,27.9400,0,ctb-row:site:0:code:8:18244151@2026-10-26:11
+2026-10-26,garlic aioli side,18338771,Garlic Aioli - Side,2.0000,5.0000,0.4500,5.0000,0,ctb-row:site:0:code:8:18338771@2026-10-26:12
+2026-10-26,little dragon ginger beer,18686570,Little Dragon 'Ginger Beer',5.0000,75.7500,6.8800,75.7500,0,ctb-row:site:0:code:8:18686570@2026-10-26:105
+2026-10-26,pint the mill ipa,19402776,Pint - The Mill IPA,1.0000,16.0000,1.4500,16.0000,0,ctb-row:site:0:code:8:19402776@2026-10-26:106
+2026-10-26,regular cheese,19921137,Regular Cheese,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:19921137@2026-10-26:13
+2026-10-26,pot bridge road free time,19967639,Pot - Bridge Road Free Time,4.0000,28.1200,2.5700,28.1200,0,ctb-row:site:0:code:8:19967639@2026-10-26:107
+2026-10-26,pint bridge road free time,19967640,Pint - Bridge Road Free Time,8.0000,112.6900,10.2200,112.6900,0,ctb-row:site:0:code:8:19967640@2026-10-26:108
+2026-10-26,gnocchi ragu,20161231,Gnocchi - Ragu,44.0000,1101.1981,98.8811,1101.1981,0,ctb-row:site:0:code:8:20161231@2026-10-26:14
+2026-10-26,pint napoleone cider,20185179,Pint - Napoleone Cider,23.0000,333.0000,30.1900,333.0000,0,ctb-row:site:0:code:8:20185179@2026-10-26:109
+2026-10-26,pot napoleone cider,20185180,Pot - Napoleone Cider,3.0000,22.6200,2.0500,22.6200,0,ctb-row:site:0:code:8:20185180@2026-10-26:110
+2026-10-26,louis rose cider pomme rouge,20624123,Louis Rose Cider Pomme Rouge,2.0000,24.2000,2.2000,24.2000,0,ctb-row:site:0:code:8:20624123@2026-10-26:111
+2026-10-26,garlic bread,20747805,Garlic bread,9.0000,128.0800,11.6100,128.0800,0,ctb-row:site:0:code:8:20747805@2026-10-26:15
+2026-10-26,kids slider,20766261,Kids slider,3.0000,42.6900,3.8700,42.6900,0,ctb-row:site:0:code:8:20766261@2026-10-26:16
+2026-10-26,mustard gravy side,20824943,Mustard Gravy - Side,5.0000,12.6600,1.1500,12.6600,0,ctb-row:site:0:code:8:20824943@2026-10-26:17
+2026-10-26,gnocchi alla norma,21202354,Gnocchi - Alla Norma,21.0000,540.9505,48.3799,540.9505,0,ctb-row:site:0:code:8:21202354@2026-10-26:18
+2026-10-26,5l goldys sangiovese,21402331,.5L - Goldys! Sangiovese,2.0000,81.3200,7.4000,81.3200,0,ctb-row:site:0:code:8:21402331@2026-10-26:112
+2026-10-26,g goldys sangiovese,21402505,G- Goldys! Sangiovese,17.0000,236.2400,21.4300,236.2400,0,ctb-row:site:0:code:8:21402505@2026-10-26:113
+2026-10-26,chappy s chips dill pickle,21622221,Chappy's Chips (Dill Pickle),2.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:21622221@2026-10-26:114
+2026-10-26,chicken parma,22101357,Chicken Parma,42.0000,1278.3600,116.3500,1278.3600,0,ctb-row:site:0:code:8:22101357@2026-10-26:19
+2026-10-26,eggplant parma,22101409,Eggplant Parma,7.0000,132.4200,12.0700,132.4200,0,ctb-row:site:0:code:8:22101409@2026-10-26:20
+2026-10-26,fish n chips v2,22101441,Fish'n'Chips v2,4.0000,129.5900,11.7900,129.5900,0,ctb-row:site:0:code:8:22101441@2026-10-26:21
+2026-10-26,housemade tomato sauce,22101515,Housemade Tomato Sauce,2.0000,7.1200,0.6600,7.1200,0,ctb-row:site:0:code:8:22101515@2026-10-26:22
+2026-10-26,b le battilstelle montesei soave,22140891,B - Le Battilstelle Montesei Soave,1.0000,79.2900,7.2100,79.2900,0,ctb-row:site:0:code:8:22140891@2026-10-26:115
+2026-10-26,cheeseburger,22152688,Cheeseburger,10.0000,264.8500,24.1300,264.8500,0,ctb-row:site:0:code:8:22152688@2026-10-26:23
+2026-10-26,vegan beyond burger,22152693,Vegan Beyond Burger,6.0000,182.4600,16.5900,182.4600,0,ctb-row:site:0:code:8:22152693@2026-10-26:24
+2026-10-26,double vegan burger,22153798,Double Vegan Burger,1.0000,38.6500,3.5400,38.6500,0,ctb-row:site:0:code:8:22153798@2026-10-26:25
+2026-10-26,double cheeseburger,22155522,Double Cheeseburger,3.0000,106.7400,9.7000,106.7400,0,ctb-row:site:0:code:8:22155522@2026-10-26:26
+2026-10-26,frickles,22469048,Frickles,1.0000,14.2300,1.2900,14.2300,0,ctb-row:site:0:code:8:22469048@2026-10-26:27
+2026-10-26,g shady lane pet nat,22471903,G - Shady Lane Pet Nat,8.0000,122.0000,11.0800,122.0000,0,ctb-row:site:0:code:8:22471903@2026-10-26:116
+2026-10-26,dill aioli,22510826,Dill Aioli,3.0000,7.6200,0.6900,7.6200,0,ctb-row:site:0:code:8:22510826@2026-10-26:28
+2026-10-26,g swiftsure marlborough sauvignon blanc,22857146,G - Swiftsure 'Marlborough' Sauvignon Blanc,6.0000,91.2500,8.2600,91.2500,0,ctb-row:site:0:code:8:22857146@2026-10-26:117
+2026-10-26,g dazma gew rztraminer,22857161,"G - Dazma, Gewürztraminer",8.0000,121.4900,11.0200,121.4900,0,ctb-row:site:0:code:8:22857161@2026-10-26:118
+2026-10-26,b table wines gelato bianco pecorino blend,22858220,B - Table Wines 'Gelato Bianco' Pecorino Blend,1.0000,73.1900,6.6600,73.1900,0,ctb-row:site:0:code:8:22858220@2026-10-26:119
+2026-10-26,pint melbourne black,22870705,Pint - Melbourne Black,12.0000,193.5700,17.5300,193.5700,0,ctb-row:site:0:code:8:22870705@2026-10-26:120
+2026-10-26,pot philter xpa,23005113,Pot - Philter XPA,3.0000,24.1300,2.2000,24.1300,0,ctb-row:site:0:code:8:23005113@2026-10-26:121
+2026-10-26,pint philter xpa,23005115,Pint - Philter XPA,11.0000,177.3100,16.0600,177.3100,0,ctb-row:site:0:code:8:23005115@2026-10-26:122
+2026-10-26,jug philter xpa,23005117,Jug - Philter XPA,1.0000,32.5300,2.9600,32.5300,0,ctb-row:site:0:code:8:23005117@2026-10-26:123
+2026-10-26,yes,23088943,Yes,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23088943@2026-10-26:29
+2026-10-26,no,23088945,No,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23088945@2026-10-26:30
+2026-10-26,cacio e pepe croquettes,23118462,Cacio e Pepe Croquettes,1.0000,14.2300,1.2900,14.2300,0,ctb-row:site:0:code:8:23118462@2026-10-26:31
+2026-10-26,fried calamari,23118464,Fried Calamari,3.0000,54.6000,4.9800,54.6000,0,ctb-row:site:0:code:8:23118464@2026-10-26:32
+2026-10-26,wild boar dimmies,23118475,Wild Boar Dimmies,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23118475@2026-10-26:33
+2026-10-26,casarecce,23143536,Casarecce,2.0000,58.9600,5.3700,58.9600,0,ctb-row:site:0:code:8:23143536@2026-10-26:34
+2026-10-26,roast hispi cabbage,23143547,Roast Hispi Cabbage,3.0000,85.3800,7.7700,85.3800,0,ctb-row:site:0:code:8:23143547@2026-10-26:35
+2026-10-26,kids fish chippies,23271688,Kids Fish & Chippies,1.0000,10.1700,0.9200,10.1700,0,ctb-row:site:0:code:8:23271688@2026-10-26:36
+2026-10-26,kids parma,23271710,Kids Parma,1.0000,17.2800,1.5800,17.2800,0,ctb-row:site:0:code:8:23271710@2026-10-26:37
+2026-10-26,g garagiste le stagiaire pinot noir,23351439,G - Garagiste 'Le Stagiaire' Pinot Noir,6.0000,103.1200,9.4000,103.1200,0,ctb-row:site:0:code:8:23351439@2026-10-26:124
+2026-10-26,mojito,23439059,Mojito,1.0000,20.3300,1.8500,20.3300,0,ctb-row:site:0:code:8:23439059@2026-10-26:125
+2026-10-26,pint keeper pilsner,23499705,Pint - Keeper Pilsner,1.0000,16.2600,1.4700,16.2600,0,ctb-row:site:0:code:8:23499705@2026-10-26:126
+2026-10-26,g dr loosen dr l riesling,23537757,G - Dr. Loosen 'Dr. L' Riesling,3.0000,48.0000,4.3500,48.0000,0,ctb-row:site:0:code:8:23537757@2026-10-26:127
+2026-10-26,g deep woods estate chardonnay,23537760,G - Deep Woods Estate Chardonnay,8.0000,128.7900,11.6700,128.7900,0,ctb-row:site:0:code:8:23537760@2026-10-26:128
+2026-10-26,g syrahmi demi shiraz,23537766,G - Syrahmi 'Demi' Shiraz,1.0000,18.2900,1.6600,18.2900,0,ctb-row:site:0:code:8:23537766@2026-10-26:129
+2026-10-26,g dominique piron beaujolais villages gamay,23537769,G - Dominique Piron 'Beaujolais-Villages' Gamay,2.0000,32.5200,2.9400,32.5200,0,ctb-row:site:0:code:8:23537769@2026-10-26:130
+2026-10-26,black betty,23575223,Black Betty,1.0000,23.0000,2.0900,23.0000,0,ctb-row:site:0:code:8:23575223@2026-10-26:131
+2026-10-26,sangria,23575230,Sangria,1.0000,14.0000,1.2700,14.0000,0,ctb-row:site:0:code:8:23575230@2026-10-26:132
+2026-10-26,tiki martin,23575237,Tiki Martin,1.0000,22.3600,2.0300,22.3600,0,ctb-row:site:0:code:8:23575237@2026-10-26:133
+2026-10-26,g nv three pillars sparkling brut cuvee,23611729,G - NV Three Pillars Sparkling Brut Cuvee,2.0000,20.0000,1.8200,20.0000,0,ctb-row:site:0:code:8:23611729@2026-10-26:134
+2026-10-26,aperol spritz nv three pillars,23611732,Aperol Spritz (NV Three Pillars),1.0000,18.3000,1.6700,18.3000,0,ctb-row:site:0:code:8:23611732@2026-10-26:135
+2026-10-26,pint d sseldorf draught altbier,23641018,Pint - Düsseldorf Draught Altbier,2.0000,32.0000,2.9000,32.0000,0,ctb-row:site:0:code:8:23641018@2026-10-26:136
+2026-10-26,octoberfest schnitty,23660247,Octoberfest Schnitty,14.0000,426.4700,38.8500,426.4700,0,ctb-row:site:0:code:8:23660247@2026-10-26:38
+2026-10-26,pot la sirene citray sour,23662906,Pot - La Sirene 'Citray' Sour,1.0000,8.6400,0.7800,8.6400,0,ctb-row:site:0:code:8:23662906@2026-10-26:137
+2026-10-26,pint la sirene citray sour,23662907,Pint - La Sirene 'Citray' Sour,3.0000,48.5200,4.3900,48.5200,0,ctb-row:site:0:code:8:23662907@2026-10-26:138
+2026-10-26,baba ganoush,23673744,Baba Ganoush,2.0000,32.2600,2.9200,32.2600,0,ctb-row:site:0:code:8:23673744@2026-10-26:39
+2026-10-26,tuna tostada,23673809,Tuna Tostada,3.0000,54.8900,5.0000,54.8900,0,ctb-row:site:0:code:8:23673809@2026-10-26:40
+2026-10-26,charred corn salad,23673814,Charred Corn Salad,2.0000,28.4600,2.5900,28.4600,0,ctb-row:site:0:code:8:23673814@2026-10-26:41
+2026-10-26,leaf salad,23673817,Leaf Salad,1.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:23673817@2026-10-26:42
+2026-10-26,murray cod,23673819,Murray Cod,2.0000,77.2600,7.0200,77.2600,0,ctb-row:site:0:code:8:23673819@2026-10-26:43
+2026-10-26,thai beef salad,23673822,Thai Beef Salad,3.0000,103.1200,9.3700,103.1200,0,ctb-row:site:0:code:8:23673822@2026-10-26:44
+2026-10-26,steak frites,23673827,Steak Frites,2.0000,93.5200,8.5000,93.5200,0,ctb-row:site:0:code:8:23673827@2026-10-26:45
+2026-10-26,cheesecake,23676135,Cheesecake,1.0000,14.0000,1.2700,14.0000,0,ctb-row:site:0:code:8:23676135@2026-10-26:46
+2026-10-26,november roast,23740192,November Roast,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23740192@2026-10-26:47
+2026-10-26,november vegan roast,23740193,November Vegan Roast,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23740193@2026-10-26:48
+2026-10-26,caprese schnitty,23740195,Caprese Schnitty,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23740195@2026-10-26:49
+2026-10-26,caprese eggplant schnitty,23740197,Caprese Eggplant Schnitty,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23740197@2026-10-26:50
+2026-10-26,caprese schnitty 20,23740203,Caprese Schnitty $20,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23740203@2026-10-26:51
+2026-10-26,caprese eggplant schnitty 20,23740204,Caprese Eggplant Schnitty $20,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23740204@2026-10-26:52
+2026-10-27,chippies,11791008,Chippies,6.0000,73.0000,6.6400,73.0000,0,ctb-row:site:0:code:8:11791008@2026-10-27:0
+2026-10-27,pot carlton draught,11801264,Pot - Carlton Draught,5.0000,31.0000,2.8100,31.0000,0,ctb-row:site:0:code:8:11801264@2026-10-27:38
+2026-10-27,pint carlton draught,11801266,Pint - Carlton Draught,43.0000,618.0000,56.0500,618.0000,0,ctb-row:site:0:code:8:11801266@2026-10-27:39
+2026-10-27,jug carlton draught,11801268,Jug - Carlton Draught,2.0000,40.0000,3.6400,40.0000,0,ctb-row:site:0:code:8:11801268@2026-10-27:40
+2026-10-27,frog in a pond,11814978,Frog In A Pond,3.0000,16.2600,1.4600,16.2600,0,ctb-row:site:0:code:8:11814978@2026-10-27:1
+2026-10-27,bloody oath,11815270,Bloody Oath,1.0000,16.0000,1.4500,16.0000,0,ctb-row:site:0:code:8:11815270@2026-10-27:41
+2026-10-27,1 glass,11829588,1 Glass,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829588@2026-10-27:42
+2026-10-27,2 glasses,11829589,2 Glasses,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829589@2026-10-27:43
+2026-10-27,3 glasses,11829591,3 Glasses,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829591@2026-10-27:44
+2026-10-27,lagavulin 30ml,12027395,Lagavulin - 30ml,1.0000,19.0000,1.7300,19.0000,0,ctb-row:site:0:code:8:12027395@2026-10-27:45
+2026-10-27,apple juice gls,12042869,Apple Juice - Gls,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:12042869@2026-10-27:46
+2026-10-27,pint bodriggy speccy juice,12096194,Pint - Bodriggy Speccy Juice,29.0000,363.4200,33.0000,363.4200,0,ctb-row:site:0:code:8:12096194@2026-10-27:47
+2026-10-27,pot bodriggy speccy juice,12096195,Pot - Bodriggy Speccy Juice,5.0000,30.2800,2.7400,30.2800,0,ctb-row:site:0:code:8:12096195@2026-10-27:48
+2026-10-27,virgin bloody oath,14125046,Virgin Bloody Oath,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:14125046@2026-10-27:49
+2026-10-27,pot pale ale love shack,14936614,Pot - Pale Ale Love Shack,8.0000,64.4000,5.8700,64.4000,0,ctb-row:site:0:code:8:14936614@2026-10-27:50
+2026-10-27,pint pale ale love shack,14936615,Pint - Pale Ale Love Shack,35.0000,527.7500,47.8700,527.7500,0,ctb-row:site:0:code:8:14936615@2026-10-27:51
+2026-10-27,o brien gluten free pale ale can,15370026,O'Brien Gluten Free Pale Ale - Can,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:15370026@2026-10-27:52
+2026-10-27,no parma sauce,15866620,No Parma Sauce,5.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866620@2026-10-27:2
+2026-10-27,no cheese,15866622,No Cheese,5.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866622@2026-10-27:3
+2026-10-27,no ham,15866623,No Ham,13.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866623@2026-10-27:4
+2026-10-27,no salad,15995858,No Salad,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15995858@2026-10-27:5
+2026-10-27,pineapple juice gls,16090144,Pineapple Juice - Gls,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:16090144@2026-10-27:53
+2026-10-27,vegan option,16457487,Vegan Option,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:16457487@2026-10-27:6
+2026-10-27,pot goldy s one off the wood lager,16470218,Pot - Goldy's 'One Off The Wood' Lager,3.0000,24.0000,2.1900,24.0000,0,ctb-row:site:0:code:8:16470218@2026-10-27:54
+2026-10-27,pint goldy s one off the wood lager,16470220,Pint - Goldy's 'One Off The Wood' Lager,39.0000,541.3300,49.1000,541.3300,0,ctb-row:site:0:code:8:16470220@2026-10-27:55
+2026-10-27,jug goldy s one off the wood lager,16470223,Jug - Goldy's 'One Off The Wood' Lager,1.0000,20.0000,1.8200,20.0000,0,ctb-row:site:0:code:8:16470223@2026-10-27:56
+2026-10-27,coke pot,16749341,Coke - Pot,4.0000,16.0600,1.4500,16.0600,0,ctb-row:site:0:code:8:16749341@2026-10-27:57
+2026-10-27,coke pint,16749346,Coke - Pint,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:16749346@2026-10-27:58
+2026-10-27,coke jug,16749348,Coke - Jug,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:16749348@2026-10-27:59
+2026-10-27,coke zero pot,16749434,Coke Zero - Pot,5.0000,20.2100,1.8300,20.2100,0,ctb-row:site:0:code:8:16749434@2026-10-27:60
+2026-10-27,coke zero pint,16749437,Coke Zero - Pint,5.0000,40.5200,3.6900,40.5200,0,ctb-row:site:0:code:8:16749437@2026-10-27:61
+2026-10-27,lemonade pot,16749454,Lemonade - Pot,2.0000,8.0700,0.7300,8.0700,0,ctb-row:site:0:code:8:16749454@2026-10-27:62
+2026-10-27,lemonade pint,16749456,Lemonade - Pint,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:16749456@2026-10-27:63
+2026-10-27,rasp lem pot,16749465,Rasp Lem - Pot,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:16749465@2026-10-27:64
+2026-10-27,dry ginger ale pint,16749561,Dry Ginger Ale - Pint,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:16749561@2026-10-27:65
+2026-10-27,ginger beer pot,16749567,Ginger Beer - Pot,1.0000,4.0000,0.3600,4.0000,0,ctb-row:site:0:code:8:16749567@2026-10-27:66
+2026-10-27,ginger beer pint,16749569,Ginger Beer - Pint,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:16749569@2026-10-27:67
+2026-10-27,soda pot,16749705,Soda - Pot,2.0000,5.0400,0.4600,5.0400,0,ctb-row:site:0:code:8:16749705@2026-10-27:68
+2026-10-27,soda pint,16749706,Soda - Pint,2.0000,10.0800,0.9100,10.0800,0,ctb-row:site:0:code:8:16749706@2026-10-27:69
+2026-10-27,llb pot,16749736,LLB - Pot,4.0000,16.0000,1.4400,16.0000,0,ctb-row:site:0:code:8:16749736@2026-10-27:70
+2026-10-27,llb pint,16749737,LLB - Pint,4.0000,32.2600,2.9400,32.2600,0,ctb-row:site:0:code:8:16749737@2026-10-27:71
+2026-10-27,slb pot,16749748,SLB - Pot,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:16749748@2026-10-27:72
+2026-10-27,slb pint,16749749,SLB - Pint,2.0000,14.0000,1.2800,14.0000,0,ctb-row:site:0:code:8:16749749@2026-10-27:73
+2026-10-27,g goldy s pinot grigio,17128306,G - Goldy's Pinot Grigio,8.0000,104.1700,9.4600,104.1700,0,ctb-row:site:0:code:8:17128306@2026-10-27:74
+2026-10-27,g goldy s rose,17128338,G - Goldy's Rose,5.0000,58.1700,5.2900,58.1700,0,ctb-row:site:0:code:8:17128338@2026-10-27:75
+2026-10-27,0 amaretti sour,17630864,0% Amaretti Sour,1.0000,20.3300,1.8500,20.3300,0,ctb-row:site:0:code:8:17630864@2026-10-27:76
+2026-10-27,ice cream,17890537,Ice cream,1.0000,7.1200,0.6500,7.1200,0,ctb-row:site:0:code:8:17890537@2026-10-27:7
+2026-10-27,doggie roo pop,17914464,Doggie - Roo Pop,2.0000,5.0000,0.4500,5.0000,0,ctb-row:site:0:code:8:17914464@2026-10-27:77
+2026-10-27,doggie chicken twist,17914665,Doggie - Chicken Twist,1.0000,2.0000,0.1800,2.0000,0,ctb-row:site:0:code:8:17914665@2026-10-27:78
+2026-10-27,garlic aioli,18244151,Garlic Aioli,5.0000,12.7000,1.1500,12.7000,0,ctb-row:site:0:code:8:18244151@2026-10-27:8
+2026-10-27,little dragon ginger beer,18686570,Little Dragon 'Ginger Beer',1.0000,15.0000,1.3600,15.0000,0,ctb-row:site:0:code:8:18686570@2026-10-27:79
+2026-10-27,pot the mill ipa,19402773,Pot - The Mill IPA,1.0000,8.6400,0.7800,8.6400,0,ctb-row:site:0:code:8:19402773@2026-10-27:80
+2026-10-27,pint the mill ipa,19402776,Pint - The Mill IPA,8.0000,128.2600,11.6200,128.2600,0,ctb-row:site:0:code:8:19402776@2026-10-27:81
+2026-10-27,regular cheese,19921137,Regular Cheese,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:19921137@2026-10-27:9
+2026-10-27,pot bridge road free time,19967639,Pot - Bridge Road Free Time,3.0000,21.1200,1.9300,21.1200,0,ctb-row:site:0:code:8:19967639@2026-10-27:82
+2026-10-27,pint bridge road free time,19967640,Pint - Bridge Road Free Time,7.0000,98.2300,8.9100,98.2300,0,ctb-row:site:0:code:8:19967640@2026-10-27:83
+2026-10-27,pint napoleone cider,20185179,Pint - Napoleone Cider,6.0000,90.0000,8.1600,90.0000,0,ctb-row:site:0:code:8:20185179@2026-10-27:84
+2026-10-27,pot napoleone cider,20185180,Pot - Napoleone Cider,3.0000,22.6200,2.0500,22.6200,0,ctb-row:site:0:code:8:20185180@2026-10-27:85
+2026-10-27,louis rose cider pomme rouge,20624123,Louis Rose Cider Pomme Rouge,2.0000,24.4000,2.2200,24.4000,0,ctb-row:site:0:code:8:20624123@2026-10-27:86
+2026-10-27,garlic bread,20747805,Garlic bread,2.0000,28.4600,2.5800,28.4600,0,ctb-row:site:0:code:8:20747805@2026-10-27:10
+2026-10-27,kids slider,20766261,Kids slider,4.0000,56.9200,5.1700,56.9200,0,ctb-row:site:0:code:8:20766261@2026-10-27:11
+2026-10-27,mustard gravy side,20824943,Mustard Gravy - Side,8.0000,20.2400,1.8400,20.2400,0,ctb-row:site:0:code:8:20824943@2026-10-27:12
+2026-10-27,5l goldys sangiovese,21402331,.5L - Goldys! Sangiovese,2.0000,80.6600,7.3400,80.6600,0,ctb-row:site:0:code:8:21402331@2026-10-27:87
+2026-10-27,g goldys sangiovese,21402505,G- Goldys! Sangiovese,6.0000,68.4000,6.2200,68.4000,0,ctb-row:site:0:code:8:21402505@2026-10-27:88
+2026-10-27,fish n chips v2,22101441,Fish'n'Chips v2,1.0000,32.5300,2.9600,32.5300,0,ctb-row:site:0:code:8:22101441@2026-10-27:13
+2026-10-27,housemade tomato sauce,22101515,Housemade Tomato Sauce,3.0000,10.6800,0.9900,10.6800,0,ctb-row:site:0:code:8:22101515@2026-10-27:14
+2026-10-27,20 parma special,22101640,$20 Parma Special,101.0000,2023.7600,184.1600,2023.7600,0,ctb-row:site:0:code:8:22101640@2026-10-27:15
+2026-10-27,20 eggplant parma special,22101650,$20 Eggplant Parma Special,15.0000,304.6200,27.7200,304.6200,0,ctb-row:site:0:code:8:22101650@2026-10-27:16
+2026-10-27,cheeseburger,22152688,Cheeseburger,1.0000,29.4800,2.6800,29.4800,0,ctb-row:site:0:code:8:22152688@2026-10-27:17
+2026-10-27,vegan beyond burger,22152693,Vegan Beyond Burger,2.0000,61.0000,5.5600,61.0000,0,ctb-row:site:0:code:8:22152693@2026-10-27:18
+2026-10-27,frickles,22469048,Frickles,4.0000,56.6900,5.1400,56.6900,0,ctb-row:site:0:code:8:22469048@2026-10-27:19
+2026-10-27,g shady lane pet nat,22471903,G - Shady Lane Pet Nat,3.0000,45.5000,4.1200,45.5000,0,ctb-row:site:0:code:8:22471903@2026-10-27:89
+2026-10-27,dill aioli,22510826,Dill Aioli,4.0000,10.1600,0.9200,10.1600,0,ctb-row:site:0:code:8:22510826@2026-10-27:20
+2026-10-27,g dazma gew rztraminer,22857161,"G - Dazma, Gewürztraminer",1.0000,15.2500,1.3800,15.2500,0,ctb-row:site:0:code:8:22857161@2026-10-27:90
+2026-10-27,pint melbourne black,22870705,Pint - Melbourne Black,22.0000,352.0000,31.9000,352.0000,0,ctb-row:site:0:code:8:22870705@2026-10-27:91
+2026-10-27,pot melbourne black,22870707,Pot - Melbourne Black,1.0000,8.6400,0.7900,8.6400,0,ctb-row:site:0:code:8:22870707@2026-10-27:92
+2026-10-27,pot philter xpa,23005113,Pot - Philter XPA,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:23005113@2026-10-27:93
+2026-10-27,pint philter xpa,23005115,Pint - Philter XPA,9.0000,144.2600,13.0700,144.2600,0,ctb-row:site:0:code:8:23005115@2026-10-27:94
+2026-10-27,yes,23088943,Yes,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23088943@2026-10-27:21
+2026-10-27,no,23088945,No,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23088945@2026-10-27:22
+2026-10-27,cacio e pepe croquettes,23118462,Cacio e Pepe Croquettes,1.0000,14.0000,1.2700,14.0000,0,ctb-row:site:0:code:8:23118462@2026-10-27:23
+2026-10-27,fried calamari,23118464,Fried Calamari,1.0000,18.3000,1.6700,18.3000,0,ctb-row:site:0:code:8:23118464@2026-10-27:24
+2026-10-27,kids fish chippies,23271688,Kids Fish & Chippies,2.0000,25.4200,2.3100,25.4200,0,ctb-row:site:0:code:8:23271688@2026-10-27:25
+2026-10-27,kids gnocchi bolognese,23271704,Kids Gnocchi Bolognese,2.0000,25.4200,2.3100,25.4200,0,ctb-row:site:0:code:8:23271704@2026-10-27:26
+2026-10-27,kids gnocchi napoli,23271705,Kids Gnocchi Napoli,2.0000,28.4600,2.5800,28.4600,0,ctb-row:site:0:code:8:23271705@2026-10-27:27
+2026-10-27,kids parma,23271710,Kids Parma,1.0000,10.1700,0.9300,10.1700,0,ctb-row:site:0:code:8:23271710@2026-10-27:28
+2026-10-27,kids schnitty,23271750,New Kids Schnitty,1.0000,14.2300,1.2900,14.2300,0,ctb-row:site:0:code:8:23271750@2026-10-27:29
+2026-10-27,b garagiste le stagiaire pinot noir,23351435,B - Garagiste Le Stagiaire Pinot Noir,1.0000,81.3200,7.3900,81.3200,0,ctb-row:site:0:code:8:23351435@2026-10-27:95
+2026-10-27,g garagiste le stagiaire pinot noir,23351439,G - Garagiste 'Le Stagiaire' Pinot Noir,3.0000,51.0000,4.6500,51.0000,0,ctb-row:site:0:code:8:23351439@2026-10-27:96
+2026-10-27,pot keeper pilsner,23499704,Pot - Keeper Pilsner,1.0000,8.5000,0.7700,8.5000,0,ctb-row:site:0:code:8:23499704@2026-10-27:97
+2026-10-27,pint keeper pilsner,23499705,Pint - Keeper Pilsner,4.0000,65.0600,5.9000,65.0600,0,ctb-row:site:0:code:8:23499705@2026-10-27:98
+2026-10-27,g dr loosen dr l riesling,23537757,G - Dr. Loosen 'Dr. L' Riesling,3.0000,48.0000,4.3500,48.0000,0,ctb-row:site:0:code:8:23537757@2026-10-27:99
+2026-10-27,g deep woods estate chardonnay,23537760,G - Deep Woods Estate Chardonnay,3.0000,48.0000,4.3500,48.0000,0,ctb-row:site:0:code:8:23537760@2026-10-27:100
+2026-10-27,g syrahmi demi shiraz,23537766,G - Syrahmi 'Demi' Shiraz,2.0000,36.0000,3.2800,36.0000,0,ctb-row:site:0:code:8:23537766@2026-10-27:101
+2026-10-27,b syrahmi demi shiraz 2024,23537767,B - Syrahmi 'Demi' Shiraz 2024,1.0000,85.0000,7.7300,85.0000,0,ctb-row:site:0:code:8:23537767@2026-10-27:102
+2026-10-27,g dominique piron beaujolais villages gamay,23537769,G - Dominique Piron 'Beaujolais-Villages' Gamay,1.0000,16.2600,1.4700,16.2600,0,ctb-row:site:0:code:8:23537769@2026-10-27:103
+2026-10-27,b glaetzer wallace shiraz grenache blend 2022,23576198,B - Glaetzer 'Wallace' Shiraz Grenache Blend 2022,1.0000,75.0000,6.8200,75.0000,0,ctb-row:site:0:code:8:23576198@2026-10-27:104
+2026-10-27,g nv three pillars sparkling brut cuvee,23611729,G - NV Three Pillars Sparkling Brut Cuvee,3.0000,30.0000,2.7300,30.0000,0,ctb-row:site:0:code:8:23611729@2026-10-27:105
+2026-10-27,limoncello spritz nv three pillars,23611742,Limoncello Spritz (NV Three Pillars),2.0000,36.6000,3.3300,36.6000,0,ctb-row:site:0:code:8:23611742@2026-10-27:106
+2026-10-27,b joshua cooper regional pinot noir 2025,23643644,B - Joshua Cooper 'Regional' Pinot Noir 2025,1.0000,111.8200,10.1700,111.8200,0,ctb-row:site:0:code:8:23643644@2026-10-27:107
+2026-10-27,20 octoberfest schnitty,23660261,$20 Octoberfest Schnitty,39.0000,789.5600,71.8400,789.5600,0,ctb-row:site:0:code:8:23660261@2026-10-27:30
+2026-10-27,20 octoberfest eggplant schnitty,23660272,$20 Octoberfest Eggplant Schnitty,4.0000,81.3200,7.4000,81.3200,0,ctb-row:site:0:code:8:23660272@2026-10-27:31
+2026-10-27,pot la sirene citray sour,23662906,Pot - La Sirene 'Citray' Sour,1.0000,8.6400,0.7800,8.6400,0,ctb-row:site:0:code:8:23662906@2026-10-27:108
+2026-10-27,pint la sirene citray sour,23662907,Pint - La Sirene 'Citray' Sour,1.0000,16.0000,1.4500,16.0000,0,ctb-row:site:0:code:8:23662907@2026-10-27:109
+2026-10-27,g jamsheed flor de corazon chilled tap,23662915,G - Jamsheed 'Flor de Corazon' CHILLED (Tap),1.0000,15.0000,1.3600,15.0000,0,ctb-row:site:0:code:8:23662915@2026-10-27:110
+2026-10-27,baba ganoush,23673744,Baba Ganoush,3.0000,48.5200,4.3900,48.5200,0,ctb-row:site:0:code:8:23673744@2026-10-27:32
+2026-10-27,charred corn salad,23673814,Charred Corn Salad,1.0000,14.2300,1.2900,14.2300,0,ctb-row:site:0:code:8:23673814@2026-10-27:33
+2026-10-27,leaf salad,23673817,Leaf Salad,2.0000,16.2600,1.4800,16.2600,0,ctb-row:site:0:code:8:23673817@2026-10-27:34
+2026-10-27,murray cod,23673819,Murray Cod,3.0000,77.2600,7.0200,77.2600,0,ctb-row:site:0:code:8:23673819@2026-10-27:35
+2026-10-27,thai beef salad,23673822,Thai Beef Salad,2.0000,43.0600,3.9200,43.0600,0,ctb-row:site:0:code:8:23673822@2026-10-27:36
+2026-10-27,steak frites,23673827,Steak Frites,1.0000,46.7600,4.2500,46.7600,0,ctb-row:site:0:code:8:23673827@2026-10-27:37
+2026-10-28,negroni,11589780,Negroni,2.0000,44.3600,4.0300,44.3600,0,ctb-row:site:0:code:8:11589780@2026-10-28:36
+2026-10-28,chippies,11791008,Chippies,13.0000,157.4000,14.3100,157.4000,0,ctb-row:site:0:code:8:11791008@2026-10-28:0
+2026-10-28,pot carlton draught,11801264,Pot - Carlton Draught,41.0000,289.4700,26.3300,289.4700,0,ctb-row:site:0:code:8:11801264@2026-10-28:37
+2026-10-28,pint carlton draught,11801266,Pint - Carlton Draught,201.0000,2903.7900,263.3400,2903.7900,0,ctb-row:site:0:code:8:11801266@2026-10-28:38
+2026-10-28,jug carlton draught,11801268,Jug - Carlton Draught,20.0000,532.0000,48.3900,532.0000,0,ctb-row:site:0:code:8:11801268@2026-10-28:39
+2026-10-28,bloody oath,11815270,Bloody Oath,1.0000,16.2600,1.4700,16.2600,0,ctb-row:site:0:code:8:11815270@2026-10-28:40
+2026-10-28,1 glass,11829588,1 Glass,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829588@2026-10-28:41
+2026-10-28,2 glasses,11829589,2 Glasses,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829589@2026-10-28:42
+2026-10-28,3 glasses,11829591,3 Glasses,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829591@2026-10-28:43
+2026-10-28,5 glasses,11829593,5 Glasses,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829593@2026-10-28:44
+2026-10-28,pint gold one,11857980,Pint - Gold One,2.0000,30.0000,2.7200,30.0000,0,ctb-row:site:0:code:8:11857980@2026-10-28:45
+2026-10-28,amaretto sour,11888557,Amaretto Sour,1.0000,22.0000,2.0000,22.0000,0,ctb-row:site:0:code:8:11888557@2026-10-28:46
+2026-10-28,hold,11927956,HOLD,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11927956@2026-10-28:1
+2026-10-28,four pillars bloody shiraz 30ml,11992355,Four Pillars Bloody Shiraz - 30ml,1.0000,16.2700,1.4700,16.2700,0,ctb-row:site:0:code:8:11992355@2026-10-28:47
+2026-10-28,hendricks 30ml,11992386,Hendricks - 30ml,1.0000,15.2500,1.3800,15.2500,0,ctb-row:site:0:code:8:11992386@2026-10-28:48
+2026-10-28,lemonade mixer,12026491,Lemonade - Mixer,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026491@2026-10-28:49
+2026-10-28,tonic mixer,12026532,Tonic - Mixer,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026532@2026-10-28:50
+2026-10-28,soda mixer,12026550,Soda - Mixer,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026550@2026-10-28:51
+2026-10-28,coke mixer,12026562,Coke - Mixer,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026562@2026-10-28:52
+2026-10-28,bacardi carta blanca 30ml,12027391,Bacardi Carta Blanca - 30ml,5.0000,65.2200,5.9200,65.2200,0,ctb-row:site:0:code:8:12027391@2026-10-28:53
+2026-10-28,jameson 30ml,12027393,Jameson - 30ml,1.0000,14.0000,1.2700,14.0000,0,ctb-row:site:0:code:8:12027393@2026-10-28:54
+2026-10-28,sailor jerry 30ml,12027410,Sailor Jerry - 30ml,2.0000,28.0000,2.5400,28.0000,0,ctb-row:site:0:code:8:12027410@2026-10-28:55
+2026-10-28,pint bodriggy speccy juice,12096194,Pint - Bodriggy Speccy Juice,27.0000,342.8600,31.1200,342.8600,0,ctb-row:site:0:code:8:12096194@2026-10-28:56
+2026-10-28,pot bodriggy speccy juice,12096195,Pot - Bodriggy Speccy Juice,14.0000,80.2000,7.2400,80.2000,0,ctb-row:site:0:code:8:12096195@2026-10-28:57
+2026-10-28,espresso martini,12217683,Espresso Martini,1.0000,22.0000,2.0000,22.0000,0,ctb-row:site:0:code:8:12217683@2026-10-28:58
+2026-10-28,fernet branca 30ml,12538276,Fernet Branca - 30ml,7.0000,91.0000,8.2500,91.0000,0,ctb-row:site:0:code:8:12538276@2026-10-28:59
+2026-10-28,jack daniels 30ml,13330906,Jack Daniels - 30ml,2.0000,28.2300,2.5600,28.2300,0,ctb-row:site:0:code:8:13330906@2026-10-28:60
+2026-10-28,red wine jus,13494503,Red Wine Jus,2.0000,7.1000,0.6400,7.1000,0,ctb-row:site:0:code:8:13494503@2026-10-28:2
+2026-10-28,montenegro 30ml,13903634,Montenegro 30ml,1.0000,13.0000,1.1800,13.0000,0,ctb-row:site:0:code:8:13903634@2026-10-28:61
+2026-10-28,gordans gin 30ml,14203742,Gordans Gin- 30ml,8.0000,104.4400,9.4800,104.4400,0,ctb-row:site:0:code:8:14203742@2026-10-28:62
+2026-10-28,house vodka 30ml,14263125,House Vodka - 30ml,15.0000,195.4300,17.7400,195.4300,0,ctb-row:site:0:code:8:14263125@2026-10-28:63
+2026-10-28,pot pale ale love shack,14936614,Pot - Pale Ale Love Shack,12.0000,96.0000,8.7600,96.0000,0,ctb-row:site:0:code:8:14936614@2026-10-28:64
+2026-10-28,pint pale ale love shack,14936615,Pint - Pale Ale Love Shack,40.0000,601.9800,54.6000,601.9800,0,ctb-row:site:0:code:8:14936615@2026-10-28:65
+2026-10-28,no cheese,15866622,No Cheese,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866622@2026-10-28:3
+2026-10-28,no ham,15866623,No Ham,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866623@2026-10-28:4
+2026-10-28,el jimador 30ml,16369332,El Jimador - 30ml,5.0000,65.0000,5.9000,65.0000,0,ctb-row:site:0:code:8:16369332@2026-10-28:66
+2026-10-28,pot goldy s one off the wood lager,16470218,Pot - Goldy's 'One Off The Wood' Lager,15.0000,104.0000,9.4600,104.0000,0,ctb-row:site:0:code:8:16470218@2026-10-28:67
+2026-10-28,pint goldy s one off the wood lager,16470220,Pint - Goldy's 'One Off The Wood' Lager,68.0000,826.0000,75.0400,826.0000,0,ctb-row:site:0:code:8:16470220@2026-10-28:68
+2026-10-28,jug goldy s one off the wood lager,16470223,Jug - Goldy's 'One Off The Wood' Lager,3.0000,80.0000,7.2800,80.0000,0,ctb-row:site:0:code:8:16470223@2026-10-28:69
+2026-10-28,coke pot,16749341,Coke - Pot,5.0000,20.1400,1.8200,20.1400,0,ctb-row:site:0:code:8:16749341@2026-10-28:70
+2026-10-28,coke pint,16749346,Coke - Pint,4.0000,32.2600,2.9400,32.2600,0,ctb-row:site:0:code:8:16749346@2026-10-28:71
+2026-10-28,coke zero pot,16749434,Coke Zero - Pot,9.0000,36.6200,3.3400,36.6200,0,ctb-row:site:0:code:8:16749434@2026-10-28:72
+2026-10-28,coke zero pint,16749437,Coke Zero - Pint,19.0000,154.0900,14.0200,154.0900,0,ctb-row:site:0:code:8:16749437@2026-10-28:73
+2026-10-28,coke zero jug,16749441,Coke Zero - Jug,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:16749441@2026-10-28:74
+2026-10-28,lemonade pot,16749454,Lemonade - Pot,1.0000,4.0000,0.3600,4.0000,0,ctb-row:site:0:code:8:16749454@2026-10-28:75
+2026-10-28,lemonade pint,16749456,Lemonade - Pint,1.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:16749456@2026-10-28:76
+2026-10-28,dry ginger ale pint,16749561,Dry Ginger Ale - Pint,1.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:16749561@2026-10-28:77
+2026-10-28,ginger beer pot,16749567,Ginger Beer - Pot,4.0000,16.2800,1.4900,16.2800,0,ctb-row:site:0:code:8:16749567@2026-10-28:78
+2026-10-28,ginger beer pint,16749569,Ginger Beer - Pint,3.0000,24.3900,2.2100,24.3900,0,ctb-row:site:0:code:8:16749569@2026-10-28:79
+2026-10-28,soda pot,16749705,Soda - Pot,3.0000,7.5400,0.6900,7.5400,0,ctb-row:site:0:code:8:16749705@2026-10-28:80
+2026-10-28,soda pint,16749706,Soda - Pint,3.0000,15.2400,1.3800,15.2400,0,ctb-row:site:0:code:8:16749706@2026-10-28:81
+2026-10-28,llb pot,16749736,LLB - Pot,10.0000,40.3400,3.6400,40.3400,0,ctb-row:site:0:code:8:16749736@2026-10-28:82
+2026-10-28,llb pint,16749737,LLB - Pint,5.0000,40.4000,3.6900,40.4000,0,ctb-row:site:0:code:8:16749737@2026-10-28:83
+2026-10-28,g goldy s pinot grigio,17128306,G - Goldy's Pinot Grigio,20.0000,257.7700,23.3900,257.7700,0,ctb-row:site:0:code:8:17128306@2026-10-28:84
+2026-10-28,g goldy s rose,17128338,G - Goldy's Rose,9.0000,126.9200,11.5100,126.9200,0,ctb-row:site:0:code:8:17128338@2026-10-28:85
+2026-10-28,0 5l goldy s pinot grigio,17176896,(0.5L) Goldy's Pinot Grigio,2.0000,81.3200,7.4000,81.3200,0,ctb-row:site:0:code:8:17176896@2026-10-28:86
+2026-10-28,doggie roo pop,17914464,Doggie - Roo Pop,2.0000,5.0800,0.4600,5.0800,0,ctb-row:site:0:code:8:17914464@2026-10-28:87
+2026-10-28,doggie chicken twist,17914665,Doggie - Chicken Twist,7.0000,14.0000,1.2600,14.0000,0,ctb-row:site:0:code:8:17914665@2026-10-28:88
+2026-10-28,garlic aioli,18244151,Garlic Aioli,5.0000,12.7000,1.1500,12.7000,0,ctb-row:site:0:code:8:18244151@2026-10-28:5
+2026-10-28,garlic aioli side,18338771,Garlic Aioli - Side,1.0000,2.5000,0.2300,2.5000,0,ctb-row:site:0:code:8:18338771@2026-10-28:6
+2026-10-28,little dragon ginger beer,18686570,Little Dragon 'Ginger Beer',2.0000,30.0000,2.7200,30.0000,0,ctb-row:site:0:code:8:18686570@2026-10-28:89
+2026-10-28,pot the mill ipa,19402773,Pot - The Mill IPA,1.0000,8.6400,0.7800,8.6400,0,ctb-row:site:0:code:8:19402773@2026-10-28:90
+2026-10-28,pint the mill ipa,19402776,Pint - The Mill IPA,9.0000,144.2600,13.0700,144.2600,0,ctb-row:site:0:code:8:19402776@2026-10-28:91
+2026-10-28,pot bridge road free time,19967639,Pot - Bridge Road Free Time,11.0000,77.5900,7.0900,77.5900,0,ctb-row:site:0:code:8:19967639@2026-10-28:92
+2026-10-28,pint bridge road free time,19967640,Pint - Bridge Road Free Time,12.0000,168.6900,15.3000,168.6900,0,ctb-row:site:0:code:8:19967640@2026-10-28:93
+2026-10-28,pint napoleone cider,20185179,Pint - Napoleone Cider,7.0000,75.0000,6.8000,75.0000,0,ctb-row:site:0:code:8:20185179@2026-10-28:94
+2026-10-28,pot napoleone cider,20185180,Pot - Napoleone Cider,2.0000,7.5000,0.6800,7.5000,0,ctb-row:site:0:code:8:20185180@2026-10-28:95
+2026-10-28,garlic bread,20747805,Garlic bread,8.0000,113.1500,10.2600,113.1500,0,ctb-row:site:0:code:8:20747805@2026-10-28:7
+2026-10-28,kids slider,20766261,Kids slider,2.0000,28.4600,2.5800,28.4600,0,ctb-row:site:0:code:8:20766261@2026-10-28:8
+2026-10-28,mustard gravy side,20824943,Mustard Gravy - Side,5.0000,12.6600,1.1500,12.6600,0,ctb-row:site:0:code:8:20824943@2026-10-28:9
+2026-10-28,5l goldys sangiovese,21402331,.5L - Goldys! Sangiovese,1.0000,40.6600,3.7000,40.6600,0,ctb-row:site:0:code:8:21402331@2026-10-28:96
+2026-10-28,g goldys sangiovese,21402505,G- Goldys! Sangiovese,16.0000,184.6900,16.7800,184.6900,0,ctb-row:site:0:code:8:21402505@2026-10-28:97
+2026-10-28,margarita,21429994,Margarita,1.0000,22.0000,2.0000,22.0000,0,ctb-row:site:0:code:8:21429994@2026-10-28:98
+2026-10-28,chappy s chips dill pickle,21622221,Chappy's Chips (Dill Pickle),3.0000,24.0000,2.1900,24.0000,0,ctb-row:site:0:code:8:21622221@2026-10-28:99
+2026-10-28,b voyager estate cabernets,21945046,B - Voyager Estate 'Cabernets',1.0000,96.0000,8.7300,96.0000,0,ctb-row:site:0:code:8:21945046@2026-10-28:100
+2026-10-28,chicken parma,22101357,Chicken Parma,42.0000,1245.4200,113.3800,1245.4200,0,ctb-row:site:0:code:8:22101357@2026-10-28:10
+2026-10-28,eggplant parma,22101409,Eggplant Parma,7.0000,176.8700,16.1100,176.8700,0,ctb-row:site:0:code:8:22101409@2026-10-28:11
+2026-10-28,fish n chips v2,22101441,Fish'n'Chips v2,3.0000,96.5200,8.7700,96.5200,0,ctb-row:site:0:code:8:22101441@2026-10-28:12
+2026-10-28,housemade tomato sauce,22101515,Housemade Tomato Sauce,1.0000,3.5600,0.3300,3.5600,0,ctb-row:site:0:code:8:22101515@2026-10-28:13
+2026-10-28,cheeseburger,22152688,Cheeseburger,5.0000,146.9200,13.3800,146.9200,0,ctb-row:site:0:code:8:22152688@2026-10-28:14
+2026-10-28,vegan beyond burger,22152693,Vegan Beyond Burger,2.0000,61.0000,5.5600,61.0000,0,ctb-row:site:0:code:8:22152693@2026-10-28:15
+2026-10-28,frickles,22469048,Frickles,6.0000,85.3800,7.7400,85.3800,0,ctb-row:site:0:code:8:22469048@2026-10-28:16
+2026-10-28,g shady lane pet nat,22471903,G - Shady Lane Pet Nat,4.0000,61.0000,5.5200,61.0000,0,ctb-row:site:0:code:8:22471903@2026-10-28:101
+2026-10-28,dill aioli side,22510823,Dill Aioli - Side,2.0000,5.0800,0.4600,5.0800,0,ctb-row:site:0:code:8:22510823@2026-10-28:17
+2026-10-28,dill aioli,22510826,Dill Aioli,1.0000,2.5400,0.2300,2.5400,0,ctb-row:site:0:code:8:22510826@2026-10-28:18
+2026-10-28,g swiftsure marlborough sauvignon blanc,22857146,G - Swiftsure 'Marlborough' Sauvignon Blanc,2.0000,30.2500,2.7400,30.2500,0,ctb-row:site:0:code:8:22857146@2026-10-28:102
+2026-10-28,g dazma gew rztraminer,22857161,"G - Dazma, Gewürztraminer",4.0000,60.5000,5.4800,60.5000,0,ctb-row:site:0:code:8:22857161@2026-10-28:103
+2026-10-28,pint melbourne black,22870705,Pint - Melbourne Black,22.0000,352.7900,31.9700,352.7900,0,ctb-row:site:0:code:8:22870705@2026-10-28:104
+2026-10-28,pot melbourne black,22870707,Pot - Melbourne Black,4.0000,34.1400,3.0900,34.1400,0,ctb-row:site:0:code:8:22870707@2026-10-28:105
+2026-10-28,pot philter xpa,23005113,Pot - Philter XPA,2.0000,16.0000,1.4600,16.0000,0,ctb-row:site:0:code:8:23005113@2026-10-28:106
+2026-10-28,pint philter xpa,23005115,Pint - Philter XPA,7.0000,112.0000,10.1500,112.0000,0,ctb-row:site:0:code:8:23005115@2026-10-28:107
+2026-10-28,jug philter xpa,23005117,Jug - Philter XPA,1.0000,32.5300,2.9600,32.5300,0,ctb-row:site:0:code:8:23005117@2026-10-28:108
+2026-10-28,no,23088945,No,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23088945@2026-10-28:19
+2026-10-28,cacio e pepe croquettes,23118462,Cacio e Pepe Croquettes,6.0000,84.9200,7.7000,84.9200,0,ctb-row:site:0:code:8:23118462@2026-10-28:20
+2026-10-28,fried calamari,23118464,Fried Calamari,5.0000,91.2000,8.3200,91.2000,0,ctb-row:site:0:code:8:23118464@2026-10-28:21
+2026-10-28,wild boar dimmies,23118475,Wild Boar Dimmies,5.0000,96.2500,8.7700,96.2500,0,ctb-row:site:0:code:8:23118475@2026-10-28:22
+2026-10-28,1 croquette,23118678,+1 Croquette,2.0000,14.1200,1.2900,14.1200,0,ctb-row:site:0:code:8:23118678@2026-10-28:23
+2026-10-28,casarecce,23143536,Casarecce,1.0000,29.4800,2.6800,29.4800,0,ctb-row:site:0:code:8:23143536@2026-10-28:24
+2026-10-28,roast hispi cabbage,23143547,Roast Hispi Cabbage,1.0000,28.4600,2.5900,28.4600,0,ctb-row:site:0:code:8:23143547@2026-10-28:25
+2026-10-28,kids gnocchi bolognese,23271704,Kids Gnocchi Bolognese,1.0000,15.0000,1.3600,15.0000,0,ctb-row:site:0:code:8:23271704@2026-10-28:26
+2026-10-28,kids parma,23271710,Kids Parma,2.0000,27.4500,2.5000,27.4500,0,ctb-row:site:0:code:8:23271710@2026-10-28:27
+2026-10-28,b garagiste le stagiaire pinot noir,23351435,B - Garagiste Le Stagiaire Pinot Noir,1.0000,80.0000,7.2700,80.0000,0,ctb-row:site:0:code:8:23351435@2026-10-28:109
+2026-10-28,g garagiste le stagiaire pinot noir,23351439,G - Garagiste 'Le Stagiaire' Pinot Noir,14.0000,240.5200,21.9400,240.5200,0,ctb-row:site:0:code:8:23351439@2026-10-28:110
+2026-10-28,pot keeper pilsner,23499704,Pot - Keeper Pilsner,1.0000,8.6400,0.7900,8.6400,0,ctb-row:site:0:code:8:23499704@2026-10-28:111
+2026-10-28,pint keeper pilsner,23499705,Pint - Keeper Pilsner,6.0000,96.0000,8.7000,96.0000,0,ctb-row:site:0:code:8:23499705@2026-10-28:112
+2026-10-28,g dr loosen dr l riesling,23537757,G - Dr. Loosen 'Dr. L' Riesling,7.0000,112.7800,10.2100,112.7800,0,ctb-row:site:0:code:8:23537757@2026-10-28:113
+2026-10-28,g deep woods estate chardonnay,23537760,G - Deep Woods Estate Chardonnay,9.0000,144.5400,13.0900,144.5400,0,ctb-row:site:0:code:8:23537760@2026-10-28:114
+2026-10-28,b deep woods estate chardonnay,23537762,B - Deep Woods Estate Chardonnay,2.0000,150.0000,13.6400,150.0000,0,ctb-row:site:0:code:8:23537762@2026-10-28:115
+2026-10-28,g syrahmi demi shiraz,23537766,G - Syrahmi 'Demi' Shiraz,4.0000,72.0000,6.5600,72.0000,0,ctb-row:site:0:code:8:23537766@2026-10-28:116
+2026-10-28,g dominique piron beaujolais villages gamay,23537769,G - Dominique Piron 'Beaujolais-Villages' Gamay,9.0000,145.0700,13.1500,145.0700,0,ctb-row:site:0:code:8:23537769@2026-10-28:117
+2026-10-28,b little reddie bootleg red nv,23562311,B - Little Reddie 'Bootleg Red' NV,1.0000,76.2400,6.9300,76.2400,0,ctb-row:site:0:code:8:23562311@2026-10-28:118
+2026-10-28,b glaetzer wallace shiraz grenache blend 2022,23576198,B - Glaetzer 'Wallace' Shiraz Grenache Blend 2022,2.0000,151.2400,13.7500,151.2400,0,ctb-row:site:0:code:8:23576198@2026-10-28:119
+2026-10-28,g nv three pillars sparkling brut cuvee,23611729,G - NV Three Pillars Sparkling Brut Cuvee,11.0000,138.4600,12.5700,138.4600,0,ctb-row:site:0:code:8:23611729@2026-10-28:120
+2026-10-28,aperol spritz nv three pillars,23611732,Aperol Spritz (NV Three Pillars),8.0000,120.3000,10.9500,120.3000,0,ctb-row:site:0:code:8:23611732@2026-10-28:121
+2026-10-28,montenegro spritz nv three pillars,23611744,Montenegro Spritz (NV Three Pillars),2.0000,36.3000,3.3100,36.3000,0,ctb-row:site:0:code:8:23611744@2026-10-28:122
+2026-10-28,b alkina kin grenache 2024,23614503,B - Alkina 'Kin' Grenache 2024,3.0000,255.0000,23.1900,255.0000,0,ctb-row:site:0:code:8:23614503@2026-10-28:123
+2026-10-28,pint d sseldorf draught altbier,23641018,Pint - Düsseldorf Draught Altbier,3.0000,48.2600,4.3700,48.2600,0,ctb-row:site:0:code:8:23641018@2026-10-28:124
+2026-10-28,b alessandro stefani la vignola sangiovese 2024,23643647,B - Alessandro Stefani 'La Vignola' Sangiovese 2024,1.0000,43.2000,3.9200,43.2000,0,ctb-row:site:0:code:8:23643647@2026-10-28:125
+2026-10-28,octoberfest schnitty,23660247,Octoberfest Schnitty,8.0000,244.0000,22.2200,244.0000,0,ctb-row:site:0:code:8:23660247@2026-10-28:28
+2026-10-28,pot la sirene citray sour,23662906,Pot - La Sirene 'Citray' Sour,1.0000,8.5000,0.7700,8.5000,0,ctb-row:site:0:code:8:23662906@2026-10-28:126
+2026-10-28,pint la sirene citray sour,23662907,Pint - La Sirene 'Citray' Sour,2.0000,32.0000,2.9000,32.0000,0,ctb-row:site:0:code:8:23662907@2026-10-28:127
+2026-10-28,g jamsheed flor de corazon chilled tap,23662915,G - Jamsheed 'Flor de Corazon' CHILLED (Tap),3.0000,45.0000,4.0800,45.0000,0,ctb-row:site:0:code:8:23662915@2026-10-28:128
+2026-10-28,baba ganoush,23673744,Baba Ganoush,2.0000,32.2600,2.9200,32.2600,0,ctb-row:site:0:code:8:23673744@2026-10-28:29
+2026-10-28,tuna tostada,23673809,Tuna Tostada,3.0000,54.9000,5.0100,54.9000,0,ctb-row:site:0:code:8:23673809@2026-10-28:30
+2026-10-28,charred corn salad,23673814,Charred Corn Salad,3.0000,42.2300,3.8300,42.2300,0,ctb-row:site:0:code:8:23673814@2026-10-28:31
+2026-10-28,leaf salad,23673817,Leaf Salad,6.0000,48.3900,4.4100,48.3900,0,ctb-row:site:0:code:8:23673817@2026-10-28:32
+2026-10-28,murray cod,23673819,Murray Cod,1.0000,38.6300,3.5100,38.6300,0,ctb-row:site:0:code:8:23673819@2026-10-28:33
+2026-10-28,thai beef salad,23673822,Thai Beef Salad,4.0000,137.6800,12.5200,137.6800,0,ctb-row:site:0:code:8:23673822@2026-10-28:34
+2026-10-28,28 steak frites,23703576,$28 Steak Frites,204.0000,5730.1700,521.7700,5730.1700,0,ctb-row:site:0:code:8:23703576@2026-10-28:35
+2026-10-29,chippies,11791008,Chippies,22.0000,266.8000,24.2600,266.8000,0,ctb-row:site:0:code:8:11791008@2026-10-29:0
+2026-10-29,pot carlton draught,11801264,Pot - Carlton Draught,19.0000,140.5200,12.7900,140.5200,0,ctb-row:site:0:code:8:11801264@2026-10-29:41
+2026-10-29,pint carlton draught,11801266,Pint - Carlton Draught,110.0000,1541.9800,139.8500,1541.9800,0,ctb-row:site:0:code:8:11801266@2026-10-29:42
+2026-10-29,jug carlton draught,11801268,Jug - Carlton Draught,2.0000,40.3300,3.6700,40.3300,0,ctb-row:site:0:code:8:11801268@2026-10-29:43
+2026-10-29,frog in a pond,11814978,Frog In A Pond,2.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:11814978@2026-10-29:1
+2026-10-29,bloody oath,11815270,Bloody Oath,2.0000,32.2600,2.9200,32.2600,0,ctb-row:site:0:code:8:11815270@2026-10-29:44
+2026-10-29,2 glasses,11829589,2 Glasses,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829589@2026-10-29:45
+2026-10-29,3 glasses,11829591,3 Glasses,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829591@2026-10-29:46
+2026-10-29,no glass,11829651,No Glass,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829651@2026-10-29:47
+2026-10-29,pot gold one,11857960,Pot - Gold One,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:11857960@2026-10-29:48
+2026-10-29,pint gold one,11857980,Pint - Gold One,1.0000,15.0000,1.3600,15.0000,0,ctb-row:site:0:code:8:11857980@2026-10-29:49
+2026-10-29,amaretto sour,11888557,Amaretto Sour,1.0000,22.3600,2.0300,22.3600,0,ctb-row:site:0:code:8:11888557@2026-10-29:50
+2026-10-29,four pillars 30ml,11992343,Four Pillars - 30ml,1.0000,15.2500,1.3800,15.2500,0,ctb-row:site:0:code:8:11992343@2026-10-29:51
+2026-10-29,tonic mixer,12026532,Tonic - Mixer,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026532@2026-10-29:52
+2026-10-29,jameson 30ml,12027393,Jameson - 30ml,4.0000,56.0000,5.0800,56.0000,0,ctb-row:site:0:code:8:12027393@2026-10-29:53
+2026-10-29,fireball 30ml,12041921,Fireball - 30ml,5.0000,65.0000,5.9000,65.0000,0,ctb-row:site:0:code:8:12041921@2026-10-29:54
+2026-10-29,jug bodriggy speccy juice,12096191,Jug - Bodriggy Speccy Juice,3.0000,60.0000,5.4600,60.0000,0,ctb-row:site:0:code:8:12096191@2026-10-29:55
+2026-10-29,pint bodriggy speccy juice,12096194,Pint - Bodriggy Speccy Juice,39.0000,488.0000,44.3100,488.0000,0,ctb-row:site:0:code:8:12096194@2026-10-29:56
+2026-10-29,pot bodriggy speccy juice,12096195,Pot - Bodriggy Speccy Juice,9.0000,52.7500,4.7500,52.7500,0,ctb-row:site:0:code:8:12096195@2026-10-29:57
+2026-10-29,galliano black sambuca 30ml,12538491,Galliano Black Sambuca - 30ml,3.0000,39.0000,3.5400,39.0000,0,ctb-row:site:0:code:8:12538491@2026-10-29:58
+2026-10-29,carlton draught can,12539172,Carlton Draught - Can,2.0000,12.0000,1.0900,12.0000,0,ctb-row:site:0:code:8:12539172@2026-10-29:59
+2026-10-29,red wine jus,13494503,Red Wine Jus,1.0000,3.5500,0.3200,3.5500,0,ctb-row:site:0:code:8:13494503@2026-10-29:2
+2026-10-29,montenegro 30ml,13903634,Montenegro 30ml,8.0000,104.0000,9.4400,104.0000,0,ctb-row:site:0:code:8:13903634@2026-10-29:60
+2026-10-29,gordans gin 30ml,14203742,Gordans Gin- 30ml,3.0000,39.0000,3.5400,39.0000,0,ctb-row:site:0:code:8:14203742@2026-10-29:61
+2026-10-29,house vodka 30ml,14263125,House Vodka - 30ml,21.0000,273.0000,24.7800,273.0000,0,ctb-row:site:0:code:8:14263125@2026-10-29:62
+2026-10-29,pot pale ale love shack,14936614,Pot - Pale Ale Love Shack,4.0000,32.2600,2.9400,32.2600,0,ctb-row:site:0:code:8:14936614@2026-10-29:63
+2026-10-29,pint pale ale love shack,14936615,Pint - Pale Ale Love Shack,40.0000,601.4900,54.5400,601.4900,0,ctb-row:site:0:code:8:14936615@2026-10-29:64
+2026-10-29,lyre s garden tonic,15301670,Lyre's Garden Tonic,1.0000,12.0000,1.0900,12.0000,0,ctb-row:site:0:code:8:15301670@2026-10-29:65
+2026-10-29,no parma sauce,15866620,No Parma Sauce,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866620@2026-10-29:3
+2026-10-29,no cheese,15866622,No Cheese,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866622@2026-10-29:4
+2026-10-29,no ham,15866623,No Ham,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866623@2026-10-29:5
+2026-10-29,el jimador 30ml,16369332,El Jimador - 30ml,3.0000,39.0000,3.5400,39.0000,0,ctb-row:site:0:code:8:16369332@2026-10-29:66
+2026-10-29,vegan option,16457487,Vegan Option,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:16457487@2026-10-29:6
+2026-10-29,pot goldy s one off the wood lager,16470218,Pot - Goldy's 'One Off The Wood' Lager,7.0000,56.0000,5.1100,56.0000,0,ctb-row:site:0:code:8:16470218@2026-10-29:67
+2026-10-29,pint goldy s one off the wood lager,16470220,Pint - Goldy's 'One Off The Wood' Lager,53.0000,732.4100,66.4500,732.4100,0,ctb-row:site:0:code:8:16470220@2026-10-29:68
+2026-10-29,jug goldy s one off the wood lager,16470223,Jug - Goldy's 'One Off The Wood' Lager,2.0000,40.0000,3.6400,40.0000,0,ctb-row:site:0:code:8:16470223@2026-10-29:69
+2026-10-29,coke pot,16749341,Coke - Pot,3.0000,12.1300,1.0900,12.1300,0,ctb-row:site:0:code:8:16749341@2026-10-29:70
+2026-10-29,coke pint,16749346,Coke - Pint,3.0000,24.2600,2.2100,24.2600,0,ctb-row:site:0:code:8:16749346@2026-10-29:71
+2026-10-29,coke zero pot,16749434,Coke Zero - Pot,7.0000,28.4200,2.5800,28.4200,0,ctb-row:site:0:code:8:16749434@2026-10-29:72
+2026-10-29,coke zero pint,16749437,Coke Zero - Pint,4.0000,32.3900,2.9500,32.3900,0,ctb-row:site:0:code:8:16749437@2026-10-29:73
+2026-10-29,lemonade pint,16749456,Lemonade - Pint,1.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:16749456@2026-10-29:74
+2026-10-29,rasp lem pint,16749466,Rasp Lem - Pint,2.0000,14.2400,1.3000,14.2400,0,ctb-row:site:0:code:8:16749466@2026-10-29:75
+2026-10-29,ginger beer pot,16749567,Ginger Beer - Pot,1.0000,4.0000,0.3600,4.0000,0,ctb-row:site:0:code:8:16749567@2026-10-29:76
+2026-10-29,soda pot,16749705,Soda - Pot,5.0000,12.6600,1.1600,12.6600,0,ctb-row:site:0:code:8:16749705@2026-10-29:77
+2026-10-29,soda pint,16749706,Soda - Pint,8.0000,40.4800,3.6200,40.4800,0,ctb-row:site:0:code:8:16749706@2026-10-29:78
+2026-10-29,llb pot,16749736,LLB - Pot,3.0000,12.2000,1.1000,12.2000,0,ctb-row:site:0:code:8:16749736@2026-10-29:79
+2026-10-29,llb pint,16749737,LLB - Pint,8.0000,64.2600,5.8600,64.2600,0,ctb-row:site:0:code:8:16749737@2026-10-29:80
+2026-10-29,slb pint,16749749,SLB - Pint,1.0000,7.1200,0.6500,7.1200,0,ctb-row:site:0:code:8:16749749@2026-10-29:81
+2026-10-29,g goldy s pinot grigio,17128306,G - Goldy's Pinot Grigio,31.0000,429.9100,39.0000,429.9100,0,ctb-row:site:0:code:8:17128306@2026-10-29:82
+2026-10-29,g goldy s rose,17128338,G - Goldy's Rose,11.0000,146.9200,13.3300,146.9200,0,ctb-row:site:0:code:8:17128338@2026-10-29:83
+2026-10-29,0 5l goldy s rose,17128342,0.5L - Goldy's Rose,1.0000,40.6600,3.7000,40.6600,0,ctb-row:site:0:code:8:17128342@2026-10-29:84
+2026-10-29,0 5l goldy s pinot grigio,17176896,(0.5L) Goldy's Pinot Grigio,2.0000,81.3200,7.4000,81.3200,0,ctb-row:site:0:code:8:17176896@2026-10-29:85
+2026-10-29,gluten free burger,17333419,Gluten Free - Burger,1.0000,2.0300,0.1800,2.0300,0,ctb-row:site:0:code:8:17333419@2026-10-29:7
+2026-10-29,doggie roo pop,17914464,Doggie - Roo Pop,2.0000,5.0900,0.4600,5.0900,0,ctb-row:site:0:code:8:17914464@2026-10-29:86
+2026-10-29,doggie chicken twist,17914665,Doggie - Chicken Twist,9.0000,18.0300,1.6300,18.0300,0,ctb-row:site:0:code:8:17914665@2026-10-29:87
+2026-10-29,garlic aioli,18244151,Garlic Aioli,9.0000,22.8600,2.0700,22.8600,0,ctb-row:site:0:code:8:18244151@2026-10-29:8
+2026-10-29,little dragon ginger beer,18686570,Little Dragon 'Ginger Beer',8.0000,121.5000,11.0100,121.5000,0,ctb-row:site:0:code:8:18686570@2026-10-29:88
+2026-10-29,jim beam,19357128,Jim Beam,9.0000,117.0000,10.6200,117.0000,0,ctb-row:site:0:code:8:19357128@2026-10-29:89
+2026-10-29,pint the mill ipa,19402776,Pint - The Mill IPA,7.0000,112.0000,10.1500,112.0000,0,ctb-row:site:0:code:8:19402776@2026-10-29:90
+2026-10-29,regular cheese,19921137,Regular Cheese,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:19921137@2026-10-29:9
+2026-10-29,pot bridge road free time,19967639,Pot - Bridge Road Free Time,1.0000,7.0000,0.6400,7.0000,0,ctb-row:site:0:code:8:19967639@2026-10-29:91
+2026-10-29,pint bridge road free time,19967640,Pint - Bridge Road Free Time,9.0000,126.2300,11.4500,126.2300,0,ctb-row:site:0:code:8:19967640@2026-10-29:92
+2026-10-29,pint napoleone cider,20185179,Pint - Napoleone Cider,6.0000,90.5000,8.2200,90.5000,0,ctb-row:site:0:code:8:20185179@2026-10-29:93
+2026-10-29,pot napoleone cider,20185180,Pot - Napoleone Cider,2.0000,15.0000,1.3600,15.0000,0,ctb-row:site:0:code:8:20185180@2026-10-29:94
+2026-10-29,jug napoleone cider,20185183,Jug - Napoleone Cider,1.0000,30.4900,2.7700,30.4900,0,ctb-row:site:0:code:8:20185183@2026-10-29:95
+2026-10-29,garlic bread,20747805,Garlic bread,1.0000,14.2300,1.2900,14.2300,0,ctb-row:site:0:code:8:20747805@2026-10-29:10
+2026-10-29,mustard gravy side,20824943,Mustard Gravy - Side,16.0000,40.6000,3.6800,40.6000,0,ctb-row:site:0:code:8:20824943@2026-10-29:11
+2026-10-29,g goldys sangiovese,21402505,G- Goldys! Sangiovese,9.0000,126.4600,11.4700,126.4600,0,ctb-row:site:0:code:8:21402505@2026-10-29:96
+2026-10-29,margarita,21429994,Margarita,6.0000,134.1900,12.2100,134.1900,0,ctb-row:site:0:code:8:21429994@2026-10-29:97
+2026-10-29,chappy s chips dill pickle,21622221,Chappy's Chips (Dill Pickle),1.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:21622221@2026-10-29:98
+2026-10-29,raffle ticket x 1,22093596,Raffle Ticket x 1,2.0000,4.0000,0.0000,4.0000,0,ctb-row:site:0:code:8:22093596@2026-10-29:99
+2026-10-29,raffle ticket x 3,22093624,Raffle ticket x 3,68.0000,340.0000,0.0000,340.0000,0,ctb-row:site:0:code:8:22093624@2026-10-29:100
+2026-10-29,chicken parma,22101357,Chicken Parma,43.0000,1306.3700,118.8946,1306.3700,0,ctb-row:site:0:code:8:22101357@2026-10-29:12
+2026-10-29,eggplant parma,22101409,Eggplant Parma,10.0000,264.8400,24.1100,264.8400,0,ctb-row:site:0:code:8:22101409@2026-10-29:13
+2026-10-29,fish n chips v2,22101441,Fish'n'Chips v2,4.0000,129.5900,11.7900,129.5900,0,ctb-row:site:0:code:8:22101441@2026-10-29:14
+2026-10-29,housemade tomato sauce,22101515,Housemade Tomato Sauce,5.0000,17.8000,1.6500,17.8000,0,ctb-row:site:0:code:8:22101515@2026-10-29:15
+2026-10-29,cheeseburger,22152688,Cheeseburger,23.0000,675.1700,61.4800,675.1700,0,ctb-row:site:0:code:8:22152688@2026-10-29:16
+2026-10-29,vegan beyond burger,22152693,Vegan Beyond Burger,8.0000,241.9900,22.0200,241.9900,0,ctb-row:site:0:code:8:22152693@2026-10-29:17
+2026-10-29,double cheeseburger,22155522,Double Cheeseburger,1.0000,35.5800,3.2300,35.5800,0,ctb-row:site:0:code:8:22155522@2026-10-29:18
+2026-10-29,make it spicy,22247868,Make it Spicy,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:22247868@2026-10-29:101
+2026-10-29,frickles,22469048,Frickles,3.0000,42.6900,3.8700,42.6900,0,ctb-row:site:0:code:8:22469048@2026-10-29:19
+2026-10-29,dill aioli side,22510823,Dill Aioli - Side,1.0000,2.5000,0.2300,2.5000,0,ctb-row:site:0:code:8:22510823@2026-10-29:20
+2026-10-29,dill aioli,22510826,Dill Aioli,2.0000,5.0800,0.4600,5.0800,0,ctb-row:site:0:code:8:22510826@2026-10-29:21
+2026-10-29,tommy s marg,22698455,Tommy's Marg,4.0000,88.7200,8.0600,88.7200,0,ctb-row:site:0:code:8:22698455@2026-10-29:102
+2026-10-29,buffalo wings,22854775,Buffalo Wings,27.0000,262.7900,23.9200,262.7900,0,ctb-row:site:0:code:8:22854775@2026-10-29:22
+2026-10-29,nam jim wings,22854785,Nam Jim Wings,5.0000,50.6607,4.6102,50.6607,0,ctb-row:site:0:code:8:22854785@2026-10-29:23
+2026-10-29,sticky bbq wings,22854797,Sticky BBQ Wings,11.0000,111.1716,10.1356,111.1716,0,ctb-row:site:0:code:8:22854797@2026-10-29:24
+2026-10-29,g dazma gew rztraminer,22857161,"G - Dazma, Gewürztraminer",17.0000,257.2500,23.3200,257.2500,0,ctb-row:site:0:code:8:22857161@2026-10-29:103
+2026-10-29,b azimut brisat,22858215,"B - Azimut, Brisat",1.0000,77.2500,7.0200,77.2500,0,ctb-row:site:0:code:8:22858215@2026-10-29:104
+2026-10-29,pint melbourne black,22870705,Pint - Melbourne Black,36.0000,576.2600,52.2300,576.2600,0,ctb-row:site:0:code:8:22870705@2026-10-29:105
+2026-10-29,pot philter xpa,23005113,Pot - Philter XPA,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:23005113@2026-10-29:106
+2026-10-29,pint philter xpa,23005115,Pint - Philter XPA,9.0000,144.8100,13.1400,144.8100,0,ctb-row:site:0:code:8:23005115@2026-10-29:107
+2026-10-29,cacio e pepe croquettes,23118462,Cacio e Pepe Croquettes,5.0000,70.7100,6.4400,70.7100,0,ctb-row:site:0:code:8:23118462@2026-10-29:25
+2026-10-29,fried calamari,23118464,Fried Calamari,2.0000,36.0000,3.2800,36.0000,0,ctb-row:site:0:code:8:23118464@2026-10-29:26
+2026-10-29,wild boar dimmies,23118475,Wild Boar Dimmies,2.0000,38.3100,3.4900,38.3100,0,ctb-row:site:0:code:8:23118475@2026-10-29:27
+2026-10-29,kids gnocchi bolognese,23271704,Kids Gnocchi Bolognese,3.0000,40.6600,3.7000,40.6600,0,ctb-row:site:0:code:8:23271704@2026-10-29:28
+2026-10-29,kids parma,23271710,Kids Parma,3.0000,51.8400,4.7200,51.8400,0,ctb-row:site:0:code:8:23271710@2026-10-29:29
+2026-10-29,kids schnitty,23271750,New Kids Schnitty,1.0000,14.2300,1.2900,14.2300,0,ctb-row:site:0:code:8:23271750@2026-10-29:30
+2026-10-29,g garagiste le stagiaire pinot noir,23351439,G - Garagiste 'Le Stagiaire' Pinot Noir,7.0000,119.5600,10.9100,119.5600,0,ctb-row:site:0:code:8:23351439@2026-10-29:108
+2026-10-29,pot keeper pilsner,23499704,Pot - Keeper Pilsner,2.0000,17.0000,1.5400,17.0000,0,ctb-row:site:0:code:8:23499704@2026-10-29:109
+2026-10-29,pint keeper pilsner,23499705,Pint - Keeper Pilsner,2.0000,32.5200,2.9400,32.5200,0,ctb-row:site:0:code:8:23499705@2026-10-29:110
+2026-10-29,g dr loosen dr l riesling,23537757,G - Dr. Loosen 'Dr. L' Riesling,8.0000,129.0600,11.7000,129.0600,0,ctb-row:site:0:code:8:23537757@2026-10-29:111
+2026-10-29,g deep woods estate chardonnay,23537760,G - Deep Woods Estate Chardonnay,17.0000,270.6400,24.5200,270.6400,0,ctb-row:site:0:code:8:23537760@2026-10-29:112
+2026-10-29,g syrahmi demi shiraz,23537766,G - Syrahmi 'Demi' Shiraz,6.0000,108.9000,9.9300,108.9000,0,ctb-row:site:0:code:8:23537766@2026-10-29:113
+2026-10-29,g dominique piron beaujolais villages gamay,23537769,G - Dominique Piron 'Beaujolais-Villages' Gamay,1.0000,16.2600,1.4700,16.2600,0,ctb-row:site:0:code:8:23537769@2026-10-29:114
+2026-10-29,corn ribs buffalo,23545628,Corn Ribs - Buffalo,6.0000,60.9900,5.5400,60.9900,0,ctb-row:site:0:code:8:23545628@2026-10-29:31
+2026-10-29,linda paloma,23575228,Linda Paloma,2.0000,44.3600,4.0300,44.3600,0,ctb-row:site:0:code:8:23575228@2026-10-29:115
+2026-10-29,sangria,23575230,Sangria,9.0000,94.6600,8.6100,94.6600,0,ctb-row:site:0:code:8:23575230@2026-10-29:116
+2026-10-29,tiki martin,23575237,Tiki Martin,1.0000,22.3600,2.0400,22.3600,0,ctb-row:site:0:code:8:23575237@2026-10-29:117
+2026-10-29,b glaetzer wallace shiraz grenache blend 2022,23576198,B - Glaetzer 'Wallace' Shiraz Grenache Blend 2022,1.0000,75.0000,6.8200,75.0000,0,ctb-row:site:0:code:8:23576198@2026-10-29:118
+2026-10-29,g nv three pillars sparkling brut cuvee,23611729,G - NV Three Pillars Sparkling Brut Cuvee,8.0000,112.4600,10.2000,112.4600,0,ctb-row:site:0:code:8:23611729@2026-10-29:119
+2026-10-29,aperol spritz nv three pillars,23611732,Aperol Spritz (NV Three Pillars),17.0000,246.5000,22.4300,246.5000,0,ctb-row:site:0:code:8:23611732@2026-10-29:120
+2026-10-29,limoncello spritz nv three pillars,23611742,Limoncello Spritz (NV Three Pillars),1.0000,18.3000,1.6700,18.3000,0,ctb-row:site:0:code:8:23611742@2026-10-29:121
+2026-10-29,pot d sseldorf draught altbier,23641017,Pot - Düsseldorf Draught Altbier,1.0000,8.5000,0.7700,8.5000,0,ctb-row:site:0:code:8:23641017@2026-10-29:122
+2026-10-29,pint d sseldorf draught altbier,23641018,Pint - Düsseldorf Draught Altbier,4.0000,64.2600,5.8200,64.2600,0,ctb-row:site:0:code:8:23641018@2026-10-29:123
+2026-10-29,corn ribs sticky bbq,23660052,Corn Ribs - Sticky BBQ,2.0000,15.1656,1.3801,15.1656,0,ctb-row:site:0:code:8:23660052@2026-10-29:32
+2026-10-29,octoberfest schnitty,23660247,Octoberfest Schnitty,24.0000,729.4000,66.3600,729.4000,0,ctb-row:site:0:code:8:23660247@2026-10-29:33
+2026-10-29,pot la sirene citray sour,23662906,Pot - La Sirene 'Citray' Sour,2.0000,17.1400,1.5600,17.1400,0,ctb-row:site:0:code:8:23662906@2026-10-29:124
+2026-10-29,g jamsheed flor de corazon chilled tap,23662915,G - Jamsheed 'Flor de Corazon' CHILLED (Tap),6.0000,90.0000,8.1600,90.0000,0,ctb-row:site:0:code:8:23662915@2026-10-29:125
+2026-10-29,baba ganoush,23673744,Baba Ganoush,1.0000,16.2600,1.4700,16.2600,0,ctb-row:site:0:code:8:23673744@2026-10-29:34
+2026-10-29,tuna tostada,23673809,Tuna Tostada,6.0000,109.4900,9.9600,109.4900,0,ctb-row:site:0:code:8:23673809@2026-10-29:35
+2026-10-29,charred corn salad,23673814,Charred Corn Salad,1.0000,14.0000,1.2700,14.0000,0,ctb-row:site:0:code:8:23673814@2026-10-29:36
+2026-10-29,leaf salad,23673817,Leaf Salad,3.0000,24.2600,2.2100,24.2600,0,ctb-row:site:0:code:8:23673817@2026-10-29:37
+2026-10-29,murray cod,23673819,Murray Cod,4.0000,154.5100,14.0400,154.5100,0,ctb-row:site:0:code:8:23673819@2026-10-29:38
+2026-10-29,thai beef salad,23673822,Thai Beef Salad,4.0000,137.6800,12.5100,137.6800,0,ctb-row:site:0:code:8:23673822@2026-10-29:39
+2026-10-29,steak frites,23673827,Steak Frites,1.0000,46.0000,4.1800,46.0000,0,ctb-row:site:0:code:8:23673827@2026-10-29:40
+2026-10-30,negroni,11589780,Negroni,22.0000,485.0800,44.0900,485.0800,0,ctb-row:site:0:code:8:11589780@2026-10-30:44
+2026-10-30,chippies,11791008,Chippies,41.0000,497.5605,45.2464,497.5605,0,ctb-row:site:0:code:8:11791008@2026-10-30:0
+2026-10-30,pot carlton draught,11801264,Pot - Carlton Draught,58.0000,413.2600,37.6000,413.2600,0,ctb-row:site:0:code:8:11801264@2026-10-30:45
+2026-10-30,pint carlton draught,11801266,Pint - Carlton Draught,286.0000,4057.8500,368.0500,4057.8500,0,ctb-row:site:0:code:8:11801266@2026-10-30:46
+2026-10-30,jug carlton draught,11801268,Jug - Carlton Draught,14.0000,416.5700,37.9000,416.5700,0,ctb-row:site:0:code:8:11801268@2026-10-30:47
+2026-10-30,frog in a pond,11814978,Frog In A Pond,1.0000,4.0000,0.3600,4.0000,0,ctb-row:site:0:code:8:11814978@2026-10-30:1
+2026-10-30,bloody oath,11815270,Bloody Oath,5.0000,81.3200,7.3800,81.3200,0,ctb-row:site:0:code:8:11815270@2026-10-30:48
+2026-10-30,1 glass,11829588,1 Glass,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829588@2026-10-30:49
+2026-10-30,2 glasses,11829589,2 Glasses,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829589@2026-10-30:50
+2026-10-30,3 glasses,11829591,3 Glasses,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829591@2026-10-30:51
+2026-10-30,no glass,11829651,No Glass,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829651@2026-10-30:52
+2026-10-30,pot gold one,11857960,Pot - Gold One,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:11857960@2026-10-30:53
+2026-10-30,pint gold one,11857980,Pint - Gold One,5.0000,75.5000,6.8400,75.5000,0,ctb-row:site:0:code:8:11857980@2026-10-30:54
+2026-10-30,old fashioned,11888552,Old Fashioned,2.0000,44.0000,4.0000,44.0000,0,ctb-row:site:0:code:8:11888552@2026-10-30:55
+2026-10-30,amaretto sour,11888557,Amaretto Sour,2.0000,44.7200,4.0600,44.7200,0,ctb-row:site:0:code:8:11888557@2026-10-30:56
+2026-10-30,four pillars bloody shiraz 30ml,11992355,Four Pillars Bloody Shiraz - 30ml,1.0000,16.0000,1.4500,16.0000,0,ctb-row:site:0:code:8:11992355@2026-10-30:57
+2026-10-30,hendricks 30ml,11992386,Hendricks - 30ml,3.0000,45.7500,4.1500,45.7500,0,ctb-row:site:0:code:8:11992386@2026-10-30:58
+2026-10-30,gin martini,11998365,Gin Martini,1.0000,22.3600,2.0300,22.3600,0,ctb-row:site:0:code:8:11998365@2026-10-30:59
+2026-10-30,lemonade mixer,12026491,Lemonade - Mixer,6.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026491@2026-10-30:60
+2026-10-30,tonic mixer,12026532,Tonic - Mixer,14.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026532@2026-10-30:61
+2026-10-30,soda mixer,12026550,Soda - Mixer,8.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026550@2026-10-30:62
+2026-10-30,coke mixer,12026562,Coke - Mixer,6.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026562@2026-10-30:63
+2026-10-30,neat,12026723,Neat,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026723@2026-10-30:64
+2026-10-30,orange juice gls,12027034,Orange Juice - Gls,1.0000,4.0000,0.3600,4.0000,0,ctb-row:site:0:code:8:12027034@2026-10-30:65
+2026-10-30,orange juice mixer,12027035,Orange Juice - Mixer,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12027035@2026-10-30:66
+2026-10-30,1800 anejo 30ml,12027370,1800 Anejo - 30ml,4.0000,64.0000,5.8000,64.0000,0,ctb-row:site:0:code:8:12027370@2026-10-30:67
+2026-10-30,bacardi carta blanca 30ml,12027391,Bacardi Carta Blanca - 30ml,18.0000,234.0000,21.2400,234.0000,0,ctb-row:site:0:code:8:12027391@2026-10-30:68
+2026-10-30,jameson 30ml,12027393,Jameson - 30ml,13.0000,183.1500,16.6100,183.1500,0,ctb-row:site:0:code:8:12027393@2026-10-30:69
+2026-10-30,mount gay eclipse 30ml,12027401,Mount Gay Eclipse - 30ml,2.0000,28.2300,2.5600,28.2300,0,ctb-row:site:0:code:8:12027401@2026-10-30:70
+2026-10-30,sailor jerry 30ml,12027410,Sailor Jerry - 30ml,6.0000,84.0000,7.6200,84.0000,0,ctb-row:site:0:code:8:12027410@2026-10-30:71
+2026-10-30,starward two fold 30ml,12027414,Starward Two Fold - 30ml,6.0000,91.4800,8.3000,91.4800,0,ctb-row:site:0:code:8:12027414@2026-10-30:72
+2026-10-30,fireball 30ml,12041921,Fireball - 30ml,10.0000,130.0000,11.8000,130.0000,0,ctb-row:site:0:code:8:12041921@2026-10-30:73
+2026-10-30,apple juice gls,12042869,Apple Juice - Gls,4.0000,16.2100,1.4700,16.2100,0,ctb-row:site:0:code:8:12042869@2026-10-30:74
+2026-10-30,pint bodriggy speccy juice,12096194,Pint - Bodriggy Speccy Juice,170.0000,2230.7500,202.4700,2230.7500,0,ctb-row:site:0:code:8:12096194@2026-10-30:75
+2026-10-30,pot bodriggy speccy juice,12096195,Pot - Bodriggy Speccy Juice,20.0000,145.8400,13.2000,145.8400,0,ctb-row:site:0:code:8:12096195@2026-10-30:76
+2026-10-30,espresso martini,12217683,Espresso Martini,6.0000,133.4500,12.1300,133.4500,0,ctb-row:site:0:code:8:12217683@2026-10-30:77
+2026-10-30,fernet branca 30ml,12538276,Fernet Branca - 30ml,3.0000,39.0000,3.5400,39.0000,0,ctb-row:site:0:code:8:12538276@2026-10-30:78
+2026-10-30,carlton draught can,12539172,Carlton Draught - Can,6.0000,36.0000,3.3000,36.0000,0,ctb-row:site:0:code:8:12539172@2026-10-30:79
+2026-10-30,with olives,13320653,With Olives,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:13320653@2026-10-30:80
+2026-10-30,jack daniels 30ml,13330906,Jack Daniels - 30ml,3.0000,42.0000,3.8100,42.0000,0,ctb-row:site:0:code:8:13330906@2026-10-30:81
+2026-10-30,red wine jus,13494503,Red Wine Jus,1.0000,3.5600,0.3300,3.5600,0,ctb-row:site:0:code:8:13494503@2026-10-30:2
+2026-10-30,shark juice,13900464,Shark Juice,1.0000,22.3600,2.0300,22.3600,0,ctb-row:site:0:code:8:13900464@2026-10-30:82
+2026-10-30,lyres gin 30ml,13903532,Lyres Gin - 30ml,1.0000,12.0000,1.0900,12.0000,0,ctb-row:site:0:code:8:13903532@2026-10-30:83
+2026-10-30,invalid stout btl,14036826,Invalid Stout - Btl,2.0000,19.7100,1.7900,19.7100,0,ctb-row:site:0:code:8:14036826@2026-10-30:84
+2026-10-30,gordans gin 30ml,14203742,Gordans Gin- 30ml,55.0000,718.6100,65.2400,718.6100,0,ctb-row:site:0:code:8:14203742@2026-10-30:85
+2026-10-30,house vodka 30ml,14263125,House Vodka - 30ml,74.0000,963.9400,87.4800,963.9400,0,ctb-row:site:0:code:8:14263125@2026-10-30:86
+2026-10-30,pot pale ale love shack,14936614,Pot - Pale Ale Love Shack,7.0000,56.2600,5.1300,56.2600,0,ctb-row:site:0:code:8:14936614@2026-10-30:87
+2026-10-30,pint pale ale love shack,14936615,Pint - Pale Ale Love Shack,152.0000,2283.9900,207.0700,2283.9900,0,ctb-row:site:0:code:8:14936615@2026-10-30:88
+2026-10-30,jug pale ale love shack,14936616,Jug - Pale Ale Love Shack,3.0000,90.0000,8.1900,90.0000,0,ctb-row:site:0:code:8:14936616@2026-10-30:89
+2026-10-30,chappy s chips sea salt,15147349,Chappy's Chips (Sea Salt),3.0000,24.2600,2.2100,24.2600,0,ctb-row:site:0:code:8:15147349@2026-10-30:90
+2026-10-30,lyre s garden tonic,15301670,Lyre's Garden Tonic,3.0000,36.6000,3.3300,36.6000,0,ctb-row:site:0:code:8:15301670@2026-10-30:91
+2026-10-30,o brien gluten free pale ale can,15370026,O'Brien Gluten Free Pale Ale - Can,6.0000,72.4000,6.5800,72.4000,0,ctb-row:site:0:code:8:15370026@2026-10-30:92
+2026-10-30,no parma sauce,15866620,No Parma Sauce,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866620@2026-10-30:3
+2026-10-30,no cheese,15866622,No Cheese,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866622@2026-10-30:4
+2026-10-30,no ham,15866623,No Ham,7.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866623@2026-10-30:5
+2026-10-30,no salad,15995858,No Salad,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15995858@2026-10-30:6
+2026-10-30,no chips,15995860,No Chips,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15995860@2026-10-30:7
+2026-10-30,flat bread,16040398,Flat bread,3.0000,24.3900,2.2300,24.3900,0,ctb-row:site:0:code:8:16040398@2026-10-30:8
+2026-10-30,pineapple juice gls,16090144,Pineapple Juice - Gls,3.0000,12.1400,1.1000,12.1400,0,ctb-row:site:0:code:8:16090144@2026-10-30:93
+2026-10-30,pickleback shot,16131422,Pickleback Shot,4.0000,60.0000,5.4400,60.0000,0,ctb-row:site:0:code:8:16131422@2026-10-30:94
+2026-10-30,el jimador 30ml,16369332,El Jimador - 30ml,32.0000,416.2100,37.7800,416.2100,0,ctb-row:site:0:code:8:16369332@2026-10-30:95
+2026-10-30,vegan option,16457487,Vegan Option,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:16457487@2026-10-30:9
+2026-10-30,pot goldy s one off the wood lager,16470218,Pot - Goldy's 'One Off The Wood' Lager,8.0000,61.0000,5.5600,61.0000,0,ctb-row:site:0:code:8:16470218@2026-10-30:96
+2026-10-30,pint goldy s one off the wood lager,16470220,Pint - Goldy's 'One Off The Wood' Lager,187.0000,2513.5800,228.1000,2513.5800,0,ctb-row:site:0:code:8:16470220@2026-10-30:97
+2026-10-30,jug goldy s one off the wood lager,16470223,Jug - Goldy's 'One Off The Wood' Lager,8.0000,180.9900,16.4700,180.9900,0,ctb-row:site:0:code:8:16470223@2026-10-30:98
+2026-10-30,coke pot,16749341,Coke - Pot,1.0000,4.0000,0.3600,4.0000,0,ctb-row:site:0:code:8:16749341@2026-10-30:99
+2026-10-30,coke pint,16749346,Coke - Pint,7.0000,56.2600,5.1300,56.2600,0,ctb-row:site:0:code:8:16749346@2026-10-30:100
+2026-10-30,coke zero pot,16749434,Coke Zero - Pot,14.0000,56.2800,5.0800,56.2800,0,ctb-row:site:0:code:8:16749434@2026-10-30:101
+2026-10-30,coke zero pint,16749437,Coke Zero - Pint,12.0000,97.0400,8.8400,97.0400,0,ctb-row:site:0:code:8:16749437@2026-10-30:102
+2026-10-30,coke zero jug,16749441,Coke Zero - Jug,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:16749441@2026-10-30:103
+2026-10-30,lemonade pot,16749454,Lemonade - Pot,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:16749454@2026-10-30:104
+2026-10-30,lemonade pint,16749456,Lemonade - Pint,4.0000,32.1300,2.9300,32.1300,0,ctb-row:site:0:code:8:16749456@2026-10-30:105
+2026-10-30,rasp lem pot,16749465,Rasp Lem - Pot,2.0000,8.1300,0.7300,8.1300,0,ctb-row:site:0:code:8:16749465@2026-10-30:106
+2026-10-30,rasp lem pint,16749466,Rasp Lem - Pint,1.0000,7.1200,0.6500,7.1200,0,ctb-row:site:0:code:8:16749466@2026-10-30:107
+2026-10-30,ginger beer pint,16749569,Ginger Beer - Pint,3.0000,24.2600,2.2100,24.2600,0,ctb-row:site:0:code:8:16749569@2026-10-30:108
+2026-10-30,soda pot,16749705,Soda - Pot,12.0000,30.0000,2.7600,30.0000,0,ctb-row:site:0:code:8:16749705@2026-10-30:109
+2026-10-30,soda pint,16749706,Soda - Pint,1.0000,5.0800,0.4500,5.0800,0,ctb-row:site:0:code:8:16749706@2026-10-30:110
+2026-10-30,llb pot,16749736,LLB - Pot,6.0000,24.0700,2.1700,24.0700,0,ctb-row:site:0:code:8:16749736@2026-10-30:111
+2026-10-30,llb pint,16749737,LLB - Pint,10.0000,80.2600,7.3200,80.2600,0,ctb-row:site:0:code:8:16749737@2026-10-30:112
+2026-10-30,slb pot,16749748,SLB - Pot,3.0000,12.1300,1.0900,12.1300,0,ctb-row:site:0:code:8:16749748@2026-10-30:113
+2026-10-30,slb pint,16749749,SLB - Pint,1.0000,7.1200,0.6500,7.1200,0,ctb-row:site:0:code:8:16749749@2026-10-30:114
+2026-10-30,1800 coconut tequila 30ml,16817686,1800 Coconut Tequila - 30ml,1.0000,15.2500,1.3800,15.2500,0,ctb-row:site:0:code:8:16817686@2026-10-30:115
+2026-10-30,g goldy s pinot grigio,17128306,G - Goldy's Pinot Grigio,67.0000,930.3000,84.3800,930.3000,0,ctb-row:site:0:code:8:17128306@2026-10-30:116
+2026-10-30,g goldy s rose,17128338,G - Goldy's Rose,21.0000,279.6700,25.3900,279.6700,0,ctb-row:site:0:code:8:17128338@2026-10-30:117
+2026-10-30,0 5l goldy s pinot grigio,17176896,(0.5L) Goldy's Pinot Grigio,4.0000,160.6600,14.6200,160.6600,0,ctb-row:site:0:code:8:17176896@2026-10-30:118
+2026-10-30,gluten free burger,17333419,Gluten Free - Burger,2.0000,4.0600,0.3600,4.0600,0,ctb-row:site:0:code:8:17333419@2026-10-30:10
+2026-10-30,kraken spiced rum,17391112,Kraken Spiced Rum,7.0000,105.0000,9.5200,105.0000,0,ctb-row:site:0:code:8:17391112@2026-10-30:119
+2026-10-30,0 amaretti sour,17630864,0% Amaretti Sour,1.0000,20.3300,1.8500,20.3300,0,ctb-row:site:0:code:8:17630864@2026-10-30:120
+2026-10-30,doggie roo pop,17914464,Doggie - Roo Pop,2.0000,5.0000,0.4600,5.0000,0,ctb-row:site:0:code:8:17914464@2026-10-30:121
+2026-10-30,doggie chicken twist,17914665,Doggie - Chicken Twist,1.0000,2.0000,0.1800,2.0000,0,ctb-row:site:0:code:8:17914665@2026-10-30:122
+2026-10-30,t i n a,18093919,T.I.N.A,4.0000,60.5000,5.4800,60.5000,0,ctb-row:site:0:code:8:18093919@2026-10-30:123
+2026-10-30,garlic aioli,18244151,Garlic Aioli,20.0000,50.8000,4.6000,50.8000,0,ctb-row:site:0:code:8:18244151@2026-10-30:11
+2026-10-30,little dragon ginger beer,18686570,Little Dragon 'Ginger Beer',23.0000,346.5000,31.4200,346.5000,0,ctb-row:site:0:code:8:18686570@2026-10-30:124
+2026-10-30,johnnie walker,19268857,Johnnie Walker,5.0000,65.0000,5.9000,65.0000,0,ctb-row:site:0:code:8:19268857@2026-10-30:125
+2026-10-30,pot the mill ipa,19402773,Pot - The Mill IPA,3.0000,25.6400,2.3200,25.6400,0,ctb-row:site:0:code:8:19402773@2026-10-30:126
+2026-10-30,pint the mill ipa,19402776,Pint - The Mill IPA,19.0000,305.3300,27.6800,305.3300,0,ctb-row:site:0:code:8:19402776@2026-10-30:127
+2026-10-30,regular cheese,19921137,Regular Cheese,5.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:19921137@2026-10-30:12
+2026-10-30,can bridge road brewers beechworth pale ale,19956119,Can - Bridge Road Brewers 'Beechworth' Pale Ale,4.0000,30.0000,2.7200,30.0000,0,ctb-row:site:0:code:8:19956119@2026-10-30:128
+2026-10-30,pot bridge road free time,19967639,Pot - Bridge Road Free Time,6.0000,42.1200,3.8500,42.1200,0,ctb-row:site:0:code:8:19967639@2026-10-30:129
+2026-10-30,pint bridge road free time,19967640,Pint - Bridge Road Free Time,24.0000,337.3800,30.6000,337.3800,0,ctb-row:site:0:code:8:19967640@2026-10-30:130
+2026-10-30,don julio margarita,19989852,Don Julio Margarita,2.0000,50.8300,4.6200,50.8300,0,ctb-row:site:0:code:8:19989852@2026-10-30:131
+2026-10-30,pint napoleone cider,20185179,Pint - Napoleone Cider,18.0000,271.7500,24.6500,271.7500,0,ctb-row:site:0:code:8:20185179@2026-10-30:132
+2026-10-30,pot napoleone cider,20185180,Pot - Napoleone Cider,12.0000,90.3600,8.1900,90.3600,0,ctb-row:site:0:code:8:20185180@2026-10-30:133
+2026-10-30,make it dirty,20391782,Make it Dirty,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:20391782@2026-10-30:134
+2026-10-30,louis rose cider pomme rouge,20624123,Louis Rose Cider Pomme Rouge,2.0000,24.4000,2.2200,24.4000,0,ctb-row:site:0:code:8:20624123@2026-10-30:135
+2026-10-30,garlic bread,20747805,Garlic bread,4.0000,49.6897,4.5008,49.6897,0,ctb-row:site:0:code:8:20747805@2026-10-30:13
+2026-10-30,kids slider,20766261,Kids slider,4.0000,56.9200,5.1700,56.9200,0,ctb-row:site:0:code:8:20766261@2026-10-30:14
+2026-10-30,mustard gravy side,20824943,Mustard Gravy - Side,16.0000,40.5600,3.6800,40.5600,0,ctb-row:site:0:code:8:20824943@2026-10-30:15
+2026-10-30,g goldys sangiovese,21402505,G- Goldys! Sangiovese,10.0000,140.9200,12.7800,140.9200,0,ctb-row:site:0:code:8:21402505@2026-10-30:136
+2026-10-30,margarita,21429994,Margarita,26.0000,354.1700,32.1900,354.1700,0,ctb-row:site:0:code:8:21429994@2026-10-30:137
+2026-10-30,chappy s chips dill pickle,21622221,Chappy's Chips (Dill Pickle),1.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:21622221@2026-10-30:138
+2026-10-30,b voyager estate cabernets,21945046,B - Voyager Estate 'Cabernets',2.0000,92.1600,8.3800,92.1600,0,ctb-row:site:0:code:8:21945046@2026-10-30:139
+2026-10-30,chicken parma,22101357,Chicken Parma,97.0000,2920.2600,265.8100,2920.2600,0,ctb-row:site:0:code:8:22101357@2026-10-30:16
+2026-10-30,eggplant parma,22101409,Eggplant Parma,22.0000,617.1600,56.2000,617.1600,0,ctb-row:site:0:code:8:22101409@2026-10-30:17
+2026-10-30,fish n chips v2,22101441,Fish'n'Chips v2,11.0000,357.3000,32.5100,357.3000,0,ctb-row:site:0:code:8:22101441@2026-10-30:18
+2026-10-30,housemade tomato sauce,22101515,Housemade Tomato Sauce,5.0000,17.8000,1.6500,17.8000,0,ctb-row:site:0:code:8:22101515@2026-10-30:19
+2026-10-30,cheeseburger,22152688,Cheeseburger,35.0000,999.9100,91.0000,999.9100,0,ctb-row:site:0:code:8:22152688@2026-10-30:20
+2026-10-30,vegan beyond burger,22152693,Vegan Beyond Burger,4.0000,121.4900,11.0600,121.4900,0,ctb-row:site:0:code:8:22152693@2026-10-30:21
+2026-10-30,double vegan burger,22153798,Double Vegan Burger,2.0000,77.2600,7.0200,77.2600,0,ctb-row:site:0:code:8:22153798@2026-10-30:22
+2026-10-30,double cheeseburger,22155522,Double Cheeseburger,3.0000,106.7400,9.7000,106.7400,0,ctb-row:site:0:code:8:22155522@2026-10-30:23
+2026-10-30,make it spicy,22247868,Make it Spicy,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:22247868@2026-10-30:140
+2026-10-30,frickles,22469048,Frickles,8.0000,113.8400,10.3300,113.8400,0,ctb-row:site:0:code:8:22469048@2026-10-30:24
+2026-10-30,dill aioli,22510826,Dill Aioli,5.0000,12.7000,1.1500,12.7000,0,ctb-row:site:0:code:8:22510826@2026-10-30:25
+2026-10-30,tommy s marg,22698455,Tommy's Marg,6.0000,134.1700,12.1900,134.1700,0,ctb-row:site:0:code:8:22698455@2026-10-30:141
+2026-10-30,g swiftsure marlborough sauvignon blanc,22857146,G - Swiftsure 'Marlborough' Sauvignon Blanc,11.0000,165.2500,14.9800,165.2500,0,ctb-row:site:0:code:8:22857146@2026-10-30:142
+2026-10-30,g dazma gew rztraminer,22857161,"G - Dazma, Gewürztraminer",42.0000,632.7500,57.3500,632.7500,0,ctb-row:site:0:code:8:22857161@2026-10-30:143
+2026-10-30,b table wines gelato bianco pecorino blend,22858220,B - Table Wines 'Gelato Bianco' Pecorino Blend,1.0000,43.2000,3.9300,43.2000,0,ctb-row:site:0:code:8:22858220@2026-10-30:144
+2026-10-30,pint melbourne black,22870705,Pint - Melbourne Black,29.0000,466.1000,42.2300,466.1000,0,ctb-row:site:0:code:8:22870705@2026-10-30:145
+2026-10-30,pot melbourne black,22870707,Pot - Melbourne Black,2.0000,17.1400,1.5500,17.1400,0,ctb-row:site:0:code:8:22870707@2026-10-30:146
+2026-10-30,pot philter xpa,23005113,Pot - Philter XPA,3.0000,24.0000,2.1900,24.0000,0,ctb-row:site:0:code:8:23005113@2026-10-30:147
+2026-10-30,pint philter xpa,23005115,Pint - Philter XPA,24.0000,385.8500,34.9700,385.8500,0,ctb-row:site:0:code:8:23005115@2026-10-30:148
+2026-10-30,no,23088945,No,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23088945@2026-10-30:26
+2026-10-30,cacio e pepe croquettes,23118462,Cacio e Pepe Croquettes,12.0000,170.7597,15.4908,170.7597,0,ctb-row:site:0:code:8:23118462@2026-10-30:27
+2026-10-30,fried calamari,23118464,Fried Calamari,11.0000,200.9900,18.3200,200.9900,0,ctb-row:site:0:code:8:23118464@2026-10-30:28
+2026-10-30,wild boar dimmies,23118475,Wild Boar Dimmies,4.0000,76.6300,6.9800,76.6300,0,ctb-row:site:0:code:8:23118475@2026-10-30:29
+2026-10-30,casarecce,23143536,Casarecce,10.0000,279.3300,25.4600,279.3300,0,ctb-row:site:0:code:8:23143536@2026-10-30:30
+2026-10-30,roast hispi cabbage,23143547,Roast Hispi Cabbage,1.0000,28.0000,2.5500,28.0000,0,ctb-row:site:0:code:8:23143547@2026-10-30:31
+2026-10-30,kids gnocchi bolognese,23271704,Kids Gnocchi Bolognese,1.0000,10.1700,0.9300,10.1700,0,ctb-row:site:0:code:8:23271704@2026-10-30:32
+2026-10-30,kids parma,23271710,Kids Parma,3.0000,51.8400,4.7300,51.8400,0,ctb-row:site:0:code:8:23271710@2026-10-30:33
+2026-10-30,kids schnitty,23271750,New Kids Schnitty,2.0000,28.4600,2.5700,28.4600,0,ctb-row:site:0:code:8:23271750@2026-10-30:34
+2026-10-30,g garagiste le stagiaire pinot noir,23351439,G - Garagiste 'Le Stagiaire' Pinot Noir,10.0000,170.0000,15.5000,170.0000,0,ctb-row:site:0:code:8:23351439@2026-10-30:149
+2026-10-30,mojito,23439059,Mojito,1.0000,20.3300,1.8500,20.3300,0,ctb-row:site:0:code:8:23439059@2026-10-30:150
+2026-10-30,pot keeper pilsner,23499704,Pot - Keeper Pilsner,3.0000,25.6400,2.3200,25.6400,0,ctb-row:site:0:code:8:23499704@2026-10-30:151
+2026-10-30,pint keeper pilsner,23499705,Pint - Keeper Pilsner,5.0000,80.0000,7.2500,80.0000,0,ctb-row:site:0:code:8:23499705@2026-10-30:152
+2026-10-30,jug keeper pilsner,23499706,Jug - Keeper Pilsner,1.0000,32.5300,2.9600,32.5300,0,ctb-row:site:0:code:8:23499706@2026-10-30:153
+2026-10-30,g croix de b zard picpoul de pinet,23537744,G - Croix de Bézard Picpoul de Pinet,1.0000,13.6000,1.2400,13.6000,0,ctb-row:site:0:code:8:23537744@2026-10-30:154
+2026-10-30,g dr loosen dr l riesling,23537757,G - Dr. Loosen 'Dr. L' Riesling,9.0000,145.5700,13.1800,145.5700,0,ctb-row:site:0:code:8:23537757@2026-10-30:155
+2026-10-30,g deep woods estate chardonnay,23537760,G - Deep Woods Estate Chardonnay,4.0000,64.2600,5.8200,64.2600,0,ctb-row:site:0:code:8:23537760@2026-10-30:156
+2026-10-30,g syrahmi demi shiraz,23537766,G - Syrahmi 'Demi' Shiraz,2.0000,36.0000,3.2800,36.0000,0,ctb-row:site:0:code:8:23537766@2026-10-30:157
+2026-10-30,g dominique piron beaujolais villages gamay,23537769,G - Dominique Piron 'Beaujolais-Villages' Gamay,5.0000,80.7800,7.3200,80.7800,0,ctb-row:site:0:code:8:23537769@2026-10-30:158
+2026-10-30,green day,23575217,Green Day,1.0000,22.3600,2.0300,22.3600,0,ctb-row:site:0:code:8:23575217@2026-10-30:159
+2026-10-30,linda paloma,23575228,Linda Paloma,4.0000,89.4500,8.1400,89.4500,0,ctb-row:site:0:code:8:23575228@2026-10-30:160
+2026-10-30,sangria,23575230,Sangria,37.0000,478.9100,43.4600,478.9100,0,ctb-row:site:0:code:8:23575230@2026-10-30:161
+2026-10-30,tiki martin,23575237,Tiki Martin,2.0000,44.3600,4.0300,44.3600,0,ctb-row:site:0:code:8:23575237@2026-10-30:162
+2026-10-30,b contrefort carm n re 2022,23600781,B - Contrefort Carménère 2022,1.0000,42.0000,3.8200,42.0000,0,ctb-row:site:0:code:8:23600781@2026-10-30:163
+2026-10-30,g nv three pillars sparkling brut cuvee,23611729,G - NV Three Pillars Sparkling Brut Cuvee,21.0000,259.1900,23.5400,259.1900,0,ctb-row:site:0:code:8:23611729@2026-10-30:164
+2026-10-30,aperol spritz nv three pillars,23611732,Aperol Spritz (NV Three Pillars),64.0000,1073.1900,97.7600,1073.1900,0,ctb-row:site:0:code:8:23611732@2026-10-30:165
+2026-10-30,campari spritz nv three pillars,23611738,Campari Spritz (NV Three Pillars),14.0000,253.1900,23.0800,253.1900,0,ctb-row:site:0:code:8:23611738@2026-10-30:166
+2026-10-30,limoncello spritz nv three pillars,23611742,Limoncello Spritz (NV Three Pillars),13.0000,237.2900,21.6300,237.2900,0,ctb-row:site:0:code:8:23611742@2026-10-30:167
+2026-10-30,montenegro spritz nv three pillars,23611744,Montenegro Spritz (NV Three Pillars),7.0000,126.9000,11.5700,126.9000,0,ctb-row:site:0:code:8:23611744@2026-10-30:168
+2026-10-30,b alkina kin grenache 2024,23614503,B - Alkina 'Kin' Grenache 2024,1.0000,51.0000,4.6400,51.0000,0,ctb-row:site:0:code:8:23614503@2026-10-30:169
+2026-10-30,tomato juice gls,23614524,Tomato Juice - Gls,2.0000,8.0000,0.7200,8.0000,0,ctb-row:site:0:code:8:23614524@2026-10-30:170
+2026-10-30,pot d sseldorf draught altbier,23641017,Pot - Düsseldorf Draught Altbier,1.0000,8.5000,0.7700,8.5000,0,ctb-row:site:0:code:8:23641017@2026-10-30:171
+2026-10-30,pint d sseldorf draught altbier,23641018,Pint - Düsseldorf Draught Altbier,12.0000,192.7800,17.4600,192.7800,0,ctb-row:site:0:code:8:23641018@2026-10-30:172
+2026-10-30,octoberfest schnitty,23660247,Octoberfest Schnitty,33.0000,1003.9000,91.3800,1003.9000,0,ctb-row:site:0:code:8:23660247@2026-10-30:35
+2026-10-30,pot la sirene citray sour,23662906,Pot - La Sirene 'Citray' Sour,1.0000,8.5000,0.7700,8.5000,0,ctb-row:site:0:code:8:23662906@2026-10-30:173
+2026-10-30,pint la sirene citray sour,23662907,Pint - La Sirene 'Citray' Sour,14.0000,224.5300,20.3500,224.5300,0,ctb-row:site:0:code:8:23662907@2026-10-30:174
+2026-10-30,5l jamsheed flor de corazon chilled tap,23662914,.5L - Jamsheed 'Flor de Corazon' CHILLED (Tap),1.0000,43.0000,3.9100,43.0000,0,ctb-row:site:0:code:8:23662914@2026-10-30:175
+2026-10-30,g jamsheed flor de corazon chilled tap,23662915,G - Jamsheed 'Flor de Corazon' CHILLED (Tap),7.0000,105.0000,9.5200,105.0000,0,ctb-row:site:0:code:8:23662915@2026-10-30:176
+2026-10-30,baba ganoush,23673744,Baba Ganoush,14.0000,227.1700,20.5700,227.1700,0,ctb-row:site:0:code:8:23673744@2026-10-30:36
+2026-10-30,tuna tostada,23673809,Tuna Tostada,10.0000,173.0900,15.7800,173.0900,0,ctb-row:site:0:code:8:23673809@2026-10-30:37
+2026-10-30,charred corn salad,23673814,Charred Corn Salad,4.0000,49.4600,4.4800,49.4600,0,ctb-row:site:0:code:8:23673814@2026-10-30:38
+2026-10-30,leaf salad,23673817,Leaf Salad,4.0000,32.5200,2.9600,32.5200,0,ctb-row:site:0:code:8:23673817@2026-10-30:39
+2026-10-30,murray cod,23673819,Murray Cod,6.0000,231.1400,21.0000,231.1400,0,ctb-row:site:0:code:8:23673819@2026-10-30:40
+2026-10-30,thai beef salad,23673822,Thai Beef Salad,11.0000,379.6000,34.5000,379.6000,0,ctb-row:site:0:code:8:23673822@2026-10-30:41
+2026-10-30,steak frites,23673827,Steak Frites,16.0000,744.3600,67.6500,744.3600,0,ctb-row:site:0:code:8:23673827@2026-10-30:42
+2026-10-30,28 steak frites,23703576,$28 Steak Frites,1.0000,14.0000,1.2700,14.0000,0,ctb-row:site:0:code:8:23703576@2026-10-30:43
+2026-10-31,negroni,11589780,Negroni,11.0000,243.4500,22.1300,243.4500,0,ctb-row:site:0:code:8:11589780@2026-10-31:45
+2026-10-31,chippies,11791008,Chippies,57.0000,700.4086,63.6918,700.4086,0,ctb-row:site:0:code:8:11791008@2026-10-31:0
+2026-10-31,pot carlton draught,11801264,Pot - Carlton Draught,33.0000,264.2600,24.1100,264.2600,0,ctb-row:site:0:code:8:11801264@2026-10-31:46
+2026-10-31,pint carlton draught,11801266,Pint - Carlton Draught,345.0000,5524.9800,500.6872,5524.9800,0,ctb-row:site:0:code:8:11801266@2026-10-31:47
+2026-10-31,jug carlton draught,11801268,Jug - Carlton Draught,10.0000,321.0600,29.1982,321.0600,0,ctb-row:site:0:code:8:11801268@2026-10-31:48
+2026-10-31,bloody oath,11815270,Bloody Oath,9.0000,145.8500,13.2200,145.8500,0,ctb-row:site:0:code:8:11815270@2026-10-31:49
+2026-10-31,apple juice mixer,11823953,Apple Juice - Mixer,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11823953@2026-10-31:50
+2026-10-31,2 glasses,11829589,2 Glasses,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829589@2026-10-31:51
+2026-10-31,3 glasses,11829591,3 Glasses,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829591@2026-10-31:52
+2026-10-31,4 glasses,11829592,4 Glasses,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829592@2026-10-31:53
+2026-10-31,5 glasses,11829593,5 Glasses,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829593@2026-10-31:54
+2026-10-31,no glass,11829651,No Glass,5.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829651@2026-10-31:55
+2026-10-31,pot gold one,11857960,Pot - Gold One,9.0000,72.9122,6.6421,72.9122,0,ctb-row:site:0:code:8:11857960@2026-10-31:56
+2026-10-31,pint gold one,11857980,Pint - Gold One,8.0000,120.4978,10.9225,120.4978,0,ctb-row:site:0:code:8:11857980@2026-10-31:57
+2026-10-31,jug gold one,11858077,Jug - Gold One,1.0000,30.0000,2.7300,30.0000,0,ctb-row:site:0:code:8:11858077@2026-10-31:58
+2026-10-31,dry ginger ale mixer,11867573,Dry Ginger Ale - Mixer,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11867573@2026-10-31:59
+2026-10-31,amaretto sour,11888557,Amaretto Sour,1.0000,22.3600,2.0300,22.3600,0,ctb-row:site:0:code:8:11888557@2026-10-31:60
+2026-10-31,hold,11927956,HOLD,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11927956@2026-10-31:1
+2026-10-31,four pillars 30ml,11992343,Four Pillars - 30ml,3.0000,45.7464,4.1423,45.7464,0,ctb-row:site:0:code:8:11992343@2026-10-31:61
+2026-10-31,four pillars bloody shiraz 30ml,11992355,Four Pillars Bloody Shiraz - 30ml,4.0000,64.2600,5.8236,64.2600,0,ctb-row:site:0:code:8:11992355@2026-10-31:62
+2026-10-31,hendricks 30ml,11992386,Hendricks - 30ml,2.0000,30.5000,2.7700,30.5000,0,ctb-row:site:0:code:8:11992386@2026-10-31:63
+2026-10-31,gin martini,11998365,Gin Martini,3.0000,66.7200,6.0600,66.7200,0,ctb-row:site:0:code:8:11998365@2026-10-31:64
+2026-10-31,lemonade mixer,12026491,Lemonade - Mixer,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026491@2026-10-31:65
+2026-10-31,tonic mixer,12026532,Tonic - Mixer,6.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026532@2026-10-31:66
+2026-10-31,soda mixer,12026550,Soda - Mixer,21.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026550@2026-10-31:67
+2026-10-31,coke mixer,12026562,Coke - Mixer,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026562@2026-10-31:68
+2026-10-31,shot,12026724,Shot,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026724@2026-10-31:69
+2026-10-31,orange juice gls,12027034,Orange Juice - Gls,4.0000,16.1400,1.4600,16.1400,0,ctb-row:site:0:code:8:12027034@2026-10-31:70
+2026-10-31,belvedere 30ml,12027377,Belvedere - 30ml,8.0000,121.0000,10.9600,121.0000,0,ctb-row:site:0:code:8:12027377@2026-10-31:71
+2026-10-31,campari 30ml,12027382,Campari - 30ml,3.0000,36.0000,3.2700,36.0000,0,ctb-row:site:0:code:8:12027382@2026-10-31:72
+2026-10-31,bacardi carta blanca 30ml,12027391,Bacardi Carta Blanca - 30ml,33.0000,430.4936,39.0794,430.4936,0,ctb-row:site:0:code:8:12027391@2026-10-31:73
+2026-10-31,jameson 30ml,12027393,Jameson - 30ml,8.0000,112.0000,10.1600,112.0000,0,ctb-row:site:0:code:8:12027393@2026-10-31:74
+2026-10-31,sailor jerry 30ml,12027410,Sailor Jerry - 30ml,1.0000,14.0000,1.2700,14.0000,0,ctb-row:site:0:code:8:12027410@2026-10-31:75
+2026-10-31,apple juice gls,12042869,Apple Juice - Gls,7.0000,28.4100,2.5800,28.4100,0,ctb-row:site:0:code:8:12042869@2026-10-31:76
+2026-10-31,jug bodriggy speccy juice,12096191,Jug - Bodriggy Speccy Juice,3.0000,84.0000,7.6500,84.0000,0,ctb-row:site:0:code:8:12096191@2026-10-31:77
+2026-10-31,pint bodriggy speccy juice,12096194,Pint - Bodriggy Speccy Juice,117.0000,1640.7717,148.8510,1640.7717,0,ctb-row:site:0:code:8:12096194@2026-10-31:78
+2026-10-31,pot bodriggy speccy juice,12096195,Pot - Bodriggy Speccy Juice,7.0000,52.6200,4.7700,52.6200,0,ctb-row:site:0:code:8:12096195@2026-10-31:79
+2026-10-31,espresso martini,12217683,Espresso Martini,42.0000,933.4300,84.8600,933.4300,0,ctb-row:site:0:code:8:12217683@2026-10-31:80
+2026-10-31,tanqueray gin 30ml,12361283,Tanqueray Gin - 30ml,3.0000,42.6900,3.8700,42.6900,0,ctb-row:site:0:code:8:12361283@2026-10-31:81
+2026-10-31,carlton draught can,12539172,Carlton Draught - Can,6.0000,36.0000,3.2700,36.0000,0,ctb-row:site:0:code:8:12539172@2026-10-31:82
+2026-10-31,jack daniels 30ml,13330906,Jack Daniels - 30ml,1.0000,14.0000,1.2700,14.0000,0,ctb-row:site:0:code:8:13330906@2026-10-31:194
+2026-10-31,bar pretzels,13442259,Bar Pretzels,2.0000,12.0000,1.1000,12.0000,0,ctb-row:site:0:code:8:13442259@2026-10-31:83
+2026-10-31,red wine jus,13494503,Red Wine Jus,4.0000,14.2100,1.2800,14.2100,0,ctb-row:site:0:code:8:13494503@2026-10-31:2
+2026-10-31,shark juice,13900464,Shark Juice,2.0000,44.0000,4.0000,44.0000,0,ctb-row:site:0:code:8:13900464@2026-10-31:84
+2026-10-31,lyres gin 30ml,13903532,Lyres Gin - 30ml,1.0000,12.0000,1.0900,12.0000,0,ctb-row:site:0:code:8:13903532@2026-10-31:85
+2026-10-31,invalid stout btl,14036826,Invalid Stout - Btl,3.0000,39.2100,3.5500,39.2100,0,ctb-row:site:0:code:8:14036826@2026-10-31:86
+2026-10-31,virgin bloody oath,14125046,Virgin Bloody Oath,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:14125046@2026-10-31:87
+2026-10-31,gordans gin 30ml,14203742,Gordans Gin- 30ml,49.0000,638.2600,57.9300,638.2600,0,ctb-row:site:0:code:8:14203742@2026-10-31:88
+2026-10-31,house vodka 30ml,14263125,House Vodka - 30ml,147.0000,1874.5400,170.1400,1874.5400,0,ctb-row:site:0:code:8:14263125@2026-10-31:89
+2026-10-31,pot pale ale love shack,14936614,Pot - Pale Ale Love Shack,12.0000,96.5200,8.8019,96.5200,0,ctb-row:site:0:code:8:14936614@2026-10-31:90
+2026-10-31,pint pale ale love shack,14936615,Pint - Pale Ale Love Shack,133.0000,1997.7500,181.1500,1997.7500,0,ctb-row:site:0:code:8:14936615@2026-10-31:91
+2026-10-31,jug pale ale love shack,14936616,Jug - Pale Ale Love Shack,6.0000,181.0000,16.4800,181.0000,0,ctb-row:site:0:code:8:14936616@2026-10-31:92
+2026-10-31,chappy s chips sea salt,15147349,Chappy's Chips (Sea Salt),2.0000,16.0000,1.4600,16.0000,0,ctb-row:site:0:code:8:15147349@2026-10-31:93
+2026-10-31,canadian club 30ml,15201515,Canadian Club 30ml,1.0000,14.2300,1.2900,14.2300,0,ctb-row:site:0:code:8:15201515@2026-10-31:94
+2026-10-31,lyre s garden tonic,15301670,Lyre's Garden Tonic,3.0000,36.2000,3.2900,36.2000,0,ctb-row:site:0:code:8:15301670@2026-10-31:95
+2026-10-31,o brien gluten free pale ale can,15370026,O'Brien Gluten Free Pale Ale - Can,17.0000,204.4000,18.5700,204.4000,0,ctb-row:site:0:code:8:15370026@2026-10-31:96
+2026-10-31,bloody maria,15513468,Bloody Maria,1.0000,16.2600,1.4700,16.2600,0,ctb-row:site:0:code:8:15513468@2026-10-31:97
+2026-10-31,no parma sauce,15866620,No Parma Sauce,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866620@2026-10-31:3
+2026-10-31,no cheese,15866622,No Cheese,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866622@2026-10-31:4
+2026-10-31,no ham,15866623,No Ham,6.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866623@2026-10-31:5
+2026-10-31,no salad,15995858,No Salad,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15995858@2026-10-31:6
+2026-10-31,no chips,15995860,No Chips,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15995860@2026-10-31:7
+2026-10-31,flat bread,16040398,Flat bread,3.0000,24.4000,2.2300,24.4000,0,ctb-row:site:0:code:8:16040398@2026-10-31:8
+2026-10-31,pickleback shot,16131422,Pickleback Shot,8.0000,120.7400,10.9500,120.7400,0,ctb-row:site:0:code:8:16131422@2026-10-31:98
+2026-10-31,el jimador 30ml,16369332,El Jimador - 30ml,65.0000,845.8400,76.7800,845.8400,0,ctb-row:site:0:code:8:16369332@2026-10-31:99
+2026-10-31,pot goldy s one off the wood lager,16470218,Pot - Goldy's 'One Off The Wood' Lager,26.0000,192.6500,17.5700,192.6500,0,ctb-row:site:0:code:8:16470218@2026-10-31:100
+2026-10-31,pint goldy s one off the wood lager,16470220,Pint - Goldy's 'One Off The Wood' Lager,126.0000,1893.9668,171.7124,1893.9668,0,ctb-row:site:0:code:8:16470220@2026-10-31:101
+2026-10-31,jug goldy s one off the wood lager,16470223,Jug - Goldy's 'One Off The Wood' Lager,18.0000,540.0000,49.1400,540.0000,0,ctb-row:site:0:code:8:16470223@2026-10-31:102
+2026-10-31,coke pot,16749341,Coke - Pot,4.0000,16.1400,1.4600,16.1400,0,ctb-row:site:0:code:8:16749341@2026-10-31:103
+2026-10-31,coke pint,16749346,Coke - Pint,4.0000,32.2600,2.9400,32.2600,0,ctb-row:site:0:code:8:16749346@2026-10-31:104
+2026-10-31,coke jug,16749348,Coke - Jug,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:16749348@2026-10-31:105
+2026-10-31,coke zero pot,16749434,Coke Zero - Pot,15.0000,60.2667,5.4260,60.2667,0,ctb-row:site:0:code:8:16749434@2026-10-31:106
+2026-10-31,coke zero pint,16749437,Coke Zero - Pint,14.0000,112.6500,10.2700,112.6500,0,ctb-row:site:0:code:8:16749437@2026-10-31:107
+2026-10-31,coke zero jug,16749441,Coke Zero - Jug,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:16749441@2026-10-31:108
+2026-10-31,lemonade pot,16749454,Lemonade - Pot,13.0000,52.2700,4.7100,52.2700,0,ctb-row:site:0:code:8:16749454@2026-10-31:109
+2026-10-31,lemonade pint,16749456,Lemonade - Pint,1.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:16749456@2026-10-31:110
+2026-10-31,lemonade jug,16749457,Lemonade - Jug,1.0000,12.0000,1.0900,12.0000,0,ctb-row:site:0:code:8:16749457@2026-10-31:111
+2026-10-31,rasp lem pot,16749465,Rasp Lem - Pot,1.0000,4.0000,0.3600,4.0000,0,ctb-row:site:0:code:8:16749465@2026-10-31:112
+2026-10-31,dry ginger ale pot,16749558,Dry Ginger Ale - Pot,1.0000,4.0000,0.3600,4.0000,0,ctb-row:site:0:code:8:16749558@2026-10-31:113
+2026-10-31,ginger beer pot,16749567,Ginger Beer - Pot,3.0000,12.2100,1.1100,12.2100,0,ctb-row:site:0:code:8:16749567@2026-10-31:114
+2026-10-31,soda pot,16749705,Soda - Pot,7.0000,17.5400,1.6100,17.5400,0,ctb-row:site:0:code:8:16749705@2026-10-31:115
+2026-10-31,soda pint,16749706,Soda - Pint,4.0000,20.0833,1.8075,20.0833,0,ctb-row:site:0:code:8:16749706@2026-10-31:116
+2026-10-31,soda jug,16749711,Soda - Jug,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:16749711@2026-10-31:117
+2026-10-31,llb pot,16749736,LLB - Pot,11.0000,44.2800,4.0000,44.2800,0,ctb-row:site:0:code:8:16749736@2026-10-31:118
+2026-10-31,llb pint,16749737,LLB - Pint,13.0000,104.6500,9.5400,104.6500,0,ctb-row:site:0:code:8:16749737@2026-10-31:119
+2026-10-31,llb jug,16749739,LLB - Jug,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:16749739@2026-10-31:120
+2026-10-31,slb pot,16749748,SLB - Pot,4.0000,16.2667,1.4660,16.2667,0,ctb-row:site:0:code:8:16749748@2026-10-31:121
+2026-10-31,slb pint,16749749,SLB - Pint,2.0000,14.2400,1.3000,14.2400,0,ctb-row:site:0:code:8:16749749@2026-10-31:122
+2026-10-31,tonic pot,16749755,Tonic - Pot,1.0000,4.0700,0.3700,4.0700,0,ctb-row:site:0:code:8:16749755@2026-10-31:123
+2026-10-31,1800 coconut tequila 30ml,16817686,1800 Coconut Tequila - 30ml,2.0000,30.2500,2.7400,30.2500,0,ctb-row:site:0:code:8:16817686@2026-10-31:124
+2026-10-31,g goldy s pinot grigio,17128306,G - Goldy's Pinot Grigio,20.0000,280.0000,25.4000,280.0000,0,ctb-row:site:0:code:8:17128306@2026-10-31:125
+2026-10-31,g goldy s rose,17128338,G - Goldy's Rose,25.0000,351.6100,31.8917,351.6100,0,ctb-row:site:0:code:8:17128338@2026-10-31:126
+2026-10-31,0 5l goldy s rose,17128342,0.5L - Goldy's Rose,1.0000,40.0000,3.6400,40.0000,0,ctb-row:site:0:code:8:17128342@2026-10-31:127
+2026-10-31,0 5l goldy s pinot grigio,17176896,(0.5L) Goldy's Pinot Grigio,2.0000,80.6600,7.3400,80.6600,0,ctb-row:site:0:code:8:17176896@2026-10-31:128
+2026-10-31,gluten free burger,17333419,Gluten Free - Burger,1.0000,2.0300,0.1800,2.0300,0,ctb-row:site:0:code:8:17333419@2026-10-31:9
+2026-10-31,kraken spiced rum,17391112,Kraken Spiced Rum,7.0000,105.7500,9.5800,105.7500,0,ctb-row:site:0:code:8:17391112@2026-10-31:129
+2026-10-31,0 amaretti sour,17630864,0% Amaretti Sour,1.0000,20.3300,1.8500,20.3300,0,ctb-row:site:0:code:8:17630864@2026-10-31:130
+2026-10-31,doggie roo pop,17914464,Doggie - Roo Pop,1.0000,2.5400,0.2300,2.5400,0,ctb-row:site:0:code:8:17914464@2026-10-31:131
+2026-10-31,doggie chicken twist,17914665,Doggie - Chicken Twist,8.0000,16.0300,1.4400,16.0300,0,ctb-row:site:0:code:8:17914665@2026-10-31:132
+2026-10-31,t i n a,18093919,T.I.N.A,4.0000,60.7600,5.5100,60.7600,0,ctb-row:site:0:code:8:18093919@2026-10-31:133
+2026-10-31,garlic aioli,18244151,Garlic Aioli,26.0000,66.0400,5.9800,66.0400,0,ctb-row:site:0:code:8:18244151@2026-10-31:10
+2026-10-31,little dragon ginger beer,18686570,Little Dragon 'Ginger Beer',30.0000,450.5000,40.8600,450.5000,0,ctb-row:site:0:code:8:18686570@2026-10-31:134
+2026-10-31,johnnie walker,19268857,Johnnie Walker,1.0000,13.0000,1.1800,13.0000,0,ctb-row:site:0:code:8:19268857@2026-10-31:135
+2026-10-31,jim beam,19357128,Jim Beam,15.0000,195.2100,17.7200,195.2100,0,ctb-row:site:0:code:8:19357128@2026-10-31:136
+2026-10-31,pot the mill ipa,19402773,Pot - The Mill IPA,1.0000,8.5000,0.7700,8.5000,0,ctb-row:site:0:code:8:19402773@2026-10-31:137
+2026-10-31,pint the mill ipa,19402776,Pint - The Mill IPA,9.0000,144.7800,13.1100,144.7800,0,ctb-row:site:0:code:8:19402776@2026-10-31:138
+2026-10-31,jug the mill ipa,19402778,Jug - The Mill IPA,1.0000,32.0000,2.9100,32.0000,0,ctb-row:site:0:code:8:19402778@2026-10-31:139
+2026-10-31,regular cheese,19921137,Regular Cheese,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:19921137@2026-10-31:11
+2026-10-31,can bridge road brewers beechworth pale ale,19956119,Can - Bridge Road Brewers 'Beechworth' Pale Ale,2.0000,15.0000,1.3600,15.0000,0,ctb-row:site:0:code:8:19956119@2026-10-31:140
+2026-10-31,pot bridge road free time,19967639,Pot - Bridge Road Free Time,8.0000,56.1200,5.1300,56.1200,0,ctb-row:site:0:code:8:19967639@2026-10-31:141
+2026-10-31,pint bridge road free time,19967640,Pint - Bridge Road Free Time,9.0000,126.6917,11.4810,126.6917,0,ctb-row:site:0:code:8:19967640@2026-10-31:142
+2026-10-31,pint napoleone cider,20185179,Pint - Napoleone Cider,18.0000,270.2483,24.5025,270.2483,0,ctb-row:site:0:code:8:20185179@2026-10-31:143
+2026-10-31,pot napoleone cider,20185180,Pot - Napoleone Cider,7.0000,51.2400,4.6400,51.2400,0,ctb-row:site:0:code:8:20185180@2026-10-31:144
+2026-10-31,make it dirty,20391782,Make it Dirty,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:20391782@2026-10-31:145
+2026-10-31,jw whiskey sour,20391901,JW Whiskey Sour,1.0000,22.3600,2.0300,22.3600,0,ctb-row:site:0:code:8:20391901@2026-10-31:146
+2026-10-31,garlic bread,20747805,Garlic bread,5.0000,71.1500,6.4509,71.1500,0,ctb-row:site:0:code:8:20747805@2026-10-31:12
+2026-10-31,kids slider,20766261,Kids slider,7.0000,99.3800,9.0100,99.3800,0,ctb-row:site:0:code:8:20766261@2026-10-31:13
+2026-10-31,mustard gravy side,20824943,Mustard Gravy - Side,15.0000,37.9017,3.4538,37.9017,0,ctb-row:site:0:code:8:20824943@2026-10-31:14
+2026-10-31,g goldys sangiovese,21402505,G- Goldys! Sangiovese,13.0000,182.4600,16.5500,182.4600,0,ctb-row:site:0:code:8:21402505@2026-10-31:147
+2026-10-31,margarita,21429994,Margarita,10.0000,220.3600,20.0300,220.3600,0,ctb-row:site:0:code:8:21429994@2026-10-31:148
+2026-10-31,chappy s chips dill pickle,21622221,Chappy's Chips (Dill Pickle),2.0000,8.0000,0.7300,8.0000,0,ctb-row:site:0:code:8:21622221@2026-10-31:149
+2026-10-31,chicken parma,22101357,Chicken Parma,104.0000,3118.7698,283.9067,3118.7698,0,ctb-row:site:0:code:8:22101357@2026-10-31:15
+2026-10-31,eggplant parma,22101409,Eggplant Parma,15.0000,409.8368,37.3034,409.8368,0,ctb-row:site:0:code:8:22101409@2026-10-31:16
+2026-10-31,fish n chips v2,22101441,Fish'n'Chips v2,16.0000,518.3500,47.1500,518.3500,0,ctb-row:site:0:code:8:22101441@2026-10-31:17
+2026-10-31,housemade tomato sauce,22101515,Housemade Tomato Sauce,9.0000,32.0383,2.9653,32.0383,0,ctb-row:site:0:code:8:22101515@2026-10-31:18
+2026-10-31,b la petit mort crianza tempranillo,22141312,B - La Petit Mort 'Crianza' Tempranillo,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:22141312@2026-10-31:150
+2026-10-31,cheeseburger,22152688,Cheeseburger,45.0000,1309.7100,119.2000,1309.7100,0,ctb-row:site:0:code:8:22152688@2026-10-31:19
+2026-10-31,vegan beyond burger,22152693,Vegan Beyond Burger,12.0000,304.4667,27.7052,304.4667,0,ctb-row:site:0:code:8:22152693@2026-10-31:20
+2026-10-31,double cheeseburger,22155522,Double Cheeseburger,2.0000,70.5800,6.4100,70.5800,0,ctb-row:site:0:code:8:22155522@2026-10-31:21
+2026-10-31,frickles,22469048,Frickles,11.0000,156.3100,14.2000,156.3100,0,ctb-row:site:0:code:8:22469048@2026-10-31:22
+2026-10-31,b shady lane pet nat,22471901,B - Shady Lane Pet Nat,3.0000,211.1600,19.1900,211.1600,0,ctb-row:site:0:code:8:22471901@2026-10-31:151
+2026-10-31,g shady lane pet nat,22471903,G - Shady Lane Pet Nat,15.0000,227.9983,20.6578,227.9983,0,ctb-row:site:0:code:8:22471903@2026-10-31:152
+2026-10-31,dill aioli,22510826,Dill Aioli,9.0000,22.8600,2.0700,22.8600,0,ctb-row:site:0:code:8:22510826@2026-10-31:23
+2026-10-31,tommy s marg,22698455,Tommy's Marg,3.0000,66.3600,6.0300,66.3600,0,ctb-row:site:0:code:8:22698455@2026-10-31:153
+2026-10-31,g swiftsure marlborough sauvignon blanc,22857146,G - Swiftsure 'Marlborough' Sauvignon Blanc,10.0000,150.0000,13.6000,150.0000,0,ctb-row:site:0:code:8:22857146@2026-10-31:154
+2026-10-31,g dazma gew rztraminer,22857161,"G - Dazma, Gewürztraminer",30.0000,450.7500,40.8600,450.7500,0,ctb-row:site:0:code:8:22857161@2026-10-31:155
+2026-10-31,b bondar fiano,22858293,B - Bondar Fiano,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:22858293@2026-10-31:156
+2026-10-31,b linear gewurztraminer,22858333,"B - Linear, Gewurztraminer",1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:22858333@2026-10-31:157
+2026-10-31,b cotier joy tempranillo,22861803,B - Cotier 'Joy' Tempranillo,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:22861803@2026-10-31:158
+2026-10-31,pint melbourne black,22870705,Pint - Melbourne Black,53.0000,850.8700,77.0700,850.8700,0,ctb-row:site:0:code:8:22870705@2026-10-31:159
+2026-10-31,pot melbourne black,22870707,Pot - Melbourne Black,7.0000,59.6400,5.4000,59.6400,0,ctb-row:site:0:code:8:22870707@2026-10-31:160
+2026-10-31,pot philter xpa,23005113,Pot - Philter XPA,2.0000,16.1300,1.4700,16.1300,0,ctb-row:site:0:code:8:23005113@2026-10-31:161
+2026-10-31,pint philter xpa,23005115,Pint - Philter XPA,18.0000,289.8300,26.2600,289.8300,0,ctb-row:site:0:code:8:23005115@2026-10-31:162
+2026-10-31,jug philter xpa,23005117,Jug - Philter XPA,1.0000,32.5300,2.9600,32.5300,0,ctb-row:site:0:code:8:23005117@2026-10-31:163
+2026-10-31,yes,23088943,Yes,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23088943@2026-10-31:24
+2026-10-31,no,23088945,No,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23088945@2026-10-31:25
+2026-10-31,cacio e pepe croquettes,23118462,Cacio e Pepe Croquettes,14.0000,198.9900,18.0500,198.9900,0,ctb-row:site:0:code:8:23118462@2026-10-31:26
+2026-10-31,fried calamari,23118464,Fried Calamari,10.0000,182.3900,16.6200,182.3900,0,ctb-row:site:0:code:8:23118464@2026-10-31:27
+2026-10-31,wild boar dimmies,23118475,Wild Boar Dimmies,2.0000,38.6200,3.5082,38.6200,0,ctb-row:site:0:code:8:23118475@2026-10-31:28
+2026-10-31,casarecce,23143536,Casarecce,9.0000,265.3200,24.1400,265.3200,0,ctb-row:site:0:code:8:23143536@2026-10-31:29
+2026-10-31,kids fish chippies,23271688,Kids Fish & Chippies,6.0000,91.2375,8.2824,91.2375,0,ctb-row:site:0:code:8:23271688@2026-10-31:30
+2026-10-31,kids gnocchi bolognese,23271704,Kids Gnocchi Bolognese,2.0000,30.4900,2.7500,30.4900,0,ctb-row:site:0:code:8:23271704@2026-10-31:31
+2026-10-31,kids gnocchi napoli,23271705,Kids Gnocchi Napoli,4.0000,56.6900,5.1400,56.6900,0,ctb-row:site:0:code:8:23271705@2026-10-31:32
+2026-10-31,kids parma,23271710,Kids Parma,9.0000,154.9605,14.1456,154.9605,0,ctb-row:site:0:code:8:23271710@2026-10-31:33
+2026-10-31,kids schnitty,23271750,New Kids Schnitty,13.0000,184.0720,16.6919,184.0720,0,ctb-row:site:0:code:8:23271750@2026-10-31:34
+2026-10-31,kids teddy bears picnic,23271752,Kids Teddy Bears Picnic,1.0000,14.2300,1.2900,14.2300,0,ctb-row:site:0:code:8:23271752@2026-10-31:35
+2026-10-31,buffalo trace bourbon,23332017,Buffalo Trace Bourbon,5.0000,70.0000,6.3500,70.0000,0,ctb-row:site:0:code:8:23332017@2026-10-31:164
+2026-10-31,g garagiste le stagiaire pinot noir,23351439,G - Garagiste 'Le Stagiaire' Pinot Noir,4.0000,68.0000,6.2000,68.0000,0,ctb-row:site:0:code:8:23351439@2026-10-31:165
+2026-10-31,mojito,23439059,Mojito,4.0000,80.6600,7.3400,80.6600,0,ctb-row:site:0:code:8:23439059@2026-10-31:166
+2026-10-31,pot keeper pilsner,23499704,Pot - Keeper Pilsner,1.0000,8.5000,0.7700,8.5000,0,ctb-row:site:0:code:8:23499704@2026-10-31:167
+2026-10-31,pint keeper pilsner,23499705,Pint - Keeper Pilsner,11.0000,176.7832,16.0139,176.7832,0,ctb-row:site:0:code:8:23499705@2026-10-31:168
+2026-10-31,jug keeper pilsner,23499706,Jug - Keeper Pilsner,1.0000,32.5300,2.9600,32.5300,0,ctb-row:site:0:code:8:23499706@2026-10-31:169
+2026-10-31,g dr loosen dr l riesling,23537757,G - Dr. Loosen 'Dr. L' Riesling,18.0000,289.8500,26.2700,289.8500,0,ctb-row:site:0:code:8:23537757@2026-10-31:170
+2026-10-31,b dr loosen dr l riesling,23537759,B - Dr. Loosen 'Dr. L' Riesling,1.0000,76.2400,6.9300,76.2400,0,ctb-row:site:0:code:8:23537759@2026-10-31:171
+2026-10-31,g deep woods estate chardonnay,23537760,G - Deep Woods Estate Chardonnay,40.0000,641.0600,58.1000,641.0600,0,ctb-row:site:0:code:8:23537760@2026-10-31:172
+2026-10-31,b deep woods estate chardonnay,23537762,B - Deep Woods Estate Chardonnay,2.0000,90.0000,8.1800,90.0000,0,ctb-row:site:0:code:8:23537762@2026-10-31:173
+2026-10-31,g syrahmi demi shiraz,23537766,G - Syrahmi 'Demi' Shiraz,7.0000,126.0000,11.4800,126.0000,0,ctb-row:site:0:code:8:23537766@2026-10-31:174
+2026-10-31,g dominique piron beaujolais villages gamay,23537769,G - Dominique Piron 'Beaujolais-Villages' Gamay,3.0000,48.2700,4.3800,48.2700,0,ctb-row:site:0:code:8:23537769@2026-10-31:175
+2026-10-31,green day,23575217,Green Day,2.0000,44.0000,4.0000,44.0000,0,ctb-row:site:0:code:8:23575217@2026-10-31:176
+2026-10-31,linda paloma,23575228,Linda Paloma,3.0000,66.7200,6.0600,66.7200,0,ctb-row:site:0:code:8:23575228@2026-10-31:177
+2026-10-31,sangria,23575230,Sangria,6.0000,85.1533,7.7212,85.1533,0,ctb-row:site:0:code:8:23575230@2026-10-31:178
+2026-10-31,tiki martin,23575237,Tiki Martin,4.0000,89.0900,8.1000,89.0900,0,ctb-row:site:0:code:8:23575237@2026-10-31:179
+2026-10-31,b nv three pillars sparkling brut cuvee,23611726,B - NV Three Pillars Sparkling Brut Cuvee,2.0000,132.0000,12.0000,132.0000,0,ctb-row:site:0:code:8:23611726@2026-10-31:180
+2026-10-31,g nv three pillars sparkling brut cuvee,23611729,G - NV Three Pillars Sparkling Brut Cuvee,28.0000,392.2300,35.5900,392.2300,0,ctb-row:site:0:code:8:23611729@2026-10-31:181
+2026-10-31,aperol spritz nv three pillars,23611732,Aperol Spritz (NV Three Pillars),41.0000,740.9700,67.5200,740.9700,0,ctb-row:site:0:code:8:23611732@2026-10-31:182
+2026-10-31,limoncello spritz nv three pillars,23611742,Limoncello Spritz (NV Three Pillars),2.0000,36.3000,3.3100,36.3000,0,ctb-row:site:0:code:8:23611742@2026-10-31:183
+2026-10-31,montenegro spritz nv three pillars,23611744,Montenegro Spritz (NV Three Pillars),2.0000,36.3000,3.3100,36.3000,0,ctb-row:site:0:code:8:23611744@2026-10-31:184
+2026-10-31,b koerner mammolo sciacarello 2023,23614502,B - Koerner 'Mammolo' Sciacarello 2023,1.0000,54.0000,4.9100,54.0000,0,ctb-row:site:0:code:8:23614502@2026-10-31:185
+2026-10-31,pot d sseldorf draught altbier,23641017,Pot - Düsseldorf Draught Altbier,2.0000,17.1400,1.5500,17.1400,0,ctb-row:site:0:code:8:23641017@2026-10-31:186
+2026-10-31,pint d sseldorf draught altbier,23641018,Pint - Düsseldorf Draught Altbier,30.0000,481.0600,43.6100,481.0600,0,ctb-row:site:0:code:8:23641018@2026-10-31:187
+2026-10-31,b alessandro stefani occaso pinot gris 2024,23643648,B - Alessandro Stefani 'Occaso' Pinot Gris 2024,1.0000,80.0000,7.2700,80.0000,0,ctb-row:site:0:code:8:23643648@2026-10-31:188
+2026-10-31,octoberfest schnitty,23660247,Octoberfest Schnitty,52.0000,1579.8333,143.7704,1579.8333,0,ctb-row:site:0:code:8:23660247@2026-10-31:36
+2026-10-31,octoberfest eggplant schnitty,23660253,Octoberfest Eggplant Schnitty,1.0000,30.0000,2.7300,30.0000,0,ctb-row:site:0:code:8:23660253@2026-10-31:37
+2026-10-31,pot la sirene citray sour,23662906,Pot - La Sirene 'Citray' Sour,3.0000,25.7800,2.3300,25.7800,0,ctb-row:site:0:code:8:23662906@2026-10-31:189
+2026-10-31,pint la sirene citray sour,23662907,Pint - La Sirene 'Citray' Sour,12.0000,192.2600,17.4236,192.2600,0,ctb-row:site:0:code:8:23662907@2026-10-31:190
+2026-10-31,g jamsheed flor de corazon chilled tap,23662915,G - Jamsheed 'Flor de Corazon' CHILLED (Tap),23.0000,345.0000,31.2700,345.0000,0,ctb-row:site:0:code:8:23662915@2026-10-31:191
+2026-10-31,baba ganoush,23673744,Baba Ganoush,9.0000,137.8500,12.4800,137.8500,0,ctb-row:site:0:code:8:23673744@2026-10-31:38
+2026-10-31,tuna tostada,23673809,Tuna Tostada,6.0000,99.9000,9.1173,99.9000,0,ctb-row:site:0:code:8:23673809@2026-10-31:39
+2026-10-31,charred corn salad,23673814,Charred Corn Salad,5.0000,63.6922,5.7711,63.6922,0,ctb-row:site:0:code:8:23673814@2026-10-31:40
+2026-10-31,leaf salad,23673817,Leaf Salad,5.0000,40.5220,3.6920,40.5220,0,ctb-row:site:0:code:8:23673817@2026-10-31:41
+2026-10-31,murray cod,23673819,Murray Cod,4.0000,153.8802,13.9672,153.8802,0,ctb-row:site:0:code:8:23673819@2026-10-31:42
+2026-10-31,thai beef salad,23673822,Thai Beef Salad,9.0000,309.3500,28.1400,309.3500,0,ctb-row:site:0:code:8:23673822@2026-10-31:43
+2026-10-31,steak frites,23673827,Steak Frites,25.0000,1165.9603,105.9673,1165.9603,0,ctb-row:site:0:code:8:23673827@2026-10-31:44
+2026-10-31,resting witch face,23746984,Resting Witch Face,13.0000,262.3100,23.8700,262.3100,0,ctb-row:site:0:code:8:23746984@2026-10-31:192
+2026-10-31,coke zero mixer,23765701,Coke Zero - Mixer,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:23765701@2026-10-31:193
+2026-11-01,chippies,11791008,Chippies,33.0000,399.1600,36.2782,399.1600,0,ctb-row:site:0:code:8:11791008@2026-11-01:0
+2026-11-01,pot carlton draught,11801264,Pot - Carlton Draught,31.0000,248.6500,22.6800,248.6500,0,ctb-row:site:0:code:8:11801264@2026-11-01:45
+2026-11-01,pint carlton draught,11801266,Pint - Carlton Draught,162.0000,2569.4800,232.8200,2569.4800,0,ctb-row:site:0:code:8:11801266@2026-11-01:46
+2026-11-01,bloody oath,11815270,Bloody Oath,45.0000,543.7900,49.4100,543.7900,0,ctb-row:site:0:code:8:11815270@2026-11-01:47
+2026-11-01,1 glass,11829588,1 Glass,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829588@2026-11-01:48
+2026-11-01,2 glasses,11829589,2 Glasses,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829589@2026-11-01:49
+2026-11-01,3 glasses,11829591,3 Glasses,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829591@2026-11-01:50
+2026-11-01,4 glasses,11829592,4 Glasses,5.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829592@2026-11-01:51
+2026-11-01,no glass,11829651,No Glass,6.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:11829651@2026-11-01:52
+2026-11-01,old fashioned,11888552,Old Fashioned,2.0000,44.3600,4.0300,44.3600,0,ctb-row:site:0:code:8:11888552@2026-11-01:53
+2026-11-01,amaretto sour,11888557,Amaretto Sour,1.0000,22.3600,2.0300,22.3600,0,ctb-row:site:0:code:8:11888557@2026-11-01:54
+2026-11-01,tonic mixer,12026532,Tonic - Mixer,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026532@2026-11-01:55
+2026-11-01,soda mixer,12026550,Soda - Mixer,3.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12026550@2026-11-01:56
+2026-11-01,orange juice mixer,12027035,Orange Juice - Mixer,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:12027035@2026-11-01:57
+2026-11-01,belvedere 30ml,12027377,Belvedere - 30ml,1.0000,15.2500,1.3800,15.2500,0,ctb-row:site:0:code:8:12027377@2026-11-01:58
+2026-11-01,starward two fold 30ml,12027414,Starward Two Fold - 30ml,4.0000,60.0000,5.4400,60.0000,0,ctb-row:site:0:code:8:12027414@2026-11-01:59
+2026-11-01,apple juice gls,12042869,Apple Juice - Gls,5.0000,20.0700,1.8100,20.0700,0,ctb-row:site:0:code:8:12042869@2026-11-01:60
+2026-11-01,jug bodriggy speccy juice,12096191,Jug - Bodriggy Speccy Juice,2.0000,56.0000,5.1000,56.0000,0,ctb-row:site:0:code:8:12096191@2026-11-01:61
+2026-11-01,pint bodriggy speccy juice,12096194,Pint - Bodriggy Speccy Juice,47.0000,618.0733,56.0512,618.0733,0,ctb-row:site:0:code:8:12096194@2026-11-01:62
+2026-11-01,pot bodriggy speccy juice,12096195,Pot - Bodriggy Speccy Juice,8.0000,60.1200,5.4500,60.1200,0,ctb-row:site:0:code:8:12096195@2026-11-01:63
+2026-11-01,espresso martini,12217683,Espresso Martini,3.0000,66.7200,6.0600,66.7200,0,ctb-row:site:0:code:8:12217683@2026-11-01:64
+2026-11-01,bar pretzels,13442259,Bar Pretzels,1.0000,6.1000,0.5600,6.1000,0,ctb-row:site:0:code:8:13442259@2026-11-01:65
+2026-11-01,red wine jus,13494503,Red Wine Jus,1.0000,3.5500,0.3200,3.5500,0,ctb-row:site:0:code:8:13494503@2026-11-01:1
+2026-11-01,on ya bike,13900421,On Ya Bike,2.0000,24.4000,2.2200,24.4000,0,ctb-row:site:0:code:8:13900421@2026-11-01:66
+2026-11-01,virgin bloody oath,14125046,Virgin Bloody Oath,1.0000,10.1700,0.9300,10.1700,0,ctb-row:site:0:code:8:14125046@2026-11-01:67
+2026-11-01,gordans gin 30ml,14203742,Gordans Gin- 30ml,10.0000,130.4300,11.8400,130.4300,0,ctb-row:site:0:code:8:14203742@2026-11-01:68
+2026-11-01,house vodka 30ml,14263125,House Vodka - 30ml,25.0000,325.6300,29.5600,325.6300,0,ctb-row:site:0:code:8:14263125@2026-11-01:69
+2026-11-01,pot pale ale love shack,14936614,Pot - Pale Ale Love Shack,18.0000,144.9100,13.2100,144.9100,0,ctb-row:site:0:code:8:14936614@2026-11-01:70
+2026-11-01,pint pale ale love shack,14936615,Pint - Pale Ale Love Shack,77.0000,1144.7384,103.7925,1144.7384,0,ctb-row:site:0:code:8:14936615@2026-11-01:71
+2026-11-01,jug pale ale love shack,14936616,Jug - Pale Ale Love Shack,2.0000,60.4900,5.5000,60.4900,0,ctb-row:site:0:code:8:14936616@2026-11-01:72
+2026-11-01,lyre s garden tonic,15301670,Lyre's Garden Tonic,2.0000,24.4000,2.2200,24.4000,0,ctb-row:site:0:code:8:15301670@2026-11-01:73
+2026-11-01,o brien gluten free pale ale can,15370026,O'Brien Gluten Free Pale Ale - Can,4.0000,36.1988,3.2781,36.1988,0,ctb-row:site:0:code:8:15370026@2026-11-01:74
+2026-11-01,no parma sauce,15866620,No Parma Sauce,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866620@2026-11-01:2
+2026-11-01,no cheese,15866622,No Cheese,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866622@2026-11-01:3
+2026-11-01,no ham,15866623,No Ham,4.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15866623@2026-11-01:4
+2026-11-01,no salad,15995858,No Salad,1.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:15995858@2026-11-01:5
+2026-11-01,flat bread,16040398,Flat bread,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:16040398@2026-11-01:6
+2026-11-01,pineapple juice gls,16090144,Pineapple Juice - Gls,4.0000,16.2100,1.4700,16.2100,0,ctb-row:site:0:code:8:16090144@2026-11-01:75
+2026-11-01,pickleback shot,16131422,Pickleback Shot,3.0000,45.0000,4.0800,45.0000,0,ctb-row:site:0:code:8:16131422@2026-11-01:76
+2026-11-01,el jimador 30ml,16369332,El Jimador - 30ml,3.0000,39.0000,3.5400,39.0000,0,ctb-row:site:0:code:8:16369332@2026-11-01:77
+2026-11-01,vegan option,16457487,Vegan Option,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:16457487@2026-11-01:7
+2026-11-01,pot goldy s one off the wood lager,16470218,Pot - Goldy's 'One Off The Wood' Lager,13.0000,104.3900,9.5200,104.3900,0,ctb-row:site:0:code:8:16470218@2026-11-01:78
+2026-11-01,pint goldy s one off the wood lager,16470220,Pint - Goldy's 'One Off The Wood' Lager,52.0000,782.2400,70.9000,782.2400,0,ctb-row:site:0:code:8:16470220@2026-11-01:79
+2026-11-01,jug goldy s one off the wood lager,16470223,Jug - Goldy's 'One Off The Wood' Lager,3.0000,90.0000,8.1900,90.0000,0,ctb-row:site:0:code:8:16470223@2026-11-01:80
+2026-11-01,coke pot,16749341,Coke - Pot,10.0000,40.2700,3.6400,40.2700,0,ctb-row:site:0:code:8:16749341@2026-11-01:81
+2026-11-01,coke pint,16749346,Coke - Pint,10.0000,80.7800,7.3500,80.7800,0,ctb-row:site:0:code:8:16749346@2026-11-01:82
+2026-11-01,coke zero pot,16749434,Coke Zero - Pot,29.0000,116.7600,10.5500,116.7600,0,ctb-row:site:0:code:8:16749434@2026-11-01:83
+2026-11-01,coke zero pint,16749437,Coke Zero - Pint,7.0000,56.2600,5.1300,56.2600,0,ctb-row:site:0:code:8:16749437@2026-11-01:84
+2026-11-01,coke zero jug,16749441,Coke Zero - Jug,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:16749441@2026-11-01:85
+2026-11-01,lemonade pot,16749454,Lemonade - Pot,4.0000,16.2100,1.4700,16.2100,0,ctb-row:site:0:code:8:16749454@2026-11-01:86
+2026-11-01,lemonade pint,16749456,Lemonade - Pint,2.0000,16.1300,1.4700,16.1300,0,ctb-row:site:0:code:8:16749456@2026-11-01:87
+2026-11-01,rasp lem pot,16749465,Rasp Lem - Pot,3.0000,12.1300,1.1000,12.1300,0,ctb-row:site:0:code:8:16749465@2026-11-01:88
+2026-11-01,dry ginger ale pint,16749561,Dry Ginger Ale - Pint,1.0000,8.1300,0.7400,8.1300,0,ctb-row:site:0:code:8:16749561@2026-11-01:89
+2026-11-01,ginger beer pot,16749567,Ginger Beer - Pot,5.0000,20.3500,1.8500,20.3500,0,ctb-row:site:0:code:8:16749567@2026-11-01:90
+2026-11-01,ginger beer jug,16749570,Ginger Beer - Jug,2.0000,24.4000,2.2200,24.4000,0,ctb-row:site:0:code:8:16749570@2026-11-01:91
+2026-11-01,soda pot,16749705,Soda - Pot,11.0000,27.5000,2.5300,27.5000,0,ctb-row:site:0:code:8:16749705@2026-11-01:92
+2026-11-01,soda pint,16749706,Soda - Pint,7.0000,35.2428,3.1675,35.2428,0,ctb-row:site:0:code:8:16749706@2026-11-01:93
+2026-11-01,soda jug,16749711,Soda - Jug,2.0000,16.2600,1.4800,16.2600,0,ctb-row:site:0:code:8:16749711@2026-11-01:94
+2026-11-01,llb pot,16749736,LLB - Pot,10.0000,40.2800,3.6400,40.2800,0,ctb-row:site:0:code:8:16749736@2026-11-01:95
+2026-11-01,llb pint,16749737,LLB - Pint,5.0000,40.6500,3.7000,40.6500,0,ctb-row:site:0:code:8:16749737@2026-11-01:96
+2026-11-01,llb jug,16749739,LLB - Jug,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:16749739@2026-11-01:97
+2026-11-01,slb pot,16749748,SLB - Pot,2.0000,8.0700,0.7300,8.0700,0,ctb-row:site:0:code:8:16749748@2026-11-01:98
+2026-11-01,slb pint,16749749,SLB - Pint,2.0000,14.1200,1.2900,14.1200,0,ctb-row:site:0:code:8:16749749@2026-11-01:99
+2026-11-01,japanese slipper,16754732,Japanese Slipper,1.0000,21.0000,1.9100,21.0000,0,ctb-row:site:0:code:8:16754732@2026-11-01:100
+2026-11-01,g goldy s pinot grigio,17128306,G - Goldy's Pinot Grigio,28.0000,336.6900,30.5400,336.6900,0,ctb-row:site:0:code:8:17128306@2026-11-01:101
+2026-11-01,g goldy s rose,17128338,G - Goldy's Rose,14.0000,196.9200,17.8600,196.9200,0,ctb-row:site:0:code:8:17128338@2026-11-01:102
+2026-11-01,0 5l goldy s pinot grigio,17176896,(0.5L) Goldy's Pinot Grigio,3.0000,120.6600,10.9800,120.6600,0,ctb-row:site:0:code:8:17176896@2026-11-01:103
+2026-11-01,gluten free bread,17333408,Gluten Free - Bread,1.0000,2.0300,0.1800,2.0300,0,ctb-row:site:0:code:8:17333408@2026-11-01:8
+2026-11-01,0 amaretti sour,17630864,0% Amaretti Sour,2.0000,40.6600,3.7000,40.6600,0,ctb-row:site:0:code:8:17630864@2026-11-01:104
+2026-11-01,doggie roo pop,17914464,Doggie - Roo Pop,2.0000,5.0000,0.4600,5.0000,0,ctb-row:site:0:code:8:17914464@2026-11-01:105
+2026-11-01,doggie chicken twist,17914665,Doggie - Chicken Twist,9.0000,18.0000,1.6200,18.0000,0,ctb-row:site:0:code:8:17914665@2026-11-01:106
+2026-11-01,t i n a,18093919,T.I.N.A,4.0000,60.7400,5.5000,60.7400,0,ctb-row:site:0:code:8:18093919@2026-11-01:107
+2026-11-01,garlic aioli,18244151,Garlic Aioli,9.0000,22.8600,2.0700,22.8600,0,ctb-row:site:0:code:8:18244151@2026-11-01:9
+2026-11-01,little dragon ginger beer,18686570,Little Dragon 'Ginger Beer',14.0000,181.0000,16.4300,181.0000,0,ctb-row:site:0:code:8:18686570@2026-11-01:108
+2026-11-01,johnnie walker,19268857,Johnnie Walker,6.0000,78.0000,7.0800,78.0000,0,ctb-row:site:0:code:8:19268857@2026-11-01:109
+2026-11-01,pot the mill ipa,19402773,Pot - The Mill IPA,2.0000,17.0000,1.5400,17.0000,0,ctb-row:site:0:code:8:19402773@2026-11-01:110
+2026-11-01,pint the mill ipa,19402776,Pint - The Mill IPA,8.0000,128.2600,11.6200,128.2600,0,ctb-row:site:0:code:8:19402776@2026-11-01:111
+2026-11-01,regular cheese,19921137,Regular Cheese,2.0000,0.0000,0.0000,0.0000,0,ctb-row:site:0:code:8:19921137@2026-11-01:10
+2026-11-01,pot bridge road free time,19967639,Pot - Bridge Road Free Time,8.0000,56.2300,5.1400,56.2300,0,ctb-row:site:0:code:8:19967639@2026-11-01:112
+2026-11-01,pint bridge road free time,19967640,Pint - Bridge Road Free Time,13.0000,182.6900,16.5700,182.6900,0,ctb-row:site:0:code:8:19967640@2026-11-01:113
+2026-11-01,don julio margarita,19989852,Don Julio Margarita,3.0000,76.2400,6.9200,76.2400,0,ctb-row:site:0:code:8:19989852@2026-11-01:114
+2026-11-01,pint napoleone cider,20185179,Pint - Napoleone Cider,11.0000,166.2500,15.0600,166.2500,0,ctb-row:site:0:code:8:20185179@2026-11-01:115
+2026-11-01,pot napoleone cider,20185180,Pot - Napoleone Cider,8.0000,60.4900,5.4800,60.4900,0,ctb-row:site:0:code:8:20185180@2026-11-01:116
+2026-11-01,jug napoleone cider,20185183,Jug - Napoleone Cider,1.0000,30.5000,2.7800,30.5000,0,ctb-row:site:0:code:8:20185183@2026-11-01:117
+2026-11-01,jw whiskey sour,20391901,JW Whiskey Sour,1.0000,22.0000,2.0000,22.0000,0,ctb-row:site:0:code:8:20391901@2026-11-01:118
+2026-11-01,louis rose cider pomme rouge,20624123,Louis Rose Cider Pomme Rouge,1.0000,12.2000,1.1100,12.2000,0,ctb-row:site:0:code:8:20624123@2026-11-01:119
+2026-11-01,garlic bread,20747805,Garlic bread,5.0000,71.1400,6.4400,71.1400,0,ctb-row:site:0:code:8:20747805@2026-11-01:11
+2026-11-01,mustard gravy side,20824943,Mustard Gravy - Side,6.0000,15.2000,1.3800,15.2000,0,ctb-row:site:0:code:8:20824943@2026-11-01:12
+2026-11-01,g goldys sangiovese,21402505,G- Goldys! Sangiovese,10.0000,140.4600,12.7400,140.4600,0,ctb-row:site:0:code:8:21402505@2026-11-01:120
+2026-11-01,margarita,21429994,Margarita,8.0000,176.7200,16.0700,176.7200,0,ctb-row:site:0:code:8:21429994@2026-11-01:121
+2026-11-01,chicken parma,22101357,Chicken Parma,59.0000,1763.8400,160.5600,1763.8400,0,ctb-row:site:0:code:8:22101357@2026-11-01:13
+2026-11-01,eggplant parma,22101409,Eggplant Parma,15.0000,441.7200,40.2300,441.7200,0,ctb-row:site:0:code:8:22101409@2026-11-01:14
+2026-11-01,fish n chips v2,22101441,Fish'n'Chips v2,10.0000,324.7700,29.5500,324.7700,0,ctb-row:site:0:code:8:22101441@2026-11-01:15
+2026-11-01,housemade tomato sauce,22101515,Housemade Tomato Sauce,5.0000,17.8000,1.6500,17.8000,0,ctb-row:site:0:code:8:22101515@2026-11-01:16
+2026-11-01,cheeseburger,22152688,Cheeseburger,25.0000,734.6000,66.9000,734.6000,0,ctb-row:site:0:code:8:22152688@2026-11-01:17
+2026-11-01,vegan beyond burger,22152693,Vegan Beyond Burger,5.0000,152.4800,13.8800,152.4800,0,ctb-row:site:0:code:8:22152693@2026-11-01:18
+2026-11-01,double vegan burger,22153798,Double Vegan Burger,1.0000,38.6300,3.5100,38.6300,0,ctb-row:site:0:code:8:22153798@2026-11-01:19
+2026-11-01,double cheeseburger,22155522,Double Cheeseburger,2.0000,71.1500,6.4600,71.1500,0,ctb-row:site:0:code:8:22155522@2026-11-01:20
+2026-11-01,frickles,22469048,Frickles,4.0000,56.9200,5.1600,56.9200,0,ctb-row:site:0:code:8:22469048@2026-11-01:21
+2026-11-01,b shady lane pet nat,22471901,B - Shady Lane Pet Nat,1.0000,70.0000,6.3600,70.0000,0,ctb-row:site:0:code:8:22471901@2026-11-01:122
+2026-11-01,g shady lane pet nat,22471903,G - Shady Lane Pet Nat,26.0000,392.9900,35.6400,392.9900,0,ctb-row:site:0:code:8:22471903@2026-11-01:123
+2026-11-01,dill aioli side,22510823,Dill Aioli - Side,1.0000,2.5400,0.2300,2.5400,0,ctb-row:site:0:code:8:22510823@2026-11-01:22
+2026-11-01,dill aioli,22510826,Dill Aioli,7.0000,17.7800,1.6100,17.7800,0,ctb-row:site:0:code:8:22510826@2026-11-01:23
+2026-11-01,tommy s marg,22698455,Tommy's Marg,2.0000,44.3600,4.0300,44.3600,0,ctb-row:site:0:code:8:22698455@2026-11-01:124
+2026-11-01,g swiftsure marlborough sauvignon blanc,22857146,G - Swiftsure 'Marlborough' Sauvignon Blanc,5.0000,75.5000,6.8500,75.5000,0,ctb-row:site:0:code:8:22857146@2026-11-01:125
+2026-11-01,g dazma gew rztraminer,22857161,"G - Dazma, Gewürztraminer",15.0000,227.7500,20.6354,227.7500,0,ctb-row:site:0:code:8:22857161@2026-11-01:126
+2026-11-01,pint melbourne black,22870705,Pint - Melbourne Black,23.0000,369.8400,33.5200,369.8400,0,ctb-row:site:0:code:8:22870705@2026-11-01:127
+2026-11-01,pot melbourne black,22870707,Pot - Melbourne Black,1.0000,8.6400,0.7800,8.6400,0,ctb-row:site:0:code:8:22870707@2026-11-01:128
+2026-11-01,jug melbourne black,22870708,Jug - Melbourne Black,1.0000,32.5300,2.9600,32.5300,0,ctb-row:site:0:code:8:22870708@2026-11-01:129
+2026-11-01,pot philter xpa,23005113,Pot - Philter XPA,4.0000,32.0000,2.9200,32.0000,0,ctb-row:site:0:code:8:23005113@2026-11-01:130
+2026-11-01,pint philter xpa,23005115,Pint - Philter XPA,22.0000,352.7900,31.9700,352.7900,0,ctb-row:site:0:code:8:23005115@2026-11-01:131
+2026-11-01,cacio e pepe croquettes,23118462,Cacio e Pepe Croquettes,8.0000,113.6100,10.3100,113.6100,0,ctb-row:site:0:code:8:23118462@2026-11-01:24
+2026-11-01,fried calamari,23118464,Fried Calamari,7.0000,128.0800,11.6500,128.0800,0,ctb-row:site:0:code:8:23118464@2026-11-01:25
+2026-11-01,wild boar dimmies,23118475,Wild Boar Dimmies,4.0000,76.6200,6.9800,76.6200,0,ctb-row:site:0:code:8:23118475@2026-11-01:26
+2026-11-01,casarecce,23143536,Casarecce,4.0000,117.9200,10.7200,117.9200,0,ctb-row:site:0:code:8:23143536@2026-11-01:27
+2026-11-01,kids gnocchi bolognese,23271704,Kids Gnocchi Bolognese,5.0000,76.0000,6.9000,76.0000,0,ctb-row:site:0:code:8:23271704@2026-11-01:28
+2026-11-01,kids orange smiles,23271706,Kids Orange Smiles,2.0000,9.2500,0.0000,9.2500,0,ctb-row:site:0:code:8:23271706@2026-11-01:29
+2026-11-01,kids parma,23271710,Kids Parma,2.0000,34.5500,3.1600,34.5500,0,ctb-row:site:0:code:8:23271710@2026-11-01:30
+2026-11-01,kids schnitty,23271750,New Kids Schnitty,2.0000,28.4600,2.5800,28.4600,0,ctb-row:site:0:code:8:23271750@2026-11-01:31
+2026-11-01,kids teddy bears picnic,23271752,Kids Teddy Bears Picnic,1.0000,14.2300,1.3000,14.2300,0,ctb-row:site:0:code:8:23271752@2026-11-01:32
+2026-11-01,g garagiste le stagiaire pinot noir,23351439,G - Garagiste 'Le Stagiaire' Pinot Noir,5.0000,85.0000,7.7500,85.0000,0,ctb-row:site:0:code:8:23351439@2026-11-01:132
+2026-11-01,pot keeper pilsner,23499704,Pot - Keeper Pilsner,4.0000,34.2800,3.1100,34.2800,0,ctb-row:site:0:code:8:23499704@2026-11-01:133
+2026-11-01,pint keeper pilsner,23499705,Pint - Keeper Pilsner,4.0000,64.0000,5.8000,64.0000,0,ctb-row:site:0:code:8:23499705@2026-11-01:134
+2026-11-01,g dr loosen dr l riesling,23537757,G - Dr. Loosen 'Dr. L' Riesling,3.0000,48.0000,4.3500,48.0000,0,ctb-row:site:0:code:8:23537757@2026-11-01:135
+2026-11-01,b dr loosen dr l riesling,23537759,B - Dr. Loosen 'Dr. L' Riesling,2.0000,152.4800,13.8600,152.4800,0,ctb-row:site:0:code:8:23537759@2026-11-01:136
+2026-11-01,g deep woods estate chardonnay,23537760,G - Deep Woods Estate Chardonnay,7.0000,112.2600,10.1700,112.2600,0,ctb-row:site:0:code:8:23537760@2026-11-01:137
+2026-11-01,g syrahmi demi shiraz,23537766,G - Syrahmi 'Demi' Shiraz,11.0000,199.1900,18.1400,199.1900,0,ctb-row:site:0:code:8:23537766@2026-11-01:138
+2026-11-01,g dominique piron beaujolais villages gamay,23537769,G - Dominique Piron 'Beaujolais-Villages' Gamay,6.0000,96.5267,8.7442,96.5267,0,ctb-row:site:0:code:8:23537769@2026-11-01:139
+2026-11-01,green day,23575217,Green Day,1.0000,22.3600,2.0300,22.3600,0,ctb-row:site:0:code:8:23575217@2026-11-01:140
+2026-11-01,linda paloma,23575228,Linda Paloma,2.0000,44.3600,4.0300,44.3600,0,ctb-row:site:0:code:8:23575228@2026-11-01:141
+2026-11-01,sangria,23575230,Sangria,5.0000,70.9200,6.4300,70.9200,0,ctb-row:site:0:code:8:23575230@2026-11-01:142
+2026-11-01,tiki martin,23575237,Tiki Martin,2.0000,44.3600,4.0300,44.3600,0,ctb-row:site:0:code:8:23575237@2026-11-01:143
+2026-11-01,b le corti chianti classico 2024,23600782,B - Le Corti Chianti Classico 2024,1.0000,86.4000,7.8500,86.4000,0,ctb-row:site:0:code:8:23600782@2026-11-01:144
+2026-11-01,b vinea marson rosato 2023,23600783,B - Vinea Marson Rosato 2023,2.0000,121.2400,11.0200,121.2400,0,ctb-row:site:0:code:8:23600783@2026-11-01:145
+2026-11-01,g nv three pillars sparkling brut cuvee,23611729,G - NV Three Pillars Sparkling Brut Cuvee,3.0000,42.0000,3.8100,42.0000,0,ctb-row:site:0:code:8:23611729@2026-11-01:146
+2026-11-01,aperol spritz nv three pillars,23611732,Aperol Spritz (NV Three Pillars),38.0000,691.1600,63.0000,691.1600,0,ctb-row:site:0:code:8:23611732@2026-11-01:147
+2026-11-01,campari spritz nv three pillars,23611738,Campari Spritz (NV Three Pillars),1.0000,18.0000,1.6400,18.0000,0,ctb-row:site:0:code:8:23611738@2026-11-01:148
+2026-11-01,limoncello spritz nv three pillars,23611742,Limoncello Spritz (NV Three Pillars),3.0000,54.9000,5.0100,54.9000,0,ctb-row:site:0:code:8:23611742@2026-11-01:149
+2026-11-01,montenegro spritz nv three pillars,23611744,Montenegro Spritz (NV Three Pillars),3.0000,54.8900,5.0000,54.8900,0,ctb-row:site:0:code:8:23611744@2026-11-01:150
+2026-11-01,b koerner watervale riesling 2025,23614504,B - Koerner 'Watervale' Riesling 2025,4.0000,345.6100,31.4500,345.6100,0,ctb-row:site:0:code:8:23614504@2026-11-01:151
+2026-11-01,pint d sseldorf draught altbier,23641018,Pint - Düsseldorf Draught Altbier,6.0000,96.2600,8.7200,96.2600,0,ctb-row:site:0:code:8:23641018@2026-11-01:152
+2026-11-01,octoberfest schnitty,23660247,Octoberfest Schnitty,21.0000,639.4600,58.1955,639.4600,0,ctb-row:site:0:code:8:23660247@2026-11-01:33
+2026-11-01,octoberfest eggplant schnitty,23660253,Octoberfest Eggplant Schnitty,1.0000,15.0000,1.3700,15.0000,0,ctb-row:site:0:code:8:23660253@2026-11-01:34
+2026-11-01,pot la sirene citray sour,23662906,Pot - La Sirene 'Citray' Sour,2.0000,17.0000,1.5400,17.0000,0,ctb-row:site:0:code:8:23662906@2026-11-01:153
+2026-11-01,pint la sirene citray sour,23662907,Pint - La Sirene 'Citray' Sour,4.0000,64.2600,5.8200,64.2600,0,ctb-row:site:0:code:8:23662907@2026-11-01:154
+2026-11-01,g jamsheed flor de corazon chilled tap,23662915,G - Jamsheed 'Flor de Corazon' CHILLED (Tap),10.0000,150.0000,13.6000,150.0000,0,ctb-row:site:0:code:8:23662915@2026-11-01:155
+2026-11-01,baba ganoush,23673744,Baba Ganoush,5.0000,81.3100,7.3600,81.3100,0,ctb-row:site:0:code:8:23673744@2026-11-01:35
+2026-11-01,tuna tostada,23673809,Tuna Tostada,7.0000,128.0800,11.6700,128.0800,0,ctb-row:site:0:code:8:23673809@2026-11-01:36
+2026-11-01,charred corn salad,23673814,Charred Corn Salad,6.0000,85.3800,7.7400,85.3800,0,ctb-row:site:0:code:8:23673814@2026-11-01:37
+2026-11-01,leaf salad,23673817,Leaf Salad,4.0000,32.5200,2.9600,32.5200,0,ctb-row:site:0:code:8:23673817@2026-11-01:38
+2026-11-01,murray cod,23673819,Murray Cod,3.0000,115.8900,10.5300,115.8900,0,ctb-row:site:0:code:8:23673819@2026-11-01:39
+2026-11-01,thai beef salad,23673822,Thai Beef Salad,7.0000,206.2400,18.7400,206.2400,0,ctb-row:site:0:code:8:23673822@2026-11-01:40
+2026-11-01,steak frites,23673827,Steak Frites,16.0000,724.4000,65.8400,724.4000,0,ctb-row:site:0:code:8:23673827@2026-11-01:41
+2026-11-01,cheesecake,23676135,Cheesecake,2.0000,28.4600,2.5800,28.4600,0,ctb-row:site:0:code:8:23676135@2026-11-01:42
+2026-11-01,november roast,23740192,November Roast,46.0000,1379.8700,125.5900,1379.8700,0,ctb-row:site:0:code:8:23740192@2026-11-01:43
+2026-11-01,november vegan roast,23740193,November Vegan Roast,7.0000,212.4700,19.3400,212.4700,0,ctb-row:site:0:code:8:23740193@2026-11-01:44
+2026-11-01,resting witch face,23746984,Resting Witch Face,2.0000,40.6600,3.7000,40.6600,0,ctb-row:site:0:code:8:23746984@2026-11-01:156

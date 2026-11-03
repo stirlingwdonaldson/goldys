@@ -39,10 +39,12 @@ import { TaxonomyTree } from "@/components/classification/taxonomy-tree";
 import { DendrogramView, type DendroAction, type DendroSelection } from "@/components/classification/dendrogram-view";
 import { EmbeddingScatter } from "@/components/classification/embedding-scatter";
 import { PipelineFlow, type PipelineStage } from "@/components/classification/pipeline-flow";
+import { ReportingMappingEditor } from "@/components/classification/reporting-mapping-editor";
+import { CategoryCriteriaEditor } from "@/components/classification/category-criteria-editor";
 import { ClassificationPreviewPanel } from "@/components/classification/classification-preview";
 import { SuggestionsPanel } from "@/components/classification/suggestions-panel";
 
-type Tab = "categories" | "clusters" | "pipeline" | "suggestions";
+type Tab = "categories" | "clusters" | "pipeline" | "suggestions" | "reporting";
 
 /** Status pills follow the platform's status vocabulary, not a bespoke one. */
 function StatusBadge({ status }: { status: string }) {
@@ -132,6 +134,7 @@ function CategoryDetail({
   groups,
   onRename,
   onRegroup,
+  onCriteriaSaved,
   onDelete,
 }: {
   category: CategoryNode;
@@ -139,6 +142,7 @@ function CategoryDetail({
   groups: string[];
   onRename: (categoryId: string, name: string) => void;
   onRegroup: (categoryId: string, groupName: string) => void;
+  onCriteriaSaved: () => void;
   onDelete: (categoryId: string) => void;
 }) {
   return (
@@ -147,6 +151,7 @@ function CategoryDetail({
       description={`${category.groupName ? `${category.groupName} · ` : ""}${products.length} products in this category`}
     >
       {/* Keyed so drilling into another category resets the name draft. */}
+      <CategoryCriteriaEditor key={category.id+"-criteria"} category={category} onSaved={onCriteriaSaved} />
       <RenameCategoryForm key={category.id} category={category} onSave={(name) => onRename(category.id, name)} />
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="category-group" className="text-sm text-muted-foreground">
@@ -323,6 +328,7 @@ function CategoriesTab({
   onSelectCategory,
   onRename,
   onRegroup,
+  onCriteriaSaved,
   onDelete,
   onMove,
   onClear,
@@ -333,6 +339,7 @@ function CategoriesTab({
   onSelectCategory: (categoryId: string | null) => void;
   onRename: (categoryId: string, name: string) => void;
   onRegroup: (categoryId: string, groupName: string) => void;
+  onCriteriaSaved: () => void;
   onDelete: (categoryId: string) => void;
   onMove: (productNameKey: string, categoryId: string) => void;
   onClear: (productNameKey: string) => void;
@@ -372,6 +379,7 @@ function CategoriesTab({
           groups={groups}
           onRename={onRename}
           onRegroup={onRegroup}
+          onCriteriaSaved={onCriteriaSaved}
           onDelete={onDelete}
         />
       ) : null}
@@ -783,10 +791,11 @@ export default function ProductsPage() {
 
       {hasAny ? (
         <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
-          <TabsList aria-label="Product categorisation views">
+          <TabsList aria-label="Product categorisation views" className="h-auto flex-wrap justify-start">
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="clusters">Clusters</TabsTrigger>
             <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+            <TabsTrigger value="reporting">Reporting mappings</TabsTrigger>
             <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
           </TabsList>
 
@@ -798,6 +807,7 @@ export default function ProductsPage() {
               onSelectCategory={setSelectedCategoryId}
               onRename={rename}
               onRegroup={regroup}
+              onCriteriaSaved={() => void reloadAll()}
               onDelete={deleteCategory}
               onMove={move}
               onClear={clearOverride}
@@ -816,6 +826,7 @@ export default function ProductsPage() {
             />
           </TabsContent>
 
+          <TabsContent value="reporting"><ReportingMappingEditor /></TabsContent>
           <TabsContent value="pipeline">
             <Section
               title="Pipeline"

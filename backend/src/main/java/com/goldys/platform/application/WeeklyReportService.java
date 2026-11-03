@@ -23,6 +23,7 @@ public class WeeklyReportService {
   private final VenueClock clock;
   private final WeeklyReportTargets targets;
   private final WeeklyInventoryQuery inventory;
+  private final com.goldys.platform.semantic.ReportingSalesQuery reportingSales;
 
   public WeeklyReportService(
       MetricQueryService metrics,
@@ -31,7 +32,8 @@ public class WeeklyReportService {
       PermissionService permissions,
       VenueClock clock,
       WeeklyReportTargets targets,
-      WeeklyInventoryQuery inventory) {
+      WeeklyInventoryQuery inventory,
+      com.goldys.platform.semantic.ReportingSalesQuery reportingSales) {
     this.metrics = metrics;
     this.catalog = catalog;
     this.reviews = reviews;
@@ -39,6 +41,7 @@ public class WeeklyReportService {
     this.clock = clock;
     this.targets = targets;
     this.inventory = inventory;
+    this.reportingSales = reportingSales;
   }
 
   private record Field(
@@ -63,6 +66,17 @@ public class WeeklyReportService {
     fields.add(missing("food_target", "Sales", "Food sales target", "AUD", TARGET));
     fields.add(missing("beverage_sales", "Sales", "Beverage sales ex GST", "AUD", SPLIT));
     fields.add(missing("beverage_target", "Sales", "Beverage sales target", "AUD", TARGET));
+    for (String prefix : List.of("food", "beverage")) {
+      fields.add(
+          missing(prefix + "_difference", "Sales", prefix + " sales versus target", "AUD", TARGET));
+      fields.add(
+          missing(
+              prefix + "_difference_percent",
+              "Sales",
+              prefix + " sales versus target %",
+              "PERCENT",
+              TARGET));
+    }
     fields.add(
         new Field(
             "net_sales",
@@ -221,6 +235,7 @@ public class WeeklyReportService {
     resources.add("reviews");
     resources.add("weekly-report.targets");
     resources.add("inventory.stock");
+    resources.add("products.category");
     for (String resource : resources)
       permissions.require(role, new ResourceKey(resource), PermissionAction.READ);
     TimeRange range =
@@ -235,6 +250,7 @@ public class WeeklyReportService {
     for (var bucket : reviews.ratingTrend(from, to))
       ratings.put(bucket.periodStart(), bucket.avgRating());
     List<WeeklyReport.Week> weeks = new ArrayList<>();
+    var sales = reportingSales.sales(from, to);
     var waste = inventory.wastage(from, to);
     var stockCounts = inventory.stockCounts(from, to);
     for (int i = 0; i < weekCount; i++) {
@@ -248,6 +264,15 @@ public class WeeklyReportService {
           waste.stream()
               .filter(w -> !w.date().isBefore(start) && w.date().isBefore(start.plusDays(7)))
               .toList();
+      rows =
+          new ArrayList<>(
+              WeeklyReportSales.fill(
+                  rows,
+                  dates,
+                  sales.stream()
+                      .filter(
+                          s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
+                      .toList()));
       rows = new ArrayList<>(WeeklyReportInventory.fill(rows, dates, weekWaste));
       applyTargets(rows, weekTargets);
       weeks.add(
@@ -344,34 +369,37 @@ public class WeeklyReportService {
                         + target.source()
                         + ". Carried forward until changed; weekly target, not a daily allocation.")));
     }
-    var sales = rows.stream().filter(r -> r.id().equals("net_sales")).findFirst().orElseThrow();
-    var target = byId.get("sales_target");
-    if (target != null && sales.total() != null) {
+    for (String prefix : List.of("sales", "food", "beverage")) {
+      String actualId = prefix.equals("sales") ? "net_sales" : prefix + "_sales";
+      String targetId = prefix.equals("sales") ? "sales_target" : prefix + "_target";
+      var sales = rows.stream().filter(r -> r.id().equals(actualId)).findFirst().orElseThrow();
+      var target = byId.get(targetId);
+      if (target == null || sales.total() == null) continue;
       BigDecimal difference = sales.total().subtract(target.value());
       for (int i = 0; i < rows.size(); i++) {
         var row = rows.get(i);
-        if (row.id().equals("sales_difference") || row.id().equals("sales_difference_percent")) {
-          BigDecimal value =
-              row.id().equals("sales_difference")
-                  ? difference
-                  : WeeklyReportInventory.ratio(difference, target.value());
-          List<String> notes = new ArrayList<>(sales.notes());
-          notes.add(
-              "Actual minus effective weekly sales target "
-                  + target.value()
-                  + "; partial actuals produce a partial comparison.");
-          rows.set(
-              i,
-              new WeeklyReport.Row(
-                  row.id(),
-                  row.section(),
-                  row.label(),
-                  row.unit(),
-                  row.days(),
-                  value,
-                  value == null ? "UNAVAILABLE" : "QUALIFIED",
-                  List.copyOf(notes)));
-        }
+        if (!row.id().equals(prefix + "_difference")
+            && !row.id().equals(prefix + "_difference_percent")) continue;
+        BigDecimal value =
+            row.id().endsWith("_percent")
+                ? WeeklyReportInventory.ratio(difference, target.value())
+                : difference;
+        List<String> notes = new ArrayList<>(sales.notes());
+        notes.add(
+            "Actual minus effective weekly target "
+                + target.value()
+                + "; partial actuals produce a partial comparison.");
+        rows.set(
+            i,
+            new WeeklyReport.Row(
+                row.id(),
+                row.section(),
+                row.label(),
+                row.unit(),
+                row.days(),
+                value,
+                value == null ? "UNAVAILABLE" : "QUALIFIED",
+                List.copyOf(notes)));
       }
     }
   }

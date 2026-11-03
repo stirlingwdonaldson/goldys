@@ -6,4 +6,9 @@ import java.util.UUID;
  * One curated category in the taxonomy, with the number of products currently assigned to it.
  * {@code groupName} is null for flat (top-level) categories.
  */
-public record CategoryNode(UUID id, String name, String groupName, int productCount) {}
+public record CategoryNode(
+    UUID id, String name, String groupName, int productCount, String description) {
+  public CategoryNode(UUID id, String name, String groupName, int productCount) {
+    this(id, name, groupName, productCount, null);
+  }
+}
