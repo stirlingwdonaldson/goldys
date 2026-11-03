@@ -22,14 +22,18 @@ class WeeklyReportServiceTest {
   private final MetricQueryService metrics = mock(MetricQueryService.class);
   private final PermissionService permissions = mock(PermissionService.class);
   private final ReviewMetricsQuery reviews = mock(ReviewMetricsQuery.class);
+  private final WeeklyReportTargets targets = mock(WeeklyReportTargets.class);
+  private final com.goldys.platform.semantic.WeeklyInventoryQuery inventory =
+      mock(com.goldys.platform.semantic.WeeklyInventoryQuery.class);
   private final WeeklyReportService service =
       new WeeklyReportService(
           metrics,
           new MetricCatalog(),
           reviews,
           permissions,
-          VenueClock.fixed(
-              ZoneId.of("Australia/Melbourne"), Instant.parse("2026-11-01T14:30:00Z")));
+          VenueClock.fixed(ZoneId.of("Australia/Melbourne"), Instant.parse("2026-11-01T14:30:00Z")),
+          targets,
+          inventory);
 
   @BeforeEach
   void data() {

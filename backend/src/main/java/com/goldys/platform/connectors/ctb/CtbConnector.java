@@ -42,9 +42,11 @@ import org.slf4j.LoggerFactory;
  * <p>The inventory/purchasing endpoints (invoices, recipes, stocks, suppliers, stocktakes, wastage,
  * stock orders, statements, variance, missing-revenue, and reference data) are ingested to the raw
  * ledger only — each under its own {@code fetcherIdentity} so the ledger distinguishes them — with
- * no canonicalization yet. The exception is wastage: the newest {@link #RECENT_WASTAGE_RECORDS}
- * wastage records also have their item lines pulled ({@code ctb-wastage-detail}) and canonicalized
- * every run, so new wastage reaches {@code canonical_wastage} without a manual backfill. See {@code
+ * no canonicalization yet. Stocktake headers and all their count lines are refreshed and
+ * canonicalized each run. The other exception is wastage: the newest {@link
+ * #RECENT_WASTAGE_RECORDS} wastage records also have their item lines pulled ({@code
+ * ctb-wastage-detail}) and canonicalized every run, so new wastage reaches {@code
+ * canonical_wastage} without a manual backfill. See {@code
  * docs/connectors/matching-and-identity.md} for the invoice double-source note and the deferred
  * canonical types.
  */
@@ -74,6 +76,7 @@ public class CtbConnector implements SourceConnector {
   private final SaleRecipeLinkIngest saleRecipeLinkIngest;
   private final ProductMappingIngest productMapping;
   private final SourceProductSaleFactIngest sourceSaleFact;
+  private final CtbStocktakeRefresh stocktakes;
   private final CtbWastageParser wastageParser;
   private final CanonicalWastageIngest wastageIngest;
   private final VenueClock venueClock;
@@ -93,7 +96,9 @@ public class CtbConnector implements SourceConnector {
       SourceProductSaleFactIngest sourceSaleFact,
       CtbWastageParser wastageParser,
       CanonicalWastageIngest wastageIngest,
-      VenueClock venueClock) {
+      VenueClock venueClock,
+      CtbStocktakeRefresh stocktakes) {
+    this.stocktakes = stocktakes;
     this.client = client;
     this.email = email;
     this.password = password;
@@ -152,10 +157,7 @@ public class CtbConnector implements SourceConnector {
         "ctb-suppliers",
         failures,
         () -> pullSingle("ctb-suppliers", client::getAllSuppliers, sink));
-    pull(
-        "ctb-stocktakes",
-        failures,
-        () -> pullRaw("ctb-stocktakes", client::searchStocktakes, sink));
+    pull("ctb-stocktakes", failures, () -> stocktakes.fetch(client, sink));
     pull("ctb-wastage", failures, () -> pullWastage(sink, failures));
     pull(
         "ctb-stock-orders",

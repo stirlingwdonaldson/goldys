@@ -1,5 +1,8 @@
 "use client";
 
+import { TargetsEditor } from "./targets-editor";
+import { InventoryPanels } from "./inventory-panels";
+import { reportPercent } from "@/lib/weekly-report-targets";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +10,7 @@ import { Download, RotateCw } from "lucide-react";
 import { useApi, useDemoMode } from "@/lib/demo-mode";
 import { ApiError } from "@/lib/api/errors";
 import type { WeeklyReportRow, WeeklyReportWeek } from "@/lib/api/types";
-import { formatCurrency, formatDay, formatNumber, formatPercent } from "@/lib/format";
+import { formatCurrency, formatDay, formatNumber } from "@/lib/format";
 import { weeklyReportWorkbook } from "@/lib/weekly-report-export";
 import { PageHeader } from "@/components/layout/page-header";
 import { LoadingState } from "@/components/states/loading-state";
@@ -20,7 +23,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCap
 
 function value(row: WeeklyReportRow, amount: number | null) {
   if (row.unit === "AUD") return formatCurrency(amount);
-  if (row.unit === "PERCENT") return formatPercent(amount);
+  if (row.unit === "PERCENT") return reportPercent(amount);
   return formatNumber(amount, 2);
 }
 
@@ -87,7 +90,7 @@ function WeeklyReportContent() {
     </div>
     {query.isPending ? <LoadingState rows={8} /> : query.error instanceof ApiError && query.error.code === "NOT_PERMITTED" ? <PermissionDenied subject="the weekly report" message={query.error.message} /> : query.error ? <ErrorState title="Couldn't load weekly report" message={query.error.message} onRetry={() => query.refetch()} /> : report && week ? <>
       <p className="text-sm text-muted-foreground">{demo ? "Demo snapshot. " : ""}{report.from} to {report.to} · {report.timezone} · Generated {new Date(report.generatedAt).toLocaleString("en-AU", { timeZone: report.timezone })}. Excel contains this exact snapshot. Refresh to include new source data.</p>
-      <div className="rounded-lg border p-4 text-sm"><p className="font-medium">Values remain source-qualified</p><p className="mt-1 text-muted-foreground">Missing values are unavailable, not zero. Known totals can be incomplete. Food/beverage splits, targets, stock variances and COGS remain unavailable while their inputs are reviewed. Invoice purchases are separate from COGS.</p></div>
+      <div className="rounded-lg border p-4 text-sm"><p className="font-medium">Values remain source-qualified</p><p className="mt-1 text-muted-foreground">Missing values are unavailable, not zero. Known totals can be incomplete. Targets carry forward from the workbook or subsequent edits. Wastage includes missing reasons. Food/beverage splits, stock variances and COGS still need verified inputs. Invoice purchases are separate from COGS.</p></div>
       {exportError ? <p role="alert" className="text-sm text-destructive">{exportError}</p> : null}
       <Table><TableCaption>Weekly history. Select a week for daily figures and every report field.</TableCaption>
         <TableHeader><TableRow><TableHead>Week</TableHead><TableHead className="text-right">Sales ex GST</TableHead><TableHead className="text-right">Recorded payments</TableHead><TableHead className="text-right">Review rating</TableHead></TableRow></TableHeader>
@@ -97,6 +100,8 @@ function WeeklyReportContent() {
         </TableRow>)}</TableBody>
       </Table>
       <div aria-live="polite"><h2 className="text-lg font-semibold">{week.start} – {week.end}</h2><p className="text-sm text-muted-foreground">Weekly values use the metric catalogue. Review ratings are weekly averages, not sums. Scroll tables horizontally for daily columns.</p></div>
+      <TargetsEditor key={`${demo}:${week.start}`} week={week} onSaved={() => query.refetch()} />
+      <InventoryPanels week={week} />
       <DailyTables week={week} />
     </> : null}
   </div>;

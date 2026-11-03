@@ -149,7 +149,7 @@ fetcher identities `ctb-stocktake-detail`, `ctb-wastage-detail`, `ctb-recipe-ing
 `ctb-recipe-cost`. Recipe cost (`ctb-recipe-cost`) is canonicalized by the recipe-composition slice
 (D); recipe ingredients (`ctb-recipe-ingredients`) are canonicalized by the recipe-ingredients
 slice, replayed from the existing raw ledger by a flag-gated runner
-(`app.recipe-ingredients-canonicalize=true`). Stocktake detail remains raw-only. Wastage detail is
+(`app.recipe-ingredients-canonicalize=true`). Stocktake headers and every advertised detail page are now pulled and canonicalized by the scheduled `CtbConnector` on each run. The existing raw-only detail remains audit evidence; fresh pulls attach `stocktake:<id>` references and flow through the resolved observation view. Wastage detail is
 also pulled by the scheduled `CtbConnector` for the newest 60 wastage records each run and
 canonicalized into `canonical_wastage` (see "Wastage" below); older records come from this backfill
 plus the `app.stock-wastage-canonicalize=true` replay.

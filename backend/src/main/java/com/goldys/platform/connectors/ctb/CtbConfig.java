@@ -29,7 +29,8 @@ public class CtbConfig {
       SourceProductSaleFactIngest sourceSaleFact,
       CtbWastageParser wastageParser,
       CanonicalWastageIngest wastageIngest,
-      VenueClock venueClock) {
+      VenueClock venueClock,
+      CtbStocktakeRefresh stocktakes) {
     return new CtbConnector(
         new CtbClient(baseUrl),
         email,
@@ -44,6 +45,7 @@ public class CtbConfig {
         sourceSaleFact,
         wastageParser,
         wastageIngest,
-        venueClock);
+        venueClock,
+        stocktakes);
   }
 }

@@ -97,7 +97,14 @@ public class CtbStocktakeParser {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Missing stocktake date");
     }
     try {
-      return LocalDate.parse(n.asText().trim());
+      String value = n.asText().trim();
+      return value.matches("\\d{4}-\\d{2}-\\d{2}")
+          ? LocalDate.parse(value)
+          : LocalDate.parse(
+              value,
+              java.time.format.DateTimeFormatter.ofPattern(
+                      "EEEE, d MMMM uuuu", java.util.Locale.ENGLISH)
+                  .withResolverStyle(java.time.format.ResolverStyle.STRICT));
     } catch (DateTimeParseException e) {
       throw new ConnectorFetchException(
           "CONNECTOR_SCHEMA_MISMATCH", "Bad stocktake date '" + n.asText() + "'", e);

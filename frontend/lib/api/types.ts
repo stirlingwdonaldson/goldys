@@ -1285,6 +1285,8 @@ export interface ReceiptGroup {
 }
 
 export interface Api {
+  getWeeklyTargets(week: string): Promise<WeeklyTarget[]>;
+  saveWeeklyTargets(input: { effectiveFrom: string; values: Record<string, number> }): Promise<WeeklyTarget[]>;
   getWeeklyReport(from?: string, weeks?: number, options?: { signal?: AbortSignal }): Promise<WeeklyReport>;
   uploadLightspeedReceiptCsv(dataset: "mapping" | "transactions", file: File, scope: ReceiptImportScope): Promise<ReceiptImportResult>;
   getReceiptGroup(saleNumber: string, from: string, to: string, options?: { signal?: AbortSignal }): Promise<ReceiptGroup>;
@@ -1465,11 +1467,21 @@ export interface WeeklyReportRow {
   notes: string[];
 }
 
+export interface WeeklyTarget { id: string; value: number; effectiveFrom: string; source: string }
+export interface WeeklyWastage {
+  lines: number; valuedLines: number; value: number | null;
+  reasonCoverageLines: number | null; reasonCoverageValue: number | null;
+  reasons: { reason: string; originalReasons: string[]; lines: number; valuedLines: number; value: number | null; shareOfValue: number | null }[];
+}
+export interface WeeklyStockCount { date: string; stocktakeId: number; lines: number; valuedLines: number; value: number | null; partial: boolean | null; locked: boolean | null }
 export interface WeeklyReportWeek {
   start: string;
   end: string;
   dates: string[];
   rows: WeeklyReportRow[];
+  targets: WeeklyTarget[];
+  wastage: WeeklyWastage;
+  stockCounts: WeeklyStockCount[];
 }
 
 export interface WeeklyReport {
