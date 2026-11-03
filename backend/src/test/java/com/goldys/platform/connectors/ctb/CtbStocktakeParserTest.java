@@ -176,6 +176,32 @@ class CtbStocktakeParserTest {
         .isEqualTo("CONNECTOR_SCHEMA_MISMATCH");
   }
 
+  @Test
+  void parsesEveryLiveHeaderAndEveryLineOfLatestStocktake() throws Exception {
+    var headers =
+        parser.parseStocktakes(
+            getClass()
+                .getResourceAsStream("/fixtures/ctb/live-stocktake-headers-2026-11-03.json")
+                .readAllBytes(),
+            RAW);
+    assertThat(headers).hasSize(30);
+    var header = headers.stream().filter(h -> h.stocktakeId() == 40).findFirst().orElseThrow();
+    assertThat(header.stocktakeDate()).isEqualTo(LocalDate.parse("2026-10-26"));
+    try (var in =
+        new java.util.zip.GZIPInputStream(
+            getClass()
+                .getResourceAsStream("/fixtures/ctb/live-stocktake-40-lines-2026-11-03.json.gz"))) {
+      var lines = parser.parseStocktakeLines(in.readAllBytes(), RAW, 40, header.stocktakeDate());
+      assertThat(lines).hasSize(443);
+      assertThat(lines).extracting(StockCountInput::lineId).doesNotHaveDuplicates();
+      assertThat(
+              lines.stream()
+                  .map(StockCountInput::lineValue)
+                  .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add))
+          .isEqualByComparingTo("29722.104716666666546");
+    }
+  }
+
   private static byte[] bytes(String s) {
     return s.getBytes(StandardCharsets.UTF_8);
   }

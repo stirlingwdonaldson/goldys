@@ -156,7 +156,7 @@ so a second source can be added later without re-deriving these decisions.
   `(source_system, source_record_ref)`.
 - **Confidence:** n/a (single source).
 - **Manual resolution path:** not wired.
-- Fresh detail pages are captured raw-first, with stable parent references. Changed totals, short pages, repeated identities and page limits fail the affected stocktake rather than publishing partial new counts. Counts retain source units and values; separate stocktakes are not summed into a current balance. Removal of a previously observed source line is not inferred from absence; count completeness remains qualified.
+- Fresh detail pages are captured raw-first, with stable parent references. Changed totals, short pages, repeated identities and page limits fail the affected stocktake rather than publishing partial new counts. Exact repetitions across pages do not prove completeness: the 3–4 November audit found seven source populations whose advertised totals exceed the unique rows returned even by a single large response. They remain held; duplicates are never used to satisfy the advertised population. Counts retain source units and values; separate stocktakes are not summed into a current balance. Removal of a previously observed source line is not inferred from absence; count completeness remains qualified.
 
 ## Wastage (`canonical_wastage`)
 
@@ -606,3 +606,14 @@ below-threshold dates are the alert mechanism; this introduces no background mon
 notifications, automatic classification or model approval. The queue requires all existing
 category, reconciliation sales, inventory stock and inventory cost READ grants before any
 read. See the [curation evidence](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/audits/food-beverage-reporting-2026-11-03/ongoing-review/README.md).
+
+## Weekly source-reported theoretical costs (3–4 November 2026)
+
+`resolved_reporting_cost` matches CTB source-product observations to the selected
+resolved product/day only when gross and quantity agree exactly and a single non-null
+site is observed. Existing reviewed sales policies supply nature; no recipe or stock
+name join is introduced. Missing matched-source tax evidence, another selected source,
+zero unit-cost placeholders, inconsistent multiplication or signs withhold the affected
+cost. Source estimates remain distinct from current recipe costing and actual inventory
+COGS. Coverage/subtotals and seven-date completeness are described in the
+[weekly-report audit](../audits/ctb-stock-cogs-2026-11-03/README.md).

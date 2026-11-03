@@ -117,6 +117,7 @@ export function demoWeeklyReport(from?: string, weeks = 4): WeeklyReport {
     const targets = demoWeeklyTargets(dates[0]);
     applyDemoTargets(rows, targets);
     applyDemoWastage(rows);
+    applyDemoCosts(rows);
     result.weeks.push({
       start: dates[0],
       end: dates[6],
@@ -139,6 +140,24 @@ export function demoWeeklyReport(from?: string, weeks = 4): WeeklyReport {
   }
   result.to = result.weeks.at(-1)!.end;
   return result;
+}
+
+function applyDemoCosts(rows: WeeklyReportRow[]) {
+  const food = rows.find(r => r.id === "known_food_sales")!.days.map(v => v === null ? null : v * 0.25 * 0.6);
+  const beverage = rows.find(r => r.id === "known_beverage_sales")!.days.map(v => v === null ? null : v * 0.22 * 0.6);
+  const costs = { food, beverage, total: food.map((v, i) => v === null || beverage[i] === null ? null : v + beverage[i]!) };
+  for (const [prefix, days] of Object.entries(costs)) {
+    const subtotal = rows.find(r => r.id === `${prefix}_known_theoretical_cost`)!;
+    subtotal.days = days;
+    subtotal.total = days.reduce<number>((sum, v) => sum + (v ?? 0), 0);
+    subtotal.status = "QUALIFIED";
+    subtotal.notes = ["DEMO known CTB source-cost subtotal with partial coverage; zero cost placeholders are unsupported. Historical cost effectiveness and tax basis remain unverified."];
+    const coverage = rows.find(r => r.id === `${prefix}_cost_coverage_lines`)!;
+    coverage.days = days.map(v => v === null ? null : 0.6);
+    coverage.total = 0.6;
+    coverage.status = "QUALIFIED";
+    coverage.notes = ["DEMO cost coverage by recorded observations. Partial coverage withholds complete theoretical COGS and rates."];
+  }
 }
 
 function applyDemoTargets(rows: WeeklyReportRow[], targets: WeeklyTarget[]) {

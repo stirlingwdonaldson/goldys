@@ -47,7 +47,7 @@ class WeeklyReportIntegrationTest {
     mvc.perform(get("/api/reports/weekly").session(session))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.weeks.length()").value(4))
-        .andExpect(jsonPath("$.weeks[0].rows.length()").value(79));
+        .andExpect(jsonPath("$.weeks[0].rows.length()").value(85));
 
     var date = java.time.LocalDate.parse("2026-10-26");
     var raw = raw();

@@ -75,5 +75,11 @@
   {"id":"other_wastage","label":"Other recorded wastage","unit":"AUD","section":"Wastage","notes":["Source-qualified recorded observations; missing records are not zero."]},
   {"id":"unclassified_wastage","label":"Unclassified recorded wastage","unit":"AUD","section":"Wastage","notes":["Source-qualified recorded observations; missing records are not zero."]},
   {"id":"wastage_classified_coverage_value","label":"Classified wastage (by known recorded value)","unit":"PERCENT","section":"Wastage","notes":["Source-qualified recorded observations; missing records are not zero."]},
-  {"id":"wastage_classified_coverage_lines","label":"Classified wastage (by lines)","unit":"PERCENT","section":"Wastage","notes":["Source-qualified recorded observations; missing records are not zero."]}
+  {"id":"wastage_classified_coverage_lines","label":"Classified wastage (by lines)","unit":"PERCENT","section":"Wastage","notes":["Source-qualified recorded observations; missing records are not zero."]},
+  {"id":"food_known_theoretical_cost","label":"Food known CTB theoretical cost subtotal","unit":"AUD","section":"Cost of goods","notes":["CTB sale-report source costs only; partial known estimates do not establish complete COGS."]},
+  {"id":"food_cost_coverage_lines","label":"Food source cost coverage (by observations)","unit":"PERCENT","section":"Cost of goods","notes":["CTB sale-report source costs only; partial known estimates do not establish complete COGS."]},
+  {"id":"beverage_known_theoretical_cost","label":"Beverage known CTB theoretical cost subtotal","unit":"AUD","section":"Cost of goods","notes":["CTB sale-report source costs only; partial known estimates do not establish complete COGS."]},
+  {"id":"beverage_cost_coverage_lines","label":"Beverage source cost coverage (by observations)","unit":"PERCENT","section":"Cost of goods","notes":["CTB sale-report source costs only; partial known estimates do not establish complete COGS."]},
+  {"id":"total_known_theoretical_cost","label":"Total known CTB theoretical cost subtotal","unit":"AUD","section":"Cost of goods","notes":["CTB sale-report source costs only; partial known estimates do not establish complete COGS."]},
+  {"id":"total_cost_coverage_lines","label":"Total source cost coverage (by observations)","unit":"PERCENT","section":"Cost of goods","notes":["CTB sale-report source costs only; partial known estimates do not establish complete COGS."]}
 ]

@@ -24,6 +24,7 @@ public class WeeklyReportService {
   private final WeeklyReportTargets targets;
   private final WeeklyInventoryQuery inventory;
   private final com.goldys.platform.semantic.ReportingSalesQuery reportingSales;
+  private final boolean costsExcludeGst;
 
   public WeeklyReportService(
       MetricQueryService metrics,
@@ -33,7 +34,9 @@ public class WeeklyReportService {
       VenueClock clock,
       WeeklyReportTargets targets,
       WeeklyInventoryQuery inventory,
-      com.goldys.platform.semantic.ReportingSalesQuery reportingSales) {
+      com.goldys.platform.semantic.ReportingSalesQuery reportingSales,
+      @org.springframework.beans.factory.annotation.Value("${ctb.recipes.costs-exclude-gst:true}")
+          boolean costsExcludeGst) {
     this.metrics = metrics;
     this.catalog = catalog;
     this.reviews = reviews;
@@ -42,6 +45,7 @@ public class WeeklyReportService {
     this.targets = targets;
     this.inventory = inventory;
     this.reportingSales = reportingSales;
+    this.costsExcludeGst = costsExcludeGst;
   }
 
   private record Field(
@@ -250,7 +254,7 @@ public class WeeklyReportService {
     for (var bucket : reviews.ratingTrend(from, to))
       ratings.put(bucket.periodStart(), bucket.avgRating());
     List<WeeklyReport.Week> weeks = new ArrayList<>();
-    var sales = reportingSales.sales(from, to);
+    var sales = reportingSales.salesWithCosts(from, to);
     var waste = inventory.wastage(from, to);
     var stockCounts = inventory.stockCounts(from, to);
     for (int i = 0; i < weekCount; i++) {
@@ -274,6 +278,16 @@ public class WeeklyReportService {
                           s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
                       .toList()));
       rows = new ArrayList<>(WeeklyReportInventory.fill(rows, dates, weekWaste));
+      rows =
+          new ArrayList<>(
+              WeeklyReportCogs.fill(
+                  rows,
+                  dates,
+                  sales.stream()
+                      .filter(
+                          s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
+                      .toList(),
+                  costsExcludeGst));
       applyTargets(rows, weekTargets);
       weeks.add(
           new WeeklyReport.Week(

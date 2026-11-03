@@ -36,7 +36,8 @@ class WeeklyReportServiceTest {
           VenueClock.fixed(ZoneId.of("Australia/Melbourne"), Instant.parse("2026-11-01T14:30:00Z")),
           targets,
           inventory,
-          reportingSales);
+          reportingSales,
+          true);
 
   @BeforeEach
   void data() {
@@ -139,7 +140,7 @@ class WeeklyReportServiceTest {
                   new com.goldys.platform.semantic.ReportingSalesQuery.Sale(
                       d, "drink", new BigDecimal("55"), new BigDecimal("50"), "CTB", "BEVERAGE"));
             });
-    when(reportingSales.sales(any(), any())).thenReturn(observations);
+    when(reportingSales.salesWithCosts(any(), any())).thenReturn(observations);
     when(targets.get(OWNER, MONDAY))
         .thenReturn(
             List.of(

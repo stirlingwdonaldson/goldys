@@ -32,4 +32,38 @@ public class ResolvedReportingSalesQuery implements ReportingSalesQuery {
         from,
         to);
   }
+
+  // Materialize each bounded basis once: inlining both views can multiply lateral policy lookups.
+  @Override
+  public List<Sale> salesWithCosts(LocalDate from, LocalDate to) {
+    return jdbc.query(
+        """
+      with sales as materialized (
+        select * from resolved_reporting_sales where trading_date between ? and ?
+      ), costs as materialized (
+        select * from resolved_reporting_cost where trading_date between ? and ?
+      )
+      select s.*, c.known_cost, coalesce(c.cost_lines,1) cost_lines,
+             coalesce(c.costed_lines,0) costed_lines
+      from sales s left join costs c
+        on c.trading_date=s.trading_date and c.product_name_key=s.product_name_key
+        and s.net_amount is not null
+      order by s.trading_date,s.product_name_key
+      """,
+        (rs, n) ->
+            new Sale(
+                rs.getObject("trading_date", LocalDate.class),
+                rs.getString("product_name_key"),
+                rs.getBigDecimal("gross_amount"),
+                rs.getBigDecimal("net_amount"),
+                rs.getString("authoritative_source"),
+                rs.getString("sales_nature"),
+                rs.getBigDecimal("known_cost"),
+                rs.getLong("cost_lines"),
+                rs.getLong("costed_lines")),
+        from,
+        to,
+        from,
+        to);
+  }
 }

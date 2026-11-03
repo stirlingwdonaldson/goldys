@@ -19,7 +19,7 @@ generation time, units, missing cells and qualifications. Refresh before downloa
 to include subsequent ingestion. A downloaded workbook is a snapshot, not a live
 Excel connection or a scheduled email delivery. Demo files are explicitly labelled.
 
-The dashboard and workbook carry the same 79 fields. The spreadsheet's summary
+The dashboard and workbook carry the same 85 fields. The spreadsheet's summary
 fields are covered: food/beverage/total sales and targets, stock-variance categories,
 cash variance and thresholds, wastage values/rates/targets, COGS and reviews.
 Gross sales, GST, recorded payments and invoice purchases are included with explicit
@@ -53,7 +53,7 @@ tracking are not copied.
 | Physical cash | Establish physical count/banking input and paid-in/out/refund treatment; verify tender identities and date allocation | Recorded payments separate; counted cash/banking/variance unavailable |
 | Wastage | Category mapping, tax basis and source capture completeness remain unverified. Missing reasons cannot be reconstructed | All recorded wastage included, with No reason recorded bucket; coverage by lines and known value; given-reason breakdown and original labels. Category recorded splits use exact line/recipe mappings; rates use matching sales ex GST with explicit cost-basis qualification and availability guards |
 | Stock variances | Verify expected stock movements, consumption, categories and valuation; a count alone is not a variance | Stocktake headers and counts now flow on every CTB run, and dated source-value summaries are shown. Variance actuals remain unavailable; targets are editable |
-| Theoretical COGS | Verify recipe versions/yields, source costs, tax, classification, sold quantities and intended denominator. Actual COGS additionally needs inventory valuation | Unavailable; purchases remain separately labelled |
+| Theoretical COGS | Verify recipe versions/yields, source costs, tax, classification, sold quantities and intended denominator. Actual COGS additionally needs inventory valuation | Known CTB sale-report cost subtotals and coverage; complete theoretical estimates/rates only where all required inputs are supported. Purchases remain separate |
 | Reviews | Confirm intended platforms, rating scale, review-date versus visit-date and capture completeness | Existing weekly actual-star averages with coverage qualification |
 
 These reviews gate the affected values, not delivery of the dashboard/export.
@@ -140,3 +140,16 @@ matching unrelated domains. These matches were reviewed and the local patterns
 retained; no cross-domain helper or blanket suppression was introduced. The scan also flags the report constructor dependency count and expanded integration-test/report size; these follow the existing composition pattern and test the required data seams. The static
 quality gate is not claimed as passing. Contract inspection found no incompatible
 callers; compilation, runtime tests and independent XLSX checks are separate evidence.
+
+## CTB source-cost estimates (3–4 November follow-up)
+
+The [stock/count and cost audit](../audits/ctb-stock-cogs-2026-11-03/README.md)
+records live source access, parser hit rates and the production recovery run. V112
+adds `resolved_reporting_cost`; the report now has 85 rows. Six additional rows
+show known CTB food/beverage/combined theoretical cost subtotals and recorded cost
+coverage. Missing and zero-placeholder costs stay unsupported. Full daily estimates
+require matching selected-source scope and complete classification/costs; full weekly
+estimates require seven supported dates. Ratios use matching category net sales under
+the explicit existing ex-GST assumption, and are withheld when it is withdrawn.
+These source-reported estimates do not establish historical actual COGS, recipe
+effectiveness, yields or complete source capture. YTD and stock variance remain gated.
