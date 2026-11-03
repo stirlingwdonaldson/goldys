@@ -55,3 +55,57 @@ reporting mapping or production rerun has been performed. Those require separate
 Browser end-to-end checks and production-scale preview performance were not run. The isolated
 live Jev evaluation used bounded real evidence and draft criteria, not an end-to-end production
 run of the changed pipeline or certification of all labels. No unrelated labour/bookkeeping work.
+
+
+## PR #230 review fixes, based on 27a062e9
+
+The review findings were reproduced in code and fixed without changing the design:
+
+- Wastage now checks inventory.stock, inventory.cost and products.category READ before storage.
+  A permanent test allows cost/category checks but denies stock and verifies the wastage query
+  and mapping storage are never called; a positive test verifies all checks precede the query.
+- Candidate text includes a name ahead of bounded evidence and retains original source names.
+  A catalogue-only Porterhouse test has no sales, receipts or recipe links and inspects the
+  actual classification request, not the map key.
+- Manual exemplars include category ID, readable name and approved criteria. Missing category
+  references and criteria are explicit states with nullable text. The permanent full-run regression
+  captures the Jev HTTP request and the naming LLM's actual system prompt; it tests valid, deleted
+  and missing-criteria references and verifies manual assignments are never saved over.
+- Run polling uses a JPQL metadata constructor projection with PageRequest(0,25), not entity
+  loading or LAZY basic fields. PostgreSQL SQL capture tests seed 30 runs, verify the newest 25,
+  assert the SQL has a database limit and no snapshot columns, then verify the preview retrieves
+  all three saved snapshots. The public polling/preview response shapes are unchanged.
+
+Focused regression and architecture tests passed. Final full-gate results for this update follow
+below. No new paid model calls or production database/source-system operations were performed.
+This remains foundational work: Beer → Food is not repaired automatically. Weekly food/beverage
+actuals remain unavailable until separate curation and reporting activation are completed.
+
+
+The frontend full gate passed again for the review update: frozen-lockfile installation,
+`bun run typecheck`, `bun run lint`, `TMPDIR=/tmp bun run test` (**735 tests / 135 files**),
+and `bun run build`. No frontend source or response schema changed.
+
+Ripwire was run against a clean scratch baseline at 27a062e9 because automatic HEAD fallback
+was unavailable. The review-fix delta still reports 11 gating warnings: candidate-extractor
+complexity growth (14→16), required regression-test class growth and structural duplication
+matches to other permission/mapping tests. These are documented static warnings, not a passed
+quality gate; no unrelated refactor or blanket suppression was added. The listRuns edit check
+reported no-baseline; Java compilation, query capture and caller tests validate this change.
+
+
+The first full backend review-update run exhausted the test JVM heap. Its SQL-capture fixture
+created another full Spring application context. The final fixture captures Hibernate SQL through
+the existing logger instead, restricted to the test thread and restoring logger configuration in
+finally; it creates no additional Spring context. The stuck worker was stopped only after verifying
+its PID and isolated worktree directory. A cache retry failed before tests due to Spotless's stale
+JVM-local configuration cache; a superseded lifecycle-based attempt was stopped before completion.
+Final gates use `--no-configuration-cache` for those invocations. No production or repository heap
+settings changed. These failed/interrupted attempts are not claimed as successful validation.
+
+
+Final review-update backend gate: `./gradlew --no-configuration-cache test spotlessCheck`
+**passed in 5m37s**, with **1845 tests, 0 failures, 0 errors and 5 skipped**.
+The final focused permission/model-context/SQL/architecture run also passed after the logger-fixture
+change. The full frontend gate passed with 735 tests and production build. PR CI is checked after
+pushing the review-fix commit; no merge or deployment is included in this task.

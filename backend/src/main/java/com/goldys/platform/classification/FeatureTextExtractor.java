@@ -62,7 +62,7 @@ public class FeatureTextExtractor {
     if (evidence != null) {
       for (var row : evidence.currentEvidence()) {
         String key = ProductNameKey.normalize(row.name());
-        add(texts, key, row.text());
+        add(texts, key, "Source name=" + row.name() + "; " + row.text());
         if (row.ambiguous()) ambiguous.add(key);
         if (row.identity() != null && !row.identity().isBlank()) {
           Set<String> ids =
@@ -94,7 +94,9 @@ public class FeatureTextExtractor {
                     + link.lightspeedProductId());
           }
           boolean conflict = ambiguous.contains(key) || recipes.size() > 1;
-          String text = String.join("\n", parts.stream().limit(16).toList());
+          parts.remove(key);
+          String text = key;
+          if (!parts.isEmpty()) text += "\n" + String.join("\n", parts.stream().limit(16).toList());
           if (parts.size() > 16)
             text += "\nEvidence truncated; " + parts.size() + " distinct observations.";
           if (text.length() > 8000) text = text.substring(0, 8000) + "\nEvidence truncated.";

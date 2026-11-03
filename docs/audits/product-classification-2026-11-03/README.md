@@ -88,7 +88,8 @@ levels need review. Existing authorised manual moves record approved corrections
 them. No bulk apply endpoint or production rerun was introduced. The Products screen exposes saved
 proposals and item evidence; legacy runs explicitly lack snapshots.
 
-Candidate context retains all distinct source labels rather than a nondeterministic first match,
+Candidate text always starts with its product name, including catalogue-only candidates; source
+observations also retain their original names. Candidate context retains all distinct source labels rather than a nondeterministic first match,
 source-scoped IDs, first/last observations, recipe IDs/folders/active states and up to eight ingredient
 observations with supplier/raw evidence. Text is capped at 16 observations/8,000 characters with
 truncation notices; conflict detection runs before the cap. This does not synthesize missing identities
@@ -99,7 +100,8 @@ per cluster. Bounded source text is data, never instructions; model output remai
 `backend/src/main/resources/classification/business-context.txt` is the durable reviewed context.
 Maintain it through a reviewed code change; bump its version and cite evidence when approving café
 dates/identifiers. Category descriptions hold inclusion/exclusion rules/counterexamples. Runs retain
-exact context, category choices, candidate evidence, up to 100 sorted manual exemplars, classifier
+exact context, category choices, candidate evidence, up to 100 sorted manual exemplars (IDs, readable
+category names, criteria and explicit missing-category/criteria states), classifier
 alias, embedding policy, returned Jev model version/probabilities and proposed/previous category IDs.
 Naming inputs/prompt/output are separately saved. Rolling hosted-model changes preclude guaranteed
 bitwise model replay; snapshots explain the evidence and permit recorded-output replay.
@@ -154,6 +156,8 @@ No source system, production classification, ingestion job, mapping or source re
 
 Existing `products.category` table-driven permissions govern reads/writes; no new role grants.
 
+- `GET /api/products/categories/runs`: newest 25 metadata rows selected with a database limit,
+  excluding all snapshot columns. No lazy-field configuration is assumed.
 - `GET /api/products/categories/runs/{id}/preview`: exact context, naming and assignment snapshots.
 - `PATCH /api/products/categories/categories/{id}` accepts `description` as approved category criteria.
 - Existing manual move endpoint records an explicit approved browsing assignment.
@@ -166,7 +170,7 @@ Existing `products.category` table-driven permissions govern reads/writes; no ne
   WASTE_LINE uses the exact observed ref, e.g. `wastage:<recordId>:<detailId>`.
 - `GET /api/products/categories/reporting-mappings/wastage?from=...&to=...&page=0&size=50`:
   itemised current wastage evidence and mapping revision/scope/reason, including unknowns.
-  Requires BOTH inventory.cost READ and products.category READ, before reading. Range <= one year,
+  Requires inventory.stock READ, inventory.cost READ and products.category READ, before reading. Range <= one year,
   page 0–10000, size 1–200. Source cost/quantity/unit are separate: no guessed cost/unit conversion.
 
 Append a same-key revision with UNKNOWN dimensions to withdraw a policy from its effective date.

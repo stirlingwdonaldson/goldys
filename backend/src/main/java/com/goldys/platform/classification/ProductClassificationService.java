@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 /**
@@ -173,15 +174,14 @@ public class ProductClassificationService {
           categories.findAllByOrderByGroupNameAscDisplayOrderAscNameAsc().stream()
               .map(c -> new CategoryOption(c.id(), c.name(), c.description()))
               .toList();
+      Map<UUID, CategoryOption> optionsById = new HashMap<>();
+      options.forEach(option -> optionsById.put(option.categoryId(), option));
       var corrections =
           assignments.findAll().stream()
-              .filter(a -> a.source() == AssignmentSource.MANUAL && a.categoryId() != null)
+              .filter(a -> a.source() == AssignmentSource.MANUAL)
               .sorted(Comparator.comparing(ProductCategoryAssignment::productNameKey))
               .limit(100)
-              .map(
-                  a ->
-                      Map.of(
-                          "product", a.productNameKey(), "categoryId", a.categoryId().toString()))
+              .map(a -> manualCorrection(a, optionsById.get(a.categoryId())))
               .toList();
       String context =
           ClassificationContext.TEXT
@@ -216,6 +216,29 @@ public class ProductClassificationService {
     runs.save(run);
   }
 
+  private record ManualCorrection(
+      String product,
+      UUID categoryId,
+      String categoryName,
+      String criteria,
+      String categoryState) {}
+
+  private static ManualCorrection manualCorrection(
+      ProductCategoryAssignment assignment, CategoryOption category) {
+    String state =
+        category == null
+            ? "CATEGORY_MISSING"
+            : category.description() == null || category.description().isBlank()
+                ? "CRITERIA_MISSING"
+                : "AVAILABLE";
+    return new ManualCorrection(
+        assignment.productNameKey(),
+        assignment.categoryId(),
+        category == null ? null : category.name(),
+        category == null ? null : category.description(),
+        state);
+  }
+
   /**
    * Rejects a run whose services are not enabled, so a run against an un-deployed or un-warmed
    * sidecar fails fast with an operator-facing message recorded in {@code error_message} rather
@@ -239,8 +262,7 @@ public class ProductClassificationService {
 
   /** The recent runs, newest first, capped at {@link #RUN_LIST_LIMIT}. */
   public List<ClassificationRunView> listRuns() {
-    return runs.findAllByOrderByStartedAtDesc().stream()
-        .limit(RUN_LIST_LIMIT)
+    return runs.findRecentMetadata(PageRequest.of(0, RUN_LIST_LIMIT)).stream()
         .map(
             run ->
                 new ClassificationRunView(

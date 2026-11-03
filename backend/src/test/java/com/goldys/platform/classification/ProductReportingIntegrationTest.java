@@ -2,15 +2,21 @@ package com.goldys.platform.classification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.goldys.platform.canonical.CanonicalWastageIngest;
 import com.goldys.platform.canonical.WastageInput;
 import com.goldys.platform.semantic.ClassifiedWastageQuery;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -26,6 +32,8 @@ class ProductReportingIntegrationTest {
   @Autowired ClassifiedWastageQuery query;
   @Autowired EntityManager em;
   @Autowired ClassificationRunRepository runs;
+  @Autowired ProductClassificationService classification;
+
   @Autowired com.goldys.platform.canonical.ClassificationEvidenceQuery evidence;
   private final LocalDate date = LocalDate.of(2026, 10, 1);
 
@@ -82,8 +90,64 @@ class ProductReportingIntegrationTest {
   }
 
   @Test
+  void polling_is_database_bounded_and_never_selects_snapshots_but_preview_still_does() {
+    Instant now = Instant.parse("2026-11-03T00:00:00Z");
+    ClassificationRun newest = null;
+    for (int i = 0; i < 30; i++) {
+      newest = ClassificationRun.create(ClassificationRunKind.ASSIGN, now.plusSeconds(i));
+      newest.snapshot("{\"context\":\"retained\"}", "[{\"status\":\"NEEDS_REVIEW\"}]");
+      newest.namingSnapshot("[{\"name\":\"Food\"}]");
+      runs.save(newest);
+    }
+    em.flush();
+    em.clear();
+    var logger = (Logger) LoggerFactory.getLogger("org.hibernate.SQL");
+    var previousLevel = logger.getLevel();
+    Thread testThread = Thread.currentThread();
+    var statements =
+        new ListAppender<ILoggingEvent>() {
+          @Override
+          protected void append(ILoggingEvent event) {
+            if (Thread.currentThread() == testThread) super.append(event);
+          }
+        };
+    statements.start();
+    logger.addAppender(statements);
+    logger.setLevel(Level.DEBUG);
+    try {
+      var listed = classification.listRuns();
+      assertThat(listed).hasSize(25);
+      assertThat(listed.getFirst().id()).isEqualTo(newest.id());
+      assertThat(listed.getLast().startedAt()).isEqualTo(now.plusSeconds(5));
+      assertThat(statements.list.stream().map(ILoggingEvent::getFormattedMessage).toList())
+          .singleElement()
+          .satisfies(
+              sql -> {
+                assertThat(sql)
+                    .contains("classification_run", "fetch first ? rows only")
+                    .doesNotContain("context_snapshot", "proposal_snapshot", "naming_snapshot");
+              });
+      statements.list.clear();
+      var preview = classification.preview(newest.id());
+      assertThat(preview.contextSnapshot()).isEqualTo(newest.contextSnapshot());
+      assertThat(preview.proposalSnapshot()).isEqualTo(newest.proposalSnapshot());
+      assertThat(preview.namingSnapshot()).isEqualTo(newest.namingSnapshot());
+      assertThat(statements.list.stream().map(ILoggingEvent::getFormattedMessage).toList())
+          .singleElement()
+          .satisfies(
+              sql ->
+                  assertThat(sql)
+                      .contains("context_snapshot", "proposal_snapshot", "naming_snapshot"));
+    } finally {
+      logger.detachAppender(statements);
+      logger.setLevel(previousLevel);
+      statements.stop();
+    }
+  }
+
+  @Test
   void run_snapshots_survive_a_fresh_entity_read() {
-    var run = ClassificationRun.create(ClassificationRunKind.ASSIGN, java.time.Instant.now());
+    var run = ClassificationRun.create(ClassificationRunKind.ASSIGN, Instant.now());
     run.snapshot("{\"businessContext\":\"historical cafe\"}", "[{\"status\":\"NEEDS_REVIEW\"}]");
     run.namingSnapshot("[]");
     runs.saveAndFlush(run);

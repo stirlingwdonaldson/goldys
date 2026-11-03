@@ -29,6 +29,7 @@ public class ProductReportingReviewService {
 
   public List<com.goldys.platform.semantic.ClassifiedWastageQuery.Line> wastage(
       UserRole role, LocalDate from, LocalDate to, int page, int size) {
+    permissions.require(role, new ResourceKey("inventory.stock"), PermissionAction.READ);
     permissions.require(role, new ResourceKey("inventory.cost"), PermissionAction.READ);
     permissions.require(role, new ResourceKey("products.category"), PermissionAction.READ);
     if (from == null

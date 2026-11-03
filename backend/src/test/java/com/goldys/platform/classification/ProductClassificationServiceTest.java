@@ -7,13 +7,19 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.canonical.CanonicalProductSalesQuery;
 import com.goldys.platform.canonical.CanonicalSaleItemQuery;
 import com.goldys.platform.canonical.CanonicalSaleRecipeLinkQuery;
+import com.goldys.platform.canonical.ClassificationEvidenceQuery;
 import com.goldys.platform.canonical.SaleItemIdentityView;
 import com.goldys.platform.canonical.SaleRecipeLinkView;
 import com.goldys.platform.semantic.ClassificationRunView;
+import com.sun.net.httpserver.HttpServer;
 import java.math.BigDecimal;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -25,16 +31,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.data.domain.PageRequest;
 
 /** Orchestration coverage: embed → cluster → persist, and classify → assign (or review). */
 class ProductClassificationServiceTest {
 
   private static final Instant NOW = Instant.parse("2026-10-13T00:00:00Z");
 
+  private final ClassificationEvidenceQuery evidence = mock(ClassificationEvidenceQuery.class);
   private final CanonicalProductSalesQuery productSales = mock(CanonicalProductSalesQuery.class);
   private final CanonicalSaleItemQuery saleItems = mock(CanonicalSaleItemQuery.class);
   private final CanonicalSaleRecipeLinkQuery recipeLinks = mock(CanonicalSaleRecipeLinkQuery.class);
@@ -61,7 +77,7 @@ class ProductClassificationServiceTest {
   private final TaskExecutor executor = task -> {};
 
   private final FeatureTextExtractor extractor =
-      new FeatureTextExtractor(productSales, saleItems, recipeLinks);
+      new FeatureTextExtractor(productSales, saleItems, recipeLinks, evidence);
 
   @BeforeEach
   void setUp() {
@@ -223,6 +239,36 @@ class ProductClassificationServiceTest {
               assertThat(p.productNameKey()).isEqualTo("lemonade");
               assertThat(p.x()).isEqualTo(0.5);
               assertThat(p.y()).isEqualTo(0.6);
+            });
+  }
+
+  @Test
+  void catalogue_only_name_reaches_the_classifier() {
+    when(evidence.currentEvidence())
+        .thenReturn(
+            List.of(
+                new ClassificationEvidenceQuery.Evidence(
+                    "Porterhouse",
+                    "catalog:CTB",
+                    "catalog-461",
+                    "Catalog observation: CTB; category=null; raw=receipt")));
+    var food = ProductCategory.create("Food", null, 0, "Prepared food excluding beverages");
+    when(categories.findAllByOrderByGroupNameAscDisplayOrderAscNameAsc()).thenReturn(List.of(food));
+    var classifier =
+        new FakeClassifier(
+            req ->
+                new ProductClassification(
+                    food.id(), Map.of(food.id(), BigDecimal.ONE), BigDecimal.ONE));
+    var svc = service(new FakeEmbeddingClient(), classifier);
+    svc.runAssignment();
+    svc.execute(runStore.values().iterator().next().id());
+    assertThat(classifier.requests())
+        .singleElement()
+        .satisfies(
+            request -> {
+              assertThat(request.featureText())
+                  .startsWith("porterhouse\n")
+                  .contains("Porterhouse", "Catalog observation: CTB");
             });
   }
 
@@ -517,7 +563,8 @@ class ProductClassificationServiceTest {
     older.markSucceeded(3, NOW.minusSeconds(30));
     ClassificationRun newer = ClassificationRun.create(ClassificationRunKind.FULL, NOW);
     newer.markFailed("Jev service returned HTTP 500", NOW.plusSeconds(10));
-    when(runs.findAllByOrderByStartedAtDesc()).thenReturn(List.of(newer, older));
+    when(runs.findRecentMetadata(PageRequest.of(0, 25)))
+        .thenReturn(List.of(metadata(newer), metadata(older)));
 
     List<ClassificationRunView> result =
         service(new FakeEmbeddingClient(), new FakeClassifier(req -> null)).listRuns();
@@ -533,17 +580,21 @@ class ProductClassificationServiceTest {
   }
 
   @Test
-  void listRuns_caps_to_limit() {
-    List<ClassificationRun> many = new ArrayList<>();
-    for (int i = 0; i < ProductClassificationService.RUN_LIST_LIMIT + 5; i++) {
-      many.add(ClassificationRun.create(ClassificationRunKind.CLUSTER, NOW.plusSeconds(i)));
-    }
-    when(runs.findAllByOrderByStartedAtDesc()).thenReturn(many);
+  void listRuns_requests_a_database_limit() {
+    service(new FakeEmbeddingClient(), new FakeClassifier(req -> null)).listRuns();
+    verify(runs).findRecentMetadata(PageRequest.of(0, ProductClassificationService.RUN_LIST_LIMIT));
+    verify(runs, never()).findAll();
+  }
 
-    List<ClassificationRunView> result =
-        service(new FakeEmbeddingClient(), new FakeClassifier(req -> null)).listRuns();
-
-    assertThat(result).hasSize(ProductClassificationService.RUN_LIST_LIMIT);
+  private ClassificationRunMetadata metadata(ClassificationRun run) {
+    return new ClassificationRunMetadata(
+        run.id(),
+        run.kind(),
+        run.status(),
+        run.productCount(),
+        run.startedAt(),
+        run.finishedAt(),
+        run.errorMessage());
   }
 
   @Test
@@ -556,6 +607,106 @@ class ProductClassificationServiceTest {
     assertThat(run.status()).isEqualTo(ClassificationRunStatus.FAILED);
     assertThat(run.errorMessage()).isEqualTo("service restarted before completion");
     assertThat(run.finishedAt()).isEqualTo(NOW);
+  }
+
+  @Test
+  void readable_manual_corrections_reach_jev_and_the_naming_llm() throws Exception {
+    var food =
+        ProductCategory.create(
+            "Food", null, 0, "Prepared food; include porterhouse; exclude beer.");
+    var unclear = ProductCategory.create("Unexplained", null, 1, null);
+    var missingId = UUID.randomUUID();
+    var known = ProductCategoryAssignment.create("known manual", NOW);
+    known.markAssigned(food.id(), null, AssignmentSource.MANUAL, NOW);
+    var orphan = ProductCategoryAssignment.create("orphan manual", NOW);
+    orphan.markAssigned(missingId, null, AssignmentSource.MANUAL, NOW);
+    var missingCriteria = ProductCategoryAssignment.create("criteria missing manual", NOW);
+    missingCriteria.markAssigned(unclear.id(), null, AssignmentSource.MANUAL, NOW);
+    assignmentStore.put("known manual", known);
+    assignmentStore.put("orphan manual", orphan);
+    when(assignments.findAll()).thenReturn(List.of(known, orphan, missingCriteria));
+    when(productSales.distinctProductNameKeys())
+        .thenReturn(List.of("known manual", "orphan manual", "porterhouse"));
+    when(categories.findAllByOrderByGroupNameAscDisplayOrderAscNameAsc())
+        .thenReturn(List.of(food, unclear));
+
+    var mapper = new ObjectMapper();
+    var jevBody = new AtomicReference<JsonNode>();
+    var server = HttpServer.create(new InetSocketAddress(0), 0);
+    server.createContext(
+        "/v1/systemone",
+        exchange -> {
+          jevBody.set(mapper.readTree(exchange.getRequestBody()));
+          byte[] response =
+              "{\"model\":\"jev-test\",\"answers\":{\"category\":{\"choice\":\"Food\",\"confidence\":0.8,\"probabilities\":{\"Food\":0.8,\"Unexplained\":0.1,\"Unclassified\":0.1}}}}"
+                  .getBytes(StandardCharsets.UTF_8);
+          exchange.sendResponseHeaders(200, response.length);
+          exchange.getResponseBody().write(response);
+          exchange.close();
+        });
+    var model = mock(ChatModel.class);
+    @SuppressWarnings("unchecked")
+    ObjectProvider<ChatModel> provider = mock(ObjectProvider.class);
+    when(provider.getIfAvailable()).thenReturn(model);
+    when(model.call(any(Prompt.class)))
+        .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("[]")))));
+    server.start();
+    try {
+      var svc =
+          new ProductClassificationService(
+              extractor,
+              categories,
+              assignments,
+              runs,
+              clusters,
+              projections,
+              new FakeEmbeddingClient(),
+              new JevProductClassifier(
+                  new JevProperties(
+                      true, "http://localhost:" + server.getAddress().getPort(), "test"),
+                  mapper),
+              new OpenAiClusterNamer(provider, mapper),
+              suggestions,
+              new NamingProperties(true),
+              new EmbeddingProperties(true, "http://localhost"),
+              new JevProperties(true, "http://localhost", "test"),
+              executor,
+              Clock.fixed(NOW, ZoneOffset.UTC));
+      svc.runFull();
+      var run = runStore.values().iterator().next();
+      svc.execute(run.id());
+      assertThat(run.status()).isEqualTo(ClassificationRunStatus.SUCCEEDED);
+      var prompt = ArgumentCaptor.forClass(Prompt.class);
+      verify(model).call(prompt.capture());
+      for (String context :
+          List.of(
+              jevBody.get().path("state").asText(),
+              prompt.getValue().getInstructions().getFirst().getText())) {
+        assertThat(context)
+            .contains(
+                "known manual",
+                "\"categoryName\":\"Food\"",
+                food.description(),
+                food.id().toString(),
+                missingId.toString(),
+                "CATEGORY_MISSING",
+                "CRITERIA_MISSING",
+                "\"categoryName\":null",
+                "\"criteria\":null");
+      }
+      assertThat(
+              jevBody
+                  .get()
+                  .path("questions")
+                  .path("category")
+                  .path("criteria")
+                  .path("Food")
+                  .asText())
+          .isEqualTo(food.description());
+      verify(assignments, never()).save(any());
+    } finally {
+      server.stop(0);
+    }
   }
 
   /** A clock whose instant can be moved forward mid-test, to simulate the passage of wall time. */
