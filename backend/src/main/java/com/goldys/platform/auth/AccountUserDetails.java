@@ -14,8 +14,21 @@ public record AccountUserDetails(
     String displayName,
     String department,
     String seniority,
-    boolean active)
+    boolean active,
+    boolean mustChangePassword)
     implements UserDetails {
+
+  /** Convenience for call sites that do not care about the forced-change flag. */
+  public AccountUserDetails(
+      UUID id,
+      String email,
+      String passwordHash,
+      String displayName,
+      String department,
+      String seniority,
+      boolean active) {
+    this(id, email, passwordHash, displayName, department, seniority, active, false);
+  }
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {

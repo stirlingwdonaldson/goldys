@@ -29,6 +29,7 @@ public class AccountUserDetailsService implements UserDetailsService {
         account.displayName(),
         account.department(),
         account.seniority(),
-        account.active());
+        account.active(),
+        account.mustChangePassword());
   }
 }
