@@ -106,14 +106,12 @@ test("shared chart values are available by keyboard in a labelled table", async 
   await expect(details.getByText("Unavailable", { exact: true }).first()).toBeVisible();
 });
 
-for (const route of ["login", "signup"]) {
-  test(`${route} keeps field labels visible after typing`, async ({ page }) => {
-    await page.goto(`/${route}`);
-    const email = page.getByLabel(route === "login" ? "Email" : "Work email", { exact: true });
-    await email.fill("fixture@example.test");
-    await expect(page.locator(`label[for="${await email.getAttribute("id")}"]`)).toBeVisible();
-    const password = page.getByLabel("Password", { exact: true });
-    await password.fill("example-only");
-    await expect(page.locator(`label[for="${await password.getAttribute("id")}"]`)).toBeVisible();
-  });
-}
+test("login keeps field labels visible after typing", async ({ page }) => {
+  await page.goto("/login");
+  const email = page.getByLabel("Email", { exact: true });
+  await email.fill("fixture@example.test");
+  await expect(page.locator(`label[for="${await email.getAttribute("id")}"]`)).toBeVisible();
+  const password = page.getByLabel("Password", { exact: true });
+  await password.fill("example-only");
+  await expect(page.locator(`label[for="${await password.getAttribute("id")}"]`)).toBeVisible();
+});

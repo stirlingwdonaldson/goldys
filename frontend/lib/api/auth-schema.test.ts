@@ -6,7 +6,7 @@ it("accepts Spring StaffProfileSummary without inventing id", () => {
   expect(currentUserSchema.parse(profile)).toEqual(profile);
 });
 it("defaults the forced-change flag when an older payload omits it", () => {
-  const { mustChangePassword, ...legacy } = profile;
+  const legacy = { displayName: profile.displayName, department: profile.department, seniority: profile.seniority };
   expect(currentUserSchema.parse(legacy).mustChangePassword).toBe(false);
   expect(currentUserSchema.parse({ ...legacy, mustChangePassword: true }).mustChangePassword).toBe(true);
 });
