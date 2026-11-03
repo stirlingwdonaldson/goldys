@@ -5,11 +5,14 @@ import type {
   ReportingMapping,
   ReportingMappingPreview,
   ClassifiedWasteLine,
+  ReportingReviewQueue,
 } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InlineError } from "@/components/states/inline-error";
 import { formatNumber } from "@/lib/format";
+
+import { ReportingReviewQueuePanel } from "./reporting-review-queue";
 
 const choices = {
   scope: [
@@ -69,6 +72,22 @@ export function ReportingMappingEditor() {
     lifecycle: "UNKNOWN",
     reason: "",
   });
+  const [queue, setQueue] = useState<ReportingReviewQueue | null>(null);
+  const [queueFrom, setQueueFrom] = useState(
+    new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10),
+  );
+  const [queueTo, setQueueTo] = useState(today);
+  const [queueDomain, setQueueDomain] = useState<
+    "SALES" | "SALES_BASIS" | "WASTAGE"
+  >("SALES");
+  const [queuePage, setQueuePage] = useState(0);
+  async function loadQueue(next: number) {
+    setQueue(null);
+    setQueue(
+      await api.getReportingReviewQueue(queueDomain, queueFrom, queueTo, next),
+    );
+    setQueuePage(next);
+  }
   const draftRevision = useRef(0);
   const [through, setThrough] = useState(today);
   const [preview, setPreview] = useState<ReportingMappingPreview | null>(null);
@@ -115,6 +134,41 @@ export function ReportingMappingEditor() {
         reporting from that date. Keep uncertain identities, café membership and
         lifecycle unknown.
       </p>
+      <ReportingReviewQueuePanel
+        data={queue}
+        busy={busy}
+        from={queueFrom}
+        to={queueTo}
+        domain={queueDomain}
+        page={queuePage}
+        onRange={(from, to) => {
+          setQueueFrom(from);
+          setQueueTo(to);
+          setQueue(null);
+          setQueuePage(0);
+        }}
+        onDomain={(domain) => {
+          setQueueDomain(domain);
+          setQueue(null);
+          setQueuePage(0);
+        }}
+        onLoad={(page) => void act(() => loadQueue(page))}
+        onSelect={(item) => {
+          change({
+            scope: item.scope,
+            sourceSystem: item.sourceSystem,
+            entityKey: item.entityKey,
+            effectiveFrom: item.firstDate ?? queueFrom,
+            salesNature: "UNKNOWN",
+            stockBucket: "UNKNOWN",
+            itemRole: "UNKNOWN",
+            businessArea: "UNKNOWN",
+            lifecycle: "UNKNOWN",
+            reason: "",
+          });
+          setThrough(queueTo);
+        }}
+      />
       <div className="grid gap-3 md:grid-cols-3">
         {Object.entries(choices).map(([key, values]) => (
           <label key={key} className="flex flex-col gap-1 text-sm">
@@ -258,6 +312,15 @@ export function ReportingMappingEditor() {
                 setMessage(
                   "Reviewed revision saved. Earlier revisions remain in history.",
                 );
+                if (queue) await loadQueue(0);
+                if (lines)
+                  setLines(
+                    await api.getClassifiedWastage(
+                      mapping.effectiveFrom,
+                      through,
+                      page,
+                    ),
+                  );
                 if (history)
                   setHistory(await api.getReportingMappings(through));
               })

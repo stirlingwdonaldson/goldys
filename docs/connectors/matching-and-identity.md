@@ -580,3 +580,29 @@ requires complete matching observations in one non-null native site. No residual
 The owner-approved pet-treat policy is OTHER (recipes 371/372 corroborate Dog Street inventory);
 this does not decide stock bucket, business area or lifecycle. Cafe membership and retirement
 remain independent and unknown without further business evidence.
+
+### Ongoing reporting review (3 November 2026)
+
+Products → Reporting mappings adds an explicit owner review queue over resolved projections,
+with 92-day maximum ranges and pages of at most 200 identities (the UI requests 50). Sales
+rank by the sum of absolute eligible unclassified ex-GST observations, with a separate
+missing-tax/unresolved view ranked by known gross. Native CTB site/code identities stay
+separate; if a whole alias is held by partial/mixed/UNKNOWN source policies, every contributing
+identity remains held. No native amount qualifies when the selected alias fails the existing
+gross/quantity/tax checks. Zero-value unknown modifiers remain visible and unclassified.
+
+Wastage lists exact source lines and their recorded recipe IDs, historical quantity/cost,
+units, every recorded reason, and current recipe evidence with an explicit qualification.
+The current canonical schema rejects undated lines; these remain source-ingestion failures
+for Data health review. Missing report dates and costs stay missing.
+An owner may prefill the editor with the exact line or recorded recipe, then explicitly review
+dimensions, effective date, reason, impact preview and approval. Saving refreshes queue/coverage.
+Exact-line UNKNOWN withdrawals still override recipe decisions. POS category corroboration by
+name and CTB code-only recipe links are labelled evidence, never site/ID equivalence.
+
+Daily sales coverage reuses `ClassifiedSalesTotals` and the unchanged 95% rule. Wastage
+classification counts and recorded-reason counts are separate from sales coverage. Visible
+below-threshold dates are the alert mechanism; this introduces no background monitor,
+notifications, automatic classification or model approval. The queue requires all existing
+category, reconciliation sales, inventory stock and inventory cost READ grants before any
+read. See the [curation evidence](../audits/food-beverage-reporting-2026-11-03/ongoing-review/README.md).

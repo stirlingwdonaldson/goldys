@@ -12,10 +12,127 @@ const api = vi.hoisted(() => ({
   saveReportingMapping: vi.fn(),
   getReportingMappings: vi.fn(),
   getClassifiedWastage: vi.fn(),
+  getReportingReviewQueue: vi.fn(),
 }));
 vi.mock("@/lib/demo-mode", () => ({ useApi: () => api }));
 describe("reporting mapping review", () => {
   beforeEach(() => vi.resetAllMocks());
+  it("selects an exact queue identity, requires fresh approval and refreshes coverage after save", async () => {
+    const item = {
+      scope: "CTB_PRODUCT",
+      sourceSystem: "CTB",
+      entityKey: "site:0:code:8:20161229",
+      names: "Gnocchi - Pumpkin Butter Sage",
+      firstDate: "2026-11-02",
+      lastDate: "2026-11-02",
+      observations: 1,
+      knownExposure: 788.6411,
+      missingBasisGross: null,
+      missingBasis: 0,
+      unresolved: 0,
+      policies: "No applicable policy",
+      holds: "No applicable policy",
+      evidence: "Exact site/code; POS Weekly Food Specials",
+    };
+    const queue = {
+      items: [item],
+      hasMore: false,
+      days: [
+        {
+          date: "2026-11-02",
+          salesCoverage: 0.87,
+          unclassifiedSales: 2107.5662,
+          missingTax: 0,
+          unresolved: 0,
+          belowThreshold: true,
+        },
+      ],
+      wastage: {
+        lines: 2,
+        classifiedLines: 0,
+        reasonLines: 2,
+        missingCost: 0,
+        missingDate: 0,
+        knownValue: 5.93,
+        unknownValue: 5.93,
+      },
+    };
+    api.getReportingReviewQueue
+      .mockResolvedValueOnce(queue)
+      .mockResolvedValue({ ...queue, items: [], days: [] });
+    api.previewReportingMapping.mockImplementation(async (mapping) => ({
+      mapping,
+      reviewable: true,
+      evidence: "Reviewed exact identity",
+      notes: [],
+      observedRows: 1,
+      knownAmount: 866.7919,
+      through: "2026-11-03",
+    }));
+    api.saveReportingMapping.mockResolvedValue(undefined);
+    render(<ReportingMappingEditor />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Refresh review queue" }),
+    );
+    expect(await screen.findByText(/Below 95%/)).toBeInTheDocument();
+    const select = screen.getByRole("button", {
+      name: "Review site:0:code:8:20161229",
+    });
+    fireEvent.click(select);
+    expect(screen.getByLabelText(/Exact identity/)).toHaveValue(item.entityKey);
+    expect(screen.getByLabelText("Effective from")).toHaveValue("2026-11-02");
+    expect(screen.getByLabelText("Sales nature")).toHaveValue("UNKNOWN");
+    expect(screen.getByLabelText("Review reason and evidence")).toHaveValue("");
+    fireEvent.change(screen.getByLabelText("Review reason and evidence"), {
+      target: { value: "Evidence reviewed; date restates 2 November" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Preview mapping impact" }),
+    );
+    await screen.findByRole("button", { name: "Approve reviewed mapping" });
+    expect(api.saveReportingMapping).not.toHaveBeenCalled();
+    fireEvent.click(select);
+    expect(
+      screen.queryByRole("button", { name: "Approve reviewed mapping" }),
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Review reason and evidence"), {
+      target: { value: "Confirmed food from source evidence" },
+    });
+    fireEvent.change(screen.getByLabelText("Sales nature"), {
+      target: { value: "FOOD" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Preview mapping impact" }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Approve reviewed mapping" }),
+    );
+    expect(
+      await screen.findByText("No unmapped or held identities on this page."),
+    ).toBeInTheDocument();
+    expect(api.getReportingReviewQueue).toHaveBeenCalledTimes(2);
+    expect(api.saveReportingMapping).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityKey: item.entityKey,
+        salesNature: "FOOD",
+        businessArea: "UNKNOWN",
+      }),
+    );
+  });
+
+  it("shows explicit queue permission failures without presenting an empty queue", async () => {
+    api.getReportingReviewQueue.mockRejectedValue(
+      new Error("Not permitted: inventory.cost"),
+    );
+    render(<ReportingMappingEditor />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Refresh review queue" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("Not permitted");
+    expect(
+      screen.queryByText("No unmapped or held identities on this page."),
+    ).not.toBeInTheDocument();
+  });
   it("previews an explicit dated decision, invalidates changed drafts and saves only on approval", async () => {
     api.previewReportingMapping.mockImplementation(async (mapping) => ({
       mapping,

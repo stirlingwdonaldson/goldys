@@ -1,0 +1,43 @@
+product_number,item_name,categories,min,max,count
+,B - Stargazer 'Tupelo' Gris 2025,WINE BOTTLE,2026-10-09,2026-11-02,6
+,Dill Aioli,Uncategorised,2023-04-20,2026-11-02,5369
+,Dill Aioli - Side,FOOD MENU,2023-08-12,2026-11-01,331
+,Gnocchi - Pumpkin Butter Sage,Uncategorised | Weekly Food Specials,2024-08-19,2026-11-02,340
+recipe_id,name,description,stock_id
+52,Moorak Blanc de Blanc btl,Moorak Blanc De Blancs NV,2029
+175,Glenfiddich,GLENFIDDICH 12 YEAR OLD : 700 ml,761
+185,Makers Mark,MAKERS MARK BOURBON : 700 ml,784
+198,Disaronno Amaretto ,DISARONNO AMARETTO : 700 ml,758
+316,Four Pillars Martini,FOUR PILLARS RARE DRY GIN : 700 ml,737
+316,Four Pillars Martini,DOLIN VERMOUTH DRY : 750 ml,759
+316,Four Pillars Martini,Olives Queen Green Pitted 2kg,677
+330,Manhattan,JIM BEAM WHITE BOURBON : 700 ml,2301
+330,Manhattan,DOLIN VERMOUTH ROUGE RED : 750 ml,734
+330,Manhattan,Angostura Bitters 473ml,683
+330,Manhattan,Maraschino Cherries 1.8 kg Jar,686
+410,Gnocchi Bolognese,CHIVES X BUNCH,813
+410,Gnocchi Bolognese,Grana Padano QUARTER  App 4.5k,1964
+570,Chalmers Vermentino 2025 BTL,25 CHALMERS VERMENTINO,2866
+666,Tuna Tostada ,Tortilla White Corn 14cm 46s (10) La,2920
+666,Tuna Tostada ,LEBANESE CUCUMBERS X BOX,874
+666,Tuna Tostada ,Sesame Seeds Black 1K (12),2177
+666,Tuna Tostada ,Loin - Tuna Blue Fin Skin On,3092
+name,category,source_system,source_product_id,sku
+B - Stargazer 'Tupelo' Gris 2025,,CTB,,
+Dill Aioli - Side,,CTB,,
+Gnocchi - 4 Cheese Rocket & Pear,,CTB,,
+Gnocchi - Alfredo,,CTB,,
+Gnocchi - Alla Norma,,CTB,,
+Gnocchi - Bolognese,,CTB,,
+Gnocchi - Chorizo,,CTB,,
+Gnocchi - Funghi,,CTB,,
+Gnocchi - Meatballs,,CTB,,
+Gnocchi - Pesto,,CTB,,
+Gnocchi - Prawn & Vodka,,CTB,,
+Gnocchi - Puttanesca,,CTB,,
+Gnocchi - Ragu,,CTB,,
+Kids Gnocchi,,CTB,,
+Dill Aioli,,CTB,,
+Gnocchi - Pumpkin Butter Sage,,CTB,,
+New Kids Gnocchi Bolognese,,CTB,,
+New Kids Gnocchi Napoli,,CTB,,

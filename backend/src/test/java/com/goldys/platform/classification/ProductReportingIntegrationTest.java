@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class ProductReportingIntegrationTest {
   @Autowired JdbcTemplate jdbc;
+  @Autowired com.goldys.platform.semantic.ReportingReviewQuery review;
+  @Autowired com.goldys.platform.application.ProductReportingReviewService reviewService;
   @Autowired CanonicalWastageIngest ingest;
   @Autowired ClassifiedWastageQuery query;
   @Autowired EntityManager em;
@@ -36,6 +38,10 @@ class ProductReportingIntegrationTest {
   @Autowired ProductClassificationService classification;
 
   @Autowired com.goldys.platform.canonical.ClassificationEvidenceQuery evidence;
+  private final com.goldys.platform.auth.UserRole reviewOwner =
+      new com.goldys.platform.auth.UserRole(
+          new com.goldys.platform.auth.DepartmentCode("ALL"),
+          new com.goldys.platform.auth.SeniorityCode("OWNER"));
   private final LocalDate date = LocalDate.of(2026, 10, 1);
 
   @Test
@@ -126,6 +132,15 @@ class ProductReportingIntegrationTest {
     assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("FOOD");
     mapping("PRODUCT_NAME", "RESOLVED", "historical cafe steak", date, "UNKNOWN", "UNKNOWN");
     assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("UNKNOWN");
+    assertThat(
+            review.items(
+                com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES, date, date, 0, 50))
+        .singleElement()
+        .satisfies(
+            item -> {
+              assertThat(item.policies()).contains("UNKNOWN");
+              assertThat(item.holds()).contains("UNKNOWN withdrawal");
+            });
     jdbc.update(
         "update resolved_product_sales set authoritative_source='LIGHTSPEED' where product_name_key='historical cafe steak'");
     assertThat(reportingSales.sales(date, date).getFirst().net()).isNull();
@@ -156,7 +171,32 @@ class ProductReportingIntegrationTest {
     }
     mapping("CTB_PRODUCT", "CTB", "site:-1:code:5:STEAK", date.minusDays(1), "BEVERAGE", "UNKNOWN");
     mapping("CTB_PRODUCT", "CTB", "site:0:code:5:STEAK", date.plusDays(1), "FOOD", "UNKNOWN");
-    assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("UNKNOWN");
+    var initialQueue =
+        review.items(
+            com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES, date, date, 0, 50);
+    assertThat(initialQueue)
+        .singleElement()
+        .satisfies(
+            item -> {
+              assertThat(item.entityKey()).isEqualTo("site:0:code:5:STEAK");
+              assertThat(item.knownExposure()).isEqualByComparingTo("100");
+              assertThat(item.observations()).isEqualTo(1);
+              assertThat(item.holds()).contains("No applicable");
+            });
+    jdbc.update(
+        "update source_product_sale_fact set amount=-110,tax_amount=-10,quantity_sold=-2 where source_record_ref='scope-test:0'");
+    jdbc.update(
+        "update resolved_product_sales set amount=-110,quantity_sold=-2 where trading_date=?",
+        date);
+    assertThat(
+            review.items(
+                com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES, date, date, 0, 50))
+        .singleElement()
+        .satisfies(item -> assertThat(item.knownExposure()).isEqualByComparingTo("100"));
+    jdbc.update(
+        "update source_product_sale_fact set amount=110,tax_amount=10,quantity_sold=2 where source_record_ref='scope-test:0'");
+    jdbc.update(
+        "update resolved_product_sales set amount=110,quantity_sold=2 where trading_date=?", date);
     var owner =
         new com.goldys.platform.auth.UserRole(
             new com.goldys.platform.auth.DepartmentCode("ALL"),
@@ -180,11 +220,29 @@ class ProductReportingIntegrationTest {
     assertThat(preview.knownAmount()).isEqualByComparingTo("110");
     mappingService.append(owner, "reviewer", decision);
     assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("FOOD");
+    assertThat(
+            review.items(
+                com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES, date, date, 0, 50))
+        .isEmpty();
     assertThat(reportingSales.sales(date.minusDays(1), date.minusDays(1)).getFirst().nature())
         .isEqualTo("BEVERAGE");
     jdbc.update(
         "update source_product_sale_fact set tax_amount=null where source_record_ref='scope-test:0'");
     assertThat(reportingSales.sales(date, date).getFirst().net()).isNull();
+    assertThat(
+            review.items(
+                com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES_BASIS,
+                date,
+                date,
+                0,
+                50))
+        .singleElement()
+        .satisfies(
+            item -> {
+              assertThat(item.knownExposure()).isNull();
+              assertThat(item.missingBasis()).isEqualTo(1);
+              assertThat(item.missingBasisGross()).isEqualByComparingTo("110");
+            });
     jdbc.update(
         "update source_product_sale_fact set tax_amount=10 where source_record_ref='scope-test:0'");
     jdbc.update(
@@ -207,6 +265,18 @@ class ProductReportingIntegrationTest {
     assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("UNKNOWN");
     mapping("CTB_PRODUCT", "CTB", "site:0:code:6:SECOND", date, "UNKNOWN", "UNKNOWN");
     assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("UNKNOWN");
+    var held =
+        review.items(
+            com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES, date, date, 0, 50);
+    assertThat(held).hasSize(2);
+    assertThat(held.getFirst().entityKey()).isEqualTo("site:0:code:5:STEAK");
+    assertThat(held.getFirst().knownExposure()).isEqualByComparingTo("100");
+    assertThat(held.get(1).knownExposure()).isEqualByComparingTo("50");
+    assertThat(held.get(1).holds()).contains("UNKNOWN withdrawal");
+    assertThat(
+            review.items(
+                com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES, date, date, 1, 1))
+        .containsExactly(held.get(1));
     jdbc.update(
         "update resolved_product_sales set authoritative_source='LIGHTSPEED' where trading_date=?",
         date);
@@ -247,6 +317,31 @@ class ProductReportingIntegrationTest {
             null,
             raw));
     em.flush();
+    var wasteQueue =
+        review.items(
+            com.goldys.platform.semantic.ReportingReviewQuery.Domain.WASTAGE, date, date, 0, 50);
+    assertThat(wasteQueue).hasSize(2);
+    assertThat(wasteQueue.getFirst().knownExposure()).isEqualByComparingTo("12.39");
+    assertThat(wasteQueue.get(1).knownExposure()).isNull();
+    assertThat(wasteQueue.get(1).missingBasis()).isEqualTo(1);
+    assertThat(wasteQueue.get(1).evidence()).contains("unrecorded", "unavailable");
+    var coverage = review.wasteCoverage(date, date);
+    assertThat(coverage.lines()).isEqualTo(2);
+    assertThat(coverage.missingCost()).isEqualTo(1);
+    assertThat(coverage.reasonLines()).isEqualTo(1);
+    var queue =
+        reviewService.queue(
+            reviewOwner,
+            com.goldys.platform.semantic.ReportingReviewQuery.Domain.WASTAGE,
+            date,
+            date,
+            0,
+            1);
+    assertThat(queue.hasMore()).isTrue();
+    assertThat(queue.items()).hasSize(1);
+    assertThat(queue.days())
+        .singleElement()
+        .satisfies(day -> assertThat(day.salesCoverage()).isNull());
     mapping("CTB_RECIPE", "CTB", "28", date, "BEVERAGE", "UNKNOWN");
     var rows = weeklyInventory.wastage(date, date);
     assertThat(rows).hasSize(2);
@@ -379,6 +474,253 @@ class ProductReportingIntegrationTest {
     assertThat(reread.contextSnapshot()).contains("historical cafe");
     assertThat(reread.proposalSnapshot()).contains("NEEDS_REVIEW");
     assertThat(reread.namingSnapshot()).isEqualTo("[]");
+  }
+
+  @Test
+  void unresolved_sales_and_unpriced_waste_remain_visible_without_inventing_exposure() {
+    var raw = raw();
+    jdbc.update(
+        """
+      insert into resolved_product_sales(trading_date,product_name_key,quantity_sold,amount,
+        resolution_type,authoritative_source,has_conflict,resolved_at)
+      values (?,'unresolved',null,null,'unresolved',null,true,now())
+      """,
+        date);
+    var rows =
+        review.items(
+            com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES_BASIS,
+            date,
+            date,
+            0,
+            50);
+    assertThat(rows)
+        .singleElement()
+        .satisfies(
+            item -> {
+              assertThat(item.scope()).isEqualTo("PRODUCT_NAME");
+              assertThat(item.unresolved()).isEqualTo(1);
+              assertThat(item.knownExposure()).isNull();
+              assertThat(item.missingBasisGross()).isNull();
+            });
+    ingest.record(
+        new WastageInput(
+            "CTB",
+            94001,
+            94002,
+            date,
+            "unknown recorded identity",
+            BigDecimal.ONE,
+            null,
+            null,
+            null,
+            "each",
+            null,
+            null,
+            raw));
+    em.flush();
+    var unpriced =
+        review.items(
+            com.goldys.platform.semantic.ReportingReviewQuery.Domain.WASTAGE, date, date, 0, 50);
+    assertThat(unpriced)
+        .singleElement()
+        .satisfies(
+            item -> {
+              assertThat(item.firstDate()).isEqualTo(date);
+              assertThat(item.lastDate()).isEqualTo(date);
+              assertThat(item.unresolved()).isZero();
+              assertThat(item.missingBasis()).isEqualTo(1);
+              assertThat(item.knownExposure()).isNull();
+            });
+    var coverage = review.wasteCoverage(date, date);
+    assertThat(coverage.missingDate()).isZero();
+    assertThat(coverage.reasonLines()).isZero();
+    assertThat(coverage.unknownValue()).isNull();
+    assertThat(review.wasteCoverage(date.plusDays(1), date.plusDays(1)).knownValue()).isNull();
+  }
+
+  @Test
+  void real_second_november_queue_reproduces_exposure_and_curation_without_changing_threshold()
+      throws Exception {
+    var mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper()
+            .findAndRegisterModules()
+            .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    var sample =
+        mapper.readTree(
+            getClass().getResourceAsStream("/fixtures/ctb/reporting-review-2026-11-02.json"));
+    var raw = raw();
+    var day = LocalDate.of(2026, 11, 2);
+    var quantities = new java.util.HashMap<String, BigDecimal>();
+    for (var row : sample.get("native")) {
+      String key = com.goldys.platform.canonical.ProductNameKey.normalize(row.get("name").asText());
+      quantities.merge(key, row.get("quantity").decimalValue(), BigDecimal::add);
+      jdbc.update(
+          """
+        insert into source_product_sale_fact(id,logical_entity_id,source_system,source_record_ref,
+          raw_record_id,valid_from,recorded_at,trading_date,stock_code,product_name,quantity_sold,amount,tax_amount,site_number)
+        values (?,?,'CTB',?,?,now(),now(),?,?,?,?,?,?,?)
+        """,
+          UUID.randomUUID(),
+          UUID.randomUUID(),
+          row.get("ref").asText(),
+          raw,
+          day,
+          row.get("code").asText(),
+          row.get("name").asText(),
+          row.get("quantity").decimalValue(),
+          row.get("gross").decimalValue(),
+          row.get("tax").decimalValue(),
+          row.get("site").intValue());
+    }
+    for (var row : sample.get("sales")) {
+      jdbc.update(
+          """
+        insert into resolved_product_sales(trading_date,product_name_key,quantity_sold,amount,
+          resolution_type,authoritative_source,has_conflict,resolved_at)
+        values (?,?,?,?,'single',?,false,now())
+        """,
+          day,
+          row.get("product_name_key").asText(),
+          quantities.get(row.get("product_name_key").asText()),
+          row.get("gross_amount").decimalValue(),
+          row.get("authoritative_source").asText());
+    }
+    for (var row : sample.get("waste")) {
+      var ids = row.get("source_record_ref").asText().split(":");
+      ingest.record(
+          new WastageInput(
+              "CTB",
+              Integer.parseInt(ids[1]),
+              Integer.parseInt(ids[2]),
+              day,
+              row.get("product_name_key").asText(),
+              row.get("quantity").decimalValue(),
+              row.get("source_unit_cost").decimalValue(),
+              row.get("reason").isNull() ? null : row.get("reason").asText(),
+              null,
+              row.get("unit").isNull() ? null : row.get("unit").asText(),
+              row.get("unit_size").isNull() ? null : row.get("unit_size").asText(),
+              row.get("recipe_id").isNull() ? null : row.get("recipe_id").intValue(),
+              raw));
+    }
+    em.flush();
+    var newPolicies = new java.util.ArrayList<com.fasterxml.jackson.databind.JsonNode>();
+    for (var row : sample.get("policies")) {
+      if (row.get("effective_from").asText().equals("2026-11-02")
+          && row.get("reason").asText().startsWith("Owner-authorized")) {
+        newPolicies.add(row);
+        continue;
+      }
+      mapping(
+          row.get("scope").asText(),
+          row.get("source_system").asText(),
+          row.get("entity_key").asText(),
+          LocalDate.parse(row.get("effective_from").asText()),
+          row.get("sales_nature").asText(),
+          row.get("stock_bucket").asText());
+    }
+    var before =
+        reviewService.queue(
+            reviewOwner,
+            com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES,
+            day,
+            day,
+            0,
+            50);
+    assertThat(before.items().getFirst().entityKey()).isEqualTo("site:0:code:8:20161229");
+    assertThat(before.items().getFirst().knownExposure()).isEqualByComparingTo("788.6411");
+    assertThat(
+            before.items().stream()
+                .map(com.goldys.platform.semantic.ReportingReviewQuery.Item::knownExposure)
+                .reduce(BigDecimal.ZERO, BigDecimal::add))
+        .isEqualByComparingTo("2107.5662");
+    assertThat(before.days().getFirst().salesCoverage()).isEqualByComparingTo("0.87284597");
+    assertThat(before.days().getFirst().belowThreshold()).isTrue();
+    assertThat(before.wastage().unknownValue()).isEqualByComparingTo("5.93");
+    assertThat(newPolicies).hasSize(14);
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("build/review-queue-before.json"), mapper.writeValueAsString(before));
+    for (var row : newPolicies)
+      mapping(
+          row.get("scope").asText(),
+          row.get("source_system").asText(),
+          row.get("entity_key").asText(),
+          day,
+          row.get("sales_nature").asText(),
+          "UNKNOWN");
+    assertThat(
+            reviewService
+                .queue(
+                    reviewOwner,
+                    com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES,
+                    day,
+                    day,
+                    0,
+                    50)
+                .days()
+                .getFirst()
+                .unclassifiedSales())
+        .isEqualByComparingTo("9.24");
+    // Explicit owner confirmation supplies the one business fact absent from source identity links.
+    mapping("CTB_PRODUCT", "CTB", "site:0:code:8:22510826", day, "FOOD", "UNKNOWN");
+    var after =
+        reviewService.queue(
+            reviewOwner,
+            com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES,
+            day,
+            day,
+            0,
+            50);
+    assertThat(after.days().getFirst().salesCoverage()).isEqualByComparingTo("1");
+    assertThat(after.days().getFirst().unclassifiedSales()).isEqualByComparingTo("0");
+    assertThat(after.items()).allSatisfy(item -> assertThat(item.knownExposure()).isZero());
+    assertThat(after.wastage().unknownValue()).isEqualByComparingTo("0");
+    assertThat(
+            review.items(
+                com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES_BASIS,
+                day,
+                day,
+                0,
+                50))
+        .isEmpty();
+    java.nio.file.Files.writeString(
+        java.nio.file.Path.of("build/review-queue-after.json"), mapper.writeValueAsString(after));
+    jdbc.update(
+        """
+      insert into resolved_product_sales(trading_date,product_name_key,quantity_sold,amount,
+        resolution_type,authoritative_source,has_conflict,resolved_at)
+      values (?,'gnocchi pumpkin butter sage',1,110,'single','CTB',false,now())
+      """,
+        day.plusDays(1));
+    jdbc.update(
+        """
+      insert into source_product_sale_fact(id,logical_entity_id,source_system,source_record_ref,
+        raw_record_id,valid_from,recorded_at,trading_date,stock_code,product_name,quantity_sold,amount,tax_amount,site_number)
+      values (?,?,'CTB','future-withdrawal',?,now(),now(),?,'20161229','Gnocchi - Pumpkin Butter Sage',1,110,10,0)
+      """,
+        UUID.randomUUID(),
+        UUID.randomUUID(),
+        raw,
+        day.plusDays(1));
+    mapping("CTB_PRODUCT", "CTB", "site:0:code:8:20161229", day.plusDays(1), "UNKNOWN", "UNKNOWN");
+    var changed =
+        review
+            .items(
+                com.goldys.platform.semantic.ReportingReviewQuery.Domain.SALES,
+                day,
+                day.plusDays(1),
+                0,
+                50)
+            .stream()
+            .filter(item -> item.entityKey().equals("site:0:code:8:20161229"))
+            .findFirst()
+            .orElseThrow();
+    assertThat(changed.firstDate()).isEqualTo(day);
+    assertThat(changed.lastDate()).isEqualTo(day.plusDays(1));
+    assertThat(changed.observations()).isEqualTo(2);
+    assertThat(changed.knownExposure()).isEqualByComparingTo("100");
+    assertThat(changed.policies())
+        .contains("FOOD", "UNKNOWN", day.toString(), day.plusDays(1).toString());
   }
 
   private void mapping(

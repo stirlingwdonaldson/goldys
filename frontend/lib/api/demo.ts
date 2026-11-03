@@ -2235,6 +2235,32 @@ export const demoApi: Api = {
     return demoRecipeIngredients[recipeId] ?? [];
   },
 
+  async getReportingReviewQueue(domain, from, to, page) {
+    await delay(300);
+    const validDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date) && Number.isFinite(Date.parse(date)) && new Date(date).toISOString().slice(0,10) === date;
+    if (!validDate(from) || !validDate(to) || to < from || (Date.parse(to)-Date.parse(from))/86400000 > 91 || !Number.isInteger(page) || page < 0 || page > 10000)
+      throw new ApiError("VALIDATION_FAILED", "Use an ordered range up to 92 days and page 0–10000");
+    const latest = (scope: string, key: string) => demoReportingMappings.slice().reverse()
+      .filter(m => m.scope === scope && m.entityKey === key && m.effectiveFrom <= from)
+      .sort((a,b)=>b.effectiveFrom.localeCompare(a.effectiveFrom)).at(0);
+    const salePolicy = latest("CTB_PRODUCT","site:0:code:8:20161229");
+    const wastePolicy = latest("WASTE_LINE","wastage:1:1") ?? latest("CTB_RECIPE","388");
+    const saleClassified = !!salePolicy && salePolicy.salesNature !== "UNKNOWN";
+    const wasteClassified = !!wastePolicy && wastePolicy.salesNature !== "UNKNOWN";
+    const isWaste = domain === "WASTAGE", isBasis = domain === "SALES_BASIS";
+    const policy = isWaste ? wastePolicy : isBasis ? undefined : salePolicy;
+    const item = {scope: isWaste ? "WASTE_LINE" as const : "CTB_PRODUCT" as const,
+      sourceSystem: "CTB" as const, entityKey: isWaste ? "wastage:1:1" : isBasis ? "site:0:code:8:99999999" : "site:0:code:8:20161229",
+      recipeId: isWaste ? 388 : null, names: isWaste ? "DEMO unknown recorded item" : isBasis ? "DEMO missing-tax product" : "DEMO Gnocchi - Pumpkin Butter Sage",
+      firstDate: from, lastDate: to, observations: 1, knownExposure: isWaste || isBasis ? null : 788.6411,
+      missingBasisGross: isBasis ? 110 : null, missingBasis: isWaste || isBasis ? 1 : 0, unresolved: 0,
+      policies: policy ? `${policy.scope} ${policy.salesNature} from ${policy.effectiveFrom}: ${policy.reason}` : "No applicable policy",
+      holds: isWaste ? "Missing historical cost" : isBasis ? "Missing tax observation" : policy ? "Explicit UNKNOWN withdrawal" : "No applicable policy",
+      evidence: "DEMO exact observed identity; recipe evidence unavailable. Historical cost and tax basis unknown."};
+    return {items: page === 0 && (isWaste || isBasis || !saleClassified) ? [item] : [], hasMore: false,
+      days: [{date: from, salesCoverage: saleClassified ? 1 : 0.87, unclassifiedSales: saleClassified ? 0 : 788.6411, missingTax: 1, unresolved: 0, belowThreshold: !saleClassified}],
+      wastage: {lines: 1, classifiedLines: wasteClassified ? 1 : 0, reasonLines: 0, missingCost: 1, missingDate: 0, knownValue: null, unknownValue: null}};
+  },
   async getReportingMappings(to) { return structuredClone(demoReportingMappings.filter(m => m.effectiveFrom <= to).slice().reverse()); },
   async previewReportingMapping(mapping, through) {
     const reviewable = !mapping.entityKey.includes("ambiguous");

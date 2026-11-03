@@ -1326,6 +1326,7 @@ export interface ClassifiedWasteLine {
 }
 
 export interface Api {
+  getReportingReviewQueue(domain: "SALES" | "SALES_BASIS" | "WASTAGE", from: string, to: string, page: number): Promise<ReportingReviewQueue>;
   getReportingMappings(to: string): Promise<ReportingMapping[]>;
   previewReportingMapping(mapping: ReportingMapping, through: string): Promise<ReportingMappingPreview>;
   saveReportingMapping(mapping: ReportingMapping): Promise<void>;
@@ -1988,4 +1989,18 @@ export interface RecipeDetails {
  collection?: { source:string; connector:string; lastRunAt:string | null; status:string } | null;
  collectionEnabled?: boolean;
  freshnessLimitSeconds?: number;
+}
+
+export interface ReportingReviewItem {
+  scope: ReportingMapping["scope"]; sourceSystem: ReportingMapping["sourceSystem"]; entityKey: string; names: string; recipeId: number | null;
+  firstDate: string | null; lastDate: string | null; observations: number;
+  knownExposure: number | null; missingBasisGross: number | null; missingBasis: number; unresolved: number;
+  policies: string; holds: string | null; evidence: string;
+}
+export interface ReportingReviewQueue {
+  items: ReportingReviewItem[]; hasMore: boolean;
+  days: {date: string; salesCoverage: number | null; unclassifiedSales: number | null;
+    missingTax: number; unresolved: number; belowThreshold: boolean}[];
+  wastage: {lines: number; classifiedLines: number; reasonLines: number; missingCost: number;
+    missingDate: number; knownValue: number | null; unknownValue: number | null};
 }

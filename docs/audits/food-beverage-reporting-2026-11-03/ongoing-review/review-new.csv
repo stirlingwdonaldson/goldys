@@ -1,0 +1,51 @@
+trading_date,count,net,unknown
+2026-10-26,139,10669.7076,6.9300
+2026-10-27,111,7815.3400,9.2400
+2026-10-28,129,18169.4200,2.3100
+2026-10-29,126,13155.8074,4.6200
+2026-10-30,177,33205.5719,11.5500
+2026-10-31,195,37791.5076,20.7900
+2026-11-01,157,20720.0574,27.2700
+2026-11-02,154,16587.6462,2107.5662
+trading_date,product_name_key,gross_amount,net_amount,authoritative_source,site_number,stock_code,product_name,raw_record_id,source_record_ref
+2026-11-02,gnocchi pumpkin butter sage,866.7919,788.6411,CTB,0,20161229,Gnocchi - Pumpkin Butter Sage,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:20161229@2026-11-02:13
+2026-11-02,gnocchi bolognese,728.9170,663.2851,CTB,0,21162117,Gnocchi - Bolognese,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:21162117@2026-11-02:18
+2026-11-02,fish tostada,182.3800,165.7500,CTB,0,23673809,Fish Tostada,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:23673809@2026-11-02:37
+2026-11-02,four pillars gin martini,127.0500,115.5200,CTB,0,19989720,Four Pillars Gin Martini,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:19989720@2026-11-02:122
+2026-11-02,b moorak blanc de blanc,96.0000,87.2700,CTB,0,22857471,"B - Moorak, Blanc de Blanc",3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:22857471@2026-11-02:134
+2026-11-02,glenfiddich 30ml,90.0000,81.8400,CTB,0,12027390,Glenfiddich - 30ml,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:12027390@2026-11-02:65
+2026-11-02,b stargazer tupelo gris 2025,85.0000,77.2700,CTB,0,23643649,B - Stargazer 'Tupelo' Gris 2025,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:23643649@2026-11-02:151
+2026-11-02,b chalmers vermentino 2025,76.2400,69.3100,CTB,0,23562304,B - Chalmers Vermentino 2025,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:23562304@2026-11-02:146
+2026-11-02,manhattan,24.4000,22.1800,CTB,0,17878130,Manhattan,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:17878130@2026-11-02:110
+2026-11-02,makers mark 30ml,14.2300,12.9400,CTB,0,12027397,Makers Mark - 30ml,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:12027397@2026-11-02:67
+2026-11-02,amaretto 30ml,12.2000,11.0900,CTB,0,17914368,Amaretto - 30ml,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:17914368@2026-11-02:111
+2026-11-02,dill aioli,10.1600,9.2400,CTB,0,22510826,Dill Aioli,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:22510826@2026-11-02:27
+2026-11-02,red wine jus side,3.5600,3.2300,CTB,0,20824947,Red Wine Jus - Side,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:20824947@2026-11-02:17
+2026-11-02,no parma sauce,0.0000,0.0000,CTB,0,15866620,No Parma Sauce,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:15866620@2026-11-02:3
+2026-11-02,no salad,0.0000,0.0000,CTB,0,15995858,No Salad,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:15995858@2026-11-02:6
+2026-11-02,on the rocks,0.0000,0.0000,CTB,0,12026717,On The Rocks,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:12026717@2026-11-02:62
+2026-11-02,regular cheese,0.0000,0.0000,CTB,0,19921137,Regular Cheese,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:19921137@2026-11-02:12
+2026-11-02,soda mixer,0.0000,0.0000,CTB,0,12026550,Soda - Mixer,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:12026550@2026-11-02:61
+2026-11-02,tonic mixer,0.0000,0.0000,CTB,0,12026532,Tonic - Mixer,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:12026532@2026-11-02:60
+2026-11-02,vegan option,0.0000,0.0000,CTB,0,16457487,Vegan Option,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:16457487@2026-11-02:8
+2026-11-02,with olives,0.0000,0.0000,CTB,0,13320653,With Olives,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:13320653@2026-11-02:75
+2026-11-02,1 glass,0.0000,0.0000,CTB,0,11829588,1 Glass,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:11829588@2026-11-02:49
+2026-11-02,yes,0.0000,0.0000,CTB,0,23088943,Yes,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:23088943@2026-11-02:28
+2026-11-02,2 glasses,0.0000,0.0000,CTB,0,11829589,2 Glasses,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:11829589@2026-11-02:50
+2026-11-02,3 glasses,0.0000,0.0000,CTB,0,11829591,3 Glasses,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:11829591@2026-11-02:51
+2026-11-02,4 glasses,0.0000,0.0000,CTB,0,11829592,4 Glasses,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:11829592@2026-11-02:52
+2026-11-02,apple juice mixer,0.0000,0.0000,CTB,0,11823953,Apple Juice - Mixer,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:11823953@2026-11-02:48
+2026-11-02,dry ginger ale mixer,0.0000,0.0000,CTB,0,11867573,Dry Ginger Ale - Mixer,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:11867573@2026-11-02:54
+2026-11-02,lemonade mixer,0.0000,0.0000,CTB,0,12026491,Lemonade - Mixer,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:12026491@2026-11-02:59
+2026-11-02,lemon twist,0.0000,0.0000,CTB,0,11998349,Lemon Twist,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:11998349@2026-11-02:58
+2026-11-02,make it dirty,0.0000,0.0000,CTB,0,20391782,Make it Dirty,3551598c-72a6-4726-abdb-fdf51232f2ab,ctb-row:site:0:code:8:20391782@2026-11-02:125
+2026-11-02,no,0.0000,0.0000,CTB,0,23088945,No,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:23088945@2026-11-02:29
+2026-11-02,no cheese,0.0000,0.0000,CTB,0,15866622,No Cheese,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:15866622@2026-11-02:4
+2026-11-02,no glass,0.0000,0.0000,CTB,0,11829651,No Glass,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:11829651@2026-11-02:53
+2026-11-02,no ham,0.0000,0.0000,CTB,0,15866623,No Ham,8a1b869e-3aef-44e8-afbd-25f46f029ed6,ctb-row:site:0:code:8:15866623@2026-11-02:5
+source_system,source_record_ref,raw_record_id,wastage_date,product_name_key,quantity,source_unit_cost,unit,unit_size,reason,supplier_name,recipe_id,mapping_revision_id,mapping_scope,mapping_reason,sales_nature,stock_bucket,item_role,business_area,lifecycle
+CTB,wastage:171:914,ebd35b8c-282d-4e2c-bea1-2187f9652489,2026-11-02,the mill d sseldorf draught altbier pint,1.0000,3.4100,each,,Knock off,,655,,,,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN
+CTB,wastage:171:915,ebd35b8c-282d-4e2c-bea1-2187f9652489,2026-11-02,four pillars rare dry gin,1.0000,2.5200,each,,Knock off,,173,,,,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN
+recipe_id,name,recipe
+173,Four Pillars Rare Dry Gin,"{""gst"": 1.360000000000, ""name"": ""Four Pillars Rare Dry Gin"", ""unit"": ""each"", ""hints"": """", ""active"": true, ""locked"": false, ""barcode"": """", ""unit_id"": 7, ""valid_to"": null, ""folder_id"": 53, ""recipe_id"": 173, ""video_url"": """", ""total_cost"": 2.760000000000, ""valid_from"": ""2026-10-26T18:04:20.208533+00:00"", ""description"": """", ""labour_cost"": 0.000000000000, ""recipe_date"": ""17/06/2026"", ""recorded_at"": ""2026-10-26T18:04:20.867353+00:00"", ""gross_profit"": 10.880000000000, ""portion_size"": 1.000000000000, ""portion_count"": 1.000000000000, ""raw_record_id"": ""c901495c-77b3-492c-9215-a24f219aaa5a"", ""source_system"": ""CTB"", ""superseded_at"": null, ""created_by_name"": ""Mat Jones"", ""food_cost_limit"": 0.000000000000, ""production_item"": false, ""cost_per_portion"": 2.760000000000, ""menu_description"": """", ""difficulty_rating"": 0, ""food_cost_percent"": 20.230000000000, ""logical_entity_id"": ""f2d8e569-cc1d-3906-836e-3c17f937d0ff"", ""source_record_ref"": ""recipe-definition:173"", ""stock_category_id"": null, ""preparation_minutes"": 0.000000000000, ""stocks_raw_record_id"": ""05555b18-ebde-4be4-816b-043a9d1d3d7b"", ""usages_raw_record_id"": ""4d4d86fd-374f-4102-a257-e66f6e52c32e"", ""revenue_excluding_gst"": 13.640000000000, ""countable_on_stocktake"": false, ""selling_price_including_gst"": 15.000000000000, ""food_cost_limit_including_labour"": 0.000000000000, ""cost_per_portion_including_labour"": 2.760000000000}"
+655,The Mill 'Düsseldorf Draught' Altbier - Pint,"{""gst"": 1.450000000000, ""name"": ""The Mill 'Düsseldorf Draught' Altbier - Pint"", ""unit"": ""each"", ""hints"": """", ""active"": true, ""locked"": false, ""barcode"": """", ""unit_id"": 7, ""valid_to"": null, ""folder_id"": 163, ""recipe_id"": 655, ""video_url"": """", ""total_cost"": 3.410000000000, ""valid_from"": ""2026-10-26T18:44:48.798436+00:00"", ""description"": """", ""labour_cost"": 0.000000000000, ""recipe_date"": ""21/09/2026"", ""recorded_at"": ""2026-10-26T18:44:49.467822+00:00"", ""gross_profit"": 11.140000000000, ""portion_size"": 1.000000000000, ""portion_count"": 1.000000000000, ""raw_record_id"": ""2aa812cb-25ac-470b-a079-1b38f68f3cbd"", ""source_system"": ""CTB"", ""superseded_at"": null, ""created_by_name"": ""Mat Jones"", ""food_cost_limit"": 0.000000000000, ""production_item"": false, ""cost_per_portion"": 3.410000000000, ""menu_description"": """", ""difficulty_rating"": 0, ""food_cost_percent"": 23.440000000000, ""logical_entity_id"": ""633d15ce-0fd5-39ed-bbd6-f3e476a5b7ea"", ""source_record_ref"": ""recipe-definition:655"", ""stock_category_id"": null, ""preparation_minutes"": 0.000000000000, ""stocks_raw_record_id"": ""53804903-16b4-4d92-b403-e13b57b8c567"", ""usages_raw_record_id"": ""b65bba95-6062-4e27-9ded-543b47abab5d"", ""revenue_excluding_gst"": 14.550000000000, ""countable_on_stocktake"": false, ""selling_price_including_gst"": 16.000000000000, ""food_cost_limit_including_labour"": 0.000000000000, ""cost_per_portion_including_labour"": 3.410000000000}"

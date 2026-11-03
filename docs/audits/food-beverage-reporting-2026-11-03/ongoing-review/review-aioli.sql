@@ -1,0 +1,2 @@
+SELECT d.recipe_id,d.name,d.menu_description,d.hints,s.description,s.stock_id FROM canonical_recipe_definition d LEFT JOIN canonical_recipe_definition_stocks s ON s.snapshot_id=d.id WHERE d.superseded_at IS NULL AND lower(d.name) like '%aioli%' ORDER BY 1,s.line_order;
+SELECT item_name,category_name,count(*) FROM canonical_sale_item WHERE superseded_at IS NULL AND item_name='Dill Aioli' AND category_name<>'Uncategorised' GROUP BY 1,2;
