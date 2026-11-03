@@ -59,7 +59,8 @@ public class ProductReportingMappingService {
   public com.goldys.platform.semantic.ReportingMappingPreview preview(
       UserRole role, ProductReportingMapping m, LocalDate through) {
     permissions.require(role, new ResourceKey("products.category"), PermissionAction.READ);
-    boolean sales = m != null && m.scope() == Scope.PRODUCT_NAME;
+    boolean sales =
+        m != null && (m.scope() == Scope.PRODUCT_NAME || m.scope() == Scope.CTB_PRODUCT);
     if (sales)
       permissions.require(role, new ResourceKey("reconciliation.sales"), PermissionAction.READ);
     else {
@@ -73,7 +74,7 @@ public class ProductReportingMappingService {
       throw new IllegalArgumentException("Preview an ordered interval of at most one year");
     boolean reviewable;
     String evidence;
-    if (sales) {
+    if (m.scope() == Scope.PRODUCT_NAME) {
       var candidate = extractor.candidates().get(m.entityKey());
       reviewable =
           candidate != null && (!candidate.ambiguous() || m.salesNature() == SalesNature.UNKNOWN);
@@ -83,19 +84,7 @@ public class ProductReportingMappingService {
               : candidate.text() + "\nIdentity ambiguous: " + candidate.ambiguous();
     } else {
       reviewable = sourceIdentityExists(m);
-      evidence =
-          m.scope() == Scope.CTB_RECIPE && reviewable
-              ? jdbc.queryForObject(
-                  "select name || '; unit=' || coalesce(unit,'unknown') from canonical_recipe_definition where source_system='CTB' and recipe_id::text=? and superseded_at is null",
-                  String.class,
-                  m.entityKey())
-              : m.sourceSystem()
-                  + " / "
-                  + m.scope()
-                  + " / "
-                  + m.entityKey()
-                  + "; observed="
-                  + reviewable;
+      evidence = sourceEvidence(m, reviewable);
     }
     LocalDate next =
         jdbc.queryForObject(
@@ -108,7 +97,11 @@ public class ProductReportingMappingService {
     LocalDate end = next != null && !next.isAfter(through) ? next.minusDays(1) : through;
     String sql;
     Object[] args;
-    if (sales) {
+    if (m.scope() == Scope.CTB_PRODUCT) {
+      sql =
+          "select count(*) rows,sum(amount) amount from source_product_sale_fact where source_system='CTB' and superseded_at is null and 'site:' || site_number || ':code:' || length(stock_code) || ':' || stock_code=? and trading_date between ? and ?";
+      args = new Object[] {m.entityKey(), m.effectiveFrom(), end};
+    } else if (sales) {
       sql =
           "select count(*) rows,sum(gross_amount) amount from resolved_reporting_sales where product_name_key=? and trading_date between ? and ?";
       args = new Object[] {m.entityKey(), m.effectiveFrom(), end};
@@ -145,9 +138,30 @@ public class ProductReportingMappingService {
             "Evidence and model agreement require human review; no model proposal is approved here."));
   }
 
+  private String sourceEvidence(ProductReportingMapping m, boolean observed) {
+    if (!observed)
+      return m.sourceSystem() + " / " + m.scope() + " / " + m.entityKey() + "; observed=false";
+    return switch (m.scope()) {
+      case CTB_PRODUCT ->
+          jdbc.queryForObject(
+              "select string_agg(distinct product_name, ' | ') || '; native ' || ? || '; first=' || min(trading_date) || '; last=' || max(trading_date) from source_product_sale_fact where source_system='CTB' and superseded_at is null and 'site:' || site_number || ':code:' || length(stock_code) || ':' || stock_code=?",
+              String.class,
+              m.entityKey(),
+              m.entityKey());
+      case CTB_RECIPE ->
+          jdbc.queryForObject(
+              "select name || '; unit=' || coalesce(unit,'unknown') from canonical_recipe_definition where source_system='CTB' and recipe_id::text=? and superseded_at is null",
+              String.class,
+              m.entityKey());
+      default -> m.sourceSystem() + " / " + m.scope() + " / " + m.entityKey() + "; observed=true";
+    };
+  }
+
   private boolean sourceIdentityExists(ProductReportingMapping m) {
     String sql =
         switch (m.scope()) {
+          case CTB_PRODUCT ->
+              "select exists(select 1 from source_product_sale_fact where source_system='CTB' and superseded_at is null and site_number is not null and nullif(btrim(stock_code),'') is not null and 'site:' || site_number || ':code:' || length(stock_code) || ':' || stock_code=?)";
           case CTB_RECIPE ->
               "select exists(select 1 from canonical_recipe_definition where source_system='CTB' and recipe_id::text=? and superseded_at is null)";
           case CTB_STOCK ->
@@ -184,7 +198,7 @@ public class ProductReportingMappingService {
             "Product-name mappings require RESOLVED and an exact normalized alias");
     } else if (!m.sourceSystem().equals("CTB")) {
       throw new IllegalArgumentException(
-          "Only CTB source identities are supported for inventory mappings");
+          "Only CTB source identities are supported for source mappings");
     }
     if ((m.scope() == Scope.CTB_RECIPE || m.scope() == Scope.CTB_STOCK)
         && !m.entityKey().matches("[1-9][0-9]{0,9}"))

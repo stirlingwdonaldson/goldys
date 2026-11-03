@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useApi } from "@/lib/demo-mode";
 import type {
   ReportingMapping,
@@ -12,7 +12,13 @@ import { InlineError } from "@/components/states/inline-error";
 import { formatNumber } from "@/lib/format";
 
 const choices = {
-  scope: ["PRODUCT_NAME", "CTB_RECIPE", "CTB_STOCK", "WASTE_LINE"],
+  scope: [
+    "PRODUCT_NAME",
+    "CTB_PRODUCT",
+    "CTB_RECIPE",
+    "CTB_STOCK",
+    "WASTE_LINE",
+  ],
   salesNature: ["UNKNOWN", "FOOD", "BEVERAGE", "OTHER"],
   stockBucket: [
     "UNKNOWN",
@@ -63,6 +69,7 @@ export function ReportingMappingEditor() {
     lifecycle: "UNKNOWN",
     reason: "",
   });
+  const draftRevision = useRef(0);
   const [through, setThrough] = useState(today);
   const [preview, setPreview] = useState<ReportingMappingPreview | null>(null);
   const [history, setHistory] = useState<ReportingMapping[] | null>(null);
@@ -72,6 +79,7 @@ export function ReportingMappingEditor() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   function change(patch: Partial<ReportingMapping>) {
+    draftRevision.current++;
     setMapping((m) => ({ ...m, ...patch }));
     setPreview(null);
     setMessage("");
@@ -161,6 +169,7 @@ export function ReportingMappingEditor() {
             value={through}
             disabled={busy}
             onChange={(e) => {
+              draftRevision.current++;
               setThrough(e.target.value);
               setPreview(null);
             }}
@@ -181,9 +190,15 @@ export function ReportingMappingEditor() {
         <Button
           disabled={busy || !mapping.entityKey.trim() || !mapping.reason.trim()}
           onClick={() =>
-            void act(async () =>
-              setPreview(await api.previewReportingMapping(mapping, through)),
-            )
+            void act(async () => {
+              const revision = draftRevision.current;
+              setPreview(null);
+              const result = await api.previewReportingMapping(
+                mapping,
+                through,
+              );
+              if (revision === draftRevision.current) setPreview(result);
+            })
           }
         >
           Preview mapping impact
@@ -228,7 +243,9 @@ export function ReportingMappingEditor() {
             ))}
           </ul>
           <p>
-            Proposed decision: {preview.mapping.salesNature}, effective{" "}
+            Proposed identity: {preview.mapping.sourceSystem} /{" "}
+            {preview.mapping.scope} / {preview.mapping.entityKey}. Decision:{" "}
+            {preview.mapping.salesNature}, effective{" "}
             {preview.mapping.effectiveFrom}. Model agreement or confidence does
             not approve this decision.
           </p>
@@ -266,10 +283,8 @@ export function ReportingMappingEditor() {
                 <li key={i} className="border-b py-2">
                   <Button
                     variant="link"
-                    onClick={() => {
-                      setMapping(m);
-                      setPreview(null);
-                    }}
+                    disabled={busy}
+                    onClick={() => change(m)}
                   >
                     {m.scope}: {m.entityKey} — {m.salesNature} from{" "}
                     {m.effectiveFrom}
@@ -325,6 +340,7 @@ export function ReportingMappingEditor() {
                   <td className="p-2">
                     <Button
                       variant="link"
+                      disabled={busy}
                       onClick={() =>
                         change({
                           scope: "WASTE_LINE",
@@ -338,6 +354,7 @@ export function ReportingMappingEditor() {
                     {l.recipeId && l.recipeId > 0 ? (
                       <Button
                         variant="link"
+                        disabled={busy}
                         onClick={() =>
                           change({
                             scope: "CTB_RECIPE",

@@ -1,0 +1,17 @@
+trading_date,fetched_at,scheduled_query
+2026-10-26,2026-10-26 19:09:22.604435+00,"{""fields"": [""cashups.reconciliation_date"", ""cashups.reconciliation_end_date"", ""cashups.reconciliation_start_date"", ""revenue.total_tax"", ""revenue.total_revenue"", ""revenue.total_cost"", ""revenue.sales"", ""revenue.cost_inc_tax"", ""revenue.cost_ex_tax"", ""revenue.total_inc_tax"", ""revenue.variation_inc_tax"", ""revenue.variation_tax"", ""revenue.variation_ex_tax""], ""filters"": {""revenue.sale_date"": ""1 days ago for 1 days""}, ""timezone"": ""Australia/Sydney""}"
+2026-10-27,2026-10-27 19:09:57.678441+00,"{""fields"": [""cashups.reconciliation_date"", ""cashups.reconciliation_end_date"", ""cashups.reconciliation_start_date"", ""revenue.total_tax"", ""revenue.total_revenue"", ""revenue.total_cost"", ""revenue.sales"", ""revenue.cost_inc_tax"", ""revenue.cost_ex_tax"", ""revenue.total_inc_tax"", ""revenue.variation_inc_tax"", ""revenue.variation_tax"", ""revenue.variation_ex_tax""], ""filters"": {""revenue.sale_date"": ""1 days ago for 1 days""}, ""timezone"": ""Australia/Sydney""}"
+2026-10-28,2026-10-28 19:10:59.901838+00,"{""fields"": [""cashups.reconciliation_date"", ""cashups.reconciliation_end_date"", ""cashups.reconciliation_start_date"", ""revenue.total_tax"", ""revenue.total_revenue"", ""revenue.total_cost"", ""revenue.sales"", ""revenue.cost_inc_tax"", ""revenue.cost_ex_tax"", ""revenue.total_inc_tax"", ""revenue.variation_inc_tax"", ""revenue.variation_tax"", ""revenue.variation_ex_tax""], ""filters"": {""revenue.sale_date"": ""1 days ago for 1 days""}, ""timezone"": ""Australia/Sydney""}"
+2026-10-29,2026-10-29 19:09:59.413785+00,"{""fields"": [""cashups.reconciliation_date"", ""cashups.reconciliation_end_date"", ""cashups.reconciliation_start_date"", ""revenue.total_tax"", ""revenue.total_revenue"", ""revenue.total_cost"", ""revenue.sales"", ""revenue.cost_inc_tax"", ""revenue.cost_ex_tax"", ""revenue.total_inc_tax"", ""revenue.variation_inc_tax"", ""revenue.variation_tax"", ""revenue.variation_ex_tax""], ""filters"": {""revenue.sale_date"": ""1 days ago for 1 days""}, ""timezone"": ""Australia/Sydney""}"
+2026-10-31,2026-10-31 19:28:03.832177+00,"{""fields"": [""cashups.reconciliation_date"", ""cashups.reconciliation_end_date"", ""cashups.reconciliation_start_date"", ""revenue.total_tax"", ""revenue.total_revenue"", ""revenue.total_cost"", ""revenue.sales"", ""revenue.cost_inc_tax"", ""revenue.cost_ex_tax"", ""revenue.total_inc_tax"", ""revenue.variation_inc_tax"", ""revenue.variation_tax"", ""revenue.variation_ex_tax""], ""filters"": {""revenue.sale_date"": ""1 days ago for 1 days""}, ""timezone"": ""Australia/Sydney""}"
+2026-11-01,2026-11-02 09:09:24.522173+00,"{""fields"": [""revenue.sale_date"", ""revenue.total_ex_tax"", ""revenue.total_inc_tax"", ""revenue.total_tax"", ""revenue.variation_inc_tax"", ""site.numeric_id""], ""filters"": {""site.numeric_id"": ""96181"", ""revenue.sale_date"": ""2026/11/01 to 2026/11/02""}, ""timezone"": ""Australia/Melbourne""}"
+lines,closed_times,sites,first_date,last_date
+9405,0,8693,2026-10-26,2026-11-01
+trading_date,cashout_net,cashout_gross,lines
+2026-10-26,4,4.00,1
+2026-10-27,12.00,12.00,4
+2026-10-28,100.00,100.00,9
+2026-10-29,20.00,20.00,3
+2026-10-30,12.00,12.00,3
+2026-10-31,68.00,68.00,11
+2026-11-01,12.00,12.00,2

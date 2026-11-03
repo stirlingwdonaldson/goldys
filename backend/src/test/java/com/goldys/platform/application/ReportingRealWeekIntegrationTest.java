@@ -93,25 +93,7 @@ class ReportingRealWeekIntegrationTest {
                 r.get("recipe_id").isEmpty() ? null : Integer.valueOf(r.get("recipe_id")),
                 raw));
     }
-    var mappingFile =
-        getClass().getResourceAsStream("/fixtures/ctb/reporting-mappings-2026-10-26.json");
-    var mappings = mapper.readTree(mappingFile).get("mappings");
-    for (var m : mappings)
-      jdbc.update(
-          """
-      insert into product_reporting_mapping(scope,source_system,entity_key,effective_from,sales_nature,stock_bucket,item_role,business_area,lifecycle,reason,actor)
-      values (?,?,?,?,?,?,?,?,?,?,'reviewed-real-week-fixture')
-      """,
-          m.get("scope").asText(),
-          m.get("sourceSystem").asText(),
-          m.get("entityKey").asText(),
-          LocalDate.parse(m.get("effectiveFrom").asText()),
-          m.get("salesNature").asText(),
-          m.get("stockBucket").asText(),
-          m.get("itemRole").asText(),
-          m.get("businessArea").asText(),
-          m.get("lifecycle").asText(),
-          m.get("reason").asText());
+    loadMappings("reporting-mappings-2026-10-26.json");
     em.flush();
     jdbc.update(
         """
@@ -152,11 +134,64 @@ class ReportingRealWeekIntegrationTest {
     assertThat(week.wastage().value()).isEqualByComparingTo("560.7053");
     assertThat(rows.get("sales_reconciliation_difference").total())
         .isEqualByComparingTo("604.7852");
-    var artifact = java.nio.file.Path.of("build/reports/real-week-report.json");
-    java.nio.file.Files.createDirectories(artifact.getParent());
-    mapper.writerWithDefaultPrettyPrinter().writeValue(artifact.toFile(), report);
     assertThat(rows.get("food_wastage_percent").total()).isNull();
     assertThat(rows.get("beverage_wastage_percent").total()).isNull();
+    var directory = java.nio.file.Path.of("build/reports");
+    java.nio.file.Files.createDirectories(directory);
+    mapper
+        .writerWithDefaultPrettyPrinter()
+        .writeValue(directory.resolve("real-week-before.json").toFile(), report);
+    loadMappings("reporting-source-decisions-2026-10-26.json");
+    loadMappings("reporting-waste-decisions-2026-10-26.json");
+    var after =
+        reports.report(
+            new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER")), from, 1);
+    rows.clear();
+    for (var r : after.weeks().getFirst().rows()) rows.put(r.id(), r);
+    assertThat(rows.get("sales_classified_coverage").days())
+        .allSatisfy(v -> assertThat(v).isGreaterThan(new BigDecimal("0.997")));
+    assertThat(rows.get("food_sales").days()).doesNotContainNull();
+    assertThat(rows.get("beverage_sales").days()).doesNotContainNull();
+    assertThat(rows.get("unclassified_sales").total()).isEqualByComparingTo("82.71");
+    assertThat(rows.get("other_sales").total()).isEqualByComparingTo("437.07");
+    assertThat(
+            rows.get("food_sales")
+                .total()
+                .add(rows.get("beverage_sales").total())
+                .add(rows.get("other_sales").total())
+                .add(rows.get("unclassified_sales").total()))
+        .isEqualByComparingTo("141527.4119");
+    assertThat(rows.get("food_wastage").total()).isEqualByComparingTo("24.8493");
+    assertThat(rows.get("beverage_wastage").total()).isEqualByComparingTo("535.856");
+    assertThat(rows.get("unclassified_wastage").total()).isEqualByComparingTo("0");
+    assertThat(rows.get("food_wastage_percent").total()).isNotNull();
+    assertThat(rows.get("beverage_wastage_percent").total()).isNotNull();
+    assertThat(rows.get("sales_reconciliation_difference").total())
+        .isEqualByComparingTo("604.7852");
+    mapper
+        .writerWithDefaultPrettyPrinter()
+        .writeValue(directory.resolve("real-week-report.json").toFile(), after);
+  }
+
+  private void loadMappings(String name) throws IOException {
+    var mappingFile = getClass().getResourceAsStream("/fixtures/ctb/" + name);
+    var mappings = mapper.readTree(mappingFile).get("mappings");
+    for (var m : mappings)
+      jdbc.update(
+          """
+      insert into product_reporting_mapping(scope,source_system,entity_key,effective_from,sales_nature,stock_bucket,item_role,business_area,lifecycle,reason,actor)
+      values (?,?,?,?,?,?,?,?,?,?,'reviewed-real-week-fixture')
+      """,
+          m.get("scope").asText(),
+          m.get("sourceSystem").asText(),
+          m.get("entityKey").asText(),
+          LocalDate.parse(m.get("effectiveFrom").asText()),
+          m.get("salesNature").asText(),
+          m.get("stockBucket").asText(),
+          m.get("itemRole").asText(),
+          m.get("businessArea").asText(),
+          m.get("lifecycle").asText(),
+          m.get("reason").asText());
   }
 
   private CSVParser csv(String name) throws IOException {

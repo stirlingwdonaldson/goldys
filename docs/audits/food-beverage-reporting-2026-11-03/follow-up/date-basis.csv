@@ -1,0 +1,9 @@
+trading_date,item_name,quantity_sold,amount,total_tax,sale_closed_ten_minute_time,adjustment
+trading_date,gross,net,lines
+fetcher_identity,source_record_ref,fetched_at,prefix
+lightspeed-insights,,2026-10-26 19:09:22.604435+00,"{""type"":""query"",""scheduled_plan"":{""scheduled_plan_id"":""94356"",""title"":""integration-platform-daily-sales"",""type"":""Look"",""url"":"""",""query_id"":""66598077"",""query"":{""view"":""rev"
+lightspeed-insights,,2026-10-27 19:09:57.678441+00,"{""type"":""query"",""scheduled_plan"":{""scheduled_plan_id"":""94356"",""title"":""integration-platform-daily-sales"",""type"":""Look"",""url"":"""",""query_id"":""66598077"",""query"":{""view"":""rev"
+lightspeed-insights,,2026-10-28 19:10:59.901838+00,"{""type"":""query"",""scheduled_plan"":{""scheduled_plan_id"":""94356"",""title"":""integration-platform-daily-sales"",""type"":""Look"",""url"":"""",""query_id"":""66598077"",""query"":{""view"":""rev"
+lightspeed-insights,,2026-10-29 19:09:59.413785+00,"{""type"":""query"",""scheduled_plan"":{""scheduled_plan_id"":""94356"",""title"":""integration-platform-daily-sales"",""type"":""Look"",""url"":"""",""query_id"":""66598077"",""query"":{""view"":""rev"
+lightspeed-insights,,2026-10-31 19:28:03.832177+00,"{""type"":""query"",""scheduled_plan"":{""scheduled_plan_id"":""94356"",""title"":""integration-platform-daily-sales"",""type"":""Look"",""url"":"""",""query_id"":""66598077"",""query"":{""view"":""rev"
+lightspeed-insights,,2026-11-02 09:09:24.522173+00,"{""type"":""query"",""scheduled_plan"":{""scheduled_plan_id"":""95922"",""title"":""Insights Revenue"",""type"":""Query"",""url"":"""",""query_id"":""67551816"",""query"":{""view"":""revenue"",""fields"":"

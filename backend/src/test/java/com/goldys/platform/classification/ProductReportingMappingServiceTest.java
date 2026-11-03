@@ -62,6 +62,27 @@ class ProductReportingMappingServiceTest {
     verifyNoInteractions(jdbc, extractor);
   }
 
+  @Test
+  void source_scoped_approval_rejects_an_unobserved_native_identity() {
+    var decision =
+        new ProductReportingMapping(
+            Scope.CTB_PRODUCT,
+            "CTB",
+            "site:0:code:7:MISSING",
+            LocalDate.of(2026, 10, 26),
+            SalesNature.FOOD,
+            StockBucket.UNKNOWN,
+            ItemRole.UNKNOWN,
+            BusinessArea.UNKNOWN,
+            Lifecycle.UNKNOWN,
+            "Reviewed source scope");
+    assertThatThrownBy(() -> service.append(owner, "reviewer", decision))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("not been observed");
+    verifyNoInteractions(extractor);
+    verify(jdbc, never()).update(anyString(), any(Object[].class));
+  }
+
   private ProductReportingMapping mapping(SalesNature nature, StockBucket bucket) {
     return new ProductReportingMapping(
         Scope.PRODUCT_NAME,

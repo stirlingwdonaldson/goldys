@@ -138,6 +138,82 @@ class ProductReportingIntegrationTest {
   }
 
   @Test
+  void source_policy_keeps_sites_separate_and_holds_partial_mixed_or_withdrawn_aliases() {
+    UUID raw = raw();
+    for (int site : new int[] {-1, 0}) {
+      LocalDate day = site == -1 ? date.minusDays(1) : date;
+      jdbc.update(
+          "insert into resolved_product_sales(trading_date,product_name_key,quantity_sold,amount,resolution_type,authoritative_source,has_conflict,resolved_at) values (?,'steak',2,110,'single','CTB',false,now())",
+          day);
+      jdbc.update(
+          "insert into source_product_sale_fact(id,logical_entity_id,source_system,source_record_ref,raw_record_id,valid_from,recorded_at,trading_date,stock_code,product_name,quantity_sold,amount,tax_amount,site_number) values (?,?,'CTB',?,?,now(),now(),?,'STEAK','Steak',2,110,10,?)",
+          UUID.randomUUID(),
+          UUID.randomUUID(),
+          "scope-test:" + site,
+          raw,
+          day,
+          site);
+    }
+    mapping("CTB_PRODUCT", "CTB", "site:-1:code:5:STEAK", date.minusDays(1), "BEVERAGE", "UNKNOWN");
+    mapping("CTB_PRODUCT", "CTB", "site:0:code:5:STEAK", date.plusDays(1), "FOOD", "UNKNOWN");
+    assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("UNKNOWN");
+    var owner =
+        new com.goldys.platform.auth.UserRole(
+            new com.goldys.platform.auth.DepartmentCode("ALL"),
+            new com.goldys.platform.auth.SeniorityCode("OWNER"));
+    var decision =
+        new com.goldys.platform.semantic.ProductReportingMapping(
+            com.goldys.platform.semantic.ProductReportingMapping.Scope.CTB_PRODUCT,
+            "CTB",
+            "site:0:code:5:STEAK",
+            date,
+            com.goldys.platform.semantic.ProductReportingMapping.SalesNature.FOOD,
+            com.goldys.platform.semantic.ProductReportingMapping.StockBucket.UNKNOWN,
+            com.goldys.platform.semantic.ProductReportingMapping.ItemRole.UNKNOWN,
+            com.goldys.platform.semantic.ProductReportingMapping.BusinessArea.UNKNOWN,
+            com.goldys.platform.semantic.ProductReportingMapping.Lifecycle.UNKNOWN,
+            "Reviewed exact site/code; legacy site separate");
+    var preview = mappingService.preview(owner, decision, date);
+    assertThat(preview.reviewable()).isTrue();
+    assertThat(preview.evidence()).contains("Steak", "site:0:code:5:STEAK");
+    assertThat(preview.observedRows()).isEqualTo(1);
+    assertThat(preview.knownAmount()).isEqualByComparingTo("110");
+    mappingService.append(owner, "reviewer", decision);
+    assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("FOOD");
+    assertThat(reportingSales.sales(date.minusDays(1), date.minusDays(1)).getFirst().nature())
+        .isEqualTo("BEVERAGE");
+    jdbc.update(
+        "update source_product_sale_fact set tax_amount=null where source_record_ref='scope-test:0'");
+    assertThat(reportingSales.sales(date, date).getFirst().net()).isNull();
+    jdbc.update(
+        "update source_product_sale_fact set tax_amount=10 where source_record_ref='scope-test:0'");
+    jdbc.update(
+        "insert into source_product_sale_fact(id,logical_entity_id,source_system,source_record_ref,raw_record_id,valid_from,recorded_at,trading_date,stock_code,product_name,quantity_sold,amount,tax_amount,site_number) values (?,?,'CTB','scope-test:second',?,now(),now(),?,'SECOND','Steak',1,55,5,0)",
+        UUID.randomUUID(),
+        UUID.randomUUID(),
+        raw,
+        date);
+    jdbc.update(
+        "update resolved_product_sales set quantity_sold=3,amount=165 where trading_date=?", date);
+    mapping("PRODUCT_NAME", "RESOLVED", "steak", date, "FOOD", "UNKNOWN");
+    assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("UNKNOWN");
+    mapping("CTB_PRODUCT", "CTB", "site:0:code:6:SECOND", date, "FOOD", "UNKNOWN");
+    assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("FOOD");
+    jdbc.update("update resolved_product_sales set quantity_sold=4 where trading_date=?", date);
+    assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("UNKNOWN");
+    assertThat(reportingSales.sales(date, date).getFirst().net()).isNull();
+    jdbc.update("update resolved_product_sales set quantity_sold=3 where trading_date=?", date);
+    mapping("CTB_PRODUCT", "CTB", "site:0:code:6:SECOND", date, "BEVERAGE", "UNKNOWN");
+    assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("UNKNOWN");
+    mapping("CTB_PRODUCT", "CTB", "site:0:code:6:SECOND", date, "UNKNOWN", "UNKNOWN");
+    assertThat(reportingSales.sales(date, date).getFirst().nature()).isEqualTo("UNKNOWN");
+    jdbc.update(
+        "update resolved_product_sales set authoritative_source='LIGHTSPEED' where trading_date=?",
+        date);
+    assertThat(reportingSales.sales(date, date).getFirst().net()).isNull();
+  }
+
+  @Test
   void classified_weekly_waste_keeps_exact_line_unknowns_and_real_ml_portion_value() {
     UUID raw = raw();
     ingest.record(

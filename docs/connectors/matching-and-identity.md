@@ -561,3 +561,22 @@ an earlier date is an explicit reporting restatement, not a source-effective fac
 Café closure around 2022 is an owner's hypothesis, not an approved effective date. Menu names,
 last sales or current recipe activity never automatically assign café membership or retirement.
 See [the measured investigation](../audits/product-classification-2026-11-03/README.md).
+
+### Reviewed CTB product nature without cross-site equivalence (3 November 2026)
+
+`CTB_PRODUCT` reporting policies use the existing qualified CTB identity
+`site:<native siteNumber>:code:<stockCode length>:<stockCode>`. These decisions are effective-dated
+and append-only. Raw observations show native site -1 through 28 July and site 0 from 29 July;
+the reason for that boundary is not established. Neither the identity matcher nor name-alias
+ambiguity checks equate those sites. An inventory recipe ID is a different namespace.
+
+For the selected CTB product/day, the reporting projection requires all contributing source rows
+to have reviewed source policies of one nature and their gross/quantity totals to match the
+resolved alias/day exactly. A partial, mixed or UNKNOWN source policy holds that whole alias;
+it does not fall back to a name policy. With no applicable source policy, existing PRODUCT_NAME
+policy remains in force. Source policies do not classify a different selected source. Tax still
+requires complete matching observations in one non-null native site. No residual is allocated.
+
+The owner-approved pet-treat policy is OTHER (recipes 371/372 corroborate Dog Street inventory);
+this does not decide stock bucket, business area or lifecycle. Cafe membership and retirement
+remain independent and unknown without further business evidence.

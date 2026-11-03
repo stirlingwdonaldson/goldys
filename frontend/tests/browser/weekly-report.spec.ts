@@ -92,17 +92,24 @@ test("retained real completed week matches API snapshot and Excel download", asy
     page
       .getByRole("cell", { name: "Food sales ex GST", exact: true })
       .locator(".."),
-  ).toContainText("—");
+  ).toContainText("$48,442.78");
   await expect(
     page
       .getByRole("cell", { name: "Beverage recorded wastage", exact: true })
       .locator(".."),
-  ).toContainText("$452.99");
+  ).toContainText("$535.86");
   await expect(
     page
       .getByRole("cell", { name: "Unclassified recorded wastage", exact: true })
       .locator(".."),
-  ).toContainText("$102.70");
+  ).toContainText("$0.00");
+  for (const [label, value] of [
+    ["food sales versus target", "$2,842.78"],
+    ["Beverage recorded wastage / matching sales", "0.58%"],
+    ["Food recorded wastage / matching sales", "0.05%"],
+  ]) {
+    await expect(page.getByRole("cell", { name: label, exact: true }).locator("..")).toContainText(value);
+  }
   const pending = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Download Excel", exact: true })

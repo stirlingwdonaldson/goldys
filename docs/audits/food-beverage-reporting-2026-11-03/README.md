@@ -1,3 +1,5 @@
+> This file records the baseline reviewed at `e25a6abf`. See [the follow-up](follow-up/README.md) for the subsequent source-scoped decisions, applied wastage mappings and usable local report.
+
 # Food/beverage reporting and curation — 3 November 2026
 
 Base `6c01de71` (PR #230), isolated branch `codex/food-beverage-reporting`, worktree

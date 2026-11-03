@@ -1296,7 +1296,7 @@ export interface ReceiptGroup {
 }
 
 export interface ReportingMapping {
-  scope: "PRODUCT_NAME" | "CTB_RECIPE" | "CTB_STOCK" | "WASTE_LINE";
+  scope: "PRODUCT_NAME" | "CTB_PRODUCT" | "CTB_RECIPE" | "CTB_STOCK" | "WASTE_LINE";
   sourceSystem: "RESOLVED" | "CTB";
   entityKey: string;
   effectiveFrom: string;

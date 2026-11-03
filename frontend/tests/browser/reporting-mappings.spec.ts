@@ -33,12 +33,22 @@ for (const width of [1280, 390])
       page.getByRole("button", { name: "Approve reviewed mapping" }),
     ).toHaveCount(0);
     await page.getByRole("button", { name: "Preview mapping impact" }).click();
-    await expect(page.getByText(/Proposed decision: FOOD/)).toBeVisible();
+    await expect(
+      page.getByText(/Proposed identity:.*Decision: FOOD/),
+    ).toBeVisible();
     await page
       .getByRole("button", { name: "Approve reviewed mapping" })
       .click();
     await expect(
       page.getByRole("status").filter({ hasText: "Reviewed revision saved" }),
+    ).toBeVisible();
+    await page.getByLabel("Identity scope").selectOption("CTB_PRODUCT");
+    await page.getByLabel(/Exact identity/).fill("site:0:code:8:22101357");
+    await page.getByRole("button", { name: "Preview mapping impact" }).click();
+    await expect(
+      page.getByText(
+        /Proposed identity: CTB \/ CTB_PRODUCT \/ site:0:code:8:22101357/,
+      ),
     ).toBeVisible();
     await page.getByRole("button", { name: "Load wastage evidence" }).click();
     await expect(

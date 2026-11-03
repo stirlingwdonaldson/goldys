@@ -25,7 +25,7 @@ final class WeeklyReportSales {
         new ArrayList<>(
             List.of(
                 "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.",
-                "Reviewed PRODUCT_NAME mappings effective on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.",
+                "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.",
                 "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.",
                 "Observed product/day rows: "
                     + week.lines()
