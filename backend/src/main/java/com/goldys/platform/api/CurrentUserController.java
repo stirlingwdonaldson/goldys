@@ -14,6 +14,7 @@ public class CurrentUserController {
 
   @GetMapping("/me")
   StaffProfileSummary me(@AuthenticationPrincipal AccountUserDetails user) {
-    return new StaffProfileSummary(user.displayName(), user.department(), user.seniority());
+    return new StaffProfileSummary(
+        user.displayName(), user.department(), user.seniority(), user.mustChangePassword());
   }
 }

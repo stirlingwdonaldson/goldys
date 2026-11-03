@@ -30,6 +30,18 @@ public record AccountUserDetails(
     this(id, email, passwordHash, displayName, department, seniority, active, false);
   }
 
+  static AccountUserDetails of(UserAccount account) {
+    return new AccountUserDetails(
+        account.id(),
+        account.email(),
+        account.passwordHash(),
+        account.displayName(),
+        account.department(),
+        account.seniority(),
+        account.active(),
+        account.mustChangePassword());
+  }
+
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of();

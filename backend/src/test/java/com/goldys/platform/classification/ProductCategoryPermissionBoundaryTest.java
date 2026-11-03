@@ -5,8 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.goldys.platform.auth.AuthService;
 import com.goldys.platform.support.PostgresContainerConfiguration;
+import com.goldys.platform.support.TestAccounts;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class ProductCategoryPermissionBoundaryTest {
 
   @Autowired MockMvc mvc;
   @Autowired JdbcTemplate jdbc;
-  @Autowired AuthService authService;
+  @Autowired TestAccounts testAccounts;
 
   @BeforeEach
   void clean() {
@@ -41,8 +41,7 @@ class ProductCategoryPermissionBoundaryTest {
 
   @Test
   void ownerReadsTaxonomy() throws Exception {
-    authService.signup("owner@example.com", "Owner", "password123");
-    jdbc.update("update user_account set seniority = 'OWNER' where email = 'owner@example.com'");
+    testAccounts.createOwner("owner@example.com", "Owner", "password123");
     Login owner = login("owner@example.com", "password123");
 
     // An empty taxonomy is a valid 200 for a freshly migrated database.
@@ -52,8 +51,7 @@ class ProductCategoryPermissionBoundaryTest {
 
   @Test
   void ownerReadsAndAddsSuggestions() throws Exception {
-    authService.signup("owner@example.com", "Owner", "password123");
-    jdbc.update("update user_account set seniority = 'OWNER' where email = 'owner@example.com'");
+    testAccounts.createOwner("owner@example.com", "Owner", "password123");
     Login owner = login("owner@example.com", "password123");
 
     mvc.perform(get("/api/products/categories/suggestions").session(owner.session()))
@@ -71,7 +69,7 @@ class ProductCategoryPermissionBoundaryTest {
 
   @Test
   void userWithoutProductCategoryGrantIsDenied() throws Exception {
-    authService.signup("staff@example.com", "Staff", "password123");
+    testAccounts.createStaff("staff@example.com", "Staff", "password123");
     Login staff = login("staff@example.com", "password123");
 
     mvc.perform(get("/api/products/categories/taxonomy").session(staff.session()))
@@ -81,7 +79,7 @@ class ProductCategoryPermissionBoundaryTest {
 
   @Test
   void userWithoutProductCategoryGrantIsDeniedSuggestions() throws Exception {
-    authService.signup("staff@example.com", "Staff", "password123");
+    testAccounts.createStaff("staff@example.com", "Staff", "password123");
     Login staff = login("staff@example.com", "password123");
 
     mvc.perform(get("/api/products/categories/suggestions").session(staff.session()))

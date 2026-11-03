@@ -5,8 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.goldys.platform.auth.AuthService;
 import com.goldys.platform.support.PostgresContainerConfiguration;
+import com.goldys.platform.support.TestAccounts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ class ReviewPermissionBoundaryTest {
 
   @Autowired MockMvc mvc;
   @Autowired JdbcTemplate jdbc;
-  @Autowired AuthService authService;
+  @Autowired TestAccounts testAccounts;
 
   @BeforeEach
   void clean() {
@@ -39,8 +39,7 @@ class ReviewPermissionBoundaryTest {
 
   @Test
   void ownerReadsOverview() throws Exception {
-    authService.signup("owner@example.com", "Owner", "password123");
-    jdbc.update("update user_account set seniority = 'OWNER' where email = 'owner@example.com'");
+    testAccounts.createOwner("owner@example.com", "Owner", "password123");
     MockHttpSession session = login("owner@example.com", "password123");
 
     // A freshly migrated database has no reviews, so an all-zero overview is a valid 200.
@@ -54,7 +53,7 @@ class ReviewPermissionBoundaryTest {
 
   @Test
   void userWithoutReviewsGrantIsDenied() throws Exception {
-    authService.signup("staff@example.com", "Staff", "password123");
+    testAccounts.createStaff("staff@example.com", "Staff", "password123");
     MockHttpSession session = login("staff@example.com", "password123");
 
     mvc.perform(

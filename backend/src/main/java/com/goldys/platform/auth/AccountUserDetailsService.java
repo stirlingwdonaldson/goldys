@@ -22,14 +22,6 @@ public class AccountUserDetailsService implements UserDetailsService {
         accounts
             .findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("No account for " + email));
-    return new AccountUserDetails(
-        account.id(),
-        account.email(),
-        account.passwordHash(),
-        account.displayName(),
-        account.department(),
-        account.seniority(),
-        account.active(),
-        account.mustChangePassword());
+    return AccountUserDetails.of(account);
   }
 }
