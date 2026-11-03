@@ -208,9 +208,9 @@ export default function ReviewsPage() {
 
       <Section
         title="Review explorer"
-        description="Every review, scoped by the filters above — click a row for the full text and per-aspect sentiment."
+        description="Browse full reviews, ratings and per-aspect sentiment, scoped by the filters above."
       >
-        <ReviewExplorer reviews={reviews.data ?? []} />
+        <ReviewExplorer key={JSON.stringify(reviewFilter)} reviews={reviews.data ?? []} />
       </Section>
     </div>
   );

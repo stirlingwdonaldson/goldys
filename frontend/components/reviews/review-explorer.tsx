@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/data-table/data-table";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { useMemo, useState } from "react";
+import { TablePagination, useClientPagination } from "@/components/data-table/table-pagination";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SourceLabel } from "@/components/sources/source-tile";
 import { formatDay, formatPercent, humanizeKey } from "@/lib/format";
 import type { ReviewView } from "@/lib/api";
@@ -30,67 +28,6 @@ function SentimentBadge({ sentiment }: { sentiment: string | null }) {
   );
 }
 
-const columns: ColumnDef<ReviewView>[] = [
-  {
-    id: "reviewedAt",
-    accessorFn: (r) => r.reviewedAt.slice(0, 10),
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
-    cell: ({ row }) => (
-      <span className="whitespace-nowrap">{formatDay(row.original.reviewedAt.slice(0, 10))}</span>
-    ),
-    meta: { title: "Date" },
-    enableHiding: false,
-  },
-  {
-    id: "source",
-    accessorFn: (r) => reviewSourceLabel(r.source),
-    header: "Source",
-    cell: ({ row }) => (
-      <SourceLabel source={row.original.source}>{reviewSourceLabel(row.original.source)}</SourceLabel>
-    ),
-    meta: { title: "Source" },
-  },
-  {
-    id: "rating",
-    accessorFn: (r) => r.overallRating ?? -1,
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Rating" />,
-    cell: ({ row }) => {
-      const rating = row.original.overallRating;
-      return rating != null ? (
-        <span className="tabular-nums">{rating}★</span>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      );
-    },
-    meta: { title: "Rating", align: "right" },
-  },
-  {
-    id: "sentiment",
-    accessorFn: (r) => r.sentiment ?? "",
-    header: "Sentiment",
-    cell: ({ row }) => <SentimentBadge sentiment={row.original.sentiment} />,
-    meta: { title: "Sentiment" },
-  },
-  {
-    id: "guest",
-    accessorFn: (r) => r.guestName ?? "",
-    header: "Guest",
-    cell: ({ row }) => row.original.guestName ?? <span className="text-muted-foreground">—</span>,
-    meta: { title: "Guest" },
-  },
-  {
-    id: "comment",
-    accessorFn: (r) => r.comment ?? "",
-    header: "Comment",
-    cell: ({ row }) => (
-      <span className="block max-w-72 truncate" title={row.original.comment ?? undefined}>
-        {row.original.comment ?? "—"}
-      </span>
-    ),
-    meta: { title: "Comment" },
-  },
-];
-
 /** One nullable star sub-rating, rendered as a dash when absent. */
 function SubRating({ label, value }: { label: string; value: number | null }) {
   return (
@@ -101,10 +38,13 @@ function SubRating({ label, value }: { label: string; value: number | null }) {
   );
 }
 
-/** The drilled-in review: full text, sub-ratings, and per-aspect sentiment. */
-function ReviewDetail({ review, onClose }: { review: ReviewView; onClose: () => void }) {
+/** Full review content stays visible while browsing. */
+function ReviewDetail({ review }: { review: ReviewView }) {
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-card p-5">
+    <article
+      aria-label={`Review by ${review.guestName ?? "Anonymous"}`}
+      className="flex flex-col gap-4 border-b p-5 last:border-b-0"
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -114,41 +54,32 @@ function ReviewDetail({ review, onClose }: { review: ReviewView; onClose: () => 
               {formatDay(review.reviewedAt.slice(0, 10))}
             </span>
           </div>
-          <span className="text-sm text-muted-foreground">{review.guestName ?? "Anonymous"}</span>
+          <h3 className="break-words text-sm font-semibold">{review.guestName ?? "Anonymous"}</h3>
         </div>
-        <Button variant="outline" size="sm" onClick={onClose}>
-          Close
-        </Button>
-      </div>
-
-      <blockquote className="border-l-2 border-muted pl-3 text-sm">
-        {review.comment ?? "No comment"}
-      </blockquote>
-
-      <div className="grid grid-cols-3 gap-2">
-        <div>
+        <div className="shrink-0 text-right">
           <p className="text-xs text-muted-foreground">Overall rating</p>
-          <p className="tabular-nums">
+          <p className="text-lg font-semibold tabular-nums">
             {review.overallRating != null ? `${review.overallRating}★` : "—"}
           </p>
         </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Predicted rating</p>
-          <p className="tabular-nums">
-            {review.predictedRating != null ? `${review.predictedRating.toFixed(1)}★` : "—"}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Confidence</p>
-          <p className="tabular-nums">{formatPercent(review.sentimentConfidence)}</p>
-        </div>
       </div>
+
+      <blockquote className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+        {review.comment ?? "No comment"}
+      </blockquote>
 
       <div className="grid grid-cols-4 gap-2">
         <SubRating label="Food" value={review.foodRating} />
         <SubRating label="Service" value={review.serviceRating} />
         <SubRating label="Ambience" value={review.ambienceRating} />
         <SubRating label="Value" value={review.valueRating} />
+      </div>
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span>
+          Predicted rating: {review.predictedRating != null ? `${review.predictedRating.toFixed(1)}★` : "—"}
+        </span>
+        <span>Sentiment confidence: {formatPercent(review.sentimentConfidence)}</span>
       </div>
 
       {review.aspects.length > 0 ? (
@@ -167,30 +98,56 @@ function ReviewDetail({ review, onClose }: { review: ReviewView; onClose: () => 
           </ul>
         </div>
       ) : null}
-    </div>
+    </article>
   );
 }
 
-/**
- * The review explorer: every resolved review in a filterable table, with a row
- * click drilling into the full text, sub-ratings and per-aspect sentiment.
- * The shared filter bar already scopes `getReviews`, so the table itself adds no
- * second text filter.
- */
+/** Paginated full reviews, scoped by the page's shared filters. */
 export function ReviewExplorer({ reviews }: { reviews: ReviewView[] }) {
-  const [selected, setSelected] = useState<ReviewView | null>(null);
+  const [sort, setSort] = useState("newest");
+  const sortedReviews = useMemo(
+    () => [...reviews].sort((a, b) => {
+      if (sort === "highest" || sort === "lowest") {
+        if (a.overallRating == null) return b.overallRating == null ? 0 : 1;
+        if (b.overallRating == null) return -1;
+        return sort === "highest"
+          ? b.overallRating - a.overallRating
+          : a.overallRating - b.overallRating;
+      }
+      return sort === "oldest"
+        ? a.reviewedAt.localeCompare(b.reviewedAt)
+        : b.reviewedAt.localeCompare(a.reviewedAt);
+    }),
+    [reviews, sort],
+  );
+  const { pageRows, pagination } = useClientPagination(sortedReviews, sort);
+
   return (
     <div data-testid="review-explorer" className="flex flex-col gap-4">
-      <DataTable
-        columns={columns}
-        data={reviews}
-        getRowId={(r) => r.reviewId}
-        initialSorting={[{ id: "reviewedAt", desc: true }]}
-        onRowClick={(r) => setSelected(r)}
-        isRowSelected={(r) => r.reviewId === selected?.reviewId}
-        emptyMessage="No reviews match this filter."
-      />
-      {selected ? <ReviewDetail review={selected} onClose={() => setSelected(null)} /> : null}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{reviews.length} reviews</p>
+        <Select value={sort} onValueChange={setSort}>
+          <SelectTrigger aria-label="Sort reviews" className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest first</SelectItem>
+            <SelectItem value="oldest">Oldest first</SelectItem>
+            <SelectItem value="highest">Highest rated</SelectItem>
+            <SelectItem value="lowest">Lowest rated</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {pageRows.length > 0 ? (
+        <div className="min-w-0 rounded-xl border bg-card">
+          {pageRows.map((review) => (
+            <ReviewDetail key={review.reviewId} review={review} />
+          ))}
+        </div>
+      ) : (
+        <p className="py-10 text-center text-sm text-muted-foreground">No reviews match this filter.</p>
+      )}
+      <TablePagination {...pagination} />
     </div>
   );
 }

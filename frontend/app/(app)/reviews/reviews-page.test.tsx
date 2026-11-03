@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import ReviewsPage from "./page";
 import type {
   AspectSentimentSummary,
@@ -119,7 +119,7 @@ describe("ReviewsPage", () => {
     expect(screen.getByText("Average rating")).toBeInTheDocument();
     // The five remaining views each own a titled section.
     expect(screen.getByText("Sentiment trend")).toBeInTheDocument();
-    expect(screen.getByText("Aspects")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Aspects" })).toBeInTheDocument();
     expect(screen.getByText("Ratings")).toBeInTheDocument();
     expect(screen.getByText("Sources")).toBeInTheDocument();
     expect(screen.getByText("Review explorer")).toBeInTheDocument();
@@ -137,7 +137,7 @@ describe("ReviewsPage", () => {
     render(<ReviewsPage />);
 
     const explorer = await screen.findByTestId("review-explorer");
-    expect(await within(explorer).findByText("Negative")).toBeInTheDocument();
+    expect((await within(explorer).findAllByText("Negative")).length).toBeGreaterThan(0);
     expect(within(explorer).getByText("Dave R.")).toBeInTheDocument();
   });
 
@@ -146,5 +146,25 @@ describe("ReviewsPage", () => {
     render(<ReviewsPage />);
 
     expect(await screen.findByText("No reviews yet")).toBeInTheDocument();
+  });
+
+  it("returns to the first review page when the search filter changes", async () => {
+    mocks.api.getReviews.mockResolvedValue(Array.from({ length: 12 }, (_, index) => ({
+      ...reviews[0], reviewId: `review-${index}`, guestName: `Guest ${index}`,
+    })));
+    render(<ReviewsPage />);
+    const explorer = await screen.findByTestId("review-explorer");
+    await within(explorer).findByText("Guest 0");
+    fireEvent.click(within(explorer).getByRole("button", { name: "Next page" }));
+    expect(within(explorer).getByText("Guest 11")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Search reviews" }), {
+      target: { value: "service" },
+    });
+    const filteredExplorer = screen.getByTestId("review-explorer");
+    expect(await within(filteredExplorer).findByText("Guest 0")).toBeInTheDocument();
+    expect(within(filteredExplorer).getByRole("button", { name: "Previous page" })).toBeDisabled();
+    expect(mocks.api.getReviews).toHaveBeenLastCalledWith(
+      expect.objectContaining({ query: "service" }), expect.anything(),
+    );
   });
 });
