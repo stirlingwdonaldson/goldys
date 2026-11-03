@@ -25,7 +25,7 @@ password. With a single owner role, every active account must be able to manage 
 
 ## Data model
 
-One migration, `V100__user_management.sql`:
+One migration, `V105__user_management.sql`:
 
 ```sql
 ALTER TABLE user_account

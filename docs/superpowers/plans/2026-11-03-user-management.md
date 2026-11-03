@@ -15,7 +15,7 @@
 - Branch: `feat/user-management` in worktree `.worktrees/user-management`.
 - An owner is exactly `department='ALL'`, `seniority='OWNER'`. No other role and no new role column.
 - Every protected read/write authorizes through `PermissionService.require(...)` in the service that owns the use case.
-- Schema changes only through Flyway (`V100`); Hibernate stays `validate`.
+- Schema changes only through Flyway (`V105`); Hibernate stays `validate`.
 - API errors use the existing `ApiErrorResponse` envelope.
 - Every `Api` method needs a live and a demo implementation.
 - Do not add dependencies.
@@ -36,7 +36,7 @@
 ### Task 1: Account flag, principal field and migration
 
 **Files:**
-- Create: `backend/src/main/resources/db/migration/V100__user_management.sql`
+- Create: `backend/src/main/resources/db/migration/V105__user_management.sql`
 - Modify: `backend/src/main/java/com/goldys/platform/auth/UserAccount.java`
 - Modify: `backend/src/main/java/com/goldys/platform/auth/AccountUserDetails.java`
 - Modify: `backend/src/main/java/com/goldys/platform/auth/AccountUserDetailsService.java`
@@ -71,7 +71,7 @@ Expected: compilation failure — `setPassword` / `mustChangePassword` do not ex
 
 - [ ] **Step 3: Add the migration and model fields**
 
-`V100__user_management.sql`:
+`V105__user_management.sql`:
 
 ```sql
 ALTER TABLE user_account
@@ -95,7 +95,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/src/main/resources/db/migration/V100__user_management.sql \
+git add backend/src/main/resources/db/migration/V105__user_management.sql \
   backend/src/main/java/com/goldys/platform/auth/UserAccount.java \
   backend/src/main/java/com/goldys/platform/auth/AccountUserDetails.java \
   backend/src/main/java/com/goldys/platform/auth/AccountUserDetailsService.java \
