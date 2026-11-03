@@ -27,6 +27,17 @@ public class ProductReportingReviewController {
     return service.revisions(currentUser.roleOf(user), to);
   }
 
+  @GetMapping("/queue")
+  ProductReportingReviewService.Queue queue(
+      @RequestParam com.goldys.platform.semantic.ReportingReviewQuery.Domain domain,
+      @RequestParam LocalDate from,
+      @RequestParam LocalDate to,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "50") int size,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return service.queue(currentUser.roleOf(user), domain, from, to, page, size);
+  }
+
   @GetMapping("/wastage")
   List<com.goldys.platform.semantic.ClassifiedWastageQuery.Line> wastage(
       @RequestParam LocalDate from,

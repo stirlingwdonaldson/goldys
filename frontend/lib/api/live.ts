@@ -394,6 +394,7 @@ export const liveApi: Api = {
   getRecipes: (options?: { signal?: AbortSignal }) => fetchApi<import("./types").RecipeCosting[]>("/api/recipes", { signal: options?.signal }),
   getRecipeIngredients: (recipeId: number, options?: { signal?: AbortSignal }) =>
     fetchApi<import("./types").RecipeIngredient[]>(`/api/recipes/${recipeId}/ingredients`, { signal: options?.signal }),
+  getReportingReviewQueue: (domain, from, to, page) => fetchApi<import("./types").ReportingReviewQueue>(`/api/products/categories/reporting-mappings/queue?domain=${domain}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&page=${page}&size=50`),
   getReportingMappings: (to) => fetchApi<import("./types").ReportingMapping[]>(`/api/products/categories/reporting-mappings?to=${encodeURIComponent(to)}`),
   previewReportingMapping: (mapping, through) => fetchApi<import("./types").ReportingMappingPreview>(`/api/products/categories/reporting-mappings/preview?through=${encodeURIComponent(through)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(mapping) }),
   saveReportingMapping: (mapping) => fetchApi<void>("/api/products/categories/reporting-mappings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(mapping) }, { responseType: "void" }),
