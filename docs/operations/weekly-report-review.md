@@ -19,7 +19,7 @@ generation time, units, missing cells and qualifications. Refresh before downloa
 to include subsequent ingestion. A downloaded workbook is a snapshot, not a live
 Excel connection or a scheduled email delivery. Demo files are explicitly labelled.
 
-The dashboard and workbook carry the same 59 fields. The spreadsheet's summary
+The dashboard and workbook carry the same 61 fields. The spreadsheet's summary
 fields are covered: food/beverage/total sales and targets, stock-variance categories,
 cash variance and thresholds, wastage values/rates/targets, COGS and reviews.
 Gross sales, GST, recorded payments and invoice purchases are included with explicit
@@ -29,16 +29,17 @@ tracking are not copied.
 
 ## Verified implementation boundaries
 
-- Sales, GST, payments, purchases and total recorded wastage reuse the semantic
-  metric catalogue with DAY and WEEK grains. No second financial formula path.
+- Sales, GST, payments and purchases reuse the semantic metric catalogue with DAY and WEEK grains. Recorded wastage is summed from `resolved_inventory_observation` (source line quantity × cost), because the legacy inventory-day metric does not project those observations.
 - A report is assembled in one read-only repeatable-read database transaction.
 - Every transitive metric permission and `reviews` READ is checked before any
-  data read. Denial fails the whole report explicitly; no new role grants.
+  data read. Denial fails the whole report explicitly; the new target grant is ALL × OWNER only.
 - Missing values stay null. Known partial sums retain unavailable dates and
   source qualifications. A full calendar grid does not certify source completeness.
 - Review ratings reuse the existing weekly actual-rating calculation by review
   date in venue time. Daily rating cells are unavailable; weekly averages are never
   summed or averaged from daily averages.
+- Targets use versioned effective-week settings; edits append an actor/timestamp revision. `weekly-report.targets` READ/WRITE is seeded for ALL × OWNER only.
+- Wastage reasons, reason coverage, effective targets and dated stock counts appear in both the dashboard and additional Excel detail sheets.
 - Classification-dependent splits and other unverified measures are deliberately
   unavailable in both outputs until their evidence is reviewed. They are retained
   as fields, not replaced with fabricated zeros or historical targets.
@@ -49,16 +50,15 @@ tracking are not copied.
 |---|---|---|
 | Current headline sales | Reconcile a completed recent week against independent source net/GST/gross; confirm scope, adjustments and timezone/cutoff | Show resolved amounts with qualifications |
 | Food / beverage | Correct Beer → Food hierarchy and item assignments (including porterhouse → Beer); verify ex-GST allocation, merchandise/donation exclusions and coverage | Withhold both splits |
-| Targets | Choose approved target versions and maintainable source. Planning, summary and dated tabs disagree; do not copy the old figures forward | Targets and target differences unavailable |
+| Targets | Workbook baselines may no longer be appropriate; review in the target editor. Daily allocations are not provided | Dated planning-sheet D/F/H sales targets carry forward; percentage limits copied from latest dated tab, COGS limits from the latest populated summary cells. Total sales differences use the effective target; food/beverage comparisons still need valid actual splits |
 | Physical cash | Establish physical count/banking input and paid-in/out/refund treatment; verify tender identities and date allocation | Recorded payments separate; counted cash/banking/variance unavailable |
-| Wastage | Verify current cost observations, category mapping, reason exclusions (staff meals, personal use, knock-offs), coverage and tax basis | Show only existing resolved total where available; splits/rates/targets unavailable |
-| Stock variances | Verify opening/closing stocktakes, movements, recipe consumption, units and valuation; establish category/threshold definitions | All variance categories and rates unavailable |
+| Wastage | Category mapping, tax basis and source capture completeness remain unverified. Missing reasons cannot be reconstructed | All recorded wastage included, with No reason recorded bucket; coverage by lines and known value; given-reason breakdown and original labels. Total rate uses sales ex GST with explicit cost-basis qualification; category splits remain unavailable |
+| Stock variances | Verify expected stock movements, consumption, categories and valuation; a count alone is not a variance | Stocktake headers and counts now flow on every CTB run, and dated source-value summaries are shown. Variance actuals remain unavailable; targets are editable |
 | Theoretical COGS | Verify recipe versions/yields, source costs, tax, classification, sold quantities and intended denominator. Actual COGS additionally needs inventory valuation | Unavailable; purchases remain separately labelled |
 | Reviews | Confirm intended platforms, rating scale, review-date versus visit-date and capture completeness | Existing weekly actual-star averages with coverage qualification |
 
 These reviews gate the affected values, not delivery of the dashboard/export.
-Activating reviewed fields requires an implementation change and tests; there is
-no UI switch that silently treats these measures as verified.
+Targets can be edited in the report without a code change. Other unverified measures still require implementation changes and tests; there is no switch that silently certifies source data.
 
 ## Audit context (not a current-data certification)
 
@@ -75,19 +75,29 @@ Large daily differences sometimes offset across adjacent dates. Historical sourc
 attribution must not be applied as a universal current-feed assumption.
 
 Product sales started 8 July 2026, detailed source-cost observations 25 July,
-wastage 10 September; no stock-count observations existed at the audit. These are
+wastage 10 September; no stock-count observations existed in the reporting projection at the audit (raw detail did exist). These are
 audit observations, not permanent coverage constraints. Six absent headline dates
 included Christmas and three June days; closure versus missing ingestion was not
-established. No historical repair, replay, category mutation, production write or
-new source access is authorised by this feature.
+established. No production replay, category mutation or deployment was performed during implementation; the released CTB connector refreshes source stocktakes on its existing schedule.
 
 The old workbook also contains copied summary values, zeros replacing recorded
 wastage, COGS percentages based on Sunday alone, averaged daily wastage rates and
 mislabelled date ranges. Its calculations are not copied into the new report.
 
+
+## Imported targets and remaining stock-count exceptions
+
+- Sales targets: 156 dated values from `Weekly Targets & labour budgets!D/F/H` (food/beverage/total), 7 July 2025–29 June 2026. The dedicated planning sheet is used instead of copied, conflicting actual-week summary values. The latest baseline is $45,600 food + $74,400 beverage = $120,000 total. This is explicitly a carried-forward historical target, not a new forecast.
+- Variance and wastage percentage limits: seven values from `20 - 26 July!AG3/AH3/AQ3/AR3/AY3/BB3/BE3`, effective 20 July 2026. Food/beverage COGS limits: 25% and 22%, from `Weekly Data 2526!BM54/BV54`, effective 22 June 2026. All source cells are retained with the values; no labour or cash targets are imported.
+- Edit targets from a selected Monday. Only changed fields are saved; they carry forward until another dated setting for that field. Historical/future dated settings are preserved. Percent entry uses percent units (0.25 means 0.25%); API/storage use fractions (0.0025). Min/max pairs are validated. Edits append audit rows; no existing revision is overwritten.
+- Wastage includes every received line, including missing reasons. Reasons are trimmed/case-normalized, whitespace collapsed and `Knockoff`/`Knock off` merged; original labels remain visible/exported. Other abbreviations such as `KO` remain distinct. Neither missing reasons nor staff-meal membership is inferred. Zero records means unknown, not zero; unknown-valued lines remain counted and are excluded only from known-value denominators.
+- Read-only raw-ledger audit on 3 November 2026: 25 header payloads (30 distinct stocktakes), 28 identifiable detail payloads, 10,653 input lines → 10,653 parsed lines (100%) using the actual Java parser. One additional 413-line detail payload has no parent reference and cannot safely be dated; it is not guessed into a stocktake. Representative real-payload fixtures are retained in tests; the all-sample audit ran offline without production writes.
+- Existing identifiable detail covered stocktakes through 12 October while headers continued through 26 October. The regular connector now refreshes all advertised stocktakes and pages, including older counts, so historical known parents can be repopulated from CTB without enabling a blanket replay flag. Source authentication and current endpoint availability must still succeed at release time.
+- Counts are observations, not continuous balances. Removed source lines are not retired solely by absence. Partial/locked header state stays unknown when CTB does not supply it. Expected consumption/movements and category valuation still gate stock variances and actual COGS. Recipe-cost matching coverage and correct food/beverage classifications remain outstanding.
+
 ## Release and validation
 
-No schema migration or production configuration change is required. Both backend
+PR #228 reserves V106 for sale-close timing and must be on main before V107 is deployed. Flyway can apply both migrations in one deployment; do not deploy V107 first and later introduce an older pending migration. This extension requires migration `V107__weekly_report_targets_and_waste_reasons.sql`. Flyway creates effective target settings and appends reason metadata to the resolved inventory observation view. No new production flags are required. Counts begin flowing after the next successful CTB scheduled/manual run; this change does not itself run a production ingestion or replay. Both backend
 and frontend must be released together for the new typed GET endpoint
 `/api/reports/weekly?from=YYYY-MM-DD&weeks=4`. Existing session authentication and
 permission-table grants apply. Pushing, merging and deployment require separate
@@ -108,6 +118,6 @@ already authorised report, not another backend query or a new permission path.
 Ripwire's quality-delta check reports structural duplication warnings for record
 factories, thin controllers, map-building loops, page wrappers and assertions
 matching unrelated domains. These matches were reviewed and the local patterns
-retained; no cross-domain helper or blanket suppression was introduced. The static
+retained; no cross-domain helper or blanket suppression was introduced. The scan also flags the report constructor dependency count and expanded integration-test/report size; these follow the existing composition pattern and test the required data seams. The static
 quality gate is not claimed as passing. Contract inspection found no incompatible
 callers; compilation, runtime tests and independent XLSX checks are separate evidence.

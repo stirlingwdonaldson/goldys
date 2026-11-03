@@ -14,10 +14,29 @@ import org.springframework.web.bind.annotation.*;
 public class WeeklyReportController {
   private final WeeklyReportService reports;
   private final CurrentUserService currentUser;
+  private final com.goldys.platform.application.WeeklyReportTargets targets;
 
-  public WeeklyReportController(WeeklyReportService reports, CurrentUserService currentUser) {
+  public WeeklyReportController(
+      WeeklyReportService reports,
+      CurrentUserService currentUser,
+      com.goldys.platform.application.WeeklyReportTargets targets) {
     this.reports = reports;
     this.currentUser = currentUser;
+    this.targets = targets;
+  }
+
+  @GetMapping("/targets")
+  java.util.List<com.goldys.platform.application.WeeklyReportTargets.Target> targets(
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate week,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return targets.get(currentUser.roleOf(user), week);
+  }
+
+  @PutMapping("/targets")
+  java.util.List<com.goldys.platform.application.WeeklyReportTargets.Target> saveTargets(
+      @RequestBody com.goldys.platform.application.WeeklyReportTargets.Edit edit,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return targets.save(currentUser.roleOf(user), user.getUsername(), edit);
   }
 
   @GetMapping

@@ -3,6 +3,7 @@ package com.goldys.platform.application;
 import com.goldys.platform.auth.*;
 import com.goldys.platform.config.VenueClock;
 import com.goldys.platform.semantic.ReviewMetricsQuery;
+import com.goldys.platform.semantic.WeeklyInventoryQuery;
 import com.goldys.platform.semantic.catalog.*;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -20,18 +21,24 @@ public class WeeklyReportService {
   private final ReviewMetricsQuery reviews;
   private final PermissionService permissions;
   private final VenueClock clock;
+  private final WeeklyReportTargets targets;
+  private final WeeklyInventoryQuery inventory;
 
   public WeeklyReportService(
       MetricQueryService metrics,
       MetricCatalog catalog,
       ReviewMetricsQuery reviews,
       PermissionService permissions,
-      VenueClock clock) {
+      VenueClock clock,
+      WeeklyReportTargets targets,
+      WeeklyInventoryQuery inventory) {
     this.metrics = metrics;
     this.catalog = catalog;
     this.reviews = reviews;
     this.permissions = permissions;
     this.clock = clock;
+    this.targets = targets;
+    this.inventory = inventory;
   }
 
   private record Field(
@@ -212,13 +219,15 @@ public class WeeklyReportService {
       if (field.metric() != null) resources.addAll(catalog.requiredPermissions(field.metric()));
     }
     resources.add("reviews");
+    resources.add("weekly-report.targets");
+    resources.add("inventory.stock");
     for (String resource : resources)
       permissions.require(role, new ResourceKey(resource), PermissionAction.READ);
     TimeRange range =
         new TimeRange(from, to, com.goldys.platform.semantic.catalog.Calendar.CALENDAR);
     Map<MetricId, TimeSeriesResult> days = new HashMap<>(), totals = new HashMap<>();
     for (Field field : fields) {
-      if (field.metric() == null) continue;
+      if (field.metric() == null || field.metric() == MetricId.INVENTORY_WASTAGE) continue;
       days.put(field.metric(), query(field.metric(), range, TimeGrain.DAY));
       totals.put(field.metric(), query(field.metric(), range, TimeGrain.WEEK));
     }
@@ -226,13 +235,32 @@ public class WeeklyReportService {
     for (var bucket : reviews.ratingTrend(from, to))
       ratings.put(bucket.periodStart(), bucket.avgRating());
     List<WeeklyReport.Week> weeks = new ArrayList<>();
+    var waste = inventory.wastage(from, to);
+    var stockCounts = inventory.stockCounts(from, to);
     for (int i = 0; i < weekCount; i++) {
       LocalDate start = from.plusWeeks(i);
       List<LocalDate> dates = start.datesUntil(start.plusDays(7)).toList();
       List<WeeklyReport.Row> rows = new ArrayList<>();
+      var weekTargets = targets.get(role, start);
       for (Field field : fields)
         rows.add(row(field, start, dates, days, totals, ratings.get(start)));
-      weeks.add(new WeeklyReport.Week(start, start.plusDays(6), dates, List.copyOf(rows)));
+      var weekWaste =
+          waste.stream()
+              .filter(w -> !w.date().isBefore(start) && w.date().isBefore(start.plusDays(7)))
+              .toList();
+      rows = new ArrayList<>(WeeklyReportInventory.fill(rows, dates, weekWaste));
+      applyTargets(rows, weekTargets);
+      weeks.add(
+          new WeeklyReport.Week(
+              start,
+              start.plusDays(6),
+              dates,
+              List.copyOf(rows),
+              weekTargets,
+              WeeklyReportInventory.summarize(weekWaste),
+              stockCounts.stream()
+                  .filter(s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
+                  .toList()));
     }
     return new WeeklyReport(
         from, to, clock.clock().instant(), clock.zone().getId(), List.copyOf(weeks));
@@ -256,7 +284,7 @@ public class WeeklyReportService {
     if (!dates.getLast().isBefore(clock.today())) {
       notes.add("Week includes today or future dates; this is not a completed-week result.");
     }
-    if (field.metric() != null) {
+    if (field.metric() != null && field.metric() != MetricId.INVENTORY_WASTAGE) {
       TimeSeriesResult result = days.get(field.metric());
       Map<LocalDate, BigDecimal> byDate = points(result);
       values = dates.stream().map(byDate::get).toList();
@@ -289,6 +317,63 @@ public class WeeklyReportService {
         total,
         total == null ? "UNAVAILABLE" : "QUALIFIED",
         List.copyOf(notes));
+  }
+
+  private static void applyTargets(
+      List<WeeklyReport.Row> rows, List<WeeklyReportTargets.Target> targets) {
+    Map<String, WeeklyReportTargets.Target> byId = new HashMap<>();
+    for (var target : targets) byId.put(target.id(), target);
+    for (int i = 0; i < rows.size(); i++) {
+      var row = rows.get(i);
+      var target = byId.get(row.id());
+      if (target != null)
+        rows.set(
+            i,
+            new WeeklyReport.Row(
+                row.id(),
+                row.section(),
+                row.label(),
+                row.unit(),
+                row.days(),
+                target.value(),
+                "QUALIFIED",
+                List.of(
+                    "Target effective from "
+                        + target.effectiveFrom()
+                        + "; "
+                        + target.source()
+                        + ". Carried forward until changed; weekly target, not a daily allocation.")));
+    }
+    var sales = rows.stream().filter(r -> r.id().equals("net_sales")).findFirst().orElseThrow();
+    var target = byId.get("sales_target");
+    if (target != null && sales.total() != null) {
+      BigDecimal difference = sales.total().subtract(target.value());
+      for (int i = 0; i < rows.size(); i++) {
+        var row = rows.get(i);
+        if (row.id().equals("sales_difference") || row.id().equals("sales_difference_percent")) {
+          BigDecimal value =
+              row.id().equals("sales_difference")
+                  ? difference
+                  : WeeklyReportInventory.ratio(difference, target.value());
+          List<String> notes = new ArrayList<>(sales.notes());
+          notes.add(
+              "Actual minus effective weekly sales target "
+                  + target.value()
+                  + "; partial actuals produce a partial comparison.");
+          rows.set(
+              i,
+              new WeeklyReport.Row(
+                  row.id(),
+                  row.section(),
+                  row.label(),
+                  row.unit(),
+                  row.days(),
+                  value,
+                  value == null ? "UNAVAILABLE" : "QUALIFIED",
+                  List.copyOf(notes)));
+        }
+      }
+    }
   }
 
   private static Map<LocalDate, BigDecimal> points(TimeSeriesResult result) {

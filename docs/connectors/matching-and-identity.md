@@ -136,13 +136,13 @@ so a second source can be added later without re-deriving these decisions.
   `(source_system, source_record_ref)` (unchanged → no-op).
 - **Confidence:** n/a (single source).
 - **Manual resolution path:** not wired.
+- Header dates accept ISO dates and the observed English `EEEE, d MMMM uuuu` format (for example Monday, 26 October 2026); malformed or conflicting weekdays fail explicitly.
 - The header carries the stocktake's `stocktakeDate`; the detail payload does not, so
   `canonical_stock_count.counted_date` is resolved from this entity.
 
 ## Stock count (`canonical_stock_count`)
 
-- **Source:** `CTB` (stocktake detail via `ctb-stocktake-detail`, backfilled by the one-off
-  `ctb-detail-backfill` run).
+- **Source:** `CTB` (stocktake detail via `ctb-stocktake-detail`, refreshed with all headers by each scheduled/manual `CtbConnector` run; earlier data came from `ctb-detail-backfill`).
 - **Logical identity:** `UUID.nameUUIDFromBytes("stock-count:" + stocktakeId + ":" + lineId)`.
 - **Source identity:** `(source_system = CTB, source_record_ref = "stocktake:<stocktakeId>:<lineId>")`.
 - **Line id ruling:** `stocktakeDetailId` is **not** a line id (only 4 distinct values across all
@@ -156,6 +156,7 @@ so a second source can be added later without re-deriving these decisions.
   `(source_system, source_record_ref)`.
 - **Confidence:** n/a (single source).
 - **Manual resolution path:** not wired.
+- Fresh detail pages are captured raw-first, with stable parent references. Changed totals, short pages, repeated identities and page limits fail the affected stocktake rather than publishing partial new counts. Counts retain source units and values; separate stocktakes are not summed into a current balance. Removal of a previously observed source line is not inferred from absence; count completeness remains qualified.
 
 ## Wastage (`canonical_wastage`)
 

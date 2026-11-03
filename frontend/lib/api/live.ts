@@ -81,6 +81,8 @@ function dateRangeQuery(from?: string, to?: string): string {
 
 /** Real backend calls. The demo fixtures stay behind the `demo` flag; these hit the live endpoints. */
 export const liveApi: Api = {
+  getWeeklyTargets: week => fetchApi(`/api/reports/weekly/targets?week=${encodeURIComponent(week)}`),
+  saveWeeklyTargets: input => fetchApi("/api/reports/weekly/targets", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) }),
   getWeeklyReport: (from, weeks = 4, options) => {
     const query = new URLSearchParams({ weeks: String(weeks) });
     if (from) query.set("from", from);

@@ -1,0 +1,50 @@
+{
+  "data": [
+    {
+      "id": -219,
+      "stocktakeDetailId": 0,
+      "stockId": 0,
+      "stockCode": "RP_219",
+      "stockDesc": "Espresso Martini Batch",
+      "qtyCount": 5,
+      "stockUnitOfMeasurementName": "ml",
+      "stocktakeDetailCost": 24.7621,
+      "subTotal": 123.8105,
+      "recipeId": 219,
+      "stocktakeAreaName": null,
+      "qtyCount1": 0,
+      "qtyCount2": 0
+    },
+    {
+      "id": -581,
+      "stocktakeDetailId": 0,
+      "stockId": 0,
+      "stockCode": "RP_581",
+      "stockDesc": "Black Betty (Spirit Batch)",
+      "qtyCount": 0,
+      "stockUnitOfMeasurementName": "ml",
+      "stocktakeDetailCost": 46.88961904761904,
+      "subTotal": 0,
+      "recipeId": 581,
+      "stocktakeAreaName": null,
+      "qtyCount1": 0,
+      "qtyCount2": 0
+    },
+    {
+      "id": 2880,
+      "stocktakeDetailId": -1,
+      "stockId": 2871,
+      "stockCode": "88171",
+      "stockDesc": "BR Carlton Draught NGB 375ML 4x6",
+      "qtyCount": 0,
+      "stockUnitOfMeasurementName": "each",
+      "stocktakeDetailCost": 61.3,
+      "subTotal": 0.0,
+      "recipeId": null,
+      "stocktakeAreaName": null,
+      "qtyCount1": 0,
+      "qtyCount2": 0
+    }
+  ],
+  "totalCount": 3
+}

@@ -375,7 +375,11 @@ class CtbConnectorTest {
         facts,
         new CtbWastageParser(),
         mock(CanonicalWastageIngest.class),
-        VenueClock.system(ZoneId.of("Australia/Melbourne")));
+        VenueClock.system(ZoneId.of("Australia/Melbourne")),
+        new CtbStocktakeRefresh(
+            new CtbStocktakeParser(),
+            mock(com.goldys.platform.canonical.CanonicalStocktakeIngest.class),
+            mock(com.goldys.platform.canonical.CanonicalStockCountIngest.class)));
   }
 
   private static CtbConnector wastageConnector(CtbClient client, CanonicalWastageIngest ingest) {
@@ -393,7 +397,11 @@ class CtbConnectorTest {
         mock(SourceProductSaleFactIngest.class),
         new CtbWastageParser(),
         ingest,
-        VenueClock.system(ZoneId.of("Australia/Melbourne")));
+        VenueClock.system(ZoneId.of("Australia/Melbourne")),
+        new CtbStocktakeRefresh(
+            new CtbStocktakeParser(),
+            mock(com.goldys.platform.canonical.CanonicalStocktakeIngest.class),
+            mock(com.goldys.platform.canonical.CanonicalStockCountIngest.class)));
   }
 
   @Test

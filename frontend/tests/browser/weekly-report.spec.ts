@@ -16,6 +16,14 @@ for (const width of [1280, 390]) {
     await expect(page.getByText("Average review rating", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "2026-10-19 – 2026-10-25", exact: true }).click();
     await expect(page.getByRole("heading", { name: "2026-10-19 – 2026-10-25", exact: true })).toBeVisible();
+    await expect(page.getByRole("cell", { name: /^No reason recorded/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Stock counts", exact: true })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "0.25%", exact: true }).first()).toBeVisible();
+    await page.getByText("Edit weekly targets", { exact: true }).click();
+    await page.getByLabel("Beverage wastage target % (%)", { exact: true }).fill("0.5");
+    await page.getByRole("button", { name: "Save targets", exact: true }).click();
+    await expect(page.getByText("Targets saved.", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Beverage wastage target % (%)", { exact: true })).toHaveValue("0.5");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const pending = page.waitForEvent("download");
     await page.getByRole("button", { name: "Download Excel", exact: true }).click();

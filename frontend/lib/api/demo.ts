@@ -1,3 +1,4 @@
+import { demoWeeklyTargets, saveDemoWeeklyTargets } from "./weekly-report-demo";
 import { demoRecipeComposition } from "./demo-recipe-composition";
 import { demoWeeklyReport } from "./weekly-report-demo";
 import { deriveExceptions } from "../reconciliation-logic";
@@ -1256,6 +1257,8 @@ let demoUsers: ManagedUser[] = [
 ];
 
 export const demoApi: Api = {
+  getWeeklyTargets: async week => { await delay(300); return demoWeeklyTargets(week); },
+  saveWeeklyTargets: async input => { await delay(300); return saveDemoWeeklyTargets(input); },
   getWeeklyReport: async (from, weeks = 4, options) => {
     await delay(300, options?.signal);
     return demoWeeklyReport(from, weeks);

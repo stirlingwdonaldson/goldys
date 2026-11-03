@@ -29,6 +29,13 @@ describe("weekly Excel snapshot", () => {
     expect(workbook).toContain('name="2026-10-19"');
     expect(workbook).toContain('name="2026-10-26"');
     expect(workbook).toContain('name="Field notes"');
+    expect(workbook).toContain('name="Wastage reasons"');
+    expect(workbook).toContain('name="Stock counts"');
+    expect(workbook).toContain('name="Targets"');
+    expect(files.get("xl/worksheets/sheet5.xml")).toContain("No reason recorded");
+    expect(files.get("xl/worksheets/sheet5.xml")).toContain("Knockoff | Knock Off");
+    expect(files.get("xl/worksheets/sheet6.xml")).toContain("Unknown");
+    expect(files.get("xl/worksheets/sheet7.xml")).toContain("DEMO workbook baseline");
     const sheet = new DOMParser().parseFromString(files.get("xl/worksheets/sheet2.xml")!, "application/xml");
     expect(sheet.querySelector("parsererror")).toBeNull();
     for (const row of report.weeks[0].rows) {
@@ -39,6 +46,9 @@ describe("weekly Excel snapshot", () => {
     expect(sheet.querySelector(`c[r="K${index}"] v`)?.textContent).toBe("90000");
     expect(sheet.querySelector(`c[r="E${index}"]`)).toBeNull();
     expect(sheet.querySelector(`c[r="D${index}"] v`)?.textContent).toBe("6000");
+    const targetIndex = report.weeks[0].rows.findIndex(r => r.id === "beverage_wastage_target_percent") + 5;
+    expect(sheet.querySelector(`c[r="K${targetIndex}"]`)?.getAttribute("s")).toBe("3");
+    expect(sheet.querySelector(`c[r="K${targetIndex}"] v`)?.textContent).toBe("0.0025");
     expect(JSON.stringify(report)).toBe(snapshot);
     expect(files.get("xl/worksheets/sheet4.xml")).toContain("Missing days are not zero");
   });
@@ -62,6 +72,6 @@ describe("weekly Excel snapshot", () => {
 
   it("handles the largest bounded report without losing week tabs", () => {
     const files = entries(weeklyReportWorkbook(demoWeeklyReport("2026-08-03", 13)));
-    expect((files.get("xl/workbook.xml")!.match(/<sheet /g) ?? []).length).toBe(15);
+    expect((files.get("xl/workbook.xml")!.match(/<sheet /g) ?? []).length).toBe(18);
   });
 });
