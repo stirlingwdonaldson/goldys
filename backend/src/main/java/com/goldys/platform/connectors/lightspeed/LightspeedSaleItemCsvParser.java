@@ -72,7 +72,8 @@ public class LightspeedSaleItemCsvParser {
                   text(r, columns, "Sales Adjustments Adjustment Reason"),
                   text(r, columns, "Sales Adjustments Adjustment Level"),
                   text(r, columns, "Sales Adjustments Promotion Name")),
-              siteNumber(r, columns)));
+              siteNumber(r, columns),
+              saleClosedTenMinuteTime(r, columns)));
     }
     return out;
   }
@@ -94,6 +95,29 @@ public class LightspeedSaleItemCsvParser {
       }
     } catch (IOException e) {
       throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Malformed sale-item CSV", e);
+    }
+  }
+
+  /** Source-local bucket, not an exact timestamp or a UTC instant. */
+  private static java.time.LocalTime saleClosedTenMinuteTime(
+      CSVRecord row, Map<String, Integer> columns) {
+    String value = text(row, columns, "Sales Data Sale Closed Minute 10");
+    if (value == null) return null;
+    try {
+      // Historic exports use HHmm; current scheduled exports use HH:mm.
+      java.time.LocalTime time =
+          value.contains(":")
+              ? java.time.LocalTime.parse(value)
+              : java.time.LocalTime.parse(
+                  String.format("%04d", Integer.parseInt(value)),
+                  java.time.format.DateTimeFormatter.ofPattern("HHmm")
+                      .withResolverStyle(java.time.format.ResolverStyle.STRICT));
+      if (time.getMinute() % 10 != 0 || time.getSecond() != 0 || time.getNano() != 0)
+        throw new IllegalArgumentException();
+      return time;
+    } catch (RuntimeException e) {
+      throw new ConnectorFetchException(
+          "CONNECTOR_SCHEMA_MISMATCH", "Invalid sale-closed ten-minute bucket");
     }
   }
 

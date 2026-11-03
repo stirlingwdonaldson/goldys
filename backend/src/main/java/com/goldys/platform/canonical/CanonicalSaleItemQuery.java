@@ -115,6 +115,9 @@ public class CanonicalSaleItemQuery {
         s.staffName(),
         s.registerName(),
         s.tableNumber(),
-        s.adjustment());
+        s.adjustment(),
+        s.siteNumber(),
+        s.saleNumber() == null ? "MAPPING_MISSING" : "LEGACY_RECEIPT_GROUP",
+        s.saleClosedTenMinuteTime());
   }
 }

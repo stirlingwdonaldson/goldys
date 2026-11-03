@@ -8,6 +8,7 @@ import { SaleItemsTab } from "./sale-items-tab";
 const ROWS: SaleItemRow[] = [
   {
     tradingDate: "2026-10-04",
+    saleClosedTenMinuteTime: "17:30:00",
     saleNumber: "SALE-1001",
     receiptLineId: "LINE-1",
     itemName: "pint carlton draught",
@@ -82,6 +83,8 @@ describe("SaleItemsTab", () => {
     expect(screen.getByText("Sale item mix")).toBeInTheDocument();
     expect(await screen.findByText("chicken schnitzel")).toBeInTheDocument();
     expect(screen.getByText("SKU-100")).toBeInTheDocument();
+    expect(screen.getByText("Sale closed (10-minute bucket)")).toBeInTheDocument();
+    expect(screen.getByText("17:30")).toBeInTheDocument();
     expect(screen.getByText("P-100")).toBeInTheDocument();
 
     // Currency columns are formatted (sold price, cost, total).

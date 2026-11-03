@@ -34,6 +34,48 @@ class CanonicalSaleItemMetadataIntegrationTest {
   @Autowired PlatformTransactionManager transactions;
 
   @Test
+  void timingSurvivesRedeliveryOmissionCorrectionAndResolvedReads() {
+    String ref = UUID.randomUUID().toString();
+    String header =
+        "Sales Data Receipt Line ID,Sales Data Sale Closed Date,Sales Data Product Quantity,Sales Data Total Inc Tax,Sales Data Sale Closed Minute 10\n";
+    String row = ref + ",2026-11-02,1,10,";
+    java.util.function.Consumer<String> send =
+        time ->
+            webhook.ingestCsv(
+                (header + row + time + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    send.accept("17:30");
+    send.accept("17:30");
+    send.accept("");
+    assertThat(versions(ref)).isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject(
+                "select sale_closed_ten_minute_time from resolved_sale_line where receipt_line_id=?",
+                java.time.LocalTime.class,
+                ref))
+        .isEqualTo(java.time.LocalTime.of(17, 30));
+    send.accept("17:40");
+    assertThat(versions(ref)).isEqualTo(2);
+    var query =
+        new com.goldys.platform.reconciliation.ResolvedSaleItemListQuery(jdbc, new ObjectMapper());
+    assertThat(
+            query
+                .page(
+                    null,
+                    null,
+                    LocalDate.parse("2026-11-02"),
+                    LocalDate.parse("2026-11-02"),
+                    0,
+                    200)
+                .items())
+        .filteredOn(item -> item.receiptLineId().equals(ref))
+        .singleElement()
+        .satisfies(
+            item ->
+                assertThat(item.saleClosedTenMinuteTime())
+                    .isEqualTo(java.time.LocalTime.of(17, 40)));
+  }
+
+  @Test
   void safeWebhookPreservesMetadataWhileUpdatingMoneyAndRetainingHistory() throws Exception {
     String ref = UUID.randomUUID().toString();
     var original = canonical.record(input("LIGHTSPEED", ref, "10", "receipt-1", "Example Staff"));

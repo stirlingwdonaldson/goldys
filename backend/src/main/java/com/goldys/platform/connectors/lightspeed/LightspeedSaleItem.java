@@ -23,7 +23,51 @@ public record LightspeedSaleItem(
     String registerName,
     String tableNumber,
     com.goldys.platform.semantic.SaleAdjustment adjustment,
-    Long siteNumber) {
+    Long siteNumber,
+    java.time.LocalTime saleClosedTenMinuteTime) {
+  public LightspeedSaleItem(
+      String receiptLineId,
+      LocalDate saleDate,
+      String saleNumber,
+      String itemName,
+      String productNumber,
+      String sku,
+      String categoryName,
+      BigDecimal quantity,
+      BigDecimal amount,
+      BigDecimal soldPriceIncTax,
+      BigDecimal totalTax,
+      BigDecimal costIncTax,
+      String orderType,
+      String saleType,
+      String staffName,
+      String registerName,
+      String tableNumber,
+      com.goldys.platform.semantic.SaleAdjustment adjustment,
+      Long siteNumber) {
+    this(
+        receiptLineId,
+        saleDate,
+        saleNumber,
+        itemName,
+        productNumber,
+        sku,
+        categoryName,
+        quantity,
+        amount,
+        soldPriceIncTax,
+        totalTax,
+        costIncTax,
+        orderType,
+        saleType,
+        staffName,
+        registerName,
+        tableNumber,
+        adjustment,
+        siteNumber,
+        null);
+  }
+
   public LightspeedSaleItem(
       String receiptLineId,
       LocalDate saleDate,
