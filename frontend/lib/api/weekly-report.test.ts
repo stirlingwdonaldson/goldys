@@ -16,12 +16,16 @@ describe("weekly reporting adapters", () => {
   it("keeps demo fields, missing values, ratios and qualifications consistent", () => {
     const report = demoWeeklyReport("2026-10-26", 2);
     expect(report.weeks).toHaveLength(2);
-    expect(report.weeks[0].rows).toHaveLength(79);
-    expect(new Set(report.weeks[0].rows.map(r => r.id)).size).toBe(79);
+    expect(report.weeks[0].rows).toHaveLength(85);
+    expect(new Set(report.weeks[0].rows.map(r => r.id)).size).toBe(85);
     expect(report.weeks[0].rows.find(r => r.id === "net_sales")?.days[1]).toBeNull();
     expect(report.weeks[0].rows.find(r => r.id === "food_sales")?.total).toBeGreaterThan(0);
     expect(report.weeks[0].rows.find(r => r.id === "total_wastage")?.status).toBe("QUALIFIED");
     expect(report.weeks[0].rows.find(r => r.id === "review_average")?.total).toBe(4.5);
+    expect(report.weeks[0].rows.find(r => r.id === "food_known_theoretical_cost")?.total).toBeGreaterThan(0);
+    expect(report.weeks[0].rows.find(r => r.id === "food_cost_coverage_lines")?.total).toBe(0.6);
+    expect(report.weeks[0].rows.find(r => r.id === "food_cost_coverage_lines")?.days[1]).toBeNull();
+    expect(report.weeks[0].rows.find(r => r.id === "food_theoretical_cogs")?.total).toBeNull();
     expect(report.weeks[0].rows.some(r => /labour|wages|happiness|prime cost/i.test(r.label))).toBe(false);
   });
 

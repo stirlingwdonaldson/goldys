@@ -93,6 +93,7 @@ class ReportingRealWeekIntegrationTest {
                 r.get("recipe_id").isEmpty() ? null : Integer.valueOf(r.get("recipe_id")),
                 raw));
     }
+    loadLiveCosts();
     loadMappings("reporting-mappings-2026-10-26.json");
     em.flush();
     jdbc.update(
@@ -168,9 +169,49 @@ class ReportingRealWeekIntegrationTest {
     assertThat(rows.get("beverage_wastage_percent").total()).isNotNull();
     assertThat(rows.get("sales_reconciliation_difference").total())
         .isEqualByComparingTo("604.7852");
+    assertThat(rows.get("food_theoretical_cogs").total()).isNull();
+    assertThat(rows.get("beverage_theoretical_cogs").total()).isNull();
+    assertThat(rows.get("total_theoretical_cogs_percent").total()).isNull();
+    assertThat(rows.get("total_known_theoretical_cost").total()).isEqualByComparingTo("18914.74");
+    assertThat(rows.get("total_cost_coverage_lines").total()).isLessThan(BigDecimal.ONE);
     mapper
         .writerWithDefaultPrettyPrinter()
         .writeValue(directory.resolve("real-week-report.json").toFile(), after);
+  }
+
+  private void loadLiveCosts() throws Exception {
+    int rows = 0;
+    try (var input =
+        new java.util.zip.GZIPInputStream(
+            getClass()
+                .getResourceAsStream("/fixtures/ctb/reporting-cost-week-2026-10-26.json.gz"))) {
+      for (var day : mapper.readTree(input)) {
+        var date = LocalDate.parse(day.path("date").asText());
+        var report = day.path("report");
+        var parsed =
+            new com.goldys.platform.connectors.ctb.CtbSaleItemParser()
+                .parse(mapper.writeValueAsBytes(report));
+        assertThat(parsed).hasSize(report.path("totalCount").asInt());
+        for (var item : parsed) {
+          int updated =
+              jdbc.update(
+                  """
+            update source_product_sale_fact set cost_per_unit=?,total_food_cost=?
+            where trading_date=? and stock_code=? and quantity_sold=? and amount=? and tax_amount=?
+            """,
+                  item.costPerUnit(),
+                  item.totalFoodCost(),
+                  date,
+                  item.stockCode(),
+                  item.quantitySold(),
+                  item.amount(),
+                  item.taxAmount());
+          assertThat(updated).isEqualTo(1);
+          rows++;
+        }
+      }
+    }
+    assertThat(rows).isEqualTo(1034);
   }
 
   private void loadMappings(String name) throws IOException {

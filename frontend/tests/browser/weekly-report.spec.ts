@@ -110,6 +110,14 @@ test("retained real completed week matches API snapshot and Excel download", asy
   ]) {
     await expect(page.getByRole("cell", { name: label, exact: true }).locator("..")).toContainText(value);
   }
+  for (const [label, value] of [
+    ["Food known CTB theoretical cost subtotal", "$14,143.34"],
+    ["Beverage known CTB theoretical cost subtotal", "$4,771.40"],
+    ["Total known CTB theoretical cost subtotal", "$18,914.74"],
+  ]) {
+    await expect(page.getByRole("cell", { name: label, exact: true }).locator("..")).toContainText(value);
+  }
+  await expect(page.getByRole("cell", { name: "Food theoretical COGS (CTB estimate)", exact: true }).locator("..")).toContainText("Unavailable");
   const pending = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Download Excel", exact: true })

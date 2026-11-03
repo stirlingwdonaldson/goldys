@@ -55,6 +55,32 @@ class CtbStocktakeRefreshTest {
     verifyNoInteractions(counts);
   }
 
+  @Test
+  void repeatedSourceRowsCannotStandInForACompleteUniqueStocktake() throws Exception {
+    var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+    var sample = mapper.readTree(fixture("weekly-stocktake-lines.json")).path("data").get(0);
+    var first = mapper.createArrayNode();
+    for (int i = 1; i <= 200; i++)
+      first.add(((com.fasterxml.jackson.databind.node.ObjectNode) sample.deepCopy()).put("id", i));
+    var last = mapper.createArrayNode();
+    for (int i = 0; i < 9; i++) last.add(first.get(i).deepCopy());
+    when(client.searchStocktakes(0, 200))
+        .thenReturn(new CtbClient.CtbPage(fixture("weekly-stocktake-header.json"), 1));
+    when(client.getStocktakeDetail(38, 0, 200))
+        .thenReturn(
+            new CtbClient.CtbPage(mapper.createObjectNode().set("data", first).toString(), 209));
+    when(client.getStocktakeDetail(38, 200, 200))
+        .thenReturn(
+            new CtbClient.CtbPage(mapper.createObjectNode().set("data", last).toString(), 209));
+    IngestionSink sink = mock(IngestionSink.class);
+    when(sink.accept(any())).thenAnswer(i -> UUID.randomUUID());
+    assertThatThrownBy(() -> refresh.fetch(client, sink))
+        .isInstanceOf(ConnectorFetchException.class)
+        .hasMessageContaining("unique source population is unverified");
+    verify(sink, times(3)).accept(any());
+    verifyNoInteractions(counts);
+  }
+
   private String fixture(String name) throws Exception {
     try (var input = getClass().getResourceAsStream("/ctb/" + name)) {
       return new String(Objects.requireNonNull(input).readAllBytes(), StandardCharsets.UTF_8);

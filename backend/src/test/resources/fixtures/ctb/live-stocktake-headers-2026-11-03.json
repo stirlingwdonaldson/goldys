@@ -1,0 +1,245 @@
+{
+  "data": [
+    {
+      "stocktakeId": 40,
+      "stocktakeDate": "Monday, 26 October 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 29722.104907936508,
+      "isPartial": null,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 39,
+      "stocktakeDate": "Monday, 19 October 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 42941.9980031746,
+      "isPartial": null,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 38,
+      "stocktakeDate": "Monday, 12 October 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 33812.94637180967,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 37,
+      "stocktakeDate": "Monday, 5 October 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 42757.10938063981,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 36,
+      "stocktakeDate": "Tuesday, 29 September 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 40438.88138871428,
+      "isPartial": null,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 35,
+      "stocktakeDate": "Tuesday, 29 September 2026",
+      "outletName": "",
+      "totalStockValue": 60857.586818651434,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 34,
+      "stocktakeDate": "Tuesday, 22 September 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 43760.69657956099,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 33,
+      "stocktakeDate": "Tuesday, 15 September 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 42472.94575345188,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 32,
+      "stocktakeDate": "Tuesday, 8 September 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 38173.83545677433,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 31,
+      "stocktakeDate": "Thursday, 3 September 2026",
+      "outletName": "",
+      "totalStockValue": 16222.83475261108,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 28,
+      "stocktakeDate": "Tuesday, 1 September 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 42725.011782664136,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 27,
+      "stocktakeDate": "Tuesday, 1 September 2026",
+      "outletName": "Goldy's - CTB",
+      "totalStockValue": 1356.220944016955,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 25,
+      "stocktakeDate": "Tuesday, 25 August 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 45823.18976172617,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 24,
+      "stocktakeDate": "Wednesday, 19 August 2026",
+      "outletName": "",
+      "totalStockValue": 0,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 23,
+      "stocktakeDate": "Tuesday, 18 August 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 46749.49006891239,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 21,
+      "stocktakeDate": "Tuesday, 11 August 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 52669.658781600905,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 20,
+      "stocktakeDate": "Monday, 10 August 2026",
+      "outletName": "Goldy's - CTB",
+      "totalStockValue": 13638.736240983606,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 19,
+      "stocktakeDate": "Tuesday, 4 August 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 46067.682459356074,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 18,
+      "stocktakeDate": "Monday, 3 August 2026",
+      "outletName": "Goldy's - CTB",
+      "totalStockValue": 579.605,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 17,
+      "stocktakeDate": "Tuesday, 28 July 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 49141.38014247771,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 16,
+      "stocktakeDate": "Tuesday, 21 July 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 43018.68441035937,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 15,
+      "stocktakeDate": "Monday, 20 July 2026",
+      "outletName": "Goldy's - CTB",
+      "totalStockValue": 7.98,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 14,
+      "stocktakeDate": "Monday, 20 July 2026",
+      "outletName": "",
+      "totalStockValue": 10856.0739,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 13,
+      "stocktakeDate": "Tuesday, 14 July 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 45605.00197041868,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 12,
+      "stocktakeDate": "Monday, 6 July 2026",
+      "outletName": "Goldy's - CTB",
+      "totalStockValue": 8478.805495000002,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 10,
+      "stocktakeDate": "Monday, 29 June 2026",
+      "outletName": "Goldy's - CTB",
+      "totalStockValue": 4041.103866666666,
+      "isPartial": null,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 8,
+      "stocktakeDate": "Monday, 22 June 2026",
+      "outletName": "Goldy's - CTB",
+      "totalStockValue": 3588.444171999999,
+      "isPartial": null,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 7,
+      "stocktakeDate": "Tuesday, 9 June 2026",
+      "outletName": "Goldy's Tavern - DTP",
+      "totalStockValue": 43035.80682666667,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 6,
+      "stocktakeDate": "Monday, 1 June 2026",
+      "outletName": "",
+      "totalStockValue": 5992.224033333333,
+      "isPartial": false,
+      "isLockStocktake": false
+    },
+    {
+      "stocktakeId": 4,
+      "stocktakeDate": "Monday, 25 May 2026",
+      "outletName": "",
+      "totalStockValue": 748.6,
+      "isPartial": false,
+      "isLockStocktake": false
+    }
+  ],
+  "totalCount": 30
+}

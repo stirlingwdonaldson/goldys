@@ -417,3 +417,23 @@ parsed with close buckets, covered by `LightspeedSaleItemCsvParserTest`. No sour
 schedule changes, automatic historical replay, or production data repair are part of this change.
 Payment-created time remains date-only in the separate scheduled payment report; manual Sales
 Feed transaction observations retain their source-local timestamp independently.
+
+### CTB stocktakes and source-reported theoretical costs (3–4 November 2026)
+
+Fresh login and stocktake endpoints succeeded: 30 headers and all three pages of
+stocktake 40 (443 lines) parsed with the existing parser. The first deployed refresh
+had not yet run. The user-triggered application **Run now** recovered 23 stocktakes /
+8,575 count lines. Seven older stocktakes remain held: each advertises nine more
+rows than a single large response returns, while normal pages contain nine repeated
+identities. Those responses do not establish a complete unique population. The
+existing guard is retained, with a clearer diagnostic; no deduplication or invented
+stock identities are used to force completeness.
+
+`Sale/SearchSaleItemsByDateRange` supplies `costPerUnit` and `totalFoodCost` beside
+sold quantities. The complete seven-day real sample has 1,034/1,034 rows parsed and
+matched to retained date/code/quantity/gross/tax observations. Zero cost frequently
+coincides with `recipeName=None`; it cannot establish zero consumption cost. The new
+report uses only supported source cost estimates, with partial subtotals and coverage;
+it does not replace missing costs with current recipes. Historical cost effectiveness,
+yields and complete capture remain unverified. The variance endpoint still returns
+an explicit unsuccessful envelope. See the [audit](../audits/ctb-stock-cogs-2026-11-03/README.md).

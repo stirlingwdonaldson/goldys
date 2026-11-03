@@ -84,7 +84,8 @@ public class CtbStocktakeRefresh {
       for (var line : parsed) {
         if (!ids.add(line.lineId()))
           throw new ConnectorFetchException(
-              "CONNECTOR_TRUNCATED", "Stocktake pages repeat a count identity");
+              "CONNECTOR_TRUNCATED",
+              "Stocktake pages repeat a count identity; unique source population is unverified");
         lines.add(line);
       }
       if (start + PAGE_SIZE >= total) break;
