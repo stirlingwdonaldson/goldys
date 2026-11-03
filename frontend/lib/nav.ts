@@ -72,6 +72,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Performance",
     items: [
+      { title: "Weekly report", href: "/weekly-report", icon: CalendarDays, keywords: ["weekly", "kpi", "spreadsheet", "excel", "export"] },
       { title: "Sales", href: "/sales", icon: TrendingUp, keywords: ["revenue", "takings"] },
       {
         title: "Sales detail",

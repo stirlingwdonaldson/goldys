@@ -67,6 +67,8 @@ consequences, status).
 
 ### Operations
 
+- [operations/weekly-report-review.md](operations/weekly-report-review.md): weekly dashboard/Excel usage, field coverage and outstanding accuracy reviews.
+
 - [operations/deployment.md](operations/deployment.md): dev, production, staging, accounts,
   SFTP drop, Sentry, upgrade and rollback.
 - [operations/testing.md](operations/testing.md): local checks, test layout, CI.
