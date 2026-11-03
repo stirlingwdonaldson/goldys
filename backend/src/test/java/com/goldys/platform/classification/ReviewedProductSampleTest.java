@@ -20,7 +20,7 @@ class ReviewedProductSampleTest {
   @Test
   void real_sample_responses_validate_and_uncertainty_is_preserved() throws Exception {
     ObjectMapper mapper = new ObjectMapper();
-    Path evidence = Path.of("../archive/audits/product-classification-2026-11-03/evidence");
+    Path evidence = Path.of("src/test/resources/fixtures/product-classification");
     JsonNode sample =
         mapper.readTree(Files.readString(evidence.resolve("evaluation-results.json")));
     JsonNode criteria =

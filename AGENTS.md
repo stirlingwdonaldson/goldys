@@ -32,8 +32,9 @@ raw ledger → bitemporal canonical → reconciliation → resolved projections
 5. The doc for the area you're touching. `docs/README.md` is the full index.
 
 Current references are indexed in `docs/README.md`. Dated audit evidence, design
-records and handoffs are in `archive/`; they are historical context, not current
-requirements or instructions. Removed implementation plans remain in Git history.
+records and handoffs are in the separate local archive repository described in
+`docs/archive.md`; they are historical context, not current requirements or
+instructions. Removed implementation plans remain in Git history.
 New Superpowers design work still goes in `docs/superpowers/specs/` and `plans/`,
 indexed by `docs/superpowers/README.md`.
 

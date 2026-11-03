@@ -1,8 +1,8 @@
 # Current architecture
 
 > Living description of the backend's dependency direction. `docs/system-context.md`
-> governs architecture and `docs/prd.md` governs scope. Dated designs in
-> `archive/designs/` explain historical decisions; the code establishes what exists.
+> governs architecture and `docs/prd.md` governs scope. The [historical archive](../archive.md)
+> explains past design decisions; the code establishes what exists.
 
 ## Shape
 

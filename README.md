@@ -49,7 +49,7 @@ scope and acceptance criteria in [`docs/prd.md`](docs/prd.md).
 
 Not built yet: Smart Exporter (PRD Req. 10), Automation Hub, canonical domains for OpenTable
 reviews and menu items (stored raw only), Deputy canonicalization, MarketMan history import, and a permission admin UI.
-[`archive/audits/production-data/`](archive/audits/production-data/README.md) records the 9 October 2026 production snapshot and its prioritised gaps;
+[The production-data audit](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/audits/production-data/README.md) records the 9 October 2026 production snapshot and its prioritised gaps;
 it is historical evidence, not the current deployment state.
 
 ## Open questions

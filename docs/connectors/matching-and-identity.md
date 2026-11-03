@@ -560,7 +560,7 @@ an earlier date is an explicit reporting restatement, not a source-effective fac
 
 Café closure around 2022 is an owner's hypothesis, not an approved effective date. Menu names,
 last sales or current recipe activity never automatically assign café membership or retirement.
-See [the measured investigation](../../archive/audits/product-classification-2026-11-03/README.md).
+See [the measured investigation](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/audits/product-classification-2026-11-03/README.md).
 
 ### Reviewed CTB product nature without cross-site equivalence (3 November 2026)
 
@@ -605,4 +605,4 @@ classification counts and recorded-reason counts are separate from sales coverag
 below-threshold dates are the alert mechanism; this introduces no background monitor,
 notifications, automatic classification or model approval. The queue requires all existing
 category, reconciliation sales, inventory stock and inventory cost READ grants before any
-read. See the [curation evidence](../../archive/audits/food-beverage-reporting-2026-11-03/ongoing-review/README.md).
+read. See the [curation evidence](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/audits/food-beverage-reporting-2026-11-03/ongoing-review/README.md).

@@ -220,5 +220,5 @@ the current setup, not a result snapshot.
 - Role/permission admin screen — no design yet, not yet scheduled.
 - Reconciliation view's field list — blocked on PRD open questions (§3).
 - Frontend architecture follow-ups (server-state caching, transport errors,
-  editor/explorer decomposition) — proposed in [`../frontend/`](../../archive/frontend/audit.md),
+  editor/explorer decomposition) — proposed in [`../frontend/`](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/frontend/audit.md),
   not yet approved.

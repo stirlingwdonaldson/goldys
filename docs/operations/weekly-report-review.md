@@ -96,7 +96,7 @@ mislabelled date ranges. Its calculations are not copied into the new report.
 
 ## Food/beverage curation and source basis (3 November 2026)
 
-The [dated audit](../../archive/audits/food-beverage-reporting-2026-11-03/README.md) distinguishes application
+The [dated audit](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/audits/food-beverage-reporting-2026-11-03/README.md) distinguishes application
 curation already applied (18 described categories, two manual porterhouse corrections, 89 reviewed
 mapping revisions) from report/editor code not yet deployed. Mappings explicitly restate reporting
 from 26 October 2026; source facts, café history and lifecycle are not rewritten. Products → Reporting

@@ -5,7 +5,7 @@
 
 ## Context
 
-Goldy's forecasting feature (`archive/designs/2026-10-12-timesfm-forecasting-design.md`)
+Goldy's forecasting feature ([historical design](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/superpowers/specs/2026-10-12-timesfm-forecasting-design.md))
 predicts a resolved business metric using Google's **TimesFM 3.0** zero-shot model. TimesFM is a
 330M-parameter time-series foundation model that is **Python/PyTorch-only**: it has no JVM runtime
 and no Java SDK.

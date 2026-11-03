@@ -47,7 +47,7 @@ state from the code. Agent workflows and safety rules remain in [AGENTS.md](../A
 
 - [Agent personas](agents.md): retained OpenCode reviews and commands.
 - [Superpowers workflow](superpowers/README.md): locations for new designs and plans.
-- [Historical archive](../archive/README.md): audit evidence, past designs, frontend
+- [Historical archive](archive.md): audit evidence, past designs, frontend
   proposals and handoffs. Consult it for a specific historical question, not startup context.
 
 Update the existing reference when behaviour changes. Record new architectural decisions in

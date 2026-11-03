@@ -3,7 +3,6 @@
 import argparse
 import csv
 from datetime import datetime, timezone
-import importlib.util
 import io
 import json
 from pathlib import Path
@@ -13,6 +12,24 @@ import zlib
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
+
+
+SAFE_OPTS = ('-c default_transaction_read_only=on '
+             '-c statement_timeout=8000 '
+             '-c lock_timeout=1000 '
+             '-c idle_in_transaction_session_timeout=15000')
+
+
+def run_sql(container, sql):
+    cmd = ["docker", "exec", "-i", container, "sh", "-c",
+           f'PGOPTIONS="{SAFE_OPTS}" psql -X -q --csv -v ON_ERROR_STOP=1 '
+           '-U "$POSTGRES_USER" -d "$POSTGRES_DB"']
+    proc = subprocess.run(cmd, input="BEGIN READ ONLY;\n" + sql + "\nROLLBACK;\n",
+                          text=True, capture_output=True)
+    if proc.returncode != 0:
+        sys.stderr.write(f"probe failed (rc={proc.returncode}):\n{proc.stderr}\n")
+        sys.exit(proc.returncode)
+    return proc.stdout
 
 
 def checksum(path):
@@ -55,10 +72,6 @@ def main():
     parser.add_argument("--container", required=True)
     parser.add_argument("--expected-version", type=int, choices=(82, 98), required=True)
     args = parser.parse_args()
-    spec = importlib.util.spec_from_file_location(
-        "goldys_readonly_probe", ROOT / "archive/audits/data-foundation/scripts/run_probes.py")
-    probe = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(probe)
     metadata_sql = """
 SELECT 'database' AS section, json_build_object('server_version_num',current_setting('server_version_num')::int,'read_only',current_setting('default_transaction_read_only'),'principal',current_user,'can_create_role',(SELECT rolsuper OR rolcreaterole FROM pg_roles WHERE rolname=current_user))::text AS data;
 SELECT 'history' AS section, row_to_json(h)::text AS data FROM (SELECT version,checksum,success FROM flyway_schema_history ORDER BY installed_rank) h;
@@ -66,7 +79,7 @@ SELECT 'migration_hazards' AS section,json_build_object('duplicate_current_produ
 SELECT 'parent_column' AS section,json_build_object('present',EXISTS(SELECT FROM information_schema.columns WHERE table_name='canonical_invoice_line' AND table_schema='public' AND column_name='invoice_logical_id'))::text AS data;
 SELECT 'analytical_role' AS section,json_build_object('present',EXISTS(SELECT FROM pg_roles WHERE rolname='goldys_ro'),'member',CASE WHEN EXISTS(SELECT FROM pg_roles WHERE rolname='goldys_ro') THEN pg_has_role(current_user,'goldys_ro','USAGE') ELSE false END,'raw_read',CASE WHEN EXISTS(SELECT FROM pg_roles WHERE rolname='goldys_ro') THEN has_table_privilege('goldys_ro','raw_record','SELECT') ELSE false END)::text AS data;
 """
-    metadata = parse_sections(probe.run_sql(args.container, metadata_sql))
+    metadata = parse_sections(run_sql(args.container, metadata_sql))
     files = {p.name.split("__")[0][1:]: p for p in
              (ROOT / "backend/src/main/resources/db/migration").glob("V*__*.sql")}
     blockers = migration_blockers(metadata["history"], files, args.expected_version)
@@ -87,7 +100,7 @@ SELECT 'analytical_role' AS section,json_build_object('present',EXISTS(SELECT FR
     if not blockers:
         sql = (HERE / "impact.sql").read_text()
         parent_filter = "AND l.invoice_logical_id IS NULL" if metadata["parent_column"][0]["present"] else ""
-        impact = parse_sections(probe.run_sql(args.container, sql.replace("/*LEGACY_PARENT_FILTER*/", parent_filter)))
+        impact = parse_sections(run_sql(args.container, sql.replace("/*LEGACY_PARENT_FILTER*/", parent_filter)))
     report = {"captured_at": datetime.now(timezone.utc).isoformat(),
               "working_tree_dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).strip()),
               "release_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
