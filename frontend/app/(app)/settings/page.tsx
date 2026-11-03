@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { IdentityCard } from "@/components/app-shell/identity-card";
 import { IncompleteNoticesToggle } from "@/components/settings/incomplete-notices-toggle";
 import { DemoModeToggle } from "@/components/settings/demo-mode-toggle";
@@ -13,9 +14,15 @@ export default function SettingsPage() {
       <IdentityCard />
       <DemoModeToggle />
       <IncompleteNoticesToggle />
-      <p className="text-sm text-muted-foreground">
-        Role and permission administration is not available yet.
-      </p>
+      <Link
+        href="/settings/users"
+        className="rounded-lg border p-4 text-sm font-medium underline-offset-4 hover:underline"
+      >
+        Users and access
+        <span className="mt-1 block font-normal text-muted-foreground">
+          Create, rename, deactivate and reset owner accounts.
+        </span>
+      </Link>
     </div>
   );
 }
