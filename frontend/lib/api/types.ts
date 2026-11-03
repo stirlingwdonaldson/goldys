@@ -467,6 +467,13 @@ export type ClassificationRunStatus = "RUNNING" | "SUCCEEDED" | "FAILED" | "PART
  * `status` are the enum names; `productCount`/`finishedAt` are null while a run is in flight and
  * `errorMessage` is null unless it failed or partially completed.
  */
+export interface ClassificationPreview {
+  runId: string;
+  contextSnapshot: string | null;
+  proposalSnapshot: string | null;
+  namingSnapshot: string | null;
+}
+
 export interface ClassificationRun {
   id: string;
   kind: ClassificationRunKind;
@@ -1414,6 +1421,7 @@ export interface Api {
   runClassification(kind: ClassificationRunKind): Promise<void>;
   /** Recent classification runs, newest first. */
   listClassificationRuns(options?: { signal?: AbortSignal }): Promise<ClassificationRun[]>;
+  getClassificationPreview(id: string): Promise<ClassificationPreview>;
   getReviewOverview(from: string, to: string, options?: { signal?: AbortSignal }): Promise<ReviewOverview>;
   getReviewSentimentTrend(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SentimentBucket[]>;
   getReviewRatingTrend(from: string, to: string, options?: { signal?: AbortSignal }): Promise<RatingTrendBucket[]>;

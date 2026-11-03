@@ -41,6 +41,36 @@ class ClassificationRun {
   @Column(name = "error_message")
   private String errorMessage;
 
+  @Column(name = "context_snapshot", columnDefinition = "text")
+  private String contextSnapshot;
+
+  @Column(name = "proposal_snapshot", columnDefinition = "text")
+  private String proposalSnapshot;
+
+  @Column(name = "naming_snapshot", columnDefinition = "text")
+  private String namingSnapshot;
+
+  public void namingSnapshot(String snapshot) {
+    this.namingSnapshot = snapshot;
+  }
+
+  public String namingSnapshot() {
+    return namingSnapshot;
+  }
+
+  public void snapshot(String context, String proposals) {
+    this.contextSnapshot = context;
+    this.proposalSnapshot = proposals;
+  }
+
+  public String contextSnapshot() {
+    return contextSnapshot;
+  }
+
+  public String proposalSnapshot() {
+    return proposalSnapshot;
+  }
+
   protected ClassificationRun() {}
 
   private ClassificationRun(ClassificationRunKind kind, Instant now) {

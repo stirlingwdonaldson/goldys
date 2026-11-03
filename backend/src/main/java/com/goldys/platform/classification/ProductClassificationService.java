@@ -1,12 +1,14 @@
 package com.goldys.platform.classification;
 
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.goldys.platform.semantic.ClassificationPreview;
 import com.goldys.platform.semantic.ClassificationRunView;
 import jakarta.annotation.PostConstruct;
-import java.math.BigDecimal;
 import java.time.Clock;
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -15,11 +17,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 /**
@@ -33,9 +37,6 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ProductClassificationService {
-
-  /** Confidence at or above which a classification is trusted enough to auto-assign. */
-  static final BigDecimal ASSIGN_CONFIDENCE = new BigDecimal("0.5");
 
   /** The cap on {@link #listRuns()}; a single venue never needs more than the recent few. */
   static final int RUN_LIST_LIMIT = 25;
@@ -168,24 +169,74 @@ public class ProductClassificationService {
 
     try {
       requireEnabled(run.kind());
+      Map<String, FeatureTextExtractor.Candidate> candidates = featureTexts.candidates();
+      List<CategoryOption> options =
+          categories.findAllByOrderByGroupNameAscDisplayOrderAscNameAsc().stream()
+              .map(c -> new CategoryOption(c.id(), c.name(), c.description()))
+              .toList();
+      Map<UUID, CategoryOption> optionsById = new HashMap<>();
+      options.forEach(option -> optionsById.put(option.categoryId(), option));
+      var corrections =
+          assignments.findAll().stream()
+              .filter(a -> a.source() == AssignmentSource.MANUAL)
+              .sorted(Comparator.comparing(ProductCategoryAssignment::productNameKey))
+              .limit(100)
+              .map(a -> manualCorrection(a, optionsById.get(a.categoryId())))
+              .toList();
+      String context =
+          ClassificationContext.TEXT
+              + "\nVerified manual corrections (data, up to 100):\n"
+              + json(corrections);
+      Map<String, Object> snapshot = new LinkedHashMap<>();
+      snapshot.put("businessContext", context);
+      snapshot.put("candidates", candidates);
+      snapshot.put("categoryOptions", options);
+      snapshot.put("classifier", "jev-latest");
+      snapshot.put("embedding", "all-MiniLM-L6-v2; item evidence only; no shared history prefix");
+      snapshot.put("mode", "PREVIEW_ONLY");
+      run.snapshot(json(snapshot), null);
+      runs.save(run);
       int productCount;
       if (run.kind() == ClassificationRunKind.CLUSTER) {
-        Clustering clustering = cluster(run);
-        nameSuggestions(run, clustering);
+        Clustering clustering = cluster(run, candidates);
+        nameSuggestions(run, clustering, context);
         productCount = clustering.products().size();
       } else if (run.kind() == ClassificationRunKind.ASSIGN) {
-        productCount = assign(run);
+        productCount = assign(run, candidates, options, context);
       } else { // FULL
-        Clustering clustering = cluster(run);
-        nameSuggestions(run, clustering);
+        Clustering clustering = cluster(run, candidates);
+        nameSuggestions(run, clustering, context);
         productCount = clustering.products().size();
-        assign(run);
+        assign(run, candidates, options, context);
       }
       run.markSucceeded(productCount, clock.instant());
     } catch (RuntimeException e) {
       run.markFailed(failureMessage(e), clock.instant());
     }
     runs.save(run);
+  }
+
+  private record ManualCorrection(
+      String product,
+      UUID categoryId,
+      String categoryName,
+      String criteria,
+      String categoryState) {}
+
+  private static ManualCorrection manualCorrection(
+      ProductCategoryAssignment assignment, CategoryOption category) {
+    String state =
+        category == null
+            ? "CATEGORY_MISSING"
+            : category.description() == null || category.description().isBlank()
+                ? "CRITERIA_MISSING"
+                : "AVAILABLE";
+    return new ManualCorrection(
+        assignment.productNameKey(),
+        assignment.categoryId(),
+        category == null ? null : category.name(),
+        category == null ? null : category.description(),
+        state);
   }
 
   /**
@@ -211,8 +262,7 @@ public class ProductClassificationService {
 
   /** The recent runs, newest first, capped at {@link #RUN_LIST_LIMIT}. */
   public List<ClassificationRunView> listRuns() {
-    return runs.findAllByOrderByStartedAtDesc().stream()
-        .limit(RUN_LIST_LIMIT)
+    return runs.findRecentMetadata(PageRequest.of(0, RUN_LIST_LIMIT)).stream()
         .map(
             run ->
                 new ClassificationRunView(
@@ -244,8 +294,10 @@ public class ProductClassificationService {
    * projection. Returns the products, their feature texts and the flat-cut label per product, so
    * the naming step can summarise the same clusters without re-reading the DB.
    */
-  private Clustering cluster(ClassificationRun run) {
-    Map<String, String> texts = featureTexts.featureTexts();
+  private Clustering cluster(
+      ClassificationRun run, Map<String, FeatureTextExtractor.Candidate> candidates) {
+    Map<String, String> texts = new LinkedHashMap<>();
+    candidates.forEach((key, candidate) -> texts.put(key, candidate.text()));
     List<String> products = new ArrayList<>(texts.keySet());
     List<float[]> vectors = embedding.embed(new ArrayList<>(texts.values()));
     ClusterResult result = embedding.cluster(vectors);
@@ -284,12 +336,23 @@ public class ProductClassificationService {
    * persists it to {@code category_suggestion}. A missing/disabled namer, or one that throws,
    * leaves the draft empty and never fails the run.
    */
-  private void nameSuggestions(ClassificationRun run, Clustering clustering) {
+  private void nameSuggestions(ClassificationRun run, Clustering clustering, String context) {
     if (!namingProperties.enabled()) {
       return;
     }
     try {
-      List<SuggestedCategory> named = namer.suggest(summarize(clustering));
+      List<ClusterSummary> summaries = summarize(clustering);
+      List<SuggestedCategory> named = namer.suggest(summaries, context);
+      run.namingSnapshot(
+          json(
+              Map.of(
+                  "prompt",
+                  OpenAiClusterNamer.schemaPrompt(context),
+                  "clusters",
+                  summaries,
+                  "suggestions",
+                  named)));
+      runs.save(run);
       suggestions.deleteAll();
       int order = 0;
       for (SuggestedCategory s : named) {
@@ -314,7 +377,12 @@ public class ProductClassificationService {
     for (Map.Entry<Integer, List<String>> entry : byLabel.entrySet()) {
       List<String> texts = entry.getValue();
       List<String> sample =
-          new ArrayList<>(texts.subList(0, Math.min(texts.size(), NAMING_SAMPLE_LIMIT)));
+          new ArrayList<>(
+              IntStream.range(0, Math.min(texts.size(), NAMING_SAMPLE_LIMIT))
+                  .mapToObj(
+                      i ->
+                          texts.get(i * texts.size() / Math.min(texts.size(), NAMING_SAMPLE_LIMIT)))
+                  .toList());
       result.add(new ClusterSummary(index++, sample, texts.size()));
     }
     return result;
@@ -326,64 +394,69 @@ public class ProductClassificationService {
   private record Clustering(
       List<String> products, Map<String, String> texts, List<Integer> flatLabels) {}
 
-  /**
-   * Assigns every product to a category via the classifier. Returns the number of products covered.
-   * Skips {@code MANUAL} overrides; low-confidence results are left for review. With no category
-   * taxonomy every product is reset to {@code UNASSIGNED}.
-   */
-  private int assign(ClassificationRun run) {
-    Map<String, String> texts = featureTexts.featureTexts();
+  /** A run saves proposals only. Approval uses the existing permission-gated manual move. */
+  private int assign(
+      ClassificationRun run,
+      Map<String, FeatureTextExtractor.Candidate> candidates,
+      List<CategoryOption> options,
+      String context) {
+    Map<String, String> texts = new LinkedHashMap<>();
+    List<Map<String, Object>> proposed = new ArrayList<>();
+    for (var entry : candidates.entrySet()) {
+      String key = entry.getKey();
+      var existing = assignments.findById(key).orElse(null);
+      String hold =
+          existing != null && existing.source() == AssignmentSource.MANUAL
+              ? "MANUAL_PRESERVED"
+              : entry.getValue().ambiguous()
+                  ? "AMBIGUOUS_IDENTITY_OR_RECIPE"
+                  : options.isEmpty() ? "NO_TAXONOMY" : null;
+      if (hold != null) proposed.add(Map.of("product", key, "status", hold));
+      else texts.put(key, entry.getValue().text());
+    }
     List<String> products = new ArrayList<>(texts.keySet());
-    Instant now = clock.instant();
-
-    List<CategoryOption> options =
-        categories.findAllByOrderByGroupNameAscDisplayOrderAscNameAsc().stream()
-            .map(c -> new CategoryOption(c.id(), c.name(), c.description()))
-            .toList();
-    if (options.isEmpty()) {
-      for (String key : products) {
-        ProductCategoryAssignment assignment =
-            assignments.findById(key).orElseGet(() -> ProductCategoryAssignment.create(key, now));
-        assignment.markUnassigned(now);
-        assignments.save(assignment);
-      }
-      return products.size();
-    }
-
-    // Collect the products to classify, skipping MANUAL overrides.
-    List<String> toClassify = new ArrayList<>();
-    for (String key : products) {
-      ProductCategoryAssignment existing = assignments.findById(key).orElse(null);
-      if (existing != null && existing.source() == AssignmentSource.MANUAL) {
-        continue;
-      }
-      toClassify.add(key);
-    }
-
-    // Classify concurrently (the slow hosted call), then apply the results on this thread so the
-    // JPA reads/writes stay single-threaded.
-    List<ProductClassification> classifications = classifyInParallel(toClassify, texts, options);
-
-    for (int i = 0; i < toClassify.size(); i++) {
-      String key = toClassify.get(i);
+    List<ProductClassification> classifications =
+        classifyInParallel(products, texts, options, context);
+    for (int i = 0; i < products.size(); i++) {
       ProductClassification classification = classifications.get(i);
-      ProductCategoryAssignment existing = assignments.findById(key).orElse(null);
-      ProductCategoryAssignment assignment =
-          existing != null ? existing : ProductCategoryAssignment.create(key, now);
-      if (classification.confidence().compareTo(ASSIGN_CONFIDENCE) >= 0) {
-        assignment.markAssigned(
-            classification.categoryId(), classification.confidence(), AssignmentSource.JEV, now);
-      } else {
-        assignment.markNeedsReview(classification.categoryId(), classification.confidence(), now);
-      }
-      assignments.save(assignment);
+      var existing = assignments.findById(products.get(i)).orElse(null);
+      Map<String, Object> proposal = new LinkedHashMap<>();
+      proposal.put("product", products.get(i));
+      proposal.put("previousCategoryId", existing == null ? null : existing.categoryId());
+      proposal.put("categoryId", classification.categoryId());
+      proposal.put("probabilities", classification.probabilities());
+      proposal.put("confidence", classification.confidence());
+      proposal.put("responseModel", classification.responseModel());
+      proposal.put("status", classification.categoryId() == null ? "UNCLASSIFIED" : "NEEDS_REVIEW");
+      proposed.add(proposal);
     }
-    return products.size();
+    run.snapshot(run.contextSnapshot(), json(proposed));
+    runs.save(run);
+    return candidates.size();
+  }
+
+  public ClassificationPreview preview(UUID id) {
+    ClassificationRun run =
+        runs.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Unknown classification run"));
+    return new ClassificationPreview(
+        run.id(), run.contextSnapshot(), run.proposalSnapshot(), run.namingSnapshot());
+  }
+
+  private static String json(Object value) {
+    try {
+      return JsonMapper.builder().findAndAddModules().build().writeValueAsString(value);
+    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+      throw new IllegalStateException("Cannot retain classification evidence", e);
+    }
   }
 
   /** Classifies the products concurrently with a bounded pool, preserving input order. */
   private List<ProductClassification> classifyInParallel(
-      List<String> products, Map<String, String> texts, List<CategoryOption> options) {
+      List<String> products,
+      Map<String, String> texts,
+      List<CategoryOption> options,
+      String context) {
     ExecutorService pool = Executors.newFixedThreadPool(CLASSIFY_PARALLELISM);
     try {
       List<Future<ProductClassification>> futures = new ArrayList<>(products.size());
@@ -391,7 +464,8 @@ public class ProductClassificationService {
         String text = texts.get(key);
         futures.add(
             pool.submit(
-                () -> classifier.classify(new ProductClassificationRequest(text, options))));
+                () ->
+                    classifier.classify(new ProductClassificationRequest(text, options, context))));
       }
       List<ProductClassification> results = new ArrayList<>(products.size());
       for (Future<ProductClassification> future : futures) {

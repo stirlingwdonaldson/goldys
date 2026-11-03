@@ -1,0 +1,12 @@
+{
+  "Food": "Edible prepared food dishes, sides and desserts including steak/porterhouse, parma, fish, crumble. Includes historical café food. Excludes drinks, raw stock packs and uncertain modifiers.",
+  "Beer": "Fermented malt beverages, including cans and tap beer. Excludes porterhouse steak, wine, spirits and nonalcoholic coffee.",
+  "Wine": "Wine including glass/bottle/carafe. Excludes beer and mixed cocktails.",
+  "Spirits": "Distilled spirits/liqueurs served as such. Excludes cocktails and food.",
+  "Cocktails": "Named mixed drinks, e.g. Margarita and Espresso Martini. Excludes plain coffee and spirits sold alone.",
+  "Non-Alcoholic": "Coffee, tea, juice, soft drinks and other nonalcoholic drinks, including historical café drinks. Excludes milk or shots explicitly acting as menu modifiers.",
+  "Ingredients": "Stock ingredients or bulk food packs used in preparation, e.g. raw beef, poultry, cheese, cream. Excludes identified prepared sale dishes; uncertain preparation recipes should abstain.",
+  "Modifiers": "Menu additions/substitutions, e.g. Extra Shot or Oat milk added to a drink. Excludes a whole independently sold beverage or inventory milk.",
+  "Merchandise": "Nonfood branded goods, e.g. tea towels, tote bags, shirts. Excludes all food/drinks.",
+  "Unclassified": "Insufficient, conflicting or ambiguous evidence; no category criteria fit. Prefer abstention to guessing."
+}

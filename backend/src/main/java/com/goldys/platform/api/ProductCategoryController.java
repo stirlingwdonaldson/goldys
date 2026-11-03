@@ -87,6 +87,12 @@ public class ProductCategoryController {
     return reporting.listRuns(currentUser.roleOf(user));
   }
 
+  @GetMapping("/runs/{id}/preview")
+  com.goldys.platform.semantic.ClassificationPreview preview(
+      @PathVariable UUID id, @AuthenticationPrincipal AccountUserDetails user) {
+    return reporting.preview(currentUser.roleOf(user), id);
+  }
+
   /** The pending taxonomy draft, in display order. */
   @GetMapping("/suggestions")
   List<CategorySuggestionView> suggestions(@AuthenticationPrincipal AccountUserDetails user) {
@@ -128,6 +134,7 @@ public class ProductCategoryController {
       @RequestBody UpdateCategoryRequest body,
       @AuthenticationPrincipal AccountUserDetails user) {
     var role = currentUser.roleOf(user);
+    if (body.description() != null) reporting.describe(role, id, body.description());
     if (body.name() != null) {
       reporting.rename(role, id, body.name());
     }
@@ -162,7 +169,7 @@ public class ProductCategoryController {
 
   record RunClassificationRequest(String kind) {}
 
-  record UpdateCategoryRequest(String name, String groupName) {}
+  record UpdateCategoryRequest(String name, String groupName, String description) {}
 
   record MoveRequest(UUID categoryId) {}
 

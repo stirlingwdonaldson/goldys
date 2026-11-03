@@ -11,4 +11,8 @@ import java.util.List;
 public interface ClusterNamer {
 
   List<SuggestedCategory> suggest(List<ClusterSummary> clusters);
+
+  default List<SuggestedCategory> suggest(List<ClusterSummary> clusters, String context) {
+    return suggest(clusters);
+  }
 }

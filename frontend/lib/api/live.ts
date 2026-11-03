@@ -444,6 +444,9 @@ export const liveApi: Api = {
       },
       { responseType: "void" },
     ),
+  getClassificationPreview: (id: string) =>
+    fetchApi<import("./types").ClassificationPreview>(`/api/products/categories/runs/${encodeURIComponent(id)}/preview`),
+
   listClassificationRuns: (options?: { signal?: AbortSignal }) =>
     fetchApi<import("./types").ClassificationRun[]>("/api/products/categories/runs", { signal: options?.signal }),
   getReviewOverview: (from: string, to: string, options?: { signal?: AbortSignal }) =>

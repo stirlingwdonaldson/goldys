@@ -72,7 +72,11 @@ class JevProductClassifierTest {
       // The request must follow the documented systemone Choice shape, and the option keys are the
       // category names (so the model sees readable labels), not the raw UUIDs.
       JsonNode body = MAPPER.readTree(capturedBody.get());
-      assertThat(body.get("state").asText()).isEqualTo("Chicken parma and chips");
+      assertThat(body.get("state").asText())
+          .contains(
+              "Chicken parma and chips", "former attached café", "not a verified effective date");
+      assertThat(body.path("questions").path("category").path("criteria").has("Unclassified"))
+          .isTrue();
       assertThat(body.get("model").asText()).isEqualTo("jev-latest");
       JsonNode question = body.get("questions").get("category");
       assertThat(question.get("type").asText()).isEqualTo("choice");

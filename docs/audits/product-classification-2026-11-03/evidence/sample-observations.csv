@@ -1,0 +1,49 @@
+item_name,source_categories,first_seen,last_seen,observations
+Apple Crumble,FOOD MENU | Uncategorised,2022-04-07,2025-08-17,143
+Beef Tartare,FOOD MENU | Uncategorised,2021-04-07,2023-07-02,167
+Can - Stone & Wood Pacific Ale (cafe),Uncategorised,2021-10-28,2021-12-15,23
+Coke (cafe),Uncategorised,2021-10-28,2021-12-16,39
+Coke Zero - Mixer,SOFTIES,2021-01-07,2026-10-31,1237
+Extra Shot,Uncategorised,2020-12-02,2022-11-20,2222
+Kids Fish & Chippies,Multiple Categories | Uncategorised,2023-10-19,2026-10-31,1533
+Latte - Small,Uncategorised,2020-12-02,2022-12-09,3555
+Margarita,COCKTAILS | Uncategorised,2020-12-12,2026-11-02,7022
+Oat milk,Uncategorised,2020-11-23,2022-08-14,2902
+Parma (cafe),Uncategorised,2021-10-30,2021-12-23,187
+Pint - Philter XPA,FAST BAR | Uncategorised,2022-03-16,2026-11-02,14646
+Porterhouse,Uncategorised,2020-11-26,2026-10-06,2667
+Porterhouse (250g ),FOOD MENU,2022-08-17,2025-08-17,9428
+item_name,categories,min,max,count
+Goldy's Tea Towel Doggos of 2023,MERCH,2022-07-15,2024-12-17,170
+Goldy's Tote,MERCH,2021-04-24,2026-06-22,160
+Large - Goldy's 'OG' Tee,MERCH,2021-04-14,2026-07-29,98
+product_name_key,recipe_id,units,suppliers,lines
+12 x 80g dill pickle chappy s potato chips,,each,Tailor-Made Foods Pty Ltd,1
+bay of fires clothbound cheddar,,kilograms,Savour and Grace,1
+beef cheek denuded frozen order by kg,,kilograms,Grange Meat Co,1
+braised beef cheek,440,kilograms,,1
+breast fillet butterflied pc 200g,,grams,G & T Chickens,13
+bulla thickened cream,,ml,GOLD ST MILK BAR / CAFE,1
+sale_item_stock_description,recipe_id,recipe_name,recipe_folder_name,is_recipe_active,sale_item_recipe_id
+Coke Zero - Mixer,-1,,,f,-207
+Coke Zero - Mixer,292,No Sugar Cola Mixer,No Sugar Cola,t,213
+Margarita,332,Margarita,Classics,t,242
+Pint - Philter XPA,102,Philter XPA Pint,Philter XPA,t,39
+Pint - Philter XPA,102,Philter XPA Pint,Philter XPA,t,488
+Porterhouse,461,Porterhouse ,All time classic,t,299
+Vegan Option,-1,,,f,-654
+Vegan Option,-1,,,f,-649
+Vegan Option,-1,,,f,-650
+Vegan Option,-1,,,f,-653
+Vegan Option,643,vegan option -  eggplant parma,Extras and sides,t,461
+product_name_key,ids
+coke zero mixer,3
+20 parma special,2
+amaretto sour,2
+3 glasses,2
+4 glasses,2
+5 glasses,2
+2 glasses,2
+aperol spritz nv continental,2
+apple juice gls,2
+20 eggplant parma special,2
