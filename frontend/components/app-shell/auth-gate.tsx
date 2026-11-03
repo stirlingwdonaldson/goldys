@@ -12,19 +12,35 @@ import { useCurrentUser } from "./current-user-provider";
  * Goldy's) mounts until `/api/me` confirms a session, so a signed-out visitor never sees the app.
  *
  * - signed out (401): sent to the login page, which returns them here afterwards;
+ * - forced password change: sent to /change-password until the backend clears the flag;
  * - backend unreachable or erroring: a full-screen error with a retry, not the app. The one
  *   exception is a demo build (`NEXT_PUBLIC_DEMO_MODE` not "false"), where running on fixtures
  *   with no backend at all is the point; a 401 from a real backend still gates even there.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { status, error, refresh } = useCurrentUser();
+  const { user, status, error, refresh } = useCurrentUser();
   const router = useRouter();
   const pathname = usePathname();
   const demoBuild = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
+  const mustChangePassword =
+    status === "authenticated" && user?.mustChangePassword === true && pathname !== "/change-password";
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace(loginHref(pathname));
   }, [status, pathname, router]);
+
+  useEffect(() => {
+    if (mustChangePassword) router.replace("/change-password");
+  }, [mustChangePassword, router]);
+
+  if (mustChangePassword) {
+    return (
+      <main className="flex min-h-screen items-center justify-center p-4" aria-busy="true">
+        <span className="sr-only">Opening the password change…</span>
+        <Skeleton className="h-10 w-48" />
+      </main>
+    );
+  }
 
   if (status === "authenticated" || (status === "error" && demoBuild)) return <>{children}</>;
 

@@ -9,7 +9,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
 setupApiServer();
 beforeEach(() => { push.mockReset(); refresh.mockReset(); });
 const url = "http://localhost:3000/api/auth/login";
-const profile = { displayName: "Fixture", department: "GENERAL", seniority: "JUNIOR" };
+const profile = { displayName: "Fixture", department: "GENERAL", seniority: "JUNIOR", mustChangePassword: false };
 function fill() {
   render(<LoginPage />);
   fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "fixture@example.invalid" } });
@@ -42,6 +42,12 @@ it.each([401, 500, 200])("shows safe accessible failure at HTTP %i without navig
   expect(screen.getByText(/req-login/)).toBeInTheDocument();
   expect(push).not.toHaveBeenCalled();
   expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+});
+
+it("routes a flagged user to the password change instead of the requested page", async () => {
+  server.use(http.post(url, () => HttpResponse.json({ ...profile, mustChangePassword: true })));
+  fireEvent.submit(fill());
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/change-password"));
 });
 
 it("names the existing form inputs for assistive technology", () => {

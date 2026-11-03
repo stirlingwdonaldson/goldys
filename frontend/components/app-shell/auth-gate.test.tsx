@@ -6,12 +6,13 @@ import { AuthGate } from "./auth-gate";
 import { CurrentUserProvider } from "./current-user-provider";
 
 const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
+let pathname = "/sales-detail";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
-  usePathname: () => "/sales-detail",
+  usePathname: () => pathname,
 }));
 setupApiServer();
-beforeEach(() => replace.mockReset());
+beforeEach(() => { replace.mockReset(); pathname = "/sales-detail"; });
 afterEach(() => vi.unstubAllEnvs());
 
 const me = "http://localhost:3000/api/me";
@@ -26,6 +27,21 @@ function renderGate() {
     </CurrentUserProvider>,
   );
 }
+
+it("sends a user who must change their password to the change screen", async () => {
+  server.use(http.get(me, () => HttpResponse.json({ ...owner, mustChangePassword: true })));
+  renderGate();
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/change-password"));
+  expect(screen.queryByText("The app")).not.toBeInTheDocument();
+});
+
+it("stays on the change screen without redirecting again", async () => {
+  pathname = "/change-password";
+  server.use(http.get(me, () => HttpResponse.json({ ...owner, mustChangePassword: true })));
+  renderGate();
+  expect(await screen.findByText("The app")).toBeInTheDocument();
+  expect(replace).not.toHaveBeenCalled();
+});
 
 it("renders the app for a signed-in user", async () => {
   server.use(http.get(me, () => HttpResponse.json(owner)));

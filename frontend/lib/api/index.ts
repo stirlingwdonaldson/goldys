@@ -46,6 +46,24 @@ export async function logout(): Promise<void> {
   return fetchApi<void>("/api/auth/logout", { method: "POST" }, { responseType: "void" });
 }
 
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/** Sets a new password for the signed-in account and clears the forced-change flag. */
+export async function changePassword(input: ChangePasswordInput): Promise<void> {
+  return fetchApi<void>(
+    "/api/auth/change-password",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+    { responseType: "void" },
+  );
+}
+
 export { ApiError, isApiError, isAbortError } from "./errors";
 export type { ApiErrorCode } from "./errors";
 export type {

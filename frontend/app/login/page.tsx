@@ -32,8 +32,8 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login({ email, password });
-      router.push(nextPath(window.location.search));
+      const user = await login({ email, password });
+      router.push(user.mustChangePassword ? "/change-password" : nextPath(window.location.search));
       router.refresh();
     } catch (err) {
       setError(err);
