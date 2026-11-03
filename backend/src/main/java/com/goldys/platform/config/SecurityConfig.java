@@ -13,12 +13,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -53,8 +56,21 @@ public class SecurityConfig {
   }
 
   @Bean
+  SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
+
+  @Bean
+  HttpSessionEventPublisher httpSessionEventPublisher() {
+    return new HttpSessionEventPublisher();
+  }
+
+  @Bean
   SecurityFilterChain securityFilterChain(
-      HttpSecurity http, SecurityContextRepository securityContexts) throws Exception {
+      HttpSecurity http,
+      SecurityContextRepository securityContexts,
+      SessionRegistry sessionRegistry)
+      throws Exception {
     http.authorizeHttpRequests(
         auth ->
             auth.requestMatchers(
@@ -84,6 +100,8 @@ public class SecurityConfig {
                 .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
 
     http.securityContext(context -> context.securityContextRepository(securityContexts));
+
+    http.sessionManagement(session -> session.maximumSessions(-1).sessionRegistry(sessionRegistry));
 
     http.formLogin(
         form ->
