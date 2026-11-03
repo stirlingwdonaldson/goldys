@@ -114,7 +114,10 @@ public class UserManagementService {
   }
 
   private boolean lastActiveOwner() {
-    return accounts.countByDepartmentAndSeniorityAndActiveTrue(OWNER_DEPARTMENT, OWNER_SENIORITY)
+    // Lock the active owner rows so two mutual deactivations cannot both commit.
+    return accounts
+            .findByDepartmentAndSeniorityAndActiveTrue(OWNER_DEPARTMENT, OWNER_SENIORITY)
+            .size()
         <= 1;
   }
 

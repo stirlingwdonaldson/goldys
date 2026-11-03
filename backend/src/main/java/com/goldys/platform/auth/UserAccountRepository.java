@@ -12,5 +12,6 @@ interface UserAccountRepository extends JpaRepository<UserAccount, UUID> {
 
   List<UserAccount> findAllByOrderByEmailAsc();
 
-  long countByDepartmentAndSeniorityAndActiveTrue(String department, String seniority);
+  @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+  List<UserAccount> findByDepartmentAndSeniorityAndActiveTrue(String department, String seniority);
 }

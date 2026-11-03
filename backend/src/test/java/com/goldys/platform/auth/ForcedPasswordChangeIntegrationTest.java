@@ -68,13 +68,18 @@ class ForcedPasswordChangeIntegrationTest {
 
   @Test
   void deactivationExpiresTheUsersLiveSessions() throws Exception {
-    flaggedOwnerSession("owner@example.com");
+    Login ownerLogin = flaggedOwnerSession("owner@example.com");
     UUID ownerId = idOf("owner@example.com");
     testAccounts.createOwner("second@example.com", "Second", "password123");
     UUID secondId = idOf("second@example.com");
     UserRole ownerRole = new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
 
     users.update(ownerRole, secondId, ownerId, null, false);
+
+    // A browser sends JSESSIONID as the requested session id; MockMvc's .session() alone does not.
+    mvc.perform(get("/api/me").with(requestedSession(ownerLogin.session())))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
 
     List<SessionInformation> ownerSessions =
         sessionRegistry.getAllPrincipals().stream()
@@ -84,6 +89,33 @@ class ForcedPasswordChangeIntegrationTest {
             .flatMap(principal -> sessionRegistry.getAllSessions(principal, true).stream())
             .toList();
     assertThat(ownerSessions).isNotEmpty().allMatch(SessionInformation::isExpired);
+  }
+
+  @Test
+  void resettingAPasswordExpiresTheUsersLiveSessions() throws Exception {
+    Login ownerLogin = flaggedOwnerSession("owner@example.com");
+    UUID ownerId = idOf("owner@example.com");
+    testAccounts.createOwner("second@example.com", "Second", "password123");
+    UUID secondId = idOf("second@example.com");
+    UserRole ownerRole = new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
+
+    users.resetPassword(ownerRole, ownerId, "newpassword123");
+
+    // A browser sends JSESSIONID as the requested session id; MockMvc's .session() alone does not.
+    mvc.perform(get("/api/me").with(requestedSession(ownerLogin.session())))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
+    assertThat(sessionRegistry.getAllPrincipals()).isNotEmpty();
+    assertThat(secondId).isNotNull();
+  }
+
+  private static org.springframework.test.web.servlet.request.RequestPostProcessor requestedSession(
+      MockHttpSession session) {
+    return request -> {
+      request.setSession(session);
+      request.setRequestedSessionId(session.getId());
+      return request;
+    };
   }
 
   private Login flaggedOwnerSession(String email) throws Exception {

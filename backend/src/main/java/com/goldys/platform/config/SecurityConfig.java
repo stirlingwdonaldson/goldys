@@ -102,7 +102,25 @@ public class SecurityConfig {
 
     http.securityContext(context -> context.securityContextRepository(securityContexts));
 
-    http.sessionManagement(session -> session.maximumSessions(-1).sessionRegistry(sessionRegistry));
+    http.sessionManagement(
+        session ->
+            session
+                .maximumSessions(-1)
+                .sessionRegistry(sessionRegistry)
+                .expiredSessionStrategy(
+                    event -> {
+                      HttpServletResponse response = event.getResponse();
+                      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                      response.setContentType("application/json");
+                      objectMapper.writeValue(
+                          response.getWriter(),
+                          new ApiErrorResponse(
+                              "AUTH_REQUIRED",
+                              "Your session has ended. Sign in again.",
+                              (String)
+                                  event.getRequest().getAttribute(CorrelationIdFilter.ATTRIBUTE),
+                              Map.of()));
+                    }));
 
     http.addFilterAfter(new MustChangePasswordFilter(), AuthorizationFilter.class);
 

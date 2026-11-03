@@ -38,8 +38,7 @@ public class AuthController {
       HttpServletResponse response) {
     AccountUserDetails refreshed =
         authService.changePassword(user, body.currentPassword(), body.newPassword());
-    var authentication =
-        new UsernamePasswordAuthenticationToken(refreshed, refreshed.passwordHash(), List.of());
+    var authentication = new UsernamePasswordAuthenticationToken(refreshed, null, List.of());
     SecurityContext context = SecurityContextHolder.createEmptyContext();
     context.setAuthentication(authentication);
     SecurityContextHolder.setContext(context);

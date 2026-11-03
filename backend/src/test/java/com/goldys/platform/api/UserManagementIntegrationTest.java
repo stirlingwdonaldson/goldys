@@ -137,6 +137,42 @@ class UserManagementIntegrationTest {
   }
 
   @Test
+  void blankOrUnknownInputsAreValidationErrors() throws Exception {
+    testAccounts.createOwner("owner@example.com", "Owner", "password123");
+    Login owner = login("owner@example.com", "password123");
+
+    mvc.perform(
+            post("/api/users")
+                .session(owner.session())
+                .cookie(owner.xsrf())
+                .header("X-XSRF-TOKEN", owner.xsrf().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+
+    mvc.perform(
+            patch("/api/users/{id}", UUID.randomUUID())
+                .session(owner.session())
+                .cookie(owner.xsrf())
+                .header("X-XSRF-TOKEN", owner.xsrf().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+
+    mvc.perform(
+            post("/api/users/{id}/password-reset", UUID.randomUUID())
+                .session(owner.session())
+                .cookie(owner.xsrf())
+                .header("X-XSRF-TOKEN", owner.xsrf().getValue())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"password\":\"newpassword123\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+  }
+
+  @Test
   void anOwnerCannotDeactivateThemselves() throws Exception {
     testAccounts.createOwner("owner@example.com", "Owner", "password123");
     Login owner = login("owner@example.com", "password123");

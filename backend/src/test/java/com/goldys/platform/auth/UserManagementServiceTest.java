@@ -75,7 +75,8 @@ class UserManagementServiceTest {
   void updateRefusesDeactivatingTheLastActiveOwner() {
     UserAccount target = activeAccount();
     when(accounts.findById(target.id())).thenReturn(Optional.of(target));
-    when(accounts.countByDepartmentAndSeniorityAndActiveTrue("ALL", "OWNER")).thenReturn(1L);
+    when(accounts.findByDepartmentAndSeniorityAndActiveTrue("ALL", "OWNER"))
+        .thenReturn(List.of(target));
 
     assertThatThrownBy(() -> service.update(OWNER, UUID.randomUUID(), target.id(), null, false))
         .isInstanceOf(IllegalArgumentException.class)
@@ -86,7 +87,8 @@ class UserManagementServiceTest {
   void deactivationAndResetRevokeLiveSessions() {
     UserAccount target = activeAccount();
     when(accounts.findById(target.id())).thenReturn(Optional.of(target));
-    when(accounts.countByDepartmentAndSeniorityAndActiveTrue("ALL", "OWNER")).thenReturn(2L);
+    when(accounts.findByDepartmentAndSeniorityAndActiveTrue("ALL", "OWNER"))
+        .thenReturn(List.of(target, activeAccount()));
     SessionInformation session = mock(SessionInformation.class);
     AccountUserDetails principal = principalFor(target.id());
     when(sessionRegistry.getAllPrincipals()).thenReturn(List.of(principal));
