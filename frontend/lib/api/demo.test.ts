@@ -501,3 +501,24 @@ it("keeps Home and Kitchen purchases on the same qualified demo basis", async ()
   const [home, kitchen] = await Promise.all([demoApi.getDashboardBootstrap(), demoApi.getInventorySummary("2026-09-25", "2026-10-24")]);
   expect(home.foodCost).toEqual({ purchases: kitchen.purchases, wastage: kitchen.wastage, foodCostPercent: null });
 });
+
+describe("user management fixtures", () => {
+  it("lists, creates, updates and resets owner accounts", async () => {
+    const initial = await demoApi.listUsers();
+    expect(initial.length).toBeGreaterThanOrEqual(2);
+    expect(initial.some(user => user.self)).toBe(true);
+
+    const created = await demoApi.createUser({
+      email: "new@example.com",
+      displayName: "New User",
+      password: "password123",
+    });
+    expect(created.email).toBe("new@example.com");
+    expect(created.active).toBe(true);
+
+    const updated = await demoApi.updateUser(created.id, { active: false });
+    expect(updated.active).toBe(false);
+    await demoApi.resetUserPassword(created.id, "newpassword123");
+    expect((await demoApi.listUsers()).some(user => user.id === created.id)).toBe(true);
+  });
+});

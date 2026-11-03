@@ -68,6 +68,7 @@ export type {
   ConversationThreadView,
   CoversToday,
   CreateCategoryInput,
+  CreateUserInput,
   CurrentUser,
   CustomLogic,
   DailyCovers,
@@ -93,6 +94,7 @@ export type {
   InvoiceIngestFlag,
   LabourSummary,
   LineGraphNode,
+  ManagedUser,
   NetworkEdgeDto,
   NetworkGraphDto,
   NetworkNodeDto,
@@ -144,6 +146,7 @@ export type {
   SupplierGraphNode,
   TopSeller,
   UpdateCategoryInput,
+  UpdateUserInput,
   UomUnitCost,
   WeekdayErrorRow,
 } from "./types";

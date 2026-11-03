@@ -12,8 +12,8 @@ function deferred<T>() {
   const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
   return { promise, resolve, reject };
 }
-const owner = { displayName: "Old owner", department: "MANAGEMENT", seniority: "OWNER" };
-const junior = { displayName: "Current staff", department: "GENERAL", seniority: "JUNIOR" };
+const owner = { displayName: "Old owner", department: "MANAGEMENT", seniority: "OWNER", mustChangePassword: false };
+const junior = { displayName: "Current staff", department: "GENERAL", seniority: "JUNIOR", mustChangePassword: false };
 
 it.each(["success", "failure"])("ignores obsolete %s even when promises ignore abort", async oldOutcome => {
   const old = deferred<CurrentUser>();

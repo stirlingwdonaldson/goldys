@@ -15,6 +15,9 @@ import type {
   AssignmentRow,
   CategoryNode,
   ConnectorStatus,
+  CreateUserInput,
+  ManagedUser,
+  UpdateUserInput,
   OpenTableFrame,
   OpenTableInput,
   OpenTableSessionHandlers,
@@ -78,6 +81,30 @@ function dateRangeQuery(from?: string, to?: string): string {
 
 /** Real backend calls. The demo fixtures stay behind the `demo` flag; these hit the live endpoints. */
 export const liveApi: Api = {
+  listUsers: (options?: { signal?: AbortSignal }) =>
+    fetchApi<ManagedUser[]>("/api/users", { signal: options?.signal }),
+  createUser: (input: CreateUserInput) =>
+    fetchApi<ManagedUser>("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  updateUser: (id: string, input: UpdateUserInput) =>
+    fetchApi<ManagedUser>(`/api/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  resetUserPassword: (id: string, password: string) =>
+    fetchApi<void>(
+      `/api/users/${id}/password-reset`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      },
+      { responseType: "void" },
+    ),
   getDashboardBootstrap: (options?: { signal?: AbortSignal }) => fetchApi<DashboardBootstrap>("/api/dashboard/bootstrap", { signal: options?.signal }),
   getDashboardSummary: (options?: { signal?: AbortSignal }) => fetchApi<DashboardSummary>("/api/dashboard/summary", { signal: options?.signal }),
   getDashboardActivity: (from?: string, to?: string, options?: { signal?: AbortSignal }) =>
