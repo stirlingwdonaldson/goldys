@@ -1,4 +1,5 @@
 import { demoRecipeComposition } from "./demo-recipe-composition";
+import { demoWeeklyReport } from "./weekly-report-demo";
 import { deriveExceptions } from "../reconciliation-logic";
 import { ApiError } from "./errors";
 import type { WidgetSpec } from "@/components/widgets/types";
@@ -1254,6 +1255,10 @@ let demoUsers: ManagedUser[] = [
 ];
 
 export const demoApi: Api = {
+  getWeeklyReport: async (from, weeks = 4, options) => {
+    await delay(300, options?.signal);
+    return demoWeeklyReport(from, weeks);
+  },
   listUsers: async () => demoUsers.map(user => ({ ...user })),
   createUser: async input => {
     const created: ManagedUser = {

@@ -1285,6 +1285,7 @@ export interface ReceiptGroup {
 }
 
 export interface Api {
+  getWeeklyReport(from?: string, weeks?: number, options?: { signal?: AbortSignal }): Promise<WeeklyReport>;
   uploadLightspeedReceiptCsv(dataset: "mapping" | "transactions", file: File, scope: ReceiptImportScope): Promise<ReceiptImportResult>;
   getReceiptGroup(saleNumber: string, from: string, to: string, options?: { signal?: AbortSignal }): Promise<ReceiptGroup>;
   getDashboardBootstrap(options?: { signal?: AbortSignal }): Promise<DashboardBootstrap>;
@@ -1451,6 +1452,32 @@ export interface Api {
   createUser(input: CreateUserInput): Promise<ManagedUser>;
   updateUser(id: string, input: UpdateUserInput): Promise<ManagedUser>;
   resetUserPassword(id: string, password: string): Promise<void>;
+}
+
+export interface WeeklyReportRow {
+  id: string;
+  section: string;
+  label: string;
+  unit: "AUD" | "PERCENT" | "STARS";
+  days: (number | null)[];
+  total: number | null;
+  status: "QUALIFIED" | "UNAVAILABLE";
+  notes: string[];
+}
+
+export interface WeeklyReportWeek {
+  start: string;
+  end: string;
+  dates: string[];
+  rows: WeeklyReportRow[];
+}
+
+export interface WeeklyReport {
+  from: string;
+  to: string;
+  generatedAt: string;
+  timezone: string;
+  weeks: WeeklyReportWeek[];
 }
 
 /** An owner account as the user-management screen sees it. `self` is the caller's own row. */
