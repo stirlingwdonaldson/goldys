@@ -1,11 +1,11 @@
 import { expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server, setupApiServer } from "@/tests/api-server";
-import { getCurrentUser, login, logout, signup } from "./index";
+import { getCurrentUser, login, logout } from "./index";
 
 setupApiServer();
 const origin = "http://localhost:3000";
-const profile = { displayName: "Fixture staff", department: "GENERAL", seniority: "JUNIOR" };
+const profile = { displayName: "Fixture staff", department: "GENERAL", seniority: "JUNIOR", mustChangePassword: false };
 const input = { email: "fixture+staff@example.invalid", password: "fixture-&-日本語" };
 
 it("forwards the profile request signal", async () => {
@@ -16,10 +16,10 @@ it("forwards the profile request signal", async () => {
   expect(spy.mock.calls[0][1]?.signal).toBe(controller.signal);
 });
 
-it.each(["profile", "login", "signup"])("validates malformed %s success", async endpoint => {
+it.each(["profile", "login"])("validates malformed %s success", async endpoint => {
   const handler = () => HttpResponse.json({ displayName: "Fixture", department: "GENERAL" }, { headers: { "X-Correlation-ID": "req-profile" } });
-  server.use(http.get(`${origin}/api/me`, handler), http.post(`${origin}/api/auth/login`, handler), http.post(`${origin}/api/auth/signup`, handler));
-  const result = endpoint === "profile" ? getCurrentUser() : endpoint === "login" ? login(input) : signup({ ...input, displayName: "Fixture" });
+  server.use(http.get(`${origin}/api/me`, handler), http.post(`${origin}/api/auth/login`, handler));
+  const result = endpoint === "profile" ? getCurrentUser() : login(input);
   await expect(result).rejects.toMatchObject({ code: "INVALID_RESPONSE", status: 200, correlationId: "req-profile", diagnostics: [{ path: ["seniority"], code: "invalid_type" }] });
 });
 
@@ -32,18 +32,6 @@ it("preserves form-encoded email/password characters for Spring login", async ()
   }));
   await expect(login(input)).resolves.toEqual(profile);
   expect(observed).toEqual(input);
-});
-
-it("sends JSON signup and accepts Spring's 201", async () => {
-  let observed: unknown;
-  server.use(http.post(`${origin}/api/auth/signup`, async ({ request }) => {
-    expect(request.headers.get("content-type")).toBe("application/json");
-    observed = await request.json();
-    return HttpResponse.json(profile, { status: 201 });
-  }));
-  const payload = { ...input, displayName: "Fixture staff" };
-  await expect(signup(payload)).resolves.toEqual(profile);
-  expect(observed).toEqual(payload);
 });
 
 it("preserves INVALID_CREDENTIALS and 401", async () => {

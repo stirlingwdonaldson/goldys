@@ -12,27 +12,11 @@ export async function getHealth(): Promise<HealthResponse> {
   return fetchApi<HealthResponse>("/api/health");
 }
 
-export interface SignupInput {
-  email: string;
-  displayName: string;
-  password: string;
-}
-
 export interface LoginInput {
   email: string;
   password: string;
 }
 
-/** Create an account (at the lowest role) and return it. The caller then logs in. */
-export async function signup(input: SignupInput): Promise<CurrentUser> {
-  return fetchApi<CurrentUser>("/api/auth/signup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  }, { schema: currentUserSchema });
-}
-
-/** Log in with email + password. The backend uses form login, so POST form-encoded. */
 export async function login(input: LoginInput): Promise<CurrentUser> {
   const body = new URLSearchParams({ email: input.email, password: input.password });
   return fetchApi<CurrentUser>("/api/auth/login", {

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { login } from "@/lib/api";
@@ -83,12 +82,6 @@ export default function LoginPage() {
               {submitting ? "Signing in…" : "Sign in"}
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            No account?{" "}
-            <Link href="/signup" className="underline">
-              Sign up
-            </Link>
-          </p>
         </CardContent>
       </Card>
     </main>
