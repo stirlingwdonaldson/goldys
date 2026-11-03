@@ -83,7 +83,7 @@ of live behaviour.
 | Docker | builds the backend and frontend images |
 
 CI does **not** run `bun run test` yet (see finding F11 in
-[`../frontend/audit.md`](../frontend/audit.md)), so run Vitest locally before pushing
+[`../frontend/audit.md`](../../archive/frontend/audit.md)), so run Vitest locally before pushing
 frontend changes.
 
 ## Local database

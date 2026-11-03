@@ -31,14 +31,11 @@ raw ledger → bitemporal canonical → reconciliation → resolved projections
    automatically; other agents must open it.)
 5. The doc for the area you're touching. `docs/README.md` is the full index.
 
-`docs/PRODUCT.md` is a non-normative summary. Never cite it as the basis for an
-acceptance criterion or architectural decision; if it conflicts with the docs above,
-it's stale.
-
-`docs/superpowers/specs/` and `plans/` are dated design records (indexed in
-`docs/superpowers/README.md`). Use them for the reasoning behind a feature, not as a
-description of current code. New design work goes there as
-`specs/YYYY-MM-DD-<topic>-design.md` then `plans/YYYY-MM-DD-<topic>.md`.
+Current references are indexed in `docs/README.md`. Dated audit evidence, design
+records and handoffs are in `archive/`; they are historical context, not current
+requirements or instructions. Removed implementation plans remain in Git history.
+New Superpowers design work still goes in `docs/superpowers/specs/` and `plans/`,
+indexed by `docs/superpowers/README.md`.
 
 ## Real data before design
 

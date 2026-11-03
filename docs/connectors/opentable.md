@@ -2,7 +2,7 @@
 
 How OpenTable data gets from GuestCenter into the platform. Records the access mechanics,
 endpoints and quirks, never credentials. Design record:
-[`2026-10-13-opentable-assisted-session-design.md`](../superpowers/specs/2026-10-13-opentable-assisted-session-design.md).
+[`2026-10-13-opentable-assisted-session-design.md`](../../archive/designs/2026-10-13-opentable-assisted-session-design.md).
 
 ## Current path: assisted sign-in + JSON API pull
 

@@ -56,7 +56,7 @@ def main():
     parser.add_argument("--expected-version", type=int, choices=(82, 98), required=True)
     args = parser.parse_args()
     spec = importlib.util.spec_from_file_location(
-        "goldys_readonly_probe", ROOT / "docs/audits/data-foundation/scripts/run_probes.py")
+        "goldys_readonly_probe", ROOT / "archive/audits/data-foundation/scripts/run_probes.py")
     probe = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(probe)
     metadata_sql = """

@@ -1,9 +1,8 @@
 # Current architecture
 
-> Living description of the backend's current dependency direction. Historical plans and
-> specifications (`docs/system-context.md`, `docs/prd.md`, `docs/superpowers/…`) remain the
-> source-of-truth for *why* the system is shaped this way; this file documents *how* the code is
-> organized today.
+> Living description of the backend's dependency direction. `docs/system-context.md`
+> governs architecture and `docs/prd.md` governs scope. Dated designs in
+> `archive/designs/` explain historical decisions; the code establishes what exists.
 
 ## Shape
 
