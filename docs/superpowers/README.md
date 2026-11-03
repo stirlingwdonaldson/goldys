@@ -60,7 +60,7 @@ Many specs still carry their original `Status: Draft` or `In review` header. The
 | 10-13 | Recipe costing gap recovery (price join, off-menu label, last-sold) | [spec](specs/2026-10-13-recipe-costing-gap-design.md) | [plan](plans/2026-10-13-recipe-costing-gap.md) | Planned — not implemented |
 | 10-16 | Invoice read correctness and next data-correctness increments | [spec](specs/2026-10-16-invoice-read-correctness-design.md) | [plan](plans/2026-10-16-data-correctness-next-increments.md) | Invoice increments implemented on task branch; coverage/product discovery recorded; production unchanged |
 | 10-23 | Complete CTB recipe snapshots, detail UI, source evidence and navigation | [design](specs/2026-10-23-ctb-recipes-design.md) · [coverage](specs/2026-10-23-ctb-recipes-coverage.md) · [fields](specs/2026-10-23-ctb-recipe-field-coverage.md) | [plan](plans/2026-10-23-ctb-recipes-complete-ui.md) | Implemented locally; collection/replay remain off pending rollout |
-| 11-03 | Owner-only user management with a single role | [design](specs/2026-11-03-user-management-design.md) | — | Design approved — awaiting implementation plan |
+| 11-03 | Owner-only user management with a single role | [design](specs/2026-11-03-user-management-design.md) | [plan](plans/2026-11-03-user-management.md) | Planned — awaiting implementation |
 
 | 10-16 | Product identity, coverage and dated inventory observations | [spec](specs/2026-10-16-product-coverage-observations-design.md) | [plan](plans/2026-10-16-product-coverage-observations.md) | Implemented on task branch; local verification recorded in audit report; production unchanged |
 
