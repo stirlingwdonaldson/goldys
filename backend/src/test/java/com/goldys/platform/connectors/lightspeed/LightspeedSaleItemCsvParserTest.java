@@ -14,6 +14,49 @@ import org.junit.jupiter.api.Test;
 class LightspeedSaleItemCsvParserTest {
 
   @Test
+  void all657RealHistoricalLinesRetainTenMinuteTiming() throws Exception {
+    var items =
+        new LightspeedSaleItemCsvParser()
+            .parse(
+                Files.readAllBytes(
+                    Path.of(
+                        "src/test/resources/fixtures/lightspeed/historical-repair/goldys-look-9501-2025-12-01-unformatted.csv")));
+    assertThat(items).hasSize(657);
+    assertThat(items).allSatisfy(item -> assertThat(item.saleClosedTenMinuteTime()).isNotNull());
+    assertThat(items.getFirst().saleClosedTenMinuteTime())
+        .isEqualTo(java.time.LocalTime.of(19, 10));
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(strings = {"17:30", "1730", "00:00", "0"})
+  void readsSourceLocalTenMinuteBucket(String value) {
+    String csv =
+        "Sales Data Receipt Line ID,Sales Data Sale Closed Date,Sales Data Sale Closed Minute 10\nL1,2026-11-02,"
+            + value
+            + "\n";
+    var item =
+        new LightspeedSaleItemCsvParser().parse(csv.getBytes(StandardCharsets.UTF_8)).getFirst();
+    assertThat(item.saleClosedTenMinuteTime())
+        .isEqualTo(
+            value.equals("0") || value.equals("00:00")
+                ? java.time.LocalTime.MIDNIGHT
+                : java.time.LocalTime.of(17, 30));
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(
+      strings = {"24:00", "2400", "17:35", "17:30:01", "nonsense"})
+  void rejectsMalformedOrNonBucketTimes(String value) {
+    String csv =
+        "Sales Data Receipt Line ID,Sales Data Sale Closed Date,Sales Data Sale Closed Minute 10\nL1,2026-11-02,"
+            + value
+            + "\n";
+    assertThatThrownBy(
+            () -> new LightspeedSaleItemCsvParser().parse(csv.getBytes(StandardCharsets.UTF_8)))
+        .hasFieldOrPropertyWithValue("failureType", "CONNECTOR_SCHEMA_MISMATCH");
+  }
+
+  @Test
   void verifiedThirteenLinesRetainSourceAmountsAndSeparateSameNameComponents() throws Exception {
     var parser = new LightspeedSaleItemCsvParser();
     byte[] csv =

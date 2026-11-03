@@ -905,6 +905,8 @@ export interface SaleCosting {
 }
 
 export interface SaleItemRow {
+  /** Source-local sale-close bucket, with ten-minute precision. */
+  saleClosedTenMinuteTime?: string | null;
   adjustment?: SaleAdjustment | null;
   tradingDate: string;
   saleNumber: string | null;

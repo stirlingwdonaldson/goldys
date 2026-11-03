@@ -216,7 +216,8 @@ public class LightspeedSaleItemIngestService {
         it.tableNumber(),
         rawId,
         it.adjustment(),
-        it.siteNumber());
+        it.siteNumber(),
+        it.saleClosedTenMinuteTime());
   }
 
   static String extractCsv(byte[] body) {

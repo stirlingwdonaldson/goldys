@@ -77,7 +77,8 @@ public class ResolvedSaleItemListQuery implements SaleItemListQuery {
                   rs.getString("table_number"),
                   adjustment,
                   rs.getObject("site_number", Long.class),
-                  rs.getString("receipt_association"));
+                  rs.getString("receipt_association"),
+                  rs.getObject("sale_closed_ten_minute_time", java.time.LocalTime.class));
             },
             args.toArray());
     return new DataPage<>(rows, count == null ? 0 : count, p, limit);

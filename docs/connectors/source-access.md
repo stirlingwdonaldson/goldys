@@ -400,3 +400,20 @@ The independently reconciled seven-day sample, exact headers, single-venue limit
 report/deployment cutover are documented in [the headline-sales runbook](../operations/lightspeed-headline-sales.md).
 No report/schedule, production fact, historical replay or source-priority rule is changed by this
 implementation. Old daily reports will be rejected after deployment until the source is switched.
+
+### Lightspeed sub-day sale timing
+
+The scheduled financial report supplies `Sales Data Sale Closed Minute 10` as `HH:mm`.
+Historical exports also use compact `HHmm` (including unpadded midnight `0`). The connector
+retains it as `sale_closed_ten_minute_time` in canonical sale items and `resolved_sale_line`;
+the sale-items API exposes `saleClosedTenMinuteTime`. Pair it with `tradingDate`, the observed
+sale-closed date. This is a source-local ten-minute bucket, not an exact event timestamp or
+an asserted UTC instant. Sales details labels the precision explicitly. Missing observations
+preserve a previously observed bucket; existing rows without one remain unknown.
+
+Real sample coverage: the 3 November 2026 06:05 Melbourne delivery contained 2,510/2,510
+populated close buckets. The retained 1 December 2025 historical fixture has 657/657 lines
+parsed with close buckets, covered by `LightspeedSaleItemCsvParserTest`. No source report or
+schedule changes, automatic historical replay, or production data repair are part of this change.
+Payment-created time remains date-only in the separate scheduled payment report; manual Sales
+Feed transaction observations retain their source-local timestamp independently.

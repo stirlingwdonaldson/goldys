@@ -598,6 +598,7 @@ const demoDeletedSales: DeletedSaleRow[] = [
 
 const demoSaleItems: SaleItemRow[] = [
   {
+    saleClosedTenMinuteTime: "17:30:00",
     tradingDate: "2026-10-04",
     saleNumber: "SALE-1001",
     receiptLineId: "LINE-1",

@@ -69,6 +69,13 @@ class CanonicalSaleItem extends BitemporalEntity {
   @Column(name = "table_number", updatable = false)
   private String tableNumber;
 
+  @Column(name = "sale_closed_ten_minute_time", updatable = false)
+  private java.time.LocalTime saleClosedTenMinuteTime;
+
+  java.time.LocalTime saleClosedTenMinuteTime() {
+    return saleClosedTenMinuteTime;
+  }
+
   @Column(name = "sale_closed_time", updatable = false)
   private java.time.LocalTime saleClosedTime;
 
@@ -102,6 +109,7 @@ class CanonicalSaleItem extends BitemporalEntity {
     registerName = previous.registerName;
     tableNumber = previous.tableNumber;
     saleClosedTime = previous.saleClosedTime;
+    saleClosedTenMinuteTime = previous.saleClosedTenMinuteTime;
     adjustment = previous.adjustment;
   }
 
@@ -127,7 +135,8 @@ class CanonicalSaleItem extends BitemporalEntity {
         tableNumber,
         rawRecordId(),
         adjustment,
-        siteNumber);
+        siteNumber,
+        saleClosedTenMinuteTime);
   }
 
   java.time.LocalTime saleClosedTime() {
@@ -143,6 +152,7 @@ class CanonicalSaleItem extends BitemporalEntity {
       Instant recordedAt,
       SaleItemInput input) {
     super(logicalEntityId, sourceSystem, sourceRecordRef, rawRecordId, validFrom, recordedAt);
+    this.saleClosedTenMinuteTime = input.saleClosedTenMinuteTime();
     this.tradingDate = input.tradingDate();
     this.saleNumber = input.saleNumber();
     this.siteNumber = input.siteNumber();
@@ -176,7 +186,8 @@ class CanonicalSaleItem extends BitemporalEntity {
   }
 
   boolean sameFact(SaleItemInput input) {
-    return Objects.equals(siteNumber, input.siteNumber())
+    return Objects.equals(saleClosedTenMinuteTime, input.saleClosedTenMinuteTime())
+        && Objects.equals(siteNumber, input.siteNumber())
         && Objects.equals(tradingDate, input.tradingDate())
         && Objects.equals(saleNumber, input.saleNumber())
         && Objects.equals(itemName, input.itemName())

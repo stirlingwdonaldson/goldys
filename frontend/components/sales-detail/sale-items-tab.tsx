@@ -70,6 +70,12 @@ function viewSaleColumn(onViewSale: (saleNumber: string) => void): ColumnDef<Sal
 function saleItemColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<SaleItemRow>[] {
   return [
     dateColumn<SaleItemRow>("tradingDate", "Date"),
+    {
+      accessorKey: "saleClosedTenMinuteTime",
+      header: "Sale closed (10-minute bucket)",
+      cell: ({ getValue }) => getValue<string | null>()?.slice(0, 5) ?? "—",
+      meta: { title: "Sale closed (10-minute bucket)" },
+    },
     textColumn<SaleItemRow>("saleNumber", "Sale"),
     textColumn<SaleItemRow>("receiptLineId", "Receipt line"),
     {

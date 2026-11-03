@@ -26,7 +26,55 @@ public record SaleItemInput(
     String tableNumber,
     UUID rawRecordId,
     com.goldys.platform.semantic.SaleAdjustment adjustment,
-    Long siteNumber) {
+    Long siteNumber,
+    java.time.LocalTime saleClosedTenMinuteTime) {
+  public SaleItemInput(
+      String sourceSystem,
+      String receiptLineId,
+      LocalDate tradingDate,
+      String saleNumber,
+      String itemName,
+      String productNumber,
+      String sku,
+      String categoryName,
+      BigDecimal quantitySold,
+      BigDecimal amount,
+      BigDecimal soldPriceIncTax,
+      BigDecimal totalTax,
+      BigDecimal costIncTax,
+      String orderType,
+      String saleType,
+      String staffName,
+      String registerName,
+      String tableNumber,
+      UUID rawRecordId,
+      com.goldys.platform.semantic.SaleAdjustment adjustment,
+      Long siteNumber) {
+    this(
+        sourceSystem,
+        receiptLineId,
+        tradingDate,
+        saleNumber,
+        itemName,
+        productNumber,
+        sku,
+        categoryName,
+        quantitySold,
+        amount,
+        soldPriceIncTax,
+        totalTax,
+        costIncTax,
+        orderType,
+        saleType,
+        staffName,
+        registerName,
+        tableNumber,
+        rawRecordId,
+        adjustment,
+        siteNumber,
+        null);
+  }
+
   public SaleItemInput(
       String sourceSystem,
       String receiptLineId,
@@ -73,7 +121,10 @@ public record SaleItemInput(
   }
 
   SaleItemInput preserveUnobservedMetadata(
-      String previousSaleNumber, String previousStaffName, Long previousSiteNumber) {
+      String previousSaleNumber,
+      String previousStaffName,
+      Long previousSiteNumber,
+      java.time.LocalTime previousSaleClosedTenMinuteTime) {
     return new SaleItemInput(
         sourceSystem,
         receiptLineId,
@@ -95,7 +146,10 @@ public record SaleItemInput(
         tableNumber,
         rawRecordId,
         adjustment,
-        siteNumber == null ? previousSiteNumber : siteNumber);
+        siteNumber == null ? previousSiteNumber : siteNumber,
+        saleClosedTenMinuteTime == null
+            ? previousSaleClosedTenMinuteTime
+            : saleClosedTenMinuteTime);
   }
 
   private static String observedOrPrevious(String observation, String previous) {
