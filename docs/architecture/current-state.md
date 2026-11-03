@@ -97,9 +97,25 @@ One authorization decision per use case, deliberately placed:
 
 Resources in use: `reconciliation.sales`, `reconciliation.status`, `connectors`,
 `reservations.metrics`, `labour.hours`, `labour.cost`, `labour.wages`, `inventory.cost`,
-`inventory.stock`, `conversational.chat`, `conversational.threads`, `dashboards`. Each metric in
-the catalogue names its required resource (`docs/metrics/catalog.md`). All are granted to
-`ALL × OWNER` only; department-scoped grants wait on the stakeholder field-to-role mapping.
+`inventory.stock`, `conversational.chat`, `conversational.threads`, `dashboards`, `users`.
+Each metric in the catalogue names its required resource (`docs/metrics/catalog.md`). All are
+granted to `ALL × OWNER` only; department-scoped grants wait on the stakeholder field-to-role
+mapping.
+
+## User management
+
+The single role is an owner, represented by the existing `ALL × OWNER` permission pair; there is
+no separate role column. Public sign-up is removed. Owners create accounts through `/api/users`
+(`users` READ/WRITE), and those accounts receive a temporary password with
+`user_account.must_change_password`. A security filter rejects every request from a flagged
+principal except `/api/me`, `/api/auth/change-password`, `/api/auth/login`, `/api/auth/logout` and
+`/api/health` with `403 PASSWORD_CHANGE_REQUIRED`. Deactivating or resetting an account expires its
+live sessions through Spring's `SessionRegistry`, so the cached principal cannot outlive the
+change. Owners cannot deactivate themselves, and the last active owner cannot be deactivated.
+
+The release deploys the backend and migration before the frontend; the restart clears old session
+principals, so existing users sign in again and receive `ALL × OWNER`. `/settings/users` is the
+owner screen; `/change-password` is the forced-change screen.
 
 ## Architecture rules (enforced by `ArchitectureBoundariesTest`)
 

@@ -34,6 +34,8 @@ class PermissionBoundaryIntegrationTest {
               permissions.require(owner, new ResourceKey("labour.wages"), PermissionAction.READ);
               permissions.require(owner, new ResourceKey("inventory.cost"), PermissionAction.READ);
               permissions.require(owner, new ResourceKey("inventory.stock"), PermissionAction.READ);
+              permissions.require(owner, new ResourceKey("users"), PermissionAction.READ);
+              permissions.require(owner, new ResourceKey("users"), PermissionAction.WRITE);
             })
         .doesNotThrowAnyException();
   }

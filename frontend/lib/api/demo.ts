@@ -16,6 +16,7 @@ import type {
   ConversationThreadView,
   CreateCategoryInput,
   CreateForecastInput,
+  ManagedUser,
   DailySales,
   DataPage,
   DendrogramNode,
@@ -1225,7 +1226,59 @@ function demoTopSellers(requestedFrom?: string, requestedTo?: string, limit = 5)
     "Ranked by known sales; full-period ranking unverified.", "An absent product row does not imply zero sales; product identity remains name-based and revenue tax basis is source-qualified."] };
 }
 
+let demoUsers: ManagedUser[] = [
+  {
+    id: "user-owner",
+    email: "owner@goldys.example",
+    displayName: "Fixture Owner",
+    active: true,
+    createdAt: "2026-09-19T09:00:00Z",
+    self: true,
+  },
+  {
+    id: "user-bar",
+    email: "bar@goldys.example",
+    displayName: "Bar Manager",
+    active: true,
+    createdAt: "2026-09-24T09:00:00Z",
+    self: false,
+  },
+  {
+    id: "user-kitchen",
+    email: "kitchen@goldys.example",
+    displayName: "Kitchen Lead",
+    active: false,
+    createdAt: "2026-10-02T09:00:00Z",
+    self: false,
+  },
+];
+
 export const demoApi: Api = {
+  listUsers: async () => demoUsers.map(user => ({ ...user })),
+  createUser: async input => {
+    const created: ManagedUser = {
+      id: crypto.randomUUID(),
+      email: input.email.trim().toLowerCase(),
+      displayName: input.displayName.trim(),
+      active: true,
+      createdAt: new Date().toISOString(),
+      self: false,
+    };
+    demoUsers = [...demoUsers, created];
+    return { ...created };
+  },
+  updateUser: async (id, input) => {
+    const found = demoUsers.find(user => user.id === id);
+    if (!found) throw new Error("Account not found");
+    const updated: ManagedUser = {
+      ...found,
+      ...(input.displayName !== undefined ? { displayName: input.displayName } : {}),
+      ...(input.active !== undefined ? { active: input.active } : {}),
+    };
+    demoUsers = demoUsers.map(user => (user.id === id ? updated : user));
+    return { ...updated };
+  },
+  resetUserPassword: async () => {},
   async getDashboardBootstrap(options?: { signal?: AbortSignal }): Promise<DashboardBootstrap> {
     await delay(400, options?.signal);
     return {

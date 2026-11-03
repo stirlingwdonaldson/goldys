@@ -12,27 +12,11 @@ export async function getHealth(): Promise<HealthResponse> {
   return fetchApi<HealthResponse>("/api/health");
 }
 
-export interface SignupInput {
-  email: string;
-  displayName: string;
-  password: string;
-}
-
 export interface LoginInput {
   email: string;
   password: string;
 }
 
-/** Create an account (at the lowest role) and return it. The caller then logs in. */
-export async function signup(input: SignupInput): Promise<CurrentUser> {
-  return fetchApi<CurrentUser>("/api/auth/signup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  }, { schema: currentUserSchema });
-}
-
-/** Log in with email + password. The backend uses form login, so POST form-encoded. */
 export async function login(input: LoginInput): Promise<CurrentUser> {
   const body = new URLSearchParams({ email: input.email, password: input.password });
   return fetchApi<CurrentUser>("/api/auth/login", {
@@ -44,6 +28,24 @@ export async function login(input: LoginInput): Promise<CurrentUser> {
 
 export async function logout(): Promise<void> {
   return fetchApi<void>("/api/auth/logout", { method: "POST" }, { responseType: "void" });
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/** Sets a new password for the signed-in account and clears the forced-change flag. */
+export async function changePassword(input: ChangePasswordInput): Promise<void> {
+  return fetchApi<void>(
+    "/api/auth/change-password",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+    { responseType: "void" },
+  );
 }
 
 export { ApiError, isApiError, isAbortError } from "./errors";
@@ -68,6 +70,7 @@ export type {
   ConversationThreadView,
   CoversToday,
   CreateCategoryInput,
+  CreateUserInput,
   CurrentUser,
   CustomLogic,
   DailyCovers,
@@ -93,6 +96,7 @@ export type {
   InvoiceIngestFlag,
   LabourSummary,
   LineGraphNode,
+  ManagedUser,
   NetworkEdgeDto,
   NetworkGraphDto,
   NetworkNodeDto,
@@ -144,6 +148,7 @@ export type {
   SupplierGraphNode,
   TopSeller,
   UpdateCategoryInput,
+  UpdateUserInput,
   UomUnitCost,
   WeekdayErrorRow,
 } from "./types";

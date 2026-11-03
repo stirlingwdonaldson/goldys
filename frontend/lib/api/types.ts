@@ -1446,6 +1446,32 @@ export interface Api {
   deleteCategorySuggestion(id: string): Promise<void>;
   /** Applies the draft: promotes its suggestions to confirmed categories and clears it. */
   applyCategorySuggestions(): Promise<CategoryNode[]>;
+
+  listUsers(options?: { signal?: AbortSignal }): Promise<ManagedUser[]>;
+  createUser(input: CreateUserInput): Promise<ManagedUser>;
+  updateUser(id: string, input: UpdateUserInput): Promise<ManagedUser>;
+  resetUserPassword(id: string, password: string): Promise<void>;
+}
+
+/** An owner account as the user-management screen sees it. `self` is the caller's own row. */
+export interface ManagedUser {
+  id: string;
+  email: string;
+  displayName: string;
+  active: boolean;
+  createdAt: string;
+  self: boolean;
+}
+
+export interface CreateUserInput {
+  email: string;
+  displayName: string;
+  password: string;
+}
+
+export interface UpdateUserInput {
+  displayName?: string;
+  active?: boolean;
 }
 
 /** How a resolved value earned the operator's trust, strongest to weakest (backend `TrustState`). */

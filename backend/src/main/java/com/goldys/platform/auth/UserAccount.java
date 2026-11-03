@@ -32,6 +32,9 @@ class UserAccount {
   @Column(name = "active", nullable = false)
   private boolean active;
 
+  @Column(name = "must_change_password", nullable = false)
+  private boolean mustChangePassword;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -94,6 +97,31 @@ class UserAccount {
 
   boolean active() {
     return active;
+  }
+
+  boolean mustChangePassword() {
+    return mustChangePassword;
+  }
+
+  void rename(String displayName, Instant now) {
+    this.displayName = Objects.requireNonNull(displayName, "displayName");
+    this.updatedAt = now;
+  }
+
+  void setActive(boolean active, Instant now) {
+    this.active = active;
+    this.updatedAt = now;
+  }
+
+  void setPassword(String passwordHash, boolean mustChangePassword, Instant now) {
+    this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
+    this.mustChangePassword = mustChangePassword;
+    this.updatedAt = now;
+  }
+
+  void clearMustChangePassword(Instant now) {
+    this.mustChangePassword = false;
+    this.updatedAt = now;
   }
 
   Instant createdAt() {

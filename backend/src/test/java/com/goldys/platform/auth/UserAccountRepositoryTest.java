@@ -33,4 +33,16 @@ class UserAccountRepositoryTest {
     assertThat(repository.existsByEmail("a@b.com")).isTrue();
     assertThat(repository.existsByEmail("x@y.com")).isFalse();
   }
+
+  @Test
+  void persistsTheForcedPasswordChangeFlag() {
+    UserAccount account =
+        UserAccount.create("a@b.com", "hash", "A B", "ALL", "OWNER", Instant.now());
+    account.setPassword("new-hash", true, Instant.now());
+    repository.save(account);
+
+    UserAccount stored = repository.findByEmail("a@b.com").orElseThrow();
+    assertThat(stored.mustChangePassword()).isTrue();
+    assertThat(stored.passwordHash()).isEqualTo("new-hash");
+  }
 }

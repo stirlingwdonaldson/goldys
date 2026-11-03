@@ -91,22 +91,37 @@ After going live, smoke-test a full login and confirm the browser lands back on
 
 ## Accounts and the first administrator
 
-Login is email + password, handled by the backend (`/api/auth/signup`,
-`/api/auth/login`, session cookie). There is no external identity provider.
+Login is email + password, handled by the backend (`/api/auth/login`, session
+cookie). There is no external identity provider and no public sign-up. Owners
+create accounts from `/settings/users`; new and reset accounts must change their
+temporary password at first login.
 
-New accounts sign up at `/signup` and start as `ALL × STAFF`, which holds no
-permission grants, so they see explicit "not permitted" states until promoted.
-Promotion is a manual database edit; there is no admin UI yet:
+`V105` promotes every existing account to `ALL × OWNER`, so an upgraded database
+keeps its users. A **fresh** database has no owner, and `/api/users` needs one, so
+bootstrap the first account once with a bcrypt hash and force a password change:
 
-```sql
-UPDATE user_account SET department = 'ALL', seniority = 'OWNER'
-WHERE email = 'you@example.com';
+```bash
+HASH=$(htpasswd -bnBC 10 "" 'temporary-password' | tr -d ':\n')
+# docker compose exec -T postgres psql -U goldys -d goldys -c "insert ..."
 ```
 
+```sql
+INSERT INTO user_account
+  (id, email, password_hash, display_name, department, seniority,
+   active, must_change_password, created_at, updated_at)
+VALUES
+  (gen_random_uuid(), 'owner@example.com', '<paste bcrypt hash>', 'Owner',
+   'ALL', 'OWNER', true, true, now(), now());
+```
+
+Sign in once, change the password, then add the rest of the team from
+`/settings/users`.
+
 Permission grants are table-driven `(department, seniority, resource)` rows
-seeded by migrations (`V6`, `V13`, `V18`, `V23`, `V26`). Today only `ALL × OWNER` holds
-grants; BOH/FOH-specific rows wait on the stakeholder field-to-role mapping (see
-`docs/prd.md` Open Questions). No seniority is special-cased in code.
+seeded by migrations (`V6`, `V13`, `V18`, `V23`, `V26`, `V105`). Today only
+`ALL × OWNER` holds grants; BOH/FOH-specific rows wait on the stakeholder
+field-to-role mapping (see `docs/prd.md` Open Questions). No seniority is
+special-cased in code.
 
 > OIDC was replaced by the email + password flow (`V7`/`V8`); no OIDC references remain in code or config.
 

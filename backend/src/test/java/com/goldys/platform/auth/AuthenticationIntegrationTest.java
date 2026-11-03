@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.goldys.platform.support.PostgresContainerConfiguration;
+import com.goldys.platform.support.TestAccounts;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,8 +28,7 @@ class AuthenticationIntegrationTest {
 
   @Autowired MockMvc mvc;
   @Autowired JdbcTemplate jdbc;
-  @Autowired AuthService authService;
-  @Autowired UserAccountRepository accounts;
+  @Autowired TestAccounts testAccounts;
 
   @BeforeEach
   void clean() {
@@ -36,8 +36,8 @@ class AuthenticationIntegrationTest {
   }
 
   @Test
-  void signupLoginAndMeAreCaseInsensitiveAndPersistTheSession() throws Exception {
-    authService.signup("Stirling@Donaldson.com", "Stirling Donaldson", "password123");
+  void loginAndMeAreCaseInsensitiveAndPersistTheSession() throws Exception {
+    testAccounts.createStaff("stirling@donaldson.com", "Stirling Donaldson", "password123");
 
     MockHttpSession session = new MockHttpSession();
     mvc.perform(
@@ -51,15 +51,14 @@ class AuthenticationIntegrationTest {
 
     mvc.perform(get("/api/me").session(session))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.seniority").value("STAFF"));
+        .andExpect(jsonPath("$.seniority").value("STAFF"))
+        .andExpect(jsonPath("$.mustChangePassword").value(false));
   }
 
   @Test
   void inactiveAccountCannotLogin() throws Exception {
-    authService.signup("a@b.com", "A B", "password123");
-    accounts
-        .findByEmail("a@b.com")
-        .ifPresent(a -> jdbc.update("update user_account set active = false where id = ?", a.id()));
+    testAccounts.createStaff("a@b.com", "A B", "password123");
+    jdbc.update("update user_account set active = false where email = 'a@b.com'");
 
     mvc.perform(
             post("/api/auth/login")
@@ -71,7 +70,7 @@ class AuthenticationIntegrationTest {
 
   @Test
   void freshStaffIsExplicitlyDeniedOnReconciliation() throws Exception {
-    authService.signup("staff@example.com", "Staff", "password123");
+    testAccounts.createStaff("staff@example.com", "Staff", "password123");
 
     MockHttpSession session = new MockHttpSession();
     mvc.perform(
@@ -90,7 +89,7 @@ class AuthenticationIntegrationTest {
 
   @Test
   void loginThenLogoutWithCsrfCookie() throws Exception {
-    authService.signup("a@b.com", "A B", "password123");
+    testAccounts.createStaff("a@b.com", "A B", "password123");
     MockHttpSession session = new MockHttpSession();
 
     MvcResult loginResult =
@@ -114,5 +113,26 @@ class AuthenticationIntegrationTest {
                 .cookie(xsrf)
                 .header("X-XSRF-TOKEN", xsrf.getValue()))
         .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void meReportsTheForcedPasswordChangeFlag() throws Exception {
+    testAccounts.createOwner("new@example.com", "New", "password123");
+    jdbc.update(
+        "update user_account set must_change_password = true where email = 'new@example.com'");
+
+    MockHttpSession session = new MockHttpSession();
+    mvc.perform(
+            post("/api/auth/login")
+                .session(session)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("email", "new@example.com")
+                .param("password", "password123"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.mustChangePassword").value(true));
+
+    mvc.perform(get("/api/me").session(session))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.mustChangePassword").value(true));
   }
 }

@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.goldys.platform.auth.AuthService;
 import com.goldys.platform.forecasting.ForecastModelClient;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricId;
@@ -19,6 +18,7 @@ import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import com.goldys.platform.support.PostgresContainerConfiguration;
+import com.goldys.platform.support.TestAccounts;
 import com.jayway.jsonpath.JsonPath;
 import jakarta.servlet.http.Cookie;
 import java.math.BigDecimal;
@@ -55,7 +55,7 @@ class ForecastingControllerIntegrationTest {
 
   @Autowired MockMvc mvc;
   @Autowired JdbcTemplate jdbc;
-  @Autowired AuthService authService;
+  @Autowired TestAccounts testAccounts;
 
   @MockitoBean ForecastModelClient client;
   @MockitoBean MetricQueryService queries;
@@ -86,7 +86,7 @@ class ForecastingControllerIntegrationTest {
 
   @Test
   void metricsDeniedWithoutForecastingRead() throws Exception {
-    authService.signup("staff@example.com", "Staff", "password123");
+    testAccounts.createStaff("staff@example.com", "Staff", "password123");
     Login staff = login("staff@example.com", "password123");
 
     mvc.perform(get("/api/forecasting/metrics").session(staff.session()))
@@ -123,7 +123,7 @@ class ForecastingControllerIntegrationTest {
 
   @Test
   void createDeniedWhenMetricPermissionMissing() throws Exception {
-    authService.signup("staff@example.com", "Staff", "password123");
+    testAccounts.createStaff("staff@example.com", "Staff", "password123");
     jdbc.update(
         "insert into permission (id, department, seniority, resource, can_read, can_write) "
             + "values (gen_random_uuid(), 'ALL', 'STAFF', 'forecasting', true, true)");
@@ -148,8 +148,7 @@ class ForecastingControllerIntegrationTest {
 
   /** Creates an ALL/OWNER account (the seeded role with {@code forecasting} + metric grants). */
   private Login loginOwner() throws Exception {
-    authService.signup("owner@example.com", "Owner", "password123");
-    jdbc.update("update user_account set seniority = 'OWNER' where email = 'owner@example.com'");
+    testAccounts.createOwner("owner@example.com", "Owner", "password123");
     return login("owner@example.com", "password123");
   }
 

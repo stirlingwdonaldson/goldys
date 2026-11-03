@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { login } from "@/lib/api";
@@ -32,8 +31,8 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login({ email, password });
-      router.push(nextPath(window.location.search));
+      const user = await login({ email, password });
+      router.push(user.mustChangePassword ? "/change-password" : nextPath(window.location.search));
       router.refresh();
     } catch (err) {
       setError(err);
@@ -83,12 +82,6 @@ export default function LoginPage() {
               {submitting ? "Signing in…" : "Sign in"}
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            No account?{" "}
-            <Link href="/signup" className="underline">
-              Sign up
-            </Link>
-          </p>
         </CardContent>
       </Card>
     </main>

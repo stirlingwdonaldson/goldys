@@ -13,10 +13,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -46,13 +52,31 @@ public class SecurityConfig {
   }
 
   @Bean
-  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  SecurityContextRepository securityContextRepository() {
+    return new HttpSessionSecurityContextRepository();
+  }
+
+  @Bean
+  SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
+
+  @Bean
+  HttpSessionEventPublisher httpSessionEventPublisher() {
+    return new HttpSessionEventPublisher();
+  }
+
+  @Bean
+  SecurityFilterChain securityFilterChain(
+      HttpSecurity http,
+      SecurityContextRepository securityContexts,
+      SessionRegistry sessionRegistry)
+      throws Exception {
     http.authorizeHttpRequests(
         auth ->
             auth.requestMatchers(
                     AntPathRequestMatcher.antMatcher("/api/health"),
                     INGEST_WEBHOOKS,
-                    AntPathRequestMatcher.antMatcher("/api/auth/signup"),
                     AntPathRequestMatcher.antMatcher("/api/auth/login"),
                     // Prometheus scrape + load-balancer health checks are unauthenticated.
                     // See docs/operations/performance.md for the production hardening note.
@@ -72,11 +96,33 @@ public class SecurityConfig {
     http.csrf(
         csrf ->
             csrf.ignoringRequestMatchers(
-                    INGEST_WEBHOOKS,
-                    AntPathRequestMatcher.antMatcher("/api/auth/signup"),
-                    AntPathRequestMatcher.antMatcher("/api/auth/login"))
+                    INGEST_WEBHOOKS, AntPathRequestMatcher.antMatcher("/api/auth/login"))
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
+
+    http.securityContext(context -> context.securityContextRepository(securityContexts));
+
+    http.sessionManagement(
+        session ->
+            session
+                .maximumSessions(-1)
+                .sessionRegistry(sessionRegistry)
+                .expiredSessionStrategy(
+                    event -> {
+                      HttpServletResponse response = event.getResponse();
+                      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                      response.setContentType("application/json");
+                      objectMapper.writeValue(
+                          response.getWriter(),
+                          new ApiErrorResponse(
+                              "AUTH_REQUIRED",
+                              "Your session has ended. Sign in again.",
+                              (String)
+                                  event.getRequest().getAttribute(CorrelationIdFilter.ATTRIBUTE),
+                              Map.of()));
+                    }));
+
+    http.addFilterAfter(new MustChangePasswordFilter(), AuthorizationFilter.class);
 
     http.formLogin(
         form ->
@@ -115,7 +161,8 @@ public class SecurityConfig {
     response.setContentType("application/json");
     objectMapper.writeValue(
         response.getWriter(),
-        new StaffProfileSummary(user.displayName(), user.department(), user.seniority()));
+        new StaffProfileSummary(
+            user.displayName(), user.department(), user.seniority(), user.mustChangePassword()));
   }
 
   private void failureHandler(

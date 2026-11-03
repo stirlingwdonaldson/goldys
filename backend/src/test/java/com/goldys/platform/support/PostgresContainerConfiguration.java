@@ -3,6 +3,8 @@ package com.goldys.platform.support;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 @TestConfiguration(proxyBeanMethods = false)
@@ -14,5 +16,10 @@ public class PostgresContainerConfiguration {
         .withDatabaseName("goldys")
         .withUsername("goldys")
         .withPassword("goldys_test_only");
+  }
+
+  @Bean
+  TestAccounts testAccounts(JdbcTemplate jdbc, PasswordEncoder encoder) {
+    return new TestAccounts(jdbc, encoder);
   }
 }
