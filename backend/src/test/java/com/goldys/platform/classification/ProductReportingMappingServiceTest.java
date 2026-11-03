@@ -54,6 +54,14 @@ class ProductReportingMappingServiceTest {
         .doesNotThrowAnyException();
   }
 
+  @Test
+  void preview_permission_denial_precedes_any_identity_or_impact_read() {
+    doThrow(new AccessDeniedException("denied")).when(permissions).require(any(), any(), any());
+    assertThatThrownBy(() -> service.preview(owner, null, LocalDate.now()))
+        .isInstanceOf(AccessDeniedException.class);
+    verifyNoInteractions(jdbc, extractor);
+  }
+
   private ProductReportingMapping mapping(SalesNature nature, StockBucket bucket) {
     return new ProductReportingMapping(
         Scope.PRODUCT_NAME,

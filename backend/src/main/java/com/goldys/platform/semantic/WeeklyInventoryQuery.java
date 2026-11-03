@@ -6,7 +6,17 @@ import java.util.List;
 
 /** Aggregates over source-qualified resolved observations, without inventing stock balances. */
 public interface WeeklyInventoryQuery {
-  record Waste(LocalDate date, String reason, long lines, long valuedLines, BigDecimal value) {}
+  record Waste(
+      LocalDate date,
+      String reason,
+      long lines,
+      long valuedLines,
+      BigDecimal value,
+      String nature) {
+    public Waste(LocalDate date, String reason, long lines, long valuedLines, BigDecimal value) {
+      this(date, reason, lines, valuedLines, value, "UNKNOWN");
+    }
+  }
 
   record StockCount(
       LocalDate date,

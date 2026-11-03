@@ -122,6 +122,9 @@ app:
       resolved_product_sales:
         - LIGHTSPEED
         - CTB
+      resolved_reporting_sales:
+        - LIGHTSPEED
+        - CTB
       resolved_reservation_day:
         - OPENTABLE
       resolved_labour_day:

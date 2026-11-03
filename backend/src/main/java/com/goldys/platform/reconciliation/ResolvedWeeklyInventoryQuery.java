@@ -18,9 +18,11 @@ public class ResolvedWeeklyInventoryQuery implements WeeklyInventoryQuery {
   public List<Waste> wastage(LocalDate from, LocalDate to) {
     return jdbc.query(
         """
-        select observation_date, reason, count(*) as lines, count(source_value) as valued_lines, sum(source_value) as value
-        from resolved_inventory_observation where kind='WASTE' and observation_date between ? and ?
-        group by observation_date, reason order by observation_date, reason
+        select wastage_date as observation_date, reason, sales_nature, count(*) as lines,
+               count(quantity*source_unit_cost) as valued_lines,
+               sum(round(quantity*source_unit_cost,4)) as value
+        from resolved_classified_wastage where wastage_date between ? and ?
+        group by wastage_date, reason, sales_nature order by wastage_date, reason, sales_nature
         """,
         (rs, n) ->
             new Waste(
@@ -28,7 +30,8 @@ public class ResolvedWeeklyInventoryQuery implements WeeklyInventoryQuery {
                 rs.getString("reason"),
                 rs.getLong("lines"),
                 rs.getLong("valued_lines"),
-                rs.getBigDecimal("value")),
+                rs.getBigDecimal("value"),
+                rs.getString("sales_nature")),
         from,
         to);
   }

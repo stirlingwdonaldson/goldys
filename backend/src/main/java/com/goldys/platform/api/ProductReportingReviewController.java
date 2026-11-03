@@ -37,6 +37,14 @@ public class ProductReportingReviewController {
     return service.wastage(currentUser.roleOf(user), from, to, page, size);
   }
 
+  @PostMapping("/preview")
+  com.goldys.platform.semantic.ReportingMappingPreview preview(
+      @RequestBody ProductReportingMapping mapping,
+      @RequestParam LocalDate through,
+      @AuthenticationPrincipal AccountUserDetails user) {
+    return service.preview(currentUser.roleOf(user), mapping, through);
+  }
+
   @PostMapping
   void append(
       @RequestBody ProductReportingMapping mapping,

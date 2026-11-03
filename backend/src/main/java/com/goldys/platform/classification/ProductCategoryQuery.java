@@ -58,7 +58,8 @@ public class ProductCategoryQuery {
                     category.id(),
                     category.name(),
                     category.groupName(),
-                    countByCategory.getOrDefault(category.id(), 0)))
+                    countByCategory.getOrDefault(category.id(), 0),
+                    category.description()))
         .toList();
   }
 

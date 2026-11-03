@@ -30,7 +30,7 @@ public class ProductReportingMappingService {
     validate(m);
     if (m.scope() == Scope.PRODUCT_NAME) {
       var candidate = extractor.candidates().get(m.entityKey());
-      if (candidate == null || candidate.ambiguous())
+      if (candidate == null || candidate.ambiguous() && m.salesNature() != SalesNature.UNKNOWN)
         throw new IllegalArgumentException(
             "Name alias has missing or ambiguous identity evidence; use source-scoped review");
     }
@@ -53,6 +53,96 @@ public class ProductReportingMappingService {
         m.lifecycle().name(),
         m.reason(),
         actor);
+  }
+
+  @Transactional(readOnly = true)
+  public com.goldys.platform.semantic.ReportingMappingPreview preview(
+      UserRole role, ProductReportingMapping m, LocalDate through) {
+    permissions.require(role, new ResourceKey("products.category"), PermissionAction.READ);
+    boolean sales = m != null && m.scope() == Scope.PRODUCT_NAME;
+    if (sales)
+      permissions.require(role, new ResourceKey("reconciliation.sales"), PermissionAction.READ);
+    else {
+      permissions.require(role, new ResourceKey("inventory.stock"), PermissionAction.READ);
+      permissions.require(role, new ResourceKey("inventory.cost"), PermissionAction.READ);
+    }
+    validate(m);
+    if (through == null
+        || through.isBefore(m.effectiveFrom())
+        || through.isAfter(m.effectiveFrom().plusYears(1)))
+      throw new IllegalArgumentException("Preview an ordered interval of at most one year");
+    boolean reviewable;
+    String evidence;
+    if (sales) {
+      var candidate = extractor.candidates().get(m.entityKey());
+      reviewable =
+          candidate != null && (!candidate.ambiguous() || m.salesNature() == SalesNature.UNKNOWN);
+      evidence =
+          candidate == null
+              ? "No observed alias"
+              : candidate.text() + "\nIdentity ambiguous: " + candidate.ambiguous();
+    } else {
+      reviewable = sourceIdentityExists(m);
+      evidence =
+          m.scope() == Scope.CTB_RECIPE && reviewable
+              ? jdbc.queryForObject(
+                  "select name || '; unit=' || coalesce(unit,'unknown') from canonical_recipe_definition where source_system='CTB' and recipe_id::text=? and superseded_at is null",
+                  String.class,
+                  m.entityKey())
+              : m.sourceSystem()
+                  + " / "
+                  + m.scope()
+                  + " / "
+                  + m.entityKey()
+                  + "; observed="
+                  + reviewable;
+    }
+    LocalDate next =
+        jdbc.queryForObject(
+            "select min(effective_from) from product_reporting_mapping where scope=? and source_system=? and entity_key=? and effective_from>?",
+            LocalDate.class,
+            m.scope().name(),
+            m.sourceSystem(),
+            m.entityKey(),
+            m.effectiveFrom());
+    LocalDate end = next != null && !next.isAfter(through) ? next.minusDays(1) : through;
+    String sql;
+    Object[] args;
+    if (sales) {
+      sql =
+          "select count(*) rows,sum(gross_amount) amount from resolved_reporting_sales where product_name_key=? and trading_date between ? and ?";
+      args = new Object[] {m.entityKey(), m.effectiveFrom(), end};
+    } else if (m.scope() == Scope.CTB_RECIPE || m.scope() == Scope.WASTE_LINE) {
+      sql =
+          "select count(*) rows,sum(round(quantity*source_unit_cost,4)) amount from resolved_classified_wastage where "
+              + (m.scope() == Scope.CTB_RECIPE
+                  ? "recipe_id::text=? and mapping_scope is distinct from 'WASTE_LINE'"
+                  : "source_record_ref=?")
+              + " and wastage_date between ? and ?";
+      args = new Object[] {m.entityKey(), m.effectiveFrom(), end};
+    } else {
+      sql = "select 0 as rows,null::numeric as amount";
+      args = new Object[] {};
+    }
+    var impact = jdbc.queryForMap(sql, args);
+    return new com.goldys.platform.semantic.ReportingMappingPreview(
+        m,
+        reviewable,
+        evidence,
+        end,
+        ((Number) impact.get("rows")).longValue(),
+        (java.math.BigDecimal) impact.get("amount"),
+        sales
+            ? "Observed product gross incl GST, not an ex-GST allocation"
+            : "Recorded CTB quantity × cost; tax basis unverified",
+        List.of(
+            "Append-only revision from "
+                + m.effectiveFrom()
+                + " through "
+                + end
+                + "; an earlier date explicitly restates that interval. Preview counts current observations, not future source completeness.",
+            "Later effective revisions and exact waste-line overrides still take precedence. OTHER is not beverage. UNKNOWN withdraws the financial classification; cafe identity and lifecycle remain independent.",
+            "Evidence and model agreement require human review; no model proposal is approved here."));
   }
 
   private boolean sourceIdentityExists(ProductReportingMapping m) {

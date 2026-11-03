@@ -1,0 +1,108 @@
+wastage_date,source_record_ref,wastage_record_id,detail_id,product_name_key,quantity,cost,unit_of_measurement_name,unit_size,reason,recipe_id
+2026-10-26,wastage:159:803,159,803,zini potato gnocchi 1kg,0.0300,80.5000,kilograms,10 kilograms,"",
+2026-10-26,wastage:159:804,159,804,breast fillet butterflied pc 200g,2.0000,2.2000,grams,200 grams,"",
+2026-10-26,wastage:159:805,159,805,chips supa crunch ultra fast 10mm edgell,0.1000,59.0000,kilograms,12 kilograms,"",
+2026-10-26,wastage:160:806,160,806,goldy s one off the wood lager pint,2.0000,2.3700,ml,"",ko,111
+2026-10-26,wastage:160:807,160,807,goldy s one off the wood lager jug,2.0000,4.7400,ml,"",kitchen,112
+2026-10-26,wastage:160:808,160,808,napoleone cloudy apple cider pint,2.0000,2.5800,ml,"",ko,125
+2026-10-26,wastage:160:809,160,809,goldy s one off the wood lager pint,6.0000,2.3700,ml,"",expired/spoiled,111
+2026-10-26,wastage:160:810,160,810,philter xpa pot,1.0000,1.3100,ml,"",dropped/broken ,101
+2026-10-26,wastage:160:811,160,811,gin,1.0000,1.7300,each,"",dropped/broken,159
+2026-10-26,wastage:160:812,160,812,philter xpa pint,1.0000,2.6100,ml,"",dropped/broken,102
+2026-10-26,wastage:160:813,160,813,goldy s saus rose gls,1.0000,1.5400,each,"",Wrong order ,60
+2026-10-26,wastage:160:814,160,814,bodriggy speccy juice pint,1.0000,2.3000,ml,"",ko,105
+2026-10-26,wastage:160:815,160,815,deep woods estate chardonnay gls,1.0000,2.5600,each,"",ko,548
+2026-10-26,wastage:160:816,160,816,the mill kicker ipa pint,1.0000,4.1100,ml,"",ko,115
+2026-10-26,wastage:160:817,160,817,philter xpa pint,2.0000,2.6100,ml,"",ko,102
+2026-10-26,wastage:160:818,160,818,philter xpa pot,1.0000,1.3100,ml,"",dropped/broken ,101
+2026-10-26,wastage:160:819,160,819,the mill kicker ipa pot,1.0000,2.0600,ml,"",dropped/broken,114
+2026-10-27,wastage:161:820,161,820,chicken parma,1.0000,5.0196,each,"",flipped,388
+2026-10-27,wastage:161:821,161,821,breast fillet butterflied pc 200g,1.0000,2.2000,grams,200 grams,burned,
+2026-10-27,wastage:161:822,161,822,chips supa crunch ultra fast 10mm edgell,0.0833,59.0000,kilograms,12 kilograms,"",
+2026-10-27,wastage:162:823,162,823,vodka,1.0000,1.0400,each,"",Wrong order,157
+2026-10-27,wastage:162:824,162,824,melbourne black pot,1.0000,1.9000,ml,"",Wrong order,127
+2026-10-27,wastage:162:825,162,825,melbourne black pint,1.0000,3.8100,ml,"",Wrong order,128
+2026-10-27,wastage:162:826,162,826,talisker 10yo,1.0000,3.8400,each,"",Wrong order,194
+2026-10-27,wastage:162:827,162,827,bodriggy speccy juice pint,1.0000,2.3500,ml,"",KO,105
+2026-10-27,wastage:162:828,162,828,syrahmi demi shiraz gls,1.0000,3.4100,each,"",KO,551
+2026-10-27,wastage:162:829,162,829,la sirene citray sour pint,2.0000,0.0000,each,"",KO,703
+2026-10-27,wastage:162:830,162,830,goldy s one off the wood lager pint,1.0000,2.3700,ml,"",KO,111
+2026-10-27,wastage:162:831,162,831,the mill kicker ipa pint,1.0000,4.1100,ml,"",KO,115
+2026-10-27,wastage:162:832,162,832,love shack pale ale pint,1.0000,3.6400,ml,"",Other,108
+2026-10-27,wastage:162:833,162,833,goldy s one off the wood lager pint,1.0000,2.3700,ml,"","",111
+2026-10-28,wastage:164:834,164,834,dominique beaujolais villages gamay gls,1.0000,4.0100,each,"",KO,550
+2026-10-28,wastage:164:835,164,835,goldy s saus pinot grigio gls,1.0000,1.5400,each,"",replacement drink,56
+2026-10-28,wastage:164:836,164,836,jamsheed flor de corazon chilled red gls,1.0000,0.0600,each,"",replacement drink ,699
+2026-10-28,wastage:164:837,164,837,goldy s one off the wood lager pint,1.0000,2.3700,ml,"",Dropped/broken ,111
+2026-10-28,wastage:164:838,164,838,croix de b zard picpoul de pinet gls,1.0000,3.5500,each,"",Expired/spoiled,549
+2026-10-28,wastage:164:839,164,839,la sirene citray sour pint,1.0000,0.0000,each,"",Wrong order ,703
+2026-10-28,wastage:164:840,164,840,the mill kicker ipa pint,1.0000,4.1100,ml,"",Wrong order ,115
+2026-10-28,wastage:164:841,164,841,love shack pale ale pint,1.0000,3.6400,ml,"",Knockoff,108
+2026-10-28,wastage:164:842,164,842,the mill kicker ipa pint,1.0000,4.1100,ml,"",Knockoff,115
+2026-10-28,wastage:164:843,164,843,napoleone cloudy apple cider jug,0.5000,5.1500,ml,"",Knockoff,126
+2026-10-28,wastage:164:844,164,844,keeper brewing pilsner pint,1.0000,2.7800,each,"",Knockoff,559
+2026-10-28,wastage:164:845,164,845,la sirene citray sour pint,1.0000,0.0000,each,"",Knockoff,703
+2026-10-29,wastage:165:846,165,846,bodriggy speccy juice pint,1.0000,2.3500,ml,"",Knock off,105
+2026-10-29,wastage:165:847,165,847,love shack pale ale pint,3.0000,3.6400,ml,"",Knock off,108
+2026-10-29,wastage:165:848,165,848,napoleone cloudy apple cider pint,1.0000,2.5800,ml,"",Knock off,125
+2026-10-29,wastage:165:849,165,849,old pulteney 12,1.0000,3.4400,each,"",Knock off,188
+2026-10-29,wastage:165:850,165,850,margarita,1.0000,3.8987,each,"",Knock off,332
+2026-10-29,wastage:165:851,165,851,croix de b zard picpoul de pinet gls,1.0000,3.5500,each,"",Knock off,549
+2026-10-29,wastage:165:852,165,852,keeper brewing pilsner pint,2.0000,2.7800,each,"",Knock off,559
+2026-10-29,wastage:165:853,165,853,goldy s one off the wood lager jug,4.0000,4.7400,ml,"",Kitchen Prep,112
+2026-10-29,wastage:165:854,165,854,carlton draught pint,1.0000,4.1300,ml,"",Expired/spoiled,28
+2026-10-29,wastage:165:855,165,855,love shack pale ale pint,0.0000,3.6400,ml,"",Expired/spoiled,108
+2026-10-30,wastage:166:856,166,856,dr loosen dr l dry riesling gls,1.0000,2.6800,ml,"",mispour,547
+2026-10-30,wastage:166:896,166,896,bacardi blanca,1.0000,1.9100,each,"",mispour,165
+2026-10-30,wastage:166:897,166,897,little dragon ginger beer 375ml can,4.0000,3.1800,each,"",Service Rec,144
+2026-10-30,wastage:166:898,166,898,carlton draught pint,1.0000,4.1300,ml,"","",28
+2026-10-30,wastage:166:899,166,899,goldy s one off the wood lager jug,6.0000,4.7400,ml,"",Kitchen,112
+2026-10-30,wastage:166:900,166,900,napoleone cloudy apple cider jug,2.0000,5.1500,ml,"",Kitchen,126
+2026-10-30,wastage:166:901,166,901,the mill d sseldorf draught altbier jug,3.0000,6.8200,each,"",Kitchen,654
+2026-10-30,wastage:166:902,166,902,dolin rosso vermouth,25.0000,0.9700,each,"",Kitchen,205
+2026-10-30,wastage:169:892,169,892,linear gewurztraminer 2023,1.0000,20.7000,ml,750 ml,"",
+2026-10-30,wastage:169:893,169,893,2023 cotier joy,1.0000,16.9800,ml,750 ml,"",
+2026-10-30,wastage:169:894,169,894,la petite mort crianza tempranillo 2022,1.0000,22.5000,ml,750 ml,"",
+2026-10-30,wastage:169:895,169,895,bondar fiano 2025,1.0000,19.6600,ml,750 ml,"",
+2026-10-30,wastage:170:903,170,903,carlton draught pint,2.0000,4.1300,ml,"","",28
+2026-10-30,wastage:170:904,170,904,love shack pale ale pint,2.0000,3.6400,ml,"","",108
+2026-10-30,wastage:170:905,170,905,dazma gewurztraminer gls,1.0000,2.8900,each,"","",61
+2026-10-30,wastage:170:906,170,906,bodriggy speccy juice pint,1.0000,2.3500,ml,"","",105
+2026-10-30,wastage:170:907,170,907,jamsheed flor de corazon chilled red gls,2.0000,0.0600,each,"","",699
+2026-10-30,wastage:170:908,170,908,goldy s saus rose gls,1.0000,1.5400,each,"","",60
+2026-10-30,wastage:170:909,170,909,dr loosen dr l dry riesling gls,2.0000,2.6800,ml,"","",547
+2026-10-30,wastage:170:910,170,910,keeper brewing pilsner pint,1.0000,2.7800,each,"","",559
+2026-10-30,wastage:170:911,170,911,dominique beaujolais villages gamay gls,1.0000,4.0100,each,"","",550
+2026-11-01,wastage:167:857,167,857,dr loosen dr l dry riesling gls,1.0000,2.6800,ml,"",Dropped/broken ,547
+2026-11-01,wastage:167:858,167,858,melbourne black pint,1.0000,3.8100,ml,"",Dropped/broken ,128
+2026-11-01,wastage:167:859,167,859,bridge road free time hazy pale pint,1.0000,2.7000,ml,"",Dropped/broken ,134
+2026-11-01,wastage:167:860,167,860,bridge road free time hazy pale jug,1.0000,5.4000,ml,"",Dropped/broken ,135
+2026-11-01,wastage:167:861,167,861,love shack pale ale jug,2.0000,7.2900,ml,"",Dropped/broken ,109
+2026-11-01,wastage:167:862,167,862,pickleback shot,2.0000,2.4899,each,"",Dropped/broken ,306
+2026-11-01,wastage:167:863,167,863,house vodka,1.0000,1.0400,ml,"",Expired/spoiled ,178
+2026-11-01,wastage:167:864,167,864,carlton draught pot,1.0000,2.0700,ml,"",Wrong order ,99
+2026-11-01,wastage:167:865,167,865,carlton draught jug,1.0000,8.2700,ml,"",Wrong order ,100
+2026-11-01,wastage:167:866,167,866,four pillars bloody shiraz gin,1.0000,3.1200,each,"",Wrong order ,174
+2026-11-01,wastage:167:867,167,867,napoleone cloudy apple cider pot,1.0000,1.2900,ml,"",Wrong order ,124
+2026-11-01,wastage:167:868,167,868,tequila,2.0000,2.0300,each,"",Wrong order ,161
+2026-11-01,wastage:167:869,167,869,margarita,1.0000,3.8987,each,"",Wrong order ,332
+2026-11-01,wastage:167:870,167,870,jameson,1.0000,2.4800,each,"",Wrong order ,180
+2026-11-01,wastage:167:871,167,871,keeper brewing pilsner pint,3.0000,2.7800,each,"",KO,559
+2026-11-01,wastage:167:872,167,872,melbourne black pint,1.0000,3.8100,ml,"",KO,128
+2026-11-01,wastage:167:873,167,873,love shack pale ale pint,1.0000,3.6400,ml,"",KO,108
+2026-11-01,wastage:167:874,167,874,resting witch face,1.0000,3.0300,each,"",KO,733
+2026-11-01,wastage:167:875,167,875,dazma gewurztraminer gls,1.0000,2.8900,each,"",KO,61
+2026-11-01,wastage:167:876,167,876,carlton draught pot,1.0000,2.0700,ml,"",KO,99
+2026-11-01,wastage:167:877,167,877,napoleone cloudy apple cider jug,3.0000,5.1500,ml,"",Kitchen ,126
+2026-11-01,wastage:167:878,167,878,bodriggy speccy juice jug,2.0000,4.7100,ml,"",Expired/spoiled ,106
+2026-11-01,wastage:168:879,168,879,carlton draught pint,1.0000,4.1300,ml,"",Knock off,28
+2026-11-01,wastage:168:880,168,880,keeper brewing pilsner pot,1.0000,1.4700,each,"",Knock off,558
+2026-11-01,wastage:168:881,168,881,la sirene citray sour pot,1.0000,0.0000,each,"",Knock off,704
+2026-11-01,wastage:168:882,168,882,house vodka,1.0000,1.0400,ml,"",Knock off,178
+2026-11-01,wastage:168:883,168,883,mount gay,1.0000,2.0100,each,"",Knock off,187
+2026-11-01,wastage:168:884,168,884,house vodka,1.0000,1.0400,ml,"",Expired/Spoiled ,178
+2026-11-01,wastage:168:885,168,885,goldy s saus pinot grigio 500ml carafe,1.0000,5.5000,each,"",Expired/Spoiled ,53
+2026-11-01,wastage:168:886,168,886,goldy s saus pinot grigio gls,1.0000,1.5400,each,"",Expired/Spoiled ,56
+2026-11-01,wastage:168:889,168,889,carlton draught pint,3.0000,4.1300,ml,"",Wrong Order,28
+2026-11-01,wastage:168:890,168,890,margarita,1.0000,3.8987,each,"",Wrong Order,332
+2026-11-01,wastage:168:891,168,891,espresso martini,1.0000,3.1651,each,"",Wrong Order,338

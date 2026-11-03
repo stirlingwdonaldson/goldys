@@ -2235,6 +2235,17 @@ export const demoApi: Api = {
     return demoRecipeIngredients[recipeId] ?? [];
   },
 
+  async getReportingMappings(to) { return structuredClone(demoReportingMappings.filter(m => m.effectiveFrom <= to).slice().reverse()); },
+  async previewReportingMapping(mapping, through) {
+    const reviewable = !mapping.entityKey.includes("ambiguous");
+    return { mapping, reviewable, through, evidence: "DEMO observed identity; ambiguous aliases are held. Cafe dates and lifecycle are unknown.", observedRows: reviewable ? 4 : 0, knownAmount: reviewable ? 100 : null, amountBasis: "DEMO recorded source value; tax basis qualified", notes: ["DEMO append-only review; prior decisions remain. Effective date can restate history."] };
+  },
+  async saveReportingMapping(mapping) {
+    if(!mapping.reason.trim() || !mapping.entityKey.trim()) throw new ApiError("VALIDATION_FAILED", "Identity and review reason required.");
+    if(mapping.entityKey.includes("ambiguous") && mapping.salesNature !== "UNKNOWN") throw new ApiError("VALIDATION_FAILED", "Ambiguous identity.");
+    demoReportingMappings.push(structuredClone(mapping));
+  },
+  async getClassifiedWastage(_from, _to, page) { return page === 0 ? [{sourceSystem:"CTB",sourceRecordRef:"wastage:1:1",rawRecordId:"demo",date:_from,name:"DEMO unknown recorded item",quantity:2,sourceUnitCost:null,unit:"each",unitSize:null,reason:null,supplier:null,recipeId:388,mappingRevisionId:null,mappingScope:null,mappingReason:null,salesNature:"UNKNOWN",stockBucket:"UNKNOWN",itemRole:"UNKNOWN",businessArea:"UNKNOWN",lifecycle:"UNKNOWN"}] : []; },
   async getCategoryTaxonomy(options?: { signal?: AbortSignal }): Promise<CategoryNode[]> {
     await delay(300, options?.signal);
     return demoCategoryTaxonomy;
@@ -2272,6 +2283,7 @@ export const demoApi: Api = {
     await delay(400);
     const category = demoCategoryTaxonomy.find((c) => c.id === id);
     if (!category) throw new ApiError("VALIDATION_FAILED", `No category with id ${id}.`);
+    if (input.description != null) category.description = input.description;
     if (input.name != null) category.name = input.name;
     if (input.groupName != null) category.groupName = input.groupName;
   },
@@ -2842,3 +2854,5 @@ function demoProvenance(metricId: string, date: string): Provenance {
     rawRecordIds: ["raw-2", "raw-1"],
   };
 }
+
+const demoReportingMappings: import("./types").ReportingMapping[] = [];

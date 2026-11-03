@@ -396,6 +396,7 @@ export interface RecipeIngredient {
 
 /** One curated category in the taxonomy (mirrors backend `CategoryNode`). `groupName` is null for flat (top-level) categories. */
 export interface CategoryNode {
+  description?: string | null;
   id: string;
   name: string;
   groupName: string | null;
@@ -452,6 +453,7 @@ export interface CreateCategoryInput {
 
 /** Body for `PATCH /api/products/categories/categories/{id}`. A field left null is left unchanged. */
 export interface UpdateCategoryInput {
+  description?: string | null;
   name?: string | null;
   groupName?: string | null;
 }
@@ -1293,7 +1295,41 @@ export interface ReceiptGroup {
     sourceLocalTime: string; net: number; tax: number; tip: number; total: number }[];
 }
 
+export interface ReportingMapping {
+  scope: "PRODUCT_NAME" | "CTB_RECIPE" | "CTB_STOCK" | "WASTE_LINE";
+  sourceSystem: "RESOLVED" | "CTB";
+  entityKey: string;
+  effectiveFrom: string;
+  salesNature: "FOOD" | "BEVERAGE" | "OTHER" | "UNKNOWN";
+  stockBucket: "KEGS" | "WINE" | "SPIRITS" | "TINNIES" | "OTHER_BEVERAGE" | "MERCHANDISE" | "MEAT" | "SEAFOOD" | "POULTRY" | "DAIRY" | "FROZEN" | "BREAD" | "UNKNOWN";
+  itemRole: "SALE_PRODUCT" | "INGREDIENT" | "MODIFIER" | "MERCHANDISE" | "OTHER" | "UNKNOWN";
+  businessArea: "PUB" | "CAFE" | "SHARED" | "UNKNOWN";
+  lifecycle: "CURRENT" | "HISTORICAL" | "RETIRED" | "UNKNOWN";
+  reason: string;
+}
+export interface ReportingMappingPreview {
+  mapping: ReportingMapping;
+  reviewable: boolean;
+  evidence: string;
+  through: string;
+  observedRows: number;
+  knownAmount: number | null;
+  amountBasis: string;
+  notes: string[];
+}
+export interface ClassifiedWasteLine {
+  sourceSystem: string; sourceRecordRef: string; rawRecordId: string; date: string; name: string;
+  quantity: number | null; sourceUnitCost: number | null; unit: string | null; unitSize: string | null;
+  reason: string | null; supplier: string | null; recipeId: number | null; mappingRevisionId: number | null;
+  mappingScope: string | null; mappingReason: string | null; salesNature: string; stockBucket: string;
+  itemRole: string; businessArea: string; lifecycle: string;
+}
+
 export interface Api {
+  getReportingMappings(to: string): Promise<ReportingMapping[]>;
+  previewReportingMapping(mapping: ReportingMapping, through: string): Promise<ReportingMappingPreview>;
+  saveReportingMapping(mapping: ReportingMapping): Promise<void>;
+  getClassifiedWastage(from: string, to: string, page: number): Promise<ClassifiedWasteLine[]>;
   getWeeklyTargets(week: string): Promise<WeeklyTarget[]>;
   saveWeeklyTargets(input: { effectiveFrom: string; values: Record<string, number> }): Promise<WeeklyTarget[]>;
   getWeeklyReport(from?: string, weeks?: number, options?: { signal?: AbortSignal }): Promise<WeeklyReport>;
@@ -1470,7 +1506,7 @@ export interface WeeklyReportRow {
   id: string;
   section: string;
   label: string;
-  unit: "AUD" | "PERCENT" | "STARS";
+  unit: "AUD" | "PERCENT" | "STARS" | "count";
   days: (number | null)[];
   total: number | null;
   status: "QUALIFIED" | "UNAVAILABLE";

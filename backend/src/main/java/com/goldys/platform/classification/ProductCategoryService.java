@@ -54,7 +54,7 @@ public class ProductCategoryService {
         categories.save(ProductCategory.create(name, groupName, displayOrder, description));
     // Map to the public DTO here: the entity is package-private, and callers in other packages
     // (the application layer) must never touch it directly.
-    return new CategoryNode(saved.id(), saved.name(), saved.groupName(), 0);
+    return new CategoryNode(saved.id(), saved.name(), saved.groupName(), 0, saved.description());
   }
 
   @Transactional

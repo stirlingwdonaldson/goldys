@@ -30,7 +30,29 @@ class ResolvedProductCategoryQueryTest {
       mock(ProductReportingMappingService.class);
 
   private final ResolvedProductCategoryQuery query =
-      new ResolvedProductCategoryQuery(productMetrics, categories, assignments, mappings);
+      new ResolvedProductCategoryQuery(
+          productMetrics,
+          categories,
+          assignments,
+          (from, to) ->
+              productMetrics.productSales(from, to).stream()
+                  .map(
+                      s ->
+                          new com.goldys.platform.semantic.ReportingSalesQuery.Sale(
+                              s.tradingDate(),
+                              s.productName(),
+                              s.amount(),
+                              s.amount(),
+                              s.authoritativeSource(),
+                              mappings.revisions(to).stream()
+                                  .filter(
+                                      m ->
+                                          m.entityKey().equals(s.productName())
+                                              && !m.effectiveFrom().isAfter(s.tradingDate()))
+                                  .findFirst()
+                                  .map(m -> m.salesNature().name())
+                                  .orElse("UNKNOWN")))
+                  .toList());
 
   @Test
   void joins_sales_to_category() {
@@ -192,8 +214,7 @@ class ResolvedProductCategoryQueryTest {
     when(mappings.revisions(TO)).thenReturn(List.of(mapping("lager", "BEVERAGE", FROM)));
     when(productMetrics.productSales(FROM, TO))
         .thenReturn(List.of(new ProductSalesMetric(FROM, "lager", null, null, "ctb", false)));
-    assertThat(query.dailyFoodBev(FROM, TO))
-        .containsExactly(new FoodBevSplit(FROM, BigDecimal.ZERO, null));
+    assertThat(query.dailyFoodBev(FROM, TO)).containsExactly(new FoodBevSplit(FROM, null, null));
   }
 
   private ProductSalesMetric sale(String name, String value) {

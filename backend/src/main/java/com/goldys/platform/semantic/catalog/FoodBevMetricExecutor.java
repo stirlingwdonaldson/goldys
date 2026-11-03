@@ -59,10 +59,13 @@ public class FoodBevMetricExecutor implements MetricExecutor {
                 definition.version())
             .withCoverage(bucket.coverage());
 
+    var notices = new java.util.ArrayList<>(bucket.coverage().notices());
+    notices.add(
+        "Reviewed effective-date reporting mappings; ex-GST uses observed tax only when the selected source gross and quantity match. Daily 95% absolute eligible-value classification coverage required; OTHER excluded. Missing tax, unresolved amounts and unclassified coverage can withhold dates; missing observations are not zero.");
     return new TimeSeriesResult(
         query.metric(),
         List.of(new MetricSeries(null, bucket.points())),
-        bucket.coverage().notices(),
+        List.copyOf(notices),
         provenance);
   }
 }

@@ -1,0 +1,65 @@
+trading_date,sales_nature,rows,known_tax_rows,gross,net,abs_net
+2026-10-26,BEVERAGE,15,15,901.5200,819.7200,819.7200
+2026-10-26,FOOD,10,10,1925.1781,1751.3170,1751.3170
+2026-10-26,UNKNOWN,114,114,8907.0405,8098.6706,8098.6706
+2026-10-27,BEVERAGE,14,14,667.6600,607.0000,607.0000
+2026-10-27,FOOD,7,7,1035.6500,941.4600,941.4600
+2026-10-27,UNKNOWN,90,90,6893.0800,6266.8800,6266.8800
+2026-10-28,BEVERAGE,17,17,2033.1700,1848.5100,1848.5100
+2026-10-28,FOOD,8,8,6328.2600,5752.0700,5752.0700
+2026-10-28,UNKNOWN,104,104,11624.6100,10568.8400,10568.8400
+2026-10-29,BEVERAGE,18,18,2207.0900,2006.6800,2006.6800
+2026-10-29,FOOD,9,9,1494.3900,1358.4700,1358.4700
+2026-10-29,OTHER,1,1,340.0000,340.0000,340.0000
+2026-10-29,UNKNOWN,98,98,10394.4279,9450.6574,9450.6574
+2026-10-30,BEVERAGE,21,21,5148.9200,4681.0400,4681.0400
+2026-10-30,FOOD,9,9,2855.2400,2595.6500,2595.6500
+2026-10-30,UNKNOWN,147,147,28518.6999,25928.8819,25928.8819
+2026-10-31,BEVERAGE,21,21,4963.6565,4513.0061,4513.0061
+2026-10-31,FOOD,8,8,3550.9880,3228.0827,3228.0827
+2026-10-31,UNKNOWN,166,166,33051.2354,30050.4188,30050.4188
+2026-11-01,BEVERAGE,22,22,3072.7267,2793.4425,2793.4425
+2026-11-01,FOOD,9,9,3393.1500,3084.5245,3084.5245
+2026-11-01,UNKNOWN,126,126,16323.5733,14842.0904,14842.0904
+sales_nature,lines,valued_lines,value,missing_reasons
+BEVERAGE,96,96,452.9860,11
+FOOD,1,1,5.0196,0
+UNKNOWN,10,10,102.6997,8
+record_id,lines,value,units,header_total,difference
+149,3,154.32500000,"each,kilograms",154.32500,0.00000000
+159,3,12.71500000,"grams,kilograms",12.715000,0.00000000
+160,14,58.35000000,"each,ml",58.3500,0.00000000
+161,3,12.13430000,"each,grams,kilograms",12.13626666666666470000,-0.00196666666666470000
+162,11,28.84000000,"each,ml",28.8400,0.00000000
+164,12,28.74500000,"each,ml",28.74500,0.00000000
+165,10,55.38870000,"each,ml",55.3887,0.00000000
+166,8,104.89000000,"each,ml",104.8900,0.00000000
+167,22,109.02850000,"each,ml",109.0285,0.00000000
+168,11,36.18380000,"each,ml",36.1838,0.00000000
+169,4,79.84000000,ml,79.8400,0.00000000
+170,9,34.59000000,"each,ml",34.5900,0.00000000
+name,group_name,description
+Beer,Beverage,"Sold beer, including draught, packaged and explicitly alcohol-free beer. Excludes steak, wine, spirits and beer used as a recipe ingredient; porterhouse is a food counterexample."
+Cocktails,,"Composed mixed drinks sold as cocktails, including explicitly alcohol-free cocktails. Excludes straight spirit servings, bulk syrups and food; a shot of gin belongs in Spirits."
+Desserts,Food,"Prepared sweet dishes sold as desserts, including historical menu desserts. Excludes coffee, dessert wine and bulk sugar; a latte is a beverage."
+Donations,,"Explicit voluntary contributions without a sold food/beverage item. Excludes raffle entries, surcharges and function deposits; a meal fundraiser package needs separate review."
+Functions,,"Items explicitly associated with functions, including food, drinks, packages and charges. This is a browsing context, not a food/beverage allocation. Mixed packages remain unknown for financial reporting; a room-hire charge is not food."
+Ingredients,Food,"Stock and preparation ingredients without evidence of a guest-facing sold dish. Excludes ready-to-eat menu dishes and explicit modifiers; a carton of raw chicken is included, served wings are excluded."
+Liqueurs,Spirits,"Sold liqueur servings. Excludes base spirits, cocktails and cooking ingredients; an espresso martini belongs in Cocktails."
+Mains,Food,"Prepared regular food dishes sold to guests, including steaks and historical menu dishes. Excludes explicitly evidenced weekly specials, wings, desserts, modifiers and bulk ingredients; porterhouse is included, porter beer is excluded."
+Merchandise,,"Physical retail goods such as branded shirts, caps and tote bags. Excludes food, drinks, donations and raffle entries; a beer-branded cap remains merchandise and OTHER revenue."
+Modifiers,Food,"Explicit additions, substitutions or preparation choices attached to a sold item. Excludes standalone dishes and stock ingredients; a vegan substitution is not automatically a meal or evidence of cafe identity."
+Non-Alcoholic,,"Sold non-alcoholic drinks other than explicitly evidenced Soft Drinks or Beer, including tea and coffee. Excludes milk ingredients and modifiers; oat-milk substitution alone is a modifier. Coffee does not establish cafe membership."
+Other charges,,"Explicit non-food/beverage charges not covered by Donations, Raffle Tickets or Merchandise. Excludes mixed packages unless the charge itself is identified; room hire is included, a mixed function package remains held."
+Raffle Tickets,,"Paid raffle entries. Excludes donations, merchandise and drinks; a ticket bundled with unspecified food/drink is held for review rather than split by assumption."
+Soft Drinks,,"Sold soft drinks, juices and mixers served as drinks. Excludes alcohol, coffee and bulk ingredient syrups; a gin-and-tonic cocktail is not a soft drink."
+Spirits,,"Sold spirit servings, excluding liqueurs and composed cocktails. Excludes ingredient-only alcohol and merchandise; a margarita belongs in Cocktails."
+Weekly Specials,Food,"Prepared food explicitly evidenced as a dated or weekly special. Excludes regular mains, drinks and ingredients; a steak name alone is not evidence of a special."
+Wine,,"Sold wine servings and bottles, including fortified and sparkling wine. Excludes cocktails, merchandise and wine used only in cooking; a wine-branded shirt is Merchandise."
+Wings,Food,"Prepared chicken-wing dishes sold to guests. Excludes raw poultry, wing sauce ingredients and non-wing mains; a stock carton of chicken is an ingredient."
+product_name_key,name,source,status
+porterhouse,Mains,MANUAL,ASSIGNED
+porterhouse 250g,Mains,MANUAL,ASSIGNED
+scope,count,min,max,actors
+CTB_RECIPE,51,2026-10-26,2026-10-26,1
+PRODUCT_NAME,38,2026-10-26,2026-10-26,1

@@ -4,8 +4,6 @@ import com.goldys.platform.semantic.CategorySales;
 import com.goldys.platform.semantic.FoodBevSplit;
 import com.goldys.platform.semantic.ProductCategoryMetricsQuery;
 import com.goldys.platform.semantic.ProductMetricsQuery;
-import com.goldys.platform.semantic.ProductReportingMapping.SalesNature;
-import com.goldys.platform.semantic.ProductReportingMapping.Scope;
 import com.goldys.platform.semantic.ProductSalesMetric;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,17 +27,17 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
   private final ProductMetricsQuery productMetrics;
   private final ProductCategoryRepository categories;
   private final ProductCategoryAssignmentRepository assignments;
-  private final ProductReportingMappingService mappings;
+  private final com.goldys.platform.semantic.ReportingSalesQuery reportingSales;
 
   public ResolvedProductCategoryQuery(
       ProductMetricsQuery productMetrics,
       ProductCategoryRepository categories,
       ProductCategoryAssignmentRepository assignments,
-      ProductReportingMappingService mappings) {
+      com.goldys.platform.semantic.ReportingSalesQuery reportingSales) {
     this.productMetrics = productMetrics;
     this.categories = categories;
     this.assignments = assignments;
-    this.mappings = mappings;
+    this.reportingSales = reportingSales;
   }
 
   @Override
@@ -82,73 +80,7 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
 
   @Override
   public List<FoodBevSplit> dailyFoodBev(LocalDate from, LocalDate to) {
-    var revisions = mappings.revisions(to);
-
-    // Emit a split for every date that has any resolved product-sales rows. A side with no rows in
-    // its group that day is a real zero; a side with rows but a null (unresolved) amount is null,
-    // so GrainAggregator can flag it UNRESOLVED rather than silently zeroing an unresolved day.
-    Map<LocalDate, MutableSplit> byDay = new LinkedHashMap<>();
-    for (ProductSalesMetric metric : productMetrics.productSales(from, to)) {
-      MutableSplit split = byDay.computeIfAbsent(metric.tradingDate(), d -> new MutableSplit());
-      var mapping =
-          revisions.stream()
-              .filter(
-                  m ->
-                      m.scope() == Scope.PRODUCT_NAME
-                          && m.sourceSystem().equals("RESOLVED")
-                          && m.entityKey().equals(metric.productName())
-                          && !m.effectiveFrom().isAfter(metric.tradingDate()))
-              .findFirst()
-              .orElse(null);
-      var nature = mapping == null ? SalesNature.UNKNOWN : mapping.salesNature();
-      if (nature == SalesNature.OTHER) continue;
-      boolean food = nature == SalesNature.FOOD;
-      boolean beverage = nature == SalesNature.BEVERAGE;
-      if (!food && !beverage) {
-        // Unknown revenue cannot become a zero-drinks training observation. Retain its
-        // magnitude so the daily classification coverage can be checked below.
-        if (metric.amount() == null) {
-          split.unknownAmount = true;
-        } else {
-          split.unclassified = split.unclassified.add(metric.amount().abs());
-        }
-        continue;
-      }
-      split.hasMappedProducts = true;
-      if (metric.amount() == null) {
-        if (food) {
-          split.foodUnresolved = true;
-        } else {
-          split.bevUnresolved = true;
-        }
-      } else if (food) {
-        split.food = split.food.add(metric.amount());
-      } else {
-        split.bev = split.bev.add(metric.amount());
-      }
-      if (metric.amount() != null) {
-        split.classified = split.classified.add(metric.amount().abs());
-      }
-    }
-
-    List<FoodBevSplit> out = new ArrayList<>(byDay.size());
-    for (Map.Entry<LocalDate, MutableSplit> entry : byDay.entrySet()) {
-      MutableSplit s = entry.getValue();
-      // Require at least 95% of eligible product revenue to be classified. Known non-sales
-      // categories above are outside this denominator. No mapped sales is missing, not 0/0.
-      boolean incomplete =
-          s.unknownAmount
-              || !s.hasMappedProducts
-              || s.classified.compareTo(
-                      s.classified.add(s.unclassified).multiply(new BigDecimal("0.95")))
-                  < 0;
-      out.add(
-          new FoodBevSplit(
-              entry.getKey(),
-              incomplete || s.foodUnresolved ? null : s.food,
-              incomplete || s.bevUnresolved ? null : s.bev));
-    }
-    return out;
+    return reportingSales.dailyFoodBev(from, to);
   }
 
   /** Builds the approved browsing assignment lookup once for category sales totals. */
@@ -196,16 +128,5 @@ public class ResolvedProductCategoryQuery implements ProductCategoryMetricsQuery
   private static final class MutableTotal {
     BigDecimal quantity = BigDecimal.ZERO;
     BigDecimal amount = BigDecimal.ZERO;
-  }
-
-  private static final class MutableSplit {
-    BigDecimal food = BigDecimal.ZERO;
-    BigDecimal bev = BigDecimal.ZERO;
-    boolean foodUnresolved;
-    boolean bevUnresolved;
-    BigDecimal classified = BigDecimal.ZERO;
-    BigDecimal unclassified = BigDecimal.ZERO;
-    boolean unknownAmount;
-    boolean hasMappedProducts;
   }
 }
