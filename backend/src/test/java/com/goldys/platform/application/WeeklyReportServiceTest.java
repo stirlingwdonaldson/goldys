@@ -14,6 +14,8 @@ import java.time.*;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class WeeklyReportServiceTest {
   private static final UserRole OWNER =
@@ -156,11 +158,21 @@ class WeeklyReportServiceTest {
     assertThat(row(report, "food_difference_percent").total()).isEqualByComparingTo("-0.125");
   }
 
-  @Test
-  void deniesBeforeReadingAnyData() {
-    doThrow(AccessDeniedException.forResource("inventory.cost"))
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "reconciliation.sales",
+        "inventory.cost",
+        "payments.metrics",
+        "reviews",
+        "weekly-report.targets",
+        "inventory.stock",
+        "products.category"
+      })
+  void deniesBeforeReadingAnyData(String resource) {
+    doThrow(AccessDeniedException.forResource(resource))
         .when(permissions)
-        .require(OWNER, new ResourceKey("inventory.cost"), PermissionAction.READ);
+        .require(OWNER, new ResourceKey(resource), PermissionAction.READ);
     assertThatThrownBy(() -> service.report(OWNER, MONDAY, 1))
         .isInstanceOf(AccessDeniedException.class);
     verifyNoInteractions(metrics, reviews, reportingSales, inventory, targets);
