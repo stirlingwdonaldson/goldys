@@ -1,3 +1,6 @@
+import { useState, type ReactNode } from "react";
+import { Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { WeeklyReport, WeeklyReportRow, WeeklyReportWeek } from "@/lib/api/types";
 import { formatCurrency, formatDay, formatNumber } from "@/lib/format";
 import { reportPercent } from "@/lib/weekly-report-targets";
@@ -11,27 +14,38 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCap
 const metric = (week: WeeklyReportWeek, id: string) => week.rows.find(row => row.id === id)!;
 const available = (row: WeeklyReportRow) => row.status === "QUALIFIED" && row.total !== null;
 const datesWithValues = (row: WeeklyReportRow) => row.days.filter(day => day !== null).length;
-export const disclosureClass = "cursor-pointer rounded-md font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-function reportValue(row: WeeklyReportRow, amount: number | null) {
+export function reportValue(row: WeeklyReportRow, amount: number | null) {
   if (row.unit === "AUD") return formatCurrency(amount);
   if (row.unit === "PERCENT") return reportPercent(amount);
   return `${formatNumber(amount, 2)}${row.unit === "STARS" && amount !== null ? " stars" : ""}`;
 }
 
-function SourceNotes({ row, week, target = false }: { row: WeeklyReportRow; week: WeeklyReportWeek; target?: boolean }) {
+export function SourceNotes({ row, week, target = false, onOpenChange }: { row: WeeklyReportRow; week: WeeklyReportWeek; target?: boolean; onOpenChange?: (open: boolean) => void }) {
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [hintOpen, setHintOpen] = useState(false);
   const setting = target ? week.targets.find(t => t.id === row.id) : undefined;
-  return <Popover>
-    <PopoverTrigger asChild>
-      <Button variant="ghost" size="sm" aria-label={`Source notes for ${row.label}, week of ${week.start}`} className="h-7 px-2 text-xs text-muted-foreground">{available(row) ? target ? "Target" : "Qualified" : "Unavailable"} · notes</Button>
-    </PopoverTrigger>
-    <PopoverContent aria-label={`${row.label} source notes`} className="max-h-80 w-80 max-w-full overflow-y-auto text-sm">
-      <p className="font-semibold">{row.label}</p>
-      <p className="my-2 text-xs text-muted-foreground">{week.start} – {week.end} · {row.unit}</p>
-      {setting ? <p className="mb-2">Effective {setting.effectiveFrom} · {setting.source}. Carried forward until changed.</p> : null}
-      <ul className="list-disc space-y-2 pl-4 text-muted-foreground">{row.notes.map((note, i) => <li key={i}>{note}</li>)}</ul>
-    </PopoverContent>
-  </Popover>;
+  const firstNote = row.notes[0] ?? "No additional source notes supplied.";
+  const preview = firstNote.length > 180 ? `${firstNote.slice(0, 177)}…` : firstNote;
+  return <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+    <span>{available(row) ? target ? "Target" : "Qualified" : "Unavailable"}</span>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip open={!notesOpen && hintOpen} onOpenChange={setHintOpen}><Popover open={notesOpen} onOpenChange={open => { setNotesOpen(open); onOpenChange?.(open); }}>
+        <TooltipTrigger asChild><PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label={`Source notes for ${row.label}, week of ${week.start}`} className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
+            <Info className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </PopoverTrigger></TooltipTrigger>
+        <TooltipContent className="max-w-xs whitespace-normal text-left leading-relaxed">{preview}<span className="mt-1 block text-xs text-muted-foreground">Select for full source notes.</span></TooltipContent>
+        <PopoverContent onEscapeKeyDown={event => { event.preventDefault(); event.stopPropagation(); setNotesOpen(false); onOpenChange?.(false); }} aria-label={`${row.label} source notes`} className="max-h-80 w-80 max-w-full overflow-y-auto text-sm">
+          <p className="font-semibold">{row.label}</p>
+          <p className="my-2 text-xs text-muted-foreground">{week.start} – {week.end} · {row.unit}</p>
+          {setting ? <p className="mb-2">Effective {setting.effectiveFrom} · {setting.source}. Carried forward until changed.</p> : null}
+          <ul className="list-disc space-y-2 pl-4 text-muted-foreground">{row.notes.map((note, i) => <li key={i}>{note}</li>)}</ul>
+        </PopoverContent>
+      </Popover></Tooltip>
+    </TooltipProvider>
+  </span>;
 }
 
 export function WeekSummary({ week }: { week: WeeklyReportWeek }) {
@@ -82,8 +96,8 @@ function comparison(week: WeeklyReportWeek, row: WeeklyReportRow, targetId: stri
   return { label: meets ? "Meets target" : difference ? "Below target" : "Above limit", variant: meets ? "success" : "conflict", difference } as const;
 }
 
-export function TargetComparison({ week }: { week: WeeklyReportWeek }) {
-  return <Section title="Effective weekly targets" description="Sales minima and recorded wastage rate maxima. Assessments remain source-qualified; incomplete daily values are not compared.">
+export function TargetComparison({ week, actions }: { week: WeeklyReportWeek; actions?: ReactNode }) {
+  return <Section title="Effective weekly targets" actions={actions} description="Sales minima and recorded wastage rate maxima. Assessments remain source-qualified; incomplete daily values are not compared.">
     <Table aria-label="Effective weekly targets">
       <TableHeader><TableRow><TableHead scope="col">Measure</TableHead><TableHead scope="col" className="text-right">Weekly value</TableHead><TableHead scope="col" className="text-right">Effective target</TableHead><TableHead scope="col">Assessment</TableHead><TableHead scope="col">Basis</TableHead></TableRow></TableHeader>
       <TableBody>{[
@@ -121,29 +135,4 @@ export function DailyDetail({ week }: { week: WeeklyReportWeek }) {
     </Table>
     <div className="flex flex-wrap gap-2">{rows.map(row => <span key={row.id} className="text-xs text-muted-foreground">{row.id === "total_wastage" ? "Wastage" : row.label}: <SourceNotes row={row} week={week} /></span>)}</div>
   </Section>;
-}
-
-export function FieldCatalogue({ week }: { week: WeeklyReportWeek }) {
-  return <section aria-label="All report fields" className="space-y-3">
-    <h2 className="font-semibold">All {week.rows.length} fields & source notes</h2>
-    <p className="text-sm text-muted-foreground">Payments are recorded tenders. Invoice purchases are not consumed cost. Theoretical CTB costs are estimates; actual inventory-based COGS is unavailable. Open a section for every weekly and daily value, unit and source note.</p>
-    {[...new Set(week.rows.map(row => row.section))].map(section => {
-      const rows = week.rows.filter(row => row.section === section);
-      return <details key={section} className="min-w-0 rounded-lg border p-4">
-        <summary className={disclosureClass}>{section} <span className="ml-2 text-xs font-normal tabular-nums text-muted-foreground">{rows.length} fields · {rows.filter(row => !available(row)).length} unavailable</span></summary>
-        <div className="mt-3 min-w-0">
-          <Table aria-label={`${section} report fields`}>
-            <TableHeader><TableRow><TableHead scope="col">Field</TableHead><TableHead scope="col">Unit</TableHead><TableHead scope="col" className="text-right">Weekly value</TableHead><TableHead scope="col">Status and basis</TableHead>{week.dates.map(d => <TableHead scope="col" className="text-right" key={d}>{formatDay(d)}</TableHead>)}</TableRow></TableHeader>
-            <TableBody>{rows.map(row => <TableRow key={row.id}>
-              <TableHead scope="row" className="font-medium text-foreground">{row.label}</TableHead>
-              <TableCell>{row.unit}</TableCell>
-              <TableCell className="text-right font-medium tabular-nums">{reportValue(row, row.total)}</TableCell>
-              <TableCell><SourceNotes row={row} week={week} target={week.targets.some(t => t.id === row.id)} /></TableCell>
-              {row.days.map((amount, i) => <TableCell className="text-right tabular-nums" key={i}>{reportValue(row, amount)}</TableCell>)}
-            </TableRow>)}</TableBody>
-          </Table>
-        </div>
-      </details>;
-    })}
-  </section>;
 }

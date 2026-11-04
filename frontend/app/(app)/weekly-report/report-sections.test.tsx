@@ -70,6 +70,6 @@ describe("weekly report presentation", () => {
     render(<WeekSummary week={full} />);
     expect(screen.getByText("$0.00")).toBeVisible();
     expect(screen.getByText("—")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Source notes for Average review rating, week of 2026-10-26" })).toHaveTextContent("Unavailable");
+    expect(screen.getByRole("button", { name: "Source notes for Average review rating, week of 2026-10-26" }).parentElement).toHaveTextContent("Unavailable");
   });
 });

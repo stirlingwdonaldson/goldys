@@ -65,3 +65,49 @@ Evidence files are retained locally and intentionally excluded from the focused 
   These structural findings were retained without suppression; the static quality
   gate is not claimed as passing. Ripwire could not index the runner's .mts file;
   TypeScript and the actual sandbox/model run provide its execution evidence.
+
+## Browser-feedback revision: deliberate report controls
+
+4 November 2026. Native disclosure triangles were removed from the weekly report.
+Small source explanations now use a circled information button with hover/focus
+hints and click/tap access to full notes. Qualifications remain visible beside the
+button. Target editing opens in a right-hand sheet from the target-table action.
+The full field catalogue, wastage reasons and stock counts use a report-detail
+sheet with section navigation, visible counts and unavailable states. Week, panel
+and selected section are URL-addressable; Back/Escape, reload and focus return are
+covered. No API, export, permission, catalogue or business-calculation changes.
+
+The requested [interface-design skill](https://github.com/Dammyjay93/interface-design)
+was installed globally at commit `2f9be3206855bcb2d1d0af262c8bae25cba6658d` after a
+clean Ripwire skill scan. Its SKILL.md/frontmatter and Codex agent metadata were
+checked; it is available to skill discovery on the next turn. Its guidance was read
+and applied now, subordinate to Goldy's approved DESIGN.md direction.
+
+Verification: typecheck, lint, 138 test files / 755 tests, and production build passed.
+The final weekly-report browser suite passed 6 tests, covering 1280px, the reported
+800px viewport and 390px; the retained-real-data case remains skipped. The separate
+static demo bundle also passed rendering, all 85 fields, hover/focus/click notes,
+target save, demo-labelled export and overflow checks at 800px. Source suites
+continue to cover denial, unavailable values and recovery. Final test/build/browser
+logs are retained in `.sandcastle/logs/controls-*.log`.
+
+Browser testing found and fixed a nested Escape bug: closing source notes must
+leave the report sheet open and return focus to its information button. The report
+sheet explicitly defers Escape to an open notes popover. Earlier attempts also
+exposed test timing/locator issues around Wastage versus Wastage reasons and waiting
+for URL-based tab selection before counting fields or reloading. A Chromium path
+typo and an interrupted check process were corrected before the final passing run.
+
+Ripwire still exits 2 for short-horizon churn in TargetsEditor and WeeklyReportContent,
+with a minor target-editor complexity increase and JSX caller false positives.
+The inventory panel was split along its two actual tab views to remove the introduced
+complexity regression. No static-warning suppression or unrelated cleanup was added.
+WeeklyReportContent's callable contract is unchanged. The static gate is not claimed
+as passing. Main data/permission/export contracts and design authorities are unchanged.
+
+Visual evidence: [detail entry points](weekly-ui-evidence/controls-main-800.png),
+[target editor](weekly-ui-evidence/controls-targets-800.png),
+[field browser](weekly-ui-evidence/controls-fields-800.png).
+The private demo uses the same components and browser-only fixtures. Production
+services and live-data validation remain outside this preview. Goldy's GitHub
+branch has not been pushed or merged.

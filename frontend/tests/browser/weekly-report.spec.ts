@@ -1,7 +1,7 @@
 import { demoWeeklyReport } from "../../lib/api/weekly-report-demo";
 import { test, expect } from "@playwright/test";
 
-for (const width of [1280, 390]) {
+for (const width of [1280, 800, 390]) {
   test(`weekly report and Excel download at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.addInitScript(() => localStorage.setItem("goldys-demo-mode", "true"));
@@ -26,25 +26,53 @@ for (const width of [1280, 390]) {
     await expect(summary.getByText("$90,000.00", { exact: true })).toBeVisible();
     await expect(targets.getByText("Below target", { exact: true })).toHaveCount(0);
     await expect(targets.getByText("Incomplete daily values", { exact: true })).toHaveCount(4);
-    await page.locator("summary").filter({ hasText: "Wastage reasons & stock counts" }).click();
-    await expect(page.getByRole("cell", { name: /^No reason recorded/ })).toBeVisible();
-    const catalogue = page.getByRole("region", { name: "All report fields" });
-    for (const disclosure of await catalogue.locator("summary").all()) await disclosure.click();
-    await expect(catalogue.getByRole("rowheader")).toHaveCount(85);
-    await expect(catalogue.getByText("Food COGS YTD %", { exact: true })).toBeVisible();
-    const notes = catalogue.getByRole("button", { name: "Source notes for Food COGS YTD %, week of 2026-10-19", exact: true });
+    await expect(page.locator("details")).toHaveCount(0);
+    await page.getByRole("button", { name: /Wastage reasons.*recorded lines/ }).click();
+    let detail = page.getByRole("dialog", { name: "Report detail", exact: true });
+    await expect(detail.getByRole("cell", { name: /^No reason recorded/ })).toBeVisible();
+    await detail.getByRole("tab", { name: /^Stock counts/ }).click();
+    await expect(detail.getByRole("heading", { name: "Stock counts", exact: true })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(detail).not.toBeVisible();
+    const browse = page.getByRole("button", { name: /All report fields.*weekly and daily/ });
+    await browse.click();
+    detail = page.getByRole("dialog", { name: "Report detail", exact: true });
+    let fieldCount = 0;
+    for (const section of ["Sales", "Cash and takings", "Stock variances", "Wastage", "Cost of goods", "Reviews"]) {
+      await detail.getByRole("tab", { name: new RegExp(`^${section} [0-9]+$`) }).click();
+      const fields = detail.getByRole("table", { name: `${section} report fields`, exact: true });
+      await expect(fields).toBeVisible();
+      fieldCount += await fields.getByRole("rowheader").count();
+    }
+    expect(fieldCount).toBe(85);
+    await detail.getByRole("tab", { name: /^Cost of goods/ }).click();
+    await expect.poll(() => new URL(page.url()).searchParams.get("reportTab")).toBe("Cost of goods");
+    await page.reload();
+    await expect(detail.getByText("Food COGS YTD %", { exact: true })).toBeVisible();
+    const notes = detail.getByRole("button", { name: "Source notes for Food COGS YTD %, week of 2026-10-19", exact: true });
+    await notes.hover();
+    await expect(page.getByRole("tooltip")).toBeVisible();
     await notes.focus();
     await notes.press("Enter");
-    await expect(page.getByRole("dialog")).toContainText("verified costs, classification and cumulative coverage");
-    expect(await page.getByRole("dialog").evaluate(el => el.getBoundingClientRect().right <= innerWidth)).toBe(true);
+    const source = page.getByRole("dialog", { name: "Food COGS YTD % source notes", exact: true });
+    await expect(source).toContainText("verified costs, classification and cumulative coverage");
+    expect(await source.evaluate(el => el.getBoundingClientRect().right <= innerWidth)).toBe(true);
     await page.keyboard.press("Escape");
     await expect(notes).toBeFocused();
-    await expect(page.getByRole("heading", { name: "Stock counts", exact: true })).toBeVisible();
-    await page.getByText("Edit weekly targets", { exact: true }).click();
-    await page.getByLabel("Beverage wastage target % (%)", { exact: true }).fill("0.5");
-    await page.getByRole("button", { name: "Save targets", exact: true }).click();
-    await expect(page.getByText("Targets saved.", { exact: true })).toBeVisible();
-    await expect(page.getByLabel("Beverage wastage target % (%)", { exact: true })).toHaveValue("0.5");
+    await page.screenshot({ path: test.info().outputPath("weekly-report-fields.png"), fullPage: false });
+    await detail.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(detail).not.toBeVisible();
+    await page.getByRole("button", { name: "Edit weekly targets", exact: true }).click();
+    const editor = page.getByRole("dialog", { name: "Weekly targets", exact: true });
+    await expect(page).toHaveURL(/reportPanel=targets/);
+    await editor.getByLabel("Beverage wastage target % (%)", { exact: true }).fill("0.5");
+    await editor.getByRole("button", { name: "Save targets", exact: true }).click();
+    await expect(editor.getByText("Targets saved.", { exact: true })).toBeVisible();
+    await expect(editor.getByLabel("Beverage wastage target % (%)", { exact: true })).toHaveValue("0.5");
+    await page.screenshot({ path: test.info().outputPath("weekly-report-targets.png"), fullPage: false });
+    await page.goBack();
+    await expect(editor).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Edit weekly targets", exact: true })).toBeFocused();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const pending = page.waitForEvent("download");
     await page.getByRole("button", { name: "Download Excel", exact: true }).click();
@@ -105,42 +133,42 @@ test("retained real completed week matches API snapshot and Excel download", asy
   await expect(
     page.getByRole("heading", { name: "2026-10-26 – 2026-11-01", exact: true }),
   ).toBeVisible();
-  for (const disclosure of await page.getByRole("region", { name: "All report fields" }).locator("summary").all()) await disclosure.click();
+  await page.getByRole("button", { name: /All report fields.*weekly and daily/ }).click();
+  const detail = page.getByRole("dialog", { name: "Report detail", exact: true });
+  async function reportRow(label: string) {
+    const section = snapshot.weeks[0].rows.find((row: { label: string }) => row.label.toLowerCase() === label.toLowerCase())?.section;
+    if (!section) throw new Error(`No report section for ${label}`);
+    await detail.getByRole("tab", { name: new RegExp(`^${section} [0-9]+$`) }).click();
+    return detail.getByRole("rowheader", { name: label, exact: true }).locator("..");
+  }
   await expect(
-    page
-      .getByRole("rowheader", { name: "Known product sales ex GST", exact: true })
-      .locator(".."),
+    (await reportRow("Known product sales ex GST")),
   ).toContainText("$141,527.41");
   await expect(
-    page
-      .getByRole("rowheader", { name: "Food sales ex GST", exact: true })
-      .locator(".."),
+    (await reportRow("Food sales ex GST")),
   ).toContainText("$48,442.78");
   await expect(
-    page
-      .getByRole("rowheader", { name: "Beverage recorded wastage", exact: true })
-      .locator(".."),
+    (await reportRow("Beverage recorded wastage")),
   ).toContainText("$535.86");
   await expect(
-    page
-      .getByRole("rowheader", { name: "Unclassified recorded wastage", exact: true })
-      .locator(".."),
+    (await reportRow("Unclassified recorded wastage")),
   ).toContainText("$0.00");
   for (const [label, value] of [
     ["food sales versus target", "$2,842.78"],
     ["Beverage recorded wastage / matching sales", "0.58%"],
     ["Food recorded wastage / matching sales", "0.05%"],
   ]) {
-    await expect(page.getByRole("rowheader", { name: label, exact: true }).locator("..")).toContainText(value);
+    await expect((await reportRow(label))).toContainText(value);
   }
   for (const [label, value] of [
     ["Food known CTB theoretical cost subtotal", "$14,143.34"],
     ["Beverage known CTB theoretical cost subtotal", "$4,771.40"],
     ["Total known CTB theoretical cost subtotal", "$18,914.74"],
   ]) {
-    await expect(page.getByRole("rowheader", { name: label, exact: true }).locator("..")).toContainText(value);
+    await expect((await reportRow(label))).toContainText(value);
   }
-  await expect(page.getByRole("rowheader", { name: "Food theoretical COGS (CTB estimate)", exact: true }).locator("..")).toContainText("Unavailable");
+  await expect((await reportRow("Food theoretical COGS (CTB estimate)"))).toContainText("Unavailable");
+  await detail.getByRole("button", { name: "Close", exact: true }).click();
   const pending = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Download Excel", exact: true })
@@ -218,9 +246,11 @@ test("missing values remain explicit and URL week controls still select the repo
   await expect(summary.getByText("—", { exact: true })).toHaveCount(3);
   await expect(summary.getByText("$0.00", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("table", { name: "Effective weekly targets", exact: true }).getByText("Actual unavailable", { exact: true })).toHaveCount(6);
-  await page.locator("summary").filter({ hasText: "Wastage reasons & stock counts" }).click();
+  await page.getByRole("button", { name: /Wastage reasons.*recorded lines/ }).click();
   await expect(page.getByText("No wastage observations received for this week. This does not establish zero wastage.", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: /^Stock counts/ }).click();
   await expect(page.getByText("No stock-count observations received for this week.", { exact: true })).toBeVisible();
+  await page.getByRole("dialog", { name: "Report detail", exact: true }).getByRole("button", { name: "Close", exact: true }).click();
   await page.screenshot({ path: test.info().outputPath("weekly-report-missing.png"), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByLabel("First week (Monday)", { exact: true }).fill("2026-10-19");

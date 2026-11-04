@@ -1,8 +1,8 @@
 "use client";
 
 import { TargetsEditor } from "./targets-editor";
-import { InventoryPanels } from "./inventory-panels";
-import { DailyDetail, FieldCatalogue, TargetComparison, WeekSummary, WeeklyHistory, disclosureClass } from "./report-sections";
+import { FieldCatalogue } from "./report-details";
+import { DailyDetail, TargetComparison, WeekSummary, WeeklyHistory } from "./report-sections";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -30,7 +30,7 @@ function WeeklyReportContent() {
   const router = useRouter();
   const from = params.get("from") || undefined;
   const count = Number(params.get("weeks") ?? 4);
-  const [selected, setSelected] = useState("");
+  const selected = params.get("week") ?? "";
   const [exportError, setExportError] = useState<string | null>(null);
   const query = useQuery({ queryKey: ["weeklyReport", from, count, demo], queryFn: ({ signal }) => api.getWeeklyReport(from, count, { signal }) });
   const update = (key: string, next: string) => {
@@ -77,18 +77,13 @@ function WeeklyReportContent() {
         <Badge variant="missing">{week.rows.filter(row => row.status === "UNAVAILABLE" || row.total === null).length} / {week.rows.length} fields unavailable</Badge>
         <div className="min-w-0 flex-1 space-y-1">
           <p className="font-medium">Values remain source-qualified</p>
-          <p className="text-muted-foreground">Missing values are unavailable, not zero. Known totals can be incomplete. Wastage includes missing reasons. Physical cash, stock variances and actual COGS need verified inputs. All qualifications remain in the field notes below.</p>
+          <p className="text-muted-foreground">Missing values are unavailable, not zero. Known totals can be incomplete. Wastage includes missing reasons. Physical cash, stock variances and actual COGS need verified inputs. Use the information icons for source notes, or browse the full report detail below.</p>
         </div>
       </div>
       {exportError ? <p role="alert" className="text-sm text-destructive">{exportError}</p> : null}
-      <WeeklyHistory report={report} week={week} onSelect={setSelected} />
-      <TargetComparison week={week} />
-      <TargetsEditor key={`${demo}:${week.start}`} week={week} onSaved={() => query.refetch()} />
+      <WeeklyHistory report={report} week={week} onSelect={start => update("week", start)} />
+      <TargetComparison week={week} actions={<TargetsEditor key={`${demo}:${week.start}`} week={week} onSaved={() => query.refetch()} />} />
       <DailyDetail week={week} />
-      <details className="min-w-0 rounded-lg border p-4">
-        <summary className={disclosureClass}>Wastage reasons & stock counts <span className="mt-1 block text-xs font-normal tabular-nums text-muted-foreground sm:ml-2 sm:mt-0 sm:inline">{week.wastage.lines} wastage lines · {week.stockCounts.length} {week.stockCounts.length === 1 ? "stocktake" : "stocktakes"}</span></summary>
-        <div className="mt-4 space-y-6"><InventoryPanels week={week} /></div>
-      </details>
       <FieldCatalogue key={week.start} week={week} />
     </> : null}
   </div>;
