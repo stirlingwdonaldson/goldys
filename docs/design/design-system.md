@@ -167,7 +167,7 @@ from earlier drafts still hold:
   (`pageSize={false}` when the server pages). Numeric columns set
   `meta: { align: "right" }`. Headers and cells never wrap; all tables use the
   shared `Table` scroll container. Keep row content inline and put long detail
-  in a disclosure outside the row. Don't hand-roll `<table>` markup for new lists.
+  in a right-hand detail sheet outside the row (see below). Don't hand-roll `<table>` markup for new lists.
 - **Lineage and flow — n8n-style node graphs.** When the point is *how data
   got here* (pipeline stages, a figure's provenance), draw it as a
   left-to-right node graph with `components/flow/FlowCanvas` (`@xyflow/react`)
@@ -197,6 +197,60 @@ from earlier drafts still hold:
   `aria-hidden`; the same nodes are always in the DOM as `NetworkList`, which is
   the only view on a phone. Cap what the backend sends (top-N, per-node edge
   limits): a graph everyone can read beats a complete hairball.
+
+### Information hints, actions and detail panels
+
+Apply these patterns across dashboards, reporting and admin screens. Keep the
+manager's current task and any material data qualification visible; choose the
+control by what the person needs to do, rather than stacking collapsible boxes.
+
+| Need | Pattern |
+|---|---|
+| Brief definition or source explanation | Circled `Info` icon beside the label or value; `Tooltip` on hover and keyboard focus |
+| Longer supporting notes about one value | The same information button opens a `Popover` on click, Enter/Space or tap |
+| Edit settings or targets | Explicit verb-labelled `Button` beside the relevant section heading, opening a right-hand `Sheet` with a labelled form and save feedback |
+| Browse many fields, records or source details | Named detail action with useful counts, opening a right-hand `Sheet` with section navigation and the selected section's content |
+
+Use existing shadcn `Button`, `Tooltip`, `Popover` and `Sheet` primitives and
+semantic tokens. Native triangle disclosures and stacks of accordion cards are
+not the dashboard/admin pattern for explanations, editing or field catalogues.
+Tree expansion may retain its own hierarchy controls.
+
+- **Hints:** keep the preview brief; full notes remain reachable on touch and
+  keyboard. The icon button has a contextual accessible name (e.g. "Source notes
+  for Food sales") and visible focus. The weekly-report reference uses a 16px
+  `Info` glyph in a 32px round ghost button and a 200ms hint delay. Preserve
+  usable target spacing. Suppress the tooltip while the full popover is open.
+- **Trust:** status text, units, missing/denied states and consequential caveats
+  remain visible alongside figures. Hints provide supporting explanation rather
+  than concealing whether a figure is usable. Missing values stay missing.
+- **Actions:** name the task ("Edit weekly targets", "All report fields",
+  "Wastage reasons"). Keep edit actions distinct from explanatory icons. Retain
+  permission checks, validation, pending/error states and save feedback.
+- **Large detail:** show category names and relevant total/unavailable counts at
+  the entry point or in navigation. Present one selected section at a time,
+  retaining access to every field, unit and source note. Use a wide sheet for
+  dense data and a narrower one for forms; adapt navigation at narrow widths and
+  contain table scrolling within the panel.
+- **Navigation and focus:** store the panel, selected section and current record
+  or reporting period in the URL. Preserve existing filters on open/close and
+  reload. Back closes a panel opened from the page; closing a direct panel link
+  removes panel state while retaining scope. Escape closes the topmost overlay
+  first, so dismissing a notes popover leaves its sheet open. Return focus to the
+  invoking control, including after reload via a stable fallback trigger.
+
+Implementation references: weekly-report
+[`SourceNotes`](../../frontend/app/(app)/weekly-report/report-sections.tsx),
+[`FieldCatalogue`](../../frontend/app/(app)/weekly-report/report-details.tsx),
+[`TargetsEditor`](../../frontend/app/(app)/weekly-report/targets-editor.tsx) and
+[`useReportPanel`](../../frontend/app/(app)/weekly-report/use-report-panel.ts).
+These remain page-local examples; extract shared behavior when a second screen
+needs it rather than copying the implementation or inventing an abstraction early.
+
+For adoption, verify hover/focus/tap access, nested Escape, focus return, Back,
+reload and shared URLs; check desktop and narrow widths, permission denial and
+missing data. Document-only pattern changes do not imply other screens have been
+migrated.
 
 ### Relational query builder
 
