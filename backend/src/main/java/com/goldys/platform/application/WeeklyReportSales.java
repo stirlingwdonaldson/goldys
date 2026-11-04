@@ -11,8 +11,9 @@ import java.util.function.Function;
 final class WeeklyReportSales {
   private WeeklyReportSales() {}
 
-  static List<WeeklyReport.Row> fill(
-      List<WeeklyReport.Row> original, List<LocalDate> dates, List<Sale> sales) {
+  /** Calculates complete sales rows without requiring the report's placeholder rows or layout. */
+  static List<WeeklyReport.Row> calculate(
+      List<LocalDate> dates, List<Sale> sales, Map<LocalDate, BigDecimal> headlineNetSales) {
     List<ClassifiedSalesTotals> daily =
         dates.stream()
             .map(
@@ -46,15 +47,24 @@ final class WeeklyReportSales {
       if (daily.get(i).food() == null) withheld.add(dates.get(i));
     notes.add("Food/beverage unavailable dates: " + withheld);
     List<WeeklyReport.Row> rows = new ArrayList<>();
-    for (var row : original) {
-      if (row.id().equals("food_sales"))
-        rows.add(
-            row(row.id(), row.label(), "AUD", daily, ClassifiedSalesTotals::food, null, notes));
-      else if (row.id().equals("beverage_sales"))
-        rows.add(
-            row(row.id(), row.label(), "AUD", daily, ClassifiedSalesTotals::beverage, null, notes));
-      else rows.add(row);
-    }
+    rows.add(
+        row(
+            "food_sales",
+            "Food sales ex GST",
+            "AUD",
+            daily,
+            ClassifiedSalesTotals::food,
+            null,
+            notes));
+    rows.add(
+        row(
+            "beverage_sales",
+            "Beverage sales ex GST",
+            "AUD",
+            daily,
+            ClassifiedSalesTotals::beverage,
+            null,
+            notes));
     rows.add(
         row(
             "known_food_sales",
@@ -136,18 +146,14 @@ final class WeeklyReportSales {
             s -> s.lines() == 0 ? null : BigDecimal.valueOf(s.unresolved()),
             null,
             notes));
-    var headline =
-        original.stream().filter(r -> r.id().equals("net_sales")).findFirst().orElseThrow();
     List<BigDecimal> residuals = new ArrayList<>();
     for (int i = 0; i < dates.size(); i++) {
       var d = daily.get(i);
+      var headline = headlineNetSales.get(dates.get(i));
       residuals.add(
-          d.net() == null
-                  || d.missingTax() > 0
-                  || d.unresolved() > 0
-                  || headline.days().get(i) == null
+          d.net() == null || d.missingTax() > 0 || d.unresolved() > 0 || headline == null
               ? null
-              : headline.days().get(i).subtract(d.net()));
+              : headline.subtract(d.net()));
     }
     rows.add(
         new WeeklyReport.Row(
@@ -159,7 +165,7 @@ final class WeeklyReportSales {
             residuals.stream().filter(Objects::nonNull).reduce(BigDecimal::add).orElse(null),
             residuals.stream().anyMatch(Objects::nonNull) ? "QUALIFIED" : "UNAVAILABLE",
             List.copyOf(notes)));
-    return rows;
+    return List.copyOf(rows);
   }
 
   private static WeeklyReport.Row row(

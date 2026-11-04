@@ -269,14 +269,15 @@ public class WeeklyReportService {
               .filter(w -> !w.date().isBefore(start) && w.date().isBefore(start.plusDays(7)))
               .toList();
       rows =
-          new ArrayList<>(
-              WeeklyReportSales.fill(
-                  rows,
+          mergeRows(
+              rows,
+              WeeklyReportSales.calculate(
                   dates,
                   sales.stream()
                       .filter(
                           s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
-                      .toList()));
+                      .toList(),
+                  points(days.get(MetricId.SALES_NET))));
       rows = new ArrayList<>(WeeklyReportInventory.fill(rows, dates, weekWaste));
       rows =
           new ArrayList<>(
@@ -307,6 +308,20 @@ public class WeeklyReportService {
 
   private TimeSeriesResult query(MetricId metric, TimeRange range, TimeGrain grain) {
     return (TimeSeriesResult) metrics.query(new MetricQuery(metric, range, grain, Set.of(), null));
+  }
+
+  private static List<WeeklyReport.Row> mergeRows(
+      List<WeeklyReport.Row> layout, List<WeeklyReport.Row> calculated) {
+    Map<String, WeeklyReport.Row> remaining = new LinkedHashMap<>();
+    for (var row : calculated) remaining.put(row.id(), row);
+    List<WeeklyReport.Row> rows = new ArrayList<>();
+    // Keep established field positions; additional calculated rows retain their calculation order.
+    for (var row : layout) {
+      var replacement = remaining.remove(row.id());
+      rows.add(replacement == null ? row : replacement);
+    }
+    rows.addAll(remaining.values());
+    return rows;
   }
 
   private WeeklyReport.Row row(
