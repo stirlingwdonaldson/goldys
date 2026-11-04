@@ -61,3 +61,6 @@ References: [agent providers](https://github.com/mattpocock/sandcastle/blob/main
 Codex 0.162.1 no longer accepts `-a` after `exec`. The runner adapts upstream's
 `-a on-request` to `-c 'approval_policy="on-request"'`, retaining the auto-review
 configuration and Bubblewrap. Assertions fail closed if upstream's command changes.
+
+The completed trial and observed checks are recorded in [weekly-ui-result.md](weekly-ui-result.md).
+Screenshots and downloaded workbooks are local ignored evidence, linked from that result.

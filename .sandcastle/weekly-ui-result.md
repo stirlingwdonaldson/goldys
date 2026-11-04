@@ -41,3 +41,27 @@ Evidence files are retained locally and intentionally excluded from the focused 
 - Backend tests, other browser suites, production services, deployment and external publication were outside this bounded frontend trial. No push, PR/issue mutation, merge or external communication.
 - The required read-only Git preparation fetched successfully; `gh pr list --state all -L 10` could not run because GitHub CLI is unauthenticated. No login or credential inspection was attempted.
 - Seven dates with values establish only the presentation guard; they do not certify source capture, accounting basis or operational accuracy. Recorded wastage costs and reviews remain qualified; actual inventory-based COGS remains unavailable. Narrow detail tables require horizontal scrolling inside their containers. The UI conservatively withholds incomplete assessments; the unchanged Excel scorecard and full catalogue retain the API’s supplied qualified values/differences.
+
+## Host review and setup verification
+
+- Sandcastle 0.14.0 ran Codex with a fresh ChatGPT subscription login and Bubblewrap.
+  No API key or host login was copied. A typed, assert-checked adapter preserves
+  automatic approval review while translating the removed Codex exec `-a` option.
+- Tooling typecheck, frozen install, sandbox/toolchain preflight and Git ignore
+  checks passed. Host-side read-only `gh issue view 249` and PR-list access passed;
+  the sandbox's missing GitHub login is intentional. Optional issue context is
+  fetched on the host, without forwarding its credential.
+- The host inspected before/after desktop and narrow screenshots and reviewed the
+  source. No changed API, financial calculation, permission or export-writer code
+  was found. React review found no added fetches, dependencies or charting code.
+- The review branch was rebased onto main after PR #252 landed. That intervening
+  change affects backend calculations/tests only; the final frontend is identical
+  to the frontend tested by the trial. No backend verification is claimed here.
+- Ripwire quality-delta on the trial working tree exited 2: short-horizon churn and
+  render verbosity increased in WeeklyReportContent; the new comparison guard has
+  complexity 16 against a threshold of 15. It also reported component dead-code
+  findings despite JSX use. Manual review and the rendering/browser tests confirm
+  these callers. The guard's early exits retain explicit basis/completeness checks.
+  These structural findings were retained without suppression; the static quality
+  gate is not claimed as passing. Ripwire could not index the runner's .mts file;
+  TypeScript and the actual sandbox/model run provide its execution evidence.
