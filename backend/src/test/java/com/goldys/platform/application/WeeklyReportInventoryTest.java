@@ -7,8 +7,11 @@ import com.goldys.platform.semantic.WeeklyInventoryQuery.Waste;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class WeeklyReportInventoryTest {
   @Test
@@ -131,6 +134,57 @@ class WeeklyReportInventoryTest {
     assertThat(row(rows, "food_wastage_percent").days().get(1)).isEqualByComparingTo("0.1");
     assertThat(row(rows, "food_wastage_percent").total()).isNull();
     assertThat(row(rows, "total_wastage_percent").total()).isNull();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"FOOD", "BEVERAGE"})
+  void zeroSalesDayWithholdsDailyWastageRateButRetainsSupportedWeeklyRate(String nature) {
+    var rows = wastageWithFirstDaySales(nature, BigDecimal.ZERO);
+    String prefix = nature.toLowerCase(Locale.ROOT);
+    var rate = row(rows, prefix + "_wastage_percent");
+    assertThat(rate.days()).hasSize(7);
+    assertThat(rate.days().getFirst()).isNull();
+    assertThat(rate.days().subList(1, 7))
+        .allSatisfy(value -> assertThat(value).isEqualByComparingTo("0.1"));
+    // All seven waste values count; the zero-sales date contributes zero to the denominator.
+    assertThat(rate.total()).isEqualByComparingTo("0.11666667");
+    assertThat(rate.status()).isEqualTo("QUALIFIED");
+    assertThat(row(rows, prefix + "_wastage").days()).containsOnly(BigDecimal.ONE);
+    assertThat(row(rows, prefix + "_wastage").total()).isEqualByComparingTo("7");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"FOOD", "BEVERAGE"})
+  void negativeSalesDayWithholdsWeeklyWastageRateDespitePositiveWeeklySales(String nature) {
+    var rows = wastageWithFirstDaySales(nature, BigDecimal.TEN.negate());
+    String prefix = nature.toLowerCase(Locale.ROOT);
+    var rate = row(rows, prefix + "_wastage_percent");
+    assertThat(rate.days()).hasSize(7);
+    assertThat(rate.days().getFirst()).isNull();
+    assertThat(rate.days().subList(1, 7))
+        .allSatisfy(value -> assertThat(value).isEqualByComparingTo("0.1"));
+    // Weekly sales are -10 + 6 * 10 = 50; a positive sum cannot override a negative date.
+    assertThat(rate.total()).isNull();
+    assertThat(rate.status()).isEqualTo("UNAVAILABLE");
+    assertThat(row(rows, prefix + "_wastage").days()).containsOnly(BigDecimal.ONE);
+    assertThat(row(rows, prefix + "_wastage").total()).isEqualByComparingTo("7");
+  }
+
+  private static List<WeeklyReport.Row> wastageWithFirstDaySales(
+      String nature, BigDecimal firstDaySales) {
+    var start = LocalDate.parse("2026-10-26");
+    var dates = start.datesUntil(start.plusDays(7)).toList();
+    var sales =
+        dates.stream()
+            .map(
+                date -> {
+                  var amount = date.equals(start) ? firstDaySales : BigDecimal.TEN;
+                  return new Sale(date, nature, amount, amount, "CTB", nature);
+                })
+            .toList();
+    var waste =
+        dates.stream().map(date -> new Waste(date, "KO", 1, 1, BigDecimal.ONE, nature)).toList();
+    return WeeklyReportInventory.calculate(dates, waste, sales, Map.of(), null);
   }
 
   private static WeeklyReport.Row row(List<WeeklyReport.Row> rows, String id) {
