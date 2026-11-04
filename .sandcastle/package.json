@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "@ai-hero/sandcastle": "0.14.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.4",
+    "typescript": "7.0.2"
+  },
+  "name": "goldys-sandcastle-trial",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "preflight": "bun main.mts --check",
+    "login": "bun main.mts --login",
+    "weekly-ui": "bun main.mts"
+  }
+}
