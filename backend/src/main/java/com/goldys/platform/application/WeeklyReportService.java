@@ -286,7 +286,11 @@ public class WeeklyReportService {
                   points(days.get(MetricId.SALES_NET)),
                   points(totals.get(MetricId.SALES_NET)).get(start)));
       rows = mergeRows(rows, WeeklyReportCogs.calculate(dates, weekSales, costsExcludeGst));
-      applyTargets(rows, weekTargets);
+      applyTargets(
+          rows,
+          weekTargets,
+          WeeklyReportTargetComparisons.calculate(
+              dates, weekSales, points(totals.get(MetricId.SALES_NET)).get(start), weekTargets));
       weeks.add(
           new WeeklyReport.Week(
               start,
@@ -371,7 +375,9 @@ public class WeeklyReportService {
   }
 
   private static void applyTargets(
-      List<WeeklyReport.Row> rows, List<WeeklyReportTargets.Target> targets) {
+      List<WeeklyReport.Row> rows,
+      List<WeeklyReportTargets.Target> targets,
+      List<WeeklyReportTargetComparisons.Comparison> comparisons) {
     Map<String, WeeklyReportTargets.Target> byId = new HashMap<>();
     for (var target : targets) byId.put(target.id(), target);
     for (int i = 0; i < rows.size(); i++) {
@@ -395,25 +401,20 @@ public class WeeklyReportService {
                         + target.source()
                         + ". Carried forward until changed; weekly target, not a daily allocation.")));
     }
-    for (String prefix : List.of("sales", "food", "beverage")) {
+    for (var comparison : comparisons) {
+      String prefix = comparison.prefix();
       String actualId = prefix.equals("sales") ? "net_sales" : prefix + "_sales";
-      String targetId = prefix.equals("sales") ? "sales_target" : prefix + "_target";
       var sales = rows.stream().filter(r -> r.id().equals(actualId)).findFirst().orElseThrow();
-      var target = byId.get(targetId);
-      if (target == null || sales.total() == null) continue;
-      BigDecimal difference = sales.total().subtract(target.value());
       for (int i = 0; i < rows.size(); i++) {
         var row = rows.get(i);
         if (!row.id().equals(prefix + "_difference")
             && !row.id().equals(prefix + "_difference_percent")) continue;
         BigDecimal value =
-            row.id().endsWith("_percent")
-                ? WeeklyReportInventory.ratio(difference, target.value())
-                : difference;
+            row.id().endsWith("_percent") ? comparison.percent() : comparison.difference();
         List<String> notes = new ArrayList<>(sales.notes());
         notes.add(
             "Actual minus effective weekly target "
-                + target.value()
+                + comparison.target()
                 + "; partial actuals produce a partial comparison.");
         rows.set(
             i,
