@@ -17,9 +17,14 @@ introduced.
 week and field notes. It exports the exact authorised browser snapshot, including
 generation time, units, missing cells and qualifications. Refresh before downloading
 to include subsequent ingestion. A downloaded workbook is a snapshot, not a live
-Excel connection or a scheduled email delivery. Demo files are explicitly labelled. Tabs use gold titles, charcoal headers, alternating
-row shading, wrapped notes, column filters and frozen headings/labels. Weekly values
-are highlighted in gold; numeric and percentage cells remain usable as numbers.
+Excel connection or a scheduled email delivery. Demo files are explicitly labelled. The summary stacks separate section tables with metrics down the page and at most
+four week columns per table. Dated tabs use separate sales, cash, stock variance,
+wastage, cost and review tables with Monday–Sunday columns and highlighted weekly
+values, following the pub workbook's sectional layout. Full source qualifications
+remain on Field notes, with statuses beside weekly values. Gold section banners,
+charcoal headers, alternating rows and frozen headings/labels aid scanning; the
+detail tabs retain filters. Numeric and percentage cells remain usable as numbers.
+The reference workbook supplies layout only; its formulas and manual forms are not copied.
 
 The dashboard and workbook carry the same 85 fields. The spreadsheet's summary
 fields are covered: food/beverage/total sales and targets, stock-variance categories,
