@@ -1,0 +1,81 @@
+{
+  "source": "Existing untracked requirements bundle; copied unchanged for review, not adopted wholesale.",
+  "files": [
+    {
+      "path": "2026-10-15/PROJECT_CHARTER.md",
+      "sha256": "47bbc27078b6acd78085fca7cf4eb6e49e63295073c6de2afb332fd91fb0a93b"
+    },
+    {
+      "path": "2026-10-15/deliverables/DOMAIN-MODEL.md",
+      "sha256": "ad7d7eec67616554730e96fc3727dbf682bdd0673581cfdce7e02ffbe81cf910"
+    },
+    {
+      "path": "2026-10-15/deliverables/IMPLEMENTATION-GAP-ANALYSIS.md",
+      "sha256": "9d1c9e4bff401fde5f5df0e1241e8c290a8c3af7f11073ef1b43818b3f1dfdbf"
+    },
+    {
+      "path": "2026-10-15/deliverables/OPEN-DECISIONS.md",
+      "sha256": "8b4600892845d2e3a273222dc0b49d79b410b41142b21a92dafb4d62c8e2a062"
+    },
+    {
+      "path": "2026-10-15/deliverables/REQUIREMENTS-TRACEABILITY.md",
+      "sha256": "4475b5a929c0e97bc5a5abbfd77b4c134f4643d7aa96dbf6e66f733bf88ff4fe"
+    },
+    {
+      "path": "2026-10-15/deliverables/REVISION-LOG.md",
+      "sha256": "59e5c88e1a2a812d7fd3e02ddb6e8e17976bebf144b5e448c7f5b336838c672e"
+    },
+    {
+      "path": "2026-10-15/deliverables/ROLE-KPI-MATRIX.md",
+      "sha256": "c1d498ca4803f9272d2d2ade50ef8c949e23c157c611bbcf427b59114d991b43"
+    },
+    {
+      "path": "2026-10-15/deliverables/SRS-VERIFICATION-FIXTURES.md",
+      "sha256": "f5ff14217a5eae3aea5e2fb5989d1fc9eb97397b833fa5a0666785a119f029d5"
+    },
+    {
+      "path": "2026-10-15/deliverables/SRS.md",
+      "sha256": "49a7234e5aa90bf0163632516fe9e098fd9d907a95025fecf840e021ae4bd2c4"
+    },
+    {
+      "path": "2026-10-15/deliverables/UX-INFORMATION-ARCHITECTURE.md",
+      "sha256": "c30b21be39beb0594d0e46bb50e6e7879362e65c07e3bdda7e5e4944a5f49952"
+    },
+    {
+      "path": "2026-10-15/deliverables/briefs/brief-goldys-requirements-2026-10-14/addendum.md",
+      "sha256": "8cdb6fa0a09c962a4f4876a7a5d2418eedfcd6354688b2b15d0a6dfe003de927"
+    },
+    {
+      "path": "2026-10-15/deliverables/briefs/brief-goldys-requirements-2026-10-14/brief.md",
+      "sha256": "a1c7affd4fb79831034c1b829e78b085fbd9b0151f12131d3b59ad7829ed6165"
+    },
+    {
+      "path": "2026-10-15/deliverables/prds/prd-goldys-requirements-2026-10-14/addendum.md",
+      "sha256": "783d5ad7ccd13bb0274695985c47925e1d76e2b2fda157b43b920ac3bc030b21"
+    },
+    {
+      "path": "2026-10-15/deliverables/prds/prd-goldys-requirements-2026-10-14/prd.md",
+      "sha256": "3350d9107b5e82aeb7dd76a8fefb5fc9a1bffc231e31d63b2b388ed96bf31465"
+    },
+    {
+      "path": "2026-10-15/deliverables/research/domain-australian-pub-operational-information-m-2026-10-14/research.md",
+      "sha256": "593f3f14329f4b38d3e7e1b2c2121225832b2e8430b3a4617cf2c96e4c3f4c8e"
+    },
+    {
+      "path": "2026-10-15/deliverables/ux-designs/ux-goldys-requirements-2026-10-14/DESIGN.md",
+      "sha256": "6b02db0f49d40ce475dbb651bf65bd99a64b61d342885ac4e73d32b48d2ae740"
+    },
+    {
+      "path": "2026-10-15/deliverables/ux-designs/ux-goldys-requirements-2026-10-14/EXPERIENCE.md",
+      "sha256": "a1c92851f9280fe9670bd81ddfdbea4bf9a90b2b1eee83ce5a7cf350b4009e3f"
+    },
+    {
+      "path": "2026-10-15/research/business-capability-map.md",
+      "sha256": "dc330146e44ae11e8e1ee94883d8dc5d5b9c71a79968717b229d343e6218e0c7"
+    },
+    {
+      "path": "2026-10-15/research/business-domain-model.md",
+      "sha256": "9c9921154f639134917b1c4595a5bdedb1592fab320df6e4e972597330b44fcf"
+    }
+  ]
+}

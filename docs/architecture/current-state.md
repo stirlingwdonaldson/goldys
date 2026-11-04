@@ -43,6 +43,9 @@ semantic layer.
 | `connectors` | Vendor adapters behind the `SourceConnector` port | `canonical` (ingest), `ingestion` |
 | `auth` | Identity, roles, table-driven permissions | (JPA) |
 | `widget` | Versioned widget spec records (the only thing the frontend renders) | (nothing in-platform) |
+| `query` | Bounded analytical registry/compiler/executor; independent read-only role | `semantic`, `auth` (see enforced query rules) |
+| `classification` | Product/review classification and curation | Canonical feature extraction, semantic values and auth; see architecture tests |
+| `forecasting` | Persisted forecasting runs and inference client | Semantic catalogue and auth; application service is the bridge |
 | `config`, `metrics` | Security, request filters, Micrometer metric names | — |
 
 ## Application services
@@ -97,9 +100,7 @@ One authorization decision per use case, deliberately placed:
 Resources in use: `reconciliation.sales`, `reconciliation.status`, `connectors`,
 `reservations.metrics`, `labour.hours`, `labour.cost`, `labour.wages`, `inventory.cost`,
 `inventory.stock`, `conversational.chat`, `conversational.threads`, `dashboards`, `users`.
-Each metric in the catalogue names its required resource (`docs/metrics/catalog.md`). All are
-granted to `ALL × OWNER` only; department-scoped grants wait on the stakeholder field-to-role
-mapping.
+Each metric in the catalogue names its required resource (`docs/metrics/catalog.md`). Owner grants are explicit. V84 also seeded approved aggregate manager reads and forecasting grants; later account management restricts the supported account flow to owners. Target scope now includes owners/managers, but new manager mappings remain undecided. Do not infer new grants from product scope or historical seeds.
 
 ## User management
 
