@@ -25,7 +25,7 @@ Paths below are relative to `backend/src/main/java/com/goldys/platform/`.
 |---|---|---|
 | Lightspeed | Insights webhook (sales, products, Z-report) | `connectors/lightspeed/`, `api/LightspeedIngestController` |
 | CTB | Scheduled AJAX pull (pull connector), invoice CSV/PDF drop, SFTP poll | `connectors/ctb/`, `ingestion/CtbScheduledPull`, `ingestion/CtbSftpPull` |
-| OpenTable | Manual GuestCenter CSV drop | `connectors/opentable/`, `api/OpenTableCsvIngestController` |
+| OpenTable | Assisted-session JSON pull; CSV fallback | `connectors/opentable/`, `docs/connectors/opentable.md` |
 | Deputy | Webhook, raw-ledger only until the payload schema is confirmed | `api/DeputyIngestController` |
 
 ## Pick the pattern

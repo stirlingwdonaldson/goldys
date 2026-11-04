@@ -14,7 +14,10 @@ raw ledger (append-only, byte-faithful)
 
 Start with [`docs/README.md`](docs/README.md), the index for everything else.
 Architecture decisions live in [`docs/system-context.md`](docs/system-context.md);
-scope and acceptance criteria in [`docs/prd.md`](docs/prd.md).
+scope in [`docs/prd.md`](docs/prd.md), acceptance in [`docs/srs.md`](docs/srs.md),
+and current capability/limits in [`docs/app-state.md`](docs/app-state.md).
+Outstanding work lives in [GitHub issues](https://github.com/stirlingwdonaldson/goldys/issues),
+indexed by [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Layout
 
@@ -47,15 +50,18 @@ scope and acceptance criteria in [`docs/prd.md`](docs/prd.md).
 | Auth | Email + password accounts; table-driven `(department, seniority, resource)` permissions |
 | Ops | Docker Compose deploy at `platform.swd.sh`, Sentry (self-hosted), Micrometer/Prometheus |
 
-Not built yet: Smart Exporter (PRD Req. 10), Automation Hub, canonical domains for OpenTable
-reviews and menu items (stored raw only), Deputy canonicalization, MarketMan history import, and a permission admin UI.
+Remaining target gaps include broader reusable reports/exports, retained issued reports,
+business delivery/alerts, OpenTable menu canonicalization (menus remain raw-only),
+Deputy canonicalization, and approved manager permissions. Canonical reviews and owner
+account administration already exist. MarketMan is a possible one-time history input.
+See the [app-state summary](docs/app-state.md) and [issue index](docs/roadmap.md).
 [The production-data audit](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/audits/production-data/README.md) records the 9 October 2026 production snapshot and its prioritised gaps;
 it is historical evidence, not the current deployment state.
 
 ## Open questions
 
-Two stakeholder inputs gate their dependent behaviour (tracked in
-[`docs/prd.md`](docs/prd.md#open-questions)):
+Stakeholder inputs gate dependent behaviour (tracked in the
+[SRS](docs/srs.md#outstanding-decisions) and linked decision issues):
 
 - **Field-to-role permission mapping**: which fields each department × seniority
   combination may see. Until it's decided, permissions are seeded for `ALL × OWNER`

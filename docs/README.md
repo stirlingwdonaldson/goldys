@@ -1,54 +1,25 @@
-# Current documentation
+# Project documentation
 
-Use these references for current project work. Architecture comes from
-[system-context.md](system-context.md), scope from [prd.md](prd.md), and implementation
-state from the code. Agent workflows and safety rules remain in [AGENTS.md](../AGENTS.md).
+Read the smallest reference that answers the task.
 
-## Architecture and contracts
+| Need | Authority |
+|---|---|
+| Product scope and priority | [PRD](prd.md) |
+| Behaviour and acceptance | [SRS](srs.md) |
+| What exists and its limits | [App state](app-state.md) |
+| Outstanding work and decisions | [GitHub issue index](roadmap.md) |
+| Full requirement detail by ID | [Scoped source records](requirements/README.md) |
+| Shared business meanings | [Glossary](../GLOSSARY.md) |
+| Architecture and constraints | [System context](system-context.md), [current packages](architecture/current-state.md), [backend invariants](../.claude/rules/architecture-invariants.md) |
+| Source access and identity | [Access paths](connectors/source-access.md), [matching](connectors/matching-and-identity.md), [OpenTable](connectors/opentable.md) |
+| Metrics and AI/UI contracts | [Metric catalogue](metrics/catalog.md), [AI tools](contracts/ai-tool-boundary.md), [widgets](contracts/widget-spec.schema.json), [dashboards](contracts/dashboard-document.schema.json) |
+| UI changes | [Design entry](../DESIGN.md), [visual direction](design/ui-direction.md), [interaction system](design/design-system.md) |
+| Operations | [Testing](operations/testing.md), [deployment](operations/deployment.md), [weekly-report accuracy reviews](operations/weekly-report-review.md) |
+| Agent workflow | [Skills](agents/skills.md), [GitHub tracker](agents/issue-tracker.md), [domain docs](agents/domain.md), [review commands](agents.md) |
+| Durable choices | [Owner scope decisions](decisions/2026-11-04-product-scope.md), existing files in `decisions/` |
+| Dated evidence | [CTB stock/cost audit](audits/ctb-stock-cogs-2026-11-03/README.md), [historical archive](archive.md) |
 
-- [System context](system-context.md): architecture invariants and ingestion model.
-- [PRD](prd.md): requirements, scope and open decisions.
-- [Current architecture](architecture/current-state.md): packages, authorization and runtime.
-- [Adding a domain](architecture/adding-a-domain.md): implementation recipe.
-- [Metric catalogue](metrics/catalog.md): definitions, permissions and missing-data semantics.
-- [AI tool boundary](contracts/ai-tool-boundary.md): bounded tools and allowed reads.
-- [Widget schema](contracts/widget-spec.schema.json) and
-  [dashboard schema](contracts/dashboard-document.schema.json): persisted/rendered contracts.
-
-## Sources and decisions
-
-- [Source access](connectors/source-access.md): actual access paths and source limitations.
-- [Matching and identity](connectors/matching-and-identity.md): entity keys and matching rules.
-- [OpenTable](connectors/opentable.md): assisted sign-in, JSON pulls and CSV fallback.
-- [Line-item matching](connectors/line-item-matching.md): measured matching constraints.
-- [CTB invoice gaps](connectors/ctb-invoice-export-gaps.md) and
-  [sample](connectors/ctb-invoice-export-gaps.csv): dated source limitation evidence.
-- [POS menu reconciliation](connectors/pos-menu-reconciliation-2026-10-13.md): dated matching evidence.
-- [CTB recipe access](decisions/ctb-recipe-ajax.md),
-  [MarketMan history-only](decisions/marketman-history-only.md),
-  [resolved product sales](decisions/resolved-product-sales.md), and
-  [TimesFM runtime](decisions/timesfm-inference-service.md): architectural decisions.
-
-## UI and operations
-
-- [Design entry point](../DESIGN.md), [UI direction](design/ui-direction.md),
-  [design system](design/design-system.md), and [mockups](design/ui-direction-mockups.html).
-- [Testing](operations/testing.md) and [deployment](operations/deployment.md).
-- [Performance](operations/performance.md): recorded baseline and operational measurements.
-- [Weekly reporting](operations/weekly-report-review.md): coverage and remaining accuracy reviews.
-- [Lightspeed headline sales](operations/lightspeed-headline-sales.md),
-  [separate feeds](operations/lightspeed-separated-feeds.md), and
-  [bounded repair](operations/lightspeed-five-day-repair.md).
-- [Sale-costing rollout](operations/sale-costing-rollout.md).
-- [Data-correctness release](operations/data-correctness-release-2026-10-16.md):
-  release-specific procedure; not a general instruction to run a repair or deployment.
-
-## Agent workflows and history
-
-- [Agent personas](agents.md): retained OpenCode reviews and commands.
-- [Superpowers workflow](superpowers/README.md): locations for new designs and plans.
-- [Historical archive](archive.md): audit evidence, past designs, frontend
-  proposals and handoffs. Consult it for a specific historical question, not startup context.
-
-Update the existing reference when behaviour changes. Record new architectural decisions in
-`decisions/`; keep implementation checklists out of current reference documentation.
+Update definitions in place when approved behaviour changes. GitHub owns delivery
+status; PRD/SRS remain reference contracts. Detailed source snapshots and dated
+audits preserve evidence, not current approvals. Current code never overrides an
+architectural invariant merely by disagreeing with it.

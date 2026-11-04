@@ -8,7 +8,7 @@ Goldy's pub requires a unified data platform to consolidate disconnected operati
 
 It aims to improve on Tenzo's reporting — but note Tenzo plays two roles here, not one: it's the incumbent tool being superseded for reporting/dashboards, **and** a candidate data source in its own right (it already aggregates CTB, Deputy, and likely Lightspeed via its own connectors and exposes a developer API). Don't build a connector against Tenzo without first confirming whether its API returns raw or pre-aggregated data — pre-aggregated is only useful as a cross-check, not as canonical input, since the bitemporal layer needs raw events.
 
-**Build phasing:** this doc describes the target-state architecture. The 3–4 week MVP should implement the raw → canonical layers, a working ingestion connector for each in-scope source, and a minimal reconciliation UI (manual override is enough — the full field-level rule engine can follow in the 7–12 week full build). Don't reach for hexagonal boilerplate, event-bus infrastructure, or the automation hub in the MVP unless a module explicitly says otherwise below.
+Current product scope and delivery priority are governed by `prd.md` and `srs.md`; implementation capability is summarized in `app-state.md`. This document governs enduring architecture, not historical MVP sequencing.
 
 ## Technology Stack
 
@@ -48,24 +48,9 @@ These are sequencing constraints, not suggestions — building modules out of th
 
 ## Per-Source Ingestion Reality (flag before designing a connector)
 
-Design assumptions about API access must be checked against what's actually available — several MVP sources have no or partial APIs. The table below is the access reality that shaped the design; the path each source actually uses today is in `docs/connectors/source-access.md`.
+Design assumptions about API access must be checked against what is available. Several sources have no public API or only partial access; current paths and limitations live in `docs/connectors/source-access.md`.
 
-|Source|API access|Working ingestion path|
-|---|---|---|
-|**Lightspeed (O-Series / Kounta)**|Public REST API exists but is paid-add-on-gated on the current plan (or ask support to unlock the legacy free tier)|Authenticated back-office scrape of server-rendered pages (working today); richer REST API if unlocked|
-|**Cooking the Books (CTB)**|No public API|Existing authenticated internal AJAX pull for revenue and recipe data; Custom Invoice Export CSV/PDF via SFTP for purchasing. Internal endpoints remain unsupported and require captured schemas and observable failures (see `decisions/ctb-recipe-ajax.md`).|
-|**MarketMan (history only)**|Buyer-portal internal API (session cookie) + official API v3 (`api.marketman.com/v3`, keys from MarketMan support)|One-time historical pull of old (pre-CTB) numbers — not a recurring connector. Integrated with Kounta (POS) and Deputy (labour); customer since 2022|
-|**OpenTable**|Partner-gated, no self-serve API; GuestCenter's reports are backed by internal JSON endpoints|Assisted session: a human signs in to GuestCenter through a live view of the VM's browser (no automated login or challenge-solving), then the connector pulls the JSON endpoints. Manual CSV drop as fallback (`connectors/opentable.md`)|
-|**Deputy**|Genuine self-serve OAuth REST API|Standard API connector — cleanest of the five once someone with admin access registers the OAuth client|
-|**Tenzo**|Has a developer API, tier/rawness unconfirmed|Confirm with account manager before treating as a source; useful as cross-check even if aggregated-only|
-
-Note: CTB is really **inventory/purchasing** (recipes, stock, orders, wastage)
-rather than accounting — it was adopted around May 2026 (invoice `createdDate`
-starts 2026-05-13, with invoice dates backdated to 2025-10-28). MarketMan
-overlaps heavily and goes back to 2022. **Future job:** determine when the
-business migrated from MarketMan to CTB.
-
-Note CTB is owned by Quantaco, a hospitality analytics competitor — any request for data broader than the standard export should be framed carefully and isn't guaranteed goodwill.
+The single current access reference is [`connectors/source-access.md`](connectors/source-access.md). Lightspeed uses scheduled-report webhooks; CTB uses internal AJAX plus invoice SFTP; OpenTable uses assisted-session JSON pulls with CSV fallback; Deputy is raw-only pending schema confirmation. MarketMan is a possible one-time history input. Prove real sample/schema access before extending any path; do not treat historical API possibilities as implemented connectors.
 
 ## Key System Modules
 
