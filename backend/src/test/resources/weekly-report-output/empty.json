@@ -1,0 +1,787 @@
+{
+  "from" : "2026-10-26",
+  "to" : "2026-11-01",
+  "generatedAt" : "2026-11-04T01:30:00Z",
+  "timezone" : "Australia/Melbourne",
+  "weeks" : [ {
+    "start" : "2026-10-26",
+    "end" : "2026-11-01",
+    "dates" : [ "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31", "2026-11-01" ],
+    "rows" : [ {
+      "id" : "food_sales",
+      "section" : "Sales",
+      "label" : "Food sales ex GST",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "food_target",
+      "section" : "Sales",
+      "label" : "Food sales target",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: no approved target feed is configured." ]
+    }, {
+      "id" : "beverage_sales",
+      "section" : "Sales",
+      "label" : "Beverage sales ex GST",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "beverage_target",
+      "section" : "Sales",
+      "label" : "Beverage sales target",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: no approved target feed is configured." ]
+    }, {
+      "id" : "food_difference",
+      "section" : "Sales",
+      "label" : "food sales versus target",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: no approved target feed is configured." ]
+    }, {
+      "id" : "food_difference_percent",
+      "section" : "Sales",
+      "label" : "food sales versus target %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: no approved target feed is configured." ]
+    }, {
+      "id" : "beverage_difference",
+      "section" : "Sales",
+      "label" : "beverage sales versus target",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: no approved target feed is configured." ]
+    }, {
+      "id" : "beverage_difference_percent",
+      "section" : "Sales",
+      "label" : "beverage sales versus target %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: no approved target feed is configured." ]
+    }, {
+      "id" : "net_sales",
+      "section" : "Sales",
+      "label" : "Total sales ex GST",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Resolved headline sales. Source-supplied dates are retained; historical sources differ.", "Known subtotal; unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]. Missing days are not zero.", "Selected range: Source coverage unverified", "Metric: sales.net; source: resolved_test" ]
+    }, {
+      "id" : "gst",
+      "section" : "Sales",
+      "label" : "GST",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Source-qualified GST.", "Known subtotal; unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]. Missing days are not zero.", "Selected range: Source coverage unverified", "Metric: sales.gst; source: resolved_test" ]
+    }, {
+      "id" : "gross_sales",
+      "section" : "Sales",
+      "label" : "Total sales incl GST",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Resolved headline sales including GST; scope may exceed food/beverage.", "Known subtotal; unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]. Missing days are not zero.", "Selected range: Source coverage unverified", "Metric: sales.gross; source: resolved_test" ]
+    }, {
+      "id" : "sales_target",
+      "section" : "Sales",
+      "label" : "Total sales target",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: no approved target feed is configured." ]
+    }, {
+      "id" : "sales_difference",
+      "section" : "Sales",
+      "label" : "Sales versus target",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: no approved target feed is configured." ]
+    }, {
+      "id" : "sales_difference_percent",
+      "section" : "Sales",
+      "label" : "Sales versus target %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: no approved target feed is configured." ]
+    }, {
+      "id" : "payments",
+      "section" : "Cash and takings",
+      "label" : "Recorded payments",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded tenders, not sales or physically counted cash.", "Known subtotal; unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]. Missing days are not zero.", "Selected range: Source coverage unverified", "Metric: payments.amount; source: resolved_test" ]
+    }, {
+      "id" : "counted_cash",
+      "section" : "Cash and takings",
+      "label" : "Counted cash",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: physical counts, banking and an approved reconciliation basis are required." ]
+    }, {
+      "id" : "cash_to_bank",
+      "section" : "Cash and takings",
+      "label" : "Cash to bank",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: physical counts, banking and an approved reconciliation basis are required." ]
+    }, {
+      "id" : "takings_variance",
+      "section" : "Cash and takings",
+      "label" : "Takings variance",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: physical counts, banking and an approved reconciliation basis are required." ]
+    }, {
+      "id" : "cash_variance_percent",
+      "section" : "Cash and takings",
+      "label" : "Cash variance %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: physical counts, banking and an approved reconciliation basis are required." ]
+    }, {
+      "id" : "cash_variance_target_min",
+      "section" : "Cash and takings",
+      "label" : "Cash variance target min",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: physical counts, banking and an approved reconciliation basis are required." ]
+    }, {
+      "id" : "cash_variance_target_max",
+      "section" : "Cash and takings",
+      "label" : "Cash variance target max",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: physical counts, banking and an approved reconciliation basis are required." ]
+    }, {
+      "id" : "kegs",
+      "section" : "Stock variances",
+      "label" : "Kegs",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "wine",
+      "section" : "Stock variances",
+      "label" : "Wine",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "spirits",
+      "section" : "Stock variances",
+      "label" : "Spirits",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "tinnies",
+      "section" : "Stock variances",
+      "label" : "Tinnies",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "other_beverage",
+      "section" : "Stock variances",
+      "label" : "Other beverage",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "merchandise",
+      "section" : "Stock variances",
+      "label" : "Merchandise",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "beverage_variance_total",
+      "section" : "Stock variances",
+      "label" : "Beverage variance total",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "beverage_variance_percent",
+      "section" : "Stock variances",
+      "label" : "Beverage variance %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "beverage_variance_target_min",
+      "section" : "Stock variances",
+      "label" : "Beverage variance target min",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "beverage_variance_target_max",
+      "section" : "Stock variances",
+      "label" : "Beverage variance target max",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "meat",
+      "section" : "Stock variances",
+      "label" : "Meat",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "seafood",
+      "section" : "Stock variances",
+      "label" : "Seafood",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "poultry",
+      "section" : "Stock variances",
+      "label" : "Poultry",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "dairy",
+      "section" : "Stock variances",
+      "label" : "Dairy",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "frozen",
+      "section" : "Stock variances",
+      "label" : "Frozen",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "bread",
+      "section" : "Stock variances",
+      "label" : "Bread",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "food_variance_total",
+      "section" : "Stock variances",
+      "label" : "Food variance total",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "food_variance_percent",
+      "section" : "Stock variances",
+      "label" : "Food variance %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "food_variance_target_min",
+      "section" : "Stock variances",
+      "label" : "Food variance target min",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "food_variance_target_max",
+      "section" : "Stock variances",
+      "label" : "Food variance target max",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: stocktake, consumption and valuation evidence is not verified." ]
+    }, {
+      "id" : "beverage_wastage",
+      "section" : "Wastage",
+      "label" : "Beverage recorded wastage",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB quantity × source unit cost; no ml/each/recipe unit conversion. Reviewed exact waste-line mapping takes precedence over CTB recipe ID, including UNKNOWN withdrawals. Sale names never identify inventory.", "Includes all recorded reasons, KO and missing reasons; no staff-meal or knock-off exclusions are inferred. Food + beverage + other + unclassified reconcile to known recorded value.", "Cost tax basis and source completeness remain unverified; percentages are recorded source-cost / ex-GST sales comparisons, not certified loss rates. Weekly rates require all seven matching sales dates and known costs for included lines.", "Known values: 0 of 0 recorded lines. Missing observations are not zero." ]
+    }, {
+      "id" : "beverage_wastage_percent",
+      "section" : "Wastage",
+      "label" : "Beverage recorded wastage / matching sales",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB quantity × source unit cost; no ml/each/recipe unit conversion. Reviewed exact waste-line mapping takes precedence over CTB recipe ID, including UNKNOWN withdrawals. Sale names never identify inventory.", "Includes all recorded reasons, KO and missing reasons; no staff-meal or knock-off exclusions are inferred. Food + beverage + other + unclassified reconcile to known recorded value.", "Cost tax basis and source completeness remain unverified; percentages are recorded source-cost / ex-GST sales comparisons, not certified loss rates. Weekly rates require all seven matching sales dates and known costs for included lines.", "Known values: 0 of 0 recorded lines. Missing observations are not zero." ]
+    }, {
+      "id" : "beverage_wastage_target_percent",
+      "section" : "Wastage",
+      "label" : "Beverage wastage target %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: category/reason exclusions and cost basis need verification." ]
+    }, {
+      "id" : "food_wastage",
+      "section" : "Wastage",
+      "label" : "Food recorded wastage",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB quantity × source unit cost; no ml/each/recipe unit conversion. Reviewed exact waste-line mapping takes precedence over CTB recipe ID, including UNKNOWN withdrawals. Sale names never identify inventory.", "Includes all recorded reasons, KO and missing reasons; no staff-meal or knock-off exclusions are inferred. Food + beverage + other + unclassified reconcile to known recorded value.", "Cost tax basis and source completeness remain unverified; percentages are recorded source-cost / ex-GST sales comparisons, not certified loss rates. Weekly rates require all seven matching sales dates and known costs for included lines.", "Known values: 0 of 0 recorded lines. Missing observations are not zero." ]
+    }, {
+      "id" : "food_wastage_percent",
+      "section" : "Wastage",
+      "label" : "Food recorded wastage / matching sales",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB quantity × source unit cost; no ml/each/recipe unit conversion. Reviewed exact waste-line mapping takes precedence over CTB recipe ID, including UNKNOWN withdrawals. Sale names never identify inventory.", "Includes all recorded reasons, KO and missing reasons; no staff-meal or knock-off exclusions are inferred. Food + beverage + other + unclassified reconcile to known recorded value.", "Cost tax basis and source completeness remain unverified; percentages are recorded source-cost / ex-GST sales comparisons, not certified loss rates. Weekly rates require all seven matching sales dates and known costs for included lines.", "Known values: 0 of 0 recorded lines. Missing observations are not zero." ]
+    }, {
+      "id" : "food_wastage_target_percent",
+      "section" : "Wastage",
+      "label" : "Food wastage target %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: category/reason exclusions and cost basis need verification." ]
+    }, {
+      "id" : "total_wastage_target_percent",
+      "section" : "Wastage",
+      "label" : "Total wastage target %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: category/reason exclusions and cost basis need verification." ]
+    }, {
+      "id" : "total_wastage",
+      "section" : "Wastage",
+      "label" : "Total recorded wastage",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB wastage includes every reason and No reason recorded; no missing reasons are inferred.", "Known recorded value; 0 of 0 lines have a value. Receipt completeness and tax basis are unverified.", "Percent of sales uses resolved sales ex GST; wastage cost tax basis is unverified. Missing dates are not zero." ]
+    }, {
+      "id" : "total_wastage_percent",
+      "section" : "Wastage",
+      "label" : "Total wastage %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB wastage includes every reason and No reason recorded; no missing reasons are inferred.", "Known recorded value; 0 of 0 lines have a value. Receipt completeness and tax basis are unverified.", "Percent of sales uses resolved sales ex GST; wastage cost tax basis is unverified. Missing dates are not zero." ]
+    }, {
+      "id" : "staff_meals",
+      "section" : "Wastage",
+      "label" : "Staff meals and drinks cost",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: category/reason exclusions and cost basis need verification." ]
+    }, {
+      "id" : "purchases",
+      "section" : "Cost of goods",
+      "label" : "Invoice purchases (not COGS)",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Known invoice purchases, not consumed cost or theoretical COGS.", "Known subtotal; unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]. Missing days are not zero.", "Selected range: Source coverage unverified", "Metric: inventory.purchases; source: resolved_test" ]
+    }, {
+      "id" : "food_theoretical_cogs",
+      "section" : "Cost of goods",
+      "label" : "Food theoretical COGS (CTB estimate)",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "food_cogs_percent",
+      "section" : "Cost of goods",
+      "label" : "Food theoretical COGS / matching sales",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "food_cogs_ytd_percent",
+      "section" : "Cost of goods",
+      "label" : "Food COGS YTD %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: year-to-date cost coverage and year boundary are not established. Weekly estimates do not establish YTD COGS." ]
+    }, {
+      "id" : "food_cogs_target_percent",
+      "section" : "Cost of goods",
+      "label" : "Food COGS target %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: verified cost, tax, recipe and category bases are required; purchases are not COGS." ]
+    }, {
+      "id" : "beverage_theoretical_cogs",
+      "section" : "Cost of goods",
+      "label" : "Beverage theoretical COGS (CTB estimate)",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "beverage_cogs_percent",
+      "section" : "Cost of goods",
+      "label" : "Beverage theoretical COGS / matching sales",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "beverage_cogs_ytd_percent",
+      "section" : "Cost of goods",
+      "label" : "Beverage COGS YTD %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: year-to-date cost coverage and year boundary are not established. Weekly estimates do not establish YTD COGS." ]
+    }, {
+      "id" : "beverage_cogs_target_percent",
+      "section" : "Cost of goods",
+      "label" : "Beverage COGS target %",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Unavailable: verified cost, tax, recipe and category bases are required; purchases are not COGS." ]
+    }, {
+      "id" : "total_theoretical_cogs",
+      "section" : "Cost of goods",
+      "label" : "Total theoretical COGS (CTB estimate)",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "total_theoretical_cogs_percent",
+      "section" : "Cost of goods",
+      "label" : "Total theoretical COGS / matching sales",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "review_average",
+      "section" : "Reviews",
+      "label" : "Average review rating",
+      "unit" : "STARS",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Actual reported stars, grouped by review date in the venue timezone. Weekly average only; source coverage unverified." ]
+    }, {
+      "id" : "known_food_sales",
+      "section" : "Sales",
+      "label" : "Reviewed food product sales ex GST (known subtotal)",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "known_beverage_sales",
+      "section" : "Sales",
+      "label" : "Reviewed beverage product sales ex GST (known subtotal)",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "other_sales",
+      "section" : "Sales",
+      "label" : "Other product sales ex GST",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "unclassified_sales",
+      "section" : "Sales",
+      "label" : "Unclassified product sales ex GST (known basis)",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "product_net_sales",
+      "section" : "Sales",
+      "label" : "Known product sales ex GST",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "product_gross_sales",
+      "section" : "Sales",
+      "label" : "Known product sales incl GST",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "sales_classified_coverage",
+      "section" : "Sales",
+      "label" : "Food/beverage classification coverage (absolute eligible value)",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "sales_missing_tax_rows",
+      "section" : "Sales",
+      "label" : "Product/day rows without tax basis",
+      "unit" : "count",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "sales_unresolved_rows",
+      "section" : "Sales",
+      "label" : "Unresolved product/day amounts",
+      "unit" : "count",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "sales_reconciliation_difference",
+      "section" : "Sales",
+      "label" : "Headline minus product sales ex GST",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Selected product/day source amounts include GST. Ex-GST = observed amount minus observed tax, only when source gross and quantity exactly match the selected resolved product/day. No inferred GST, extra discount, refund or surcharge adjustment.", "Reviewed CTB_PRODUCT site/code policies govern fully matched CTB observations; partial, mixed and UNKNOWN policies hold the alias. Otherwise reviewed PRODUCT_NAME mappings apply on each sale date; browsing categories, cafe identity and lifecycle do not allocate revenue. Paid modifiers follow their reviewed mapping; mixed packages remain unknown until reviewed.", "Food/beverage require 95% of absolute known eligible ex-GST product amounts classified on each date; OTHER is outside this denominator. Missing tax or unresolved amounts withhold that date. Week totals are known subtotals of usable dates.", "Observed product/day rows: 0; tax basis unavailable: 0; unresolved gross: 0. Missing records and absent dates are not zero.", "Product sources: []. Product totals can differ from the independently resolved headline; the residual is not allocated.", "Food/beverage unavailable dates: [2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-10-31, 2026-11-01]" ]
+    }, {
+      "id" : "wastage_reason_coverage_lines",
+      "section" : "Wastage",
+      "label" : "Wastage with reasons (by lines)",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB wastage includes every reason and No reason recorded; no missing reasons are inferred.", "Known recorded value; 0 of 0 lines have a value. Receipt completeness and tax basis are unverified.", "Percent of sales uses resolved sales ex GST; wastage cost tax basis is unverified. Missing dates are not zero." ]
+    }, {
+      "id" : "wastage_reason_coverage_value",
+      "section" : "Wastage",
+      "label" : "Wastage with reasons (by recorded value)",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB wastage includes every reason and No reason recorded; no missing reasons are inferred.", "Known recorded value; 0 of 0 lines have a value. Receipt completeness and tax basis are unverified.", "Percent of sales uses resolved sales ex GST; wastage cost tax basis is unverified. Missing dates are not zero." ]
+    }, {
+      "id" : "other_wastage",
+      "section" : "Wastage",
+      "label" : "Other recorded wastage",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB quantity × source unit cost; no ml/each/recipe unit conversion. Reviewed exact waste-line mapping takes precedence over CTB recipe ID, including UNKNOWN withdrawals. Sale names never identify inventory.", "Includes all recorded reasons, KO and missing reasons; no staff-meal or knock-off exclusions are inferred. Food + beverage + other + unclassified reconcile to known recorded value.", "Cost tax basis and source completeness remain unverified; percentages are recorded source-cost / ex-GST sales comparisons, not certified loss rates. Weekly rates require all seven matching sales dates and known costs for included lines.", "Known values: 0 of 0 recorded lines. Missing observations are not zero." ]
+    }, {
+      "id" : "unclassified_wastage",
+      "section" : "Wastage",
+      "label" : "Unclassified recorded wastage",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB quantity × source unit cost; no ml/each/recipe unit conversion. Reviewed exact waste-line mapping takes precedence over CTB recipe ID, including UNKNOWN withdrawals. Sale names never identify inventory.", "Includes all recorded reasons, KO and missing reasons; no staff-meal or knock-off exclusions are inferred. Food + beverage + other + unclassified reconcile to known recorded value.", "Cost tax basis and source completeness remain unverified; percentages are recorded source-cost / ex-GST sales comparisons, not certified loss rates. Weekly rates require all seven matching sales dates and known costs for included lines.", "Known values: 0 of 0 recorded lines. Missing observations are not zero." ]
+    }, {
+      "id" : "wastage_classified_coverage_lines",
+      "section" : "Wastage",
+      "label" : "Classified wastage (by lines)",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB quantity × source unit cost; no ml/each/recipe unit conversion. Reviewed exact waste-line mapping takes precedence over CTB recipe ID, including UNKNOWN withdrawals. Sale names never identify inventory.", "Includes all recorded reasons, KO and missing reasons; no staff-meal or knock-off exclusions are inferred. Food + beverage + other + unclassified reconcile to known recorded value.", "Cost tax basis and source completeness remain unverified; percentages are recorded source-cost / ex-GST sales comparisons, not certified loss rates. Weekly rates require all seven matching sales dates and known costs for included lines.", "Known values: 0 of 0 recorded lines. Missing observations are not zero." ]
+    }, {
+      "id" : "wastage_classified_coverage_value",
+      "section" : "Wastage",
+      "label" : "Classified wastage (by known recorded value)",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "Recorded CTB quantity × source unit cost; no ml/each/recipe unit conversion. Reviewed exact waste-line mapping takes precedence over CTB recipe ID, including UNKNOWN withdrawals. Sale names never identify inventory.", "Includes all recorded reasons, KO and missing reasons; no staff-meal or knock-off exclusions are inferred. Food + beverage + other + unclassified reconcile to known recorded value.", "Cost tax basis and source completeness remain unverified; percentages are recorded source-cost / ex-GST sales comparisons, not certified loss rates. Weekly rates require all seven matching sales dates and known costs for included lines.", "Known values: 0 of 0 recorded lines. Missing observations are not zero." ]
+    }, {
+      "id" : "food_known_theoretical_cost",
+      "section" : "Cost of goods",
+      "label" : "Food known CTB theoretical cost subtotal",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "food_cost_coverage_lines",
+      "section" : "Cost of goods",
+      "label" : "Food source cost coverage (by observations)",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "beverage_known_theoretical_cost",
+      "section" : "Cost of goods",
+      "label" : "Beverage known CTB theoretical cost subtotal",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "beverage_cost_coverage_lines",
+      "section" : "Cost of goods",
+      "label" : "Beverage source cost coverage (by observations)",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "total_known_theoretical_cost",
+      "section" : "Cost of goods",
+      "label" : "Total known CTB theoretical cost subtotal",
+      "unit" : "AUD",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    }, {
+      "id" : "total_cost_coverage_lines",
+      "section" : "Cost of goods",
+      "label" : "Total source cost coverage (by observations)",
+      "unit" : "PERCENT",
+      "days" : [ null, null, null, null, null, null, null ],
+      "total" : null,
+      "status" : "UNAVAILABLE",
+      "notes" : [ "CTB sale-report totalFoodCost, checked against quantitySold × costPerUnit. Zero unit cost with nonzero quantity is unsupported, not free consumption. Selected source, gross, quantity, site and tax evidence must agree.", "Source-reported theoretical estimate as observed; historical recipe versions, yields and completeness are unverified. No current recipe substitution, purchase allocation or additional wastage deduction. Total covers food and beverage only.", "Known cost for 0 of 0 reviewed-category observations (an unmatched product/day counts as one unsupported observation); unknown classifications are excluded from this coverage. Full totals require seven supported dates and no unknown classification. Partial known costs are separate subtotals.", "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST." ]
+    } ],
+    "targets" : [ ],
+    "wastage" : {
+      "lines" : 0,
+      "valuedLines" : 0,
+      "value" : null,
+      "reasonCoverageLines" : null,
+      "reasonCoverageValue" : null,
+      "reasons" : [ ]
+    },
+    "stockCounts" : [ ]
+  } ]
+}

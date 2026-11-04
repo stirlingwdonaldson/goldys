@@ -268,27 +268,22 @@ public class WeeklyReportService {
           waste.stream()
               .filter(w -> !w.date().isBefore(start) && w.date().isBefore(start.plusDays(7)))
               .toList();
-      rows =
-          new ArrayList<>(
-              WeeklyReportSales.fill(
-                  rows,
+      var weekSales =
+          sales.stream()
+              .filter(s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
+              .toList();
+      var calculation =
+          WeeklyReportCalculation.calculate(
+              new WeeklyReportCalculation.Context(
                   dates,
-                  sales.stream()
-                      .filter(
-                          s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
-                      .toList()));
-      rows = new ArrayList<>(WeeklyReportInventory.fill(rows, dates, weekWaste));
-      rows =
-          new ArrayList<>(
-              WeeklyReportCogs.fill(
-                  rows,
-                  dates,
-                  sales.stream()
-                      .filter(
-                          s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
-                      .toList(),
-                  costsExcludeGst));
-      applyTargets(rows, weekTargets);
+                  points(days.get(MetricId.SALES_NET)),
+                  points(totals.get(MetricId.SALES_NET)).get(start),
+                  costsExcludeGst),
+              weekSales,
+              weekWaste,
+              weekTargets);
+      rows = mergeRows(rows, calculation.rows());
+      applyTargets(rows, weekTargets, calculation.comparisons());
       weeks.add(
           new WeeklyReport.Week(
               start,
@@ -296,7 +291,7 @@ public class WeeklyReportService {
               dates,
               List.copyOf(rows),
               weekTargets,
-              WeeklyReportInventory.summarize(weekWaste),
+              calculation.wastage(),
               stockCounts.stream()
                   .filter(s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
                   .toList()));
@@ -307,6 +302,20 @@ public class WeeklyReportService {
 
   private TimeSeriesResult query(MetricId metric, TimeRange range, TimeGrain grain) {
     return (TimeSeriesResult) metrics.query(new MetricQuery(metric, range, grain, Set.of(), null));
+  }
+
+  private static List<WeeklyReport.Row> mergeRows(
+      List<WeeklyReport.Row> layout, List<WeeklyReport.Row> calculated) {
+    Map<String, WeeklyReport.Row> remaining = new LinkedHashMap<>();
+    for (var row : calculated) remaining.put(row.id(), row);
+    List<WeeklyReport.Row> rows = new ArrayList<>();
+    // Keep established field positions; additional calculated rows retain their calculation order.
+    for (var row : layout) {
+      var replacement = remaining.remove(row.id());
+      rows.add(replacement == null ? row : replacement);
+    }
+    rows.addAll(remaining.values());
+    return rows;
   }
 
   private WeeklyReport.Row row(
@@ -359,7 +368,9 @@ public class WeeklyReportService {
   }
 
   private static void applyTargets(
-      List<WeeklyReport.Row> rows, List<WeeklyReportTargets.Target> targets) {
+      List<WeeklyReport.Row> rows,
+      List<WeeklyReportTargets.Target> targets,
+      List<WeeklyReportTargetComparisons.Comparison> comparisons) {
     Map<String, WeeklyReportTargets.Target> byId = new HashMap<>();
     for (var target : targets) byId.put(target.id(), target);
     for (int i = 0; i < rows.size(); i++) {
@@ -383,25 +394,20 @@ public class WeeklyReportService {
                         + target.source()
                         + ". Carried forward until changed; weekly target, not a daily allocation.")));
     }
-    for (String prefix : List.of("sales", "food", "beverage")) {
+    for (var comparison : comparisons) {
+      String prefix = comparison.prefix();
       String actualId = prefix.equals("sales") ? "net_sales" : prefix + "_sales";
-      String targetId = prefix.equals("sales") ? "sales_target" : prefix + "_target";
       var sales = rows.stream().filter(r -> r.id().equals(actualId)).findFirst().orElseThrow();
-      var target = byId.get(targetId);
-      if (target == null || sales.total() == null) continue;
-      BigDecimal difference = sales.total().subtract(target.value());
       for (int i = 0; i < rows.size(); i++) {
         var row = rows.get(i);
         if (!row.id().equals(prefix + "_difference")
             && !row.id().equals(prefix + "_difference_percent")) continue;
         BigDecimal value =
-            row.id().endsWith("_percent")
-                ? WeeklyReportInventory.ratio(difference, target.value())
-                : difference;
+            row.id().endsWith("_percent") ? comparison.percent() : comparison.difference();
         List<String> notes = new ArrayList<>(sales.notes());
         notes.add(
             "Actual minus effective weekly target "
-                + target.value()
+                + comparison.target()
                 + "; partial actuals produce a partial comparison.");
         rows.set(
             i,

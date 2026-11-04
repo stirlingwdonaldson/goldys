@@ -23,31 +23,7 @@ class WeeklyReportSalesTest {
   }
 
   private List<WeeklyReport.Row> report(List<Sale> sales) {
-    var empty = Collections.<BigDecimal>nCopies(7, null);
-    return WeeklyReportSales.fill(
-        List.of(
-            new WeeklyReport.Row(
-                "net_sales",
-                "Sales",
-                "Net",
-                "AUD",
-                Collections.nCopies(7, new BigDecimal("200")),
-                new BigDecimal("1400"),
-                "QUALIFIED",
-                List.of()),
-            new WeeklyReport.Row(
-                "food_sales", "Sales", "Food", "AUD", empty, null, "UNAVAILABLE", List.of()),
-            new WeeklyReport.Row(
-                "beverage_sales",
-                "Sales",
-                "Beverage",
-                "AUD",
-                empty,
-                null,
-                "UNAVAILABLE",
-                List.of())),
-        dates,
-        sales);
+    return WeeklyReportSales.calculate(dates, sales, Map.of(monday, new BigDecimal("200")));
   }
 
   private BigDecimal total(List<WeeklyReport.Row> rows, String id) {
@@ -110,5 +86,12 @@ class WeeklyReportSalesTest {
     assertThat(total(rows, "beverage_sales")).isZero();
     assertThat(total(rows, "sales_classified_coverage")).isNull();
     assertThat(WeeklyReportInventory.ratio(BigDecimal.ONE, BigDecimal.ZERO)).isNull();
+  }
+
+  @Test
+  void missingHeadlineWithholdsResidualWithoutWithholdingObservedProductSales() {
+    var rows = WeeklyReportSales.calculate(dates, List.of(sale("food", "100", "FOOD")), Map.of());
+    assertThat(total(rows, "food_sales")).isEqualByComparingTo("100");
+    assertThat(total(rows, "sales_reconciliation_difference")).isNull();
   }
 }
