@@ -31,12 +31,10 @@ final class WeeklyReportCogs {
     return known(selected);
   }
 
-  static List<WeeklyReport.Row> fill(
-      List<WeeklyReport.Row> original,
-      List<LocalDate> dates,
-      List<Sale> observations,
-      boolean costsExcludeGst) {
-    List<WeeklyReport.Row> rows = new ArrayList<>(original);
+  /** Calculates complete theoretical-cost rows without requiring report placeholders or layout. */
+  static List<WeeklyReport.Row> calculate(
+      List<LocalDate> dates, List<Sale> observations, boolean costsExcludeGst) {
+    List<WeeklyReport.Row> rows = new ArrayList<>();
     for (String prefix : List.of("food", "beverage", "total")) {
       var selected =
           observations.stream()
@@ -71,25 +69,25 @@ final class WeeklyReportCogs {
               costsExcludeGst
                   ? "ASSUMED_EX_GST: existing owner recipe-cost assumption; ratios compare matching category sales ex GST."
                   : "UNVERIFIED cost tax basis: COGS ratios withheld.");
-      replace(
-          rows,
-          prefix + "_theoretical_cogs",
-          label + " theoretical COGS (CTB estimate)",
-          "AUD",
-          costs,
-          total,
-          notes);
+      rows.add(
+          row(
+              prefix + "_theoretical_cogs",
+              label + " theoretical COGS (CTB estimate)",
+              "AUD",
+              costs,
+              total,
+              notes));
       List<BigDecimal> rates = new ArrayList<>();
       for (int i = 0; i < dates.size(); i++)
         rates.add(rate(costs.get(i), revenue(daily.get(i)), costsExcludeGst));
-      replace(
-          rows,
-          prefix + (prefix.equals("total") ? "_theoretical_cogs_percent" : "_cogs_percent"),
-          label + " theoretical COGS / matching sales",
-          "PERCENT",
-          rates,
-          rate(total, revenue(selected), costsExcludeGst),
-          notes);
+      rows.add(
+          row(
+              prefix + (prefix.equals("total") ? "_theoretical_cogs_percent" : "_cogs_percent"),
+              label + " theoretical COGS / matching sales",
+              "PERCENT",
+              rates,
+              rate(total, revenue(selected), costsExcludeGst),
+              notes));
       rows.add(
           row(
               prefix + "_known_theoretical_cost",
@@ -107,20 +105,16 @@ final class WeeklyReportCogs {
               coverage(selected),
               notes));
     }
-    for (int i = 0; i < rows.size(); i++) {
-      var r = rows.get(i);
-      if (r.id().equals("food_cogs_ytd_percent") || r.id().equals("beverage_cogs_ytd_percent"))
-        rows.set(
-            i,
-            row(
-                r.id(),
-                r.label(),
-                r.unit(),
-                r.days(),
-                null,
-                List.of(
-                    "Unavailable: year-to-date cost coverage and year boundary are not established. Weekly estimates do not establish YTD COGS.")));
-    }
+    for (String prefix : List.of("food", "beverage"))
+      rows.add(
+          row(
+              prefix + "_cogs_ytd_percent",
+              (prefix.equals("food") ? "Food" : "Beverage") + " COGS YTD %",
+              "PERCENT",
+              Collections.nCopies(dates.size(), null),
+              null,
+              List.of(
+                  "Unavailable: year-to-date cost coverage and year boundary are not established. Weekly estimates do not establish YTD COGS.")));
     return List.copyOf(rows);
   }
 
@@ -133,18 +127,6 @@ final class WeeklyReportCogs {
     return !costsExcludeGst || revenue == null || revenue.signum() <= 0
         ? null
         : WeeklyReportInventory.ratio(cost, revenue);
-  }
-
-  private static void replace(
-      List<WeeklyReport.Row> rows,
-      String id,
-      String label,
-      String unit,
-      List<BigDecimal> days,
-      BigDecimal total,
-      List<String> notes) {
-    for (int i = 0; i < rows.size(); i++)
-      if (rows.get(i).id().equals(id)) rows.set(i, row(id, label, unit, days, total, notes));
   }
 
   private static WeeklyReport.Row row(

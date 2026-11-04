@@ -42,47 +42,8 @@ class WeeklyReportCogsTest {
   }
 
   private Map<String, WeeklyReport.Row> report(List<Sale> sales, boolean tax) {
-    List<WeeklyReport.Row> rows = new ArrayList<>();
-    for (String id :
-        List.of(
-            "food_theoretical_cogs",
-            "food_cogs_percent",
-            "beverage_theoretical_cogs",
-            "beverage_cogs_percent",
-            "total_theoretical_cogs",
-            "total_theoretical_cogs_percent"))
-      rows.add(
-          new WeeklyReport.Row(
-              id,
-              "Cost of goods",
-              id,
-              "AUD",
-              Arrays.asList(null, null, null, null, null, null, null),
-              null,
-              "UNAVAILABLE",
-              List.of()));
-    rows.add(
-        new WeeklyReport.Row(
-            "food_sales",
-            "Sales",
-            "Food",
-            "AUD",
-            Collections.nCopies(7, new BigDecimal("100")),
-            new BigDecimal("700"),
-            "QUALIFIED",
-            List.of()));
-    rows.add(
-        new WeeklyReport.Row(
-            "beverage_sales",
-            "Sales",
-            "Beverage",
-            "AUD",
-            Collections.nCopies(7, new BigDecimal("50")),
-            new BigDecimal("350"),
-            "QUALIFIED",
-            List.of()));
     var result = new HashMap<String, WeeklyReport.Row>();
-    WeeklyReportCogs.fill(rows, dates, sales, tax).forEach(r -> result.put(r.id(), r));
+    WeeklyReportCogs.calculate(dates, sales, tax).forEach(r -> result.put(r.id(), r));
     return result;
   }
 
@@ -95,6 +56,17 @@ class WeeklyReportCogsTest {
     assertThat(rows.get("total_theoretical_cogs").total()).isEqualByComparingTo("245");
     assertThat(rows.get("total_theoretical_cogs_percent").total())
         .isEqualByComparingTo("0.23333333");
+    // Complete weekly observations do not establish year-to-date cost coverage.
+    for (String prefix : List.of("food", "beverage")) {
+      var ytd = rows.get(prefix + "_cogs_ytd_percent");
+      assertThat(ytd.days()).hasSize(7).containsOnlyNulls();
+      assertThat(ytd.total()).isNull();
+      assertThat(ytd.status()).isEqualTo("UNAVAILABLE");
+      assertThat(ytd.unit()).isEqualTo("PERCENT");
+      assertThat(ytd.notes())
+          .containsExactly(
+              "Unavailable: year-to-date cost coverage and year boundary are not established. Weekly estimates do not establish YTD COGS.");
+    }
   }
 
   @Test

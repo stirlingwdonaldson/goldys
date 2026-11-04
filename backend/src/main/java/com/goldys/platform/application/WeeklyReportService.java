@@ -285,16 +285,7 @@ public class WeeklyReportService {
                   weekSales,
                   points(days.get(MetricId.SALES_NET)),
                   points(totals.get(MetricId.SALES_NET)).get(start)));
-      rows =
-          new ArrayList<>(
-              WeeklyReportCogs.fill(
-                  rows,
-                  dates,
-                  sales.stream()
-                      .filter(
-                          s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
-                      .toList(),
-                  costsExcludeGst));
+      rows = mergeRows(rows, WeeklyReportCogs.calculate(dates, weekSales, costsExcludeGst));
       applyTargets(rows, weekTargets);
       weeks.add(
           new WeeklyReport.Week(
