@@ -57,3 +57,7 @@ into the regular host Codex home.
 References: [agent providers](https://github.com/mattpocock/sandcastle/blob/main/docs/guide/agent-providers.md),
 [native sandboxes](https://github.com/mattpocock/sandcastle/blob/main/docs/guide/sandbox-providers.md),
 [Codex authentication](https://learn.chatgpt.com/docs/auth).
+
+Codex 0.162.1 no longer accepts `-a` after `exec`. The runner adapts upstream's
+`-a on-request` to `-c 'approval_policy="on-request"'`, retaining the auto-review
+configuration and Bubblewrap. Assertions fail closed if upstream's command changes.
