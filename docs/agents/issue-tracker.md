@@ -21,7 +21,14 @@ Pushes, merges, deployments and external notifications need their own authorizat
 
 A map is one issue labelled `wayfinder:map`; decision tickets are native sub-issues
 labelled `wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling` or
-`wayfinder:task`. Keep these separate from implementation readiness labels.
+`wayfinder:task`. Only `wayfinder:` labels belong on these issues: no readiness or
+priority labels. Each decision ticket has only a `## Question` section; the answer
+goes in a resolution comment. Implementation issues stay outside the map and use
+the `to-tickets` structure, even when blocked by a map decision.
+
+The map has exactly Destination, Notes, Decisions so far, Not yet specified and
+Out of scope sections. Do not duplicate open-ticket lists in its body; native
+sub-issues are that index. Refer to issues by linked titles in human-facing text.
 
 Use GitHub's native sub-issues and blocking relationships. With older `gh`, use
 `gh api --method POST repos/stirlingwdonaldson/goldys/issues/<parent>/sub_issues -F sub_issue_id=<child-database-id>`
@@ -34,3 +41,21 @@ The frontier is the map's open, unassigned children with no open blockers. Claim
 by assigning the driving user before work. Resolve with a decision/evidence comment,
 close the ticket, and add a short named link to the map's Decisions so far.
 Charts and references are loaded on demand; do not fetch every ticket body at startup.
+
+## Resume this effort
+
+Open [Find the path through Goldy's remaining product decisions](https://github.com/stirlingwdonaldson/goldys/issues/249)
+and read its Notes first. Invoke `wayfinder` with that map URL. Query the native
+frontier as below, preserving child order. Claim the first eligible ticket before
+working; resolve at most one non-research ticket per session. Grilling requires
+the human; do not answer on their behalf. On resolution, comment, close and add a
+short named link to Decisions so far; graduate newly sharp questions and blockers.
+
+The approved PRD/SRS and skill baseline is intentionally local on
+`codex/docs-skills-reconciliation`; use the map's commit/worktree reference.
+If unavailable, request that baseline before dependent work. Do not assume these
+unpushed files can be fetched on another machine or use the older main PRD instead.
+
+```bash
+gh api --paginate repos/stirlingwdonaldson/goldys/issues/249/sub_issues --jq '.[] | if .issue_dependencies_summary.blocked_by == null then error("Dependency summary unavailable; inspect native blockers") else select(.state == "open" and (.assignees | length) == 0 and .issue_dependencies_summary.blocked_by == 0) | {number, title, type: [.labels[].name | select(startswith("wayfinder:"))][0]} end'
+```
