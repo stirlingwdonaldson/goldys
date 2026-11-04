@@ -5,7 +5,9 @@ Entry point for design tools and agents. The approved, authoritative design docs
 - [`docs/design/ui-direction.md`](docs/design/ui-direction.md): visual direction, tokens,
   responsive rules, shared building blocks. Tokens live in `frontend/app/globals.css`.
 - [`docs/design/design-system.md`](docs/design/design-system.md): principles, screen
-  inventory, reconciliation / data-table / node-graph interaction patterns.
+  inventory, reconciliation / data-table / node-graph interaction patterns. For
+  dashboard and admin explanations, edits or drill-ins, use its
+  [information hints, actions and detail panels](docs/design/design-system.md#information-hints-actions-and-detail-panels).
 
 Read both before changing UI. Refinement preserves this direction; replacing it needs an
 approved spec first.

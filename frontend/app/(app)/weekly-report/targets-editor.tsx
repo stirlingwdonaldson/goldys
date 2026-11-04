@@ -1,5 +1,8 @@
 "use client";
 
+import { Pencil } from "lucide-react";
+import { useReportPanel } from "./use-report-panel";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useApi } from "@/lib/demo-mode";
 import type { WeeklyReportWeek } from "@/lib/api/types";
@@ -10,6 +13,7 @@ import { Label } from "@/components/ui/label";
 
 export function TargetsEditor({ week, onSaved }: { week: WeeklyReportWeek; onSaved: () => Promise<unknown> }) {
   const api = useApi();
+  const panel = useReportPanel("targets", week.start);
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -36,11 +40,14 @@ export function TargetsEditor({ week, onSaved }: { week: WeeklyReportWeek; onSav
     finally { setSaving(false); }
   }
 
-  return <details className="rounded-lg border p-4">
-    <summary className="cursor-pointer font-semibold">Edit weekly targets</summary>
-    <p className="my-3 text-sm text-muted-foreground">Changes apply from {week.start} until the next dated target for that field. Percentages use percent units: enter 0.25 for 0.25%. Imported targets carry forward as a workbook baseline.</p>
+  return <>
+    <Button variant="outline" size="sm" data-report-panel-trigger="targets" onClick={() => panel.open()}><Pencil className="h-4 w-4" aria-hidden="true" />Edit weekly targets</Button>
+    <Sheet open={panel.isOpen} onOpenChange={open => { if (!open) panel.close(); }}>
+      <SheetContent className="overflow-y-auto sm:max-w-2xl" onCloseAutoFocus={panel.restoreFocus}>
+        <SheetHeader className="pr-8"><SheetTitle>Weekly targets</SheetTitle><SheetDescription>Effective from {week.start}. Changes carry forward until the next dated setting.</SheetDescription></SheetHeader>
+    <p className="my-5 text-sm text-muted-foreground">Changes apply from {week.start} until the next dated target for that field. Percentages use percent units: enter 0.25 for 0.25%. Imported targets carry forward as a workbook baseline.</p>
     <form onSubmit={save} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{fields.map(field => {
+      <div className="grid gap-4 sm:grid-cols-2">{fields.map(field => {
         const target = week.targets.find(t => t.id === field.id);
         const initial = target ? String(Number((target.value * (field.unit === "PERCENT" ? 100 : 1)).toFixed(4))) : "";
         return <div className="space-y-1" key={field.id}>
@@ -52,5 +59,7 @@ export function TargetsEditor({ week, onSaved }: { week: WeeklyReportWeek; onSav
       <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save targets"}</Button>
       {message ? <p role="status" className="text-sm">{message}</p> : null}
     </form>
-  </details>;
+      </SheetContent>
+    </Sheet>
+  </>;
 }
