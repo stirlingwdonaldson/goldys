@@ -17,13 +17,18 @@ introduced.
 week and field notes. It exports the exact authorised browser snapshot, including
 generation time, units, missing cells and qualifications. Refresh before downloading
 to include subsequent ingestion. A downloaded workbook is a snapshot, not a live
-Excel connection or a scheduled email delivery. Demo files are explicitly labelled. The summary stacks separate section tables with metrics down the page and at most
-four week columns per table. Dated tabs use separate sales, cash, stock variance,
-wastage, cost and review tables with Monday–Sunday columns and highlighted weekly
-values, following the pub workbook's sectional layout. Full source qualifications
-remain on Field notes, with statuses beside weekly values. Gold section banners,
-charcoal headers, alternating rows and frozen headings/labels aid scanning; the
-detail tabs retain filters. Numeric and percentage cells remain usable as numbers.
+Excel connection or a scheduled email delivery. Demo files are explicitly labelled. The summary is a compact scorecard for each week, with sales, wastage, COGS and
+reviews alongside actuals, effective targets, sales differences and assessments.
+Dated tabs retain every field in separate Monday–Sunday section tables; Field notes
+retains full source qualifications. The workbook uses Arial, navy/teal headings,
+spaced tables, bold headline measures and numeric currency/percentage/count formats.
+Green means an available actual meets its effective sales minimum, cost/wastage
+maximum or variance range; red means it falls outside that target. Target boundaries
+are inclusive. Sales differences use their existing zero baseline. Daily values do
+not borrow weekly targets. Blue marks planning targets; amber marks qualified data
+without a comparison; grey marks unavailable results. Colour is not a completeness
+certification. No review threshold or target is invented. Missing cells remain blank,
+while known zeros are displayed explicitly. Detail tabs retain filters.
 The reference workbook supplies layout only; its formulas and manual forms are not copied.
 
 The dashboard and workbook carry the same 85 fields. The spreadsheet's summary

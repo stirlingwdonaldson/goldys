@@ -1,7 +1,51 @@
-import type { WeeklyReport, WeeklyReportWeek } from "./api/types";
+import type { WeeklyReport, WeeklyReportRow, WeeklyReportWeek } from "./api/types";
 
-type Cell = string | number | null | { percent: number };
-const percent = (value: number | null): Cell => value === null ? null : { percent: value };
+type Tone = "good" | "bad" | "target" | "qualified" | "unavailable" | "total";
+type Cell = string | number | null | { value: string | number; unit?: WeeklyReportRow["unit"]; tone?: Tone };
+const percent = (value: number | null): Cell => value === null ? null : { value, unit: "PERCENT" };
+const numberUnits = ["AUD", "PERCENT", "count", "STARS"];
+const numberTones = ["normal", "band", "good", "bad", "target", "total", "unavailable"];
+const textStyles: Record<Tone, number> = { good: 41, bad: 42, qualified: 43, unavailable: 44, target: 45, total: 46 };
+
+const comparisonTargets: Record<string, [string | null, string | null]> = {
+  food_sales: ["food_target", null], beverage_sales: ["beverage_target", null], net_sales: ["sales_target", null],
+  food_wastage_percent: [null, "food_wastage_target_percent"],
+  beverage_wastage_percent: [null, "beverage_wastage_target_percent"],
+  total_wastage_percent: [null, "total_wastage_target_percent"],
+  food_cogs_percent: [null, "food_cogs_target_percent"], beverage_cogs_percent: [null, "beverage_cogs_target_percent"],
+  food_variance_percent: ["food_variance_target_min", "food_variance_target_max"],
+  beverage_variance_percent: ["beverage_variance_target_min", "beverage_variance_target_max"],
+  cash_variance_percent: ["cash_variance_target_min", "cash_variance_target_max"],
+};
+const headlineMetrics = new Set(["net_sales", "gross_sales", "payments", "total_wastage", "purchases", "total_theoretical_cogs", "review_average"]);
+const salesDifferences = new Set(["sales_difference", "sales_difference_percent", "food_difference", "food_difference_percent", "beverage_difference", "beverage_difference_percent"]);
+
+function qualifiedTotal(row: WeeklyReportRow | undefined): number | null {
+  return row?.status === "QUALIFIED" && row.total !== null && Number.isFinite(row.total) ? row.total : null;
+}
+
+function performance(week: WeeklyReportWeek, row: WeeklyReportRow): { tone: Tone; label: string } {
+  const actual = qualifiedTotal(row);
+  if (actual === null) return { tone: "unavailable", label: "Unavailable" };
+  if (salesDifferences.has(row.id)) return actual >= 0 ? { tone: "good", label: "At / above target" } : { tone: "bad", label: "Below target" };
+  const targets = comparisonTargets[row.id];
+  if (!targets) return { tone: "qualified", label: "Source-qualified" };
+  const bounds = targets.map(id => id === null ? null : qualifiedTotal(week.rows.find(r => r.id === id)));
+  if (targets.some((id, i) => id !== null && bounds[i] === null)) return { tone: "qualified", label: "No target available" };
+  const [min, max] = bounds;
+  const within = (min === null || actual >= min) && (max === null || actual <= max);
+  return { tone: within ? "good" : "bad", label: within ? "Meets target" : "Outside target" };
+}
+
+function metricValue(row: WeeklyReportRow, amount: number | null, tone?: Exclude<Tone, "qualified">): Cell {
+  return amount === null ? null : { value: amount, unit: row.unit, tone };
+}
+
+function weeklyValue(week: WeeklyReportWeek, row: WeeklyReportRow): Cell {
+  const tone = row.status === "UNAVAILABLE" ? "unavailable" : row.id.includes("_target") ? "target" : performance(week, row).tone;
+  return metricValue(row, row.total, tone === "qualified" ? undefined : tone);
+}
+
 const encoder = new TextEncoder();
 type WorkbookSheet = { name: string; rows: Cell[][]; sectionRows?: number[]; headerRows?: number[] };
 type ReportTable = { title: string; headers: string[]; rows: Cell[][] };
@@ -17,33 +61,42 @@ function sectionedSheet(name: string, metadata: Cell[][], tables: ReportTable[])
 }
 
 function summarySheet(report: WeeklyReport, title: string): WorkbookSheet {
-  const tables: ReportTable[] = [];
-  // Keep comparisons to four weeks per block so the summary never becomes a horizontal ledger.
-  for (let start = 0; start < report.weeks.length; start += 4) {
-    const weeks = report.weeks.slice(start, start + 4);
-    for (const section of new Set(report.weeks[0].rows.map(r => r.section))) {
-      tables.push({
-        title: `${section} · ${weeks[0].start} to ${weeks.at(-1)!.end}`,
-        headers: ["Field", "Unit", ...weeks.map(w => w.start)],
-        rows: report.weeks[0].rows.filter(r => r.section === section).map(row => [row.label, row.unit,
-          ...weeks.map(w => {
-            const total = w.rows.find(r => r.id === row.id)?.total ?? null;
-            return row.unit === "PERCENT" ? percent(total) : total;
-          })]),
-      });
-    }
-  }
+  const metrics = [
+    ["Food sales", "food_sales", "food_target", "food_difference"],
+    ["Beverage sales", "beverage_sales", "beverage_target", "beverage_difference"],
+    ["Total sales ex GST", "net_sales", "sales_target", "sales_difference"],
+    ["Food wastage rate", "food_wastage_percent", "food_wastage_target_percent"],
+    ["Beverage wastage rate", "beverage_wastage_percent", "beverage_wastage_target_percent"],
+    ["Total wastage rate", "total_wastage_percent", "total_wastage_target_percent"],
+    ["Food COGS rate", "food_cogs_percent", "food_cogs_target_percent"],
+    ["Beverage COGS rate", "beverage_cogs_percent", "beverage_cogs_target_percent"],
+    ["Review rating", "review_average"],
+  ];
+  const tables = report.weeks.map(week => ({
+    title: `WEEK OF ${week.start} — ${week.end}`,
+    headers: ["Performance measure", "Actual", "Target", "Sales vs target", "Assessment"],
+    rows: metrics.map(([label, id, targetId, differenceId]) => {
+      const row = week.rows.find(r => r.id === id)!;
+      const target = week.rows.find(r => r.id === targetId);
+      const difference = week.rows.find(r => r.id === differenceId);
+      const result = performance(week, row);
+      return [{ value: label, tone: "total" } as Cell, weeklyValue(week, row),
+        target ? weeklyValue(week, target) : null,
+        difference ? weeklyValue(week, difference) : null,
+        { value: result.label, tone: result.tone } as Cell];
+    }),
+  }));
   return sectionedSheet("Weekly summary", [[title], [`${report.from} – ${report.to} · ${report.timezone}`],
-    [`Generated ${report.generatedAt} · Blank values are unavailable, not zero. See dated tabs for daily figures and Field notes for qualifications.`]], tables);
+    [`Green: meets target · Red: outside target · Blue: planning target · Amber: qualified / no comparison · Grey: unavailable. Colours do not certify completeness. All fields, daily values and source notes are on the dated tabs and Field notes. Generated ${report.generatedAt}.`]], tables);
 }
 
 function weekSheet(report: WeeklyReport, week: WeeklyReportWeek, title: string): WorkbookSheet {
   const headers = ["Field", "Unit", ...week.dates.map((date, i) => `${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i]}\n${date}`), "Weekly value", "Status"];
   const tables = [...new Set(week.rows.map(r => r.section))].map(section => ({
     title: section, headers,
-    rows: week.rows.filter(r => r.section === section).map(r => [r.label, r.unit,
-      ...r.days.map(v => r.unit === "PERCENT" ? percent(v) : v),
-      r.unit === "PERCENT" ? percent(r.total) : r.total, r.status]),
+    rows: week.rows.filter(r => r.section === section).map(r => [headlineMetrics.has(r.id) || salesDifferences.has(r.id) ? { value: r.label, tone: "total" as const } : r.label, r.unit,
+      ...r.days.map(v => metricValue(r, v)),
+      weeklyValue(week, r), { value: r.status, tone: r.status === "UNAVAILABLE" ? "unavailable" as const : "qualified" as const }]),
   }));
   return sectionedSheet(week.start, [[title], [`${week.start} – ${week.end} · ${report.timezone}`],
     [`Generated ${report.generatedAt} · Blank values are unavailable, not zero. All values remain source-qualified; see Field notes.`]], tables);
@@ -61,25 +114,33 @@ function column(index: number): string {
   return name;
 }
 
+function cellStyle(value: Cell, styles: number[]): number {
+  if (value === null || typeof value !== "object") return typeof value === "number" ? styles[1] : styles[0];
+  if (!value.unit) return value.tone ? textStyles[value.tone] : styles[0];
+  const tone = value.tone ?? (styles[1] === 10 ? "total" : styles[1] === 7 ? "band" : "normal");
+  return 13 + numberUnits.indexOf(value.unit) * numberTones.length + numberTones.indexOf(tone);
+}
+
 function worksheetCell(value: Cell, ref: string, styles: number[]): string {
-  if (value === null) return `<c r="${ref}" s="${styles[0]}"/>`;
-  const amount = typeof value === "object" ? value.percent : value;
-  if (typeof amount === "number" && Number.isFinite(amount)) {
-    const style = styles[typeof value === "object" ? 2 : 1];
-    return `<c r="${ref}" s="${style}"><v>${amount}</v></c>`;
-  }
-  return `<c r="${ref}" t="inlineStr" s="${styles[0]}"><is><t xml:space="preserve">${xml(String(value))}</t></is></c>`;
+  const style = cellStyle(value, styles);
+  if (value === null) return `<c r="${ref}" s="${style}"/>`;
+  const amount = typeof value === "object" ? value.value : value;
+  if (typeof amount === "number" && Number.isFinite(amount)) return `<c r="${ref}" s="${style}"><v>${amount}</v></c>`;
+  return `<c r="${ref}" t="inlineStr" s="${style}"><is><t xml:space="preserve">${xml(String(amount))}</t></is></c>`;
 }
 
 function rowHeight(row: Cell[], widths: number[]): number {
-  const lines = Math.max(1, ...row.map((v, c) => typeof v === "string"
-    ? v.split("\n").reduce((n, line) => n + Math.max(1, Math.ceil(line.length / (widths[c] - 2))), 0) : 1));
+  const lines = Math.max(1, ...row.map((v, c) => {
+    const text = v !== null && typeof v === "object" ? v.value : v;
+    return typeof text === "string"
+    ? text.split("\n").reduce((n, line) => n + Math.max(1, Math.ceil(line.length / (widths[c] - 2))), 0) : 1;
+  }));
   // shortcut: Excel caps row height at 409 points; longer notes remain available in the cell.
   return Math.min(409, Math.max(30, lines * 15 + 12));
 }
 
 function worksheetRow(row: Cell[], r: number, widths: number[], headingStyle: number | undefined, totalColumn: number): string {
-  const height = r === 0 ? 34 : headingStyle === 1 ? 42 : headingStyle === 12 ? 30 : rowHeight(row, widths);
+  const height = r === 0 ? 46 : headingStyle === 1 ? 36 : headingStyle === 12 ? 36 : row.length === 0 ? 20 : rowHeight(row, widths);
   const bodyStyles = r % 2 === 1 ? [6, 7, 8] : [0, 2, 3];
   const cells = row.map((v, c) => {
     const styles = headingStyle !== undefined ? [headingStyle, headingStyle, headingStyle]
@@ -96,11 +157,12 @@ function worksheet(sheet: WorkbookSheet): string {
   const frozenRows = sheet.name === "Weekly summary" ? 3 : 4;
   const frozenColumns = headers[0] === "Field" ? 2 : 1;
   const totalColumn = headers.indexOf("Weekly value");
-  const textWidths: Record<string, number> = { Field: 44, Unit: 10, Status: 20, Reason: 38, "Original labels": 38, Notes: 70, Source: 70, Section: 24 };
+  const textWidths: Record<string, number> = { "Performance measure": 36, Actual: 19, Target: 19, "Sales vs target": 19, Assessment: 26, Field: 44, Unit: 10, Status: 20, Reason: 38, "Original labels": 38, Notes: 70, Source: 70, Section: 24 };
   const widths = headers.map(header => /\d{4}-\d{2}-\d{2}$/.test(header) ? 16 : textWidths[header] ?? 20);
   const metadataWidths = [widths.reduce((sum, width) => sum + width, 0)];
   const columns = widths.map((width, c) => `<col min="${c + 1}" max="${c + 1}" width="${width}" customWidth="1"/>`).join("");
   const data = rows.map((row, r) => {
+    if (r === 3 && sheet.name === "Weekly summary") return "";
     const headingStyle = sectionRows.includes(r) ? 12 : headerRows.includes(r) ? 1 : [4, 5, 5][r];
     return worksheetRow(row, r, r < 3 ? metadataWidths : widths, headingStyle, totalColumn);
   }).join("");
@@ -110,15 +172,26 @@ function worksheet(sheet: WorkbookSheet): string {
 }
 
 function workbookStyles(): string {
-  // Style order is shared by the worksheet's text, number and percentage variants.
+  // Base styles, followed by unit × tone variants, then labelled assessment badges.
   const formats = [
     [0, 0, 0], [1, 2, 0], [0, 0, 4], [0, 0, 10],
-    [2, 3, 0], [3, 0, 0], [0, 4, 0], [0, 4, 4],
-    [0, 4, 10], [0, 5, 0], [0, 5, 4], [0, 5, 10], [4, 3, 0],
+    [2, 2, 0], [3, 0, 0], [0, 4, 0], [0, 4, 4],
+    [0, 4, 10], [10, 8, 0], [10, 8, 4], [10, 8, 10], [4, 11, 0],
+    ...[164, 165, 166, 167].flatMap(format => [[0, 0], [0, 4], [5, 6], [6, 7], [7, 8], [10, 8], [9, 10]].map(([font, fill]) => [font, fill, format])),
+    [5, 6, 0], [6, 7, 0], [8, 9, 0], [9, 10, 0], [7, 8, 0], [10, 0, 0],
   ];
-  const cells = formats.map(([font, fill, numFmt], i) => `<xf numFmtId="${numFmt}" fontId="${font}" fillId="${fill}" borderId="0" xfId="0" applyFont="1" applyFill="1" applyNumberFormat="1" applyAlignment="1"><alignment vertical="center" wrapText="1"${i === 1 ? ' horizontal="center"' : ""}/></xf>`).join("");
-  const fills = ["FF262626", "FFF5C94C", "FFF5F5F2", "FFFFF2CC"].map(color => `<fill><patternFill patternType="solid"><fgColor rgb="${color}"/><bgColor indexed="64"/></patternFill></fill>`).join("");
-  return `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="5"><font><sz val="11"/><color rgb="FF262626"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="20"/><color rgb="FF262626"/><name val="Calibri"/></font><font><sz val="10"/><color rgb="FF595959"/><name val="Calibri"/></font><font><b/><sz val="12"/><color rgb="FF262626"/><name val="Calibri"/></font></fonts><fills count="6"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>${fills}</fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="13">${cells}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+  const cells = formats.map(([font, fill, numFmt], i) => `<xf numFmtId="${numFmt}" fontId="${font}" fillId="${fill}" borderId="${i === 0 || i === 6 || i >= 13 ? 1 : 0}" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment vertical="center" wrapText="1" indent="1" horizontal="${numFmt ? "right" : i === 1 ? "center" : "left"}"/></xf>`).join("");
+  const fills = ["FF172B3A", "FFE9B949", "FFF4F7F9", "FFFFF6D9", "FFE3F3E8", "FFFCE8E6", "FFEAF1F8", "FFFFF3D6", "FFF0F1F3", "FF176B70"].map(color => `<fill><patternFill patternType="solid"><fgColor rgb="${color}"/><bgColor indexed="64"/></patternFill></fill>`).join("");
+  const fonts = [
+    [11, "FF243746", false], [10, "FFFFFFFF", true], [22, "FFFFFFFF", true],
+    [10, "FF607080", false], [12, "FFFFFFFF", true], [11, "FF17633B", true],
+    [11, "FFAD2929", true], [11, "FF285E8E", true], [10, "FF8A5B0A", true],
+    [10, "FF737D87", false], [11, "FF172B3A", true],
+  ].map(([size, color, bold]) => `<font>${bold ? "<b/>" : ""}<sz val="${size}"/><color rgb="${color}"/><name val="Arial"/></font>`).join("");
+  const numberFormats = [
+    '$#,##0.00;($#,##0.00);$0.00', '0.00%;(0.00%);0.00%', '#,##0;(#,##0);0', '0.00',
+  ].map((format, i) => `<numFmt numFmtId="${164 + i}" formatCode="${xml(format)}"/>`).join("");
+  return `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="4">${numberFormats}</numFmts><fonts count="11">${fonts}</fonts><fills count="12"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>${fills}</fills><borders count="2"><border/><border><bottom style="hair"><color rgb="FFE2E8ED"/></bottom></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${formats.length}">${cells}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
 }
 
 /** shortcut: OOXML supports numbers and literal text only; use a full writer when formulas/charts are required. */
@@ -166,13 +239,13 @@ export function weeklyReportWorkbook(report: WeeklyReport, demo = false): Uint8A
     ...report.weeks.flatMap(w => w.rows.map(r => [w.start, r.section, r.label, r.unit, r.status, r.notes.join("\n")]))] });
   sheets.push({ name: "Wastage reasons", rows: [[title], [`${report.from} – ${report.to} · ${report.timezone}`], ["All recorded reasons included; missing reasons are not inferred. Shares use known recorded value."],
     ["Week", "Reason", "Original labels", "Lines", "Valued lines", "Recorded value", "Share of known value", "Reason coverage by lines", "Reason coverage by value"],
-    ...report.weeks.flatMap(w => w.wastage.reasons.length ? w.wastage.reasons.map(r => [w.start, r.reason, r.originalReasons.join(" | "), r.lines, r.valuedLines, r.value, percent(r.shareOfValue), percent(w.wastage.reasonCoverageLines), percent(w.wastage.reasonCoverageValue)]) : [[w.start, "No observations received", "", 0, 0, null, null, null, null]])] });
+    ...report.weeks.flatMap(w => w.wastage.reasons.length ? w.wastage.reasons.map((r): Cell[] => [w.start, r.reason, r.originalReasons.join(" | "), { value: r.lines, unit: "count" }, { value: r.valuedLines, unit: "count" }, r.value === null ? null : { value: r.value, unit: "AUD" }, percent(r.shareOfValue), percent(w.wastage.reasonCoverageLines), percent(w.wastage.reasonCoverageValue)]) : [[w.start, "No observations received", "", 0, 0, null, null, null, null]])] });
   sheets.push({ name: "Stock counts", rows: [[title], [`${report.from} – ${report.to} · ${report.timezone}`], ["Dated source observations, not stock balances or variances. Tax, valuation and completeness unverified."],
     ["Week", "Count date", "Stocktake", "Lines", "Valued lines", "Recorded value", "Partial", "Locked"],
-    ...report.weeks.flatMap(w => w.stockCounts.map(c => [w.start, c.date, c.stocktakeId, c.lines, c.valuedLines, c.value, c.partial === null ? "Unknown" : String(c.partial), c.locked === null ? "Unknown" : String(c.locked)]))] });
+    ...report.weeks.flatMap(w => w.stockCounts.map((c): Cell[] => [w.start, c.date, { value: c.stocktakeId, unit: "count" }, { value: c.lines, unit: "count" }, { value: c.valuedLines, unit: "count" }, c.value === null ? null : { value: c.value, unit: "AUD" }, c.partial === null ? "Unknown" : String(c.partial), c.locked === null ? "Unknown" : String(c.locked)]))] });
   sheets.push({ name: "Targets", rows: [[title], [`${report.from} – ${report.to} · ${report.timezone}`], ["Effective-week settings carried forward until changed. Percentage values are fractions; 0.0025 means 0.25%."],
     ["Report week", "Field", "Value", "Effective from", "Source"],
-    ...report.weeks.flatMap(w => w.targets.map(t => [w.start, t.id, ["food_target", "beverage_target", "sales_target"].includes(t.id) ? t.value : percent(t.value), t.effectiveFrom, t.source]))] });
+    ...report.weeks.flatMap(w => w.targets.map((t): Cell[] => [w.start, t.id, { value: t.value, unit: ["food_target", "beverage_target", "sales_target"].includes(t.id) ? "AUD" : "PERCENT", tone: "target" }, t.effectiveFrom, t.source]))] });
   const ns = "http://schemas.openxmlformats.org/";
   const files: [string, string][] = [
     ["[Content_Types].xml", `<Types xmlns="${ns}package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}</Types>`],
