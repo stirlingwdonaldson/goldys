@@ -268,17 +268,23 @@ public class WeeklyReportService {
           waste.stream()
               .filter(w -> !w.date().isBefore(start) && w.date().isBefore(start.plusDays(7)))
               .toList();
+      var weekSales =
+          sales.stream()
+              .filter(s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
+              .toList();
       rows =
           mergeRows(
               rows,
-              WeeklyReportSales.calculate(
+              WeeklyReportSales.calculate(dates, weekSales, points(days.get(MetricId.SALES_NET))));
+      rows =
+          mergeRows(
+              rows,
+              WeeklyReportInventory.calculate(
                   dates,
-                  sales.stream()
-                      .filter(
-                          s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
-                      .toList(),
-                  points(days.get(MetricId.SALES_NET))));
-      rows = new ArrayList<>(WeeklyReportInventory.fill(rows, dates, weekWaste));
+                  weekWaste,
+                  weekSales,
+                  points(days.get(MetricId.SALES_NET)),
+                  points(totals.get(MetricId.SALES_NET)).get(start)));
       rows =
           new ArrayList<>(
               WeeklyReportCogs.fill(

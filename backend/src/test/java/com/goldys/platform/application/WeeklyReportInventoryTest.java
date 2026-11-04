@@ -2,10 +2,12 @@ package com.goldys.platform.application;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.goldys.platform.semantic.ReportingSalesQuery.Sale;
 import com.goldys.platform.semantic.WeeklyInventoryQuery.Waste;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class WeeklyReportInventoryTest {
@@ -45,52 +47,15 @@ class WeeklyReportInventoryTest {
   void classificationKeepsUnmatchedLinesAndWithholdsRatesForMissingCosts() {
     var d = LocalDate.parse("2026-10-26");
     var dates = d.datesUntil(d.plusDays(7)).toList();
-    var empty = java.util.Collections.<BigDecimal>nCopies(7, null);
     var sales =
-        new WeeklyReport.Row(
-            "food_sales",
-            "Sales",
-            "Food",
-            "AUD",
-            java.util.Collections.nCopies(7, BigDecimal.TEN),
-            new BigDecimal("70"),
-            "QUALIFIED",
-            List.of());
-    var bev =
-        new WeeklyReport.Row(
-            "beverage_sales",
-            "Sales",
-            "Beverage",
-            "AUD",
-            sales.days(),
-            sales.total(),
-            "QUALIFIED",
-            List.of());
-    var net =
-        new WeeklyReport.Row(
-            "net_sales",
-            "Sales",
-            "Net",
-            "AUD",
-            sales.days(),
-            sales.total(),
-            "QUALIFIED",
-            List.of());
-    var rate =
-        new WeeklyReport.Row(
-            "food_wastage_percent",
-            "Wastage",
-            "Rate",
-            "PERCENT",
-            empty,
-            null,
-            "UNAVAILABLE",
-            List.of());
+        dates.stream()
+            .map(date -> new Sale(date, "Food", BigDecimal.TEN, BigDecimal.TEN, "CTB", "FOOD"))
+            .toList();
     var observations =
         List.of(
             new Waste(d, "KO", 2, 1, BigDecimal.ONE, "FOOD"),
             new Waste(d, null, 1, 1, new BigDecimal("3"), "UNKNOWN"));
-    var rows = WeeklyReportInventory.fill(List.of(sales, bev, net, rate), dates, observations);
+    var rows = WeeklyReportInventory.calculate(dates, observations, sales, Map.of(), null);
     var result =
         rows.stream().filter(r -> r.id().equals("food_wastage_percent")).findFirst().orElseThrow();
     assertThat(result.total()).isNull();
@@ -109,5 +74,66 @@ class WeeklyReportInventoryTest {
                 .orElseThrow()
                 .total())
         .isEqualByComparingTo("0.66666667");
+  }
+
+  @Test
+  void calculatesCompleteRowsUsingIndependentHeadlineAndMatchingSales() {
+    var start = LocalDate.parse("2026-10-26");
+    var dates = start.datesUntil(start.plusDays(7)).toList();
+    var sales =
+        dates.stream()
+            .map(d -> new Sale(d, "Food", BigDecimal.TEN, BigDecimal.TEN, "CTB", "FOOD"))
+            .toList();
+    var waste = dates.stream().map(d -> new Waste(d, "KO", 1, 1, BigDecimal.ONE, "FOOD")).toList();
+    var headline =
+        dates.stream()
+            .collect(java.util.stream.Collectors.toMap(d -> d, d -> new BigDecimal("100")));
+    var rows =
+        WeeklyReportInventory.calculate(dates, waste, sales, headline, new BigDecimal("140"));
+    assertThat(row(rows, "total_wastage").total()).isEqualByComparingTo("7");
+    assertThat(row(rows, "total_wastage_percent").days())
+        .allSatisfy(v -> assertThat(v).isEqualByComparingTo("0.01"));
+    assertThat(row(rows, "total_wastage_percent").total()).isEqualByComparingTo("0.05");
+    assertThat(row(rows, "food_wastage_percent").days())
+        .allSatisfy(v -> assertThat(v).isEqualByComparingTo("0.1"));
+    assertThat(row(rows, "food_wastage_percent").total()).isEqualByComparingTo("0.1");
+    assertThat(rows)
+        .extracting(WeeklyReport.Row::id)
+        .containsExactly(
+            "total_wastage",
+            "total_wastage_percent",
+            "wastage_reason_coverage_lines",
+            "wastage_reason_coverage_value",
+            "food_wastage",
+            "food_wastage_percent",
+            "beverage_wastage",
+            "beverage_wastage_percent",
+            "other_wastage",
+            "unclassified_wastage",
+            "wastage_classified_coverage_lines",
+            "wastage_classified_coverage_value");
+  }
+
+  @Test
+  void classificationHoldWithholdsMatchingRatesWithoutWithholdingKnownWastage() {
+    var start = LocalDate.parse("2026-10-26");
+    var dates = start.datesUntil(start.plusDays(7)).toList();
+    var sales =
+        new java.util.ArrayList<>(
+            dates.stream()
+                .map(d -> new Sale(d, "Food", BigDecimal.TEN, BigDecimal.TEN, "CTB", "FOOD"))
+                .toList());
+    sales.add(new Sale(start, "Unknown", BigDecimal.TEN, BigDecimal.TEN, "CTB", "UNKNOWN"));
+    var waste = dates.stream().map(d -> new Waste(d, "KO", 1, 1, BigDecimal.ONE, "FOOD")).toList();
+    var rows = WeeklyReportInventory.calculate(dates, waste, sales, Map.of(), null);
+    assertThat(row(rows, "food_wastage").total()).isEqualByComparingTo("7");
+    assertThat(row(rows, "food_wastage_percent").days().getFirst()).isNull();
+    assertThat(row(rows, "food_wastage_percent").days().get(1)).isEqualByComparingTo("0.1");
+    assertThat(row(rows, "food_wastage_percent").total()).isNull();
+    assertThat(row(rows, "total_wastage_percent").total()).isNull();
+  }
+
+  private static WeeklyReport.Row row(List<WeeklyReport.Row> rows, String id) {
+    return rows.stream().filter(r -> r.id().equals(id)).findFirst().orElseThrow();
   }
 }

@@ -1,5 +1,7 @@
 package com.goldys.platform.application;
 
+import com.goldys.platform.semantic.ClassifiedSalesTotals;
+import com.goldys.platform.semantic.ReportingSalesQuery.Sale;
 import com.goldys.platform.semantic.WeeklyInventoryQuery.Waste;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -67,16 +69,19 @@ final class WeeklyReportInventory {
     return normalized.replace(" ", "").equals("knockoff") ? "knock off" : normalized;
   }
 
-  static List<WeeklyReport.Row> fill(
-      List<WeeklyReport.Row> original, List<LocalDate> dates, List<Waste> observations) {
+  /** Calculates wastage without report placeholders or previously assembled sales rows. */
+  static List<WeeklyReport.Row> calculate(
+      List<LocalDate> dates,
+      List<Waste> observations,
+      List<Sale> sales,
+      Map<LocalDate, BigDecimal> headlineNetSales,
+      BigDecimal headlineWeeklyNetSales) {
     var summary = summarize(observations);
     var daily =
         dates.stream()
             .map(d -> summarize(observations.stream().filter(w -> w.date().equals(d)).toList()))
             .toList();
     List<WeeklyReport.Row> rows = new ArrayList<>();
-    WeeklyReport.Row sales =
-        original.stream().filter(r -> r.id().equals("net_sales")).findFirst().orElseThrow();
     List<String> notes =
         List.of(
             "Recorded CTB wastage includes every reason and No reason recorded; no missing reasons are inferred.",
@@ -86,29 +91,25 @@ final class WeeklyReportInventory {
                 + summary.lines()
                 + " lines have a value. Receipt completeness and tax basis are unverified.",
             "Percent of sales uses resolved sales ex GST; wastage cost tax basis is unverified. Missing dates are not zero.");
-    for (var row : original) {
-      if (row.id().equals("total_wastage"))
-        rows.add(
-            row(
-                row.id(),
-                row.label(),
-                "AUD",
-                daily.stream().map(WeeklyReport.Wastage::value).toList(),
-                summary.value(),
-                notes));
-      else if (row.id().equals("total_wastage_percent")) {
-        List<BigDecimal> days = new ArrayList<>();
-        for (int i = 0; i < 7; i++) days.add(ratio(daily.get(i).value(), sales.days().get(i)));
-        rows.add(
-            row(
-                row.id(),
-                row.label(),
-                "PERCENT",
-                days,
-                ratio(summary.value(), sales.total()),
-                notes));
-      } else rows.add(row);
-    }
+    rows.add(
+        row(
+            "total_wastage",
+            "Total recorded wastage",
+            "AUD",
+            daily.stream().map(WeeklyReport.Wastage::value).toList(),
+            summary.value(),
+            notes));
+    List<BigDecimal> days = new ArrayList<>();
+    for (int i = 0; i < dates.size(); i++)
+      days.add(ratio(daily.get(i).value(), headlineNetSales.get(dates.get(i))));
+    rows.add(
+        row(
+            "total_wastage_percent",
+            "Total wastage %",
+            "PERCENT",
+            days,
+            ratio(summary.value(), headlineWeeklyNetSales),
+            notes));
     rows.add(
         row(
             "wastage_reason_coverage_lines",
@@ -125,7 +126,14 @@ final class WeeklyReportInventory {
             daily.stream().map(WeeklyReport.Wastage::reasonCoverageValue).toList(),
             summary.reasonCoverageValue(),
             notes));
-    fillClassified(rows, original, dates, observations);
+    var dailySales =
+        dates.stream()
+            .map(
+                d ->
+                    ClassifiedSalesTotals.summarize(
+                        sales.stream().filter(s -> s.date().equals(d)).toList()))
+            .toList();
+    fillClassified(rows, dailySales, dates, observations);
     return List.copyOf(rows);
   }
 
@@ -147,7 +155,7 @@ final class WeeklyReportInventory {
 
   private static void fillClassified(
       List<WeeklyReport.Row> rows,
-      List<WeeklyReport.Row> original,
+      List<ClassifiedSalesTotals> dailySales,
       List<LocalDate> dates,
       List<Waste> observations) {
     var daily =
@@ -179,43 +187,38 @@ final class WeeklyReportInventory {
               values,
               total,
               notes);
-      int index = -1;
-      for (int i = 0; i < rows.size(); i++) if (rows.get(i).id().equals(id)) index = i;
-      if (index < 0) rows.add(valueRow);
-      else rows.set(index, valueRow);
+      rows.add(valueRow);
       if (!nature.equals("FOOD") && !nature.equals("BEVERAGE")) continue;
       var sales =
-          original.stream().filter(r -> r.id().equals(prefix + "_sales")).findFirst().orElseThrow();
+          dailySales.stream().map(s -> nature.equals("FOOD") ? s.food() : s.beverage()).toList();
+      var salesTotal = sales.stream().filter(Objects::nonNull).reduce(BigDecimal::add).orElse(null);
       List<BigDecimal> rates = new ArrayList<>();
       for (int i = 0; i < dates.size(); i++)
         rates.add(
             daily.get(i).stream()
                         .anyMatch(w -> nature.equals(w.nature()) && w.valuedLines() < w.lines())
-                    || sales.days().get(i) == null
-                    || sales.days().get(i).signum() <= 0
+                    || sales.get(i) == null
+                    || sales.get(i).signum() <= 0
                 ? null
-                : ratio(values.get(i), sales.days().get(i)));
+                : ratio(values.get(i), sales.get(i)));
       boolean missingCost =
           observations.stream()
               .anyMatch(w -> nature.equals(w.nature()) && w.valuedLines() < w.lines());
       BigDecimal rate =
           missingCost
-                  || sales.days().stream().anyMatch(v -> v == null || v.signum() < 0)
-                  || sales.total() == null
-                  || sales.total().signum() <= 0
+                  || sales.stream().anyMatch(v -> v == null || v.signum() < 0)
+                  || salesTotal == null
+                  || salesTotal.signum() <= 0
               ? null
-              : ratio(total, sales.total());
-      for (int i = 0; i < rows.size(); i++)
-        if (rows.get(i).id().equals(id + "_percent"))
-          rows.set(
-              i,
-              row(
-                  id + "_percent",
-                  valueRow.label() + " / matching sales",
-                  "PERCENT",
-                  rates,
-                  rate,
-                  notes));
+              : ratio(total, salesTotal);
+      rows.add(
+          row(
+              id + "_percent",
+              valueRow.label() + " / matching sales",
+              "PERCENT",
+              rates,
+              rate,
+              notes));
     }
     for (boolean value : List.of(false, true))
       rows.add(
