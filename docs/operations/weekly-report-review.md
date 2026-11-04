@@ -17,7 +17,9 @@ introduced.
 week and field notes. It exports the exact authorised browser snapshot, including
 generation time, units, missing cells and qualifications. Refresh before downloading
 to include subsequent ingestion. A downloaded workbook is a snapshot, not a live
-Excel connection or a scheduled email delivery. Demo files are explicitly labelled.
+Excel connection or a scheduled email delivery. Demo files are explicitly labelled. Tabs use gold titles, charcoal headers, alternating
+row shading, wrapped notes, column filters and frozen headings/labels. Weekly values
+are highlighted in gold; numeric and percentage cells remain usable as numbers.
 
 The dashboard and workbook carry the same 85 fields. The spreadsheet's summary
 fields are covered: food/beverage/total sales and targets, stock-variance categories,

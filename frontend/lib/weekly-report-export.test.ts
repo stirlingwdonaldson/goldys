@@ -47,10 +47,37 @@ describe("weekly Excel snapshot", () => {
     expect(sheet.querySelector(`c[r="E${index}"]`)).toBeNull();
     expect(sheet.querySelector(`c[r="D${index}"] v`)?.textContent).toBe("6000");
     const targetIndex = report.weeks[0].rows.findIndex(r => r.id === "beverage_wastage_target_percent") + 5;
-    expect(sheet.querySelector(`c[r="K${targetIndex}"]`)?.getAttribute("s")).toBe("3");
+    expect(sheet.querySelector(`c[r="K${targetIndex}"]`)?.getAttribute("s")).toBe("11");
     expect(sheet.querySelector(`c[r="K${targetIndex}"] v`)?.textContent).toBe("0.0025");
     expect(JSON.stringify(report)).toBe(snapshot);
     expect(files.get("xl/worksheets/sheet4.xml")).toContain("Missing days are not zero");
+  });
+
+  it("formats every tab with a title, filters, frozen labels and readable numeric styles", () => {
+    const report = demoWeeklyReport("2026-10-26", 1);
+    const files = entries(weeklyReportWorkbook(report));
+    const styles = new DOMParser().parseFromString(files.get("xl/styles.xml")!, "application/xml");
+    const formats = styles.querySelectorAll("cellXfs > xf");
+    for (const [name, contents] of files) {
+      if (!name.startsWith("xl/worksheets/")) continue;
+      const sheet = new DOMParser().parseFromString(contents, "application/xml");
+      expect(sheet.querySelector("sheetView")?.getAttribute("showGridLines")).toBe("0");
+      expect(sheet.querySelector("pane")?.getAttribute("ySplit")).toBe("4");
+      expect(sheet.querySelector("mergeCell")?.getAttribute("ref")).toMatch(/^A1:[A-Z]+1$/);
+      expect(sheet.querySelector("autoFilter")?.getAttribute("ref")).toMatch(/^A4:[A-Z]+\d+$/);
+      for (const cell of sheet.querySelectorAll("c")) {
+        expect(formats[Number(cell.getAttribute("s"))]).toBeDefined();
+      }
+    }
+    const sheet = new DOMParser().parseFromString(files.get("xl/worksheets/sheet2.xml")!, "application/xml");
+    expect(sheet.querySelector("pane")?.getAttribute("topLeftCell")).toBe("D5");
+    expect(sheet.querySelector('c[r="B5"]')?.getAttribute("s")).not.toBe(sheet.querySelector('c[r="B6"]')?.getAttribute("s"));
+    const index = report.weeks[0].rows.findIndex(r => r.id === "beverage_wastage_target_percent") + 5;
+    const totalStyle = formats[Number(sheet.querySelector(`c[r="K${index}"]`)?.getAttribute("s"))];
+    expect(totalStyle.getAttribute("numFmtId")).toBe("10");
+    expect(totalStyle.getAttribute("fillId")).toBe("5");
+    expect(totalStyle.querySelector("alignment")?.getAttribute("wrapText")).toBe("1");
+    expect(sheet.querySelector('col[min="13"]')?.getAttribute("width")).toBe("70");
   });
 
   it("keeps formula-looking source text literal, escapes XML and labels demo exports", () => {

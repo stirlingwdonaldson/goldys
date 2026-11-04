@@ -16,14 +16,55 @@ function column(index: number): string {
   return name;
 }
 
+function worksheetCell(value: Cell, ref: string, styles: number[]): string {
+  if (value === null) return "";
+  const amount = typeof value === "object" ? value.percent : value;
+  if (typeof amount === "number" && Number.isFinite(amount)) {
+    const style = styles[typeof value === "object" ? 2 : 1];
+    return `<c r="${ref}" s="${style}"><v>${amount}</v></c>`;
+  }
+  return `<c r="${ref}" t="inlineStr" s="${styles[0]}"><is><t xml:space="preserve">${xml(String(value))}</t></is></c>`;
+}
+
+function rowHeight(row: Cell[], widths: number[]): number {
+  const lines = Math.max(1, ...row.map((v, c) => typeof v === "string"
+    ? v.split("\n").reduce((n, line) => n + Math.max(1, Math.ceil(line.length / (widths[c] - 2))), 0) : 1));
+  // shortcut: Excel caps row height at 409 points; longer notes remain available in the cell.
+  return Math.min(409, Math.max(30, lines * 15 + 12));
+}
+
 function worksheet(rows: Cell[][]): string {
-  return `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="2" width="27" customWidth="1"/><col min="3" max="11" width="18" customWidth="1"/><col min="12" max="13" width="65" customWidth="1"/></cols><sheetData>${rows.map((row, r) => `<row r="${r + 1}">${row.map((v, c) => {
-    if (v === null) return "";
-    const ref = `${column(c)}${r + 1}`;
-    const amount = typeof v === "object" ? v.percent : v;
-    if (typeof amount === "number" && Number.isFinite(amount)) return `<c r="${ref}" s="${typeof v === "object" ? 3 : 2}"><v>${amount}</v></c>`;
-    return `<c r="${ref}" t="inlineStr" s="${r === 3 ? 1 : 0}"><is><t xml:space="preserve">${xml(String(v))}</t></is></c>`;
-  }).join("")}</row>`).join("")}</sheetData></worksheet>`;
+  const headers = rows[3].map(String);
+  const lastColumn = column(headers.length - 1);
+  const frozenColumns = headers[0] === "Section" ? 3 : 1;
+  const totalColumn = headers.indexOf("Weekly value");
+  const textWidths: Record<string, number> = { Field: 38, Reason: 38, "Original labels": 38, Notes: 70, Source: 70, Section: 24 };
+  const widths = headers.map(header => /^\d{4}-\d{2}-\d{2}$/.test(header) ? 16 : textWidths[header] ?? 20);
+  const columns = widths.map((width, c) => `<col min="${c + 1}" max="${c + 1}" width="${width}" customWidth="1"/>`).join("");
+  const data = rows.map((row, r) => {
+    const height = r === 0 ? 34 : r === 3 ? 66 : rowHeight(row, widths);
+    const headingStyle = [4, 5, 5, 1][r];
+    const bodyStyles = r % 2 === 1 ? [6, 7, 8] : [0, 2, 3];
+    const cells = row.map((v, c) => {
+      const styles = r < 4 ? [headingStyle, headingStyle, headingStyle]
+        : c === totalColumn ? [9, 10, 11] : bodyStyles;
+      return worksheetCell(v, `${column(c)}${r + 1}`, styles);
+    }).join("");
+    return `<row r="${r + 1}" ht="${height}" customHeight="1">${cells}</row>`;
+  }).join("");
+  return `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane xSplit="${frozenColumns}" ySplit="4" topLeftCell="${column(frozenColumns)}5" activePane="bottomRight" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="24"/><cols>${columns}</cols><sheetData>${data}</sheetData><autoFilter ref="A4:${lastColumn}${rows.length}"/><mergeCells count="1"><mergeCell ref="A1:${column(Math.min(headers.length, 11) - 1)}1"/></mergeCells><pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.2" footer="0.2"/><pageSetup orientation="landscape"/></worksheet>`;
+}
+
+function workbookStyles(): string {
+  // Style order is shared by the worksheet's text, number and percentage variants.
+  const formats = [
+    [0, 0, 0], [1, 2, 0], [0, 0, 4], [0, 0, 10],
+    [2, 3, 0], [3, 0, 0], [0, 4, 0], [0, 4, 4],
+    [0, 4, 10], [0, 5, 0], [0, 5, 4], [0, 5, 10],
+  ];
+  const cells = formats.map(([font, fill, numFmt], i) => `<xf numFmtId="${numFmt}" fontId="${font}" fillId="${fill}" borderId="0" xfId="0" applyFont="1" applyFill="1" applyNumberFormat="1" applyAlignment="1"><alignment vertical="center" wrapText="1"${i === 1 ? ' horizontal="center"' : ""}/></xf>`).join("");
+  const fills = ["FF262626", "FFF5C94C", "FFF5F5F2", "FFFFF2CC"].map(color => `<fill><patternFill patternType="solid"><fgColor rgb="${color}"/><bgColor indexed="64"/></patternFill></fill>`).join("");
+  return `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="4"><font><sz val="11"/><color rgb="FF262626"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="20"/><color rgb="FF262626"/><name val="Calibri"/></font><font><sz val="10"/><color rgb="FF595959"/><name val="Calibri"/></font></fonts><fills count="6"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>${fills}</fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="12">${cells}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
 }
 
 /** shortcut: OOXML supports numbers and literal text only; use a full writer when formulas/charts are required. */
@@ -95,7 +136,7 @@ export function weeklyReportWorkbook(report: WeeklyReport, demo = false): Uint8A
     ["_rels/.rels", `<Relationships xmlns="${ns}package/2006/relationships"><Relationship Id="rId1" Type="${ns}officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
     ["xl/workbook.xml", `<workbook xmlns="${ns}spreadsheetml/2006/main" xmlns:r="${ns}officeDocument/2006/relationships"><sheets>${sheets.map((s, i) => `<sheet name="${xml(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("")}</sheets></workbook>`],
     ["xl/_rels/workbook.xml.rels", `<Relationships xmlns="${ns}package/2006/relationships">${sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="${ns}officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("")}<Relationship Id="styles" Type="${ns}officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
-    ["xl/styles.xml", `<styleSheet xmlns="${ns}spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="4"><xf fontId="0" fillId="0" borderId="0" xfId="0"/><xf fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="10" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`],
+    ["xl/styles.xml", workbookStyles()],
     ...sheets.map((s, i): [string, string] => [`xl/worksheets/sheet${i + 1}.xml`, worksheet(s.rows)]),
   ];
   return zip(files);
