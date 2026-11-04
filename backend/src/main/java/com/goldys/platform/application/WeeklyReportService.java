@@ -272,25 +272,18 @@ public class WeeklyReportService {
           sales.stream()
               .filter(s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
               .toList();
-      rows =
-          mergeRows(
-              rows,
-              WeeklyReportSales.calculate(dates, weekSales, points(days.get(MetricId.SALES_NET))));
-      rows =
-          mergeRows(
-              rows,
-              WeeklyReportInventory.calculate(
+      var calculation =
+          WeeklyReportCalculation.calculate(
+              new WeeklyReportCalculation.Context(
                   dates,
-                  weekWaste,
-                  weekSales,
                   points(days.get(MetricId.SALES_NET)),
-                  points(totals.get(MetricId.SALES_NET)).get(start)));
-      rows = mergeRows(rows, WeeklyReportCogs.calculate(dates, weekSales, costsExcludeGst));
-      applyTargets(
-          rows,
-          weekTargets,
-          WeeklyReportTargetComparisons.calculate(
-              dates, weekSales, points(totals.get(MetricId.SALES_NET)).get(start), weekTargets));
+                  points(totals.get(MetricId.SALES_NET)).get(start),
+                  costsExcludeGst),
+              weekSales,
+              weekWaste,
+              weekTargets);
+      rows = mergeRows(rows, calculation.rows());
+      applyTargets(rows, weekTargets, calculation.comparisons());
       weeks.add(
           new WeeklyReport.Week(
               start,
@@ -298,7 +291,7 @@ public class WeeklyReportService {
               dates,
               List.copyOf(rows),
               weekTargets,
-              WeeklyReportInventory.summarize(weekWaste),
+              calculation.wastage(),
               stockCounts.stream()
                   .filter(s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
                   .toList()));
