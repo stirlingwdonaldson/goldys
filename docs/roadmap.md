@@ -11,8 +11,9 @@ unassigned ticket without open blockers. Reporting comes first. The
 is a separate implementation ticket with a native contract-decision blocker;
 it is not part of the decision map. Further implementation slices follow `to-tickets`.
 
-The approved docs/skills remain local on `codex/docs-skills-reconciliation` by owner
-choice. The map records the local baseline and how to stop if it is unavailable.
-Do not substitute the older main-branch requirements. Excluded/future/undecided
+Until merged, use the approved docs/skills on `codex/docs-skills-reconciliation`.
+The map pins the published commit and reference links; start a fresh session on
+that branch and refresh skill discovery. Do not substitute the older main-branch
+requirements. Excluded/future/undecided
 scope stays explicit in the PRD and dispositions; no issue authorizes production
 operations, source write-back, publication or new manager grants.

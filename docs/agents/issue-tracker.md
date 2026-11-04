@@ -51,10 +51,11 @@ working; resolve at most one non-research ticket per session. Grilling requires
 the human; do not answer on their behalf. On resolution, comment, close and add a
 short named link to Decisions so far; graduate newly sharp questions and blockers.
 
-The approved PRD/SRS and skill baseline is intentionally local on
-`codex/docs-skills-reconciliation`; use the map's commit/worktree reference.
-If unavailable, request that baseline before dependent work. Do not assume these
-unpushed files can be fetched on another machine or use the older main PRD instead.
+Until the documentation PR is merged, use `codex/docs-skills-reconciliation` and
+the map's pinned published commit/reference links. Start in a checkout of that
+branch; refresh skill discovery or restart the host if the skills do not appear.
+If the baseline cannot be fetched, stop dependent work rather than substituting
+the older main-branch PRD. After merge, fresh sessions on updated main inherit it.
 
 ```bash
 gh api --paginate repos/stirlingwdonaldson/goldys/issues/249/sub_issues --jq '.[] | if .issue_dependencies_summary.blocked_by == null then error("Dependency summary unavailable; inspect native blockers") else select(.state == "open" and (.assignees | length) == 0 and .issue_dependencies_summary.blocked_by == 0) | {number, title, type: [.labels[].name | select(startswith("wayfinder:"))][0]} end'
