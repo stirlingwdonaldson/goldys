@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import WeeklyReportPage from "./page";
 import { demoWeeklyReport } from "@/lib/api/weekly-report-demo";
 import { ApiError } from "@/lib/api/errors";
@@ -14,14 +14,25 @@ describe("Weekly report page", () => {
     mocks.getWeeklyReport.mockResolvedValue(demoWeeklyReport("2026-10-19", 2));
   });
 
-  it("shows all fields and unavailable states, supports week selection and URL filters", async () => {
+  it("summarises the selected week and keeps every field and source note reachable", async () => {
     render(<WeeklyReportPage />);
     await screen.findByRole("heading", { name: "2026-10-26 – 2026-11-01" });
-    expect(screen.getByText("Food sales ex GST")).toBeInTheDocument();
-    expect(screen.getAllByText("Unavailable").length).toBeGreaterThan(30);
-    expect(screen.getByText("Food COGS YTD %")).toBeInTheDocument();
+    const summary = screen.getByRole("region", { name: "Selected week summary" });
+    expect(within(summary).getByText("$97,000.00")).toBeVisible();
+    expect(within(summary).getByText("4.5 stars")).toBeVisible();
+    expect(screen.getByText(/fields unavailable/)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "All 85 fields & source notes" })).toBeVisible();
+    const catalogue = screen.getByRole("region", { name: "All report fields" });
+    for (const disclosure of catalogue.querySelectorAll("summary")) fireEvent.click(disclosure);
+    expect(within(catalogue).getAllByRole("rowheader")).toHaveLength(85);
+    expect(within(catalogue).getByText("Food COGS YTD %")).toBeVisible();
+    fireEvent.click(within(catalogue).getByRole("button", { name: "Source notes for Food COGS YTD %, week of 2026-10-26" }));
+    expect(await screen.findByText(/verified costs, classification and cumulative coverage/)).toBeVisible();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     fireEvent.click(screen.getByRole("button", { name: "2026-10-19 – 2026-10-25" }));
     expect(screen.getByRole("heading", { name: "2026-10-19 – 2026-10-25" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("First week (Monday)"), { target: { value: "2026-10-12" } });
+    expect(mocks.replace).toHaveBeenCalledWith("/weekly-report?from=2026-10-12&weeks=2");
     fireEvent.change(screen.getByLabelText("Number of weeks"), { target: { value: "4" } });
     expect(mocks.replace).toHaveBeenCalledWith("/weekly-report?from=2026-10-19&weeks=4");
   });
@@ -44,7 +55,9 @@ describe("Weekly report page", () => {
   it("shows missing reasons and stock counts, saves percent targets as fractions and refreshes", async () => {
     mocks.saveWeeklyTargets.mockResolvedValue([]);
     render(<WeeklyReportPage />);
-    expect(await screen.findByText("No reason recorded")).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "2026-10-26 – 2026-11-01" });
+    fireEvent.click(screen.getByText("Wastage reasons & stock counts"));
+    expect(screen.getByText("No reason recorded")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Stock counts" })).toBeInTheDocument();
     fireEvent.click(screen.getByText("Edit weekly targets"));
     fireEvent.change(screen.getByLabelText("Beverage wastage target % (%)"), { target: { value: "0.5" } });
@@ -57,7 +70,7 @@ describe("Weekly report page", () => {
   it("shows target write denials without reporting a successful save", async () => {
     mocks.saveWeeklyTargets.mockRejectedValue(new ApiError("NOT_PERMITTED", "Target editing is not permitted"));
     render(<WeeklyReportPage />);
-    await screen.findByRole("heading", { name: "Stock counts" });
+    await screen.findByRole("heading", { name: "2026-10-26 – 2026-11-01" });
     fireEvent.click(screen.getByText("Edit weekly targets"));
     fireEvent.change(screen.getByLabelText("Total sales target ($)"), { target: { value: "130000" } });
     fireEvent.click(screen.getByRole("button", { name: "Save targets" }));

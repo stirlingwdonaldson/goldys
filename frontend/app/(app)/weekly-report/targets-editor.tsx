@@ -1,5 +1,6 @@
 "use client";
 
+import { disclosureClass } from "./report-sections";
 import { useState } from "react";
 import { useApi } from "@/lib/demo-mode";
 import type { WeeklyReportWeek } from "@/lib/api/types";
@@ -37,7 +38,7 @@ export function TargetsEditor({ week, onSaved }: { week: WeeklyReportWeek; onSav
   }
 
   return <details className="rounded-lg border p-4">
-    <summary className="cursor-pointer font-semibold">Edit weekly targets</summary>
+    <summary className={disclosureClass}>Edit weekly targets</summary>
     <p className="my-3 text-sm text-muted-foreground">Changes apply from {week.start} until the next dated target for that field. Percentages use percent units: enter 0.25 for 0.25%. Imported targets carry forward as a workbook baseline.</p>
     <form onSubmit={save} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{fields.map(field => {
