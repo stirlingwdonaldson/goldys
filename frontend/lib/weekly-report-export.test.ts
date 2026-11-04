@@ -19,6 +19,16 @@ function entries(bytes: Uint8Array): Map<string, string> {
   return files;
 }
 
+function fieldRow(sheet: Document, label: string): Element {
+  const row = [...sheet.querySelectorAll("row")].find(r => r.querySelector("c t")?.textContent === label);
+  expect(row, `row for ${label}`).toBeDefined();
+  return row!;
+}
+
+function cell(row: Element, col: string): Element | null {
+  return row.querySelector(`c[r="${col}${row.getAttribute("r")}"]`);
+}
+
 describe("weekly Excel snapshot", () => {
   it("includes every week and field with numeric totals and missing cells, without changing the report", () => {
     const report = demoWeeklyReport("2026-10-19", 2);
@@ -42,15 +52,50 @@ describe("weekly Excel snapshot", () => {
       expect(sheet.documentElement.textContent).toContain(row.label);
       expect(sheet.documentElement.textContent).toContain(row.status);
     }
-    const index = report.weeks[0].rows.findIndex(r => r.id === "net_sales") + 5;
-    expect(sheet.querySelector(`c[r="K${index}"] v`)?.textContent).toBe("90000");
-    expect(sheet.querySelector(`c[r="E${index}"]`)).toBeNull();
-    expect(sheet.querySelector(`c[r="D${index}"] v`)?.textContent).toBe("6000");
-    const targetIndex = report.weeks[0].rows.findIndex(r => r.id === "beverage_wastage_target_percent") + 5;
-    expect(sheet.querySelector(`c[r="K${targetIndex}"]`)?.getAttribute("s")).toBe("3");
-    expect(sheet.querySelector(`c[r="K${targetIndex}"] v`)?.textContent).toBe("0.0025");
+    const sales = fieldRow(sheet, report.weeks[0].rows.find(r => r.id === "net_sales")!.label);
+    expect(cell(sales, "J")?.querySelector("v")?.textContent).toBe("90000");
+    expect(cell(sales, "D")?.querySelector("v")).toBeNull();
+    expect(cell(sales, "C")?.querySelector("v")?.textContent).toBe("6000");
+    const target = fieldRow(sheet, report.weeks[0].rows.find(r => r.id === "beverage_wastage_target_percent")!.label);
+    expect(cell(target, "J")?.querySelector("v")?.textContent).toBe("0.0025");
     expect(JSON.stringify(report)).toBe(snapshot);
     expect(files.get("xl/worksheets/sheet4.xml")).toContain("Missing days are not zero");
+  });
+
+  it("formats sectioned reports and filterable detail tabs with readable numeric styles", () => {
+    const report = demoWeeklyReport("2026-10-26", 1);
+    const files = entries(weeklyReportWorkbook(report));
+    const styles = new DOMParser().parseFromString(files.get("xl/styles.xml")!, "application/xml");
+    const formats = styles.querySelectorAll("cellXfs > xf");
+    for (const [name, contents] of files) {
+      if (!name.startsWith("xl/worksheets/")) continue;
+      const sheet = new DOMParser().parseFromString(contents, "application/xml");
+      expect(sheet.querySelector("sheetView")?.getAttribute("showGridLines")).toBe("0");
+      expect(sheet.querySelector("pane")?.getAttribute("ySplit")).toBe(name.endsWith("sheet1.xml") ? "3" : "4");
+      expect(sheet.querySelector("mergeCell")?.getAttribute("ref")).toMatch(/^A1:[A-Z]+1$/);
+      if (sheet.querySelector('c[s="12"]')) expect(sheet.querySelector("autoFilter")).toBeNull();
+      else expect(sheet.querySelector("autoFilter")?.getAttribute("ref")).toMatch(/^A4:[A-Z]+\d+$/);
+      for (const cell of sheet.querySelectorAll("c")) {
+        expect(formats[Number(cell.getAttribute("s"))]).toBeDefined();
+      }
+    }
+    const sheet = new DOMParser().parseFromString(files.get("xl/worksheets/sheet2.xml")!, "application/xml");
+    expect(sheet.querySelector("pane")?.getAttribute("topLeftCell")).toBe("C5");
+    for (const section of new Set(report.weeks[0].rows.map(r => r.section))) {
+      const heading = fieldRow(sheet, section);
+      const index = Number(heading.getAttribute("r"));
+      expect(sheet.querySelector(`mergeCell[ref="A${index}:K${index}"]`)).not.toBeNull();
+      expect(sheet.querySelector(`row[r="${index + 1}"]`)?.textContent).toContain("Weekly value");
+    }
+    const sales = fieldRow(sheet, report.weeks[0].rows[0].label);
+    const nextSales = fieldRow(sheet, report.weeks[0].rows[1].label);
+    expect(cell(sales, "A")?.getAttribute("s")).not.toBe(cell(nextSales, "A")?.getAttribute("s"));
+    const target = fieldRow(sheet, report.weeks[0].rows.find(r => r.id === "beverage_wastage_target_percent")!.label);
+    const totalStyle = formats[Number(cell(target, "J")?.getAttribute("s"))];
+    expect(totalStyle.getAttribute("numFmtId")).toBe("165");
+    expect(totalStyle.getAttribute("fillId")).toBe("8");
+    expect(totalStyle.querySelector("alignment")?.getAttribute("wrapText")).toBe("1");
+    expect(sheet.querySelectorAll("col")).toHaveLength(11);
   });
 
   it("keeps formula-looking source text literal, escapes XML and labels demo exports", () => {
@@ -66,12 +111,72 @@ describe("weekly Excel snapshot", () => {
     const contents = files.get("xl/worksheets/sheet2.xml")!;
     expect(contents).toContain("DEMO —");
     expect(contents).toContain("=HYPERLINK(&quot;");
-    expect(contents).toContain("a &lt; b &amp; c");
+    expect(files.get("xl/worksheets/sheet3.xml")).toContain("a &lt; b &amp; c");
     expect(contents).not.toContain("\u0001");
   });
 
-  it("handles the largest bounded report without losing week tabs", () => {
-    const files = entries(weeklyReportWorkbook(demoWeeklyReport("2026-08-03", 13)));
+  it("keeps a compact scorecard for every week and all fields and values on dated tabs", () => {
+    const report = demoWeeklyReport("2026-08-03", 13);
+    report.weeks[1].rows.reverse();
+    const files = entries(weeklyReportWorkbook(report));
     expect((files.get("xl/workbook.xml")!.match(/<sheet /g) ?? []).length).toBe(18);
+    const summary = new DOMParser().parseFromString(files.get("xl/worksheets/sheet1.xml")!, "application/xml");
+    expect(summary.querySelectorAll("col")).toHaveLength(5);
+    const sales = [...summary.querySelectorAll("row")].filter(r => r.querySelector("c t")?.textContent === "Total sales ex GST");
+    expect(sales).toHaveLength(13);
+    report.weeks.forEach((week, i) => {
+      expect(cell(sales[i], "B")?.querySelector("v")?.textContent).toBe(String(week.rows.find(r => r.id === "net_sales")!.total));
+      const sheet = new DOMParser().parseFromString(files.get(`xl/worksheets/sheet${i + 2}.xml`)!, "application/xml");
+      for (const metric of week.rows) {
+        const row = fieldRow(sheet, metric.label);
+        const total = cell(row, "J")?.querySelector("v")?.textContent;
+        expect(total).toBe(metric.total === null ? undefined : String(metric.total));
+        metric.days.forEach((value, day) => expect(cell(row, ["C", "D", "E", "F", "G", "H", "I"][day])?.querySelector("v")?.textContent).toBe(value === null ? undefined : String(value)));
+      }
+    });
+  });
+
+  it("uses green/red for target comparisons, blue for targets and grey for unavailable results", () => {
+    const report = demoWeeklyReport("2026-10-19", 2);
+    const first = report.weeks[0];
+    const set = (week: typeof first, id: string, total: number | null, status = "QUALIFIED") => Object.assign(week.rows.find(r => r.id === id)!, { total, status });
+    set(first, "food_sales", 45600); // Exactly on its sales target.
+    set(first, "food_wastage_percent", 0.005); // Exactly on its maximum wastage target.
+    set(first, "beverage_wastage_percent", 0.01);
+    set(first, "beverage_variance_percent", -0.003);
+    set(first, "sales_reconciliation_difference", -100); // Has no approved performance threshold.
+    set(first, "food_cogs_percent", 0.1, "UNAVAILABLE");
+    set(report.weeks[1], "beverage_variance_percent", -0.0025); // Lower bound is inclusive.
+    set(report.weeks[1], "food_target", null);
+    const files = entries(weeklyReportWorkbook(report));
+    const styles = new DOMParser().parseFromString(files.get("xl/styles.xml")!, "application/xml");
+    const formats = styles.querySelectorAll("cellXfs > xf");
+    const fills = styles.querySelectorAll("fills > fill");
+    const fill = (sheet: Document, label: string, col = "J") => {
+      const style = Number(cell(fieldRow(sheet, label), col)?.getAttribute("s"));
+      return fills[Number(formats[style].getAttribute("fillId"))].querySelector("fgColor")?.getAttribute("rgb");
+    };
+    const week = new DOMParser().parseFromString(files.get("xl/worksheets/sheet2.xml")!, "application/xml");
+    const color = (id: string) => fill(week, first.rows.find(r => r.id === id)!.label);
+    expect(color("food_sales")).toBe("FFE3F3E8");
+    expect(color("beverage_sales")).toBe("FFFCE8E6");
+    expect(color("food_wastage_percent")).toBe("FFE3F3E8");
+    expect(color("beverage_wastage_percent")).toBe("FFFCE8E6");
+    expect(color("beverage_variance_percent")).toBe("FFFCE8E6");
+    expect(color("food_target")).toBe("FFEAF1F8");
+    expect(color("food_cogs_percent")).toBe("FFF0F1F3");
+    expect(color("sales_reconciliation_difference")).toBe("FFEAF1F8");
+    const next = new DOMParser().parseFromString(files.get("xl/worksheets/sheet3.xml")!, "application/xml");
+    expect(fill(next, first.rows.find(r => r.id === "beverage_variance_percent")!.label)).toBe("FFE3F3E8");
+    const summary = new DOMParser().parseFromString(files.get("xl/worksheets/sheet1.xml")!, "application/xml");
+    const food = [...summary.querySelectorAll("row")].filter(r => r.querySelector("c t")?.textContent === "Food sales");
+    expect(cell(food[1], "E")?.textContent).toBe("No target available");
+    expect(fill(summary, "Review rating", "E")).toBe("FFFFF3D6");
+    expect(fill(summary, "Food COGS rate", "E")).toBe("FFF0F1F3");
+    expect(summary.documentElement.textContent).toContain("Colours do not certify completeness");
+    expect(styles.querySelectorAll('font name[val="Arial"]')).toHaveLength(styles.querySelectorAll("font").length);
+    const countRow = fieldRow(week, first.rows.find(r => r.id === "sales_missing_tax_rows")!.label);
+    const countFormat = formats[Number(cell(countRow, "J")?.getAttribute("s"))].getAttribute("numFmtId");
+    expect(countFormat).toBe("166");
   });
 });
