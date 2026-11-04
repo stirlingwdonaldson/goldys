@@ -20,12 +20,6 @@ Update this summary when capabilities change, not for every implementation task.
 
 ## Read with care
 
-The current README incorrectly groups reviews with raw-only menu data. The metric
-catalogue contains superseded purchases/COGS and trading-cutoff text. The current
-architecture map mixes old permission descriptions with later approved exceptions.
-Correct these in place when promoting the reviewed documents; do not build against
-the outdated sentence or weaken an invariant to match it.
-
 Use the [issue index](roadmap.md) for proposed work and the [PRD](prd.md) for target
 scope. An issue closed as implemented still needs the appropriate acceptance
 evidence before being described as operationally verified.

@@ -2,6 +2,8 @@
 name: improve-codebase-architecture
 description: Scan a codebase for deepening opportunities, present them as a visual HTML report, then grill through whichever one you pick.
 disable-model-invocation: true
+metadata:
+  opencode/autoinvoke: "false"
 ---
 
 Goldy’s integration: follow `docs/agents/skills.md`; use the host skill loader or read the named skill directly.

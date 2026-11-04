@@ -36,7 +36,7 @@
         "agents/openai.yaml": "c061e39c3e0f9d865fb1b97556d485704af2a8a58f4b8221a8917a5c2074a32b"
       },
       "installed_files": {
-        "SKILL.md": "4dff1c6a8820e2a2fc0cfbacbd0c368d7b5c732d6da3744d910bb17cf8e72a86",
+        "SKILL.md": "0a939632f04a752d0f861c4b2fc0b17123423f28f646dcfc59d76462955c4f56",
         "agents/openai.yaml": "c061e39c3e0f9d865fb1b97556d485704af2a8a58f4b8221a8917a5c2074a32b"
       }
     },
@@ -46,7 +46,7 @@
         "agents/openai.yaml": "94cd0ab161fb468a836349f5ed482ba58ce8e709a05c57ce533d739dbd35cca9"
       },
       "installed_files": {
-        "SKILL.md": "5654122220504b625883d7d907ab78640b6e99e113da3c0dd3d759ab9b16ea7a",
+        "SKILL.md": "454ca6b886e9f5739e7219e699ecb669d1f34593e1d0ab35fc731c04d350eb44",
         "agents/openai.yaml": "94cd0ab161fb468a836349f5ed482ba58ce8e709a05c57ce533d739dbd35cca9"
       }
     },
@@ -68,7 +68,7 @@
       },
       "installed_files": {
         "HTML-REPORT.md": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528",
-        "SKILL.md": "19ebc343051ebd41959680ab08aa28e25c619ec386b2ce10effbf62fbd23d8d7",
+        "SKILL.md": "0edaaf301bcd755bda40cf241aac684676d0fb9be1ef0592cf6eaf9c8cd78763",
         "agents/openai.yaml": "c8cb20f68ebf0edb4e497bc11ae5fcaa196004e661cd189015b04f4109ced7f1"
       }
     },
@@ -102,7 +102,7 @@
         "agents/openai.yaml": "1c5b4d1e3d8e52287ef19cc2742fdbbfae1914ac75d33af3e4c8174f08cc55bb"
       },
       "installed_files": {
-        "SKILL.md": "2ab0f103e0f45ef68d24d65ba686f44ed1da6c10ca9ce5e270f4ab661710fdb8",
+        "SKILL.md": "e1fdf51b336d967e03f4971640d09913cf2016e2ec85ac1cd55713d44a9e9607",
         "agents/openai.yaml": "1c5b4d1e3d8e52287ef19cc2742fdbbfae1914ac75d33af3e4c8174f08cc55bb"
       }
     },
@@ -112,7 +112,7 @@
         "agents/openai.yaml": "21bc6215fffcd7614e9f772bb1760e87cc5fc7dcc707e7d282bc9414267a6090"
       },
       "installed_files": {
-        "SKILL.md": "7be3e090573f1403b63eba1c4cbd10c052a4467c245e528797e43cbf569a5e6d",
+        "SKILL.md": "e0ec2310bd9838344fbe49f1b1bfcff8accad80fa46f41662a906fdd8271ccc5",
         "agents/openai.yaml": "21bc6215fffcd7614e9f772bb1760e87cc5fc7dcc707e7d282bc9414267a6090"
       }
     },
@@ -122,7 +122,7 @@
         "agents/openai.yaml": "88bc81a11a6d52ac67aeaa76b8b619e387020d47c5133a4dd4927fd15c4ad073"
       },
       "installed_files": {
-        "SKILL.md": "8f0917d574638b96727a5240c7f847d37ca1c4750279ed025b65ba9eff36040c",
+        "SKILL.md": "c59afb7349236fe207455798f282bf160b7ead08b1719ddd0f31d3a0750fc936",
         "agents/openai.yaml": "88bc81a11a6d52ac67aeaa76b8b619e387020d47c5133a4dd4927fd15c4ad073"
       }
     },
