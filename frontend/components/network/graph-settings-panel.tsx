@@ -2,7 +2,10 @@
 
 import { useId, useState, type ReactNode } from "react";
 import { ChevronRight, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -23,28 +26,31 @@ export function GraphSettingsPanel({
 }) {
   if (!open) {
     return (
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="icon"
         onClick={() => onOpenChange(true)}
         aria-label="Graph settings"
-        className="absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-md border bg-background/90 text-muted-foreground shadow-sm backdrop-blur hover:text-foreground"
+        className="absolute right-3 top-3 z-10 size-8 bg-popover/95 shadow-md backdrop-blur"
       >
-        <SlidersHorizontal className="size-4" />
-      </button>
+        <SlidersHorizontal />
+      </Button>
     );
   }
   return (
     <aside
       aria-label="Graph settings"
-      className="absolute right-3 top-3 z-10 flex max-h-[calc(100%-1.5rem)] w-60 flex-col overflow-hidden rounded-lg border bg-background/95 text-sm shadow-sm backdrop-blur"
+      className="absolute right-3 top-3 z-10 flex max-h-[calc(100%-1.5rem)] w-64 flex-col overflow-hidden rounded-lg border bg-popover/95 text-popover-foreground shadow-lg backdrop-blur"
     >
-      <div className="flex items-center gap-1 border-b px-3 py-2">
-        <span className="flex-1 text-xs font-medium text-muted-foreground">Graph settings</span>
+      <div className="flex items-center gap-1.5 border-b bg-muted/40 px-3 py-2">
+        <SlidersHorizontal className="text-muted-foreground" aria-hidden="true" />
+        <span className="flex-1 text-sm font-medium">Graph settings</span>
         <IconButton label="Reset settings" onClick={onReset}>
-          <RotateCcw className="size-3.5" />
+          <RotateCcw />
         </IconButton>
         <IconButton label="Close settings" onClick={() => onOpenChange(false)}>
-          <X className="size-3.5" />
+          <X />
         </IconButton>
       </div>
       <div className="flex flex-col overflow-y-auto">{children}</div>
@@ -54,15 +60,17 @@ export function GraphSettingsPanel({
 
 function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+      className="size-7 text-muted-foreground"
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -79,12 +87,17 @@ export function SettingsSection({
   const [open, setOpen] = useState(defaultOpen);
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="border-b last:border-b-0">
-      <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-[13px] font-medium hover:bg-muted/50">
-        <ChevronRight
-          className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-90")}
-          aria-hidden="true"
-        />
-        {title}
+      <CollapsibleTrigger asChild>
+        <Button
+          variant="ghost"
+          className="group h-9 w-full justify-start gap-2 rounded-none px-3 text-ui font-medium"
+        >
+          <ChevronRight
+            className="text-muted-foreground transition-transform group-data-[state=open]:rotate-90"
+            aria-hidden="true"
+          />
+          {title}
+        </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="flex flex-col gap-2.5 px-3 pb-3 pt-0.5">{children}</CollapsibleContent>
     </Collapsible>
@@ -109,13 +122,16 @@ export function SettingsSearch({
         onSubmit();
       }}
     >
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-      <input
+      <Search
+        className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
+        aria-hidden="true"
+      />
+      <Input
         aria-label="Find a node"
         placeholder="Search…"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-8 w-full rounded-md border bg-background pl-8 pr-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-8 pl-8 text-ui"
       />
     </form>
   );
@@ -138,9 +154,9 @@ export function SettingsSwitch({
   return (
     <div className="flex items-center gap-2">
       {swatch && <span aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ background: swatch }} />}
-      <label htmlFor={id} className={cn("flex-1 text-[13px]", disabled && "text-muted-foreground")}>
+      <Label htmlFor={id} className={cn("flex-1 text-ui font-normal", disabled && "text-muted-foreground")}>
         {label}
-      </label>
+      </Label>
       <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
     </div>
   );
@@ -165,23 +181,25 @@ export function SettingsSlider({
 }) {
   const id = useId();
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-[13px]">
-        {label}
-      </label>
-      <div className="flex items-center gap-2">
-        <span className="w-9 shrink-0 text-xs tabular-nums text-muted-foreground">{format(value)}</span>
-        <input
-          id={id}
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(event) => onChange(Number(event.target.value))}
-          className="h-1.5 flex-1 cursor-pointer accent-foreground"
-        />
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={id} className="text-ui font-normal">
+          {label}
+        </Label>
+        <span className="rounded-md bg-muted px-1.5 py-0.5 text-2xs font-medium tabular-nums text-muted-foreground">
+          {format(value)}
+        </span>
       </div>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="h-1.5 w-full cursor-pointer accent-primary"
+      />
     </div>
   );
 }

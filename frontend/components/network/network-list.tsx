@@ -1,6 +1,7 @@
 "use client";
 
 import type { FlowTone } from "@/components/flow/types";
+import { Button } from "@/components/ui/button";
 import { StatusDot } from "@/components/ui/status-dot";
 import { cn } from "@/lib/utils";
 import type { NetworkGraph, NetworkKind } from "./types";
@@ -60,12 +61,13 @@ export function NetworkList({ graph, kinds, focusId, onFocus }: NetworkListProps
               const dot = DOT[node.tone];
               return (
                 <li key={node.id}>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => onFocus(node.id)}
                     aria-current={node.id === focusId ? "true" : undefined}
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted",
+                      "h-auto w-full justify-start gap-2 px-2 py-1.5 text-left text-sm font-normal",
                       node.id === focusId && "bg-muted font-medium",
                     )}
                   >
@@ -75,7 +77,7 @@ export function NetworkList({ graph, kinds, focusId, onFocus }: NetworkListProps
                       <span className="shrink-0 text-xs text-muted-foreground">{node.subtitle}</span>
                     )}
                     {toneText && <span className="sr-only">({toneText})</span>}
-                  </button>
+                  </Button>
                 </li>
               );
             })}
