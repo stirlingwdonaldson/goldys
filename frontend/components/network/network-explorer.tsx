@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useIsMobile } from "@/components/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { filterKinds, neighbourhood, neighboursOf } from "./graph-ops";
@@ -149,7 +152,7 @@ export function NetworkExplorer({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-lg border bg-card" style={{ height }}>
+    <Card className="relative overflow-hidden" style={{ height }}>
       <NetworkCanvas
         graph={shown}
         graphKey={local && focused ? `${graphKey}:local:${focused.id}:${depth}` : graphKey}
@@ -211,34 +214,35 @@ export function NetworkExplorer({
         {groupSet && (
           <SettingsSection title="Groups" defaultOpen>
             {groupSets.length > 1 && (
-              <div role="radiogroup" aria-label="Colour by" className="flex rounded-md border p-0.5 text-xs">
+              <ToggleGroup
+                type="single"
+                value={groupSet.id}
+                onValueChange={(id) => id && setGroupSetId(id)}
+                variant="outline"
+                size="sm"
+                attached
+                aria-label="Colour by"
+                className="w-full"
+              >
                 {groupSets.map((set) => (
-                  <button
-                    key={set.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={set.id === groupSet.id}
-                    onClick={() => setGroupSetId(set.id)}
-                    className={cn(
-                      "flex-1 rounded px-2 py-1",
-                      set.id === groupSet.id ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
+                  <ToggleGroupItem key={set.id} value={set.id} className="flex-1 text-xs">
                     {set.label}
-                  </button>
+                  </ToggleGroupItem>
                 ))}
-              </div>
+              </ToggleGroup>
             )}
-            <ul className="flex flex-col gap-1.5">
+            <ul className="flex flex-col gap-1">
               {counts(groupSet).map(({ group, count }) => (
-                <li key={group.id} className="flex items-center gap-2 text-[13px]">
+                <li key={group.id} className="flex items-center gap-2 text-ui">
                   <span
                     aria-hidden="true"
-                    className="size-2.5 shrink-0 rounded-full"
+                    className="size-2.5 shrink-0 rounded-full ring-1 ring-inset ring-foreground/10"
                     style={{ background: colours[group.colourVar] ?? `hsl(var(${group.colourVar}))` }}
                   />
-                  <span className="flex-1">{group.label}</span>
-                  <span className="text-xs tabular-nums text-muted-foreground">{count}</span>
+                  <span className="flex-1 truncate">{group.label}</span>
+                  <Badge variant="secondary" className="h-5 min-w-6 justify-center px-1.5 text-2xs tabular-nums">
+                    {count}
+                  </Badge>
                 </li>
               ))}
             </ul>
@@ -309,9 +313,16 @@ export function NetworkExplorer({
       {focusCard}
 
       <div className="sr-only">{list}</div>
-    </div>
+    </Card>
   );
 }
+
+const TONE_BADGE: Partial<Record<NetworkNode["tone"], "failed" | "conflict" | "missing" | "info">> = {
+  warn: "conflict",
+  fail: "failed",
+  missing: "missing",
+  info: "info",
+};
 
 function FocusCard({
   node,
@@ -330,34 +341,43 @@ function FocusCard({
 }) {
   const neighbours = neighboursOf(graph, node.id);
   const toneText = TONE_TEXT[node.tone];
+  const toneBadge = TONE_BADGE[node.tone];
   return (
     <section
       aria-label={`${node.label} details`}
       aria-live="polite"
       className={cn(
-        "flex flex-col gap-3 rounded-lg border bg-background/95 p-3 text-sm shadow-sm backdrop-blur",
+        "flex flex-col gap-3 rounded-lg border bg-popover/95 p-3 text-sm shadow-lg backdrop-blur",
         floating && "absolute bottom-3 left-3 z-10 max-h-[calc(100%-1.5rem)] w-72 overflow-y-auto",
       )}
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{node.label}</p>
-          {node.subtitle && <p className="text-xs text-muted-foreground">{node.subtitle}</p>}
-          {toneText && <p className="text-xs text-muted-foreground">{toneText}</p>}
+          <p className="truncate font-medium leading-tight">{node.label}</p>
+          {node.subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{node.subtitle}</p>}
+          {toneText && toneBadge && (
+            <Badge variant={toneBadge} className="mt-1.5">
+              {toneText}
+            </Badge>
+          )}
         </div>
-        {node.href && (
-          <Link href={node.href} className="pt-0.5 text-xs font-medium underline underline-offset-2">
-            Open
-          </Link>
-        )}
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label="Clear focus"
-          className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <X className="size-3.5" />
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          {node.href && (
+            <Button asChild variant="outline" size="sm" className="h-7 px-2 text-xs">
+              <Link href={node.href}>Open</Link>
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onClear}
+            aria-label="Clear focus"
+            className="size-7 text-muted-foreground"
+          >
+            <X />
+          </Button>
+        </div>
       </div>
       {extra}
       <div>
@@ -365,15 +385,16 @@ function FocusCard({
         <ul className="flex flex-col">
           {neighbours.map(({ node: other, edge }) => (
             <li key={other.id}>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => onFocus(other.id)}
-                className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-[13px] hover:bg-muted"
+                className="h-auto w-full justify-start gap-2 px-2 py-1.5 text-left text-ui font-normal"
                 title={edge.label}
               >
                 <span className="min-w-0 flex-1 truncate">{other.label}</span>
                 {edge.label && <span className="max-w-[45%] shrink-0 truncate text-xs text-muted-foreground">{edge.label}</span>}
-              </button>
+              </Button>
             </li>
           ))}
         </ul>

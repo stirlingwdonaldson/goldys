@@ -7,6 +7,7 @@ import Graph from "graphology";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import { SigmaContainer, useRegisterEvents, useSetSettings, useSigma } from "@react-sigma/core";
 import { Maximize, Minus, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { mixColour, toRgba } from "./colour";
 import { fa2Settings, labelThreshold, nodeSize, type ForceSettings } from "./graph-settings";
 import { initialPositions, readPositions, writePositions, type Positions } from "./layout-cache";
@@ -308,7 +309,7 @@ function Controller(props: NetworkCanvasProps & { model: NetworkGraphModel; toke
   const camera = sigma.getCamera();
   return (
     <div
-      className="absolute bottom-3 right-3 z-10 flex flex-col overflow-hidden rounded-md border bg-background/95 shadow-sm backdrop-blur"
+      className="absolute bottom-3 right-3 z-10 flex flex-col overflow-hidden rounded-md border bg-popover/95 shadow-md backdrop-blur"
       onMouseLeave={() => setHoverId(null)}
     >
       {[
@@ -323,16 +324,18 @@ function Controller(props: NetworkCanvasProps & { model: NetworkGraphModel; toke
           },
         },
       ].map(({ label, icon: Icon, run }) => (
-        <button
+        <Button
           key={label}
           type="button"
+          variant="ghost"
+          size="icon"
           aria-label={label}
           title={label}
           onClick={run}
-          className="flex size-7 items-center justify-center border-b text-muted-foreground last:border-b-0 hover:bg-muted hover:text-foreground"
+          className="size-8 rounded-none border-b text-muted-foreground last:border-b-0"
         >
-          <Icon className="size-3.5" />
-        </button>
+          <Icon />
+        </Button>
       ))}
     </div>
   );
