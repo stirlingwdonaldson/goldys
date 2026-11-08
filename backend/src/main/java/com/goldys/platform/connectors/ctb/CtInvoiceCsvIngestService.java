@@ -7,6 +7,7 @@ import com.goldys.platform.canonical.CanonicalInvoiceQuery;
 import com.goldys.platform.canonical.InvoiceIdentity;
 import com.goldys.platform.canonical.InvoiceInput;
 import com.goldys.platform.canonical.InvoiceLineInput;
+import com.goldys.platform.canonical.InvoiceRevisionWithheldException;
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.StockItemIngest;
 import com.goldys.platform.canonical.StockItemInput;
@@ -14,6 +15,7 @@ import com.goldys.platform.ingestion.FetchMethod;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
+import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -112,29 +114,26 @@ public class CtInvoiceCsvIngestService {
         IngestionStageKind.PARSED,
         invoices.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
 
+    int withheld = 0;
     try {
-      for (CtInvoice invoice : invoices) {
-        InvoiceIdentity identity =
-            canonical.recordCsv(
-                new InvoiceInput(
-                    "CTB",
-                    invoice.invoiceNumber(),
-                    invoice.supplierName(),
-                    invoice.supplierCode(),
-                    invoice.invoiceDate(),
-                    invoice.dueDate(),
-                    invoice.incTaxAmount(),
-                    invoice.purchaseNumber(),
-                    null, // account number — not in the current export
-                    null, // tax code — not in the current export
-                    invoice.amountExTax(),
-                    invoice.gstAmount(),
-                    invoice.freightAmount(),
-                    null, // freight GST — not a direct column in the current export
-                    firstPdfFilename(invoice),
-                    rawId),
-                prepareLines(invoice, rawId),
-                completeInvoiceSnapshots);
+      for (int index = 0; index < invoices.size(); index++) {
+        CtInvoice invoice = invoices.get(index);
+        InvoiceIdentity identity;
+        try {
+          identity = recordHeaderAndLines(invoice, rawId);
+        } catch (InvoiceRevisionWithheldException e) {
+          // recordCsv rolls back this invoice; unrelated invoices in the export can still commit.
+          withheld++;
+          ingestion.recordQualification(
+              rawId,
+              "INVOICE_REVISION_WITHHELD",
+              "Invoice at export position "
+                  + (index + 1)
+                  + " of "
+                  + invoices.size()
+                  + " withheld: complete-versus-partial semantics require confirmation");
+          continue;
+        }
         flagPdfAnomalies(invoice);
 
         for (CtInvoiceLine line : invoice.lines())
@@ -152,6 +151,16 @@ public class CtInvoiceCsvIngestService {
         if (!unverifiedBasis && !flags.hasUnverifiedAmountBasis(invoice.invoiceNumber()))
           convergePdfLinesAfterCsvIngest(identity.logicalEntityId(), invoice.invoiceNumber());
       }
+      if (withheld > 0) {
+        // Keep the SFTP file available for review/retry instead of marking a partial import done.
+        throw new ConnectorFetchException(
+            "INVOICE_REVISION_WITHHELD",
+            withheld
+                + " of "
+                + invoices.size()
+                + " invoices withheld: complete-versus-partial semantics require confirmation;"
+                + " unaffected invoices processed, retained export requires review");
+      }
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
       throw e;
@@ -160,6 +169,29 @@ public class CtInvoiceCsvIngestService {
         rawId,
         IngestionStageKind.CANONICALIZED,
         invoices.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
+  }
+
+  private InvoiceIdentity recordHeaderAndLines(CtInvoice invoice, UUID rawId) {
+    return canonical.recordCsv(
+        new InvoiceInput(
+            "CTB",
+            invoice.invoiceNumber(),
+            invoice.supplierName(),
+            invoice.supplierCode(),
+            invoice.invoiceDate(),
+            invoice.dueDate(),
+            invoice.incTaxAmount(),
+            invoice.purchaseNumber(),
+            null, // account number — not in the current export
+            null, // tax code — not in the current export
+            invoice.amountExTax(),
+            invoice.gstAmount(),
+            invoice.freightAmount(),
+            null, // freight GST — not a direct column in the current export
+            firstPdfFilename(invoice),
+            rawId),
+        prepareLines(invoice, rawId),
+        completeInvoiceSnapshots);
   }
 
   /** Records one invoice's lines with content-based identity, then closes any removed CSV lines. */

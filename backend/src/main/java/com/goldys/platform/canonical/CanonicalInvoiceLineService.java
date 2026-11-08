@@ -155,8 +155,7 @@ class CanonicalInvoiceLineService {
                           .findFirst()
                           .orElse(null));
       if (match == null && !existing.isEmpty() && !completeSnapshot) {
-        throw new IllegalArgumentException(
-            "Invoice export revision withheld: complete-versus-partial semantics require confirmation");
+        throw new InvoiceRevisionWithheldException();
       }
       if (match != null) {
         matches.put(input, match);

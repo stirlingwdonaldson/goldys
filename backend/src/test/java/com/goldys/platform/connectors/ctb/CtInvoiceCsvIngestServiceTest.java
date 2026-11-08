@@ -1,6 +1,7 @@
 package com.goldys.platform.connectors.ctb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -127,6 +128,28 @@ class CtInvoiceCsvIngestServiceTest {
 
     verify(canonical, times(2)).recordCsv(any(InvoiceInput.class), anyList(), eq(false));
     assertThat(recordedLines()).hasSize(2);
+  }
+
+  @Test
+  void unexpectedCanonicalFailureStillStopsTheFileAndRecordsFailure() {
+    org.mockito.Mockito.reset(canonical);
+    UUID raw = UUID.randomUUID();
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any())).thenReturn(raw);
+    var failure = new IllegalArgumentException("Unexpected canonical failure");
+    when(canonical.recordCsv(any(InvoiceInput.class), anyList(), eq(false))).thenThrow(failure);
+    byte[] csv =
+        ("Invoice,Supplier,Date,StockCode,StockDescription,LineQuantity,LineTotalExTax\n"
+                + "INV-1,Bruno's,2026-09-20,STK-7,Beer,1 EACH,120.00\n"
+                + "INV-2,Bruno's,2026-09-21,STK-8,Chips,2 EACH,10.00\n")
+            .getBytes(StandardCharsets.UTF_8);
+
+    assertThatThrownBy(() -> service().ingest(csv)).isSameAs(failure);
+
+    verify(canonical).recordCsv(any(InvoiceInput.class), anyList(), eq(false));
+    verify(ingestion)
+        .recordStage(raw, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
+    verify(ingestion, never()).recordQualification(any(), any(), any());
+    verify(stockItems, never()).record(any());
   }
 
   @Test
