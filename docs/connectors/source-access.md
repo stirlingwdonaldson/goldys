@@ -370,6 +370,11 @@ canonical source amounts stay unchanged and purchase summaries explicitly qualif
 Open holds prevent automatic PDF-gap inserts and CSV-driven PDF-line pruning; a later observation
 does not silently clear an earlier hold. Credits retain supplied signs, never an inferred flip.
 Invoice replacement/deletion semantics and individual PDF/source discrepancies remain unresolved.
+Unconfirmed invoice revisions are held individually while unaffected invoices in the same CSV
+continue processing. Each hold is visible as `INVOICE_REVISION_WITHHELD`, identified by invoice
+position in the retained export. The run remains PARTIAL with a failed canonicalization stage;
+SFTP retains the file for review/retry. This does not enable complete-snapshot replacement or
+approve the held revisions.
 
 ## Lightspeed ongoing sale-line metadata qualification
 

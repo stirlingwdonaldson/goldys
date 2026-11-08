@@ -1,0 +1,7 @@
+Invoice,Supplier,SupplierCode,Date,StockCode,StockDescription,LineQuantity,LineUnitCostExTax,LineTotalExTax,InvoiceTotalExTax
+BEFORE,Example A,A,2026-11-04,BEFORE,Before hold,1,10,10,10
+HELD-AMOUNT,Example A,A,2026-10-28,ROUND,Rounding,1,0.12,0.12,0.12
+BETWEEN,Example A,A,2026-11-04,BETWEEN,Between holds,1,20,20,20
+HELD-ADDITION,Example B,B,2026-10-28,BASE,Existing product,1,10,10,10
+HELD-ADDITION,Example B,B,2026-10-28,EXTRA,Additional product,0,225.72,0,10
+AFTER,Example A,A,2026-11-04,AFTER,After holds,1,30,30,30

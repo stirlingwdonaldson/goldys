@@ -1,7 +1,9 @@
 package com.goldys.platform.connectors.ctb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -213,7 +215,7 @@ class SupplierInvoiceIdentityIntegrationTest {
                             + row("REV", "Supplier", "SUP", "2026-10-01", "A", "Item", "1", "20")
                             + ",20")
                         .getBytes(StandardCharsets.UTF_8)))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ConnectorFetchException.class)
         .hasMessageContaining("complete-versus-partial");
     assertThat(count("raw_record")).isEqualTo(rawBefore + 1);
     assertThat(currentLineCount()).isEqualTo(1);
@@ -227,6 +229,72 @@ class SupplierInvoiceIdentityIntegrationTest {
                 "select line_total from canonical_invoice_line where superseded_at is null",
                 java.math.BigDecimal.class))
         .isEqualByComparingTo("10");
+  }
+
+  @Test
+  void revisionHoldsDoNotBlockOtherInvoicesAndRetriesAreIdempotent() throws Exception {
+    // Sanitised reproducer of the observed one-cent revision and added zero-quantity line.
+    var fixtures = java.nio.file.Path.of("src/test/resources/fixtures/ctb");
+    csvIngest.ingest(
+        java.nio.file.Files.readAllBytes(fixtures.resolve("invoice-isolation-existing.csv")));
+    byte[] mixed =
+        java.nio.file.Files.readAllBytes(fixtures.resolve("invoice-isolation-revisions.csv"));
+
+    for (int attempt = 0; attempt < 2; attempt++) {
+      assertThatThrownBy(() -> csvIngest.ingest(mixed))
+          .isInstanceOfSatisfying(
+              ConnectorFetchException.class,
+              e -> assertThat(e.failureType()).isEqualTo("INVOICE_REVISION_WITHHELD"))
+          .hasMessageContaining("2 of 5 invoices withheld");
+
+      // Held headers/lines roll back together; good invoices before, between and after commit once.
+      assertThat(count("canonical_invoice")).isEqualTo(5);
+      assertThat(totalLineVersions()).isEqualTo(5);
+      assertThat(currentLineCount()).isEqualTo(5);
+      assertThat(
+              jdbc.queryForList(
+                  "select invoice_number from canonical_invoice where superseded_at is null order by invoice_number",
+                  String.class))
+          .containsExactly("AFTER", "BEFORE", "BETWEEN", "HELD-ADDITION", "HELD-AMOUNT");
+      assertThat(
+              jdbc.queryForObject(
+                  "select amount_ex_tax from canonical_invoice where invoice_number='HELD-AMOUNT' and superseded_at is null",
+                  java.math.BigDecimal.class))
+          .isEqualByComparingTo("0.11");
+      assertThat(
+              jdbc.queryForObject(
+                  "select line_total from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is null",
+                  java.math.BigDecimal.class))
+          .isEqualByComparingTo("0.11");
+      assertThat(
+              jdbc.queryForObject(
+                  "select count(*) from stock_item where stock_code='EXTRA'", Integer.class))
+          .isZero();
+
+      var runId =
+          jdbc.queryForObject(
+              "select ingestion_run_id from raw_record where payload_bytes=? order by fetched_at desc limit 1",
+              java.util.UUID.class,
+              mixed);
+      assertThat(
+              jdbc.queryForObject(
+                  "select status from ingestion_run where id=?", String.class, runId))
+          .isEqualTo("PARTIAL");
+      assertThat(
+              jdbc.queryForList(
+                  "select detail from ingestion_failure where ingestion_run_id=? and failure_type='INVOICE_REVISION_WITHHELD' order by detail",
+                  String.class,
+                  runId))
+          .containsExactly(
+              "Invoice at export position 2 of 5 withheld: complete-versus-partial semantics require confirmation",
+              "Invoice at export position 4 of 5 withheld: complete-versus-partial semantics require confirmation");
+      assertThat(
+              jdbc.queryForList(
+                  "select outcome from ingestion_stage where ingestion_run_id=? and stage='CANONICALIZED'",
+                  String.class,
+                  runId))
+          .containsExactly("FAILED");
+    }
   }
 
   @Test

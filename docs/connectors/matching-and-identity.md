@@ -116,7 +116,11 @@ so a second source can be added later without re-deriving these decisions.
 - **Default export policy:** absent lines are retained. A known subset or identical/reordered
   delivery is safe; changed/additional occurrences on an existing invoice are withheld explicitly
   because complete-versus-partial and revision semantics have not been confirmed. Header/line
-  validation is atomic; a failure leaves raw bytes and a failed processing stage available.
+  validation is atomic per invoice; a failure leaves raw bytes and a failed processing stage available.
+  An unconfirmed revision holds only that invoice: unrelated invoices in the same CSV continue.
+  Each hold records `INVOICE_REVISION_WITHHELD` with its one-based invoice position in the export.
+  The run stays PARTIAL and the SFTP file remains available for review and retry; identical accepted
+  invoices replay without creating new versions. Unexpected processing errors still stop the file.
 - `app.ctb-invoice-csv.complete-invoice-snapshots=true` permits authoritative replacement only
   after source completeness is confirmed. It defaults false. Tests that exercise replacement
   declare that policy for their fixtures; it is not a production policy.

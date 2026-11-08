@@ -1,0 +1,3 @@
+Invoice,Supplier,SupplierCode,Date,StockCode,StockDescription,LineQuantity,LineUnitCostExTax,LineTotalExTax,InvoiceTotalExTax
+HELD-AMOUNT,Example A,A,2026-10-28,ROUND,Rounding,1,0.11,0.11,0.11
+HELD-ADDITION,Example B,B,2026-10-28,BASE,Existing product,1,10,10,10
