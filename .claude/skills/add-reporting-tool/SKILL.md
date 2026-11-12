@@ -26,9 +26,13 @@ composite answer (several metrics in one table, a status summary).
      it and when not to (the model chooses tools from this text);
    - `resource()` is the permission resource; `ToolDispatcher` enforces it, plus each
      catalogue metric's own permission;
-   - `execute` reads through `MetricQueryService` / semantic queries only and returns
-     widget specs via `WidgetRenderer`;
-   - implement `toMetricQueries` so the answer can be saved as a dashboard widget.
+   - catalogue query tools extend `MetricReportingTool`: `toMetricQueries` prepares
+     every read (including reference periods), and `renderType` chooses its widget;
+     the dispatcher authorizes that same list before execution. Shared assembly
+     preserves result notices/provenance; use `additionalNotices` for extra context;
+   - ranked and non-catalogue tools keep explicit semantic reads in `execute`.
+     Ranked tools declare their metric via `toMetricQueries` for authorization;
+     non-catalogue tools retain their resource gate and an empty metric list.
    `ToolRegistry` picks up every `ReportingTool` bean; nothing else to register.
 4. Add eval cases to `backend/src/test/resources/conversational-eval/questions.json`
    (question, role, `expectedTools`), including one where the tool should *not* be

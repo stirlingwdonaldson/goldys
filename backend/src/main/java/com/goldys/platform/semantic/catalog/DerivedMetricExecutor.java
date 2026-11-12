@@ -75,22 +75,14 @@ public class DerivedMetricExecutor implements MetricExecutor {
 
   @Override
   public MetricResult evaluate(MetricQuery query) {
+    DerivedFormula formula = catalog.formula(query.metric());
+    if (formula != null) {
+      return switch (formula.operation()) {
+        case RATIO -> ratio(query, formula.left(), formula.right());
+        case DIFFERENCE -> difference(query, formula.left(), formula.right());
+      };
+    }
     return switch (query.metric()) {
-      case RESERVATIONS_NO_SHOW_RATE ->
-          ratio(query, MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_EXPECTED_BOOKINGS);
-      case RESERVATIONS_BOOKING_TO_COVER_CONVERSION ->
-          ratio(query, MetricId.RESERVATIONS_ATTENDED, MetricId.RESERVATIONS_BOOKINGS);
-      case RESERVATIONS_AVG_PARTY_SIZE ->
-          ratio(query, MetricId.RESERVATIONS_COVERS, MetricId.RESERVATIONS_ATTENDED);
-      case SALES_AVERAGE_SPEND_PER_COVER ->
-          ratio(query, MetricId.SALES_GROSS, MetricId.RESERVATIONS_COVERS);
-      case SALES_FOOD_SHARE -> ratio(query, MetricId.SALES_FOOD, MetricId.SALES_NET);
-      case LABOUR_HOURS_PER_COVER ->
-          ratio(query, MetricId.LABOUR_ACTUAL_HOURS, MetricId.RESERVATIONS_COVERS);
-      case LABOUR_COST_PER_COVER ->
-          ratio(query, MetricId.LABOUR_COST, MetricId.RESERVATIONS_COVERS);
-      case LABOUR_HOURS_VARIANCE ->
-          difference(query, MetricId.LABOUR_SCHEDULED_HOURS, MetricId.LABOUR_ACTUAL_HOURS);
       case INVENTORY_FOOD_COST_PERCENT ->
           new TimeSeriesResult(
               query.metric(),

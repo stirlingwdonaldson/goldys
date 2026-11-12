@@ -74,6 +74,34 @@ class CompareMetricPeriodsToolTest {
   }
 
   @Test
+  void preservesQualificationsFromBothPeriods() {
+    MetricQueryService metrics = mock(MetricQueryService.class);
+    TimeSeriesResult current = tsResult(MetricId.SALES_GROSS, JAN_8, JAN_14, point(JAN_8, "1100"));
+    TimeSeriesResult reference = tsResult(MetricId.SALES_GROSS, JAN_1, JAN_7, point(JAN_1, "1000"));
+    when(metrics.query(any()))
+        .thenReturn(
+            new TimeSeriesResult(
+                current.metric(),
+                current.series(),
+                List.of("Current period coverage unverified"),
+                current.provenance()))
+        .thenReturn(
+            new TimeSeriesResult(
+                reference.metric(),
+                reference.series(),
+                List.of("Reference period has missing observations"),
+                reference.provenance()));
+
+    ToolResult result = tool(metrics).execute(input(Comparison.PREVIOUS_WEEK), OWNER);
+
+    assertThat(result.notices())
+        .contains(
+            "Current period coverage unverified",
+            "Reference period has missing observations",
+            "vs PREVIOUS_WEEK: 10.0%");
+  }
+
+  @Test
   void omitsDeltaWhenReferenceIsZero() {
     MetricQueryService metrics = mock(MetricQueryService.class);
     when(metrics.query(any()))
@@ -140,12 +168,14 @@ class CompareMetricPeriodsToolTest {
   }
 
   @Test
-  void toMetricQueriesReturnsCurrentRangeForPerMetricAuth() {
+  void toMetricQueriesIncludesBothExecutedRanges() {
     CompareMetricPeriodsTool tool = tool(mock(MetricQueryService.class));
 
     List<MetricQuery> queries = tool.toMetricQueries(input(Comparison.PREVIOUS_WEEK));
 
-    assertThat(queries).hasSize(1);
+    assertThat(queries).hasSize(2);
+    assertThat(queries.get(1).range()).isEqualTo(new TimeRange(JAN_1, JAN_7, Calendar.CALENDAR));
+    assertThat(queries.get(1).comparison()).isNull();
     MetricQuery q = queries.get(0);
     assertThat(q.metric()).isEqualTo(MetricId.SALES_GROSS);
     assertThat(q.range().from()).isEqualTo(JAN_8);

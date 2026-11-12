@@ -1,7 +1,6 @@
 package com.goldys.platform.reporting;
 
 import com.goldys.platform.auth.ResourceKey;
-import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricQuery;
@@ -9,10 +8,8 @@ import com.goldys.platform.semantic.catalog.MetricQueryService;
 import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
-import com.goldys.platform.widget.WidgetSpec;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,13 +18,10 @@ import org.springframework.stereotype.Component;
  * the derived ratios are deferred — see the dashboards design spec §18.
  */
 @Component
-public class GetReservationSummaryTool implements ReportingTool {
-  private final MetricQueryService metrics;
-  private final WidgetRenderer renderer;
+public class GetReservationSummaryTool extends MetricReportingTool {
 
   public GetReservationSummaryTool(MetricQueryService metrics, WidgetRenderer renderer) {
-    this.metrics = metrics;
-    this.renderer = renderer;
+    super(metrics, renderer);
   }
 
   @Override
@@ -56,18 +50,8 @@ public class GetReservationSummaryTool implements ReportingTool {
   }
 
   @Override
-  public ToolResult execute(ToolInput input, UserRole role) {
-    if (!(input instanceof GetReservationSummaryInput in)) {
-      throw new IllegalArgumentException(
-          "Expected GetReservationSummaryInput, got " + input.getClass().getSimpleName());
-    }
-    List<MetricResult> results = toMetricQueries(in).stream().map(metrics::query).toList();
-    WidgetSpec widget = renderer.render(UUID.randomUUID().toString(), "table", results);
-    return new ToolResult(
-        widget,
-        results.stream().flatMap(r -> r.notices().stream()).toList(),
-        results.stream().map(MetricResult::provenance).toList(),
-        List.of());
+  protected String renderType(List<MetricResult> results) {
+    return "table";
   }
 
   @Override

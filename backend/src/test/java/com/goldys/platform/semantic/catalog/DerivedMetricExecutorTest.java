@@ -53,6 +53,78 @@ class DerivedMetricExecutorTest {
         catalog);
   }
 
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.EnumSource(
+      value = MetricId.class,
+      names = {
+        "RESERVATIONS_NO_SHOW_RATE",
+        "RESERVATIONS_BOOKING_TO_COVER_CONVERSION",
+        "RESERVATIONS_AVG_PARTY_SIZE",
+        "SALES_AVERAGE_SPEND_PER_COVER",
+        "SALES_FOOD_SHARE",
+        "LABOUR_HOURS_PER_COVER",
+        "LABOUR_COST_PER_COVER",
+        "LABOUR_HOURS_VARIANCE"
+      })
+  void arithmeticReadsMatchPermissionAndTrustConstituents(MetricId metric) {
+    MetricCatalog catalog = new MetricCatalog();
+    var reservationsExecutor = mock(ReservationMetricExecutor.class);
+    var salesExecutor = mock(SalesMetricExecutor.class);
+    var labourExecutor = mock(LabourMetricExecutor.class);
+    var inventoryExecutor = mock(InventoryMetricExecutor.class);
+    var foodExecutor = mock(FoodBevMetricExecutor.class);
+    List<MetricId> reads = new ArrayList<>();
+    for (MetricExecutor base :
+        List.of(
+            reservationsExecutor, salesExecutor, labourExecutor, inventoryExecutor, foodExecutor)) {
+      when(base.evaluate(org.mockito.ArgumentMatchers.any()))
+          .thenAnswer(
+              invocation -> {
+                MetricQuery query = invocation.getArgument(0);
+                reads.add(query.metric());
+                return new TimeSeriesResult(
+                    query.metric(),
+                    List.of(
+                        new MetricSeries(null, List.of(new MetricPoint(SEP_13, BigDecimal.ONE)))),
+                    List.of(),
+                    new MetricProvenance(
+                        query.metric(),
+                        "1",
+                        query.range(),
+                        query.grain(),
+                        "test",
+                        null,
+                        List.of(),
+                        "1"));
+              });
+    }
+    var executor =
+        new DerivedMetricExecutor(
+            reservationsExecutor,
+            salesExecutor,
+            labourExecutor,
+            inventoryExecutor,
+            mock(ProductMetricExecutor.class),
+            foodExecutor,
+            labour,
+            product,
+            catalog);
+
+    executor.evaluate(
+        new MetricQuery(
+            metric,
+            new TimeRange(SEP_13, SEP_13, Calendar.CALENDAR),
+            TimeGrain.DAY,
+            Set.of(),
+            null));
+
+    assertThat(reads).containsExactlyInAnyOrderElementsOf(catalog.constituents(metric));
+    Set<String> required = new java.util.HashSet<>();
+    required.add(catalog.definition(metric).requiredPermission());
+    reads.forEach(id -> required.add(catalog.definition(id).requiredPermission()));
+    assertThat(catalog.requiredPermissions(metric)).isEqualTo(required);
+  }
+
   @Test
   void exposesAllTwelveDerivedIds() {
     assertThat(executor().ids())

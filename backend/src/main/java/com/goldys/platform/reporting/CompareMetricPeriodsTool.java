@@ -1,7 +1,6 @@
 package com.goldys.platform.reporting;
 
 import com.goldys.platform.auth.ResourceKey;
-import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.Comparison;
 import com.goldys.platform.semantic.catalog.ComparisonService;
@@ -12,12 +11,10 @@ import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.semantic.catalog.MetricSeries;
 import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.semantic.catalog.TimeSeriesResult;
-import com.goldys.platform.widget.WidgetSpec;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,15 +23,12 @@ import org.springframework.stereotype.Component;
  * delta.
  */
 @Component
-public class CompareMetricPeriodsTool implements ReportingTool {
-  private final MetricQueryService metrics;
-  private final WidgetRenderer renderer;
+public class CompareMetricPeriodsTool extends MetricReportingTool {
   private final ComparisonService comparisons;
 
   public CompareMetricPeriodsTool(
       MetricQueryService metrics, WidgetRenderer renderer, ComparisonService comparisons) {
-    this.metrics = metrics;
-    this.renderer = renderer;
+    super(metrics, renderer);
     this.comparisons = comparisons;
   }
 
@@ -65,35 +59,34 @@ public class CompareMetricPeriodsTool implements ReportingTool {
   }
 
   @Override
-  public ToolResult execute(ToolInput input, UserRole role) {
+  protected String renderType(List<MetricResult> results) {
+    return "bar-chart";
+  }
+
+  @Override
+  protected List<String> additionalNotices(List<MetricQuery> queries, List<MetricResult> results) {
+    BigDecimal delta =
+        ComparisonService.deltaPercent(
+            totalOf((TimeSeriesResult) results.get(0)), totalOf((TimeSeriesResult) results.get(1)));
+    return List.of(
+        "vs "
+            + queries.get(0).comparison()
+            + (delta == null
+                ? ""
+                : ": " + delta.movePointRight(2).setScale(1, RoundingMode.HALF_UP) + "%"));
+  }
+
+  @Override
+  public List<MetricQuery> toMetricQueries(ToolInput input) {
     CompareMetricPeriodsInput in = require(input);
     if (in.comparison() == Comparison.BUDGET || in.comparison() == Comparison.FORECAST) {
       throw new IllegalArgumentException("no data source yet for " + in.comparison());
     }
     MetricQuery current = currentQuery(in);
-    TimeRange reference = comparisons.referenceRange(current);
-    MetricQuery referenceQuery =
-        new MetricQuery(in.metric(), reference, in.grain(), Set.of(), null);
-    MetricResult cur = metrics.query(current);
-    MetricResult ref = metrics.query(referenceQuery);
-    BigDecimal delta =
-        ComparisonService.deltaPercent(
-            totalOf((TimeSeriesResult) cur), totalOf((TimeSeriesResult) ref));
-    WidgetSpec widget =
-        renderer.render(UUID.randomUUID().toString(), "bar-chart", List.of(cur, ref));
-    String notice =
-        "vs "
-            + in.comparison()
-            + (delta == null
-                ? ""
-                : ": " + delta.movePointRight(2).setScale(1, RoundingMode.HALF_UP) + "%");
-    return new ToolResult(
-        widget, List.of(notice), List.of(cur.provenance(), ref.provenance()), List.of());
-  }
-
-  @Override
-  public List<MetricQuery> toMetricQueries(ToolInput input) {
-    return List.of(currentQuery(require(input)));
+    MetricQuery reference =
+        new MetricQuery(
+            in.metric(), comparisons.referenceRange(current), in.grain(), Set.of(), null);
+    return List.of(current, reference);
   }
 
   private static MetricQuery currentQuery(CompareMetricPeriodsInput in) {

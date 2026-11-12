@@ -1,7 +1,6 @@
 package com.goldys.platform.reporting;
 
 import com.goldys.platform.auth.ResourceKey;
-import com.goldys.platform.auth.UserRole;
 import com.goldys.platform.semantic.catalog.Calendar;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
 import com.goldys.platform.semantic.catalog.MetricId;
@@ -10,22 +9,17 @@ import com.goldys.platform.semantic.catalog.MetricQueryService;
 import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.semantic.catalog.RankedListResult;
 import com.goldys.platform.semantic.catalog.TimeRange;
-import com.goldys.platform.widget.WidgetSpec;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 /** The general single-metric tool: query any catalogue metric and render it. */
 @Component
-public class GetMetricTool implements ReportingTool {
-  private final MetricQueryService metrics;
-  private final WidgetRenderer renderer;
+public class GetMetricTool extends MetricReportingTool {
   private final MetricCatalog catalog;
 
   public GetMetricTool(MetricQueryService metrics, WidgetRenderer renderer, MetricCatalog catalog) {
-    this.metrics = metrics;
-    this.renderer = renderer;
+    super(metrics, renderer);
     this.catalog = catalog;
   }
 
@@ -56,17 +50,13 @@ public class GetMetricTool implements ReportingTool {
   }
 
   @Override
-  public ToolResult execute(ToolInput input, UserRole role) {
-    if (!(input instanceof GetMetricInput in)) {
-      throw new IllegalArgumentException(
-          "Expected GetMetricInput, got " + input.getClass().getSimpleName());
-    }
-    List<MetricResult> results = toMetricQueries(in).stream().map(metrics::query).toList();
-    MetricResult r = results.get(0);
-    String type = r instanceof RankedListResult ? "ranked-list" : "time-series";
-    WidgetSpec widget = renderer.render(UUID.randomUUID().toString(), type, results);
-    List<MetricId> related = new ArrayList<>(catalog.related(r.metric()));
-    return new ToolResult(widget, r.notices(), List.of(r.provenance()), related);
+  protected String renderType(List<MetricResult> results) {
+    return results.get(0) instanceof RankedListResult ? "ranked-list" : "time-series";
+  }
+
+  @Override
+  protected List<MetricId> relatedMetrics(List<MetricResult> results) {
+    return new ArrayList<>(catalog.related(results.get(0).metric()));
   }
 
   @Override
