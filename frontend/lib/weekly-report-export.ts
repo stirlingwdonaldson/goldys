@@ -1,4 +1,5 @@
 import type { WeeklyReport, WeeklyReportRow, WeeklyReportWeek } from "./api/types";
+import { presentWeeklyAssessment } from "./weekly-report-assessment";
 
 type Tone = "good" | "bad" | "target" | "qualified" | "unavailable" | "total";
 type Cell = string | number | null | { value: string | number; unit?: WeeklyReportRow["unit"]; tone?: Tone };
@@ -7,42 +8,15 @@ const numberUnits = ["AUD", "PERCENT", "count", "STARS"];
 const numberTones = ["normal", "band", "good", "bad", "target", "total", "unavailable"];
 const textStyles: Record<Tone, number> = { good: 41, bad: 42, qualified: 43, unavailable: 44, target: 45, total: 46 };
 
-const comparisonTargets: Record<string, [string | null, string | null]> = {
-  food_sales: ["food_target", null], beverage_sales: ["beverage_target", null], net_sales: ["sales_target", null],
-  food_wastage_percent: [null, "food_wastage_target_percent"],
-  beverage_wastage_percent: [null, "beverage_wastage_target_percent"],
-  total_wastage_percent: [null, "total_wastage_target_percent"],
-  food_cogs_percent: [null, "food_cogs_target_percent"], beverage_cogs_percent: [null, "beverage_cogs_target_percent"],
-  food_variance_percent: ["food_variance_target_min", "food_variance_target_max"],
-  beverage_variance_percent: ["beverage_variance_target_min", "beverage_variance_target_max"],
-  cash_variance_percent: ["cash_variance_target_min", "cash_variance_target_max"],
-};
 const headlineMetrics = new Set(["net_sales", "gross_sales", "payments", "total_wastage", "purchases", "total_theoretical_cogs", "review_average"]);
 const salesDifferences = new Set(["sales_difference", "sales_difference_percent", "food_difference", "food_difference_percent", "beverage_difference", "beverage_difference_percent"]);
-
-function qualifiedTotal(row: WeeklyReportRow | undefined): number | null {
-  return row?.status === "QUALIFIED" && row.total !== null && Number.isFinite(row.total) ? row.total : null;
-}
-
-function performance(week: WeeklyReportWeek, row: WeeklyReportRow): { tone: Tone; label: string } {
-  const actual = qualifiedTotal(row);
-  if (actual === null) return { tone: "unavailable", label: "Unavailable" };
-  if (salesDifferences.has(row.id)) return actual >= 0 ? { tone: "good", label: "At / above target" } : { tone: "bad", label: "Below target" };
-  const targets = comparisonTargets[row.id];
-  if (!targets) return { tone: "qualified", label: "Source-qualified" };
-  const bounds = targets.map(id => id === null ? null : qualifiedTotal(week.rows.find(r => r.id === id)));
-  if (targets.some((id, i) => id !== null && bounds[i] === null)) return { tone: "qualified", label: "No target available" };
-  const [min, max] = bounds;
-  const within = (min === null || actual >= min) && (max === null || actual <= max);
-  return { tone: within ? "good" : "bad", label: within ? "Meets target" : "Outside target" };
-}
 
 function metricValue(row: WeeklyReportRow, amount: number | null, tone?: Exclude<Tone, "qualified">): Cell {
   return amount === null ? null : { value: amount, unit: row.unit, tone };
 }
 
 function weeklyValue(week: WeeklyReportWeek, row: WeeklyReportRow): Cell {
-  const tone = row.status === "UNAVAILABLE" ? "unavailable" : row.id.includes("_target") ? "target" : performance(week, row).tone;
+  const tone = presentWeeklyAssessment(week.assessments?.[row.id]).tone;
   return metricValue(row, row.total, tone === "qualified" ? undefined : tone);
 }
 
@@ -79,7 +53,7 @@ function summarySheet(report: WeeklyReport, title: string): WorkbookSheet {
       const row = week.rows.find(r => r.id === id)!;
       const target = week.rows.find(r => r.id === targetId);
       const difference = week.rows.find(r => r.id === differenceId);
-      const result = performance(week, row);
+      const result = presentWeeklyAssessment(week.assessments?.[row.id]);
       return [{ value: label, tone: "total" } as Cell, weeklyValue(week, row),
         target ? weeklyValue(week, target) : null,
         difference ? weeklyValue(week, difference) : null,
@@ -87,7 +61,7 @@ function summarySheet(report: WeeklyReport, title: string): WorkbookSheet {
     }),
   }));
   return sectionedSheet("Weekly summary", [[title], [`${report.from} – ${report.to} · ${report.timezone}`],
-    [`Green: meets target · Red: outside target · Blue: planning target · Amber: qualified / no comparison · Grey: unavailable. Colours do not certify completeness. All fields, daily values and source notes are on the dated tabs and Field notes. Generated ${report.generatedAt}.`]], tables);
+    [`Green: meets target · Red: outside target · Blue: planning target · Amber: qualified / no comparison · Grey: unavailable. Incomplete comparison evidence withholds verdicts. Colours do not certify completeness. All fields, daily values and source notes are on the dated tabs and Field notes. Generated ${report.generatedAt}.`]], tables);
 }
 
 function weekSheet(report: WeeklyReport, week: WeeklyReportWeek, title: string): WorkbookSheet {

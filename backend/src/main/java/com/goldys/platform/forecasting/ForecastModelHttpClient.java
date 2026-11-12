@@ -80,7 +80,8 @@ public class ForecastModelHttpClient implements ForecastModelClient {
           root.hasNonNull("diagnostics") ? root.get("diagnostics").toString() : null;
       List<String> warnings =
           mapper.treeToValue(root.get("warnings"), new TypeReference<List<String>>() {});
-      return new ForecastModelResponse(forecast, diagnostics, warnings);
+      return new ForecastModelResponse(
+          forecast, diagnostics, warnings, root.path("modelVersion").asText(null));
     } catch (IOException | IllegalArgumentException e) {
       throw new ForecastModelException("forecasting service returned an unparseable response", e);
     }

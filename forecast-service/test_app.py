@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 
 import app as app_module
 import forecast as forecast_module
+from external import ExternalFeatures
 from external import (
     PUBLIC_HOLIDAY_COLUMNS,
     SCHOOL_COLUMNS,
@@ -36,7 +37,7 @@ def _stub_external(config, start, end, force_refresh=False):
     frame = pd.DataFrame({"date": pd.date_range(start, end, freq="D")})
     for column in columns:
         frame[column] = pd.NA
-    return frame
+    return ExternalFeatures(frame)
 
 
 def _body(n: int = 60, horizon: int = 7) -> dict:
@@ -290,3 +291,32 @@ def test_buildInternalComputesShareOverFoodPlusBev():
     assert frame["food_share"].iloc[0] == pytest.approx(60.5 / (60.5 + 49.5))
     # The second day has no food/bev, so its share degrades to NaN rather than 0.
     assert pd.isna(frame["food_share"].iloc[1])
+
+
+@pytest.mark.parametrize("diagnostics_fail", [False, True])
+def test_external_failures_survive_forecast_response(client, monkeypatch, diagnostics_fail):
+    import external as external_module
+
+    def unavailable(*args, **kwargs):
+        raise RuntimeError("private source error must not reach the response")
+
+    monkeypatch.setattr(external_module, "fetch_datavic_dates", unavailable)
+    monkeypatch.setattr(external_module, "fetch_weather_hourly", unavailable)
+    monkeypatch.setattr(external_module, "build_university_dates", unavailable)
+    if diagnostics_fail:
+        monkeypatch.setattr(app_module, "train", unavailable)
+
+    response = client.post("/forecast", json=_body())
+    assert response.status_code == 200
+    body = response.json()
+    assert body["forecast"]
+    assert body["modelVersion"] == "timesfm-3.0"
+    assert any("DataVic calendar unavailable" in w for w in body["warnings"])
+    assert any("Weather unavailable" in w for w in body["warnings"])
+    assert any("University calendar unavailable" in w for w in body["warnings"])
+    assert "private source error" not in response.text
+    if diagnostics_fail:
+        assert body["diagnostics"] is None
+        assert "XGBoost diagnostics unavailable; headline forecast retained" in body["warnings"]
+    else:
+        assert body["diagnostics"] is not None

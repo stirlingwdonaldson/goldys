@@ -50,44 +50,71 @@ public class MetricCatalog {
           MetricId.PRODUCT_SALES_AMOUNT,
               Set.of(MetricId.PRODUCT_SALES_QUANTITY, MetricId.PRODUCT_TOP_SELLERS));
 
-  /** The base operands each derived metric is computed from; empty for base metrics. */
-  private static final Map<MetricId, Set<MetricId>> CONSTITUENTS =
+  /** Ordered arithmetic operands shared by evaluation, trust and permission traversal. */
+  private static final Map<MetricId, DerivedFormula> FORMULAS =
       Map.ofEntries(
           Map.entry(
               MetricId.RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS,
-              Set.of(MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_BOOKINGS)),
+              new DerivedFormula(
+                  DerivedFormula.Operation.RATIO,
+                  MetricId.RESERVATIONS_NO_SHOWS,
+                  MetricId.RESERVATIONS_BOOKINGS)),
           Map.entry(
               MetricId.RESERVATIONS_NO_SHOW_RATE,
-              Set.of(MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_EXPECTED_BOOKINGS)),
+              new DerivedFormula(
+                  DerivedFormula.Operation.RATIO,
+                  MetricId.RESERVATIONS_NO_SHOWS,
+                  MetricId.RESERVATIONS_EXPECTED_BOOKINGS)),
           Map.entry(
               MetricId.RESERVATIONS_BOOKING_TO_COVER_CONVERSION,
-              Set.of(MetricId.RESERVATIONS_ATTENDED, MetricId.RESERVATIONS_BOOKINGS)),
+              new DerivedFormula(
+                  DerivedFormula.Operation.RATIO,
+                  MetricId.RESERVATIONS_ATTENDED,
+                  MetricId.RESERVATIONS_BOOKINGS)),
           Map.entry(
               MetricId.RESERVATIONS_AVG_PARTY_SIZE,
-              Set.of(MetricId.RESERVATIONS_COVERS, MetricId.RESERVATIONS_ATTENDED)),
+              new DerivedFormula(
+                  DerivedFormula.Operation.RATIO,
+                  MetricId.RESERVATIONS_COVERS,
+                  MetricId.RESERVATIONS_ATTENDED)),
           Map.entry(
               MetricId.SALES_AVERAGE_SPEND_PER_COVER,
-              Set.of(MetricId.SALES_GROSS, MetricId.RESERVATIONS_COVERS)),
-          Map.entry(MetricId.SALES_FOOD_SHARE, Set.of(MetricId.SALES_FOOD, MetricId.SALES_NET)),
+              new DerivedFormula(
+                  DerivedFormula.Operation.RATIO,
+                  MetricId.SALES_GROSS,
+                  MetricId.RESERVATIONS_COVERS)),
+          Map.entry(
+              MetricId.SALES_FOOD_SHARE,
+              new DerivedFormula(
+                  DerivedFormula.Operation.RATIO, MetricId.SALES_FOOD, MetricId.SALES_NET)),
           Map.entry(
               MetricId.LABOUR_HOURS_PER_COVER,
-              Set.of(MetricId.LABOUR_ACTUAL_HOURS, MetricId.RESERVATIONS_COVERS)),
+              new DerivedFormula(
+                  DerivedFormula.Operation.RATIO,
+                  MetricId.LABOUR_ACTUAL_HOURS,
+                  MetricId.RESERVATIONS_COVERS)),
           Map.entry(
               MetricId.LABOUR_COST_PER_COVER,
-              Set.of(MetricId.LABOUR_COST, MetricId.RESERVATIONS_COVERS)),
+              new DerivedFormula(
+                  DerivedFormula.Operation.RATIO,
+                  MetricId.LABOUR_COST,
+                  MetricId.RESERVATIONS_COVERS)),
           Map.entry(
               MetricId.LABOUR_HOURS_VARIANCE,
-              Set.of(MetricId.LABOUR_SCHEDULED_HOURS, MetricId.LABOUR_ACTUAL_HOURS)),
-          Map.entry(
-              MetricId.LABOUR_FOH_PERCENT, Set.of(MetricId.LABOUR_COST, MetricId.SALES_GROSS)),
-          Map.entry(
-              MetricId.LABOUR_BOH_PERCENT, Set.of(MetricId.LABOUR_COST, MetricId.SALES_GROSS)),
-          Map.entry(
-              MetricId.INVENTORY_FOOD_COST_PERCENT,
-              Set.of(MetricId.INVENTORY_PURCHASES, MetricId.SALES_GROSS)),
-          Map.entry(
-              MetricId.PRODUCT_TOP_SELLERS,
-              Set.of(MetricId.PRODUCT_SALES_AMOUNT, MetricId.PRODUCT_SALES_QUANTITY)));
+              new DerivedFormula(
+                  DerivedFormula.Operation.DIFFERENCE,
+                  MetricId.LABOUR_SCHEDULED_HOURS,
+                  MetricId.LABOUR_ACTUAL_HOURS)));
+
+  // Bespoke reads retain their explicit lineage, including the withdrawn food-cost metric.
+  private static final Map<MetricId, Set<MetricId>> SPECIAL_CONSTITUENTS =
+      Map.of(
+          MetricId.LABOUR_FOH_PERCENT, Set.of(MetricId.LABOUR_COST, MetricId.SALES_GROSS),
+          MetricId.LABOUR_BOH_PERCENT, Set.of(MetricId.LABOUR_COST, MetricId.SALES_GROSS),
+          MetricId.INVENTORY_FOOD_COST_PERCENT,
+              Set.of(MetricId.INVENTORY_PURCHASES, MetricId.SALES_GROSS),
+          MetricId.PRODUCT_TOP_SELLERS,
+              Set.of(MetricId.PRODUCT_SALES_AMOUNT, MetricId.PRODUCT_SALES_QUANTITY));
 
   private final Map<MetricId, MetricDefinition> byId;
 
@@ -484,7 +511,14 @@ public class MetricCatalog {
 
   /** The base operands a derived metric is computed from; empty for base metrics. */
   public Set<MetricId> constituents(MetricId id) {
-    return CONSTITUENTS.getOrDefault(id, Set.of());
+    DerivedFormula formula = formula(id);
+    return formula == null
+        ? SPECIAL_CONSTITUENTS.getOrDefault(id, Set.of())
+        : Set.of(formula.left(), formula.right());
+  }
+
+  DerivedFormula formula(MetricId id) {
+    return FORMULAS.get(id);
   }
 
   /** All permission resources contributing to a metric, including transitive operands. */

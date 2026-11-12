@@ -148,6 +148,39 @@ class ForecastRunTest {
     assertThat(day.quantiles()).isEqualTo(quantiles);
   }
 
+  @Test
+  void terminalRunsCannotBeRestartedOrOverwritten() {
+    ForecastRun succeeded = run();
+    succeeded.markSucceeded(List.of(), "model", 1);
+    org.assertj.core.api.Assertions.assertThatThrownBy(succeeded::markRunning)
+        .isInstanceOf(IllegalStateException.class);
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> succeeded.markFailed("late failure"))
+        .isInstanceOf(IllegalStateException.class);
+    ForecastRun failed = run();
+    failed.markFailed("failure");
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> failed.markSucceeded(List.of(), "model", 1))
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  void invalidOutcomeDoesNotPartiallyTransitionRun() {
+    ForecastRun run = run();
+    run.markRunning();
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () ->
+                run.markSucceeded(
+                    List.of(), null, java.util.Collections.singletonList(null), "model", 1))
+        .isInstanceOf(NullPointerException.class);
+    assertThat(run.status()).isEqualTo(ForecastRunStatus.RUNNING);
+    assertThat(run.modelVersion()).isNull();
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> run.markFailed(null))
+        .isInstanceOf(NullPointerException.class);
+    assertThat(run.status()).isEqualTo(ForecastRunStatus.RUNNING);
+    run.markFailed("Invalid outcome");
+    assertThat(run.status()).isEqualTo(ForecastRunStatus.FAILED);
+  }
+
   private static ForecastRun run() {
     return ForecastRun.create(
         "sales.gross",

@@ -78,7 +78,7 @@ export async function streamChat(
     body: JSON.stringify({ threadId, message }),
   });
 
-  if (!response.ok) {
+  if (!response.ok || response.redirected || response.type === "opaqueredirect") {
     await readApiResponse("/api/conversational/chat", response, { responseType: "void" });
     return;
   }

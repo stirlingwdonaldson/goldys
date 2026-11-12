@@ -1,5 +1,6 @@
 "use client";
 
+import { dashboardWrites } from "./dashboard-writes";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { useEffect, useRef, useState } from "react";
@@ -112,8 +113,6 @@ function widgetSummary(widget: SavedWidget): string {
 interface DashboardEditorProps {
   api: Api;
   dashboardId: string;
-  /** Called after a successful save/restore so the library can refresh its list. */
-  onChanged?: (doc: DashboardDocument) => void;
   /** Returns to the library. */
   onClose?: () => void;
   /** Called after a successful delete. */
@@ -147,16 +146,18 @@ function useDirtyDashboardGuard(dirty: boolean) {
  * preview with per-widget permission placeholders, and a revisions panel with restore. Saving
  * routes through `updateDashboard`; the preview re-runs `renderDashboard`.
  */
-export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDeleted }: DashboardEditorProps) {
+export function DashboardEditor({ api, dashboardId, onClose, onDeleted }: DashboardEditorProps) {
   const [doc, setDoc] = useState<DashboardDocument | null>(null);
   const queryClient = useQueryClient();
-  const update = useMutation({ mutationFn: (input: SaveDashboardInput) => api.updateDashboard(dashboardId, input) });
-  const remove = useMutation({ mutationFn: () => api.deleteDashboard(dashboardId) });
-  const restoreRevision = useMutation({ mutationFn: (revision: number) => api.restoreDashboardRevision(dashboardId, revision) });
+  const writes = dashboardWrites(api, queryClient);
+  const update = useMutation({ mutationFn: (input: SaveDashboardInput) => writes.save(input, dashboardId) });
+  const remove = useMutation({ mutationFn: () => writes.remove(dashboardId) });
+  const restoreRevision = useMutation({ mutationFn: (revision: number) => writes.restore(dashboardId, revision) });
   const detail = useQuery({ queryKey: ["getDashboard", dashboardId], queryFn: ({ signal }) => api.getDashboard(dashboardId, { signal }) });
   const preview = useQuery({ queryKey: ["renderDashboard", dashboardId], queryFn: ({ signal }) => api.renderDashboard(dashboardId, { signal }) });
   const queryList = useQuery({ queryKey: ["listSavedQueries"], queryFn: ({ signal }) => api.listSavedQueries({ signal }) });
-  const history = useQuery({ queryKey: ["listDashboardRevisions", dashboardId], queryFn: ({ signal }) => api.listDashboardRevisions(dashboardId, { signal }), enabled: false });
+  const [revisionsOpen, setRevisionsOpen] = useState(false);
+  const history = useQuery({ queryKey: ["listDashboardRevisions", dashboardId], queryFn: ({ signal }) => api.listDashboardRevisions(dashboardId, { signal }), enabled: revisionsOpen });
   const baseline = useRef("");
   const loadedId = useRef<string | null>(null);
 
@@ -179,7 +180,6 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const revisions = history.data ?? null;
-  const [revisionsOpen, setRevisionsOpen] = useState(false);
 
   function applyDocument(d: DashboardDocument) {
     const fields = editableFields(d);
@@ -237,10 +237,7 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
       });
       if (latestEdits.current === submitted) applyDocument(updated);
       else { setDoc(updated); baseline.current = submitted; }
-      queryClient.setQueryData(["getDashboard", dashboardId], updated);
       setSavedAt(new Date().toISOString());
-      void queryClient.invalidateQueries({ queryKey: ["renderDashboard", dashboardId] });
-      onChanged?.(updated);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Couldn't save the dashboard.");
     } finally {
@@ -259,7 +256,6 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
 
   function openRevisions() {
     setRevisionsOpen(!revisionsOpen);
-    if (!revisionsOpen) void history.refetch();
   }
 
   async function restore(revision: number) {
@@ -271,9 +267,6 @@ export function DashboardEditor({ api, dashboardId, onChanged, onClose, onDelete
       const restored = await restoreRevision.mutateAsync(revision);
       if (latestEdits.current === submitted) applyDocument(restored);
       else { setDoc(restored); baseline.current = submitted; }
-      queryClient.setQueryData(["getDashboard", dashboardId], restored);
-      void queryClient.invalidateQueries({ queryKey: ["renderDashboard", dashboardId] });
-      onChanged?.(restored);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Couldn't restore that revision.");
     } finally {

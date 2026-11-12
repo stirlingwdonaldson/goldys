@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -25,6 +26,10 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 /** Characterises complete report output before changing calculation ownership. */
 class WeeklyReportOutputComparisonTest {
+  // The additive assessment contract has separate assertions; preserve every existing byte.
+  @JsonIgnoreProperties("assessments")
+  private abstract static class FinancialBaseline {}
+
   private static final LocalDate MONDAY = LocalDate.parse("2026-10-26");
   private static final Instant NOW = Instant.parse("2026-11-04T01:30:00Z");
   private static final UserRole OWNER =
@@ -249,6 +254,19 @@ class WeeklyReportOutputComparisonTest {
   }
 
   private static void assertScenario(WeeklyReport report, Scenario scenario) {
+    for (var week : report.weeks()) {
+      assertThat(week.assessments().keySet())
+          .containsExactlyInAnyOrderElementsOf(
+              week.rows().stream().map(WeeklyReport.Row::id).toList());
+      assertThat(week.assessments().values())
+          .allSatisfy(
+              a -> {
+                assertThat(a.outcome()).isNotNull();
+                if (a.outcome() == WeeklyReport.AssessmentOutcome.WITHHELD)
+                  assertThat(a.reason()).isNotNull();
+                else assertThat(a.reason()).isNull();
+              });
+    }
     var rows = report.weeks().getFirst().rows();
     assertThat(rows).hasSize(85);
     assertThat(rows).extracting(WeeklyReport.Row::id).doesNotHaveDuplicates();
@@ -287,7 +305,13 @@ class WeeklyReportOutputComparisonTest {
         WeeklyReportOutputComparisonTest.class.getResourceAsStream(
             "/weekly-report-output/" + name)) {
       assertThat(input).as("Committed baseline %s (actual: %s)", name, output).isNotNull();
-      assertThat(actual)
+      String financialOutput =
+          JSON.copy()
+                  .addMixIn(WeeklyReport.Week.class, FinancialBaseline.class)
+                  .writerWithDefaultPrettyPrinter()
+                  .writeValueAsString(report)
+              + "\n";
+      assertThat(financialOutput)
           .as("Complete output for %s; inspect %s", scenario, output)
           .isEqualTo(new String(input.readAllBytes(), StandardCharsets.UTF_8));
     }

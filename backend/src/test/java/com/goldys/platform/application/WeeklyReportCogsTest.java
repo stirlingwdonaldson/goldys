@@ -43,7 +43,7 @@ class WeeklyReportCogsTest {
 
   private Map<String, WeeklyReport.Row> report(List<Sale> sales, boolean tax) {
     var result = new HashMap<String, WeeklyReport.Row>();
-    WeeklyReportCogs.calculate(dates, sales, tax).forEach(r -> result.put(r.id(), r));
+    WeeklyReportCogs.calculate(dates, sales, tax).rows().forEach(r -> result.put(r.id(), r));
     return result;
   }
 

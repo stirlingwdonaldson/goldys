@@ -1515,6 +1515,10 @@ export interface WeeklyReportRow {
 }
 
 export interface WeeklyTarget { id: string; value: number; effectiveFrom: string; source: string }
+export interface WeeklyReportAssessment {
+  outcome: "MEETS_TARGET" | "BELOW_TARGET" | "ABOVE_LIMIT" | "OUTSIDE_RANGE" | "WITHHELD" | "UNAVAILABLE" | "SOURCE_QUALIFIED" | "TARGET";
+  reason: "INCOMPLETE_EVIDENCE" | "NO_EFFECTIVE_TARGET" | "BASIS_MISMATCH" | "COMPARISON_UNAVAILABLE" | null;
+}
 export interface WeeklyWastage {
   lines: number; valuedLines: number; value: number | null;
   reasonCoverageLines: number | null; reasonCoverageValue: number | null;
@@ -1526,6 +1530,7 @@ export interface WeeklyReportWeek {
   end: string;
   dates: string[];
   rows: WeeklyReportRow[];
+  assessments: Record<string, WeeklyReportAssessment>;
   targets: WeeklyTarget[];
   wastage: WeeklyWastage;
   stockCounts: WeeklyStockCount[];

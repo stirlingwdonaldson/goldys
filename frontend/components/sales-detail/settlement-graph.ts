@@ -7,16 +7,18 @@ import type { DeletedSaleDay, PaymentMix, SaleItemMix } from "@/lib/api/types";
 export interface SettlementItem {
   id: string;
   label: string;
-  value: number;
+  value: number | null;
 }
 
 export interface SettlementInput {
   /** Items rung in the period, grouped by category (e.g. Drinks, Food, Other). */
   itemsRung: SettlementItem[];
-  /** Deleted orders in the period — money that left sales but never became a tender. */
-  deletedOrders: { count: number; value: number };
+  /** Deleted orders are separate observations, never a deduction from completed sales. */
+  deletedOrders: { count: number; value: number | null };
   /** Tenders received, grouped by payment type (e.g. Tyro, Cash, LS Payments). */
   tenders: SettlementItem[];
+  hasConflict?: boolean;
+  hasCoverageGap?: boolean;
 }
 
 /** The raw, date-scoped API rows the settlement is aggregated from. */
@@ -26,67 +28,94 @@ export interface SettlementSources {
   deletedSaleTotals: DeletedSaleDay[];
 }
 
-function sum(items: SettlementItem[]): number {
-  return items.reduce((total, item) => total + item.value, 0);
+/** Keep the source's four decimal places while summing; round only the displayed totals. */
+function sumAmounts(values: Numeric[]): number | null {
+  if (values.length === 0) return null;
+  let units = 0;
+  for (const value of values) {
+    const amount = toNumber(value);
+    if (amount === null) return null;
+    units += Math.round(amount * 10_000);
+    if (!Number.isSafeInteger(units)) return null;
+  }
+  return units / 10_000;
 }
 
-/** Groups per-day mix rows into one period total per name, largest first. */
+/** AUD comparisons use cents, with half cents rounded away from zero on either sign. */
+function cents(value: number | null): number | null {
+  if (value === null) return null;
+  const units = Math.round(value * 10_000);
+  const rounded = Math.round(Math.abs(units) / 100);
+  return rounded === 0 ? 0 : Math.sign(units) * rounded;
+}
+
+/** Groups per-day mix rows without treating an absent amount as zero. */
 function groupTotals<T>(rows: T[], name: (row: T) => string, value: (row: T) => Numeric): SettlementItem[] {
-  const totals = new Map<string, number>();
+  const groups = new Map<string, Numeric[]>();
   for (const row of rows) {
     const key = name(row);
-    totals.set(key, (totals.get(key) ?? 0) + (toNumber(value(row)) ?? 0));
+    const values = groups.get(key) ?? [];
+    values.push(value(row));
+    groups.set(key, values);
   }
-  return [...totals.entries()]
-    .map(([label, total]) => ({ id: label, label, value: total }))
-    .sort((a, b) => b.value - a.value);
+  return [...groups.entries()]
+    .map(([label, values]) => ({ id: label, label, value: sumAmounts(values) }))
+    .sort((a, b) => (b.value ?? -Infinity) - (a.value ?? -Infinity));
 }
 
 /** Aggregates the date-scoped API rows into the graph's input shape. */
 export function buildSettlementInput(sources: SettlementSources): SettlementInput {
+  const saleDates = new Set(sources.saleItemMix.map((row) => row.tradingDate));
+  const paymentDates = new Set(sources.paymentMix.map((row) => row.tradingDate));
   return {
     itemsRung: groupTotals(sources.saleItemMix, (r) => r.categoryName, (r) => r.amount),
     tenders: groupTotals(sources.paymentMix, (r) => r.paymentTypeName, (r) => r.amount),
-    deletedOrders: sources.deletedSaleTotals.reduce(
-      (acc, day) => ({
-        count: acc.count + day.count,
-        value: acc.value + (toNumber(day.totalIncTax) ?? 0),
-      }),
-      { count: 0, value: 0 },
-    ),
+    deletedOrders: {
+      count: sources.deletedSaleTotals.reduce((count, day) => count + day.count, 0),
+      value: sumAmounts(sources.deletedSaleTotals.map((day) => day.totalIncTax)),
+    },
+    hasConflict: [...sources.saleItemMix, ...sources.paymentMix, ...sources.deletedSaleTotals]
+      .some((row) => row.hasConflict),
+    hasCoverageGap: saleDates.size !== paymentDates.size || [...saleDates].some((date) => !paymentDates.has(date)),
   };
 }
 
-/** A signed dollar amount for the difference line: "−$42", "+$50", or "$0". */
-function formatDifference(value: number): string {
-  if (value > 0) return `+${formatCurrency(value, { cents: false })}`;
-  if (value < 0) return `−${formatCurrency(-value, { cents: false })}`;
-  return formatCurrency(0, { cents: false });
+function formatDifference(value: number | null): string {
+  if (value === null) return "Unavailable";
+  if (value > 0) return `+${formatCurrency(value)}`;
+  if (value < 0) return `−${formatCurrency(-value)}`;
+  return formatCurrency(0);
 }
 
-/**
- * The daily settlement as a four-column graph:
- *
- *   Items rung → Sales recorded → Tenders → Settled (Payments)
- *                 ↘ Deleted orders (dashed, below the main flow)
- *
- * Gross sales, settled payments, and the difference are all derived from the inputs rather
- * than passed in, so the diagram can never draw two numbers that disagree. The deleted-orders
- * node sits in the Sales column, joined by a dashed annotation edge, because those dollars
- * left sales without becoming a tender.
- */
+function amountTone(value: number | null): FlowTone {
+  return value === null ? "missing" : "neutral";
+}
+
+function comparisonTone(difference: number | null, qualified: boolean): FlowTone {
+  if (difference === null) return "missing";
+  return difference !== 0 || qualified ? "warn" : "ok";
+}
+
+function moneyEdge(source: string, target: string, value: number | null): ColumnGraph["edges"][number] {
+  if (value === null) return { source, target, tone: "missing" };
+  return { source, target, value };
+}
+
+/** Compare observed merchandise and POS tenders; this is not bank settlement evidence. */
 export function buildSettlementGraph(input: SettlementInput): ColumnGraph {
-  const salesRecorded = sum(input.itemsRung);
-  const settledPayments = sum(input.tenders);
-  const difference = settledPayments - salesRecorded;
+  const salesCents = cents(sumAmounts(input.itemsRung.map((item) => item.value)));
+  const paymentCents = cents(sumAmounts(input.tenders.map((item) => item.value)));
+  const salesRecorded = salesCents === null ? null : salesCents / 100;
+  const posPayments = paymentCents === null ? null : paymentCents / 100;
+  const difference = salesCents === null || paymentCents === null ? null : (paymentCents - salesCents) / 100;
 
   const items = input.itemsRung.map((item) => ({
     id: `items:${item.id}`,
     data: {
       title: item.label,
-      subtitle: formatCurrency(item.value, { cents: false }),
+      subtitle: formatCurrency(item.value),
       icon: ShoppingBasket,
-      tone: "neutral" as FlowTone,
+      tone: amountTone(item.value),
     },
   }));
 
@@ -94,10 +123,10 @@ export function buildSettlementGraph(input: SettlementInput): ColumnGraph {
     {
       id: "sales",
       data: {
-        title: "Sales recorded",
-        subtitle: `${formatCurrency(salesRecorded, { cents: false })} gross`,
+        title: "Merchandise sales",
+        subtitle: `${formatCurrency(salesRecorded)} incl. GST`,
         icon: ReceiptText,
-        tone: "neutral" as FlowTone,
+        tone: amountTone(salesRecorded),
         emphasis: true,
       },
     },
@@ -105,9 +134,9 @@ export function buildSettlementGraph(input: SettlementInput): ColumnGraph {
       id: "deleted",
       data: {
         title: "Deleted orders",
-        subtitle: `${formatNumber(input.deletedOrders.count)} orders · ${formatCurrency(input.deletedOrders.value, { cents: false })}`,
+        subtitle: `${formatNumber(input.deletedOrders.count)} orders · ${formatCurrency(input.deletedOrders.value)}`,
         icon: Trash2,
-        tone: "warn" as FlowTone,
+        tone: (input.deletedOrders.value === null ? "missing" : input.deletedOrders.count > 0 ? "warn" : "neutral") as FlowTone,
       },
     },
   ];
@@ -116,9 +145,9 @@ export function buildSettlementGraph(input: SettlementInput): ColumnGraph {
     id: `tender:${tender.id}`,
     data: {
       title: tender.label,
-      subtitle: formatCurrency(tender.value, { cents: false }),
+      subtitle: formatCurrency(tender.value),
       icon: Banknote,
-      tone: "neutral" as FlowTone,
+      tone: amountTone(tender.value),
     },
   }));
 
@@ -126,11 +155,11 @@ export function buildSettlementGraph(input: SettlementInput): ColumnGraph {
     {
       id: "settled",
       data: {
-        title: "Payments",
-        subtitle: formatCurrency(settledPayments, { cents: false }),
+        title: "POS payments",
+        subtitle: formatCurrency(posPayments),
         detail: `Difference vs sales: ${formatDifference(difference)}`,
         icon: CircleDollarSign,
-        tone: (difference === 0 ? "ok" : "warn") as FlowTone,
+        tone: comparisonTone(difference, Boolean(input.hasConflict || input.hasCoverageGap)),
         emphasis: true,
       },
     },
@@ -138,13 +167,13 @@ export function buildSettlementGraph(input: SettlementInput): ColumnGraph {
 
   const edges: ColumnGraph["edges"] = [];
   for (const item of input.itemsRung) {
-    edges.push({ source: `items:${item.id}`, target: "sales", value: item.value });
+    edges.push(moneyEdge(`items:${item.id}`, "sales", item.value));
   }
   for (const tender of input.tenders) {
-    edges.push({ source: "sales", target: `tender:${tender.id}`, value: tender.value });
+    edges.push(moneyEdge("sales", `tender:${tender.id}`, tender.value));
   }
   for (const tender of input.tenders) {
-    edges.push({ source: `tender:${tender.id}`, target: "settled", value: tender.value });
+    edges.push(moneyEdge(`tender:${tender.id}`, "settled", tender.value));
   }
   // Deleted orders are an annotation, not flowing money: a dashed edge, no value to scale.
   edges.push({
@@ -157,6 +186,6 @@ export function buildSettlementGraph(input: SettlementInput): ColumnGraph {
   return {
     columns: [items, sales, tenders, payments],
     edges,
-    columnTitles: ["Items rung", "Sales", "Tenders", "Settled"],
+    columnTitles: ["Merchandise", "Sales", "Tenders", "POS payments"],
   };
 }

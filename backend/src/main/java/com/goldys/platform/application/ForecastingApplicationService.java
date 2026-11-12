@@ -177,7 +177,7 @@ public class ForecastingApplicationService {
       BigDecimal predicted = day.quantiles().get("0.5");
       BigDecimal actual = actualByDate.get(day.date());
       points.add(new ForecastComparisonPointDto(day.date(), predicted, actual));
-      if (actual != null) {
+      if (actual != null && predicted != null) {
         BigDecimal error = actual.subtract(predicted).abs();
         maeSum = maeSum.add(error);
         maeCount++;
@@ -242,6 +242,12 @@ public class ForecastingApplicationService {
     if (run.status() == ForecastRunStatus.SUCCEEDED) {
       series = run.series().stream().map(this::toSeriesPoint).toList();
     }
+    List<String> notices =
+        new ArrayList<>(
+            run.inputSnapshot() == null
+                ? List.of("Legacy run: original input evidence unavailable")
+                : run.inputSnapshot().notices());
+    if (run.runtimeWarnings() != null) notices.addAll(run.runtimeWarnings());
     return new ForecastRunDto(
         run.id(),
         run.status().name(),
@@ -255,9 +261,7 @@ public class ForecastingApplicationService {
         run.errorMessage(),
         run.modelVersion(),
         ForecastDiagnosticsDto.fromJson(run.diagnostics()),
-        run.inputSnapshot() == null
-            ? List.of("Legacy run: original input evidence unavailable")
-            : run.inputSnapshot().notices());
+        List.copyOf(notices));
   }
 
   private ForecastSeriesPointDto toSeriesPoint(ForecastDay day) {

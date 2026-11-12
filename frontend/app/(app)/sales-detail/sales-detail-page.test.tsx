@@ -87,9 +87,9 @@ describe("SalesDetailPage", () => {
     expect(screen.queryByTestId("sale-summary")).not.toBeInTheDocument();
   });
 
-  it("shows the settlement section above the tabs", () => {
+  it("shows the sales/payment comparison above the tabs", () => {
     render(<SalesDetailPage />);
-    expect(screen.getByRole("heading", { name: "Settlement" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Sales and POS payments" })).toBeInTheDocument();
     expect(screen.getByTestId("settlement-flow")).toBeInTheDocument();
   });
 });

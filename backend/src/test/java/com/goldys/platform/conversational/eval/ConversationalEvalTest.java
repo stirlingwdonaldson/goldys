@@ -193,11 +193,7 @@ class ConversationalEvalTest {
     assertThat(widget.series()).hasSize(2);
     assertThat(sumPoints(widget.series().get(0).points())).isEqualByComparingTo("600.00");
     assertThat(sumPoints(widget.series().get(1).points())).isEqualByComparingTo("300.00");
-    assertThat(steps.get(0).result().notices())
-        .singleElement()
-        .asString()
-        .contains("PREVIOUS_WEEK")
-        .contains("100.0%");
+    assertThat(steps.get(0).result().notices()).contains("vs PREVIOUS_WEEK: 100.0%");
     schema.assertValid(widget);
   }
 

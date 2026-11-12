@@ -137,4 +137,15 @@ class LightspeedPaymentIngestServiceTest {
 
     verify(canonical, never()).record(any());
   }
+
+  @Test
+  void rejectsEvenIdenticalRepeatedRowsWithoutGuessingWhetherTheyAreSeparatePayments() {
+    UUID rawId = UUID.randomUUID();
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any())).thenReturn(rawId);
+    when(parser.parse(any())).thenReturn(List.of(payment(), payment()));
+    assertThatThrownBy(() -> service().ingest(body()))
+        .hasFieldOrPropertyWithValue("failureType", "UNSAFE_PAYMENT_GRAIN");
+    service().backfill(new RawLedgerQuery.RawPayload(rawId, body()));
+    verify(canonical, never()).record(any());
+  }
 }

@@ -6,10 +6,16 @@ behaviour; they are not new financial acceptance criteria or live source evidenc
 
 `WeeklyReportOutputComparisonTest` calls the same `report(...)` interface as its
 callers, with a fixed Melbourne clock and mocked reads. It compares the entire
-serialised result, including numeric precision, nulls, array order, labels, units,
+serialised financial result, including numeric precision, nulls, array order, labels, units,
 statuses, qualification wording, targets, wastage reasons, stock counts and metadata.
 Object property order/formatting is also fixed by the test's Jackson writer; that
 format is a test fixture convention, not an additional HTTP formatting requirement.
+
+The additive per-week `assessments` map is excluded only from this historical byte
+comparison. Actual output files include it. The test checks one assessment per row;
+assessment policy and operand support are exercised by `WeeklyReportAssessmentTest`
+and `WeeklyReportAssessmentEvidenceTest`, with HTTP coverage in
+`WeeklyReportIntegrationTest` and screen/Excel equivalence in frontend tests.
 
 | Baseline | Inputs and behaviour exercised |
 | --- | --- |

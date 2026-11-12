@@ -1,5 +1,6 @@
 "use client";
 
+import { dashboardWrites } from "@/components/dashboards/dashboard-writes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
@@ -101,7 +102,8 @@ function AnswerError({ error, onRetry }: { error: Error; onRetry?: () => void })
 /** The answer anatomy: summary + widgets + "How I got this" trace + "as of" + notices + draft. */
 export function AnswerBlock({ summary, answer, error, api, onRetry }: AnswerBlockProps) {
   const queryClient = useQueryClient();
-  const saveMutation = useMutation({ mutationFn: ({ id, input }: { id?: string | null; input: SaveDashboardInput }) => id ? api.updateDashboard(id, input) : api.saveDashboard(input) });
+  const writes = dashboardWrites(api, queryClient);
+  const saveMutation = useMutation({ mutationFn: ({ id, input }: { id?: string | null; input: SaveDashboardInput }) => writes.save(input, id) });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<DashboardDocument | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -123,8 +125,6 @@ export function AnswerBlock({ summary, answer, error, api, onRetry }: AnswerBloc
       };
       const doc = await saveMutation.mutateAsync({ id: draft.dashboardId, input });
       setSaved(doc);
-      void queryClient.invalidateQueries({ queryKey: ["listDashboards"] });
-      void queryClient.invalidateQueries({ queryKey: ["getDashboard", doc.id] });
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Couldn't save the dashboard.");
     } finally {

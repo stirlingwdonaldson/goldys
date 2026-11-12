@@ -80,8 +80,8 @@ function SalesDetail() {
       <TimeRangeSelector value={range} onChange={setRange} />
 
       <Section
-        title="Settlement"
-        description="How items rung become tenders and settle into payments, and what didn't match."
+        title="Sales and POS payments"
+        description="Compare recorded merchandise with POS payments for the selected period."
       >
         <SettlementFlowView from={range.from} to={range.to} />
       </Section>

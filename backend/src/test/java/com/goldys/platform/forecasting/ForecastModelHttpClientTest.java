@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 class ForecastModelHttpClientTest {
 
   private static final String RESPONSE_JSON =
-      "{\"forecast\":["
+      "{\"modelVersion\":\"reported-runtime\",\"forecast\":["
           + "{\"date\":\"2026-10-16\",\"median\":4200.5,\"p10\":3900.0,\"p90\":4600.0,"
           + "\"food\":1900.0,\"bev\":2300.5,\"baseline\":4100.0,\"bookedCovers\":85.0,\"observedBookedCovers\":40.0,"
           + "\"publicHoliday\":0,\"publicHolidayName\":null,\"publicHolidayEve\":0,"
@@ -94,6 +94,7 @@ class ForecastModelHttpClientTest {
       assertThat(second.publicHolidayName()).isEqualTo("Grand Final Friday");
       assertThat(second.bookedCovers()).isEqualByComparingTo("120.0");
 
+      assertThat(response.modelVersion()).isEqualTo("reported-runtime");
       assertThat(response.diagnostics()).isNotNull();
       JsonNode diagnostics = MAPPER.readTree(response.diagnostics());
       assertThat(diagnostics.get("modelVersion").asText()).isEqualTo("timesfm-3.0");

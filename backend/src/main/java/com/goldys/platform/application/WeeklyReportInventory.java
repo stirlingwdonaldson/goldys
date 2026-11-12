@@ -70,7 +70,7 @@ final class WeeklyReportInventory {
   }
 
   /** Calculates wastage without report placeholders or previously assembled sales rows. */
-  static List<WeeklyReport.Row> calculate(
+  static WeeklyReportCalculation.Rows calculate(
       List<LocalDate> dates,
       List<Waste> observations,
       List<Sale> sales,
@@ -82,6 +82,16 @@ final class WeeklyReportInventory {
             .map(d -> summarize(observations.stream().filter(w -> w.date().equals(d)).toList()))
             .toList();
     List<WeeklyReport.Row> rows = new ArrayList<>();
+    Set<String> supported = new HashSet<>();
+    // Recorded operands, not ratio cells: a known zero-sales date has no daily percentage.
+    if (dates.size() == 7
+        && daily.stream().allMatch(d -> d.value() != null && d.lines() == d.valuedLines())
+        && dates.stream()
+            .allMatch(d -> headlineNetSales.get(d) != null && headlineNetSales.get(d).signum() >= 0)
+        && headlineWeeklyNetSales != null
+        && headlineWeeklyNetSales.signum() > 0) {
+      supported.add("total_wastage_percent");
+    }
     List<String> notes =
         List.of(
             "Recorded CTB wastage includes every reason and No reason recorded; no missing reasons are inferred.",
@@ -133,8 +143,8 @@ final class WeeklyReportInventory {
                     ClassifiedSalesTotals.summarize(
                         sales.stream().filter(s -> s.date().equals(d)).toList()))
             .toList();
-    fillClassified(rows, dailySales, dates, observations);
-    return List.copyOf(rows);
+    fillClassified(rows, dailySales, dates, observations, supported);
+    return new WeeklyReportCalculation.Rows(rows, supported);
   }
 
   private static BigDecimal classifiedValue(List<Waste> observations, String nature) {
@@ -157,7 +167,8 @@ final class WeeklyReportInventory {
       List<WeeklyReport.Row> rows,
       List<ClassifiedSalesTotals> dailySales,
       List<LocalDate> dates,
-      List<Waste> observations) {
+      List<Waste> observations,
+      Set<String> supported) {
     var daily =
         dates.stream()
             .map(d -> observations.stream().filter(w -> w.date().equals(d)).toList())
@@ -211,6 +222,14 @@ final class WeeklyReportInventory {
                   || salesTotal.signum() <= 0
               ? null
               : ratio(total, salesTotal);
+      // A known subtotal can be displayed even when an absent date or unknown category
+      // prevents a verdict. No observations must never become zero wastage.
+      if (dates.size() == 7
+          && rate != null
+          && daily.stream().noneMatch(List::isEmpty)
+          && observations.stream().noneMatch(w -> "UNKNOWN".equals(w.nature()))) {
+        supported.add(id + "_percent");
+      }
       rows.add(
           row(
               id + "_percent",

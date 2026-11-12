@@ -2,7 +2,11 @@
 
 import { TrustIndicator } from "@/components/trust/trust-indicator";
 import type { TrustSummary } from "@/lib/api/types";
-import { widgetRegistry } from "./registry";
+import { BarChartWidgetView } from "./bar-chart-widget";
+import { RankedListWidgetView } from "./ranked-list-widget";
+import { StatWidgetView } from "./stat-widget";
+import { TableWidgetView } from "./table-widget";
+import { TimeSeriesWidgetView } from "./time-series-widget";
 import type { WidgetSpec } from "./types";
 
 /**
@@ -36,24 +40,35 @@ interface WidgetRendererProps {
 }
 
 /**
- * Renders a widget spec through the shared registry. Unknown or malformed types degrade to a
+ * Renders a validated widget spec through exhaustive dispatch. Unknown types degrade to a
  * notice — never a crash, never arbitrary code execution. When a metric's {@link TrustSummary} is
  * provided, a subtle trust badge is shown above the widget.
  */
 export function WidgetRenderer({ widget, trust = null }: WidgetRendererProps) {
-  const render = widgetRegistry[widget.type];
-  if (!render) {
-    return <p className="text-sm text-muted-foreground">Unsupported widget type: {widget.type}</p>;
-  }
   if (!trust) {
-    return <>{render(widget)}</>;
+    return <>{renderWidget(widget)}</>;
   }
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-end">
         <TrustIndicator trust={trust} value={widgetValue(widget)} />
       </div>
-      {render(widget)}
+      {renderWidget(widget)}
     </div>
   );
+}
+
+function renderWidget(widget: WidgetSpec) {
+  switch (widget.type) {
+    case "stat": return <StatWidgetView widget={widget} />;
+    case "time-series": return <TimeSeriesWidgetView widget={widget} />;
+    case "bar-chart": return <BarChartWidgetView widget={widget} />;
+    case "table": return <TableWidgetView widget={widget} />;
+    case "ranked-list": return <RankedListWidgetView widget={widget} />;
+    default: {
+      // Exhaustive for validated data, with a visible fallback for untyped callers.
+      const unsupported: never = widget;
+      return <p className="text-sm text-muted-foreground">Unsupported widget type: {(unsupported as { type: string }).type}</p>;
+    }
+  }
 }

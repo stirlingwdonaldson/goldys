@@ -136,8 +136,8 @@ tools return widget specs built from semantic data.
 - **Backend** produces widget specs from `ReportingTool`s (e.g. `get_sales_by_period` → a
   time-series spec). Each spec carries a `WidgetQuery` (tool id + bounded input) so it can be
   re-run.
-- **Frontend** renders every widget through one `WidgetRegistry` (Recharts-backed components) plus a
-  `WidgetRenderer`. Both the built-in dashboard and Ask Goldy's answers use it; unknown/malformed
+- **Frontend** renders every widget through an exhaustive `WidgetRenderer` over types inferred from
+  the runtime widget schema. Both the built-in dashboard and Ask Goldy's answers use it; unknown/malformed
   widgets degrade to a notice (validated at the SSE boundary via `parseWidgetSpecs`).
 - **Saved dashboards** (`saved_dashboard` table) persist query configuration only, never embedded
   data. Each document carries `filters` (dashboard-level reusable filters), `visibility`

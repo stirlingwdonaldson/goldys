@@ -8,6 +8,7 @@ import com.goldys.platform.metrics.OperationalMetrics;
 import com.goldys.platform.semantic.catalog.MetricCatalog;
 import com.goldys.platform.semantic.catalog.MetricQuery;
 import io.micrometer.core.instrument.Timer;
+import java.util.List;
 import org.springframework.stereotype.Component;
 
 /** The single entry point for tool calls: route, authorize, execute. */
@@ -34,10 +35,11 @@ public class ToolDispatcher {
         registry.find(id).orElseThrow(() -> new IllegalArgumentException("Unknown tool: " + id));
     permissions.require(role, tool.resource(), PermissionAction.READ);
     // Per-metric data gate: authorize every metric this tool will read, before execution.
+    List<MetricQuery> queries = List.copyOf(tool.toMetricQueries(input));
     java.util.Set<com.goldys.platform.semantic.catalog.MetricId> operands =
         new java.util.HashSet<>(tool.referencedMetrics(input));
-    // Keep query operands mandatory even when a tool supplies additional metadata operands.
-    tool.toMetricQueries(input).stream().map(MetricQuery::metric).forEach(operands::add);
+    // Authorize metadata and the exact immutable query list passed to execution.
+    queries.stream().map(MetricQuery::metric).forEach(operands::add);
     for (var metric : operands) {
       for (String resource : catalog.requiredPermissions(metric)) {
         permissions.require(role, new ResourceKey(resource), PermissionAction.READ);
@@ -45,7 +47,9 @@ public class ToolDispatcher {
     }
     Timer.Sample sample = metrics.start();
     try {
-      return tool.execute(input, role);
+      return tool instanceof MetricReportingTool metricTool
+          ? metricTool.executePrepared(queries)
+          : tool.execute(input, role);
     } catch (RuntimeException e) {
       metrics.toolFailure(id.name());
       throw e;

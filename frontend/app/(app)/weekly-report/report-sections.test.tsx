@@ -9,46 +9,59 @@ const row = (week: WeeklyReportWeek, id: string) => week.rows.find(r => r.id ===
 const salesAssessment = () => within(screen.getByRole("rowheader", { name: "Total sales ex GST (AUD)" }).closest("tr")!);
 
 describe("weekly report presentation", () => {
-  it("uses API sales differences only with all seven dates and effective matching targets", () => {
+  it("renders snapshot assessments while retaining partial differences and known zero", () => {
     const [partial, full] = fixture();
     const view = render(<TargetComparison week={partial} />);
-    expect(salesAssessment().getByText("Incomplete daily values")).toBeVisible();
-    expect(salesAssessment().queryByText("-$30,000.00")).not.toBeInTheDocument();
+    expect(salesAssessment().getByText("Incomplete comparison evidence")).toBeVisible();
+    expect(salesAssessment().getByText("-$30,000.00")).toBeVisible();
     view.rerender(<TargetComparison week={full} />);
     expect(salesAssessment().getByText("Below target")).toBeVisible();
     expect(salesAssessment().getByText("-$23,000.00")).toBeVisible();
     // A known zero difference is supported, and meets the inclusive boundary.
     row(full, "net_sales").total = row(full, "sales_target").total;
     row(full, "sales_difference").total = 0;
+    full.assessments.net_sales = { outcome: "MEETS_TARGET", reason: null };
     view.rerender(<TargetComparison week={full} />);
     expect(salesAssessment().getByText("Meets target")).toBeVisible();
     expect(salesAssessment().getByText("$0.00")).toBeVisible();
   });
 
-  it.each(["future target", "different unit", "missing actual", "missing difference", "no target"])("withholds assessment for %s", problem => {
+  it.each([
+    ["NO_EFFECTIVE_TARGET", "No effective target"],
+    ["BASIS_MISMATCH", "Basis differs"],
+    ["COMPARISON_UNAVAILABLE", "Comparison unavailable"],
+    ["INCOMPLETE_EVIDENCE", "Incomplete comparison evidence"],
+  ] as const)("shows the server's withholding reason: %s", (reason, label) => {
     const full = fixture()[1];
-    if (problem === "future target") full.targets.find(t => t.id === "sales_target")!.effectiveFrom = "2026-11-02";
-    if (problem === "different unit") row(full, "sales_target").unit = "PERCENT";
-    if (problem === "missing actual") { row(full, "net_sales").total = null; row(full, "net_sales").status = "UNAVAILABLE"; }
-    if (problem === "missing difference") row(full, "sales_difference").total = null;
-    if (problem === "no target") full.targets = full.targets.filter(t => t.id !== "sales_target");
+    full.assessments.net_sales = { outcome: "WITHHELD", reason };
     render(<TargetComparison week={full} />);
+    expect(salesAssessment().getByText(label)).toBeVisible();
     expect(salesAssessment().queryByText("Below target")).not.toBeInTheDocument();
     expect(salesAssessment().queryByText("Meets target")).not.toBeInTheDocument();
   });
 
-  it("does not assess incomplete wastage rates; compares a supported zero against a maximum", () => {
+  it("accepts an assessed weekly rate with an undefined daily ratio and keeps zero visible", () => {
     const full = fixture()[1];
     const view = render(<TargetComparison week={full} />);
     const assessment = () => within(screen.getByRole("rowheader", { name: "Total wastage %" }).closest("tr")!);
-    expect(assessment().getByText("Incomplete daily values")).toBeVisible();
-    row(full, "total_wastage_percent").days = Array(7).fill(0);
+    expect(assessment().getByText("Incomplete comparison evidence")).toBeVisible();
+    row(full, "total_wastage_percent").days = [null, 0, 0, 0, 0, 0, 0];
     row(full, "total_wastage_percent").total = 0;
+    full.assessments.total_wastage_percent = { outcome: "MEETS_TARGET", reason: null };
     view.rerender(<TargetComparison week={full} />);
     expect(assessment().getByText("Meets target")).toBeVisible();
     row(full, "total_wastage_percent").total = 0.01;
+    full.assessments.total_wastage_percent = { outcome: "ABOVE_LIMIT", reason: null };
     view.rerender(<TargetComparison week={full} />);
     expect(assessment().getByText("Above limit")).toBeVisible();
+  });
+
+  it("does not invent a verdict when an older snapshot has no assessment", () => {
+    const full = fixture()[1];
+    delete full.assessments.net_sales;
+    render(<TargetComparison week={full} />);
+    expect(salesAssessment().getByText("Assessment unavailable")).toBeVisible();
+    expect(salesAssessment().queryByText("Below target")).not.toBeInTheDocument();
   });
 
   it("keeps missing daily values distinct from recorded zero, without daily targets or ratings", () => {

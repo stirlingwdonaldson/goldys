@@ -32,9 +32,10 @@ final class WeeklyReportCogs {
   }
 
   /** Calculates complete theoretical-cost rows without requiring report placeholders or layout. */
-  static List<WeeklyReport.Row> calculate(
+  static WeeklyReportCalculation.Rows calculate(
       List<LocalDate> dates, List<Sale> observations, boolean costsExcludeGst) {
     List<WeeklyReport.Row> rows = new ArrayList<>();
+    Set<String> supported = new HashSet<>();
     for (String prefix : List.of("food", "beverage", "total")) {
       var selected =
           observations.stream()
@@ -80,13 +81,17 @@ final class WeeklyReportCogs {
       List<BigDecimal> rates = new ArrayList<>();
       for (int i = 0; i < dates.size(); i++)
         rates.add(rate(costs.get(i), revenue(daily.get(i)), costsExcludeGst));
+      String rateId =
+          prefix + (prefix.equals("total") ? "_theoretical_cogs_percent" : "_cogs_percent");
+      BigDecimal weeklyRate = rate(total, revenue(selected), costsExcludeGst);
+      if (dates.size() == 7 && weeklyRate != null) supported.add(rateId);
       rows.add(
           row(
-              prefix + (prefix.equals("total") ? "_theoretical_cogs_percent" : "_cogs_percent"),
+              rateId,
               label + " theoretical COGS / matching sales",
               "PERCENT",
               rates,
-              rate(total, revenue(selected), costsExcludeGst),
+              weeklyRate,
               notes));
       rows.add(
           row(
@@ -115,7 +120,7 @@ final class WeeklyReportCogs {
               null,
               List.of(
                   "Unavailable: year-to-date cost coverage and year boundary are not established. Weekly estimates do not establish YTD COGS.")));
-    return List.copyOf(rows);
+    return new WeeklyReportCalculation.Rows(rows, supported);
   }
 
   private static BigDecimal revenue(List<Sale> sales) {
