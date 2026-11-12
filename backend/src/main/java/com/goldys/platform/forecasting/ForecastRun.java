@@ -65,6 +65,10 @@ public class ForecastRun {
   @Column(name = "diagnostics", columnDefinition = "jsonb")
   private String diagnostics;
 
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "runtime_warnings", columnDefinition = "jsonb")
+  private List<String> runtimeWarnings;
+
   @Column(name = "model_version")
   private String modelVersion;
 
@@ -156,6 +160,9 @@ public class ForecastRun {
 
   /** Moves a queued run to the in-flight state once the inference call has been dispatched. */
   public void markRunning() {
+    if (status != ForecastRunStatus.QUEUED) {
+      throw new IllegalStateException("Only a queued forecast can start");
+    }
     this.status = ForecastRunStatus.RUNNING;
   }
 
@@ -171,17 +178,45 @@ public class ForecastRun {
    */
   public void markSucceeded(
       List<ForecastDay> series, String diagnostics, String modelVersion, long elapsedMs) {
-    this.status = ForecastRunStatus.SUCCEEDED;
-    this.series = List.copyOf(series);
+    markSucceeded(series, diagnostics, List.of(), modelVersion, elapsedMs);
+  }
+
+  /** Keeps runtime qualifications independently of optional diagnostic results. */
+  public void markSucceeded(
+      List<ForecastDay> series,
+      String diagnostics,
+      List<String> warnings,
+      String modelVersion,
+      long elapsedMs) {
+    requireNonterminal();
+    // Validate the complete outcome before any transition: malformed remote data must leave
+    // the run nonterminal so the orchestrator can record a failure.
+    List<ForecastDay> checkedSeries = List.copyOf(series);
+    List<String> checkedWarnings = warnings == null ? null : List.copyOf(warnings);
+    String checkedVersion = Objects.requireNonNull(modelVersion, "modelVersion");
+    this.runtimeWarnings = checkedWarnings;
+    this.series = checkedSeries;
     this.diagnostics = diagnostics;
-    this.modelVersion = Objects.requireNonNull(modelVersion, "modelVersion");
+    this.modelVersion = checkedVersion;
     this.elapsedMs = elapsedMs;
+    this.status = ForecastRunStatus.SUCCEEDED;
   }
 
   /** Records a failed forecast with an operator-facing message (never credentials or payloads). */
   public void markFailed(String message) {
-    this.status = ForecastRunStatus.FAILED;
+    requireNonterminal();
     this.errorMessage = Objects.requireNonNull(message, "message");
+    this.status = ForecastRunStatus.FAILED;
+  }
+
+  private void requireNonterminal() {
+    if (status != ForecastRunStatus.QUEUED && status != ForecastRunStatus.RUNNING) {
+      throw new IllegalStateException("Completed forecasts cannot be executed again");
+    }
+  }
+
+  public List<String> runtimeWarnings() {
+    return runtimeWarnings;
   }
 
   public UUID id() {

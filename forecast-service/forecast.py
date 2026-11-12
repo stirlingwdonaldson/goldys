@@ -242,7 +242,7 @@ def build_future_frame(
     horizon: int | None = None,
     force_refresh: bool = False,
     simulate_maturity: bool = False,
-) -> tuple[pd.DataFrame, pd.Timestamp]:
+) -> tuple[pd.DataFrame, pd.Timestamp, tuple[str, ...]]:
     """History plus ``horizon`` future days, with external features attached and
     future booked covers topped up to their settled estimate.
 
@@ -273,7 +273,7 @@ def build_future_frame(
     frame = spine.merge(internal, on="date", how="left")
 
     external = build_external_features(config, start, end, force_refresh=force_refresh)
-    frame = frame.merge(external, on="date", how="left")
+    frame = frame.merge(external.frame, on="date", how="left")
 
     frame = add_calendar_features(frame)
 
@@ -298,7 +298,7 @@ def build_future_frame(
     # same-weekday average, exactly as before.
     frame["booked_covers"] = _estimate_future_bookings(frame, cutoff)
     frame = frame[frame["date"] >= internal["date"].min()].reset_index(drop=True)
-    return frame, cutoff
+    return frame, cutoff, external.warnings
 
 
 def forecast(
@@ -317,7 +317,7 @@ def forecast(
     model saw for each forecast day. Nothing in the maths depends on it; it
     exists so the web UI can show why a given day was predicted as it was.
     """
-    frame, cutoff = build_future_frame(
+    frame, cutoff, _warnings = build_future_frame(
         internal,
         config,
         horizon=horizon,

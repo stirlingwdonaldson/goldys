@@ -1,0 +1,11 @@
+# CPU tests use a fake TimesFM predictor; never install/download torch or TimesFM weights.
+fastapi
+pydantic
+numpy
+pandas
+pyyaml
+scipy
+xgboost
+scikit-learn
+httpx
+pytest

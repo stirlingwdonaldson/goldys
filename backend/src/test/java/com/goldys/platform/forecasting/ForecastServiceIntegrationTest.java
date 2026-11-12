@@ -43,6 +43,7 @@ class ForecastServiceIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired ForecastService service;
   @Autowired ForecastRunRepository repository;
+  @Autowired com.goldys.platform.application.ForecastingApplicationService application;
 
   @MockitoBean ForecastModelClient client;
   @MockitoBean MetricQueryService queries;
@@ -96,19 +97,86 @@ class ForecastServiceIntegrationTest {
                         null,
                         null)),
                 null,
-                List.of()));
+                List.of("XGBoost diagnostics unavailable; headline forecast retained"),
+                "runtime-reported-model"));
 
     ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, "owner@example.com");
 
     ForecastRun reloaded = repository.findById(run.id()).orElseThrow();
     assertThat(reloaded.status()).isEqualTo(ForecastRunStatus.SUCCEEDED);
-    assertThat(reloaded.modelVersion()).isEqualTo("timesfm-3.0");
+    assertThat(reloaded.modelVersion()).isEqualTo("runtime-reported-model");
     assertThat(reloaded.series()).hasSize(2);
     assertThat(reloaded.series().get(0).date()).isEqualTo(OCT_12);
     assertThat(reloaded.series().get(0).quantiles())
         .containsEntry("0.5", new BigDecimal("10.5"))
         .containsEntry("0.9", new BigDecimal("10.9"));
     assertThat(reloaded.errorMessage()).isNull();
+    assertThat(reloaded.diagnostics()).isNull();
+    assertThat(reloaded.runtimeWarnings())
+        .containsExactly("XGBoost diagnostics unavailable; headline forecast retained");
+    var owner =
+        new com.goldys.platform.auth.UserRole(
+            new com.goldys.platform.auth.DepartmentCode("ALL"),
+            new com.goldys.platform.auth.SeniorityCode("OWNER"));
+    var dto = application.get(owner, run.id());
+    assertThat(dto.diagnostics()).isNull();
+    assertThat(dto.modelVersion()).isEqualTo("runtime-reported-model");
+    assertThat(dto.notices())
+        .contains(
+            "XGBoost diagnostics unavailable; headline forecast retained",
+            "Forecast uses an immutable input snapshot; incomplete inputs remain gaps, not zero");
+  }
+
+  @Test
+  void recoveryPersistsBothInterruptedStatesAndDoesNotTouchCompletedRuns() {
+    ForecastRun queued =
+        ForecastRun.create("sales.net", List.of(), SEP_01, OCT_11, 7, "owner@example.com", NOW);
+    ForecastRun running =
+        ForecastRun.create("sales.net", List.of(), SEP_01, OCT_11, 7, "owner@example.com", NOW);
+    running.markRunning();
+    ForecastRun finished =
+        ForecastRun.create("sales.net", List.of(), SEP_01, OCT_11, 7, "owner@example.com", NOW);
+    finished.markSucceeded(List.of(), "model", 1);
+    repository.saveAll(List.of(queued, running, finished));
+    service.failInterruptedRuns();
+    assertThat(repository.findByStatus(ForecastRunStatus.QUEUED)).isEmpty();
+    assertThat(repository.findByStatus(ForecastRunStatus.RUNNING)).isEmpty();
+    assertThat(repository.findByStatus(ForecastRunStatus.FAILED)).hasSize(2);
+    assertThat(repository.findById(finished.id()).orElseThrow().status())
+        .isEqualTo(ForecastRunStatus.SUCCEEDED);
+  }
+
+  @Test
+  void rejectedDispatchFailureSurvivesReload() {
+    when(queries.query(any())).thenReturn(targetSeries());
+    ForecastService rejecting =
+        new ForecastService(
+            repository,
+            queries,
+            new com.goldys.platform.semantic.catalog.MetricCatalog(),
+            client,
+            task -> {
+              throw new java.util.concurrent.RejectedExecutionException();
+            },
+            new TimesFmProperties(true, "http://localhost:8001"),
+            java.time.Clock.systemUTC());
+    ForecastRun run = rejecting.submit("sales.net", List.of(), SEP_01, 7, "owner@example.com");
+    assertThat(repository.findById(run.id()).orElseThrow().status())
+        .isEqualTo(ForecastRunStatus.FAILED);
+  }
+
+  @Test
+  void malformedRuntimeWarningsBecomePersistedFailureInsteadOfStrandingRunning() {
+    when(queries.query(any())).thenReturn(targetSeries());
+    when(client.forecast(any()))
+        .thenReturn(
+            new ForecastModelResponse(
+                List.of(), null, java.util.Collections.singletonList(null), "runtime-model"));
+    ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, "owner@example.com");
+    ForecastRun loaded = repository.findById(run.id()).orElseThrow();
+    assertThat(loaded.status()).isEqualTo(ForecastRunStatus.FAILED);
+    assertThat(loaded.errorMessage()).isEqualTo("unexpected error: NullPointerException");
+    assertThat(loaded.series()).isEmpty();
   }
 
   private static TimeSeriesResult targetSeries() {
