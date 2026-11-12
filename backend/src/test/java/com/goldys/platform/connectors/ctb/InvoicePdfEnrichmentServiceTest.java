@@ -59,6 +59,35 @@ class InvoicePdfEnrichmentServiceTest {
   }
 
   @Test
+  void successfulReplayClearsExtractionFailuresUsingTheStoredFilename() {
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(parser.extract("text"))
+        .thenReturn(
+            new PdfExtractedInvoice(
+                "INV-1",
+                List.of(new PdfExtractedLine("CODE", "desc", null, "KG", null, null, null, null))));
+    when(invoiceQuery.currentPdfFilenameForInvoiceNumber("INV-1")).thenReturn(Optional.of("a.pdf"));
+
+    service().enrich(new byte[] {1}, null, PDF_RAW_ID);
+
+    verify(flags).resolveExtractionFailures("INV-1", "a.pdf");
+  }
+
+  @Test
+  void failedOrEmptyExtractionDoesNotResolveEarlierFailures() {
+    when(extractor.extractText(any(), eq("application/pdf"))).thenReturn("text");
+    when(invoiceQuery.invoiceNumberForPdfFilename("a.pdf")).thenReturn(Optional.of("INV-1"));
+    when(parser.extract("text"))
+        .thenReturn(new PdfExtractedInvoice("INV-1", List.of(), "expired key"))
+        .thenReturn(new PdfExtractedInvoice("INV-1", List.of()));
+
+    service().enrich(new byte[] {1}, "a.pdf", PDF_RAW_ID);
+    service().enrich(new byte[] {1}, "a.pdf", PDF_RAW_ID);
+
+    verify(flags, never()).resolveExtractionFailures(any(), any());
+  }
+
+  @Test
   void usesTheFilenameMappedInvoiceNumberAsTheJoinKey() {
     byte[] pdf = new byte[] {1};
     List<PdfExtractedLine> lines =
@@ -84,6 +113,7 @@ class InvoicePdfEnrichmentServiceTest {
 
     service().enrich(pdf, "bruno-1.pdf", PDF_RAW_ID);
 
+    verify(flags).resolveExtractionFailures("INV-1", "bruno-1.pdf");
     verify(enrichment)
         .enrich(
             eq("INV-1"),

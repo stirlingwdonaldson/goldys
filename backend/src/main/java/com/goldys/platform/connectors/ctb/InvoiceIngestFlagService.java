@@ -108,6 +108,25 @@ public class InvoiceIngestFlagService {
         InvoiceIngestFlagType.INVOICE_AMOUNT_BASIS_UNVERIFIED, invoiceNumber);
   }
 
+  /** Clear extraction failures only after a known document has been successfully processed. */
+  @Transactional
+  public void resolveExtractionFailures(String invoiceNumber, String pdfFilename) {
+    // A number or filename alone cannot prove that the failed document was retried.
+    if (invoiceNumber == null || pdfFilename == null) {
+      return;
+    }
+    for (InvoiceIngestFlag flag :
+        repository.findByInvoiceNumberAndPdfFilenameAndFlagTypeInAndResolvedAtIsNull(
+            invoiceNumber,
+            pdfFilename,
+            List.of(
+                InvoiceIngestFlagType.LLM_EXTRACTION_FAILED,
+                InvoiceIngestFlagType.PDF_UNPARSEABLE))) {
+      flag.resolve(Instant.now(CLOCK));
+      repository.save(flag);
+    }
+  }
+
   /** Retires a flag once a better matcher/replay resolves it. Idempotent. */
   @Transactional
   public void resolve(UUID id) {
