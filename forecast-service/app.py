@@ -122,6 +122,7 @@ class ForecastDay(BaseModel):
 
 
 class ForecastResponse(BaseModel):
+    modelVersion: str = MODEL_VERSION
     forecast: list[ForecastDay]
     diagnostics: dict | None = None
     warnings: list[str] = Field(default_factory=list)
@@ -140,7 +141,7 @@ def forecast(request: ForecastRequest) -> ForecastResponse:
     # One feature matrix across history + horizon: external drivers, calendar,
     # and the future booked-covers maturity top-up. Lags are added separately
     # (below) because the twin needs them and TimesFM's covariates do not.
-    frame, cutoff = build_future_frame(internal, config, horizon=request.horizon)
+    frame, cutoff, external_warnings = build_future_frame(internal, config, horizon=request.horizon)
     lagged = add_lag_features(frame, config)
 
     # The headline forecast: TimesFM net-revenue quantiles conditioned on the
@@ -171,7 +172,7 @@ def forecast(request: ForecastRequest) -> ForecastResponse:
     # The XGBoost twin is best-effort: its failure must never lose the forecast.
     diagnostics: dict | None = None
     shares: list[float | None] = [None] * len(future_dates)
-    warnings: list[str] = []
+    warnings: list[str] = list(external_warnings)
     try:
         models = train(lagged, config)
         importance = feature_importance(models)
@@ -179,10 +180,10 @@ def forecast(request: ForecastRequest) -> ForecastResponse:
         summary = backtest_summary(bt)
         shares = _split_future(frame, cutoff, models, median_values, config)
         diagnostics = _build_diagnostics(models, importance, bt, summary)
-        warnings = list(models.warnings)
+        warnings.extend(models.warnings)
     except Exception as exc:  # noqa: BLE001 - the twin is a diagnostic, not the forecast
         LOGGER.warning("XGBoost twin failed; returning the TimesFM forecast only: %s", exc)
-        warnings = [f"XGBoost twin failed: {exc}"]
+        warnings.append("XGBoost diagnostics unavailable; headline forecast retained")
 
     future_frame = lagged[lagged["date"] > cutoff].sort_values("date").reset_index(drop=True)
     rows = [

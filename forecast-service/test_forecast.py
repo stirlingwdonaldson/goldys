@@ -20,6 +20,7 @@ import pandas as pd
 import pytest
 
 import forecast as forecast_module
+from external import ExternalFeatures
 from external import (
     PUBLIC_HOLIDAY_COLUMNS,
     SCHOOL_COLUMNS,
@@ -58,7 +59,7 @@ def _stub_external(config, start, end, force_refresh=False) -> pd.DataFrame:
     frame = pd.DataFrame({"date": pd.date_range(start, end, freq="D")})
     for column in columns:
         frame[column] = pd.NA
-    return frame
+    return ExternalFeatures(frame)
 
 
 def _history_frame(n: int = 70) -> pd.DataFrame:
@@ -147,7 +148,7 @@ def test_future_frame_preserves_observed_book_separately(monkeypatch):
     future = internal["date"].max() + pd.Timedelta(days=1)
     internal = pd.concat([internal, pd.DataFrame({"date": [future], "booked_covers": [np.nan]})], ignore_index=True)
     monkeypatch.setattr(forecast_module, "build_external_features", _stub_external)
-    frame, _ = forecast_module.build_future_frame(internal, Config(), horizon=1)
+    frame, _, _ = forecast_module.build_future_frame(internal, Config(), horizon=1)
     row = frame[frame.date == future].iloc[0]
     assert pd.isna(row.observed_booked_covers)
     assert row.booked_covers > 0

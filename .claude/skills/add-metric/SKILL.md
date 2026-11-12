@@ -25,14 +25,16 @@ anywhere else.
    - `requiredPermission`: an existing resource where the sensitivity matches;
      sensitive data (e.g. wages) gets its own resource, seeded `ALL × OWNER` only;
    - persistent caveats in notes (e.g. "gross includes GST").
-   For a derived metric, add its operands to `CONSTITUENTS`, and update `RELATED` if
-   it should be suggested alongside others.
+   For an arithmetic derived metric, register its ordered operands and operation in
+   `MetricCatalog.FORMULAS`; evaluation, trust and permission traversal share that
+   definition. Bespoke reads use `SPECIAL_CONSTITUENTS`. Update `RELATED` when useful.
 4. **Execute it.**
    - Base metric: add it to the domain's executor (`SalesMetricExecutor`,
      `ReservationMetricExecutor`, `LabourMetricExecutor`, `InventoryMetricExecutor`,
      `ProductMetricExecutor`) and its `ids()`. It reads a resolved projection through
      the domain's semantic query, never canonical.
-   - Derived metric: add a case to `DerivedMetricExecutor`. Return null (shown as
+   - Derived metric: ratio/difference evaluation uses the registered formula. Add a
+     case to `DerivedMetricExecutor` only for a bespoke read. Return null (shown as
      missing, never 0) when the denominator is zero or an operand is unresolved.
 5. **Document it** in `docs/metrics/catalog.md` (table row plus meaning).
    `MetricCatalogDocTest` fails if any `MetricId` is missing from that file.

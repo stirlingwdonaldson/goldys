@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
@@ -32,8 +34,8 @@ import org.springframework.stereotype.Service;
  * self-hosted forecasting runtime asynchronously, and persists the outcome.
  *
  * <p>The run is created in {@code QUEUED} state and dispatched to the application task executor, so
- * a slow inference call never blocks the submission. Any run left {@code RUNNING} when the process
- * starts is flipped to {@code FAILED}, so a restart can never strand a row.
+ * a slow inference call never blocks the submission. Any run left {@code QUEUED} or {@code RUNNING}
+ * when the process starts is flipped to {@code FAILED}, so a restart can never strand a row.
  */
 @Service
 public class ForecastService {
@@ -49,6 +51,9 @@ public class ForecastService {
 
   private static final String MODEL_VERSION = "timesfm-3.0";
   private static final String INTERRUPTED_MESSAGE = "service restarted before completion";
+
+  // shortcut: single-instance execution ownership; use a database claim before adding replicas.
+  private final Set<UUID> executing = ConcurrentHashMap.newKeySet();
 
   private final ForecastRunRepository runs;
   private final MetricQueryService queries;
@@ -135,15 +140,30 @@ public class ForecastService {
     run.captureInput(snapshot);
     runs.save(run);
     UUID runId = run.id();
-    executor.execute(() -> execute(runId));
+    try {
+      executor.execute(() -> execute(runId));
+    } catch (RejectedExecutionException e) {
+      run.markFailed("Forecast dispatch rejected; create a new forecast");
+      runs.save(run);
+    }
     return run;
   }
 
   /** Runs inference for a queued run and advances it to {@code SUCCEEDED} or {@code FAILED}. */
   public void execute(UUID runId) {
+    if (!executing.add(runId)) return;
+    try {
+      executeQueued(runId);
+    } finally {
+      executing.remove(runId);
+    }
+  }
+
+  private void executeQueued(UUID runId) {
     ForecastRun run =
         runs.findById(runId)
             .orElseThrow(() -> new IllegalStateException("unknown forecast run: " + runId));
+    if (run.status() != ForecastRunStatus.QUEUED) return;
     run.markRunning();
     runs.save(run);
 
@@ -157,7 +177,11 @@ public class ForecastService {
       ForecastModelRequest request = run.inputSnapshot().request();
       ForecastModelResponse response = client.forecast(request);
       run.markSucceeded(
-          toForecastDays(response), response.diagnostics(), MODEL_VERSION, elapsedMs(startNanos));
+          toForecastDays(response),
+          response.diagnostics(),
+          response.warnings(),
+          response.modelVersion() == null ? MODEL_VERSION : response.modelVersion(),
+          elapsedMs(startNanos));
     } catch (RuntimeException e) {
       run.markFailed(failureMessage(e));
     }
@@ -219,12 +243,14 @@ public class ForecastService {
     return result.series().getFirst().points();
   }
 
-  /** Flips any run stranded in {@code RUNNING} by a previous shutdown to {@code FAILED}. */
+  /** Fails both nonterminal states: queued work also lives only in the previous executor. */
   @PostConstruct
   void failInterruptedRuns() {
-    for (ForecastRun run : runs.findByStatus(ForecastRunStatus.RUNNING)) {
-      run.markFailed(INTERRUPTED_MESSAGE);
-      runs.save(run);
+    for (ForecastRunStatus status : List.of(ForecastRunStatus.QUEUED, ForecastRunStatus.RUNNING)) {
+      for (ForecastRun run : runs.findByStatus(status)) {
+        run.markFailed(INTERRUPTED_MESSAGE);
+        runs.save(run);
+      }
     }
   }
 

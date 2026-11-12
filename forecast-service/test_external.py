@@ -137,6 +137,12 @@ def test_source_outage_degrades_to_na(monkeypatch):
         config, pd.Timestamp("2026-09-01"), pd.Timestamp("2026-09-07")
     )
 
+    assert result.warnings == (
+        "DataVic calendar unavailable; public holidays use manual events only and school dates may be missing",
+        "University calendar unavailable; university drivers are missing",
+        "Weather unavailable; weather drivers are missing",
+    )
+    result = result.frame
     expected = set(
         external_module.PUBLIC_HOLIDAY_COLUMNS
         + external_module.SCHOOL_COLUMNS
@@ -186,3 +192,19 @@ def test_include_booked_covers_env_accepts_bool_and_force(monkeypatch):
 
     monkeypatch.setenv("FORECAST_INCLUDE_BOOKED_COVERS", "force")
     assert external_module.Config().get("features.include_booked_covers") == "force"
+
+
+def test_disabled_optional_sources_do_not_report_outages(monkeypatch):
+    monkeypatch.setenv("FORECAST_INCLUDE_WEATHER", "false")
+    monkeypatch.setenv("FORECAST_INCLUDE_UNIVERSITY", "false")
+    monkeypatch.setattr(external_module, "fetch_datavic_dates", lambda *a, **k: pd.DataFrame(
+        columns=["_type", "_date", "_name"], dtype="object"))
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("disabled source must not be fetched")
+
+    monkeypatch.setattr(external_module, "fetch_weather_hourly", unexpected)
+    monkeypatch.setattr(external_module, "build_university_dates", unexpected)
+    result = external_module.build_external_features(
+        external_module.Config(), pd.Timestamp("2026-09-01"), pd.Timestamp("2026-09-07"))
+    assert result.warnings == ()

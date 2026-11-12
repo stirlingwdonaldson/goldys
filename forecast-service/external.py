@@ -764,14 +764,23 @@ def aggregate_service_weather(config: Config, hourly: pd.DataFrame) -> pd.DataFr
 # ---------------------------------------------------------------------------
 
 
+@dataclass(frozen=True)
+class ExternalFeatures:
+    """Daily drivers and safe qualifications for the sources used to assemble them."""
+
+    frame: pd.DataFrame
+    warnings: tuple[str, ...] = ()
+
+
 def build_external_features(
     config: Config,
     start: pd.Timestamp,
     end: pd.Timestamp,
     *,
     force_refresh: bool = False,
-) -> pd.DataFrame:
+) -> ExternalFeatures:
     """One row per date between start and end, with all external features."""
+    warnings: list[str] = []
     frame = pd.DataFrame({"date": pd.date_range(start, end, freq="D")})
 
     try:
@@ -781,6 +790,7 @@ def build_external_features(
             frame = build_school_dates(dates, frame)
     except Exception as exc:  # noqa: BLE001 - source is optional, schema is not
         LOGGER.warning("DataVic dates unavailable: %s", exc)
+        warnings.append("DataVic calendar unavailable; public holidays use manual events only and school dates may be missing")
         for column in SCHOOL_COLUMNS:
             frame[column] = pd.NA
         # Manual events don't need the feed, so still apply them rather than
@@ -794,6 +804,7 @@ def build_external_features(
             frame = build_university_dates(config, frame)
         except Exception as exc:  # noqa: BLE001
             LOGGER.warning("University dates unavailable: %s", exc)
+            warnings.append("University calendar unavailable; university drivers are missing")
             for column in UNIVERSITY_COLUMNS:
                 frame[column] = pd.NA
 
@@ -804,6 +815,7 @@ def build_external_features(
             frame = frame.merge(weather, on="date", how="left")
         except Exception as exc:  # noqa: BLE001
             LOGGER.warning("Weather unavailable: %s", exc)
+            warnings.append("Weather unavailable; weather drivers are missing")
             for column in WEATHER_COLUMNS:
                 frame[column] = pd.NA
 
@@ -816,4 +828,4 @@ def build_external_features(
         if column not in frame.columns:
             frame[column] = pd.NA
 
-    return frame.sort_values("date").reset_index(drop=True)
+    return ExternalFeatures(frame.sort_values("date").reset_index(drop=True), tuple(warnings))

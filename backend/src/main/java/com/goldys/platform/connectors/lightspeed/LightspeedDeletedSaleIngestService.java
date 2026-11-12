@@ -1,18 +1,11 @@
 package com.goldys.platform.connectors.lightspeed;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.canonical.CanonicalDeletedSaleIngest;
 import com.goldys.platform.canonical.DeletedSaleInput;
 import com.goldys.platform.ingestion.FetchMethod;
+import com.goldys.platform.ingestion.IngestionProcessing;
 import com.goldys.platform.ingestion.IngestionService;
-import com.goldys.platform.ingestion.IngestionStageKind;
-import com.goldys.platform.ingestion.IngestionStageOutcome;
-import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import com.goldys.platform.util.Nulls;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
@@ -24,14 +17,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LightspeedDeletedSaleIngestService {
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper(
-          JsonFactory.builder()
-              .streamReadConstraints(
-                  StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build())
-              .build());
 
   private final IngestionService ingestion;
+  private final IngestionProcessing processing;
   private final CanonicalDeletedSaleIngest canonical;
   private final LightspeedDeletedSaleCsvParser parser;
 
@@ -40,6 +28,7 @@ public class LightspeedDeletedSaleIngestService {
       CanonicalDeletedSaleIngest canonical,
       LightspeedDeletedSaleCsvParser parser) {
     this.ingestion = ingestion;
+    this.processing = new IngestionProcessing(ingestion);
     this.canonical = canonical;
     this.parser = parser;
   }
@@ -55,65 +44,36 @@ public class LightspeedDeletedSaleIngestService {
             StandardCharsets.UTF_8.name(),
             "lightspeed-deleted-sales");
 
-    List<LightspeedDeletedSale> deletedSales;
-    try {
-      deletedSales = parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
-    } catch (RuntimeException e) {
-      ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
-      throw e;
-    }
-    ingestion.recordStage(
-        rawId,
-        IngestionStageKind.PARSED,
-        deletedSales.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
+    List<LightspeedDeletedSale> deletedSales =
+        processing.parse(rawId, () -> parser.parse(LightspeedEnvelope.csv(body)));
 
-    try {
-      for (LightspeedDeletedSale d : deletedSales) {
-        canonical.record(
-            new DeletedSaleInput(
-                "LIGHTSPEED",
-                d.saleOpenedDate(),
-                d.saleNumber(),
-                d.orderType(),
-                d.note(),
-                Nulls.zeroIfNull(d.totalIncTax()),
-                Nulls.zeroIfNull(d.totalExTax()),
-                Nulls.zeroIfNull(d.totalTax()),
-                d.totalCost(),
-                d.openedRegisterCode(),
-                d.openedRegisterName(),
-                d.deletedRegisterCode(),
-                d.deletedRegisterName(),
-                d.staffName(),
-                d.staffCode(),
-                d.deletedByStaffName(),
-                d.deletedByStaffCode(),
-                d.tableNumber(),
-                d.siteId(),
-                d.customerName(),
-                rawId));
-      }
-    } catch (RuntimeException e) {
-      ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
-      throw e;
-    }
-    ingestion.recordStage(
+    processing.canonicalize(
         rawId,
-        IngestionStageKind.CANONICALIZED,
-        deletedSales.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
-  }
-
-  private static String extractCsv(byte[] body) {
-    try {
-      JsonNode root = MAPPER.readTree(body);
-      String data = root.path("attachment").path("data").asText(null);
-      if (data == null) {
-        throw new ConnectorFetchException(
-            "CONNECTOR_SCHEMA_MISMATCH", "No attachment.data in Lightspeed webhook payload");
-      }
-      return data;
-    } catch (IOException e) {
-      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON webhook payload", e);
-    }
+        deletedSales,
+        d -> {
+          canonical.record(
+              new DeletedSaleInput(
+                  "LIGHTSPEED",
+                  d.saleOpenedDate(),
+                  d.saleNumber(),
+                  d.orderType(),
+                  d.note(),
+                  Nulls.zeroIfNull(d.totalIncTax()),
+                  Nulls.zeroIfNull(d.totalExTax()),
+                  Nulls.zeroIfNull(d.totalTax()),
+                  d.totalCost(),
+                  d.openedRegisterCode(),
+                  d.openedRegisterName(),
+                  d.deletedRegisterCode(),
+                  d.deletedRegisterName(),
+                  d.staffName(),
+                  d.staffCode(),
+                  d.deletedByStaffName(),
+                  d.deletedByStaffCode(),
+                  d.tableNumber(),
+                  d.siteId(),
+                  d.customerName(),
+                  rawId));
+        });
   }
 }

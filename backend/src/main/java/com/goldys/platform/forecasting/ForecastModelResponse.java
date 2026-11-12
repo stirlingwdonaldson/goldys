@@ -18,7 +18,13 @@ import java.util.List;
  * {@code null} meaning the driver is absent; every value field may be {@code null} because the
  * Python service serialises NaN as JSON {@code null}.
  */
-public record ForecastModelResponse(List<Day> forecast, String diagnostics, List<String> warnings) {
+public record ForecastModelResponse(
+    List<Day> forecast, String diagnostics, List<String> warnings, String modelVersion) {
+
+  /** Compatibility with runtime responses predating explicit model identity. */
+  public ForecastModelResponse(List<Day> forecast, String diagnostics, List<String> warnings) {
+    this(forecast, diagnostics, warnings, null);
+  }
 
   /** One forecasted day, matching the wire's per-day object field-for-field. */
   public record Day(

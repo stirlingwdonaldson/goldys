@@ -1,5 +1,6 @@
 "use client";
 
+import { dashboardWrites } from "./dashboard-writes";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ function sortDashboards(list: SavedDashboardSummary[]): SavedDashboardSummary[] 
  */
 export function DashboardsPageView({ api }: { api: Api }) {
   const queryClient = useQueryClient();
+  const writes = dashboardWrites(api, queryClient);
   const [actionError, setActionError] = useState<string | null>(null);
   const list = useQuery({ queryKey: ["listDashboards"], queryFn: ({ signal }) => api.listDashboards({ signal }) });
   const templates = useQuery({ queryKey: ["listDashboardTemplates"], queryFn: ({ signal }) => api.listDashboardTemplates({ signal }) });
@@ -46,14 +48,12 @@ export function DashboardsPageView({ api }: { api: Api }) {
   const [creating, setCreating] = useState<string | null>(null);
 
   const pin = useMutation({
-    mutationFn: api.toggleDashboardPin,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["listDashboards"] }),
+    mutationFn: writes.togglePin,
     onError: error => setActionError(error.message),
   });
   const create = useMutation({
-    mutationFn: api.createDashboardFromTemplate,
+    mutationFn: writes.createFromTemplate,
     onSuccess: created => {
-      void queryClient.invalidateQueries({ queryKey: ["listDashboards"] });
       setTemplatesOpen(false);
       setSelectedId(created.id);
     },
@@ -128,11 +128,7 @@ export function DashboardsPageView({ api }: { api: Api }) {
         api={api}
         dashboardId={selectedId}
         onClose={() => setSelectedId(null)}
-        onDeleted={async () => {
-          setSelectedId(null);
-          await list.refetch();
-        }}
-        onChanged={() => { void queryClient.invalidateQueries({ queryKey: ["listDashboards"] }); }}
+        onDeleted={() => setSelectedId(null)}
       />
     );
   }

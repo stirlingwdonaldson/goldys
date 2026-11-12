@@ -1,43 +1,44 @@
 # TimesFM inference service (second runtime)
 
-**Status:** Accepted
-**Date:** 2026-10-12
+**Status:** Accepted 2026-10-12; ownership clarified 2026-11-12
 
-## Context
+Goldy's runs forecasting in a separate Python runtime because its TimesFM predictor depends on
+Python/PyTorch. Java retains authorization, resolved semantic reads, the immutable internal-input
+snapshot, asynchronous run ownership and persisted results. The runtime is reached through
+`ForecastModelClient`; `ForecastModelHttpClient` is its HTTP adapter.
 
-Goldy's forecasting feature ([historical design](https://github.com/stirlingwdonaldson/goldys/blob/b2377f979742c74b8504f6ddf57acd3460390025/docs/superpowers/specs/2026-10-12-timesfm-forecasting-design.md))
-predicts a resolved business metric using Google's **TimesFM 3.0** zero-shot model. TimesFM is a
-330M-parameter time-series foundation model that is **Python/PyTorch-only**: it has no JVM runtime
-and no Java SDK.
+## Current ownership
 
-The backend is a Java 25 / Spring Boot modular monolith, and the architecture invariants
-(`docs/system-context.md`, `docs/architecture/current-state.md`) state "no microservices … single
-deployable". Running the model therefore cannot be absorbed into the existing deployable.
+The original data-agnostic description no longer describes the implementation. Python accepts
+aligned net revenue, food/beverage and reservation series, assembles venue calendar and weather
+features, applies the existing booking-maturity and feature-selection policy, and runs TimesFM
+with optional XGBoost diagnostics and food/beverage splits. These remain together in the runtime
+so feature preparation and model execution use the same frame. Python has no access to Goldy's
+database or permission tables. Java selects and authorizes the internal inputs before dispatch.
+This clarification records existing ownership; it does not change forecast targets, financial
+classification, maturity policy or the standing exception to the single-deployable architecture.
 
-## Decision
+`POST /forecast` returns points, model identity, optional diagnostics and runtime warnings.
+Missing diagnostics stay null. A diagnostic failure retains a successful headline forecast with
+an explicit notice. Optional calendar/weather failures also produce notices alongside the existing
+feature fallback behavior. Java persists those warnings separately from diagnostics and includes
+them in the run's notices after reload. Historical rows without retained warnings remain unknown;
+the migration does not reconstruct past runtime outcomes. Older runtime responses without explicit
+model identity retain the existing TimesFM 3.0 compatibility label.
 
-Add a **second runtime**: a self-hosted Python (FastAPI) inference service
-(`forecast-service/`) that loads TimesFM 3.0 and exposes a small, **data-agnostic** HTTP contract
-(`POST /forecast`, `GET /health`). The Java backend calls it behind the `TimesFmClient` port
-(`com.goldys.platform.forecasting`), exactly as a connector sits behind `SourceConnector`.
+The internal-input snapshot does not freeze external calendar/weather responses, runtime
+configuration or model weights. Reproducing external feature inputs exactly is separate work;
+this change does not claim complete forecast reproducibility.
 
-This is a **deliberate, documented exception** to the "single deployable" invariant, not a widening
-of it:
+## Run ownership and verification
 
-- The Java backend remains a single monolith; no backend logic moves into Python.
-- The inference service is an external dependency behind a port, with the same standing as
-  PostgreSQL or the external LLM the conversational AI already calls.
-- The service knows nothing about Goldy's schema, metrics, or permissions — Java does all data
-  preparation (via the resolved semantic layer) and hands the service aligned numeric arrays.
+Submission persists QUEUED before dispatching to the in-memory executor. Rejected dispatch becomes
+FAILED. Startup marks both QUEUED and RUNNING runs from the previous process FAILED with a restart
+reason, so users can submit a new run. Completed work cannot be executed again. A per-run in-process
+guard prevents simultaneous duplicate execution in the current single-instance deployment; adding
+replicas requires a database execution claim rather than relying on that guard. No broker or
+automatic retry policy is introduced.
 
-## Consequences
-
-- **Deploy** adds a container to the stack (plus a model-download/cache volume). Prod compose
-  wiring for the `timesfm` service is pending explicit approval (not yet added to
-  `docker-compose.prod.yml`).
-- **Latency** — 330M params on CPU is seconds-to-tens-of-seconds per forecast; the async
-  `forecast_run` lifecycle absorbs this, and the port makes a GPU box or a lighter checkpoint a
-  deploy-only change.
-- **Licensing** — TimesFM 3.0's open weights are under a **non-commercial license**. This is fine
-  for the pub's own internal forecasting; commercializing the product would require the Google
-  Cloud (BigQuery ML / Vertex AI) route, which is commercially licensed.
+PostgreSQL tests cover persisted outcomes and interrupted runs. Python CI uses a fake TimesFM
+predictor and blocks network connections; it does not download model weights. Production deployment
+and model licensing are separate operational decisions, not established by these tests.

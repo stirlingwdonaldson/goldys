@@ -246,6 +246,92 @@ class ForecastServiceTest {
     assertThat(run.errorMessage()).isEqualTo("service restarted before completion");
   }
 
+  @Test
+  void rejectedDispatchLeavesTerminalFailure() {
+    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_NET, 20, SEP_01));
+    ForecastService rejecting =
+        new ForecastService(
+            runs,
+            queries,
+            catalog,
+            client,
+            task -> {
+              throw new java.util.concurrent.RejectedExecutionException("private detail");
+            },
+            new TimesFmProperties(true, "http://localhost:8001"),
+            Clock.fixed(NOW, ZoneOffset.UTC));
+    ForecastRun run = rejecting.submit("sales.net", List.of(), SEP_01, 7, EMAIL);
+    assertThat(store.get(run.id()).status()).isEqualTo(ForecastRunStatus.FAILED);
+    assertThat(run.errorMessage()).isEqualTo("Forecast dispatch rejected; create a new forecast");
+    service.execute(run.id());
+    org.mockito.Mockito.verifyNoInteractions(client);
+  }
+
+  @Test
+  void restartFailsQueuedAndRunningButPreservesTerminalRuns() {
+    ForecastRun queued = ForecastRun.create("sales.net", List.of(), SEP_01, TODAY, 7, EMAIL, NOW);
+    ForecastRun running = ForecastRun.create("sales.net", List.of(), SEP_01, TODAY, 7, EMAIL, NOW);
+    running.markRunning();
+    ForecastRun succeeded =
+        ForecastRun.create("sales.net", List.of(), SEP_01, TODAY, 7, EMAIL, NOW);
+    succeeded.markSucceeded(List.of(), "test-model", 1);
+    ForecastRun failed = ForecastRun.create("sales.net", List.of(), SEP_01, TODAY, 7, EMAIL, NOW);
+    failed.markFailed("original failure");
+    for (ForecastRun run : List.of(queued, running, succeeded, failed)) runs.save(run);
+    service.failInterruptedRuns();
+    assertThat(queued.errorMessage()).isEqualTo("service restarted before completion");
+    assertThat(running.errorMessage()).isEqualTo("service restarted before completion");
+    assertThat(succeeded.status()).isEqualTo(ForecastRunStatus.SUCCEEDED);
+    assertThat(failed.errorMessage()).isEqualTo("original failure");
+  }
+
+  @Test
+  void completedRunIsNotExecutedAgainAndKeepsRuntimeWarnings() {
+    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_NET, 20, SEP_01));
+    when(client.forecast(any()))
+        .thenReturn(
+            new ForecastModelResponse(
+                List.of(), null, List.of("Diagnostics unavailable"), "reported-model"));
+    ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, EMAIL);
+    service.execute(run.id());
+    service.execute(run.id());
+    verify(client, org.mockito.Mockito.times(1)).forecast(any());
+    assertThat(run.status()).isEqualTo(ForecastRunStatus.SUCCEEDED);
+    assertThat(run.diagnostics()).isNull();
+    assertThat(run.runtimeWarnings()).containsExactly("Diagnostics unavailable");
+    assertThat(run.modelVersion()).isEqualTo("reported-model");
+  }
+
+  @Test
+  void simultaneousExecutionDoesNotCallModelTwice() throws Exception {
+    when(queries.query(any())).thenReturn(timeSeries(MetricId.SALES_NET, 20, SEP_01));
+    var entered = new java.util.concurrent.CountDownLatch(1);
+    var release = new java.util.concurrent.CountDownLatch(1);
+    when(client.forecast(any()))
+        .thenAnswer(
+            inv -> {
+              entered.countDown();
+              if (!release.await(5, java.util.concurrent.TimeUnit.SECONDS))
+                throw new AssertionError("timeout");
+              return new ForecastModelResponse(List.of(), null, List.of());
+            });
+    ForecastRun run = service.submit("sales.net", List.of(), SEP_01, 7, EMAIL);
+    try (var workers = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+      var first = workers.submit(() -> service.execute(run.id()));
+      try {
+        assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+        workers
+            .submit(() -> service.execute(run.id()))
+            .get(5, java.util.concurrent.TimeUnit.SECONDS);
+      } finally {
+        release.countDown();
+      }
+      first.get(5, java.util.concurrent.TimeUnit.SECONDS);
+    }
+    verify(client, org.mockito.Mockito.times(1)).forecast(any());
+    assertThat(run.status()).isEqualTo(ForecastRunStatus.SUCCEEDED);
+  }
+
   private static TimeSeriesResult timeSeries(MetricId id, int nonNullPoints, LocalDate from) {
     List<MetricPoint> points = new ArrayList<>();
     for (int i = 0; i < nonNullPoints; i++) {

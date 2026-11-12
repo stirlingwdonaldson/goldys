@@ -20,7 +20,10 @@ public interface ReportingTool {
 
   ToolResult execute(ToolInput input, UserRole role);
 
-  /** The bounded MetricQueries this tool computes, for persisting a saved widget. */
+  /**
+   * Bounded metric reads for authorization. Catalogue tools execute this exact prepared list;
+   * specialized ranked tools declare their metric here and retain their bounded ranking inputs.
+   */
   default List<com.goldys.platform.semantic.catalog.MetricQuery> toMetricQueries(ToolInput input) {
     return List.of();
   }

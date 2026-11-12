@@ -49,7 +49,7 @@ public class LightspeedReceiptEvidenceIngestService {
     byte[] csv;
     ReceiptImportScope scope;
     try {
-      csv = LightspeedSaleItemIngestService.extractCsv(body).getBytes(StandardCharsets.UTF_8);
+      csv = LightspeedEnvelope.csv(body);
       scope = parser.observedMappingScope(csv, siteNumber, siteName);
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);

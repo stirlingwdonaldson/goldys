@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ApiError } from "@/lib/api/errors";
-import type { WidgetSpec } from "./types";
+
 
 const base = {
   schemaVersion: z.literal(2), id: z.string(), title: z.string(), description: z.string().nullable().optional(),
@@ -15,6 +15,8 @@ export const widgetSchema = z.discriminatedUnion("type", [
   z.object({ ...base, type: z.literal("table"), columns: z.array(z.object({ key: z.string(), label: z.string(), format: z.string().nullable().optional() })), rows: z.array(z.record(z.string(), cell)) }),
   z.object({ ...base, type: z.literal("ranked-list"), items: z.array(z.object({ label: z.string(), primary: z.string().nullable().optional(), secondary: z.string().nullable().optional(), badge: z.string().nullable().optional() })) }),
 ]);
+
+export type WidgetSpec = z.infer<typeof widgetSchema>;
 
 /** Single-widget callers can render an explicit invalid-widget state. */
 export function parseWidgetSpec(value: unknown): WidgetSpec | null {

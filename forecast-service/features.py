@@ -158,7 +158,7 @@ def assemble_dataset(
     frame = spine.merge(internal, on="date", how="left")
 
     external = build_external_features(config, start, end, force_refresh=force_refresh)
-    frame = frame.merge(external, on="date", how="left")
+    frame = frame.merge(external.frame, on="date", how="left")
 
     frame = add_calendar_features(frame)
     frame = add_lag_features(frame, config)

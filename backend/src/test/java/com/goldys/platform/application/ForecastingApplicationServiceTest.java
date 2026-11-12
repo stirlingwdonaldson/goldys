@@ -261,14 +261,44 @@ class ForecastingApplicationServiceTest {
 
   @Test
   void getMapsUnparseableDiagnosticsToNull() {
-    ForecastRun run = succeededRun();
-    run.markSucceeded(run.series(), "not-json", "timesfm-3.0", 10L);
+    ForecastRun run = queuedRun("sales.gross", List.of());
+    run.markSucceeded(succeededRun().series(), "not-json", "timesfm-3.0", 10L);
     when(runs.findById(run.id())).thenReturn(Optional.of(run));
 
     ForecastRunDto dto = service().get(role(), run.id());
 
     assertThat(dto.diagnostics()).isNull();
     assertThat(dto.series()).isNotNull();
+  }
+
+  @Test
+  void missingPredictionIsNotScoredAsZeroOrComparedArithmetically() {
+    ForecastRun run = queuedRun("sales.gross", List.of());
+    run.markSucceeded(
+        List.of(
+            new ForecastDay(
+                LocalDate.of(2026, 10, 10), java.util.Collections.singletonMap("0.5", null)),
+            new ForecastDay(LocalDate.of(2026, 10, 11), Map.of("0.5", new BigDecimal("110")))),
+        "model",
+        1);
+    when(runs.findById(run.id())).thenReturn(Optional.of(run));
+    when(queries.query(any())).thenReturn(actuals());
+    var comparison = service().comparison(role(), run.id());
+    assertThat(comparison.points().getFirst().predictedMedian()).isNull();
+    assertThat(comparison.points().getFirst().actual()).isEqualByComparingTo("200");
+    assertThat(comparison.mae()).isCloseTo(10.0, offset(1e-9));
+    assertThat(comparison.mape()).isCloseTo(0.1, offset(1e-9));
+  }
+
+  @Test
+  void runtimeWarningsRemainNoticesWithoutInventingDiagnostics() {
+    ForecastRun run = queuedRun("sales.net", List.of());
+    run.markSucceeded(
+        List.of(), null, List.of("Weather unavailable", "Diagnostics unavailable"), "model", 1);
+    when(runs.findById(run.id())).thenReturn(Optional.of(run));
+    var dto = service().get(role(), run.id());
+    assertThat(dto.diagnostics()).isNull();
+    assertThat(dto.notices()).contains("Weather unavailable", "Diagnostics unavailable");
   }
 
   private static ForecastRun queuedRun(String target, List<String> covariates) {

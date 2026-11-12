@@ -253,3 +253,29 @@ it("recovers from a failed document load without retaining the old error", async
   expect(await screen.findByText("Sales dashboard")).toBeInTheDocument();
   expect(screen.queryByText("load failed")).not.toBeInTheDocument();
 });
+
+it("refreshes an open revision panel when saving and fetches changes when reopened", async () => {
+  let revision = 1;
+  const listDashboardRevisions = vi.fn(async () => [
+    { revision, createdBy: "You", createdAt: "2026-10-05T00:00:00Z" },
+  ]);
+  const updateDashboard = vi.fn(async (_id: string, input: SaveDashboardInput) => {
+    revision += 1;
+    return saveResult(input);
+  });
+  render(<DashboardEditor api={editorApi({ listDashboardRevisions, updateDashboard })} dashboardId="d1" />);
+  await screen.findByText("Sales dashboard");
+  expect(listDashboardRevisions).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Revisions" }));
+  await screen.findByText("Revision 1");
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await screen.findByText("Revision 2");
+  await screen.findByRole("button", { name: "Save" });
+  fireEvent.click(screen.getByRole("button", { name: "Revisions" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(updateDashboard).toHaveBeenCalledTimes(2));
+  await screen.findByRole("button", { name: "Save" });
+  expect(listDashboardRevisions).toHaveBeenCalledTimes(2);
+  fireEvent.click(screen.getByRole("button", { name: "Revisions" }));
+  await screen.findByText("Revision 3");
+});
