@@ -1,6 +1,9 @@
 import type { ZodType } from "zod";
 import { ApiError, isAbortError, type ApiDiagnostic } from "./errors";
 
+export const SESSION_EXPIRED_EVENT = "goldys:session-expired";
+export const SESSION_CHECK_EVENT = "goldys:session-check";
+
 export interface JsonResponseOptions<T> { responseType?: "json"; schema?: ZodType<T>; }
 export interface OptionalJsonResponseOptions<T> extends JsonResponseOptions<T> { allowNoContent: true; }
 export interface VoidResponseOptions { responseType: "void"; }
@@ -55,6 +58,15 @@ function isAuthRedirect(path: string, response: Response): boolean {
 
 /** A single body-read path; schema validation is enabled only by the endpoint owner. */
 export async function readApiResponse<T>(path: string, response: Response, options: ResponseOptions<T>): Promise<unknown> {
+  // Profile checks classify their own failures; a rejected login is not session expiry.
+  if (typeof window !== "undefined" && path !== "/api/me" && path !== "/api/auth/login" &&
+      (response.status === 401 || (response.redirected && isAuthRedirect(path, response)))) {
+    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+  }
+  // An expired session can fail CSRF before authentication. Verify before treating a 403 as sign-out.
+  if (typeof window !== "undefined" && path !== "/api/me" && response.status === 403) {
+    window.dispatchEvent(new Event(SESSION_CHECK_EVENT));
+  }
   const status = response.status || undefined;
   const correlationId = response.headers.get("X-Correlation-ID") || undefined;
   const protocolError = (code: string, message: string, cause?: unknown) =>

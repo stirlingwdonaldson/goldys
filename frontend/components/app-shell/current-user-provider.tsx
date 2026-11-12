@@ -9,8 +9,10 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { ApiError, getCurrentUser, isApiError, isAbortError, type CurrentUser } from "@/lib/api";
+import { SESSION_CHECK_EVENT, SESSION_EXPIRED_EVENT } from "@/lib/api/response";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated" | "error";
 
@@ -34,6 +36,42 @@ export function useCurrentUser(): CurrentUserContextValue {
   const ctx = useOptionalCurrentUser();
   if (!ctx) throw new Error("useCurrentUser must be used within a CurrentUserProvider");
   return ctx;
+}
+
+/** Keep an open app in sync with session loss without polling away the idle timeout. */
+function useSessionChecks(status: AuthStatus, clear: () => void, generation: RefObject<number>) {
+  useEffect(() => {
+    window.addEventListener(SESSION_EXPIRED_EVENT, clear);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, clear);
+  }, [clear]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const controller = new AbortController();
+    const current = generation.current;
+    let checking = false;
+    // Check returning tabs without hiding the app or extending idle sessions by polling.
+    const checkSession = () => {
+      if (document.visibilityState === "hidden" || checking) return;
+      checking = true;
+      void getCurrentUser({ signal: controller.signal })
+        .catch((e: unknown) => {
+          if (!controller.signal.aborted && current === generation.current && isApiError(e) &&
+              (e.status === 401 || e.code === "AUTH_REQUIRED")) clear();
+        })
+        .finally(() => { checking = false; });
+    };
+    window.addEventListener("focus", checkSession);
+    window.addEventListener(SESSION_CHECK_EVENT, checkSession);
+    document.addEventListener("visibilitychange", checkSession);
+    return () => {
+      controller.abort();
+      window.removeEventListener("focus", checkSession);
+      window.removeEventListener(SESSION_CHECK_EVENT, checkSession);
+      document.removeEventListener("visibilitychange", checkSession);
+    };
+  }, [status, clear, generation]);
+
 }
 
 export function CurrentUserProvider({ children }: { children: ReactNode }) {
@@ -83,6 +121,8 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
     setError(null);
     setStatus("unauthenticated");
   }, [cancelActive]);
+
+  useSessionChecks(status, clear, generation);
 
   useEffect(() => {
     refresh();
