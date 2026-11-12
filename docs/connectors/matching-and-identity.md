@@ -245,6 +245,7 @@ retry safe. No historical repair or production replay is run by this code change
 - **Matching strategy:** deterministic single source; no cross-source matching.
 - **Confidence:** n/a (single source).
 - **Manual resolution path:** not yet wired.
+- **Report validation:** repeated sale/type/register/created-date keys in one delivery are held with `UNSAFE_PAYMENT_GRAIN` before any canonical writes, including identical rows. Null type/register codes normalize to empty strings as in canonical identity. Amount is already grouped; payment_count is not a multiplier. See [comparison and release behavior](../operations/sales-payment-comparison.md).
 
 ## Deleted sale (`canonical_deleted_sale`)
 

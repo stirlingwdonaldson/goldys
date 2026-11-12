@@ -21,12 +21,7 @@ async function loadSettlement(api: Api, from: string, to: string, signal?: Abort
   return buildSettlementInput({ saleItemMix, paymentMix, deletedSaleTotals });
 }
 
-/**
- * The daily settlement as a four-column node graph (items rung → sales → tenders → settled),
- * scoped to the same date range as the rest of the Sales detail screen. All three figures come
- * from the resolved mix/totals endpoints, so the diagram shows the reconciled numbers — never a
- * client-side guess.
- */
+/** Date-scoped comparison of resolved merchandise totals and POS payment amounts. */
 export function SettlementFlowView({
   from,
   to,
@@ -42,10 +37,10 @@ export function SettlementFlowView({
 
   if (input.isPending) return <Skeleton className="h-[360px] w-full" />;
   if (input.isLoadingError) {
-    if (input.error.code === "NOT_PERMITTED") return <PermissionDenied subject="settlement" />;
+    if (input.error.code === "NOT_PERMITTED") return <PermissionDenied subject="sales and payments" />;
     return (
       <ErrorState
-        title="Couldn't load the settlement"
+        title="Couldn't load sales and payments"
         message={input.error.message}
         onRetry={input.refetch}
       />
@@ -60,7 +55,7 @@ export function SettlementFlowView({
   if (empty) {
     return (
       <EmptyState
-        title="No settlement data"
+        title="No sales or payment data"
         description="Items rung and tenders will appear here once sales ingest for this period."
       />
     );
@@ -68,10 +63,31 @@ export function SettlementFlowView({
 
   const tallest = Math.max(...graph.columns.map((c) => c.length));
   return (
-    <FlowCanvas
-      graph={graph}
-      ariaLabel="Daily settlement: items rung to sales, tenders, and settled payments"
-      height={Math.min(480, Math.max(300, tallest * 72 + 96))}
-    />
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-muted-foreground">
+        Sales use the date the sale closed; POS payments use the payment date. Later payments or refunds can fall in another period. Deleted orders are shown separately.
+      </p>
+      {input.data.hasCoverageGap ? <p role="status" className="text-sm text-status-conflict">Sales and payments cover different dates. Missing dates have not been treated as zero.</p> : null}
+      {input.data.hasConflict ? <p role="status" className="text-sm text-status-conflict">Source conflicts remain in this period; matching totals do not resolve them.</p> : null}
+      <dl aria-label="Sales and payment totals" className="flex flex-wrap gap-x-8 gap-y-3 text-sm tabular-nums">
+        <div>
+          <dt className="text-muted-foreground">Merchandise sales</dt>
+          <dd className="font-semibold">{graph.columns[1][0].data.subtitle}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">POS payments</dt>
+          <dd className="font-semibold">{graph.columns[3][0].data.subtitle}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Comparison</dt>
+          <dd className="font-semibold">{graph.columns[3][0].data.detail}</dd>
+        </div>
+      </dl>
+      <FlowCanvas
+        graph={graph}
+        ariaLabel="Merchandise sales compared with POS payments"
+        height={Math.min(480, Math.max(300, tallest * 72 + 96))}
+      />
+    </div>
   );
 }

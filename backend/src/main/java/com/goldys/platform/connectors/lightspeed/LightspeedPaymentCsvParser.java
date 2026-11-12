@@ -79,7 +79,10 @@ public class LightspeedPaymentCsvParser {
   private static Map<String, Integer> columnIndex(CSVRecord header) {
     Map<String, Integer> out = new HashMap<>();
     for (int i = 0; i < header.size(); i++) {
-      out.put(header.get(i).trim(), i);
+      if (out.putIfAbsent(header.get(i).trim(), i) != null) {
+        throw new ConnectorFetchException(
+            "CONNECTOR_SCHEMA_MISMATCH", "Duplicate Lightspeed payments CSV header");
+      }
     }
     return out;
   }

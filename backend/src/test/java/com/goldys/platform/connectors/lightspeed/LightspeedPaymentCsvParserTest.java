@@ -50,4 +50,16 @@ class LightspeedPaymentCsvParserTest {
         .isInstanceOf(ConnectorFetchException.class)
         .hasMessageContaining("Payments Sale Number");
   }
+
+  @Test
+  void rejectsAmbiguousDuplicateHeaders() throws Exception {
+    String report =
+        Files.readString(Path.of("src/test/resources/fixtures/lightspeed/payments_sample.csv"));
+    String duplicateHeader = report.replace("Payment Data Tip,", "Payment Data Amount,");
+    assertThatThrownBy(
+            () ->
+                new LightspeedPaymentCsvParser()
+                    .parse(duplicateHeader.getBytes(StandardCharsets.UTF_8)))
+        .hasMessage("Duplicate Lightspeed payments CSV header");
+  }
 }

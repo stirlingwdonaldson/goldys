@@ -15,7 +15,10 @@ import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,8 +103,29 @@ public class LightspeedPaymentIngestService {
   }
 
   private List<LightspeedPayment> parsePayments(byte[] body) {
-    return parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+    List<LightspeedPayment> payments =
+        parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+    var keys = new HashSet<PaymentKey>();
+    for (LightspeedPayment payment : payments) {
+      requiredAmount(payment.amount());
+      // Match the canonical identity exactly. Omitted report dimensions must not overwrite a row.
+      var key =
+          new PaymentKey(
+              payment.saleNumber(),
+              Objects.toString(payment.paymentTypeCode(), ""),
+              Objects.toString(payment.registerCode(), ""),
+              payment.createdDate());
+      if (!keys.add(key)) {
+        throw new ConnectorFetchException(
+            "UNSAFE_PAYMENT_GRAIN",
+            "Payment report repeats a sale/type/register/date key; review report grouping before importing");
+      }
+    }
+    return payments;
   }
+
+  private record PaymentKey(
+      String saleNumber, String paymentTypeCode, String registerCode, LocalDate date) {}
 
   private void recordPayments(List<LightspeedPayment> payments, UUID rawId) {
     for (LightspeedPayment p : payments) {
