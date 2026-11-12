@@ -149,6 +149,7 @@ public class InvoicePdfEnrichmentService {
       gapRecovery.recover(
           invoiceNumber, flagFilename, pdf, pdfRawRecordId, parsed.lines(), unmatchedIndexes);
     }
+    flags.resolveExtractionFailures(invoiceNumber, flagFilename);
   }
 
   /**

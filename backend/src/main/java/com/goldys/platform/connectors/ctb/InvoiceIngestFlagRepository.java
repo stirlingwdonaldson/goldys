@@ -20,10 +20,13 @@ interface InvoiceIngestFlagRepository extends JpaRepository<InvoiceIngestFlag, U
   /** Open flags of one type, for the replay reconciliation pass. */
   List<InvoiceIngestFlag> findByFlagTypeAndResolvedAtIsNull(InvoiceIngestFlagType flagType);
 
+  List<InvoiceIngestFlag> findByInvoiceNumberAndPdfFilenameAndFlagTypeInAndResolvedAtIsNull(
+      String invoiceNumber, String pdfFilename, List<InvoiceIngestFlagType> flagTypes);
+
   /**
-   * True when an equivalent flag already exists, so a re-pull does not pile up duplicates. Each
-   * nullable identity column is matched with explicit {@code IS NULL} handling — a derived {@code
-   * findBy...} query would silently fail to match nulls ({@code x = NULL} is never true).
+   * True when an equivalent open flag already exists, so a re-pull does not pile up duplicates.
+   * Each nullable identity column is matched with explicit {@code IS NULL} handling — a derived
+   * {@code findBy...} query would silently fail to match nulls ({@code x = NULL} is never true).
    *
    * <p>The identity keys on {@code detail} (the line description / message), not {@code stockCode}:
    * the PDF extractor produces an unstable stock code across runs (synthetic placeholders, LLM
@@ -31,7 +34,7 @@ interface InvoiceIngestFlagRepository extends JpaRepository<InvoiceIngestFlag, U
    * is stored as an attribute, not part of the identity.
    */
   @Query(
-      "select count(f) > 0 from InvoiceIngestFlag f where f.flagType = :type "
+      "select count(f) > 0 from InvoiceIngestFlag f where f.resolvedAt is null and f.flagType = :type "
           + "and (:invoiceNumber is null and f.invoiceNumber is null "
           + "or f.invoiceNumber = :invoiceNumber) "
           + "and (:pdfFilename is null and f.pdfFilename is null "

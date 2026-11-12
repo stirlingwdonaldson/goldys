@@ -24,6 +24,39 @@ class InvoiceIngestFlagIntegrationTest {
   }
 
   @Test
+  void successfulExtractionClearsOnlyTheSameDocumentsExtractionFailures() {
+    flags.flag(InvoiceIngestFlagType.LLM_EXTRACTION_FAILED, "INV-1", "a.pdf", null, "expired key");
+    flags.flag(InvoiceIngestFlagType.PDF_UNPARSEABLE, "INV-1", "a.pdf", null, "no lines");
+    flags.flag(InvoiceIngestFlagType.PDF_ONLY_LINE, "INV-1", "a.pdf", "CODE", "unmatched");
+    flags.flag(InvoiceIngestFlagType.LLM_EXTRACTION_FAILED, "INV-1", "b.pdf", null, "expired key");
+    flags.flag(InvoiceIngestFlagType.LLM_EXTRACTION_FAILED, "INV-2", "a.pdf", null, "expired key");
+    flags.flag(InvoiceIngestFlagType.LLM_EXTRACTION_FAILED, null, null, null, "expired key");
+
+    flags.resolveExtractionFailures(null, null);
+    flags.resolveExtractionFailures("INV-1", null);
+    flags.resolveExtractionFailures(null, "a.pdf");
+    assertThat(flags.listOpenFlags()).hasSize(6);
+
+    flags.resolveExtractionFailures("INV-1", "a.pdf");
+    flags.resolveExtractionFailures("INV-1", "a.pdf");
+
+    assertThat(flags.listOpenFlags()).hasSize(4);
+    assertThat(flags.listOpenFlags())
+        .noneMatch(
+            f ->
+                "INV-1".equals(f.invoiceNumber())
+                    && "a.pdf".equals(f.pdfFilename())
+                    && !"PDF_ONLY_LINE".equals(f.flagType()));
+    assertThat(flags.listFlags()).hasSize(6);
+
+    // A later identical failure must become visible again, with the old resolution retained.
+    flags.flag(InvoiceIngestFlagType.LLM_EXTRACTION_FAILED, "INV-1", "a.pdf", null, "expired key");
+    flags.flag(InvoiceIngestFlagType.LLM_EXTRACTION_FAILED, "INV-1", "a.pdf", null, "expired key");
+    assertThat(flags.listOpenFlags()).hasSize(5);
+    assertThat(flags.listFlags()).hasSize(7);
+  }
+
+  @Test
   void amountBasisHoldPersistsAndIsNotClearedByAnotherObservation() {
     flags.flag(
         InvoiceIngestFlagType.INVOICE_AMOUNT_BASIS_UNVERIFIED, "INV-HOLD", null, null, "review");
