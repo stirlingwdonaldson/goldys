@@ -32,9 +32,10 @@ test("chat outage preserves the question and retries its original text", async (
   await page.getByRole("button", { name: "Ask Goldy's (⌘J)" }).click();
   const input = page.getByLabel("Reporting question", { exact: true });
   await input.fill("Sales last week?");
-  await page.getByRole("button", { name: "Ask", exact: true }).click();
+  await page.getByRole("button", { name: "Send question", exact: true }).click();
   await expect(page.getByText("Couldn't answer your question", { exact: true })).toBeVisible();
-  await expect(input).toHaveValue("Sales last week?");
+  await expect(page.getByText("Sales last week?", { exact: true })).toBeVisible();
+  await expect(input).toHaveValue("");
   await expect(page.getByText("You don't have access to this data", { exact: true })).toHaveCount(0);
   await input.fill("A different draft");
   await page.getByRole("button", { name: "Retry", exact: true }).click();
@@ -51,8 +52,11 @@ for (const status of [401, 403]) {
     await page.goto("/settings");
     await page.getByRole("button", { name: "Ask Goldy's (⌘J)" }).click();
     await page.getByLabel("Reporting question", { exact: true }).fill("Sales?");
-    await page.getByRole("button", { name: "Ask", exact: true }).click();
-    if (status === 401) await expect(page.getByRole("link", { name: "Sign in", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Send question", exact: true }).click();
+    if (status === 401) {
+      await expect(page).toHaveURL(/\/login\?next=%2Fsettings/);
+      await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
+    }
     else await expect(page.getByText("You don't have access to this data", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Retry", exact: true })).toHaveCount(0);
   });

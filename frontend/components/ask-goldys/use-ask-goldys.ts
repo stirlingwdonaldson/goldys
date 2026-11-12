@@ -5,95 +5,76 @@ import { useQueryClient } from "@tanstack/react-query";
 import { isAbortError } from "@/lib/api/errors";
 import { registerThreadStream } from "@/lib/stream-lifecycle";
 import { streamChat } from "./stream";
-import type { AnswerPayload, ChatMessage } from "./types";
+import type { ChatMessage, ChatTurn } from "./types";
 
-export interface UseAskGoldys {
-  messages: ChatMessage[];
-  summary: string;
-  answer: AnswerPayload | null;
-  error: Error | null;
-  working: boolean;
-  ask: (question: string) => void;
-  reset: () => void;
-}
-
-/** Drives the "Ask Goldy's" conversation: message history + the streamed answer. */
-export function useAskGoldys(): UseAskGoldys {
+/** Retains every exchange, including its widgets and qualifications, across follow-up questions. */
+export function useAskGoldys() {
   const queryClient = useQueryClient();
   const generation = useRef(0);
   const active = useRef<AbortController | null>(null);
+  const threadId = useRef<string | null>(null);
+  const [turns, setTurns] = useState<ChatTurn[]>([]);
   const cancel = useCallback(() => {
     ++generation.current;
     active.current?.abort();
     active.current = null;
   }, []);
   useEffect(() => cancel, [cancel]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [summary, setSummary] = useState("");
-  const [answer, setAnswer] = useState<AnswerPayload | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-  const [working, setWorking] = useState(false);
-  const [threadId, setThreadId] = useState<string | null>(null);
 
-  const ask = useCallback(
-    (question: string) => {
-      // The backend owns the thread; the client mints a UUID for a new conversation and reuses it
-      // for every subsequent turn, avoiding any id-discovery round-trip.
-      cancel();
-      const current = generation.current;
-      const controller = new AbortController();
-      active.current = controller;
-      const id = threadId ?? crypto.randomUUID();
-      if (threadId === null) setThreadId(id);
-      const release = registerThreadStream(id, controller);
+  const ask = useCallback((question: string) => {
+    if (!question.trim() || active.current) return;
+    const current = ++generation.current;
+    const controller = new AbortController();
+    active.current = controller;
+    // Only the thread ID and new question go to the server, never client history.
+    const id = threadId.current ?? crypto.randomUUID();
+    threadId.current = id;
+    const release = registerThreadStream(id, controller);
+    const turnId = crypto.randomUUID();
+    setTurns(previous => [...previous, {
+      id: turnId, question, summary: "", answer: null, error: null, working: true,
+    }]);
 
-      const next: ChatMessage[] = [...messages, { role: "user", content: question }];
-      setMessages(next);
-      setSummary("");
-      setAnswer(null);
-      setError(null);
-      setWorking(true);
+    function update(patch: Partial<ChatTurn>) {
+      if (current !== generation.current || controller.signal.aborted) return;
+      setTurns(previous => previous.map(turn => turn.id === turnId ? { ...turn, ...patch } : turn));
+    }
 
-      let accumulated = "";
-      streamChat(id, question, {
-        signal: controller.signal,
-        onText: (delta) => {
-          if (current !== generation.current || controller.signal.aborted) return;
-          accumulated += delta;
-          setSummary(accumulated);
-        },
-        onAnswer: (payload) => { if (current === generation.current && !controller.signal.aborted) setAnswer(payload); },
-        onError: (message) => { if (current === generation.current && !controller.signal.aborted) setError(new Error(message)); },
+    let summary = "";
+    streamChat(id, question, {
+      signal: controller.signal,
+      onText: delta => { summary += delta; update({ summary }); },
+      onAnswer: answer => update({ answer }),
+      onError: message => update({ error: new Error(message) }),
+    })
+      .catch((error: unknown) => {
+        if (!isAbortError(error)) update({ error: error instanceof Error ? error : new Error("Could not reach the server.") });
       })
-        .catch((error: unknown) => { if (current === generation.current && !isAbortError(error)) setError(error instanceof Error ? error : new Error("Could not reach the server.")); })
-        .finally(() => {
-          release();
-          if (current !== generation.current) return;
-          // Append the assistant's turn so the local history stays in sync with what the server
-          // streamed back. The assistant text is authoritative — never sent back to the server.
-          if (accumulated && !controller.signal.aborted) {
-            setMessages((msgs) => [...msgs, { role: "assistant", content: accumulated }]);
-          }
-          setWorking(false);
-          void queryClient.invalidateQueries({ queryKey: ["listThreads"] });
-          void queryClient.invalidateQueries({ queryKey: ["getThread", id] });
-        });
-    },
-    [messages, threadId, cancel, queryClient],
-  );
+      .finally(() => {
+        release();
+        if (current !== generation.current) return;
+        active.current = null;
+        // External thread deletion can abort this stream without resetting this hook.
+        setTurns(previous => previous.map(turn => turn.id === turnId ? { ...turn, working: false } : turn));
+        void queryClient.invalidateQueries({ queryKey: ["listThreads"] });
+        void queryClient.invalidateQueries({ queryKey: ["getThread", id] });
+      });
+  }, [queryClient]);
 
   const reset = useCallback(() => {
     cancel();
-    setMessages([]);
-    setSummary("");
-    setAnswer(null);
-    setError(null);
-    setWorking(false);
-    setThreadId(null);
+    setTurns([]);
+    threadId.current = null;
   }, [cancel]);
 
-  return useMemo(
-    () => ({ messages, summary, answer, error, working, ask, reset }),
-    [messages, summary, answer, error, working, ask, reset],
-  );
+  // Retain the text-only view for callers that need it; presentation uses complete turns.
+  const messages = useMemo<ChatMessage[]>(() => turns.flatMap(turn => [
+    { role: "user" as const, content: turn.question },
+    ...(!turn.working && turn.summary ? [{ role: "assistant" as const, content: turn.summary }] : []),
+  ]), [turns]);
+  const latest = turns.at(-1);
+  return {
+    turns, messages, summary: latest?.summary ?? "", answer: latest?.answer ?? null,
+    error: latest?.error ?? null, working: latest?.working ?? false, ask, reset,
+  };
 }

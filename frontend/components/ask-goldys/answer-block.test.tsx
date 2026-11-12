@@ -70,7 +70,15 @@ describe("AnswerBlock", () => {
     render(<AnswerBlock summary="Sales were $27,650.66." answer={answer} error={null} api={stubApi()} />);
     expect(screen.getByText(/sales were/i)).toBeInTheDocument();
     expect(screen.getByText(/get_sales_by_period/i)).toBeInTheDocument();
-    expect(screen.getByText(/no resolved total/i)).toBeInTheDocument();
+    const notes = screen.getByRole("button", { name: /query notes/i });
+    expect(notes).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText(/no resolved total/i)).not.toBeInTheDocument();
+    fireEvent.click(notes);
+    expect(notes).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/no resolved total/i)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Review reconciliation" })).toHaveAttribute("href", "/reconciliation");
+    fireEvent.click(notes);
+    expect(screen.queryByText(/no resolved total/i)).not.toBeInTheDocument();
   });
 
   it("shows the error message when present", () => {

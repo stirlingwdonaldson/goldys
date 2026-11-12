@@ -72,7 +72,7 @@ test("shared shell and data-health reads issue one request per resource", async 
   expect(counts["/api/dashboard/summary"]).toBe(1);
 });
 
-test("closing Ask Goldy's cancels a pending turn and prevents stale output", async ({ page }) => {
+test("closing Ask Goldy's preserves the pending turn and receives its answer", async ({ page }) => {
   await isolate(page);
   await page.route("**/api/conversational/chat", async route => {
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -81,11 +81,12 @@ test("closing Ask Goldy's cancels a pending turn and prevents stale output", asy
   await page.goto("/dashboards");
   await page.getByRole("button", { name: "Ask Goldy's (⌘J)" }).click();
   await page.getByPlaceholder("e.g. What were sales last week?").fill("Pending question");
-  await page.getByRole("button", { name: "Ask", exact: true }).click();
+  await page.getByRole("button", { name: "Send question", exact: true }).click();
   await expect(page.getByText("Working…", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Ask Goldy's (⌘J)" }).click();
   await page.waitForTimeout(1000);
-  await expect(page.getByText("OLD RESPONSE")).toHaveCount(0);
+  await expect(page.getByText("OLD RESPONSE")).toBeVisible();
+  await expect(page.getByText("Pending question", { exact: true })).toBeVisible();
   await expect(page.getByText("Working…", { exact: true })).toHaveCount(0);
 });
