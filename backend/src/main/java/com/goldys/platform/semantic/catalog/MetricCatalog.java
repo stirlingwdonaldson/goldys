@@ -454,6 +454,19 @@ public class MetricCatalog {
     return byId.keySet();
   }
 
+  /** Validates a plan before any executor reads data; shared by single and composed queries. */
+  public void validateQuery(MetricQuery query) {
+    MetricDefinition definition = definition(query.metric());
+    if (!definition.allowedGrains().contains(query.grain())) {
+      throw new IllegalArgumentException(
+          "grain " + query.grain() + " is not allowed for " + query.metric().value());
+    }
+    if (!definition.validDimensions().containsAll(query.dimensions())) {
+      throw new IllegalArgumentException(
+          "dimensions " + query.dimensions() + " are not allowed for " + query.metric().value());
+    }
+  }
+
   /** The metrics a result's provenance points to, so the model can chain a "why" question. */
   public Set<MetricId> related(MetricId id) {
     return RELATED.getOrDefault(id, Set.of());

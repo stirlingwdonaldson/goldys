@@ -32,14 +32,7 @@ public class MetricQueryServiceImpl implements MetricQueryService {
     Objects.requireNonNull(query, "query");
     Objects.requireNonNull(query.metric(), "metric");
     MetricDefinition definition = catalog.definition(query.metric());
-    if (!definition.allowedGrains().contains(query.grain())) {
-      throw new IllegalArgumentException(
-          "grain " + query.grain() + " is not allowed for " + query.metric().value());
-    }
-    if (!definition.validDimensions().containsAll(query.dimensions())) {
-      throw new IllegalArgumentException(
-          "dimensions " + query.dimensions() + " are not allowed for " + query.metric().value());
-    }
+    catalog.validateQuery(query);
     MetricExecutor executor = executors.get(query.metric());
     if (executor == null) {
       throw new IllegalArgumentException("No executor for metric: " + query.metric());

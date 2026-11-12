@@ -34,9 +34,12 @@ public class ToolDispatcher {
         registry.find(id).orElseThrow(() -> new IllegalArgumentException("Unknown tool: " + id));
     permissions.require(role, tool.resource(), PermissionAction.READ);
     // Per-metric data gate: authorize every metric this tool will read, before execution.
-    for (MetricQuery q : tool.toMetricQueries(input)) {
-      String required = catalog.definition(q.metric()).requiredPermission();
-      for (String resource : catalog.requiredPermissions(q.metric())) {
+    java.util.Set<com.goldys.platform.semantic.catalog.MetricId> operands =
+        new java.util.HashSet<>(tool.referencedMetrics(input));
+    // Keep query operands mandatory even when a tool supplies additional metadata operands.
+    tool.toMetricQueries(input).stream().map(MetricQuery::metric).forEach(operands::add);
+    for (var metric : operands) {
+      for (String resource : catalog.requiredPermissions(metric)) {
         permissions.require(role, new ResourceKey(resource), PermissionAction.READ);
       }
     }

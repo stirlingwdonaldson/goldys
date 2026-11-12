@@ -20,6 +20,14 @@ public interface ReportingTool {
 
   ToolResult execute(ToolInput input, UserRole role);
 
+  /** Data and metadata operands authorized before execution, including definition-only tools. */
+  default java.util.Set<com.goldys.platform.semantic.catalog.MetricId> referencedMetrics(
+      ToolInput input) {
+    return toMetricQueries(input).stream()
+        .map(com.goldys.platform.semantic.catalog.MetricQuery::metric)
+        .collect(java.util.stream.Collectors.toSet());
+  }
+
   /** The bounded MetricQueries this tool computes, for persisting a saved widget. */
   default List<com.goldys.platform.semantic.catalog.MetricQuery> toMetricQueries(ToolInput input) {
     return List.of();

@@ -82,5 +82,26 @@
     "role": "owner",
     "expectedTools": ["get_recipe_costing"],
     "causal": false
+  },
+  {
+    "category": "metric-discovery",
+    "question": "Describe the approved definitions and units for gross sales and net sales. Do not fetch sales figures.",
+    "role": "owner",
+    "expectedTools": ["describe_metrics"],
+    "causal": false
+  },
+  {
+    "category": "governed-analysis",
+    "question": "Use one metric analysis to return gross sales and booked covers for 2 to 8 November 2026, each as a period total.",
+    "role": "owner",
+    "expectedTools": ["run_metric_analysis"],
+    "causal": false
+  },
+  {
+    "category": "unsupported-analysis",
+    "question": "Calculate actual inventory-based COGS from menu selling prices. Do not substitute revenue or purchases.",
+    "role": "owner",
+    "expectedTools": [],
+    "causal": false
   }
 ]

@@ -23,9 +23,11 @@ import com.goldys.platform.dashboard.SavedWidget;
 import com.goldys.platform.dashboard.WidgetLayout;
 import com.goldys.platform.reconciliation.ReservationProjector;
 import com.goldys.platform.reporting.CompareMetricPeriodsInput;
+import com.goldys.platform.reporting.GetMetricInput;
 import com.goldys.platform.reporting.GetReservationSummaryInput;
 import com.goldys.platform.reporting.GetSalesByPeriodInput;
 import com.goldys.platform.reporting.ReportingTool;
+import com.goldys.platform.reporting.RunMetricAnalysisInput;
 import com.goldys.platform.reporting.ToolDispatcher;
 import com.goldys.platform.reporting.ToolId;
 import com.goldys.platform.reporting.ToolRegistry;
@@ -105,6 +107,31 @@ class ConversationalEvalTest {
   }
 
   // -- 1. simple retrieval ----------------------------------------------------
+
+  @Test
+  void governedAnalysisUsesRealMetricTotalsAndKeepsMissingDistinctFromZero() {
+    seedAgreed(D1, "100.00");
+    seedAgreed(D2, "200.00");
+    seedAgreed(D3, "0.00");
+    var result =
+        dispatcher.dispatch(
+            ToolId.RUN_METRIC_ANALYSIS,
+            new RunMetricAnalysisInput(
+                List.of(
+                    new GetMetricInput(MetricId.SALES_GROSS, D1, D3, TimeGrain.TOTAL, Set.of()),
+                    new GetMetricInput(MetricId.SALES_GROSS, D3, D3, TimeGrain.TOTAL, Set.of()),
+                    new GetMetricInput(MetricId.SALES_GROSS, D8, D8, TimeGrain.TOTAL, Set.of()))),
+            OWNER);
+    schema.assertValid(result.widget());
+    var rows = ((TableWidgetSpec) result.widget()).rows();
+    assertThat(rows).hasSize(3);
+    assertThat((BigDecimal) rows.get(0).get("value")).isEqualByComparingTo("300.00");
+    assertThat((BigDecimal) rows.get(1).get("value")).isEqualByComparingTo("0");
+    assertThat(rows.get(2).get("value")).isNull();
+    assertThat(result.provenance()).hasSize(3);
+    assertThat(result.notices())
+        .anyMatch(notice -> notice.contains("Query 3:") && notice.contains("Incomplete"));
+  }
 
   @Test
   void simpleRetrievalMatchesSeededSales() {
@@ -412,6 +439,8 @@ class ConversationalEvalTest {
             ToolId.GET_LABOUR_VARIANCE,
             ToolId.GET_INVENTORY_SUMMARY,
             ToolId.GET_METRIC,
+            ToolId.DESCRIBE_METRICS,
+            ToolId.RUN_METRIC_ANALYSIS,
             ToolId.COMPARE_METRIC_PERIODS,
             ToolId.RANK_DIMENSION,
             ToolId.GET_TOP_PRODUCTS,
