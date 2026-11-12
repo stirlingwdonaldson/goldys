@@ -36,8 +36,12 @@ public class ToolDispatcher {
     permissions.require(role, tool.resource(), PermissionAction.READ);
     // Per-metric data gate: authorize every metric this tool will read, before execution.
     List<MetricQuery> queries = List.copyOf(tool.toMetricQueries(input));
-    for (MetricQuery q : queries) {
-      for (String resource : catalog.requiredPermissions(q.metric())) {
+    java.util.Set<com.goldys.platform.semantic.catalog.MetricId> operands =
+        new java.util.HashSet<>(tool.referencedMetrics(input));
+    // Authorize metadata and the exact immutable query list passed to execution.
+    queries.stream().map(MetricQuery::metric).forEach(operands::add);
+    for (var metric : operands) {
+      for (String resource : catalog.requiredPermissions(metric)) {
         permissions.require(role, new ResourceKey(resource), PermissionAction.READ);
       }
     }

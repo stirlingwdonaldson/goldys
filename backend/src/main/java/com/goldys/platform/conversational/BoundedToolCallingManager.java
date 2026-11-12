@@ -15,8 +15,8 @@ import org.springframework.ai.tool.definition.ToolDefinition;
  * A {@link ToolCallingManager} decorator that hard-caps the number of tool-call rounds per turn.
  * Each {@link #executeToolCalls} invocation is one round — one model response that requested tools.
  * Once the cap is exceeded the manager stops delegating and returns a {@code returnDirect} result
- * carrying a bounded error, which ends the tool loop and tells the model to summarize with the data
- * it already gathered instead of looping unbounded.
+ * carrying a bounded error, which ends the tool loop. The assistant can then synthesize a final
+ * response with tools disabled; the refusal itself is not an instruction delivered to the model.
  *
  * <p>Instances are created per-turn (fresh inside {@link ChatClientAssistantService#stream}), so
  * the round counter is naturally scoped to a single {@code stream(...)} call and is never shared
@@ -32,10 +32,16 @@ public class BoundedToolCallingManager implements ToolCallingManager {
       "tool-call limit reached: summarize using the data already gathered";
 
   private final ToolCallingManager delegate;
+  private final Runnable onLimit;
   private final AtomicInteger rounds = new AtomicInteger();
 
   public BoundedToolCallingManager(ToolCallingManager delegate) {
+    this(delegate, () -> {});
+  }
+
+  public BoundedToolCallingManager(ToolCallingManager delegate, Runnable onLimit) {
     this.delegate = delegate;
+    this.onLimit = onLimit;
   }
 
   @Override
@@ -46,6 +52,7 @@ public class BoundedToolCallingManager implements ToolCallingManager {
   @Override
   public ToolExecutionResult executeToolCalls(Prompt prompt, ChatResponse chatResponse) {
     if (rounds.incrementAndGet() > MAX_TOOL_CALLS) {
+      onLimit.run();
       return refusal();
     }
     return delegate.executeToolCalls(prompt, chatResponse);

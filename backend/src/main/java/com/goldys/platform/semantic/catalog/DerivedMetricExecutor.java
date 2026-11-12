@@ -59,6 +59,7 @@ public class DerivedMetricExecutor implements MetricExecutor {
   @Override
   public Set<MetricId> ids() {
     return Set.of(
+        MetricId.RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS,
         MetricId.RESERVATIONS_NO_SHOW_RATE,
         MetricId.RESERVATIONS_BOOKING_TO_COVER_CONVERSION,
         MetricId.RESERVATIONS_AVG_PARTY_SIZE,

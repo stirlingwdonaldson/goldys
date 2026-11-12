@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.auth.DepartmentCode;
 import com.goldys.platform.auth.SeniorityCode;
 import com.goldys.platform.auth.UserRole;
-import com.goldys.platform.reporting.GetSalesByPeriodInput;
+import com.goldys.platform.reporting.GetMetricInput;
 import com.goldys.platform.reporting.ReportingTool;
 import com.goldys.platform.reporting.ToolDispatcher;
 import com.goldys.platform.reporting.ToolId;
@@ -40,8 +40,8 @@ class BoundedRoundsTest {
         new AssistantMessage.ToolCall(
             "call-1",
             "function",
-            "get_sales_by_period",
-            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"SALES_GROSS\"}");
+            "get_metric",
+            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"SALES_GROSS\",\"grain\":\"TOTAL\",\"dimensions\":[]}");
     AssistantMessage toolCallMessage =
         AssistantMessage.builder().toolCalls(List.of(toolCall)).build();
     ChatResponse toolCallResponse =
@@ -64,7 +64,10 @@ class BoundedRoundsTest {
             List.of(tool),
             dispatcher,
             new ReportingToolCallbacks(),
-            new ObjectMapper());
+            new ObjectMapper(),
+            java.time.Clock.fixed(
+                java.time.Instant.parse("2026-11-12T13:30:00Z"),
+                java.time.ZoneId.of("Australia/Melbourne")));
 
     List<ConversationEvent> events =
         service.stream(List.of(new UserMessage("What were sales?")), OWNER)
@@ -80,10 +83,10 @@ class BoundedRoundsTest {
   @SuppressWarnings({"unchecked", "rawtypes"})
   private static ReportingTool tool() {
     ReportingTool tool = mock(ReportingTool.class);
-    when(tool.id()).thenReturn(ToolId.GET_SALES_BY_PERIOD);
-    when(tool.name()).thenReturn("get_sales_by_period");
+    when(tool.id()).thenReturn(ToolId.GET_METRIC);
+    when(tool.name()).thenReturn("get_metric");
     when(tool.description()).thenReturn("Resolved daily sales totals for a date range.");
-    when(tool.inputType()).thenReturn((Class) GetSalesByPeriodInput.class);
+    when(tool.inputType()).thenReturn((Class) GetMetricInput.class);
     return tool;
   }
 }

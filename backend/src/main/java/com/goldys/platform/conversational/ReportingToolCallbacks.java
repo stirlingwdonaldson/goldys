@@ -40,27 +40,69 @@ public class ReportingToolCallbacks {
       ConversationContext context,
       ToolDispatcher dispatcher,
       ObjectMapper mapper) {
-    return FunctionToolCallback.builder(
-            tool.name(),
-            (Function<ToolInput, Map<String, Object>>)
-                input -> {
-                  try {
-                    ToolResult result = dispatcher.dispatch(tool.id(), input, role);
-                    if (tool.id() == ToolId.CREATE_DASHBOARD_DRAFT) {
-                      context.recordDraft(((CreateDashboardDraftTool) tool).toDraft(input));
-                    } else {
-                      context.record(tool, result);
-                    }
-                    return outcome(true, result);
-                  } catch (AccessDeniedException e) {
-                    return outcome(false, "You don't have access to that data.");
-                  } catch (IllegalArgumentException e) {
-                    return outcome(false, e.getMessage());
-                  }
-                })
-        .description(tool.description())
-        .inputType((Class) tool.inputType())
-        .build();
+    ToolCallback delegate =
+        FunctionToolCallback.builder(
+                tool.name(),
+                (Function<ToolInput, Map<String, Object>>)
+                    input -> {
+                      try {
+                        ToolResult result = dispatcher.dispatch(tool.id(), input, role);
+                        if (tool.id() == ToolId.CREATE_DASHBOARD_DRAFT) {
+                          context.recordDraft(((CreateDashboardDraftTool) tool).toDraft(input));
+                        } else {
+                          context.record(tool, result);
+                        }
+                        return outcome(true, result);
+                      } catch (AccessDeniedException e) {
+                        return outcome(false, "You don't have access to that data.");
+                      } catch (IllegalArgumentException e) {
+                        return outcome(false, e.getMessage());
+                      }
+                    })
+            .description(tool.description())
+            .inputType((Class) tool.inputType())
+            .build();
+    return validatedArguments(delegate, context);
+  }
+
+  private static ToolCallback validatedArguments(
+      ToolCallback delegate, ConversationContext context) {
+    return new ToolCallback() {
+      @Override
+      public org.springframework.ai.tool.definition.ToolDefinition getToolDefinition() {
+        return delegate.getToolDefinition();
+      }
+
+      @Override
+      public org.springframework.ai.tool.metadata.ToolMetadata getToolMetadata() {
+        return delegate.getToolMetadata();
+      }
+
+      @Override
+      public String call(String input) {
+        return invoke(() -> delegate.call(input));
+      }
+
+      @Override
+      public String call(String input, org.springframework.ai.chat.model.ToolContext toolContext) {
+        return invoke(() -> delegate.call(input, toolContext));
+      }
+
+      private String invoke(java.util.function.Supplier<String> call) {
+        context.markToolInvoked();
+        try {
+          return call.get();
+        } catch (RuntimeException error) {
+          // Record construction/schema errors happen before the typed function is invoked.
+          for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause instanceof com.fasterxml.jackson.core.JsonProcessingException) {
+              return "{\"ok\":false,\"error\":\"Invalid tool arguments. Check all required fields, enum values and ISO dates in this tool's schema, then correct the call.\"}";
+            }
+          }
+          throw error;
+        }
+      }
+    };
   }
 
   private static Map<String, Object> outcome(boolean ok, Object resultOrMessage) {

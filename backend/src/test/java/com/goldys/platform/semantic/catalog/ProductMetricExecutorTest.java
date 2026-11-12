@@ -16,6 +16,58 @@ import org.junit.jupiter.api.Test;
 class ProductMetricExecutorTest {
 
   @Test
+  void productGroupingSeparatesAmountsAndQuantitiesAndPreservesMissingDays() {
+    ProductMetricsQuery source = mock(ProductMetricsQuery.class);
+    LocalDate day = LocalDate.of(2026, 9, 13);
+    when(source.productSales(day, day.plusDays(1)))
+        .thenReturn(
+            List.of(
+                new ProductSalesMetric(
+                    day, "Burger", BigDecimal.ZERO, BigDecimal.ZERO, "source", false),
+                new ProductSalesMetric(
+                    day.plusDays(1),
+                    "Burger",
+                    new BigDecimal("2"),
+                    new BigDecimal("40"),
+                    "source",
+                    false),
+                new ProductSalesMetric(
+                    day, "Beer", new BigDecimal("3"), new BigDecimal("30"), "source", false)));
+    var executor = new ProductMetricExecutor(source, new MetricCatalog());
+    var range = new TimeRange(day, day.plusDays(1), Calendar.CALENDAR);
+    var amounts =
+        (TimeSeriesResult)
+            executor.evaluate(
+                new MetricQuery(
+                    MetricId.PRODUCT_SALES_AMOUNT,
+                    range,
+                    TimeGrain.TOTAL,
+                    Set.of(Dimension.PRODUCT),
+                    null));
+    assertThat(amounts.series())
+        .extracting(MetricSeries::dimensionValue)
+        .containsExactly("Burger", "Beer");
+    assertThat(amounts.series().get(0).points().get(0).value()).isEqualByComparingTo("40");
+    assertThat(amounts.series().get(1).points().get(0).value()).isEqualByComparingTo("30");
+    assertThat(amounts.provenance().missingPeriods()).containsExactly(day.plusDays(1));
+    assertThat(amounts.notices())
+        .anySatisfy(note -> assertThat(note).contains("Beer: Incomplete subtotal"));
+    var quantities =
+        (TimeSeriesResult)
+            executor.evaluate(
+                new MetricQuery(
+                    MetricId.PRODUCT_SALES_QUANTITY,
+                    range,
+                    TimeGrain.DAY,
+                    Set.of(Dimension.PRODUCT),
+                    null));
+    assertThat(quantities.series().get(0).points().get(0).value()).isEqualByComparingTo("0");
+    assertThat(quantities.series().get(0).points().get(1).value()).isEqualByComparingTo("2");
+    assertThat(quantities.series().get(1).points().get(0).value()).isEqualByComparingTo("3");
+    assertThat(quantities.series().get(1).points().get(1).value()).isNull();
+  }
+
+  @Test
   void sumsProductAmountAcrossProductsForADay() {
     ProductMetricsQuery q = mock(ProductMetricsQuery.class);
     LocalDate d = LocalDate.of(2026, 9, 13);

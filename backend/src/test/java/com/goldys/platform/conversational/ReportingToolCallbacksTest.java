@@ -1,7 +1,6 @@
 package com.goldys.platform.conversational;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -155,13 +154,26 @@ class ReportingToolCallbacksTest {
             .forTools(List.of(tool()), OWNER, new ConversationContext(), dispatcher, mapper)
             .get(0);
 
-    assertThatThrownBy(
-            () ->
-                callback.call(
-                    "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"REVENUE\"}"))
-        .isInstanceOf(IllegalStateException.class);
-    // The enum-whitelist boundary holds: an out-of-enum metric fails deserialization and
-    // never reaches the dispatcher. (Recovery back to the model happens in Spring AI's tool loop.)
+    String result =
+        callback.call(
+            "{\"startDate\":\"2026-09-13\",\"endDate\":\"2026-09-13\",\"metric\":\"REVENUE\"}");
+    assertThat(result).contains("\"ok\":false", "Invalid tool arguments");
+    // Invalid enums remain outside the dispatcher; the model receives a repairable error.
+    verifyNoInteractions(dispatcher);
+  }
+
+  @Test
+  void missingRequiredDatesReturnAnErrorWithoutExecutingAQuery() {
+    ToolDispatcher dispatcher = mock(ToolDispatcher.class);
+    var context = new ConversationContext();
+    var callback =
+        new ReportingToolCallbacks()
+            .forTools(List.of(tool()), OWNER, context, dispatcher, mapper)
+            .getFirst();
+    assertThat(callback.call("{\"metric\":\"SALES_GROSS\",\"startDate\":\"2026-09-13\"}"))
+        .contains("\"ok\":false", "Invalid tool arguments");
+    assertThat(context.hasToolInvocations()).isTrue();
+    assertThat(context.toAnswerPayload().widgets()).isEmpty();
     verifyNoInteractions(dispatcher);
   }
 

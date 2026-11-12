@@ -3,7 +3,7 @@
     "category": "simple-retrieval",
     "question": "What were our gross sales from 1 to 3 February 2026?",
     "role": "owner",
-    "expectedTools": ["get_sales_by_period"],
+    "expectedTools": ["run_metric_analysis"],
     "causal": false
   },
   {
@@ -17,7 +17,7 @@
     "category": "cross-domain-reasoning",
     "question": "How did our sales and covers look on 15 February 2026?",
     "role": "owner",
-    "expectedTools": ["get_sales_by_period", "get_reservation_summary"],
+    "expectedTools": ["run_metric_analysis"],
     "causal": false
   },
   {
@@ -31,21 +31,21 @@
     "category": "missing-data",
     "question": "What were gross sales on 1 March 2026?",
     "role": "owner",
-    "expectedTools": ["get_sales_by_period"],
+    "expectedTools": ["run_metric_analysis"],
     "causal": false
   },
   {
     "category": "permission-denial",
     "question": "What were gross sales on 10 March 2026?",
     "role": "denied",
-    "expectedTools": ["get_sales_by_period"],
+    "expectedTools": ["run_metric_analysis"],
     "causal": false
   },
   {
     "category": "unresolved-conflict",
     "question": "What were gross sales on 20 March 2026?",
     "role": "owner",
-    "expectedTools": ["get_sales_by_period"],
+    "expectedTools": ["run_metric_analysis"],
     "causal": false
   },
   {
@@ -81,6 +81,41 @@
     "question": "What's the cost per portion and margin on the Cheeseburger?",
     "role": "owner",
     "expectedTools": ["get_recipe_costing"],
+    "causal": false
+  },
+  {
+    "category": "metric-discovery",
+    "question": "Describe the approved definitions and units for gross sales and net sales. Do not fetch sales figures.",
+    "role": "owner",
+    "expectedTools": ["describe_metrics"],
+    "causal": false
+  },
+  {
+    "category": "governed-analysis",
+    "question": "Use one metric analysis to return gross sales and booked covers for 2 to 8 November 2026, each as a period total.",
+    "role": "owner",
+    "expectedTools": ["run_metric_analysis"],
+    "causal": false
+  },
+  {
+    "category": "unsupported-analysis",
+    "question": "Calculate actual inventory-based COGS from menu selling prices. Do not substitute revenue or purchases.",
+    "role": "owner",
+    "expectedTools": [],
+    "causal": false
+  },
+  {
+    "category": "explicit-period-total",
+    "question": "What were gross sales including GST in AUD from 2 to 8 November 2026 inclusive? Return one total.",
+    "role": "owner",
+    "expectedTools": ["run_metric_analysis"],
+    "causal": false
+  },
+  {
+    "category": "explicit-ratio-denominator",
+    "question": "What percentage of all bookings were no-shows from 2 to 8 November 2026 inclusive? Use all bookings, including cancellations and walk-ins, as the denominator.",
+    "role": "owner",
+    "expectedTools": ["run_metric_analysis"],
     "causal": false
   }
 ]

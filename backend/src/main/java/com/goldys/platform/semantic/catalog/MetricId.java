@@ -24,6 +24,7 @@ public enum MetricId {
   INVENTORY_STOCK_ON_HAND("inventory.stock_on_hand"),
   PRODUCT_SALES_AMOUNT("product.sales_amount"),
   PRODUCT_SALES_QUANTITY("product.sales_quantity"),
+  RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS("reservations.no_show_share_all_bookings"),
   RESERVATIONS_NO_SHOW_RATE("reservations.no_show_rate"),
   RESERVATIONS_BOOKING_TO_COVER_CONVERSION("reservations.booking_to_cover_conversion"),
   RESERVATIONS_AVG_PARTY_SIZE("reservations.avg_party_size"),
