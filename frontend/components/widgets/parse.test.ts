@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, expectTypeOf } from "vitest";
+import type { TableWidget } from "./types";
 import { parseWidgetSpec, parseWidgetSpecs } from "./parse";
 
 describe("widget contracts", () => {
@@ -16,4 +17,17 @@ describe("widget contracts", () => {
     expect(() => parseWidgetSpecs([{ schemaVersion: 2, type: "stat", id: "w", title: "t", value: 1 }, { type: "bogus" }])).toThrow("invalid widget");
     expect(parseWidgetSpecs([])).toEqual([]);
   });
+});
+
+it("shares scalar table-cell types with runtime validation and retains missing values", () => {
+  expectTypeOf<TableWidget["rows"][number][string]>().toEqualTypeOf<string | number | boolean | null>();
+  const table: TableWidget = { schemaVersion: 2, id: "table", type: "table", title: "Values",
+    columns: [{ key: "value", label: "Value" }], rows: [{ value: 0 }, { value: null }, { value: false }, { value: "" }],
+  };
+  expect(parseWidgetSpec(table)).toEqual(table);
+  for (const value of [{ nested: 1 }, [1], Infinity, NaN]) {
+    const invalid = { ...table, rows: [{ value }] };
+    expect(parseWidgetSpec(invalid)).toBeNull();
+    expect(() => parseWidgetSpecs([table, invalid])).toThrow("invalid widget");
+  }
 });
