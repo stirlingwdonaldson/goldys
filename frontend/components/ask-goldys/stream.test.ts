@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { parseSseBlock, parseDraft, parseAnswer, streamChat } from "./stream";
+import { SESSION_EXPIRED_EVENT } from "@/lib/api/response";
 
 const answer = { widgets: [], trace: [], asOf: "2026-10-23T00:00:00Z", notices: [] };
 const filters = { dateRange: null, comparison: null, dimensions: [] };
@@ -28,6 +29,25 @@ describe("reporting contracts", () => {
 });
 
 describe("streamChat", () => {
+  it.each(["401", "redirect"])("notifies the session gate when chat receives %s", async failure => {
+    const response = new Response("Sign in", { status: failure === "401" ? 401 : 200 });
+    if (failure === "redirect") {
+      Object.defineProperties(response, {
+        redirected: { value: true },
+        url: { value: "http://localhost:3000/login" },
+      });
+    }
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response));
+    const expired = vi.fn();
+    window.addEventListener(SESSION_EXPIRED_EVENT, expired);
+    try {
+      await expect(streamChat("t", "q", { onText: vi.fn(), onAnswer: vi.fn(), onError: vi.fn() })).rejects.toBeDefined();
+      expect(expired).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(SESSION_EXPIRED_EVENT, expired);
+    }
+  });
+
   it("handles a CRLF boundary split across chunks and releases the reader", async () => {
     const cancel = vi.fn();
     const encoder = new TextEncoder();
