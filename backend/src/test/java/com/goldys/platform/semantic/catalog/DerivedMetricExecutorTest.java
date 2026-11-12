@@ -54,9 +54,10 @@ class DerivedMetricExecutorTest {
   }
 
   @Test
-  void exposesAllTwelveDerivedIds() {
+  void exposesAllDerivedIds() {
     assertThat(executor().ids())
         .containsExactlyInAnyOrder(
+            MetricId.RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS,
             MetricId.RESERVATIONS_NO_SHOW_RATE,
             MetricId.RESERVATIONS_BOOKING_TO_COVER_CONVERSION,
             MetricId.RESERVATIONS_AVG_PARTY_SIZE,
@@ -69,6 +70,49 @@ class DerivedMetricExecutorTest {
             MetricId.INVENTORY_FOOD_COST_PERCENT,
             MetricId.PRODUCT_TOP_SELLERS,
             MetricId.SALES_FOOD_SHARE);
+  }
+
+  @Test
+  void allBookingsShareKeepsItsExplicitDenominatorAndHandlesMissingOrZero() {
+    var range = new TimeRange(SEP_13, SEP_13.plusDays(1), Calendar.CALENDAR);
+    var query =
+        new MetricQuery(
+            MetricId.RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS,
+            range,
+            TimeGrain.TOTAL,
+            Set.of(),
+            null);
+    when(reservations.dailySummaries(range.from(), range.to()))
+        .thenReturn(
+            List.of(
+                new ReservationSummary(SEP_13, 20, 0, 0, 5, 2, 3, 0, null, null, null),
+                new ReservationSummary(
+                    SEP_13.plusDays(1), 80, 0, 0, 10, 3, 5, 0, null, null, null)));
+    var result = (TimeSeriesResult) executor().evaluate(query);
+    assertThat(result.series().get(0).points().get(0).value()).isEqualByComparingTo("0.0500");
+    // Same numerator, different denominator: the existing operational rate stays distinct.
+    var operational =
+        (TimeSeriesResult)
+            executor()
+                .evaluate(
+                    new MetricQuery(
+                        MetricId.RESERVATIONS_NO_SHOW_RATE,
+                        range,
+                        TimeGrain.TOTAL,
+                        Set.of(),
+                        null));
+    assertThat(operational.series().get(0).points().get(0).value())
+        .isNotEqualByComparingTo("0.0500");
+    when(reservations.dailySummaries(range.from(), range.to()))
+        .thenReturn(List.of(summary(SEP_13, 0, 0, 0, 0), summary(SEP_13.plusDays(1), 0, 0, 0, 0)));
+    assertThat(
+            ((TimeSeriesResult) executor().evaluate(query)).series().get(0).points().get(0).value())
+        .isNull();
+    when(reservations.dailySummaries(range.from(), range.to()))
+        .thenReturn(List.of(summary(SEP_13, 20, 0, 0, 2)));
+    assertThat(
+            ((TimeSeriesResult) executor().evaluate(query)).series().get(0).points().get(0).value())
+        .isNull();
   }
 
   @Test

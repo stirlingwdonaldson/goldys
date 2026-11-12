@@ -38,7 +38,7 @@ public class GetSalesByPeriodTool implements ReportingTool {
 
   @Override
   public String description() {
-    return "Resolved daily sales totals for a date range.";
+    return "Daily breakdown of gross, net or GST sales. For a period total use run_metric_analysis with TOTAL.";
   }
 
   @Override

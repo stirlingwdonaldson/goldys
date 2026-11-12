@@ -47,7 +47,7 @@ public class RunMetricAnalysisTool implements ReportingTool {
   @Override
   public String description() {
     return "Execute 1..6 approved metric queries together, each with explicit dates, grain and dimensions. "
-        + "Use for multiple metrics or periods. Use TOTAL for period totals; do not sum daily ratios. "
+        + "Preferred for numeric answers: one query for one metric, or several for multiple metrics or periods. Use TOTAL for period totals; do not sum daily ratios. "
         + "Returns individual values with scope, units, missing status and provenance, never inferred joins. "
         + "Use compare_metric_periods for calculated percentage changes and get_metric for top sellers. "
         + "Filters, new formulas and cross-dataset joins are not supported by this plan.";
@@ -107,6 +107,7 @@ public class RunMetricAnalysisTool implements ReportingTool {
         List.of(
                 "query",
                 "metric",
+                "definition",
                 "from",
                 "to",
                 "grain",
@@ -115,6 +116,7 @@ public class RunMetricAnalysisTool implements ReportingTool {
                 "bucket",
                 "value",
                 "unit",
+                "displayValue",
                 "status")
             .stream()
             .map(key -> new Column(key, key, null))
@@ -137,6 +139,7 @@ public class RunMetricAnalysisTool implements ReportingTool {
     Map<String, Object> row = new LinkedHashMap<>();
     row.put("query", number);
     row.put("metric", query.metric().value());
+    row.put("definition", catalog.definition(query.metric()).definition());
     row.put("from", query.range().from().toString());
     row.put("to", query.range().to().toString());
     row.put("grain", query.grain().name());
@@ -149,7 +152,21 @@ public class RunMetricAnalysisTool implements ReportingTool {
     row.put("group", series.dimensionValue());
     row.put("bucket", point.bucketStart().toString());
     row.put("value", point.value());
-    row.put("unit", catalog.definition(query.metric()).unit());
+    String unit = catalog.definition(query.metric()).unit();
+    row.put("unit", unit);
+    // Catalogue percentages are stored as ratios; format them here, never in model arithmetic.
+    row.put(
+        "displayValue",
+        point.value() == null
+            ? null
+            : "%".equals(unit)
+                ? point
+                        .value()
+                        .movePointRight(2)
+                        .setScale(2, java.math.RoundingMode.HALF_UP)
+                        .toPlainString()
+                    + "%"
+                : point.value().toPlainString() + " " + unit);
     row.put("status", point.status() == null ? null : point.status().name());
     return row;
   }

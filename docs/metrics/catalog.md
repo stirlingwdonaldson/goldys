@@ -30,7 +30,8 @@ data is unresolved ("display + note": a figure always shows when any resolved da
 | `deleted_sales.amount` | Deleted sales | Resolved deleted-order amount incl. GST | totalIncTax | AUD | resolved_deleted_sale_day | — | day, week, month | deleted-sales.metrics | sum |
 | `sale_items.amount` | Items sold amount | Resolved line-item amount incl. GST | amount | AUD | resolved_sale_item_day | — | day, week, month | sale-items.metrics | sum |
 | `sale_items.quantity` | Items sold quantity | Resolved line-item quantity | quantity | units | resolved_sale_item_day | — | day, week, month | sale-items.metrics | sum |
-| `reservations.no_show_rate` | No-show rate | no_shows ÷ bookings | no_shows ÷ bookings | % | derived | — | day, week, month | reservations.metrics | null when bookings = 0 |
+| `reservations.no_show_share_all_bookings` | No-shows as share of all bookings | no_shows ÷ all bookings | ratio of period sums | % | derived | — | day, week, month, total | reservations.metrics | Includes cancellations and walk-ins in denominator; null for zero or missing denominator |
+| `reservations.no_show_rate` | No-show rate | no_shows ÷ expected_bookings | no_shows ÷ expected_bookings | % | derived | — | day, week, month | reservations.metrics | null when bookings = 0 |
 | `reservations.booking_to_cover_conversion` | Booking-to-cover conversion | attended ÷ bookings | attended ÷ bookings | % | derived | — | day, week, month | reservations.metrics | null when bookings = 0 |
 | `reservations.avg_party_size` | Average party size | covers ÷ attended | covers ÷ attended | ratio | derived | — | day, week, month | reservations.metrics | null when attended = 0 |
 | `sales.average_spend_per_cover` | Average spend per cover | sales.gross ÷ reservations.covers | sales.gross ÷ reservations.covers | AUD | derived | — | day, week, month | reconciliation.sales | null when covers = 0 or gross unresolved |
@@ -132,11 +133,12 @@ today is on `sales.gross`: **"gross includes GST"**.
 
 `reservations.expected_bookings` counts booking records excluding cancellations and walk-ins.
 `reservations.no_show_rate` uses declared no-shows over that population; pending outcomes remain provisional.
+`reservations.no_show_share_all_bookings` is the explicitly requested alternative: declared no-shows divided by all booking records, including cancellations and walk-ins. It does not replace the operational rate.
 `reservations.covers` is a stated-party-size attendance proxy, not verified actual arrivals.
 `inventory.purchases` means Invoice purchases, never COGS. `inventory.food_cost_percent` is retained
 for saved-query compatibility but returns unavailable pending valuation evidence.
 `labour.cost` is labelled wages only pending source-basis confirmation; departmental percentages
-retain their explicitly named gross-sales denominator. Displayed percentages round to whole percentages.
+retain their explicitly named gross-sales denominator. Standard dashboard percentages round to whole percentages; Ask metric-analysis tables also return an explicit two-decimal `displayValue` alongside the raw ratio.
 
 `TOTAL` aggregates the exact inclusive requested range, anchored at its first date. Period summaries
 use the same catalogue calculations as series. Missing base values yield labelled known subtotals;
@@ -145,3 +147,10 @@ the owner's five-percentage-point allowance. No statistical confidence policy ha
 Sales reporting defaults to evidenced net sales. The simplified all-days trading cutoff is 02:00
 Australia/Melbourne; date-only source reports retain their supplied attribution because no close
 instant is available to shift them safely. Receipt recency is not business-evidence eligibility.
+
+### Product grouping
+
+`product.sales_amount` and `product.sales_quantity` honour the approved `PRODUCT` dimension.
+Each normalized product name has its own series. No dimensions retains the aggregate across products.
+An absent product/day observation stays missing, never an inferred zero; grouped totals retain
+per-product coverage notices, and overall coverage is incomplete if any returned group is missing.

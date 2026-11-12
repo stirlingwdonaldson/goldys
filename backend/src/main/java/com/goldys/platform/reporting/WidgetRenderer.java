@@ -1,6 +1,7 @@
 package com.goldys.platform.reporting;
 
 import com.goldys.platform.semantic.catalog.MetricCatalog;
+import com.goldys.platform.semantic.catalog.MetricId;
 import com.goldys.platform.semantic.catalog.MetricPoint;
 import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.semantic.catalog.MetricSeries;
@@ -47,17 +48,37 @@ public class WidgetRenderer {
         throw new IllegalArgumentException(
             "metric " + result.metric() + " requires render type 'ranked-list'");
       }
+      boolean productRanking =
+          result.metric() == MetricId.PRODUCT_SALES_AMOUNT
+              || result.metric() == MetricId.PRODUCT_TOP_SELLERS;
+      String primaryUnit =
+          catalog
+              .definition(productRanking ? MetricId.PRODUCT_SALES_AMOUNT : result.metric())
+              .unit();
+      String secondaryUnit =
+          productRanking ? catalog.definition(MetricId.PRODUCT_SALES_QUANTITY).unit() : null;
       List<RankedItem> items =
           r.items().stream()
               .map(
                   i ->
                       new RankedItem(
                           i.label(),
-                          str(i.primary()),
-                          str(i.secondary()),
+                          str(i.primary(), primaryUnit),
+                          str(i.secondary(), secondaryUnit),
                           i.hasConflict() ? "unresolved" : null))
               .toList();
-      return new RankedListWidgetSpec(id, label(result), null, items, null);
+      return new RankedListWidgetSpec(
+          id,
+          label(result),
+          productRanking
+              ? "Primary is total product sales amount ("
+                  + primaryUnit
+                  + "); secondary is quantity sold ("
+                  + secondaryUnit
+                  + "). Amounts retain source tax basis."
+              : "Primary is " + label(result) + " (" + primaryUnit + ").",
+          items,
+          null);
     }
     TimeSeriesResult ts = (TimeSeriesResult) result;
     return switch (type) {
@@ -174,7 +195,7 @@ public class WidgetRenderer {
     return rs.isEmpty() ? "" : label(rs.get(0));
   }
 
-  private static String str(BigDecimal v) {
-    return v == null ? null : v.toPlainString();
+  private static String str(BigDecimal v, String unit) {
+    return v == null ? null : v.toPlainString() + (unit == null ? "" : " " + unit);
   }
 }

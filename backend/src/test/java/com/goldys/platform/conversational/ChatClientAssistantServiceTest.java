@@ -27,6 +27,30 @@ class ChatClientAssistantServiceTest {
       new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
 
   @Test
+  void plannerUsesMetricToolsInsteadOfRedundantLegacyTools() {
+    ChatModel model = mock(ChatModel.class);
+    when(model.stream(any(Prompt.class)))
+        .thenReturn(
+            Flux.just(new ChatResponse(List.of(new Generation(new AssistantMessage("done"))))));
+    var legacy = mock(com.goldys.platform.reporting.ReportingTool.class);
+    when(legacy.id()).thenReturn(com.goldys.platform.reporting.ToolId.GET_SALES_BY_PERIOD);
+    var analysis = mock(com.goldys.platform.reporting.ReportingTool.class);
+    when(analysis.id()).thenReturn(com.goldys.platform.reporting.ToolId.RUN_METRIC_ANALYSIS);
+    var callbacks = mock(ReportingToolCallbacks.class);
+    when(callbacks.forTools(any(), any(), any(), any(), any())).thenReturn(List.of());
+    new ChatClientAssistantService(
+            ChatClient.builder(model).build(),
+            List.of(legacy, analysis),
+            mock(ToolDispatcher.class),
+            callbacks,
+            new ObjectMapper(),
+            java.time.Clock.systemUTC())
+        .stream(List.of(new UserMessage("Sales?")), OWNER).collectList().block();
+    org.mockito.Mockito.verify(callbacks)
+        .forTools(org.mockito.ArgumentMatchers.eq(List.of(analysis)), any(), any(), any(), any());
+  }
+
+  @Test
   void emitsTextDeltasThenATerminalAnswer() {
     ChatModel model = mock(ChatModel.class);
     when(model.stream(any(Prompt.class)))
@@ -41,13 +65,23 @@ class ChatClientAssistantServiceTest {
             List.of(),
             mock(ToolDispatcher.class),
             new ReportingToolCallbacks(),
-            new ObjectMapper());
+            new ObjectMapper(),
+            java.time.Clock.fixed(
+                java.time.Instant.parse("2026-11-12T13:30:00Z"),
+                java.time.ZoneId.of("Australia/Melbourne")));
 
     List<ConversationEvent> events =
         service.stream(List.of(new UserMessage("What were sales last week?")), OWNER)
             .collectList()
             .block();
 
+    var captured = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+    org.mockito.Mockito.verify(model).stream(captured.capture());
+    assertThat(captured.getValue().getInstructions())
+        .anySatisfy(
+            message ->
+                assertThat(message.getText())
+                    .contains("Current venue date: 2026-11-13", "Australia/Melbourne"));
     assertThat(events).hasSize(2);
     assertThat(events.get(0)).isInstanceOf(ConversationEvent.TextDelta.class);
     assertThat(((ConversationEvent.TextDelta) events.get(0)).delta()).contains("$27,650.66");
@@ -69,7 +103,10 @@ class ChatClientAssistantServiceTest {
             List.of(),
             mock(ToolDispatcher.class),
             new ReportingToolCallbacks(),
-            new ObjectMapper());
+            new ObjectMapper(),
+            java.time.Clock.fixed(
+                java.time.Instant.parse("2026-11-12T13:30:00Z"),
+                java.time.ZoneId.of("Australia/Melbourne")));
 
     List<ConversationEvent> events =
         service.stream(List.of(new UserMessage("hello")), OWNER).collectList().block();

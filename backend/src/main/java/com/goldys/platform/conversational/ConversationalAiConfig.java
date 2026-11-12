@@ -52,7 +52,9 @@ public class ConversationalAiConfig {
       List<ReportingTool> tools,
       ToolDispatcher dispatcher,
       ReportingToolCallbacks callbacks,
-      ObjectMapper mapper) {
-    return new ChatClientAssistantService(chatClient, tools, dispatcher, callbacks, mapper);
+      ObjectMapper mapper,
+      @org.springframework.beans.factory.annotation.Qualifier("venueCalendarClock")
+          java.time.Clock clock) {
+    return new ChatClientAssistantService(chatClient, tools, dispatcher, callbacks, mapper, clock);
   }
 }

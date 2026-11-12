@@ -54,6 +54,9 @@ public class MetricCatalog {
   private static final Map<MetricId, Set<MetricId>> CONSTITUENTS =
       Map.ofEntries(
           Map.entry(
+              MetricId.RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS,
+              Set.of(MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_BOOKINGS)),
+          Map.entry(
               MetricId.RESERVATIONS_NO_SHOW_RATE,
               Set.of(MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_EXPECTED_BOOKINGS)),
           Map.entry(
@@ -171,14 +174,14 @@ public class MetricCatalog {
                 base(
                     MetricId.RESERVATIONS_ATTENDED,
                     "Attended parties",
-                    "Resolved attended",
+                    "Declared attended reservation parties, not verified individual people",
                     "attended",
                     "count",
                     "resolved_reservation_day",
                     DAY_WEEK_MONTH,
                     Set.of(Dimension.SERVICE_PERIOD),
                     "reservations.metrics",
-                    null),
+                    "Counts reservation parties, not verified people or walk-ins. A zero does not establish zero actual attendance."),
                 base(
                     MetricId.RESERVATIONS_COVERS,
                     "Attendance proxy",
@@ -189,7 +192,7 @@ public class MetricCatalog {
                     DAY_WEEK_MONTH,
                     Set.of(Dimension.SERVICE_PERIOD),
                     "reservations.metrics",
-                    null),
+                    "Attendance proxy from stated party sizes, not booked covers or verified arrivals. A zero does not establish zero actual attendance."),
                 base(
                     MetricId.RESERVATIONS_BOOKED_COVERS,
                     "Booked covers",
@@ -288,7 +291,7 @@ public class MetricCatalog {
                     DAY_WEEK_MONTH,
                     Set.of(Dimension.PRODUCT),
                     "reconciliation.sales",
-                    null),
+                    "Product amount tax basis is source-qualified; do not relabel it as net or ex-GST without tax evidence."),
                 base(
                     MetricId.PRODUCT_SALES_QUANTITY,
                     "Product sales quantity",
@@ -355,6 +358,13 @@ public class MetricCatalog {
                     Set.of(),
                     "sale-items.metrics",
                     null),
+                derived(
+                    MetricId.RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS,
+                    "No-shows as share of all bookings",
+                    "declared no_shows ÷ all bookings (including cancellations and walk-ins)",
+                    "%",
+                    "reservations.metrics",
+                    "Distinct from operational no-show rate, whose denominator is expected bookings"),
                 derived(
                     MetricId.RESERVATIONS_NO_SHOW_RATE,
                     "No-show rate",

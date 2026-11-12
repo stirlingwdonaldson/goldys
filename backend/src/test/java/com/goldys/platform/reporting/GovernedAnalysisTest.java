@@ -116,6 +116,7 @@ class GovernedAnalysisTest {
         .containsEntry("grain", "TOTAL")
         .containsEntry("unit", "AUD");
     assertThat(rows.get(1))
+        .containsEntry("displayValue", null)
         .containsEntry("value", null)
         .containsEntry("status", "UNKNOWN")
         .containsEntry("unit", "%")
@@ -127,6 +128,21 @@ class GovernedAnalysisTest {
     assertThat(analysis.toMetricQueries(input))
         .extracting(MetricQuery::metric)
         .containsExactly(MetricId.SALES_GROSS, MetricId.RESERVATIONS_NO_SHOW_RATE);
+  }
+
+  @Test
+  void formatsPercentagesWithoutChangingRawRatios() {
+    when(metrics.query(any()))
+        .thenAnswer(call -> result(call.getArgument(0), new BigDecimal("0.0659")));
+    var result =
+        dispatcher.dispatch(
+            ToolId.RUN_METRIC_ANALYSIS,
+            new RunMetricAnalysisInput(
+                List.of(query(MetricId.RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS))),
+            OWNER);
+    assertThat(((TableWidgetSpec) result.widget()).rows().get(0))
+        .containsEntry("value", new BigDecimal("0.0659"))
+        .containsEntry("displayValue", "6.59%");
   }
 
   @Test

@@ -40,7 +40,8 @@ public class GetSalesByCategoryTool implements ReportingTool {
 
   @Override
   public String description() {
-    return "Sales totals grouped by the internal product category.";
+    return "Observed product-sale amounts grouped by current product category over the inclusive date range. "
+        + "These are not the reviewed ex-GST SALES_FOOD or SALES_BEV metrics; amounts retain their source tax basis.";
   }
 
   @Override
@@ -80,8 +81,24 @@ public class GetSalesByCategoryTool implements ReportingTool {
             .toList();
     WidgetSpec widget =
         new TableWidgetSpec(
-            UUID.randomUUID().toString(), "Sales by category", null, columns, tableRows, null);
-    return new ToolResult(widget, List.of(), List.of(), List.of());
+            UUID.randomUUID().toString(),
+            "Sales by category",
+            "Observed product-sale amounts from " + from + " to " + to + " inclusive",
+            columns,
+            tableRows,
+            null);
+    return new ToolResult(
+        widget,
+        List.of(
+            "Scope: "
+                + from
+                + " to "
+                + to
+                + " inclusive. Amounts retain their source tax basis. "
+                + "This is the observed product/category report, not the reviewed ex-GST sales.food or sales.bev metric. "
+                + "Missing reviewed ex-GST metrics do not invalidate this separate observed result."),
+        List.of(),
+        List.of());
   }
 
   private static GetSalesByCategoryInput require(ToolInput input) {

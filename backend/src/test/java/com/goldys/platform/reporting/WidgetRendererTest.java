@@ -29,6 +29,22 @@ class WidgetRendererTest {
   }
 
   @Test
+  void rankedProductAmountsAndQuantitiesCarryTheirOwnUnits() {
+    var result =
+        new RankedListResult(
+            MetricId.PRODUCT_SALES_AMOUNT,
+            List.of(
+                new MetricRankedItem(
+                    "Beer", new BigDecimal("2002.00"), new BigDecimal("182"), false)),
+            List.of(),
+            ts(MetricId.PRODUCT_SALES_AMOUNT, BigDecimal.ZERO).provenance());
+    var widget = (RankedListWidgetSpec) renderer.render("ranked", "ranked-list", List.of(result));
+    assertThat(widget.items().getFirst().primary()).isEqualTo("2002.00 AUD");
+    assertThat(widget.items().getFirst().secondary()).isEqualTo("182 units");
+    assertThat(widget.description()).contains("total product sales amount", "quantity sold");
+  }
+
+  @Test
   void rendersSingleMetricAsTimeSeries() {
     WidgetSpec spec =
         renderer.render(

@@ -59,6 +59,7 @@ public class DerivedMetricExecutor implements MetricExecutor {
   @Override
   public Set<MetricId> ids() {
     return Set.of(
+        MetricId.RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS,
         MetricId.RESERVATIONS_NO_SHOW_RATE,
         MetricId.RESERVATIONS_BOOKING_TO_COVER_CONVERSION,
         MetricId.RESERVATIONS_AVG_PARTY_SIZE,
@@ -76,6 +77,8 @@ public class DerivedMetricExecutor implements MetricExecutor {
   @Override
   public MetricResult evaluate(MetricQuery query) {
     return switch (query.metric()) {
+      case RESERVATIONS_NO_SHOW_SHARE_ALL_BOOKINGS ->
+          ratio(query, MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_BOOKINGS);
       case RESERVATIONS_NO_SHOW_RATE ->
           ratio(query, MetricId.RESERVATIONS_NO_SHOWS, MetricId.RESERVATIONS_EXPECTED_BOOKINGS);
       case RESERVATIONS_BOOKING_TO_COVER_CONVERSION ->
