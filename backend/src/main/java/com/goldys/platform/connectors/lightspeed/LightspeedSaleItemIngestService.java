@@ -1,9 +1,5 @@
 package com.goldys.platform.connectors.lightspeed;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.canonical.CanonicalSaleItemIngest;
 import com.goldys.platform.canonical.SaleItemInput;
 import com.goldys.platform.ingestion.FetchMethod;
@@ -12,7 +8,6 @@ import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
 import com.goldys.platform.ingestion.RawLedgerQuery;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
@@ -30,13 +25,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class LightspeedSaleItemIngestService {
   private static final Logger log = LoggerFactory.getLogger(LightspeedSaleItemIngestService.class);
-
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper(
-          JsonFactory.builder()
-              .streamReadConstraints(
-                  StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build())
-              .build());
 
   private final IngestionService ingestion;
   private final CanonicalSaleItemIngest canonical;
@@ -156,13 +144,13 @@ public class LightspeedSaleItemIngestService {
   }
 
   private List<LightspeedSaleItem> parseRows(byte[] body) {
-    byte[] csv = extractCsv(body).getBytes(StandardCharsets.UTF_8);
+    byte[] csv = LightspeedEnvelope.csv(body);
     parser.requireReceiptLineGrain(csv);
     return parser.parse(csv);
   }
 
   private List<LightspeedSaleItem> parseItems(byte[] body) {
-    return validateItems(extractCsv(body).getBytes(StandardCharsets.UTF_8));
+    return validateItems(LightspeedEnvelope.csv(body));
   }
 
   private List<LightspeedSaleItem> validateItems(byte[] csv) {
@@ -218,19 +206,5 @@ public class LightspeedSaleItemIngestService {
         it.adjustment(),
         it.siteNumber(),
         it.saleClosedTenMinuteTime());
-  }
-
-  static String extractCsv(byte[] body) {
-    try {
-      JsonNode root = MAPPER.readTree(body);
-      String data = root.path("attachment").path("data").asText(null);
-      if (data == null) {
-        throw new ConnectorFetchException(
-            "CONNECTOR_SCHEMA_MISMATCH", "No attachment.data in Lightspeed webhook payload");
-      }
-      return data;
-    } catch (IOException e) {
-      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON webhook payload", e);
-    }
   }
 }

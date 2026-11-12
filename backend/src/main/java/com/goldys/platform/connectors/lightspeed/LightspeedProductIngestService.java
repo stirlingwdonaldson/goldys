@@ -1,16 +1,11 @@
 package com.goldys.platform.connectors.lightspeed;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.canonical.CanonicalProductSalesIngest;
 import com.goldys.platform.canonical.ProductNameKey;
 import com.goldys.platform.canonical.ProductSalesInput;
 import com.goldys.platform.ingestion.FetchMethod;
+import com.goldys.platform.ingestion.IngestionProcessing;
 import com.goldys.platform.ingestion.IngestionService;
-import com.goldys.platform.ingestion.IngestionStageKind;
-import com.goldys.platform.ingestion.IngestionStageOutcome;
-import com.goldys.platform.ingestion.port.ConnectorFetchException;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -25,9 +20,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LightspeedProductIngestService {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private final IngestionService ingestion;
+  private final IngestionProcessing processing;
   private final CanonicalProductSalesIngest canonical;
   private final LightspeedProductCsvParser parser;
 
@@ -36,6 +31,7 @@ public class LightspeedProductIngestService {
       CanonicalProductSalesIngest canonical,
       LightspeedProductCsvParser parser) {
     this.ingestion = ingestion;
+    this.processing = new IngestionProcessing(ingestion);
     this.canonical = canonical;
     this.parser = parser;
   }
@@ -57,17 +53,8 @@ public class LightspeedProductIngestService {
     // the right day while the venue date would be one day late. Revisit this attribution rule once
     // the report's real delivery schedule is known — audit F11.
     LocalDate tradingDate = LocalDate.now();
-    List<LightspeedProductSale> rows;
-    try {
-      rows = parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8), tradingDate);
-    } catch (RuntimeException e) {
-      ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
-      throw e;
-    }
-    ingestion.recordStage(
-        rawId,
-        IngestionStageKind.PARSED,
-        rows.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
+    List<LightspeedProductSale> rows =
+        processing.parse(rawId, () -> parser.parse(LightspeedEnvelope.csv(body), tradingDate));
 
     Map<String, ProductSalesInput> byProduct = new LinkedHashMap<>();
     for (LightspeedProductSale row : rows) {
@@ -86,31 +73,6 @@ public class LightspeedProductIngestService {
                   null,
                   rawId));
     }
-    try {
-      for (ProductSalesInput input : byProduct.values()) {
-        canonical.record(input);
-      }
-    } catch (RuntimeException e) {
-      ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
-      throw e;
-    }
-    ingestion.recordStage(
-        rawId,
-        IngestionStageKind.CANONICALIZED,
-        rows.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
-  }
-
-  private static String extractCsv(byte[] body) {
-    try {
-      JsonNode root = MAPPER.readTree(body);
-      String data = root.path("attachment").path("data").asText(null);
-      if (data == null) {
-        throw new ConnectorFetchException(
-            "CONNECTOR_SCHEMA_MISMATCH", "No attachment.data in Lightspeed webhook payload");
-      }
-      return data;
-    } catch (IOException e) {
-      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON webhook payload", e);
-    }
+    processing.canonicalize(rawId, byProduct.values(), canonical::record);
   }
 }

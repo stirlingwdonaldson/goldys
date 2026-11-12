@@ -51,9 +51,7 @@ public class LightspeedIngestService {
   private void parseAndRecord(byte[] body, UUID rawId) {
     List<LightspeedInsightsSale> sales;
     try {
-      sales =
-          parser.parse(
-              LightspeedSaleItemIngestService.extractCsv(body).getBytes(StandardCharsets.UTF_8));
+      sales = parser.parse(LightspeedEnvelope.csv(body));
     } catch (RuntimeException e) {
       ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
       throw e;

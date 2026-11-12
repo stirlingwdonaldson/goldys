@@ -1,17 +1,12 @@
 package com.goldys.platform.connectors.lightspeed;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.canonical.CanonicalDailySalesIngest;
 import com.goldys.platform.canonical.DailySalesInput;
 import com.goldys.platform.ingestion.FetchMethod;
+import com.goldys.platform.ingestion.IngestionProcessing;
 import com.goldys.platform.ingestion.IngestionService;
 import com.goldys.platform.ingestion.IngestionStageKind;
 import com.goldys.platform.ingestion.IngestionStageOutcome;
-import com.goldys.platform.ingestion.port.ConnectorFetchException;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -33,15 +28,10 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LightspeedAllSalesIngestService {
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper(
-          JsonFactory.builder()
-              .streamReadConstraints(
-                  StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build())
-              .build());
   private static final Logger log = LoggerFactory.getLogger(LightspeedAllSalesIngestService.class);
 
   private final IngestionService ingestion;
+  private final IngestionProcessing processing;
   private final CanonicalDailySalesIngest canonical;
   private final LightspeedAllSalesCsvParser parser;
 
@@ -50,6 +40,7 @@ public class LightspeedAllSalesIngestService {
       CanonicalDailySalesIngest canonical,
       LightspeedAllSalesCsvParser parser) {
     this.ingestion = ingestion;
+    this.processing = new IngestionProcessing(ingestion);
     this.canonical = canonical;
     this.parser = parser;
   }
@@ -68,17 +59,8 @@ public class LightspeedAllSalesIngestService {
   }
 
   private void parseAndRecord(byte[] body, UUID rawId) {
-    List<LightspeedAllSale> sales;
-    try {
-      sales = parser.parse(extractCsv(body).getBytes(StandardCharsets.UTF_8));
-    } catch (RuntimeException e) {
-      ingestion.recordStage(rawId, IngestionStageKind.PARSED, IngestionStageOutcome.FAILED);
-      throw e;
-    }
-    ingestion.recordStage(
-        rawId,
-        IngestionStageKind.PARSED,
-        sales.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
+    List<LightspeedAllSale> sales =
+        processing.parse(rawId, () -> parser.parse(LightspeedEnvelope.csv(body)));
 
     if (sales.isEmpty()) {
       log.warn("Lightspeed all-sales webhook delivered an empty report (no data rows)");
@@ -91,37 +73,20 @@ public class LightspeedAllSalesIngestService {
       byDate.computeIfAbsent(sale.saleDate(), d -> new Totals()).add(sale);
     }
 
-    try {
-      for (Map.Entry<LocalDate, Totals> entry : byDate.entrySet()) {
-        Totals t = entry.getValue();
-        canonical.record(
-            new DailySalesInput(
-                "LIGHTSPEED",
-                entry.getKey(),
-                t.total,
-                t.gst,
-                t.gst == null || t.total == null ? null : t.total.subtract(t.gst),
-                rawId));
-      }
-    } catch (RuntimeException e) {
-      ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.FAILED);
-      throw e;
-    }
-    ingestion.recordStage(rawId, IngestionStageKind.CANONICALIZED, IngestionStageOutcome.SUCCESS);
-  }
-
-  private static String extractCsv(byte[] body) {
-    try {
-      JsonNode root = MAPPER.readTree(body);
-      String data = root.path("attachment").path("data").asText(null);
-      if (data == null) {
-        throw new ConnectorFetchException(
-            "CONNECTOR_SCHEMA_MISMATCH", "No attachment.data in Lightspeed webhook payload");
-      }
-      return data;
-    } catch (IOException e) {
-      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Non-JSON webhook payload", e);
-    }
+    processing.canonicalize(
+        rawId,
+        byDate.entrySet(),
+        entry -> {
+          Totals t = entry.getValue();
+          canonical.record(
+              new DailySalesInput(
+                  "LIGHTSPEED",
+                  entry.getKey(),
+                  t.total,
+                  t.gst,
+                  t.gst == null || t.total == null ? null : t.total.subtract(t.gst),
+                  rawId));
+        });
   }
 
   private static final class Totals {
