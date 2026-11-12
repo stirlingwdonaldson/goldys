@@ -17,7 +17,7 @@ export const dashboardFiltersSchema = z.object({ dateRange: rangeSchema.nullable
 export const trustSchema = z.object({
   state: z.enum(["VERIFIED", "RESOLVED_BY_RULE", "MANUALLY_OVERRIDDEN", "SINGLE_SOURCE", "CONFLICTED", "INCOMPLETE", "NOT_RECEIVED"]),
   freshness: z.enum(["FRESH", "STALE", "SOURCE_FAILURE", "UNKNOWN"]),
-  authoritativeSource: z.string().nullable(), resolvedAt: z.string().nullable(), lastIngestionAt: z.string().nullable(), threshold: z.number().nullable(),
+  authoritativeSource: z.string().nullable(), resolvedAt: z.string().nullable(), lastIngestionAt: z.string().nullable(), threshold: z.iso.duration().nullable(),
 });
 export const dashboardSchema = z.object({
   id: z.string(), schemaVersion: z.literal(2), title: z.string(), description: z.string().nullable(), layout: z.string(),

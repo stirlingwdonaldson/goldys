@@ -1589,7 +1589,7 @@ export type MissingDataStatus =
 
 /**
  * Trust and freshness summary for a metric over a range (mirrors the backend `TrustSummary` record).
- * `threshold` is the backend `Duration`, serialized by Jackson as a numeric count of milliseconds.
+ * `threshold` is the backend `Duration`, serialized as an ISO 8601 duration (for example, `PT48H`).
  */
 export interface TrustSummary {
   state: TrustState;
@@ -1597,7 +1597,7 @@ export interface TrustSummary {
   authoritativeSource: string | null;
   resolvedAt: string | null;
   lastIngestionAt: string | null;
-  threshold: number | null;
+  threshold: string | null;
 }
 
 /**

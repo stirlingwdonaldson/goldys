@@ -1,0 +1,212 @@
+{
+  "widgets": [
+    {
+      "type": "table",
+      "id": "metric-definitions",
+      "title": "Approved metrics",
+      "description": "Definitions describe meaning, not source completeness or availability",
+      "columns": [
+        {
+          "key": "metric",
+          "label": "metric",
+          "format": null
+        },
+        {
+          "key": "name",
+          "label": "name",
+          "format": null
+        },
+        {
+          "key": "definition",
+          "label": "definition",
+          "format": null
+        },
+        {
+          "key": "formula",
+          "label": "formula",
+          "format": null
+        },
+        {
+          "key": "unit",
+          "label": "unit",
+          "format": null
+        },
+        {
+          "key": "version",
+          "label": "version",
+          "format": null
+        },
+        {
+          "key": "dimensions",
+          "label": "dimensions",
+          "format": null
+        },
+        {
+          "key": "grains",
+          "label": "grains",
+          "format": null
+        },
+        {
+          "key": "notes",
+          "label": "notes",
+          "format": null
+        }
+      ],
+      "rows": [
+        {
+          "metric": "sales.gross",
+          "name": "Gross sales",
+          "definition": "Resolved gross sales incl. GST",
+          "formula": "totalSales",
+          "unit": "AUD",
+          "version": "1",
+          "dimensions": "",
+          "grains": "DAY, WEEK, MONTH, TOTAL",
+          "notes": "Gross includes GST. Trading policy: 02:00 Australia/Melbourne every day (simplified); date-only source reports retain supplied attribution until close-time evidence is available"
+        }
+      ],
+      "query": null,
+      "schemaVersion": 2
+    },
+    {
+      "type": "table",
+      "id": "metric-analysis",
+      "title": "Metric analysis",
+      "description": "Each row retains its requested scope; values are not combined across metrics or periods",
+      "columns": [
+        {
+          "key": "query",
+          "label": "query",
+          "format": null
+        },
+        {
+          "key": "metric",
+          "label": "metric",
+          "format": null
+        },
+        {
+          "key": "definition",
+          "label": "definition",
+          "format": null
+        },
+        {
+          "key": "from",
+          "label": "from",
+          "format": null
+        },
+        {
+          "key": "to",
+          "label": "to",
+          "format": null
+        },
+        {
+          "key": "grain",
+          "label": "grain",
+          "format": null
+        },
+        {
+          "key": "dimensions",
+          "label": "dimensions",
+          "format": null
+        },
+        {
+          "key": "group",
+          "label": "group",
+          "format": null
+        },
+        {
+          "key": "bucket",
+          "label": "bucket",
+          "format": null
+        },
+        {
+          "key": "value",
+          "label": "value",
+          "format": null
+        },
+        {
+          "key": "unit",
+          "label": "unit",
+          "format": null
+        },
+        {
+          "key": "displayValue",
+          "label": "displayValue",
+          "format": null
+        },
+        {
+          "key": "status",
+          "label": "status",
+          "format": null
+        }
+      ],
+      "rows": [
+        {
+          "query": 1,
+          "metric": "sales.gross",
+          "definition": "Resolved gross sales incl. GST",
+          "from": "2026-11-02",
+          "to": "2026-11-08",
+          "grain": "TOTAL",
+          "dimensions": "",
+          "group": null,
+          "bucket": "2026-11-02",
+          "value": 123.45,
+          "unit": "AUD",
+          "displayValue": "123.45 AUD",
+          "status": null
+        }
+      ],
+      "query": null,
+      "schemaVersion": 2
+    }
+  ],
+  "trace": [
+    {
+      "tool": "describe_metrics",
+      "description": "Discover approved metric definitions, units, versions, dimensions and grains before planning an unfamiliar analysis. Empty metrics lists accessible definitions; explicit metrics require access to every operand. Definitions do not establish data availability. Never invent formulas.",
+      "provenance": []
+    },
+    {
+      "tool": "run_metric_analysis",
+      "description": "Execute 1..6 approved metric queries together, each with explicit dates, grain and dimensions. Preferred for numeric answers: one query for one metric, or several for multiple metrics or periods. Use TOTAL for period totals; do not sum daily ratios. Returns individual values with scope, units, missing status and provenance, never inferred joins. Use compare_metric_periods for calculated percentage changes and get_metric for top sellers. Filters, new formulas and cross-dataset joins are not supported by this plan.",
+      "provenance": [
+        {
+          "metric": "sales.gross",
+          "definitionVersion": "1",
+          "range": {
+            "from": "2026-11-02",
+            "to": "2026-11-08",
+            "calendar": "CALENDAR"
+          },
+          "grain": "TOTAL",
+          "sourceDomain": "resolved_daily_sales",
+          "dataFreshness": "1970-01-01T00:00:00Z",
+          "missingPeriods": [],
+          "calculationVersion": "1",
+          "trust": {
+            "state": "SINGLE_SOURCE",
+            "freshness": "FRESH",
+            "authoritativeSource": "LIGHTSPEED",
+            "resolvedAt": "1970-01-01T00:00:00Z",
+            "lastIngestionAt": "1970-01-01T00:00:00Z",
+            "threshold": "PT48H"
+          },
+          "coverage": {
+            "from": "2026-11-02",
+            "to": "2026-11-08",
+            "observedDates": [
+              "2026-11-02"
+            ],
+            "unresolvedDates": [],
+            "absentDates": [],
+            "expectedTradingPopulationKnown": false
+          }
+        }
+      ]
+    }
+  ],
+  "asOf": "1970-01-01T00:00:00Z",
+  "notices": [],
+  "draft": null
+}

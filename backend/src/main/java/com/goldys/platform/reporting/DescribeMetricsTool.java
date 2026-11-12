@@ -110,9 +110,19 @@ public class DescribeMetricsTool implements ReportingTool {
     row.put("formula", definition.formula());
     row.put("unit", definition.unit());
     row.put("version", definition.version());
-    row.put("dimensions", definition.validDimensions().stream().sorted().map(Enum::name).toList());
-    row.put("grains", definition.allowedGrains().stream().sorted().map(Enum::name).toList());
-    row.put("notes", definition.notes());
+    row.put(
+        "dimensions",
+        definition.validDimensions().stream()
+            .sorted()
+            .map(Enum::name)
+            .collect(java.util.stream.Collectors.joining(", ")));
+    row.put(
+        "grains",
+        definition.allowedGrains().stream()
+            .sorted()
+            .map(Enum::name)
+            .collect(java.util.stream.Collectors.joining(", ")));
+    row.put("notes", String.join("; ", definition.notes()));
     return row;
   }
 
