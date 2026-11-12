@@ -150,6 +150,14 @@ class WeeklyReportIntegrationTest {
         .andExpect(
             jsonPath("$.weeks[0].rows[?(@.id == 'sales_difference')].total")
                 .value(org.hamcrest.Matchers.contains(-124000.0)))
+        .andExpect(jsonPath("$.weeks[0].assessments.net_sales.outcome").value("WITHHELD"))
+        .andExpect(jsonPath("$.weeks[0].assessments.net_sales.reason").value("INCOMPLETE_EVIDENCE"))
+        .andExpect(jsonPath("$.weeks[0].assessments.sales_difference.outcome").value("WITHHELD"))
+        .andExpect(
+            jsonPath("$.weeks[0].assessments.total_wastage_percent.outcome").value("WITHHELD"))
+        .andExpect(
+            jsonPath("$.weeks[0].assessments.total_wastage_percent.reason")
+                .value("INCOMPLETE_EVIDENCE"))
         .andExpect(
             jsonPath("$.weeks[0].rows[?(@.id == 'total_wastage_percent')].total")
                 .value(org.hamcrest.Matchers.contains(0.1)))

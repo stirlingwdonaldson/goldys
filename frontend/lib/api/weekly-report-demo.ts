@@ -5,6 +5,7 @@ import type {
   WeeklyWastage,
   WeeklyReport,
   WeeklyReportRow,
+  WeeklyReportAssessment,
 } from "./types";
 import { ApiError } from "./errors";
 
@@ -123,6 +124,7 @@ export function demoWeeklyReport(from?: string, weeks = 4): WeeklyReport {
       end: dates[6],
       dates,
       rows,
+      assessments: demoAssessments(rows, w === 0),
       targets,
       wastage: structuredClone(demoWastage),
       stockCounts: [
@@ -140,6 +142,36 @@ export function demoWeeklyReport(from?: string, weeks = 4): WeeklyReport {
   }
   result.to = result.weeks.at(-1)!.end;
   return result;
+}
+
+function demoAssessments(rows: WeeklyReportRow[], partial: boolean): Record<string, WeeklyReportAssessment> {
+  const assessments = Object.fromEntries(rows.map(row => [row.id, {
+    outcome: row.status === "UNAVAILABLE" ? "UNAVAILABLE" : weeklyTargetIds.includes(row.id) ? "TARGET" : "SOURCE_QUALIFIED",
+    reason: null,
+  } as WeeklyReportAssessment]));
+  // Only these fixed demo sales scenarios respond to target edits. Source support is
+  // fixture data; production evidence rules and the general assessor are not duplicated.
+  for (const prefix of ["sales", "food", "beverage"]) {
+    const difference = rows.find(row => row.id === `${prefix}_difference`)!;
+    const sales: WeeklyReportAssessment = difference.total === null
+      ? { outcome: "WITHHELD", reason: "NO_EFFECTIVE_TARGET" }
+      : partial ? { outcome: "WITHHELD", reason: "INCOMPLETE_EVIDENCE" }
+      : { outcome: difference.total >= 0 ? "MEETS_TARGET" : "BELOW_TARGET", reason: null };
+    assessments[prefix === "sales" ? "net_sales" : `${prefix}_sales`] = sales;
+    for (const id of [`${prefix}_difference`, `${prefix}_difference_percent`]) {
+      if (rows.find(row => row.id === id)!.total !== null) assessments[id] = { ...sales };
+    }
+  }
+  for (const prefix of ["total", "food", "beverage"]) {
+    const id = `${prefix}_wastage_percent`;
+    if (assessments[id].outcome === "UNAVAILABLE") continue;
+    assessments[id] = {
+      outcome: "WITHHELD",
+      reason: rows.find(row => row.id === `${prefix}_wastage_target_percent`)!.total === null
+        ? "NO_EFFECTIVE_TARGET" : "INCOMPLETE_EVIDENCE",
+    };
+  }
+  return assessments;
 }
 
 function applyDemoCosts(rows: WeeklyReportRow[]) {

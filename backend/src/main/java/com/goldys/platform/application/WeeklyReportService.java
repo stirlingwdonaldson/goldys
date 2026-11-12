@@ -294,7 +294,8 @@ public class WeeklyReportService {
               calculation.wastage(),
               stockCounts.stream()
                   .filter(s -> !s.date().isBefore(start) && s.date().isBefore(start.plusDays(7)))
-                  .toList()));
+                  .toList(),
+              WeeklyReportAssessment.assess(start, rows, weekTargets, calculation.supported())));
     }
     return new WeeklyReport(
         from, to, clock.clock().instant(), clock.zone().getId(), List.copyOf(weeks));

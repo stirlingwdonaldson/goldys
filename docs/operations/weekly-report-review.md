@@ -22,12 +22,21 @@ reviews alongside actuals, effective targets, sales differences and assessments.
 Dated tabs retain every field in separate Monday–Sunday section tables; Field notes
 retains full source qualifications. The workbook uses Arial, navy/teal headings,
 spaced tables, bold headline measures and numeric currency/percentage/count formats.
-Green means an available actual meets its effective sales minimum, cost/wastage
-maximum or variance range; red means it falls outside that target. Target boundaries
-are inclusive. Sales differences use their existing zero baseline. Daily values do
-not borrow weekly targets. Blue marks planning targets; amber marks qualified data
-without a comparison; grey marks unavailable results. Colour is not a completeness
-certification. No review threshold or target is invented. Missing cells remain blank,
+Green means a comparison supported by the recorded evidence meets its effective sales
+minimum, cost/wastage maximum or variance range; red means it falls outside that target.
+The backend includes assessments and withholding reasons in the authorised snapshot;
+the screen and Excel render the same decisions. Target boundaries are inclusive.
+Missing required daily evidence withholds verdicts without hiding partial totals or
+differences. A weekly ratio can remain assessable when a known zero-sales day makes
+its daily percentage undefined: eligibility follows the operands, not populated ratio
+cells. Missing wastage observations are not zero. Unknown wastage classifications
+withhold category verdicts; recorded total wastage remains independently assessed.
+Sales differences inherit their parent comparison's eligibility and use their existing
+zero baseline. A missing percentage difference does not suppress a valid currency
+comparison. Daily values do not borrow weekly targets. Blue marks planning targets;
+amber marks qualified data without a comparison; grey marks unavailable results.
+Colour is not a completeness certification. No review threshold or target is invented.
+Stock and cash variance placeholders remain unavailable. Missing cells remain blank,
 while known zeros are displayed explicitly. Detail tabs retain filters.
 The reference workbook supplies layout only; its formulas and manual forms are not copied.
 

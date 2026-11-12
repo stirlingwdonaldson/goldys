@@ -58,7 +58,7 @@ class WeeklyReportInventoryTest {
         List.of(
             new Waste(d, "KO", 2, 1, BigDecimal.ONE, "FOOD"),
             new Waste(d, null, 1, 1, new BigDecimal("3"), "UNKNOWN"));
-    var rows = WeeklyReportInventory.calculate(dates, observations, sales, Map.of(), null);
+    var rows = WeeklyReportInventory.calculate(dates, observations, sales, Map.of(), null).rows();
     var result =
         rows.stream().filter(r -> r.id().equals("food_wastage_percent")).findFirst().orElseThrow();
     assertThat(result.total()).isNull();
@@ -92,7 +92,8 @@ class WeeklyReportInventoryTest {
         dates.stream()
             .collect(java.util.stream.Collectors.toMap(d -> d, d -> new BigDecimal("100")));
     var rows =
-        WeeklyReportInventory.calculate(dates, waste, sales, headline, new BigDecimal("140"));
+        WeeklyReportInventory.calculate(dates, waste, sales, headline, new BigDecimal("140"))
+            .rows();
     assertThat(row(rows, "total_wastage").total()).isEqualByComparingTo("7");
     assertThat(row(rows, "total_wastage_percent").days())
         .allSatisfy(v -> assertThat(v).isEqualByComparingTo("0.01"));
@@ -128,7 +129,7 @@ class WeeklyReportInventoryTest {
                 .toList());
     sales.add(new Sale(start, "Unknown", BigDecimal.TEN, BigDecimal.TEN, "CTB", "UNKNOWN"));
     var waste = dates.stream().map(d -> new Waste(d, "KO", 1, 1, BigDecimal.ONE, "FOOD")).toList();
-    var rows = WeeklyReportInventory.calculate(dates, waste, sales, Map.of(), null);
+    var rows = WeeklyReportInventory.calculate(dates, waste, sales, Map.of(), null).rows();
     assertThat(row(rows, "food_wastage").total()).isEqualByComparingTo("7");
     assertThat(row(rows, "food_wastage_percent").days().getFirst()).isNull();
     assertThat(row(rows, "food_wastage_percent").days().get(1)).isEqualByComparingTo("0.1");
@@ -184,7 +185,7 @@ class WeeklyReportInventoryTest {
             .toList();
     var waste =
         dates.stream().map(date -> new Waste(date, "KO", 1, 1, BigDecimal.ONE, nature)).toList();
-    return WeeklyReportInventory.calculate(dates, waste, sales, Map.of(), null);
+    return WeeklyReportInventory.calculate(dates, waste, sales, Map.of(), null).rows();
   }
 
   private static WeeklyReport.Row row(List<WeeklyReport.Row> rows, String id) {

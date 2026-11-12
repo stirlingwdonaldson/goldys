@@ -12,7 +12,7 @@ final class WeeklyReportSales {
   private WeeklyReportSales() {}
 
   /** Calculates complete sales rows without requiring the report's placeholder rows or layout. */
-  static List<WeeklyReport.Row> calculate(
+  static WeeklyReportCalculation.Rows calculate(
       List<LocalDate> dates, List<Sale> sales, Map<LocalDate, BigDecimal> headlineNetSales) {
     List<ClassifiedSalesTotals> daily =
         dates.stream()
@@ -165,7 +165,15 @@ final class WeeklyReportSales {
             residuals.stream().filter(Objects::nonNull).reduce(BigDecimal::add).orElse(null),
             residuals.stream().anyMatch(Objects::nonNull) ? "QUALIFIED" : "UNAVAILABLE",
             List.copyOf(notes)));
-    return List.copyOf(rows);
+    Set<String> supported = new HashSet<>();
+    for (var row : rows) {
+      if (Set.of("food_sales", "beverage_sales").contains(row.id())
+          && dates.size() == 7
+          && row.days().stream().allMatch(Objects::nonNull)) {
+        supported.add(row.id());
+      }
+    }
+    return new WeeklyReportCalculation.Rows(rows, supported);
   }
 
   private static WeeklyReport.Row row(
