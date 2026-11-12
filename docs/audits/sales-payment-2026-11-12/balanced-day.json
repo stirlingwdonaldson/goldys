@@ -1,0 +1,97 @@
+{
+  "saleItemMix": [
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "CASH OUT",
+      "amount": "38.0000"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "COCKTAILS",
+      "amount": "150.5400"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "FAST BAR",
+      "amount": "3675.4800"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "FOOD MENU",
+      "amount": "2431.5100"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "LIQUEURS",
+      "amount": "260.0000"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "Multiple Categories",
+      "amount": "1193.7000"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "NON ALC",
+      "amount": "40.6600"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "SOFTIES",
+      "amount": "217.5700"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "SPIRITS",
+      "amount": "42.0000"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "TINNIES",
+      "amount": "60.4900"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "Uncategorised",
+      "amount": "56.6100"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "Weekly Food Specials",
+      "amount": "4159.3900"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "WINE BOTTLE",
+      "amount": "258.6400"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "categoryName": "WINE GLASS",
+      "amount": "490.4800"
+    }
+  ],
+  "paymentMix": [
+    {
+      "tradingDate": "2026-11-11",
+      "paymentTypeName": "Cash",
+      "amount": "329.0000"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "paymentTypeName": "Gift Cards",
+      "amount": "100.0000"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "paymentTypeName": "Lightspeed Payments",
+      "amount": "5838.5200"
+    },
+    {
+      "tradingDate": "2026-11-11",
+      "paymentTypeName": "Mr Yum",
+      "amount": "6807.5500"
+    }
+  ],
+  "deletedSaleTotals": []
+}

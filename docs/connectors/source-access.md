@@ -442,3 +442,7 @@ report uses only supported source cost estimates, with partial subtotals and cov
 it does not replace missing costs with current recipes. Historical cost effectiveness,
 yields and complete capture remain unverified. The variance endpoint still returns
 an explicit unsuccessful envelope. See the [audit](../audits/ctb-stock-cogs-2026-11-03/README.md).
+
+## Sales/payment comparison safeguards (12 November 2026)
+
+The existing merchandise and receipt-mapping webhook contracts remain separate; no new endpoint is required. Payment deliveries now reject duplicate CSV headers, missing required amounts and repeated canonical payment keys before publication. For source/report configuration, presentation precision, validation failures and historical-repair limits, see [sales/payment comparison](../operations/sales-payment-comparison.md). These implementation changes do not activate source schedules or repair production history.
