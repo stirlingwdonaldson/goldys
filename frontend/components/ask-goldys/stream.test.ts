@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { parseSseBlock, parseDraft, parseAnswer, streamChat } from "./stream";
+import governedAnswer from "../../tests/fixtures/governed-answer.json";
 import { SESSION_EXPIRED_EVENT } from "@/lib/api/response";
 
 const answer = { widgets: [], trace: [], asOf: "2026-10-23T00:00:00Z", notices: [] };
@@ -29,6 +30,24 @@ describe("reporting contracts", () => {
 });
 
 describe("streamChat", () => {
+  it("accepts the backend-serialized metric discovery and weekly sales answer", async () => {
+    const handlers = { onText: vi.fn(), onAnswer: vi.fn(), onError: vi.fn() };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(
+      `event: text\ndata: {"delta":"Sales last week"}\n\nevent: answer\ndata: ${JSON.stringify(governedAnswer)}\n\n`,
+      { headers: { "Content-Type": "text/event-stream" } },
+    )));
+    await streamChat("thread", "what were the sales last week", handlers);
+    expect(handlers.onError).not.toHaveBeenCalled();
+    expect(handlers.onAnswer).toHaveBeenCalledWith(governedAnswer);
+    expect(handlers.onText).toHaveBeenCalledWith("Sales last week");
+  });
+
+  it("keeps invalid freshness metadata visible as a protocol error", () => {
+    const invalid = structuredClone(governedAnswer);
+    invalid.trace[1].provenance[0].trust.threshold = "48 hours";
+    expect(() => parseAnswer(invalid)).toThrow("invalid reporting data");
+  });
+
   it.each(["401", "redirect"])("notifies the session gate when chat receives %s", async failure => {
     const response = new Response("Sign in", { status: failure === "401" ? 401 : 200 });
     if (failure === "redirect") {

@@ -2871,7 +2871,7 @@ function demoProvenance(metricId: string, date: string): Provenance {
       authoritativeSource: "LIGHTSPEED",
       resolvedAt: `${date}T23:59:00Z`,
       lastIngestionAt: `${date}T23:55:00Z`,
-      threshold: 0.5,
+      threshold: "PT48H",
     },
     sources: [primary, secondary],
     resolution: conflict
