@@ -470,6 +470,13 @@ describe("qualified invoice demo identity", () => {
 });
 
 describe("demo dashboard qualifications", () => {
+  it("does not warn for observed dates or claim verified source completeness", async () => {
+    const result = await demoApi.getSalesTrend("2026-10-01", "2026-10-03");
+    expect(result.notices).toEqual([]);
+    expect(result.provenance.coverage?.expectedTradingPopulationKnown).toBe(false);
+    expect(result.points[0].total).toBe(0);
+  });
+
   it("keeps the requested sales grid, explicit zero, unresolved and absent amounts", async () => {
     const result = await demoApi.getSalesTrend("2026-10-01", "2026-10-06");
     expect(result.points).toHaveLength(6);

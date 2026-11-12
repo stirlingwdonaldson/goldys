@@ -73,6 +73,17 @@ describe("AnswerBlock", () => {
     expect(screen.getByText(/no resolved total/i)).toBeInTheDocument();
   });
 
+  it("shows ordinary qualifications without asking the user to reconcile them", () => {
+    const answer: AnswerPayload = {
+      widgets: [], trace: [], asOf: "2026-10-02T10:00:00Z",
+      notices: ["Product totals use recorded sales; days without product observations are not assumed to be zero."],
+    };
+    render(<AnswerBlock summary="Recorded sales." answer={answer} error={null} api={stubApi()} />);
+    expect(screen.getByRole("note", { name: "Data notes" })).toHaveTextContent("Product totals use recorded sales");
+    expect(screen.queryByRole("link", { name: /reconcil|conflict/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Reconcile these first/i)).not.toBeInTheDocument();
+  });
+
   it("shows the error message when present", () => {
     render(
       <AnswerBlock summary="" answer={null} error={new ApiError("NOT_PERMITTED", "You don't have access to that data.")} api={stubApi()} />,
@@ -257,11 +268,12 @@ describe("AnswerBlock", () => {
         },
       ],
       asOf: "2026-10-02T10:00:00Z",
-      notices: [],
+      notices: ["1 unresolved conflict."],
     };
     render(<AnswerBlock summary="" answer={answer} error={null} api={stubApi()} />);
 
     // The worst trust (CONFLICTED + stale) wins, not the verified metric.
+    expect(screen.getByRole("link", { name: "Review conflicts" })).toHaveAttribute("href", "/reconciliation");
     expect(screen.getByText("Unresolved conflict")).toBeInTheDocument();
     expect(screen.getByText("stale")).toBeInTheDocument();
     expect(screen.queryByText("Verified")).not.toBeInTheDocument();

@@ -90,8 +90,10 @@ with a notice ("no covers data" / "denominator is zero"), because no value exist
 
 ## Display + note semantics
 
-A metric **always displays a value when any resolved data exists**, and attaches a **notice**
-explaining what is going on. There is no "hide the number" mode:
+A metric **always displays a value when any resolved data exists**. Runtime notices explain
+observed data gaps or unavailable values; an observed calendar grid does not generate a routine
+warning. Unknown source completeness stays in provenance and is not a claim of verified coverage.
+There is no "hide the number" mode:
 
 - **Partial data** (some days unresolved): the value is the sum of the resolved constituents; the
   unresolved dates are recorded in `MetricProvenance.missingPeriods` and surfaced as a notice
@@ -152,5 +154,9 @@ instant is available to shift them safely. Receipt recency is not business-evide
 
 `product.sales_amount` and `product.sales_quantity` honour the approved `PRODUCT` dimension.
 Each normalized product name has its own series. No dimensions retains the aggregate across products.
-An absent product/day observation stays missing, never an inferred zero; grouped totals retain
-per-product coverage notices, and overall coverage is incomplete if any returned group is missing.
+An absent product/day observation stays missing, never an inferred zero. Sparse product groups
+produce one qualification about recorded sales, rather than a separate incomplete-data warning for
+every product. Dataset-wide absent dates and unresolved values still produce coverage warnings.
+Per-product point statuses and overall missing-period provenance remain available; overall coverage
+is incomplete if any returned group is missing. Sparse product observations alone do not establish
+that a source delivery failed or a conflict exists.

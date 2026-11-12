@@ -41,7 +41,13 @@ public class ProductMetricExecutor implements MetricExecutor {
     List<ProductSalesMetric> rows = product.productSales(query.range().from(), query.range().to());
     Map<LocalDate, BigDecimal> byDay = daily(rows, pick);
     List<MetricSeries> series = new ArrayList<>();
-    List<String> notices = new ArrayList<>();
+    // Diagnose the dataset before sparse product groups affect aggregate availability.
+    List<String> notices =
+        new ArrayList<>(
+            GrainAggregator.sum(byDay, query.range().from(), query.range().to(), query.grain())
+                .coverage()
+                .notices());
+    boolean sparseProducts = false;
     if (query.dimensions().contains(Dimension.PRODUCT)) {
       Map<String, List<ProductSalesMetric>> groups = new LinkedHashMap<>();
       for (ProductSalesMetric row : rows) {
@@ -52,20 +58,20 @@ public class ProductMetricExecutor implements MetricExecutor {
         var bucket =
             GrainAggregator.sum(values, query.range().from(), query.range().to(), query.grain());
         series.add(new MetricSeries(group.getKey(), bucket.points()));
-        bucket.coverage().notices().forEach(note -> notices.add(group.getKey() + ": " + note));
+        sparseProducts |= !bucket.coverage().absentDates().isEmpty();
         // A missing product observation must not look complete because another product was
         // observed.
         for (LocalDate missing : bucket.missingDays()) {
           if (byDay.containsKey(missing)) byDay.put(missing, null);
         }
       }
-      notices.add(
-          "Product identity is source-normalized name; absent product/day observations are not zero.");
+      if (sparseProducts)
+        notices.add(
+            "Product totals use recorded sales; days without product observations are not assumed to be zero.");
     }
     GrainAggregator.Bucket bucket =
         GrainAggregator.sum(byDay, query.range().from(), query.range().to(), query.grain());
     if (series.isEmpty()) series.add(new MetricSeries(null, bucket.points()));
-    notices.addAll(bucket.coverage().notices());
     MetricDefinition definition = catalog.definition(query.metric());
     MetricProvenance provenance =
         new MetricProvenance(

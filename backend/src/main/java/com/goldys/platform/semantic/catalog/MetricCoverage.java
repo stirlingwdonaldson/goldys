@@ -36,6 +36,8 @@ public record MetricCoverage(
   }
 
   public List<String> notices() {
+    // Unknown source completeness belongs in provenance, not a warning on every successful query.
+    if (unresolvedDates.isEmpty() && absentDates.isEmpty()) return List.of();
     String detail =
         observedDates.size()
             + " observed day(s), "
@@ -43,11 +45,6 @@ public record MetricCoverage(
             + " unresolved day(s), "
             + absentDates.size()
             + " day(s) without a resolved record";
-    return List.of(
-        (unresolvedDates.isEmpty() && absentDates.isEmpty()
-                ? "Calendar coverage: "
-                : "Incomplete subtotal: ")
-            + detail
-            + "; expected trading population and within-day completeness are unverified");
+    return List.of("Incomplete subtotal: " + detail);
   }
 }
