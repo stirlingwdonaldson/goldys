@@ -27,6 +27,13 @@ describe("weekly reporting adapters", () => {
     expect(report.weeks[0].rows.find(r => r.id === "food_cost_coverage_lines")?.days[1]).toBeNull();
     expect(report.weeks[0].rows.find(r => r.id === "food_theoretical_cogs")?.total).toBeNull();
     expect(report.weeks[0].rows.some(r => /labour|wages|happiness|prime cost/i.test(r.label))).toBe(false);
+    for (const week of report.weeks) expect(Object.keys(week.assessments).sort()).toEqual(week.rows.map(r => r.id).sort());
+    expect(report.weeks[0].assessments.net_sales).toEqual({ outcome: "WITHHELD", reason: "INCOMPLETE_EVIDENCE" });
+    expect(report.weeks[0].assessments.sales_difference).toEqual(report.weeks[0].assessments.net_sales);
+    expect(report.weeks[1].assessments.net_sales.outcome).toBe("BELOW_TARGET");
+    expect(report.weeks[1].assessments.total_wastage_percent.reason).toBe("INCOMPLETE_EVIDENCE");
+    expect(report.weeks[1].assessments.food_cogs_percent.outcome).toBe("UNAVAILABLE");
+    expect(report.weeks[1].assessments.review_average.outcome).toBe("SOURCE_QUALIFIED");
   });
 
   it("rejects invalid dates and unbounded requests", () => {
@@ -48,5 +55,18 @@ describe("weekly reporting adapters", () => {
     const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("[]", { headers: { "content-type": "application/json" } }));
     await liveApi.saveWeeklyTargets(input);
     expect(fetcher).toHaveBeenCalledWith("/api/reports/weekly/targets", expect.objectContaining({ method: "PUT", body: JSON.stringify(input), credentials: "same-origin" }));
+  });
+
+  it("keeps demo assessments consistent after an effective zero-target edit", () => {
+    saveDemoWeeklyTargets({ effectiveFrom: "2099-01-05", values: { sales_target: 0 } });
+    const [partial, full] = demoWeeklyReport("2099-01-05", 2).weeks;
+    expect(partial.assessments.net_sales.reason).toBe("INCOMPLETE_EVIDENCE");
+    expect(full.assessments.net_sales.outcome).toBe("MEETS_TARGET");
+    expect(full.assessments.sales_difference.outcome).toBe("MEETS_TARGET");
+    expect(full.assessments.sales_difference_percent.outcome).toBe("UNAVAILABLE");
+    expect(full.rows.find(r => r.id === "sales_difference_percent")?.total).toBeNull();
+    const withoutTargets = demoWeeklyReport("2026-06-15", 2).weeks[1];
+    expect(withoutTargets.assessments.net_sales.reason).toBe("NO_EFFECTIVE_TARGET");
+    expect(withoutTargets.assessments.total_wastage_percent.reason).toBe("NO_EFFECTIVE_TARGET");
   });
 });

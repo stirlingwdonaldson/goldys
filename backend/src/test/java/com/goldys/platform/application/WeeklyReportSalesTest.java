@@ -23,7 +23,7 @@ class WeeklyReportSalesTest {
   }
 
   private List<WeeklyReport.Row> report(List<Sale> sales) {
-    return WeeklyReportSales.calculate(dates, sales, Map.of(monday, new BigDecimal("200")));
+    return WeeklyReportSales.calculate(dates, sales, Map.of(monday, new BigDecimal("200"))).rows();
   }
 
   private BigDecimal total(List<WeeklyReport.Row> rows, String id) {
@@ -90,7 +90,8 @@ class WeeklyReportSalesTest {
 
   @Test
   void missingHeadlineWithholdsResidualWithoutWithholdingObservedProductSales() {
-    var rows = WeeklyReportSales.calculate(dates, List.of(sale("food", "100", "FOOD")), Map.of());
+    var rows =
+        WeeklyReportSales.calculate(dates, List.of(sale("food", "100", "FOOD")), Map.of()).rows();
     assertThat(total(rows, "food_sales")).isEqualByComparingTo("100");
     assertThat(total(rows, "sales_reconciliation_difference")).isNull();
   }

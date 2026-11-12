@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { weeklyReportWorkbook } from "./weekly-report-export";
 import { demoWeeklyReport } from "./api/weekly-report-demo";
+import { createElement } from "react";
+import { render, screen, within } from "@testing-library/react";
+import { TargetComparison } from "@/app/(app)/weekly-report/report-sections";
+import type { WeeklyReportAssessment } from "./api/types";
 
 function entries(bytes: Uint8Array): Map<string, string> {
   const files = new Map<string, string>();
@@ -136,7 +140,7 @@ describe("weekly Excel snapshot", () => {
     });
   });
 
-  it("uses green/red for target comparisons, blue for targets and grey for unavailable results", () => {
+  it("styles server verdicts, planning targets and unavailable results without reassessing values", () => {
     const report = demoWeeklyReport("2026-10-19", 2);
     const first = report.weeks[0];
     const set = (week: typeof first, id: string, total: number | null, status = "QUALIFIED") => Object.assign(week.rows.find(r => r.id === id)!, { total, status });
@@ -148,6 +152,16 @@ describe("weekly Excel snapshot", () => {
     set(first, "food_cogs_percent", 0.1, "UNAVAILABLE");
     set(report.weeks[1], "beverage_variance_percent", -0.0025); // Lower bound is inclusive.
     set(report.weeks[1], "food_target", null);
+    Object.assign(first.assessments, {
+      food_sales: { outcome: "MEETS_TARGET", reason: null },
+      beverage_sales: { outcome: "BELOW_TARGET", reason: null },
+      food_wastage_percent: { outcome: "MEETS_TARGET", reason: null },
+      beverage_wastage_percent: { outcome: "ABOVE_LIMIT", reason: null },
+      beverage_variance_percent: { outcome: "OUTSIDE_RANGE", reason: null },
+    });
+    report.weeks[1].assessments.beverage_variance_percent = { outcome: "MEETS_TARGET", reason: null };
+    report.weeks[1].assessments.food_sales = { outcome: "WITHHELD", reason: "NO_EFFECTIVE_TARGET" };
+    report.weeks[1].assessments.food_target = { outcome: "UNAVAILABLE", reason: null };
     const files = entries(weeklyReportWorkbook(report));
     const styles = new DOMParser().parseFromString(files.get("xl/styles.xml")!, "application/xml");
     const formats = styles.querySelectorAll("cellXfs > xf");
@@ -170,7 +184,7 @@ describe("weekly Excel snapshot", () => {
     expect(fill(next, first.rows.find(r => r.id === "beverage_variance_percent")!.label)).toBe("FFE3F3E8");
     const summary = new DOMParser().parseFromString(files.get("xl/worksheets/sheet1.xml")!, "application/xml");
     const food = [...summary.querySelectorAll("row")].filter(r => r.querySelector("c t")?.textContent === "Food sales");
-    expect(cell(food[1], "E")?.textContent).toBe("No target available");
+    expect(cell(food[1], "E")?.textContent).toBe("No effective target");
     expect(fill(summary, "Review rating", "E")).toBe("FFFFF3D6");
     expect(fill(summary, "Food COGS rate", "E")).toBe("FFF0F1F3");
     expect(summary.documentElement.textContent).toContain("Colours do not certify completeness");
@@ -178,5 +192,43 @@ describe("weekly Excel snapshot", () => {
     const countRow = fieldRow(week, first.rows.find(r => r.id === "sales_missing_tax_rows")!.label);
     const countFormat = formats[Number(cell(countRow, "J")?.getAttribute("s"))].getAttribute("numFmtId");
     expect(countFormat).toBe("166");
+  });
+
+  it.each([
+    [{ outcome: "WITHHELD", reason: "INCOMPLETE_EVIDENCE" }, "Incomplete comparison evidence", "FFFFF3D6"],
+    [{ outcome: "WITHHELD", reason: "NO_EFFECTIVE_TARGET" }, "No effective target", "FFFFF3D6"],
+    [{ outcome: "WITHHELD", reason: "BASIS_MISMATCH" }, "Basis differs", "FFFFF3D6"],
+    [{ outcome: "MEETS_TARGET", reason: null }, "Meets target", "FFE3F3E8"],
+    [{ outcome: "BELOW_TARGET", reason: null }, "Below target", "FFFCE8E6"],
+    [undefined, "Assessment unavailable", "FFFFF3D6"],
+  ] as [WeeklyReportAssessment | undefined, string, string][])("screen and workbook express the same snapshot decision: %s", (assessment, label, color) => {
+    const report = demoWeeklyReport("2026-10-19", 1);
+    const week = report.weeks[0];
+    const actual = week.rows.find(r => r.id === "net_sales")!;
+    const difference = week.rows.find(r => r.id === "sales_difference")!;
+    // Keep the same positive figures for every verdict: neither renderer may infer success.
+    actual.total = 130000;
+    difference.total = 10000;
+    if (assessment) {
+      week.assessments.net_sales = assessment;
+      week.assessments.sales_difference = assessment;
+    } else {
+      delete week.assessments.net_sales;
+      delete week.assessments.sales_difference;
+    }
+    render(createElement(TargetComparison, { week }));
+    const ui = within(screen.getByRole("rowheader", { name: "Total sales ex GST (AUD)" }).closest("tr")!);
+    expect(ui.getByText(label)).toBeVisible();
+    expect(ui.getByText("$10,000.00")).toBeVisible();
+    const files = entries(weeklyReportWorkbook(report));
+    const summary = new DOMParser().parseFromString(files.get("xl/worksheets/sheet1.xml")!, "application/xml");
+    const sales = fieldRow(summary, "Total sales ex GST");
+    expect(cell(sales, "E")?.textContent).toBe(label);
+    expect(cell(sales, "B")?.querySelector("v")?.textContent).toBe("130000");
+    expect(cell(sales, "D")?.querySelector("v")?.textContent).toBe("10000");
+    const styles = new DOMParser().parseFromString(files.get("xl/styles.xml")!, "application/xml");
+    const format = styles.querySelectorAll("cellXfs > xf")[Number(cell(sales, "E")?.getAttribute("s"))];
+    const fill = styles.querySelectorAll("fills > fill")[Number(format.getAttribute("fillId"))];
+    expect(fill.querySelector("fgColor")?.getAttribute("rgb")).toBe(color);
   });
 });

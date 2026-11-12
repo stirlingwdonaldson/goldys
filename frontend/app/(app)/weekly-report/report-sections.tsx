@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import type { WeeklyReport, WeeklyReportRow, WeeklyReportWeek } from "@/lib/api/types";
 import { formatCurrency, formatDay, formatNumber } from "@/lib/format";
 import { reportPercent } from "@/lib/weekly-report-targets";
+import { presentWeeklyAssessment } from "@/lib/weekly-report-assessment";
 import { StatCard } from "@/components/data-display/stat-card";
 import { Section } from "@/components/layout/section";
 import { Badge } from "@/components/ui/badge";
@@ -81,23 +82,8 @@ export function WeeklyHistory({ report, week, onSelect }: { report: WeeklyReport
   </Section>;
 }
 
-// Only compare complete daily grids on the API's matching weekly basis. This is
-// a presentation guard, not a claim that all source activity has been captured.
-function comparison(week: WeeklyReportWeek, row: WeeklyReportRow, targetId: string, differenceId?: string) {
-  const target = metric(week, targetId);
-  const setting = week.targets.find(t => t.id === targetId && t.effectiveFrom <= week.start);
-  if (!available(row)) return { label: "Actual unavailable", variant: "missing" } as const;
-  if (!available(target) || !setting || setting.value !== target.total) return { label: "No effective target", variant: "missing" } as const;
-  if (row.unit !== target.unit) return { label: "Basis differs", variant: "missing" } as const;
-  if (row.days.length !== 7 || datesWithValues(row) !== 7) return { label: "Incomplete daily values", variant: "missing" } as const;
-  const difference = differenceId ? metric(week, differenceId) : undefined;
-  if (difference && (!available(difference) || difference.unit !== row.unit)) return { label: "Comparison unavailable", variant: "missing" } as const;
-  const meets = difference ? difference.total! >= 0 : row.total! <= target.total!;
-  return { label: meets ? "Meets target" : difference ? "Below target" : "Above limit", variant: meets ? "success" : "conflict", difference } as const;
-}
-
 export function TargetComparison({ week, actions }: { week: WeeklyReportWeek; actions?: ReactNode }) {
-  return <Section title="Effective weekly targets" actions={actions} description="Sales minima and recorded wastage rate maxima. Assessments remain source-qualified; incomplete daily values are not compared.">
+  return <Section title="Effective weekly targets" actions={actions} description="Sales minima and recorded wastage rate maxima. Assessments remain source-qualified; incomplete comparison evidence withholds verdicts.">
     <Table aria-label="Effective weekly targets">
       <TableHeader><TableRow><TableHead scope="col">Measure</TableHead><TableHead scope="col" className="text-right">Weekly value</TableHead><TableHead scope="col" className="text-right">Effective target</TableHead><TableHead scope="col">Assessment</TableHead><TableHead scope="col">Basis</TableHead></TableRow></TableHeader>
       <TableBody>{[
@@ -110,12 +96,13 @@ export function TargetComparison({ week, actions }: { week: WeeklyReportWeek; ac
       ].map(([id, targetId, differenceId]) => {
         const row = metric(week, id);
         const target = metric(week, targetId);
-        const result = comparison(week, row, targetId, differenceId);
+        const result = presentWeeklyAssessment(week.assessments?.[id]);
+        const difference = differenceId ? metric(week, differenceId) : undefined;
         return <TableRow key={id}>
           <TableHead scope="row" className="font-medium text-foreground">{row.label}{row.unit === "AUD" ? " (AUD)" : ""}</TableHead>
           <TableCell className="text-right tabular-nums">{reportValue(row, row.total)}</TableCell>
           <TableCell className="text-right tabular-nums">{reportValue(target, target.total)}<SourceNotes row={target} week={week} target /></TableCell>
-          <TableCell><Badge variant={result.variant}>{result.label}</Badge>{"difference" in result && result.difference ? <span className="ml-2 tabular-nums">{reportValue(result.difference, result.difference.total)}</span> : null}</TableCell>
+          <TableCell><Badge variant={result.tone === "good" ? "success" : result.tone === "bad" ? "conflict" : "missing"}>{result.label}</Badge>{difference ? <span className="ml-2 tabular-nums">{reportValue(difference, difference.total)}</span> : null}</TableCell>
           <TableCell><SourceNotes row={row} week={week} /></TableCell>
         </TableRow>;
       })}</TableBody>
