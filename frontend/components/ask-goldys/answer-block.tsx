@@ -4,6 +4,9 @@ import { dashboardWrites } from "@/components/dashboards/dashboard-writes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
+import { ChevronDown, Info } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ErrorState } from "@/components/states/error-state";
 import { isApiError } from "@/lib/api/errors";
 import { PermissionDenied } from "@/components/states/permission-denied";
@@ -99,6 +102,41 @@ function AnswerError({ error, onRetry }: { error: Error; onRetry?: () => void })
   return <ErrorState title="Couldn't answer your question" message={error.message} onRetry={onRetry} />;
 }
 
+/** Full qualifications remain available without interrupting the answer. */
+function QueryNotes({ notices, hasConflict }: { notices: string[]; hasConflict: boolean }) {
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [hintOpen, setHintOpen] = useState(false);
+  return notices.length ? (
+    <Collapsible role="note" aria-label="Data notes" open={notesOpen} onOpenChange={setNotesOpen}>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip open={!notesOpen && hintOpen} onOpenChange={setHintOpen}>
+          <TooltipTrigger asChild>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className={hasConflict
+                ? "group gap-1.5 bg-status-conflict-soft text-xs text-status-conflict"
+                : "group gap-1.5 text-xs text-muted-foreground"}>
+                <Info className="size-3.5" aria-hidden="true" />
+                Query notes ({notices.length})
+                <ChevronDown className="size-3.5 group-data-[state=open]:rotate-180" aria-hidden="true" />
+              </Button>
+            </CollapsibleTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs text-xs">
+            {notices[0].length > 160 ? `${notices[0].slice(0, 157)}…` : notices[0]}
+            <span className="mt-1 block">Open for all qualifications and source notes.</span>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <CollapsibleContent className="space-y-2 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+        <ul className="list-disc space-y-2 pl-4">
+          {notices.map((notice, index) => <li key={index}>{notice}</li>)}
+        </ul>
+      </CollapsibleContent>
+      {hasConflict ? <Link href="/reconciliation" className="ml-2 text-xs text-status-conflict underline">Review conflicts</Link> : null}
+    </Collapsible>
+  ) : null;
+}
+
 /** The answer anatomy: summary + widgets + "How I got this" trace + "as of" + notices + draft. */
 export function AnswerBlock({ summary, answer, error, api, onRetry }: AnswerBlockProps) {
   const queryClient = useQueryClient();
@@ -138,16 +176,9 @@ export function AnswerBlock({ summary, answer, error, api, onRetry }: AnswerBloc
   if (error) return <AnswerError error={error} onRetry={onRetry} />;
   return (
     <div className="space-y-4">
-      {summary ? <p className="text-sm">{summary}</p> : null}
+      {summary ? <p className="whitespace-pre-wrap text-sm leading-relaxed">{summary}</p> : null}
 
-      {answer?.notices.length ? (
-        <p role="note" aria-label="Data notes" className={hasConflict
-          ? "rounded-lg bg-status-conflict-soft px-3 py-2 text-sm text-status-conflict"
-          : "rounded-lg border px-3 py-2 text-sm text-muted-foreground"}>
-          {answer.notices.join(" ")}
-          {hasConflict ? <> <Link href="/reconciliation" className="underline">Review conflicts</Link></> : null}
-        </p>
-      ) : null}
+      {answer ? <QueryNotes notices={answer.notices} hasConflict={hasConflict ?? false} /> : null}
 
       {answer ? (
         parseWidgetSpecs(answer.widgets).map((w) => <WidgetRenderer key={w.id} widget={w} />)

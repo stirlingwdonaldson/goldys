@@ -3,6 +3,7 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { ApiError } from "@/lib/api/errors";
 import { useAskGoldys } from "./use-ask-goldys";
 import { streamChat } from "./stream";
+import { stopThreadStream } from "@/lib/stream-lifecycle";
 
 vi.mock("./stream", () => ({
   streamChat: vi.fn(),
@@ -123,4 +124,43 @@ it("retains the typed HTTP failure and submitted question", async () => {
   await waitFor(() => expect(result.current.working).toBe(false));
   expect(result.current.error).toBe(error);
   expect(result.current.messages).toEqual([{ role: "user", content: "Sales last week?" }]);
+});
+
+
+it("keeps earlier answer payloads while a follow-up streams and fails", async () => {
+  const answer = { widgets: [], trace: [], asOf: "2026-11-12T00:00:00Z", notices: ["Gross includes GST."] };
+  vi.mocked(streamChat).mockImplementationOnce(async (_id, _question, handlers) => {
+    handlers.onText("First answer");
+    handlers.onAnswer(answer);
+  }).mockRejectedValueOnce(new Error("Reporting unavailable"));
+  const { result } = renderHook(() => useAskGoldys());
+  await act(async () => result.current.ask("First question"));
+  const first = result.current.turns[0];
+  await act(async () => result.current.ask("Follow-up question"));
+  expect(result.current.turns).toHaveLength(2);
+  expect(result.current.turns[0]).toBe(first);
+  expect(first.answer).toEqual(answer);
+  expect(result.current.turns[1].error?.message).toBe("Reporting unavailable");
+  expect(result.current.turns[1].working).toBe(false);
+});
+
+it("prevents duplicate sends before React renders the pending state", async () => {
+  vi.mocked(streamChat).mockImplementationOnce(() => new Promise(() => {}));
+  const { result, unmount } = renderHook(() => useAskGoldys());
+  act(() => { result.current.ask("First"); result.current.ask("Duplicate"); });
+  expect(streamChat).toHaveBeenCalledTimes(1);
+  expect(result.current.turns).toHaveLength(1);
+  unmount();
+});
+
+
+it("clears the pending state when a conversation is cancelled externally", async () => {
+  vi.mocked(streamChat).mockImplementationOnce((_id, _message, handlers) => new Promise((resolve) => {
+    handlers.signal?.addEventListener("abort", () => resolve());
+  }));
+  const { result } = renderHook(() => useAskGoldys());
+  act(() => result.current.ask("Pending"));
+  const id = vi.mocked(streamChat).mock.calls[0][0];
+  await act(async () => stopThreadStream(id));
+  expect(result.current.working).toBe(false);
 });

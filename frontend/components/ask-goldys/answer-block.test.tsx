@@ -70,7 +70,15 @@ describe("AnswerBlock", () => {
     render(<AnswerBlock summary="Sales were $27,650.66." answer={answer} error={null} api={stubApi()} />);
     expect(screen.getByText(/sales were/i)).toBeInTheDocument();
     expect(screen.getByText(/get_sales_by_period/i)).toBeInTheDocument();
-    expect(screen.getByText(/no resolved total/i)).toBeInTheDocument();
+    const notes = screen.getByRole("button", { name: /query notes/i });
+    expect(notes).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText(/no resolved total/i)).not.toBeInTheDocument();
+    fireEvent.click(notes);
+    expect(notes).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/no resolved total/i)).toBeVisible();
+    expect(screen.queryByRole("link", { name: /reconcil|conflict/i })).not.toBeInTheDocument();
+    fireEvent.click(notes);
+    expect(screen.queryByText(/no resolved total/i)).not.toBeInTheDocument();
   });
 
   it("shows ordinary qualifications without asking the user to reconcile them", () => {
@@ -79,6 +87,10 @@ describe("AnswerBlock", () => {
       notices: ["Product totals use recorded sales; days without product observations are not assumed to be zero."],
     };
     render(<AnswerBlock summary="Recorded sales." answer={answer} error={null} api={stubApi()} />);
+    const notes = screen.getByRole("button", { name: /query notes/i });
+    expect(notes).toHaveAttribute("aria-expanded", "false");
+    expect(notes).not.toHaveClass("text-status-conflict");
+    fireEvent.click(notes);
     expect(screen.getByRole("note", { name: "Data notes" })).toHaveTextContent("Product totals use recorded sales");
     expect(screen.queryByRole("link", { name: /reconcil|conflict/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/Reconcile these first/i)).not.toBeInTheDocument();
@@ -273,7 +285,13 @@ describe("AnswerBlock", () => {
     render(<AnswerBlock summary="" answer={answer} error={null} api={stubApi()} />);
 
     // The worst trust (CONFLICTED + stale) wins, not the verified metric.
+    const notes = screen.getByRole("button", { name: /query notes/i });
+    expect(notes).toHaveAttribute("aria-expanded", "false");
+    expect(notes).toHaveClass("text-status-conflict");
+    expect(screen.getByRole("link", { name: "Review conflicts" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Review conflicts" })).toHaveAttribute("href", "/reconciliation");
+    fireEvent.click(notes);
+    expect(screen.getByRole("note", { name: "Data notes" })).toHaveTextContent("1 unresolved conflict.");
     expect(screen.getByText("Unresolved conflict")).toBeInTheDocument();
     expect(screen.getByText("stale")).toBeInTheDocument();
     expect(screen.queryByText("Verified")).not.toBeInTheDocument();

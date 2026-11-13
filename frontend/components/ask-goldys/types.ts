@@ -54,3 +54,13 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
+
+/** One locally rendered exchange; the server still owns the conversation history. */
+export interface ChatTurn {
+  id: string;
+  question: string;
+  summary: string;
+  answer: AnswerPayload | null;
+  error: Error | null;
+  working: boolean;
+}
