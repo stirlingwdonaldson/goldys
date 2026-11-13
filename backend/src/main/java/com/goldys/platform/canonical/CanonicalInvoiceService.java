@@ -1,5 +1,6 @@
 package com.goldys.platform.canonical;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -36,6 +37,17 @@ class CanonicalInvoiceService {
 
   @Transactional
   InvoiceIdentity recordAt(InvoiceInput input, Instant recordedAt) {
+    return recordObservationAt(input, recordedAt).identity();
+  }
+
+  record Observation(InvoiceIdentity identity, BigDecimal previousAmountExTax) {}
+
+  @Transactional
+  Observation recordCsvHeader(InvoiceInput input) {
+    return recordObservationAt(input, CLOCK.instant());
+  }
+
+  private Observation recordObservationAt(InvoiceInput input, Instant recordedAt) {
     String sourceSystem = input.sourceSystem();
     SupplierIdentity supplier =
         suppliers.recordAt(
@@ -52,8 +64,12 @@ class CanonicalInvoiceService {
     Optional<CanonicalInvoice> current = repository.lockCurrentSourceFact(sourceSystem, scopedRef);
     Optional<CanonicalInvoice> legacy =
         repository.lockCurrentSourceFact(sourceSystem, input.invoiceNumber());
-    if (legacy.isPresent()
-        && java.util.Objects.equals(legacy.get().supplierName(), input.supplierName())) {
+    Optional<CanonicalInvoice> matchingLegacy =
+        legacy.filter(
+            invoice -> java.util.Objects.equals(invoice.supplierName(), input.supplierName()));
+    BigDecimal previousAmount =
+        current.or(() -> matchingLegacy).map(CanonicalInvoice::amountExTax).orElse(null);
+    if (matchingLegacy.isPresent()) {
       if (current.isPresent()
           && !current.get().logicalEntityId().equals(legacy.get().logicalEntityId())) {
         throw new IllegalArgumentException(
@@ -68,11 +84,13 @@ class CanonicalInvoiceService {
     if (current.isPresent()) {
       CanonicalInvoice existing = current.get();
       if (existing.sameFact(input)) {
-        return new InvoiceIdentity(
-            existing.logicalEntityId(),
-            scopedRef,
-            supplier.logicalEntityId(),
-            supplier.sourceRecordRef());
+        return new Observation(
+            new InvoiceIdentity(
+                existing.logicalEntityId(),
+                scopedRef,
+                supplier.logicalEntityId(),
+                supplier.sourceRecordRef()),
+            previousAmount);
       }
       existing.supersede(recordedAt);
       repository.saveAndFlush(existing);
@@ -101,7 +119,9 @@ class CanonicalInvoiceService {
             input.gstAmount(),
             input.freightAmount(),
             input.freightGstAmount()));
-    return new InvoiceIdentity(
-        logicalId, scopedRef, supplier.logicalEntityId(), supplier.sourceRecordRef());
+    return new Observation(
+        new InvoiceIdentity(
+            logicalId, scopedRef, supplier.logicalEntityId(), supplier.sourceRecordRef()),
+        previousAmount);
   }
 }

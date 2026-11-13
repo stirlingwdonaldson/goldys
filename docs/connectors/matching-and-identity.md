@@ -111,16 +111,24 @@ so a second source can be added later without re-deriving these decisions.
   the signature is an export occurrence key, not a verified enduring CTB line ID.
 - Parentage is `invoice_logical_id`. A legacy ordinal line can be re-keyed only through a
   one-to-one match on its existing CSV values under an unambiguous parent. Structural successors
-  preserve logical identity, known valid time and PDF enrichment. Unknown legacy values that
-  differ from replayed source values require separately reviewed repair.
-- **Default export policy:** absent lines are retained. A known subset or identical/reordered
-  delivery is safe; changed/additional occurrences on an existing invoice are withheld explicitly
-  because complete-versus-partial and revision semantics have not been confirmed. Header/line
-  validation is atomic per invoice; a failure leaves raw bytes and a failed processing stage available.
-  An unconfirmed revision holds only that invoice: unrelated invoices in the same CSV continue.
-  Each hold records `INVOICE_REVISION_WITHHELD` with its one-based invoice position in the export.
-  The run stays PARTIAL and the SFTP file remains available for review and retry; identical accepted
-  invoices replay without creating new versions. Unexpected processing errors still stop the file.
+  preserve logical identity, known valid time and PDF enrichment. Legacy values are never filled
+  by inference; newly observed revisions must satisfy the acceptance checks below.
+- **Default export policy:** absent lines are retained. Identical, reordered and subset deliveries
+  stay idempotent. For changed occurrences, match unchanged content first, then pair a correction
+  only when stock code plus normalized product name identify exactly one unmatched old and new
+  occurrence. New occurrences are additions. The net amount of corrections/additions must agree
+  with the change in the source ex-tax invoice header; both header observations must exist.
+  This compares changes rather than assuming discounts/freight make gross line sums equal the
+  header. No source amount is adjusted to balance it.
+- The rounding allowance is half a cent per changed before/after line amount plus both header
+  amounts, capped at five cents per invoice; it is never a percentage of invoice value. A balanced
+  change is not proof of complete source population and never authorizes deleting omitted lines.
+  Corrections preserve line logical identity and historical versions, retain independent PDF
+  category/UOM enrichment and clear stale PDF monetary/tax enrichment. Replays create no versions.
+- Header/line validation is atomic per invoice. Unmatched ambiguous corrections, unknown header
+  totals and changes outside the allowance produce `INVOICE_REVISION_WITHHELD`, identified by
+  one-based invoice position. Unrelated invoices continue. The run stays PARTIAL and SFTP retains
+  the file for review/retry. Unexpected processing errors still stop the file.
 - `app.ctb-invoice-csv.complete-invoice-snapshots=true` permits authoritative replacement only
   after source completeness is confirmed. It defaults false. Tests that exercise replacement
   declare that policy for their fixtures; it is not a production policy.

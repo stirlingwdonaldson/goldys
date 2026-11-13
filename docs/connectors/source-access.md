@@ -370,11 +370,22 @@ canonical source amounts stay unchanged and purchase summaries explicitly qualif
 Open holds prevent automatic PDF-gap inserts and CSV-driven PDF-line pruning; a later observation
 does not silently clear an earlier hold. Credits retain supplied signs, never an inferred flip.
 Invoice replacement/deletion semantics and individual PDF/source discrepancies remain unresolved.
-Unconfirmed invoice revisions are held individually while unaffected invoices in the same CSV
-continue processing. Each hold is visible as `INVOICE_REVISION_WITHHELD`, identified by invoice
-position in the retained export. The run remains PARTIAL with a failed canonicalization stage;
-SFTP retains the file for review/retry. This does not enable complete-snapshot replacement or
-approve the held revisions.
+Invoice revisions now accept unambiguous corrections/additions when the net CSV line change
+reconciles with the source header change. Unchanged lines match first; corrections need a unique
+stock-code/product-name pair. Both header observations are required, omitted lines remain, and
+source amounts are never changed to force a balance. Half-cent rounding per changed before/after
+amount and both headers is capped at five cents for the whole invoice. This handles the observed
+one-cent adjustment and zero-quantity/zero-value delivery-fee addition without asserting complete
+snapshot semantics or changing discount interpretation. Independent amount-basis qualifications
+remain visible. Unknown or unreconciled revisions are held individually while unrelated invoices
+continue; a real hold still leaves the run PARTIAL and retains the SFTP file for review/retry.
+
+Read-only source validation on 13 November 2026 used the retained 40-invoice, 175-line CSV with
+the actual Java parser/importer in isolated PostgreSQL 16. The predecessor was reconstructed from
+the two held canonical versions (one-cent adjustment and absent zero-value fee); all 175 source
+lines parsed and imported, both revisions succeeded and repeat import created no line versions.
+This validates the observed delivery, not every CTB export or upstream source completeness.
+No production replay or configuration change is part of this implementation.
 
 ## Lightspeed ongoing sale-line metadata qualification
 

@@ -29,12 +29,15 @@ public class CanonicalInvoiceIngest {
   @Transactional
   public InvoiceIdentity recordCsv(
       InvoiceInput header, List<InvoiceLineInput> inputs, boolean completeSnapshot) {
-    InvoiceIdentity identity = service.record(header);
+    var observation = service.recordCsvHeader(header);
+    InvoiceIdentity identity = observation.identity();
     lines.recordCsvInvoice(
         identity,
         header.invoiceNumber(),
         inputs.stream().map(input -> input.forInvoice(identity)).toList(),
-        completeSnapshot);
+        completeSnapshot,
+        observation.previousAmountExTax(),
+        header.amountExTax());
     return identity;
   }
 }
