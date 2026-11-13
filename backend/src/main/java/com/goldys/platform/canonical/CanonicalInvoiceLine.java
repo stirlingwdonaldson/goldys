@@ -232,6 +232,7 @@ class CanonicalInvoiceLine extends BitemporalEntity {
         && sameAmount(lineTotal, input.lineTotal());
   }
 
+  /** A revised CSV occurrence keeps its identity; old PDF monetary evidence cannot price it. */
   CanonicalInvoiceLine rekeyed(InvoiceLineInput input, Instant at) {
     return new CanonicalInvoiceLine(
         logicalEntityId(),
@@ -243,20 +244,20 @@ class CanonicalInvoiceLine extends BitemporalEntity {
         invoiceNumber,
         input.invoiceLogicalId(),
         input.invoiceDate(),
-        productNameKey,
-        stockCode,
-        quantity,
-        unitCost,
-        lineTotal,
+        input.productNameKey(),
+        input.stockCode(),
+        input.quantity(),
+        input.unitCost(),
+        input.lineTotal(),
         category,
         uom,
         unitQuantity,
         packSize,
         wetAmount,
-        lineTotalIncTax,
-        lineGstAmount,
-        lineTaxRate,
-        incGst,
+        sameCsvContent(input) ? lineTotalIncTax : null,
+        sameCsvContent(input) ? lineGstAmount : null,
+        sameCsvContent(input) ? lineTaxRate : null,
+        sameCsvContent(input) ? incGst : null,
         origin);
   }
 

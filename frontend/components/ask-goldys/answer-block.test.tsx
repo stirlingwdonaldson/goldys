@@ -76,9 +76,24 @@ describe("AnswerBlock", () => {
     fireEvent.click(notes);
     expect(notes).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText(/no resolved total/i)).toBeVisible();
-    expect(screen.getByRole("link", { name: "Review reconciliation" })).toHaveAttribute("href", "/reconciliation");
+    expect(screen.queryByRole("link", { name: /reconcil|conflict/i })).not.toBeInTheDocument();
     fireEvent.click(notes);
     expect(screen.queryByText(/no resolved total/i)).not.toBeInTheDocument();
+  });
+
+  it("shows ordinary qualifications without asking the user to reconcile them", () => {
+    const answer: AnswerPayload = {
+      widgets: [], trace: [], asOf: "2026-10-02T10:00:00Z",
+      notices: ["Product totals use recorded sales; days without product observations are not assumed to be zero."],
+    };
+    render(<AnswerBlock summary="Recorded sales." answer={answer} error={null} api={stubApi()} />);
+    const notes = screen.getByRole("button", { name: /query notes/i });
+    expect(notes).toHaveAttribute("aria-expanded", "false");
+    expect(notes).not.toHaveClass("text-status-conflict");
+    fireEvent.click(notes);
+    expect(screen.getByRole("note", { name: "Data notes" })).toHaveTextContent("Product totals use recorded sales");
+    expect(screen.queryByRole("link", { name: /reconcil|conflict/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Reconcile these first/i)).not.toBeInTheDocument();
   });
 
   it("shows the error message when present", () => {
@@ -265,11 +280,18 @@ describe("AnswerBlock", () => {
         },
       ],
       asOf: "2026-10-02T10:00:00Z",
-      notices: [],
+      notices: ["1 unresolved conflict."],
     };
     render(<AnswerBlock summary="" answer={answer} error={null} api={stubApi()} />);
 
     // The worst trust (CONFLICTED + stale) wins, not the verified metric.
+    const notes = screen.getByRole("button", { name: /query notes/i });
+    expect(notes).toHaveAttribute("aria-expanded", "false");
+    expect(notes).toHaveClass("text-status-conflict");
+    expect(screen.getByRole("link", { name: "Review conflicts" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Review conflicts" })).toHaveAttribute("href", "/reconciliation");
+    fireEvent.click(notes);
+    expect(screen.getByRole("note", { name: "Data notes" })).toHaveTextContent("1 unresolved conflict.");
     expect(screen.getByText("Unresolved conflict")).toBeInTheDocument();
     expect(screen.getByText("stale")).toBeInTheDocument();
     expect(screen.queryByText("Verified")).not.toBeInTheDocument();

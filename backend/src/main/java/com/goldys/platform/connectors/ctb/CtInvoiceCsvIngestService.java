@@ -36,8 +36,9 @@ import org.springframework.stereotype.Service;
  * <p>Line identity is content-based, not ordinal: each line's source reference is derived from its
  * content (stock code, description, quantity, unit cost, line total), so a re-ordered export keeps
  * line identities stable and a re-ingested export is idempotent. Missing lines are retained by
- * default because export completeness is unconfirmed. Only explicitly confirmed complete snapshots
- * supersede absent CSV lines.
+ * default because export completeness is unconfirmed. Unambiguous corrections/additions are
+ * accepted when their amount change reconciles with the header change. Only explicitly confirmed
+ * complete snapshots supersede absent CSV lines.
  */
 @Service
 public class CtInvoiceCsvIngestService {
@@ -131,7 +132,7 @@ public class CtInvoiceCsvIngestService {
                   + (index + 1)
                   + " of "
                   + invoices.size()
-                  + " withheld: complete-versus-partial semantics require confirmation");
+                  + " withheld: line identity or invoice-total change could not be reconciled");
           continue;
         }
         flagPdfAnomalies(invoice);
@@ -158,7 +159,7 @@ public class CtInvoiceCsvIngestService {
             withheld
                 + " of "
                 + invoices.size()
-                + " invoices withheld: complete-versus-partial semantics require confirmation;"
+                + " invoices withheld: line identity or invoice-total change could not be reconciled;"
                 + " unaffected invoices processed, retained export requires review");
       }
     } catch (RuntimeException e) {

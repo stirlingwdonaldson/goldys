@@ -103,16 +103,18 @@ function AnswerError({ error, onRetry }: { error: Error; onRetry?: () => void })
 }
 
 /** Full qualifications remain available without interrupting the answer. */
-function QueryNotes({ notices }: { notices: string[] }) {
+function QueryNotes({ notices, hasConflict }: { notices: string[]; hasConflict: boolean }) {
   const [notesOpen, setNotesOpen] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
   return notices.length ? (
-    <Collapsible open={notesOpen} onOpenChange={setNotesOpen}>
+    <Collapsible role="note" aria-label="Data notes" open={notesOpen} onOpenChange={setNotesOpen}>
       <TooltipProvider delayDuration={200}>
         <Tooltip open={!notesOpen && hintOpen} onOpenChange={setHintOpen}>
           <TooltipTrigger asChild>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="group gap-1.5 text-xs text-muted-foreground">
+              <Button variant="ghost" size="sm" className={hasConflict
+                ? "group gap-1.5 bg-status-conflict-soft text-xs text-status-conflict"
+                : "group gap-1.5 text-xs text-muted-foreground"}>
                 <Info className="size-3.5" aria-hidden="true" />
                 Query notes ({notices.length})
                 <ChevronDown className="size-3.5 group-data-[state=open]:rotate-180" aria-hidden="true" />
@@ -129,8 +131,8 @@ function QueryNotes({ notices }: { notices: string[] }) {
         <ul className="list-disc space-y-2 pl-4">
           {notices.map((notice, index) => <li key={index}>{notice}</li>)}
         </ul>
-        <Link href="/reconciliation" className="inline-block text-foreground underline">Review reconciliation</Link>
       </CollapsibleContent>
+      {hasConflict ? <Link href="/reconciliation" className="ml-2 text-xs text-status-conflict underline">Review conflicts</Link> : null}
     </Collapsible>
   ) : null;
 }
@@ -168,12 +170,15 @@ export function AnswerBlock({ summary, answer, error, api, onRetry }: AnswerBloc
     }
   }
 
+  const hasConflict = answer?.trace.some(entry =>
+    entry.provenance.some(provenance => provenance.trust?.state === "CONFLICTED"),
+  );
   if (error) return <AnswerError error={error} onRetry={onRetry} />;
   return (
     <div className="space-y-4">
       {summary ? <p className="whitespace-pre-wrap text-sm leading-relaxed">{summary}</p> : null}
 
-      {answer ? <QueryNotes notices={answer.notices} /> : null}
+      {answer ? <QueryNotes notices={answer.notices} hasConflict={hasConflict ?? false} /> : null}
 
       {answer ? (
         parseWidgetSpecs(answer.widgets).map((w) => <WidgetRenderer key={w.id} widget={w} />)

@@ -99,13 +99,18 @@ class CanonicalInvoiceLineService {
             input.origin()));
   }
 
-  /** Unknown export scope allows replay/subsets, never deletion or an inferred correction. */
+  /**
+   * Unknown export scope retains omissions; unambiguous revisions must reconcile with header
+   * changes.
+   */
   @Transactional
   void recordCsvInvoice(
       InvoiceIdentity invoice,
       String number,
       List<InvoiceLineInput> inputs,
-      boolean completeSnapshot) {
+      boolean completeSnapshot,
+      BigDecimal previousAmountExTax,
+      BigDecimal amountExTax) {
     List<CanonicalInvoiceLine> existing =
         new java.util.ArrayList<>(
             repository.findCurrentCsvByInvoiceLogicalId(invoice.logicalEntityId()));
@@ -138,34 +143,16 @@ class CanonicalInvoiceLineService {
         repository.save(line.reparented(invoice.logicalEntityId(), now));
       }
     }
+    var matches =
+        InvoiceCsvRevision.match(
+            existing, inputs, completeSnapshot, previousAmountExTax, amountExTax);
     List<CanonicalInvoiceLine> remaining = new java.util.ArrayList<>(existing);
-    java.util.Map<InvoiceLineInput, CanonicalInvoiceLine> matches = new java.util.LinkedHashMap<>();
-    for (InvoiceLineInput input : inputs) {
-      CanonicalInvoiceLine match =
-          remaining.stream()
-              .filter(
-                  line ->
-                      line.sourceRecordRef().equals(input.sourceRecordRef())
-                          && line.sameCsvContent(input))
-              .findFirst()
-              .orElseGet(
-                  () ->
-                      remaining.stream()
-                          .filter(line -> line.sameCsvContent(input))
-                          .findFirst()
-                          .orElse(null));
-      if (match == null && !existing.isEmpty() && !completeSnapshot) {
-        throw new InvoiceRevisionWithheldException();
-      }
-      if (match != null) {
-        matches.put(input, match);
-        remaining.remove(match);
-      }
-    }
+    remaining.removeAll(matches.values());
     for (InvoiceLineInput input : inputs) {
       CanonicalInvoiceLine match = matches.get(input);
       if (match != null) {
-        if (match.sourceRecordRef().equals(input.sourceRecordRef())
+        if (match.sameCsvContent(input)
+            && match.sourceRecordRef().equals(input.sourceRecordRef())
             && match.invoiceDate().equals(input.invoiceDate())
             && java.util.Objects.equals(match.invoiceLogicalId(), input.invoiceLogicalId()))
           continue;
