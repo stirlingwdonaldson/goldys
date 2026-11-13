@@ -4,6 +4,6 @@ package com.goldys.platform.canonical;
 public class InvoiceRevisionWithheldException extends IllegalArgumentException {
   public InvoiceRevisionWithheldException() {
     super(
-        "Invoice export revision withheld: complete-versus-partial semantics require confirmation");
+        "Invoice export revision withheld: line identity or invoice-total change could not be reconciled");
   }
 }

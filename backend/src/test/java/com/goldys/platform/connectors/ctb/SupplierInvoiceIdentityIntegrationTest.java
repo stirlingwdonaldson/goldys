@@ -198,7 +198,7 @@ class SupplierInvoiceIdentityIntegrationTest {
   }
 
   @Test
-  void changedPartialDeliveryIsWithheldAtomicallyAndRawEvidenceRetained() {
+  void unreconciledPartialDeliveryIsWithheldAtomicallyAndRawEvidenceRetained() {
     String header = HEADER + ",InvoiceTotalExTax";
     csvIngest.ingest(
         (header
@@ -213,10 +213,10 @@ class SupplierInvoiceIdentityIntegrationTest {
                     (header
                             + "\n"
                             + row("REV", "Supplier", "SUP", "2026-10-01", "A", "Item", "1", "20")
-                            + ",20")
+                            + ",25")
                         .getBytes(StandardCharsets.UTF_8)))
         .isInstanceOf(ConnectorFetchException.class)
-        .hasMessageContaining("complete-versus-partial");
+        .hasMessageContaining("could not be reconciled");
     assertThat(count("raw_record")).isEqualTo(rawBefore + 1);
     assertThat(currentLineCount()).isEqualTo(1);
     assertThat(
@@ -232,35 +232,123 @@ class SupplierInvoiceIdentityIntegrationTest {
   }
 
   @Test
-  void revisionHoldsDoNotBlockOtherInvoicesAndRetriesAreIdempotent() throws Exception {
-    // Sanitised reproducer of the observed one-cent revision and added zero-quantity line.
+  void reconciledRevisionsFinishTheSftpDeliveryAndPreserveHistory() throws Exception {
+    var fixtures = java.nio.file.Path.of("src/test/resources/fixtures/ctb");
+    csvIngest.ingest(
+        java.nio.file.Files.readAllBytes(fixtures.resolve("invoice-isolation-existing.csv")));
+    var originalLineId =
+        jdbc.queryForObject(
+            "select logical_entity_id from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is null",
+            java.util.UUID.class);
+    jdbc.update(
+        "update canonical_invoice_line set category='BEER', uom='CASE', line_total_inc_tax=0.12, line_gst_amount=0.01 where invoice_number='HELD-AMOUNT' and superseded_at is null");
+    byte[] revision =
+        java.nio.file.Files.readAllBytes(fixtures.resolve("invoice-isolation-revisions.csv"));
+    var drop = org.mockito.Mockito.mock(com.goldys.platform.ingestion.SftpDrop.class);
+    var file =
+        new com.goldys.platform.ingestion.SftpDrop.SftpFile("in/revision.csv", "revision.csv");
+    org.mockito.Mockito.when(drop.list()).thenReturn(java.util.List.of(file));
+    org.mockito.Mockito.when(drop.download(file.path())).thenReturn(revision);
+
+    new com.goldys.platform.ingestion.CtbSftpPull(drop, null, csvIngest, null).pull();
+
+    org.mockito.Mockito.verify(drop).markProcessed(file.path());
+    assertThat(
+            jdbc.queryForObject(
+                "select line_total from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is null",
+                java.math.BigDecimal.class))
+        .isEqualByComparingTo("0.12");
+    assertThat(
+            jdbc.queryForObject(
+                "select sum(line_total) from canonical_invoice_line where invoice_number='HELD-ADDITION' and superseded_at is null",
+                java.math.BigDecimal.class))
+        .isEqualByComparingTo("10");
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from canonical_invoice_line where superseded_at is null",
+                Integer.class))
+        .isEqualTo(6);
+    assertThat(
+            jdbc.queryForObject(
+                "select line_total from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is not null",
+                java.math.BigDecimal.class))
+        .isEqualByComparingTo("0.11");
+    assertThat(
+            jdbc.queryForObject(
+                "select quantity from canonical_invoice_line where stock_code='EXTRA' and superseded_at is null",
+                java.math.BigDecimal.class))
+        .isEqualByComparingTo("0");
+    var run =
+        jdbc.queryForObject(
+            "select ingestion_run_id from raw_record where payload_bytes=? order by fetched_at desc limit 1",
+            java.util.UUID.class,
+            revision);
+    assertThat(
+            jdbc.queryForObject("select status from ingestion_run where id=?", String.class, run))
+        .isEqualTo("SUCCESS");
+    assertThat(
+            jdbc.queryForList(
+                "select outcome from ingestion_stage where ingestion_run_id=? and stage='CANONICALIZED'",
+                String.class,
+                run))
+        .containsExactly("SUCCESS");
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from ingestion_failure where ingestion_run_id=?",
+                Integer.class,
+                run))
+        .isZero();
+
+    assertThat(
+            jdbc.queryForObject(
+                "select logical_entity_id from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is null",
+                java.util.UUID.class))
+        .isEqualTo(originalLineId);
+    assertThat(
+            jdbc.queryForObject(
+                "select category from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is null",
+                String.class))
+        .isEqualTo("BEER");
+    assertThat(
+            jdbc.queryForObject(
+                "select uom from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is null",
+                String.class))
+        .isEqualTo("CASE");
+    assertThat(
+            jdbc.queryForObject(
+                "select line_gst_amount from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is null",
+                java.math.BigDecimal.class))
+        .isNull();
+    assertThat(
+            jdbc.queryForObject(
+                "select line_total_inc_tax from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is null",
+                java.math.BigDecimal.class))
+        .isNull();
+    int versions =
+        jdbc.queryForObject("select count(*) from canonical_invoice_line", Integer.class);
+    csvIngest.ingest(revision);
+    assertThat(jdbc.queryForObject("select count(*) from canonical_invoice_line", Integer.class))
+        .isEqualTo(versions);
+  }
+
+  @Test
+  void unreconciledRevisionDoesNotBlockOtherInvoices() throws Exception {
     var fixtures = java.nio.file.Path.of("src/test/resources/fixtures/ctb");
     csvIngest.ingest(
         java.nio.file.Files.readAllBytes(fixtures.resolve("invoice-isolation-existing.csv")));
     byte[] mixed =
-        java.nio.file.Files.readAllBytes(fixtures.resolve("invoice-isolation-revisions.csv"));
-
+        java.nio.file.Files.readString(fixtures.resolve("invoice-isolation-revisions.csv"))
+            .replace("ROUND,Rounding,1,0.12,0.12,0.12", "ROUND,Rounding,1,9,9,0.12")
+            .getBytes(StandardCharsets.UTF_8);
     for (int attempt = 0; attempt < 2; attempt++) {
       assertThatThrownBy(() -> csvIngest.ingest(mixed))
           .isInstanceOfSatisfying(
               ConnectorFetchException.class,
               e -> assertThat(e.failureType()).isEqualTo("INVOICE_REVISION_WITHHELD"))
-          .hasMessageContaining("2 of 5 invoices withheld");
-
-      // Held headers/lines roll back together; good invoices before, between and after commit once.
+          .hasMessageContaining("1 of 5 invoices withheld");
       assertThat(count("canonical_invoice")).isEqualTo(5);
-      assertThat(totalLineVersions()).isEqualTo(5);
-      assertThat(currentLineCount()).isEqualTo(5);
-      assertThat(
-              jdbc.queryForList(
-                  "select invoice_number from canonical_invoice where superseded_at is null order by invoice_number",
-                  String.class))
-          .containsExactly("AFTER", "BEFORE", "BETWEEN", "HELD-ADDITION", "HELD-AMOUNT");
-      assertThat(
-              jdbc.queryForObject(
-                  "select amount_ex_tax from canonical_invoice where invoice_number='HELD-AMOUNT' and superseded_at is null",
-                  java.math.BigDecimal.class))
-          .isEqualByComparingTo("0.11");
+      assertThat(totalLineVersions()).isEqualTo(6);
+      assertThat(currentLineCount()).isEqualTo(6);
       assertThat(
               jdbc.queryForObject(
                   "select line_total from canonical_invoice_line where invoice_number='HELD-AMOUNT' and superseded_at is null",
@@ -268,32 +356,24 @@ class SupplierInvoiceIdentityIntegrationTest {
           .isEqualByComparingTo("0.11");
       assertThat(
               jdbc.queryForObject(
-                  "select count(*) from stock_item where stock_code='EXTRA'", Integer.class))
-          .isZero();
-
-      var runId =
+                  "select amount_ex_tax from canonical_invoice where invoice_number='HELD-AMOUNT' and superseded_at is null",
+                  java.math.BigDecimal.class))
+          .isEqualByComparingTo("0.11");
+      var run =
           jdbc.queryForObject(
               "select ingestion_run_id from raw_record where payload_bytes=? order by fetched_at desc limit 1",
               java.util.UUID.class,
               mixed);
       assertThat(
-              jdbc.queryForObject(
-                  "select status from ingestion_run where id=?", String.class, runId))
+              jdbc.queryForObject("select status from ingestion_run where id=?", String.class, run))
           .isEqualTo("PARTIAL");
       assertThat(
               jdbc.queryForList(
-                  "select detail from ingestion_failure where ingestion_run_id=? and failure_type='INVOICE_REVISION_WITHHELD' order by detail",
+                  "select detail from ingestion_failure where ingestion_run_id=? and failure_type='INVOICE_REVISION_WITHHELD'",
                   String.class,
-                  runId))
+                  run))
           .containsExactly(
-              "Invoice at export position 2 of 5 withheld: complete-versus-partial semantics require confirmation",
-              "Invoice at export position 4 of 5 withheld: complete-versus-partial semantics require confirmation");
-      assertThat(
-              jdbc.queryForList(
-                  "select outcome from ingestion_stage where ingestion_run_id=? and stage='CANONICALIZED'",
-                  String.class,
-                  runId))
-          .containsExactly("FAILED");
+              "Invoice at export position 2 of 5 withheld: line identity or invoice-total change could not be reconciled");
     }
   }
 
