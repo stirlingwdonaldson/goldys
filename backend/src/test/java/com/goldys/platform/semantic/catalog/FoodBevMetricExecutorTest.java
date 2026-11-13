@@ -75,10 +75,7 @@ class FoodBevMetricExecutorTest {
 
     assertThat(bev.series().get(0).points().get(0).value()).isEqualByComparingTo("0");
     assertThat(bev.notices())
-        .anySatisfy(
-            note ->
-                assertThat(note)
-                    .contains("Calendar coverage", "within-day completeness are unverified"));
+        .noneMatch(n -> n.startsWith("Calendar coverage") || n.startsWith("Incomplete subtotal"));
     assertThat(bev.provenance().coverage().expectedTradingPopulationKnown()).isFalse();
   }
 

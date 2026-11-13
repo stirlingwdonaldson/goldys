@@ -9,6 +9,16 @@ import org.junit.jupiter.api.Test;
 
 class MetricCoverageTest {
   @Test
+  void observedDatesDoNotGenerateWarningsOrClaimVerifiedCompleteness() {
+    LocalDate day = LocalDate.of(2026, 10, 12);
+    var coverage =
+        new MetricCoverage(
+            day, day, java.util.List.of(day), java.util.List.of(), java.util.List.of());
+    assertThat(coverage.notices()).isEmpty();
+    assertThat(coverage.expectedTradingPopulationKnown()).isFalse();
+  }
+
+  @Test
   void distinguishesZeroUnresolvedAndAbsentWithoutClaimingCompleteness() {
     LocalDate day = LocalDate.of(2026, 10, 12);
     var values = new HashMap<LocalDate, BigDecimal>();

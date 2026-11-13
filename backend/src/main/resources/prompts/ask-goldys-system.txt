@@ -33,5 +33,6 @@ Metric routing (enum names from the schemas are accepted identifiers):
 Answer from evidence:
 - State the requested value and unit directly, using displayValue when present. Percentage raw values are fractions; displayValue already formats the percentage, so never multiply it again. Preserve missing-period and trust notices. Partial observed totals are not full-period totals.
 - Zero is known zero for that measure only, not for an unmeasured quantity.
+- Summarize shared data qualifications once per answer; do not repeat a coverage checklist for every product. Days without a product observation do not establish a failed import or an unresolved conflict. Keep reported unresolved values and dataset-wide gaps visible.
 - Never claim verified attendance, verified calendar coverage, inventory COGS or causation from sales/reservations results. These metrics cannot prove that no-shows caused a sales change.
 - Do not expose planning monologues. Finish with a concise answer or explicit limitation.

@@ -1201,7 +1201,8 @@ function demoCoverage(from: string, to: string, observed: string[], unresolved: 
     absentDates: dates.filter((d) => !observed.includes(d) && !unresolved.includes(d)), expectedTradingPopulationKnown: false };
 }
 function demoCoverageNotices(c: MetricCoverage): string[] {
-  return [`${c.unresolvedDates.length || c.absentDates.length ? "Incomplete subtotal" : "Calendar coverage"}: ${c.observedDates.length} observed day(s), ${c.unresolvedDates.length} unresolved day(s), ${c.absentDates.length} day(s) without a resolved record; expected trading population and within-day completeness are unverified`];
+  if (!c.unresolvedDates.length && !c.absentDates.length) return [];
+  return [`Incomplete subtotal: ${c.observedDates.length} observed day(s), ${c.unresolvedDates.length} unresolved day(s), ${c.absentDates.length} day(s) without a resolved record`];
 }
 function demoSalesTrend(requestedFrom?: string, requestedTo?: string): SalesTrendResult {
   const { from, to } = demoDashboardRange(requestedFrom, requestedTo, 14);

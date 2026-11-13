@@ -132,17 +132,20 @@ export function AnswerBlock({ summary, answer, error, api, onRetry }: AnswerBloc
     }
   }
 
+  const hasConflict = answer?.trace.some(entry =>
+    entry.provenance.some(provenance => provenance.trust?.state === "CONFLICTED"),
+  );
   if (error) return <AnswerError error={error} onRetry={onRetry} />;
   return (
     <div className="space-y-4">
       {summary ? <p className="text-sm">{summary}</p> : null}
 
       {answer?.notices.length ? (
-        <p className="rounded-lg bg-status-conflict-soft px-3 py-2 text-sm text-status-conflict">
-          {answer.notices.join(" ")}{" "}
-          <a href="/reconciliation" className="underline">
-            Reconcile these first.
-          </a>
+        <p role="note" aria-label="Data notes" className={hasConflict
+          ? "rounded-lg bg-status-conflict-soft px-3 py-2 text-sm text-status-conflict"
+          : "rounded-lg border px-3 py-2 text-sm text-muted-foreground"}>
+          {answer.notices.join(" ")}
+          {hasConflict ? <> <Link href="/reconciliation" className="underline">Review conflicts</Link></> : null}
         </p>
       ) : null}
 
