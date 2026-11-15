@@ -1,5 +1,7 @@
 # Ask workspace: data and security research
 
+**Historical research evidence.** The subsequent [accepted workspace decision](../decisions/0002-pi-agent-workspace.md) and [updated proposal](ask-goldys-pi-workspace-proposal-2026-11-15.md) govern the implementation direction where they supersede recommendations below. Source observations remain evidence, not runtime acceptance.
+
 Date: 15 November 2026. Scope: repository evidence and a proposed contract for a Pi-backed workspace. No source system, production database, credentials, live model or runtime integration was accessed. Proposed interfaces below are design recommendations, not accepted implementation or additional permissions.
 
 ## Decision

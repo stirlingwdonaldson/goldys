@@ -1,5 +1,7 @@
 # Pi release evidence for Goldy's — 15 November 2026
 
+**Historical research evidence.** The subsequent [accepted workspace decision](../decisions/0002-pi-agent-workspace.md) and [updated proposal](ask-goldys-pi-workspace-proposal-2026-11-15.md) govern the implementation direction where they supersede recommendations below. Source observations remain evidence, not runtime acceptance.
+
 Research evidence, not an accepted architecture decision or implementation. Official release metadata and the downloaded tagged source were inspected; no Pi package, model, sandbox or production service was executed.
 
 ## Release boundary

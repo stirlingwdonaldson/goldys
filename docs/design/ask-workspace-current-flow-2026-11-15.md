@@ -1,5 +1,7 @@
 # Ask workspace: verified current implementation
 
+**Historical research evidence.** The subsequent [accepted workspace decision](../decisions/0002-pi-agent-workspace.md) and [updated proposal](ask-goldys-pi-workspace-proposal-2026-11-15.md) govern the implementation direction where they supersede recommendations below. Source observations remain evidence, not runtime acceptance.
+
 Date: 2026-11-15. Research baseline supplied by the parent task: `origin/main` at `807a4e74`; this investigation made no Git mutations or production calls. Findings below derive from code reads, not operational acceptance claims. Symbol references identify the relevant implementation within each linked file. This companion inventory supports a proposal; it does not approve implementation or extend product scope.
 
 ## End-to-end flow
