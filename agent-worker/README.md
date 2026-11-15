@@ -66,3 +66,9 @@ The browser API can rediscover private threads through `GET /api/workspace/threa
 latest job ID. Authorized job reads include the original admission prompt and derived
 messages, never native snapshots. Live/demo frontend adapters exist; the current Ask
 drawer has not yet switched to them.
+
+An additive Investigations drawer is available only in frontend builds with
+`NEXT_PUBLIC_WORKSPACE_PREVIEW=true` (default off). It reconnects using saved job IDs,
+polls durable status, edits pending follow-ups and sends explicit Stop/Retry commands.
+It does not enable the backend, worker, sandbox or owner pilot. The legacy Ask button
+remains available; workspace file and dashboard-draft UI is still outstanding.

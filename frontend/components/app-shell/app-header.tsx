@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -17,6 +18,8 @@ import { findNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "./current-user-provider";
 import { FreshnessChip } from "./freshness-chip";
+
+const WorkspaceDrawer = dynamic(() => import("@/components/workspace/workspace-drawer").then(module => module.WorkspaceDrawer));
 
 export function AppHeader() {
   const { user } = useCurrentUser();
@@ -57,6 +60,7 @@ export function AppHeader() {
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <FreshnessChip />
         <AskGoldysDrawer seniority={user?.seniority} />
+        {process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW === "true" ? <WorkspaceDrawer seniority={user?.seniority} /> : null}
       </div>
     </header>
   );

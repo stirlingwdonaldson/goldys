@@ -206,3 +206,80 @@ passed in 6m 48s with 2,015 tests, five skipped and zero failures/errors. The fo
 workspace integration run also passed, and edited Java was formatted with Spotless.
 Nothing was pushed, merged or deployed. This remains an incomplete migration, with
 workspace activation off and the remaining delivery/acceptance gates listed above.
+
+## Continuation: persisted investigation drawer
+
+The optional Investigations entry point now mounts a right-hand workspace Sheet when
+`NEXT_PUBLIC_WORKSPACE_PREVIEW=true` at frontend build time. The flag defaults off;
+no production/build configuration was enabled. The existing Ask button, command
+shortcut and legacy conversation page remain available. The preview is owner-only in
+the UI; Spring remains the authorization boundary and its workspace feature flag is
+still off by default. This is an additive implementation preview, not pilot readiness.
+
+The selected investigation lives in the `investigation` URL parameter while preserving
+other page filters. Reload/deep links read the saved job; closing the Sheet unmounts
+polling without calling Stop. Opening from a page pushes history, Back/Escape closes
+the Sheet, and focus returns to its trigger. New/history lists authorized threads with
+pagination and explicit restricted entries. Active jobs poll every two seconds; terminal
+history is rechecked every ten seconds while open. Cached history is withheld on
+remount until a fresh job read completes and is hidden after read/authorization failure.
+Identity/demo switches inherit the existing query-provider reset.
+
+The composer queues messages while a job is active. Queued messages can be edited or
+removed until taken; server conflicts refresh their actual state. Stop targets the durable
+job and preserves committed output. Interruption offers an explicit new attempt using the
+original question; taken follow-ups are labelled and never automatically replayed. An
+uncertain send retains its original command ID/payload for explicit resend, with editing
+locked until acceptance is resolved. Mutation retries are disabled. No user text is
+written to browser storage, and no browser transcript is persisted separately from Pi.
+
+The view renders text, existing validated widgets, missing values, notices and source
+provenance. It does not yet support files, citations from public research, generated
+artifacts or dashboard-draft actions in workspace results. Existing Ask/dashboard paths
+remain available; their preservation does not establish replacement feature parity.
+The offline demo adapter can exercise queue/Stop/interrupted states without live calls,
+but does not run a simulated model or advance queued jobs automatically.
+
+A UI review found that Stop could scroll out of view during queue editing; the status
+and Stop row now remain sticky within the scrolling panel. A separate regression found
+that disabling queue polling at terminal job state could retain a stale editable queue.
+The queue query now includes the job state, forcing a final refresh on interruption,
+expiry/completion observed through polling, or Stop. No server semantics changed.
+
+Nine component regressions cover reconnect without replay/Stop, withholding stale cached
+history until fresh authorization, hiding content after revocation, no late reopening
+after an unmounted send, explicit idempotent resend after uncertain delivery, follow-up
+routing, explicit interrupted retry, terminal queue refresh and taken-message edit races.
+The fixture browser flow intercepts all application APIs and checks saved reconnect,
+queue edits/removal, Stop, explicit Retry, revoked history and responsive rendering;
+it does not establish real provider/worker execution or containment.
+
+Ripwire's final incremental quality delta against `acad1a55` reports zero gating findings,
+with eleven advisory findings: complexity of 17 in the new message renderer and panel,
+and nine JSX components classified as dead code despite their imports/render paths. The earlier panel
+complexity/nesting findings were reduced by separating commands, picker and composer.
+The targeted AppHeader edit check reports an unchanged contract and no incompatible
+callers. The broad test gate reports zero impacted tests/symbols for this primarily
+new/dynamically imported JSX surface, with 2,480 ambiguous and 4,756 unresolved edges.
+That is a static graph limitation, not evidence that tests are unnecessary or that prior
+migration-wide static findings have been resolved.
+
+Final local UI verification: sequential frontend typecheck, lint, 141 test files / 822
+tests and the production build with the preview flag passed. The nine workspace component
+tests are included in that total. Playwright passed both the existing Ask regression and
+the new workspace fixture flow (two tests), including Back/Escape, preserved URL filters,
+focus return, visible Stop after scrolling, direct-link reload, manager entry-point
+exclusion and desktop/narrow screenshots. Screenshots were inspected locally. An initial
+focused Vitest run failed before collecting tests because its inherited temporary path
+was unavailable; subsequent runs used `TMPDIR=/tmp` and passed. No dependency or test
+heap change was required. Five local documentation links, six-recipe discovery and diff
+whitespace checks pass.
+
+Backend and worker source did not change, so their suites were not rerun in this UI
+continuation. No live provider, real-file extraction, actual worker/sandbox cancellation,
+separate-VM containment, billing reconciliation, backup/restore, production operation or
+remote CI check ran. Nothing was pushed, merged or deployed. Basic queue/reconnect UI
+now exists, but precise dependency/revocation and complete legacy-history handling,
+workspace dashboard-draft parity, files/artifacts/retention, controlled research, reviewed
+dataset extraction and operational transition remain. Keep both preview/backend activation
+off for normal builds, and keep the manager rollout blocked on its approved matrix.
