@@ -21,8 +21,13 @@ export interface JobHost {
 
 /** One claim, one native session. Failure escapes to supervision; never replay a claim. */
 export async function runClaim(claim: Claim, host: JobHost, session: AgentSession, chargeBound: ModelChargeBound, signal?: AbortSignal): Promise<void> {
+  const lifecycle = new AbortController();
   try {
-    guardModelRequests(session, chargeBound, new InvestigationBudget(), () => host.heartbeat(claim));
+    guardModelRequests(session, chargeBound, new InvestigationBudget(), async () => {
+      lifecycle.signal.throwIfAborted();
+      await host.heartbeat(claim);
+      lifecycle.signal.throwIfAborted();
+    });
   } catch (error) {
     session.dispose();
     throw error;
@@ -39,6 +44,7 @@ export async function runClaim(claim: Claim, host: JobHost, session: AgentSessio
   const stop = (error: unknown) => {
     failure ??= error;
     stopped = true;
+    lifecycle.abort(error);
     void stopSession(session);
   };
   // Serial persistence retains native tree ordering; no separately writable transcript.
@@ -70,6 +76,7 @@ export async function runClaim(claim: Claim, host: JobHost, session: AgentSessio
     signal?.throwIfAborted();
     let prompt: string | null = claim.prompt;
     while (prompt !== null) {
+      lifecycle.signal.throwIfAborted();
       await session.prompt(prompt);
       await publications;
       if (failure) throw failure;

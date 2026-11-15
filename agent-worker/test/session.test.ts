@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -188,6 +188,45 @@ describe('released Pi compatibility', () => {
     expect((await outcome as Error).message).toBe('Worker stopped');
     expect(completed).not.toContain(true);
     sessions.splice(sessions.indexOf(session), 1);
+  });
+
+  test('a delayed initial heartbeat cannot revive work after lease failure', async () => {
+    const { session, faux } = await fixture();
+    faux.setResponses([fauxAssistantMessage('Must never run')]);
+    const claim: Claim = { id: crypto.randomUUID(), threadId: crypto.randomUUID(), fence: crypto.randomUUID(),
+      prompt: 'Synthetic job', deadline: new Date(Date.now() + 10000).toISOString(), revision: 0, snapshot: null };
+    let tick!: () => void;
+    const originalInterval = globalThis.setInterval;
+    const interval = spyOn(globalThis, 'setInterval').mockImplementation(((callback: () => void, delay: number) => {
+      tick = callback;
+      return originalInterval(callback, delay);
+    }) as typeof setInterval);
+    let release!: () => void;
+    const initial = new Promise<void>(resolve => { release = resolve; });
+    let heartbeats = 0;
+    let settled = false;
+    try {
+      const running = runClaim(claim, {
+        heartbeat: async () => {
+          if (++heartbeats === 1) return initial;
+          if (heartbeats === 2) throw new Error('Lease authorization lost');
+        },
+        publish: async () => {},
+        settle: async () => { settled = true; return null; },
+      }, session, { provider: faux.getModel().provider, model: faux.getModel().id, requestAud: 0.1, maxOutputTokens: 1024 });
+      const outcome = running.catch(error => error as Error);
+      tick();
+      // Let the rejected periodic heartbeat abort the lifecycle before releasing admission.
+      await new Promise(resolve => setTimeout(resolve, 0));
+      release();
+      expect((await outcome as Error).message).toBe('Lease authorization lost');
+      expect(faux.state.callCount).toBe(0);
+      expect(settled).toBe(false);
+    } finally {
+      release();
+      interval.mockRestore();
+      sessions.splice(sessions.indexOf(session), 1);
+    }
   });
 
   test('model budget and authorization wrap normal turns and compaction', async () => {
