@@ -370,3 +370,83 @@ No provider request, production operation, separate-VM containment, real-file ex
 actual billing reconciliation, backup restoration or remote CI check ran. Nothing was
 pushed, merged or deployed. This turn reached its execution budget with independently
 actionable implementation remaining; it does not close the full migration request.
+
+## Continuation: admission identity and midnight reservations — 16 November 2026
+
+Continued from `6874c3d9` in `/tmp/goldys-pi-workspace-proposal`. The initial fetch
+still observed main at `fca0b930`, highest migration V113. The two newer main commits
+remain unincorporated; no local merge, push, production access or deployment occurred.
+
+Admission now obtains its start instant from PostgreSQL and uses that same instant
+for the 15-minute deadline and venue-day reservations. `WorkspaceBudgets` atomically
+reserves A$5 on every Melbourne date touched by that window, in ascending date order.
+If either day lacks capacity the whole admission rolls back. Cancellation and unknown
+charges retain the reservations. This deliberately over-reserves near midnight; it is
+not a provider receipt ledger or actual billing reconciliation. The worker's existing
+per-investigation request ceiling remains unchanged. Provider-specific price/cap and
+in-flight billing verification are still operational gates.
+
+Reusing a job submission ID with different prompt text now returns `WORKSPACE_CONFLICT`.
+V117 records a SHA-256 digest of the original follow-up prompt; editing its queued text
+does not alter its admission identity. Resending the original payload returns the
+current command, including edited/taken/cancelled state, without replay. Different
+payloads conflict. Original payloads of pre-V117 commands cannot be established, so
+re-enqueueing those IDs fails closed; their existing edit/remove/take behavior remains.
+The digest is worker-internal persistence metadata, not a second text transcript or a
+browser field. The offline demo implements matching conflicts and retains original
+fixture input only in memory.
+
+New PostgreSQL tests cover Melbourne midnight, daylight-saving transitions, concurrent
+reservations (only ten of twenty admissions succeed), and transaction rollback when
+the next day is exhausted. Existing lifecycle tests now check duplicate-content
+conflicts and retries after queue edits/removal. An initial focused run passed the
+new budget cases but failed two older assertions that assumed exactly one daily row:
+the run occurred just before Melbourne midnight. Those assertions now validate all
+reserved days. Final verification is recorded below after completion.
+
+This does not complete slices 2–3 or the migration. Precise dependency labels/revocation,
+legacy-history treatment, separate-VM scripts, quarantine/extraction/artifacts,
+retention/deletion/restore, controlled public research, reviewed dataset extraction,
+actual billing reconciliation and remaining live/demo UX are still independent work.
+Owner pilot/operational acceptance and the manager permission matrix remain outstanding.
+Both activation flags remain default-off; existing Ask remains operational.
+
+The worker also now treats local lifecycle cancellation as irreversible. If a periodic
+heartbeat fails while an earlier authorization is still pending, a later success cannot
+start a prompt or provider request. The guard checks the local abort signal before and
+after model authorization, and the runner checks it before each prompt. A synthetic
+regression with failed then recovered heartbeat delivery makes one provider call against
+the old runner (expected failure), and zero with the fix. The native session tree,
+compaction ownership, checkpoint microtask and durable queue semantics are unchanged.
+This is not a network-partition/containment acceptance test.
+
+Final backend checks passed: `./gradlew spotlessApply test spotlessCheck`, 6m 19s,
+2,022 tests, five skipped, zero failures/errors. Worker frozen install with scripts
+disabled, typecheck, all 16 synthetic tests and build passed. Frontend typecheck, lint
+and all 824 tests across 142 files passed, without simultaneous backend-suite load.
+
+Ripwire against `6874c3d9` reports 24 incremental findings and five gating findings:
+two broad lexical constructor/delegation clone families and three short-horizon churn
+findings. Advisories include demo factory complexity increasing from 25 to 29 and
+Spring/JUnit entry points marked dead. No unrelated clone-family code was rewritten.
+The WorkspaceJobs constructor gained its budget dependency; targeted edit checks show
+no incompatible callers. `runClaim` retains its signature and caller compatibility.
+The broad test gate lists 17 test files and 132 statically untested symbols, with
+2,482 ambiguous edges, 4,762 unresolved edges and 135 unindexed files. This remains
+non-clean static evidence, not a clean safety verdict. Both changed-document local
+links resolve, all six recipes are discoverable through canonical and Codex paths,
+and whitespace checks pass.
+
+Continuation boundaries: V117 is unused on fetched main (still V113). Worker fix is
+local commit `8f7f8cae`; the admission fixes and this evidence are committed separately.
+No live provider, actual billing reconciliation, real uploaded-file extraction,
+separate-VM containment, restore rehearsal, browser flow or remote CI verification ran
+in this continuation. No production operation, push, merge or deployment occurred.
+There is no blocker preventing all remaining local work: this remains an incomplete
+implementation continuation, not completion of the authorized migration. Continue in
+this same worktree with precise dependency/history handling before the dependent
+sandbox/file/research slices. Do not infer pilot readiness from these regression results.
+
+The preview production build also passed with `NEXT_PUBLIC_WORKSPACE_PREVIEW=true`.
+The turn ended before completing the remaining authorized implementation; passing
+these checks and making local commits does not close the migration request.

@@ -14,12 +14,14 @@ describe("workspace demo", () => {
     const submission = input();
     const job = await api.submitWorkspaceJob(submission);
     expect(await api.submitWorkspaceJob(submission)).toEqual(job);
+    await expect(api.submitWorkspaceJob({ ...submission, prompt: "Different" })).rejects.toMatchObject({ code: "WORKSPACE_CONFLICT" });
     await expect(api.submitWorkspaceJob({ ...submission, requestId: crypto.randomUUID() })).rejects.toMatchObject({ code: "WORKSPACE_CONFLICT" });
     expect(await api.listWorkspaceFollowUps(job.id)).toEqual([]);
     const requestId = crypto.randomUUID();
     await api.enqueueWorkspaceFollowUp(job.id, requestId, "First question");
     await api.editWorkspaceFollowUp(job.id, requestId, "Edited question");
-    expect((await api.enqueueWorkspaceFollowUp(job.id, requestId, "Duplicate")).prompt).toBe("Edited question");
+    expect((await api.enqueueWorkspaceFollowUp(job.id, requestId, "First question")).prompt).toBe("Edited question");
+    await expect(api.enqueueWorkspaceFollowUp(job.id, requestId, "Different")).rejects.toMatchObject({ code: "WORKSPACE_CONFLICT" });
     expect((await api.stopWorkspaceJob(job.id)).state).toBe("CANCELLED");
     expect((await api.listWorkspaceFollowUps(job.id))[0].state).toBe("CANCELLED");
     await expect(api.editWorkspaceFollowUp(job.id, requestId, "Too late")).rejects.toMatchObject({ code: "WORKSPACE_CONFLICT" });

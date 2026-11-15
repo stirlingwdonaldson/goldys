@@ -262,9 +262,11 @@ class WorkspaceJobsIntegrationTest {
     }
     assertThat(jdbc.queryForObject("select count(*) from workspace_job", Integer.class))
         .isEqualTo(1);
-    assertThat(
-            jdbc.queryForObject("select reserved_aud from workspace_daily_budget", Integer.class))
-        .isEqualTo(5);
+    assertThat(jdbc.queryForList("select reserved_aud from workspace_daily_budget", Integer.class))
+        .isNotEmpty()
+        .allMatch(amount -> amount == 5);
+    assertThatThrownBy(() -> jobs.submit(owner, thread, request, "Different question"))
+        .isInstanceOf(WorkspaceConflict.class);
     var claim = jobs.claim();
     jobs.publish(claim.id(), claim.fence(), claim.revision(), snapshot(), true);
     assertThat(jobs.read(owner, claim.id()).state()).isEqualTo("COMPLETED");
@@ -372,21 +374,31 @@ class WorkspaceJobsIntegrationTest {
     var job = submit(UUID.randomUUID(), UUID.randomUUID());
     UUID first = UUID.randomUUID(), second = UUID.randomUUID();
     jobs.enqueue(owner, job.id(), first, "First");
-    jobs.enqueue(owner, job.id(), first, "Duplicate ignored");
+    jobs.enqueue(owner, job.id(), first, "First");
     jobs.enqueue(owner, job.id(), second, "Second");
     jobs.editFollowUp(owner, job.id(), first, "Edited");
+    assertThat(jobs.enqueue(owner, job.id(), first, "First").prompt()).isEqualTo("Edited");
+    assertThatThrownBy(() -> jobs.enqueue(owner, job.id(), first, "Different"))
+        .isInstanceOf(WorkspaceConflict.class);
     var claim = jobs.claim();
     assertThat(jobs.settle(job.id(), claim.fence(), 0, snapshot()).prompt()).isEqualTo("Edited");
     assertThatThrownBy(() -> jobs.editFollowUp(owner, job.id(), first, "Too late"))
         .isInstanceOf(IllegalStateException.class);
     jobs.removeFollowUp(owner, job.id(), second);
+    assertThat(jobs.enqueue(owner, job.id(), second, "Second").state()).isEqualTo("CANCELLED");
+    jdbc.update(
+        "update workspace_follow_up set request_prompt_sha256=null where job_id=? and request_id=?",
+        job.id(),
+        second);
+    assertThatThrownBy(() -> jobs.enqueue(owner, job.id(), second, "Second"))
+        .isInstanceOf(WorkspaceConflict.class);
     assertThat(jobs.settle(job.id(), claim.fence(), 1, snapshot())).isNull();
     assertThat(jobs.read(owner, job.id()).state()).isEqualTo("COMPLETED");
     assertThatThrownBy(() -> jobs.enqueue(owner, job.id(), UUID.randomUUID(), "Late"))
         .isInstanceOf(IllegalStateException.class);
-    assertThat(
-            jdbc.queryForObject("select reserved_aud from workspace_daily_budget", Integer.class))
-        .isEqualTo(5);
+    assertThat(jdbc.queryForList("select reserved_aud from workspace_daily_budget", Integer.class))
+        .isNotEmpty()
+        .allMatch(amount -> amount == 5);
   }
 
   @Test

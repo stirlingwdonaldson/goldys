@@ -31,6 +31,7 @@ export function createWorkspaceDemo(): WorkspaceApi {
     { id: "20000000-0000-4000-8000-000000000002", createdAt: "2026-11-14T00:00:00Z", access: "NOT_PERMITTED", latestJobId: null },
   ];
   const submissions = new Map<string, string>();
+  const originalFollowUps = new Map<string, string>();
   const queues = new Map<string, WorkspaceFollowUp[]>();
   const read = (id: string) => {
     const job = jobs.get(id);
@@ -63,7 +64,11 @@ export function createWorkspaceDemo(): WorkspaceApi {
       validatePrompt(input.prompt);
       const key = `${input.threadId}:${input.requestId}`;
       const prior = submissions.get(key);
-      if (prior) return structuredClone(read(prior));
+      if (prior) {
+        const accepted = read(prior);
+        if (accepted.prompt !== input.prompt) throw conflict();
+        return structuredClone(accepted);
+      }
       if ([...jobs.values()].some(job => job.threadId === input.threadId && active(job))) throw conflict();
       const thread = threads.find(thread => thread.id === input.threadId);
       if (thread?.access === "NOT_PERMITTED") throw denied();
@@ -92,10 +97,15 @@ export function createWorkspaceDemo(): WorkspaceApi {
       const job = read(id);
       const queue = queues.get(id)!;
       const existing = queue.find(item => item.id === requestId);
-      if (existing) return structuredClone(existing);
+      const key = `${id}:${requestId}`;
+      if (existing) {
+        if (originalFollowUps.get(key) !== prompt) throw conflict();
+        return structuredClone(existing);
+      }
       if (!active(job) || queue.length >= 20) throw conflict();
       const item: WorkspaceFollowUp = { id: requestId, prompt, state: "QUEUED" };
       queue.push(item);
+      originalFollowUps.set(key, prompt);
       return structuredClone(item);
     },
     async editWorkspaceFollowUp(id, requestId, prompt) {

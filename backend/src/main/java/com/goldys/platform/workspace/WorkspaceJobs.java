@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.auth.PermissionAction;
 import com.goldys.platform.auth.WorkspaceAuthorization;
+import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -41,11 +41,17 @@ public class WorkspaceJobs {
   private final JdbcTemplate jdbc;
   private final WorkspaceAuthorization authorization;
   private final ObjectMapper json;
+  private final WorkspaceBudgets budgets;
 
-  public WorkspaceJobs(JdbcTemplate jdbc, WorkspaceAuthorization authorization, ObjectMapper json) {
+  public WorkspaceJobs(
+      JdbcTemplate jdbc,
+      WorkspaceAuthorization authorization,
+      ObjectMapper json,
+      WorkspaceBudgets budgets) {
     this.jdbc = jdbc;
     this.authorization = authorization;
     this.json = json;
+    this.budgets = budgets;
   }
 
   @Transactional
@@ -64,7 +70,12 @@ public class WorkspaceJobs {
             (row, index) -> row.getObject(1, UUID.class),
             threadId,
             requestId);
-    if (!existing.isEmpty()) return read(owner, existing.getFirst());
+    if (!existing.isEmpty()) {
+      Job prior = read(owner, existing.getFirst());
+      if (!prior.prompt().equals(prompt))
+        throw new WorkspaceConflict("Request ID already has different content");
+      return prior;
+    }
     interruptExpired(threadId);
     Integer active =
         jdbc.queryForObject(
@@ -73,26 +84,21 @@ public class WorkspaceJobs {
             threadId);
     if (active != null && active > 0)
       throw new WorkspaceConflict("An investigation is already active");
-    LocalDate day = LocalDate.now(ZoneId.of("Australia/Melbourne"));
-    jdbc.update(
-        "insert into workspace_daily_budget(venue_day,reserved_aud) values (?,0) on conflict do nothing",
-        day);
-    int admitted =
-        jdbc.update(
-            "update workspace_daily_budget set reserved_aud=reserved_aud+5 where venue_day=? and reserved_aud+5<=50",
-            day);
-    if (admitted != 1) throw new WorkspaceConflict("Daily investigation budget exhausted");
+    Instant started = jdbc.queryForObject("select now()", Timestamp.class).toInstant();
+    Instant deadline = started.plus(Duration.ofMinutes(15));
+    budgets.reserve(started, deadline);
     UUID id = UUID.randomUUID();
     jdbc.update(
         """
         insert into workspace_job(id,thread_id,request_id,prompt,state,fence,deadline)
-        values (?,?,?,?,'QUEUED',?,now()+interval '15 minutes')
+        values (?,?,?,?,'QUEUED',?,?)
         """,
         id,
         threadId,
         requestId,
         prompt,
-        UUID.randomUUID());
+        UUID.randomUUID(),
+        Timestamp.from(deadline));
     return new Job(
         id,
         threadId,
@@ -135,16 +141,28 @@ public class WorkspaceJobs {
     owned(owner, threadId(id), PermissionAction.WRITE);
     var existing =
         followUps(owner, id).stream().filter(item -> item.id().equals(requestId)).findFirst();
-    if (existing.isPresent()) return existing.get();
+    if (existing.isPresent()) {
+      Boolean matches =
+          jdbc.queryForObject(
+              "select request_prompt_sha256=sha256(convert_to(?,'UTF8')) from workspace_follow_up where job_id=? and request_id=?",
+              Boolean.class,
+              prompt,
+              id,
+              requestId);
+      if (!Boolean.TRUE.equals(matches))
+        throw new WorkspaceConflict("Request ID has different or unverifiable original content");
+      return existing.get();
+    }
     requireActive(id);
     Integer count =
         jdbc.queryForObject(
             "select count(*) from workspace_follow_up where job_id=?", Integer.class, id);
     if (count >= 20) throw new WorkspaceConflict("Investigation follow-up limit reached");
     jdbc.update(
-        "insert into workspace_follow_up(job_id,request_id,prompt,state) values (?,?,?,'QUEUED')",
+        "insert into workspace_follow_up(job_id,request_id,prompt,state,request_prompt_sha256) values (?,?,?,'QUEUED',sha256(convert_to(?,'UTF8')))",
         id,
         requestId,
+        prompt,
         prompt);
     return new FollowUp(requestId, prompt, "QUEUED");
   }

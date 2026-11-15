@@ -45,8 +45,9 @@ no real environment file is included or read during this implementation task:
 
 The worker rejects absent/invalid pricing and reserves each request's upper bound against A$5,
 including compaction and failed attempts. Spring separately reserves A$5 per job against A$50
-per venue day. Actual receipt reconciliation, provider-specific cap verification and midnight
-accounting are still release gates. Never substitute an optimistic cost estimate to enable it.
+on every Melbourne date touched by the job’s 15-minute admission window. Midnight
+reservations are conservative and atomic; actual receipt reconciliation and provider-specific
+cap verification are still release gates. Never substitute an optimistic cost estimate to enable it.
 
 `bun run start` disables automatic dotenv loading. Startup with a deliberately empty process
 environment was checked to fail before contacting any service. No live worker/provider run has
