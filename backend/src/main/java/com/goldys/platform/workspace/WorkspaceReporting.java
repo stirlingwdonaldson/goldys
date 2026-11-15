@@ -1,8 +1,11 @@
 package com.goldys.platform.workspace;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.conversational.CreateDashboardDraftTool;
+import com.goldys.platform.conversational.DashboardDraft;
 import com.goldys.platform.reporting.ToolDispatcher;
 import com.goldys.platform.reporting.ToolId;
 import com.goldys.platform.reporting.ToolRegistry;
@@ -64,8 +67,10 @@ public class WorkspaceReporting {
         .toList();
   }
 
+  public record Result(@JsonUnwrapped ToolResult reporting, DashboardDraft draft) {}
+
   @Transactional
-  public ToolResult execute(UUID job, UUID fence, ToolId id, JsonNode arguments) {
+  public Result execute(UUID job, UUID fence, ToolId id, JsonNode arguments) {
     var role = jobs.authorizedRole(job, fence);
     var tool =
         registry.find(id).orElseThrow(() -> new IllegalArgumentException("Unknown reporting tool"));
@@ -84,6 +89,8 @@ public class WorkspaceReporting {
     var result = dispatcher.dispatch(id, input, role);
     // Recheck lease/deadline after the query; an expired worker receives no data.
     jobs.authorizedRole(job, fence);
-    return result;
+    DashboardDraft draft =
+        tool instanceof CreateDashboardDraftTool draftTool ? draftTool.toDraft(input) : null;
+    return new Result(result, draft);
   }
 }

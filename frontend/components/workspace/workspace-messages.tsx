@@ -1,5 +1,8 @@
 "use client";
 
+import { AnswerBlock } from "@/components/ask-goldys/answer-block";
+import type { DashboardDraft } from "@/components/ask-goldys/types";
+import { useApi } from "@/lib/demo-mode";
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import { parseWidgetSpec } from "@/components/widgets/parse";
 import { TrustIndicator } from "@/components/trust/trust-indicator";
@@ -14,6 +17,7 @@ export function WorkspaceMessages({ job }: { job: WorkspaceJob }) {
       return <article key={message.id} className="space-y-3">
         <h3 className="text-xs font-medium text-muted-foreground">{message.role === "user" ? "You" : message.role === "tool" ? "Reporting result" : "Goldy’s"}</h3>
         {message.text ? <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.text}</p> : null}
+        {message.draft ? <WorkspaceDraft draft={message.draft} /> : null}
         {result ? <>
           {widget ? <WidgetRenderer widget={widget} /> : <p role="alert">Reporting result unavailable.</p>}
           {result.notices.length ? <ul aria-label="Reporting qualifications" className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">{result.notices.map((notice, index) => <li key={index}>{notice}</li>)}</ul> : null}
@@ -27,4 +31,9 @@ export function WorkspaceMessages({ job }: { job: WorkspaceJob }) {
       </article>;
     })}
   </section>;
+}
+
+function WorkspaceDraft({ draft }: { draft: DashboardDraft }) {
+  const api = useApi();
+  return <AnswerBlock api={api} summary="" error={null} answer={{ widgets: [], notices: [], trace: [], asOf: "", draft }} />;
 }

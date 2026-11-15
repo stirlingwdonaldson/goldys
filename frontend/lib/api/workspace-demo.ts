@@ -13,7 +13,14 @@ export function createWorkspaceDemo(): WorkspaceApi {
   const example: WorkspaceJob = {
     id: "10000000-0000-4000-8000-000000000001", threadId: "20000000-0000-4000-8000-000000000001",
     prompt: "Demo: compare weekly sales", state: "INTERRUPTED", revision: 1,
-    messages: [{ id: "demo-result", role: "tool", text: "", reporting: {
+    messages: [{ id: "demo-result", role: "tool", text: "", draft: {
+      title: "Demo weekly sales", description: "A reusable sales query, not a saved result.", dashboardId: null,
+      filters: { dateRange: null, comparison: null, dimensions: [] },
+      widgets: [{ id: "sales", renderType: "stat", layout: { w: 4, h: 2 }, queries: [{
+        metric: "sales.net", range: { from: "2026-11-02", to: "2026-11-08", calendar: "TRADING" },
+        grain: "TOTAL", dimensions: [], comparison: null,
+      }] }],
+    }, reporting: {
       widget: { schemaVersion: 2, id: "demo-missing", type: "stat", title: "Demo sales", value: null },
       notices: ["Demo investigation interrupted. Sales coverage is unavailable."], provenance: [], relatedMetrics: [],
     } }],

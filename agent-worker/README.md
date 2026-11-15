@@ -71,4 +71,6 @@ An additive Investigations drawer is available only in frontend builds with
 `NEXT_PUBLIC_WORKSPACE_PREVIEW=true` (default off). It reconnects using saved job IDs,
 polls durable status, edits pending follow-ups and sends explicit Stop/Retry commands.
 It does not enable the backend, worker, sandbox or owner pilot. The legacy Ask button
-remains available; workspace file and dashboard-draft UI is still outstanding.
+remains available; workspace file UI is still outstanding. Validated dashboard drafts now survive native
+checkpoints and render an explicit user-confirmed query-only Save action through the
+existing live/demo dashboard APIs. The worker never saves dashboards itself.

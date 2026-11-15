@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { widgetSchema } from "@/components/widgets/parse";
-import { provenanceSchema } from "./dashboard-schema";
+import { draftSchema, provenanceSchema } from "./dashboard-schema";
 
 export const workspaceJobSchema = z.object({
   id: z.string().uuid(), threadId: z.string().uuid(),
   state: z.enum(["QUEUED", "RUNNING", "COMPLETED", "CANCELLED", "INTERRUPTED"]),
   prompt: z.string(), revision: z.number().int().nonnegative(),
   messages: z.array(z.object({ id: z.string(), role: z.enum(["user", "assistant", "tool"]), text: z.string(),
+    draft: draftSchema.nullable().optional(),
     reporting: z.object({ widget: widgetSchema, notices: z.array(z.string()),
       provenance: z.array(provenanceSchema), relatedMetrics: z.array(z.string()) }).nullable(),
   })),

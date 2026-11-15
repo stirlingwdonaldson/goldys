@@ -180,6 +180,43 @@ class WorkspaceJobsIntegrationTest {
   }
 
   @Test
+  void validatedDashboardDraftSurvivesNativeCheckpointWithoutSavingIt() throws Exception {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    var result =
+        reporting.execute(
+            job.id(),
+            claim.fence(),
+            com.goldys.platform.reporting.ToolId.CREATE_DASHBOARD_DRAFT,
+            json.readTree(
+                """
+        {"title":"Weekly sales","widgets":[{"id":"sales","renderType":"stat",
+          "layout":{"w":4,"h":2},"queries":[{"metric":"sales.net",
+          "range":{"from":"2026-11-02","to":"2026-11-08","calendar":"TRADING"},
+          "grain":"TOTAL","dimensions":[],"comparison":null}]}]}
+        """));
+    var details = json.valueToTree(result);
+    assertThat(details.path("widget").path("schemaVersion").asInt()).isEqualTo(2);
+    var saved = (com.fasterxml.jackson.databind.node.ObjectNode) snapshot();
+    saved.put("leafId", "draft");
+    var message = json.createObjectNode().put("role", "toolResult").set("details", details);
+    ((com.fasterxml.jackson.databind.node.ArrayNode) saved.path("entries"))
+        .add(
+            json.createObjectNode()
+                .put("type", "message")
+                .put("id", "draft")
+                .putNull("parentId")
+                .set("message", message));
+    jobs.publish(job.id(), claim.fence(), 0, saved, true);
+    var draft = jobs.read(owner, job.id()).messages().getFirst().draft();
+    assertThat(draft.title()).isEqualTo("Weekly sales");
+    assertThat(draft.widgets()).hasSize(1);
+    assertThat(draft.widgets().getFirst().queries().getFirst().metric())
+        .isEqualTo(com.goldys.platform.semantic.catalog.MetricId.SALES_NET);
+    assertThat(draft.dashboardId()).isNull();
+  }
+
+  @Test
   void releasedToolSchemaRetainsClosedMetricsAndDateTypes() {
     var job = submit(UUID.randomUUID(), UUID.randomUUID());
     var claim = jobs.claim();

@@ -306,3 +306,67 @@ context reconstruction engine was added.
 Regression coverage exercises restored grants, add/delete grant cycles, disable/reactivate
 without changing the account timestamp, stale worker publication, explicit fresh threads,
 and malformed checkpoints preserving committed output. Final verification is recorded below.
+
+
+## Continuation: workspace dashboard-draft parity
+
+The governed bridge retains the existing `CreateDashboardDraftTool` validation and
+`ToolDispatcher` authorization. Its result now includes the validated query-only draft
+alongside the existing widget/notices/provenance fields. Pi retains that result in its
+native snapshot. The browser projection exposes the typed draft only after current
+thread authorization; denied/error results expose no draft. Older snapshots without
+a draft remain readable. No dashboard is written by the worker or reporting tool.
+
+The workspace uses the existing `AnswerBlock` confirmation/save behavior and the active
+live/demo API. Create and update proposals use existing dashboard endpoints and their
+mutation-boundary authorization. The save payload contains title, filters, layout and
+query configuration, never rendered metric values. Denied/failed saves remain visible
+and require an explicit retry. Demo history contains a query-only weekly-sales draft;
+its saves stay in the offline demo adapter. No new browser storage is introduced.
+
+A PostgreSQL regression invokes the real reporting bridge, serializes the worker result,
+commits it as a native tool-result entry and reads the draft back through authorized
+job history. UI regressions cover reconnect rendering, no automatic save, denied-save
+feedback, explicit create and update, and the exact query-only save payload. Existing
+legacy Ask and dashboard tests remain part of the full regression suites.
+
+Remaining implementation is still substantial: precise dependency labels/revocation,
+legacy-history handling, separate-VM script runtime, quarantine/extraction/artifacts,
+retention/deletion/restore, controlled public research, reviewed dataset extraction,
+actual billing reconciliation and cross-midnight accounting. Missing operational
+access does not block all local implementation; this continuation must not be treated
+as completion of the user's full request. Owner pilot and manager onboarding remain
+unapproved/unverified; both activation flags stay off by default. Main's two newer
+commits are still unincorporated and untested with this branch.
+
+
+Final combined-tree backend verification passed: `./gradlew spotlessApply test spotlessCheck`
+completed in 6m 27s with 2,019 tests, five skipped, zero failures/errors. A preceding
+full run passed before the draft/checkpoint additions and is not the final evidence.
+Worker frozen install with lifecycle scripts disabled, typecheck, all 15 synthetic tests
+and build passed. Frontend typecheck, lint and all 824 tests across 142 files passed.
+The first frontend full run had one five-second timeout in an unchanged weekly-report
+UI test while backend tests were running; the unchanged suite passed when run without
+backend-test contention. No timeout or heap limit was increased.
+
+The incremental Ripwire quality delta against `b5c42d0f` remains non-clean:
+22 findings, five gating (four lexical lifecycle-test clone matches and integration-test
+class growth). Other findings include complexity 18 in `WorkspaceMessages`, complexity
+11 in snapshot validation, class size/churn and JUnit/JSX entry points classified as dead.
+Targeted class edit checks found no incompatible callers but do not prove result-record
+wire compatibility; the new serialization and schema tests exercise that separately.
+The broad test gate exits 4 with 20 test files and 145 statically untested symbols,
+2,480 ambiguous and 4,759 unresolved edges, and 134 unindexed files. This is not a clean
+static safety verdict. Changed local links and all six recipe discovery paths resolve;
+diff whitespace checks pass. Scope, owner-only grants and default-off activation remain.
+
+
+The preview production build passed. Playwright passed both workspace and legacy Ask
+fixture flows (two tests); desktop/narrow screenshots were inspected. The first sandboxed
+browser attempt could not start its local server; the approved rerun on port 3117 passed.
+All application APIs were intercepted. The browser fixtures cover lifecycle regressions;
+the new draft create/update/error behavior is covered by the component and PostgreSQL tests.
+No provider request, production operation, separate-VM containment, real-file extraction,
+actual billing reconciliation, backup restoration or remote CI check ran. Nothing was
+pushed, merged or deployed. This turn reached its execution budget with independently
+actionable implementation remaining; it does not close the full migration request.

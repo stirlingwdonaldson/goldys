@@ -3,6 +3,7 @@ package com.goldys.platform.workspace;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.conversational.DashboardDraft;
 import com.goldys.platform.reporting.ToolResult;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,7 +15,7 @@ import java.util.List;
  * A disposable display projection, never model context or an independently persisted transcript.
  */
 final class WorkspaceHistory {
-  record Message(String id, String role, String text, ToolResult reporting) {}
+  record Message(String id, String role, String text, ToolResult reporting, DashboardDraft draft) {}
 
   private WorkspaceHistory() {}
 
@@ -48,24 +49,28 @@ final class WorkspaceHistory {
     if ("toolResult".equals(role)) return reporting(id, message, json);
     if (!"user".equals(role) && !"assistant".equals(role)) return null;
     String text = text(message.path("content"));
-    return text.isEmpty() ? null : new Message(id, role, text, null);
+    return text.isEmpty() ? null : new Message(id, role, text, null, null);
   }
 
   private static Message reporting(String id, JsonNode message, ObjectMapper json) {
     JsonNode details = message.path("details");
     if ("NOT_PERMITTED".equals(details.path("status").asText()))
-      return new Message(id, "tool", "Not permitted to access this reporting result.", null);
+      return new Message(id, "tool", "Not permitted to access this reporting result.", null, null);
     if (message.path("isError").asBoolean()
         || details.path("widget").path("schemaVersion").asInt() != 2)
-      return new Message(id, "tool", "Reporting result unavailable or incomplete.", null);
+      return new Message(id, "tool", "Reporting result unavailable or incomplete.", null, null);
     try {
       ToolResult result =
           json.readerFor(ToolResult.class)
               .without(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
               .readValue(details);
-      return new Message(id, "tool", "", result);
+      DashboardDraft draft =
+          details.hasNonNull("draft")
+              ? json.treeToValue(details.path("draft"), DashboardDraft.class)
+              : null;
+      return new Message(id, "tool", "", result, draft);
     } catch (java.io.IOException | IllegalArgumentException invalid) {
-      return new Message(id, "tool", "Reporting result unavailable or incomplete.", null);
+      return new Message(id, "tool", "Reporting result unavailable or incomplete.", null, null);
     }
   }
 

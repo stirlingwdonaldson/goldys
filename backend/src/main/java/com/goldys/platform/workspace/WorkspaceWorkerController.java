@@ -58,7 +58,7 @@ public class WorkspaceWorkerController {
   }
 
   @PostMapping("/{id}/reporting")
-  com.goldys.platform.reporting.ToolResult reporting(
+  WorkspaceReporting.Result reporting(
       @RequestHeader(value = "X-Workspace-Token", required = false) String token,
       @PathVariable UUID id,
       @Valid @RequestBody ReportingRequest request) {
