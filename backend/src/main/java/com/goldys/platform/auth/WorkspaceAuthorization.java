@@ -1,0 +1,65 @@
+package com.goldys.platform.auth;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
+import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
+/** Fresh account and policy checks, including on worker requests without a browser session. */
+@Service
+public class WorkspaceAuthorization {
+  private static final ResourceKey RESOURCE = new ResourceKey("workspace.investigations");
+  private final JdbcTemplate jdbc;
+  private final PermissionService permissions;
+
+  public WorkspaceAuthorization(JdbcTemplate jdbc, PermissionService permissions) {
+    this.jdbc = jdbc;
+    this.permissions = permissions;
+  }
+
+  public UserRole role(UUID accountId) {
+    require(accountId, PermissionAction.READ);
+    return jdbc.queryForObject(
+        "select department,seniority from user_account where id=?",
+        (row, index) ->
+            new UserRole(new DepartmentCode(row.getString(1)), new SeniorityCode(row.getString(2))),
+        accountId);
+  }
+
+  public String require(UUID accountId, PermissionAction action) {
+    var accounts =
+        jdbc.query(
+            """
+        select department, seniority, updated_at::text from user_account
+        where id = ? and active and not must_change_password for share
+        """,
+            (row, index) -> new String[] {row.getString(1), row.getString(2), row.getString(3)},
+            accountId);
+    if (accounts.isEmpty()) throw AccessDeniedException.forResource(RESOURCE.value());
+    var account = accounts.getFirst();
+    var role = new UserRole(new DepartmentCode(account[0]), new SeniorityCode(account[1]));
+    permissions.require(role, RESOURCE, action);
+    // shortcut: any grant/account change invalidates the whole context; replace with precise
+    // dependency reauthorization only after provenance covers every summary and file.
+    var policy =
+        jdbc.query(
+            """
+        select resource, can_read, can_write from permission
+        where department = ? and seniority = ? order by resource for share
+        """,
+            (row, index) -> row.getString(1) + ":" + row.getBoolean(2) + ":" + row.getBoolean(3),
+            account[0],
+            account[1]);
+    try {
+      return HexFormat.of()
+          .formatHex(
+              MessageDigest.getInstance("SHA-256")
+                  .digest((String.join("|", account) + policy).getBytes(StandardCharsets.UTF_8)));
+    } catch (NoSuchAlgorithmException impossible) {
+      throw new IllegalStateException(impossible);
+    }
+  }
+}

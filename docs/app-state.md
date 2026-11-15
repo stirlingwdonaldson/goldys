@@ -24,3 +24,7 @@ Update this summary when capabilities change, not for every implementation task.
 Use the [issue index](roadmap.md) for proposed work and the [PRD](prd.md) for target
 scope. An issue closed as implemented still needs the appropriate acceptance
 evidence before being described as operationally verified.
+
+## Pi workspace migration (local implementation)
+
+The released Pi 1.5.2 session adapter and disabled persisted-job/private reporting interfaces are under implementation. Existing Ask remains the user path. See [implementation evidence](design/pi-workspace-implementation-2026-11-15.md) for observed tests, incomplete slices and acceptance gates. Do not enable `app.workspace.enabled` for a pilot yet.

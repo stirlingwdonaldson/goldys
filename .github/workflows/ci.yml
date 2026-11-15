@@ -52,6 +52,21 @@ jobs:
         working-directory: frontend
         run: bun run typecheck && bun run lint && bun run test && bun run build
 
+  agent-worker:
+    name: Pi adapter (synthetic contracts)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - name: Install locked packages without lifecycle scripts
+        working-directory: agent-worker
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Type check, test, and build
+        working-directory: agent-worker
+        run: bun run typecheck && bun run test && bun run build
+
   forecast:
     name: Forecast runtime (CPU tests, fake TimesFM)
     runs-on: ubuntu-24.04

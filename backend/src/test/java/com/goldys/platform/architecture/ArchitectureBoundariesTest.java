@@ -42,6 +42,15 @@ import com.tngtech.archunit.lang.ArchRule;
     packages = "com.goldys.platform",
     importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureBoundariesTest {
+  @ArchTest
+  static final ArchRule workspaceNeverReadsSourcePersistence =
+      noClasses()
+          .that()
+          .resideInAPackage("..workspace..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "..canonical..", "..ingestion..", "..reconciliation..", "org.springframework.ai..");
 
   /** The semantic layer is a leaf: interfaces and metric records with no platform dependencies. */
   @ArchTest

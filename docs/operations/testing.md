@@ -113,3 +113,11 @@ Playwright, or select an existing compatible executable using `PLAYWRIGHT_CHROMI
 The tests cover pending-save edits, dirty exit, explorer Apply/history, shared-read request counts,
 and chat cancellation. Traces are retained only on failure under ignored `frontend/test-results/`.
 These local fixture checks do not establish production source completeness or operational acceptance.
+
+## Pi worker (local migration slice)
+
+From `agent-worker/`, run `bun install --frozen-lockfile --ignore-scripts`, then
+`bun run typecheck && bun test && bun run build`. These synthetic released-SDK
+checks need no provider credentials. PostgreSQL workspace lifecycle/auth/schema
+checks live in `WorkspaceJobsIntegrationTest`. They do not establish real
+sandbox containment or provider billing; see the [implementation evidence](../design/pi-workspace-implementation-2026-11-15.md).

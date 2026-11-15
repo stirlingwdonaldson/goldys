@@ -46,6 +46,8 @@ dependencies {
 	// Spring AI 1.1.x is the Spring Boot 3.5-compatible line (2.x requires Boot 4).
 	implementation platform('org.springframework.ai:spring-ai-bom:1.1.8')
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+	implementation 'com.github.victools:jsonschema-generator:4.38.0'
+	implementation 'com.github.victools:jsonschema-module-jackson:4.38.0'
 	// SFTP drop delivery (transport behind the SftpDrop port, so it is swappable).
 	implementation 'org.springframework.integration:spring-integration-sftp'
 

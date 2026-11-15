@@ -46,6 +46,10 @@ public class SecurityConfig {
   private static final RequestMatcher INGEST_WEBHOOKS =
       AntPathRequestMatcher.antMatcher("/api/ingest/**");
 
+  // Every route checks the private worker token and fails closed when unset or disabled.
+  private static final RequestMatcher WORKSPACE_WORKER =
+      AntPathRequestMatcher.antMatcher("/api/workspace-worker/**");
+
   @Bean
   PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
@@ -77,6 +81,7 @@ public class SecurityConfig {
             auth.requestMatchers(
                     AntPathRequestMatcher.antMatcher("/api/health"),
                     INGEST_WEBHOOKS,
+                    WORKSPACE_WORKER,
                     AntPathRequestMatcher.antMatcher("/api/auth/login"),
                     // Prometheus scrape + load-balancer health checks are unauthenticated.
                     // See docs/operations/performance.md for the production hardening note.
@@ -96,7 +101,9 @@ public class SecurityConfig {
     http.csrf(
         csrf ->
             csrf.ignoringRequestMatchers(
-                    INGEST_WEBHOOKS, AntPathRequestMatcher.antMatcher("/api/auth/login"))
+                    INGEST_WEBHOOKS,
+                    WORKSPACE_WORKER,
+                    AntPathRequestMatcher.antMatcher("/api/auth/login"))
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
 
