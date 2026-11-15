@@ -60,3 +60,9 @@ after a crash. A maximum of 20 follow-up submissions (including removed messages
 commands per investigation. This is an engineering safety limit, not a new business spend grant.
 
 Browser-facing UI migration and the remaining proposal slices are outstanding.
+
+The browser API can rediscover private threads through `GET /api/workspace/threads`
+(keyset `before` cursor, `limit` 1–50). Restricted history is explicit and includes no
+latest job ID. Authorized job reads include the original admission prompt and derived
+messages, never native snapshots. Live/demo frontend adapters exist; the current Ask
+drawer has not yet switched to them.

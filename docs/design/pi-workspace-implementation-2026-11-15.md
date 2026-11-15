@@ -140,3 +140,69 @@ checks pass. No frontend, live provider, separate-VM containment, extraction, ba
 production operation or remote CI test was performed. Nothing was pushed, merged or deployed.
 This remains an incomplete implementation, with workspace activation off and manager onboarding
 blocked; the remaining delivery slices and acceptance gates above still apply.
+
+## Continuation: rediscovery and browser API contract
+
+Continued from `9e9db6cf` in the same implementation worktree. Fetch still observes
+`origin/main` at `fca0b930`; its highest migration remains V113. This continuation adds
+no migration and does not incorporate the two newer main commits.
+
+`GET /api/workspace/threads` now provides private, bounded keyset pagination (default
+25, maximum 50), ordered by creation time and UUID. It returns thread IDs, creation
+timestamps and the latest job ID, with no prompt, title, snapshot or result content.
+Unknown and foreign cursor IDs are denied identically. Current account/workspace
+permission checks apply to every page. Policy-invalidated threads remain visible as
+`NOT_PERMITTED` entries with no job ID; callers must start a new thread. Discovery does
+not read native snapshots or weaken the existing policy fingerprint. Authorized job
+reads now include the already-persisted admission prompt, so a browser can offer an
+explicit retry even if the worker failed before its first native checkpoint. This is
+not a new stored transcript. Latest-job reads retain expiry/interruption handling.
+
+Focused PostgreSQL tests pass for equal-timestamp pagination, ownership/cursor denial,
+page bounds, revoked/deactivated/manager access, fresh threads after policy changes,
+latest-attempt recovery and recovery of the prompt before the first checkpoint.
+
+The frontend `Api` has matching live/demo workspace operations for discovery,
+submission, polling/reconnect, Stop and queue read/enqueue/edit/remove. Live responses
+are validated with Zod, including the existing widget and provenance schemas; native
+snapshots are not a browser contract. Demo calls remain entirely local, retain
+idempotency and queue conflict behavior, cancel pending messages on Stop, and include
+interrupted/missing-result and restricted-history fixtures. Demo responses are detached
+copies. The demo adapter does not execute Pi or simulate model progress, expiry or
+provider billing. These are API foundations, not completed queue UX: no workspace
+screen is wired into the current Ask drawer and existing Ask remains operational.
+
+Remaining work still includes complete slices 2–3 (UI reconnect/queue behavior, legacy
+history and precise dependency/revocation handling), followed by sandbox execution,
+files/extraction/retention, controlled research, full UX/demo, reviewed dataset extraction
+and operational acceptance. Activation remains off; manager rollout remains blocked.
+
+Observed frontend verification: frozen-lockfile install with lifecycle scripts disabled,
+then sequential `bun run typecheck`, `bun run lint`, `bun run test` (140 files, 813 tests)
+and `bun run build` passed. Tests exercise duplicate submission/follow-ups, conflicts,
+Stop cancellation, offline-only demo behavior, missing widget values, restricted history,
+explicit retry preserving prior results, detached fixture responses and rejection of
+native-snapshot/malformed-widget browser responses.
+
+Ripwire at `9e9db6cf+dirty` remains non-clean: quality delta reports 18 findings with one
+gating lexical clone (`WorkspaceThreadController.list` versus a short `restore`
+controller delegate). Inspection found generic controller delegation, not shared domain
+logic to extract. It also flags the new demo factory's complexity (25), Spring/JUnit
+entry points as dead code and existing class size/churn. No unrelated controller was
+rewritten to suppress a lexical match. The broad test gate lists 26 test files and 254
+statically untested symbols with 2,480 ambiguous and 4,743 unresolved graph edges; it
+is not a clean safety verdict. The targeted `WorkspaceJobs` edit check finds no
+incompatible callers but does not validate the browser record shape; frontend schema
+and contract tests cover that boundary separately.
+
+Four local links in the changed documentation resolve; all six Goldy's recipes remain
+discoverable from canonical and Codex paths. Scope, accepted decisions, permission
+seeds and migration files are unchanged. No worker source changed, so worker checks
+were not repeated. No browser flow, live provider, real-file extraction, separate-VM
+containment, retention/restore, production operation or remote CI check ran.
+
+Final backend verification for this continuation: `./gradlew test spotlessCheck`
+passed in 6m 48s with 2,015 tests, five skipped and zero failures/errors. The focused
+workspace integration run also passed, and edited Java was formatted with Spotless.
+Nothing was pushed, merged or deployed. This remains an incomplete migration, with
+workspace activation off and the remaining delivery/acceptance gates listed above.

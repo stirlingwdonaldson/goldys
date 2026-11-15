@@ -1,5 +1,6 @@
 import { sortQuery } from "@/lib/record-sort";
 import type { RecordReadOptions } from "@/lib/record-sort";
+import { workspaceLive } from "./workspace-live";
 import { dashboardSchema, renderedWidgetsSchema, threadSchema } from "./dashboard-schema";
 import { fetchApi } from "./client";
 import { getProvenance } from "./provenance";
@@ -83,6 +84,7 @@ function dateRangeQuery(from?: string, to?: string): string {
 
 /** Real backend calls. The demo fixtures stay behind the `demo` flag; these hit the live endpoints. */
 export const liveApi: Api = {
+  ...workspaceLive,
   getWeeklyTargets: week => fetchApi(`/api/reports/weekly/targets?week=${encodeURIComponent(week)}`),
   saveWeeklyTargets: input => fetchApi("/api/reports/weekly/targets", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) }),
   getWeeklyReport: (from, weeks = 4, options) => {
