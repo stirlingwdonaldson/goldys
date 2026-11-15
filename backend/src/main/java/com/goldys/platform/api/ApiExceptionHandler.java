@@ -44,6 +44,15 @@ class ApiExceptionHandler {
                 exception.details()));
   }
 
+  @ExceptionHandler(com.goldys.platform.workspace.WorkspaceConflict.class)
+  ResponseEntity<ApiErrorResponse> handleWorkspaceConflict(
+      com.goldys.platform.workspace.WorkspaceConflict exception, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(
+            new ApiErrorResponse(
+                "WORKSPACE_CONFLICT", exception.getMessage(), correlationId(request), Map.of()));
+  }
+
   @ExceptionHandler(IllegalArgumentException.class)
   ResponseEntity<ApiErrorResponse> handleValidation(
       IllegalArgumentException exception, HttpServletRequest request) {

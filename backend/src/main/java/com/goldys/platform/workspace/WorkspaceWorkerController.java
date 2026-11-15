@@ -95,4 +95,22 @@ public class WorkspaceWorkerController {
         publication.snapshot(),
         publication.completed());
   }
+
+  @PostMapping("/{id}/settle")
+  WorkspaceJobs.FollowUp settle(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token,
+      @PathVariable UUID id,
+      @Valid @RequestBody Publication publication) {
+    authenticate(token);
+    return jobs.settle(id, publication.fence(), publication.revision(), publication.snapshot());
+  }
+
+  @PostMapping("/{id}/interrupt")
+  void interrupt(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token,
+      @PathVariable UUID id,
+      @Valid @RequestBody Lease lease) {
+    authenticate(token);
+    jobs.interrupt(id, lease.fence());
+  }
 }

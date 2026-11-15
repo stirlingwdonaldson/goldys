@@ -40,4 +40,39 @@ public class WorkspaceController {
   WorkspaceJobs.Job stop(@AuthenticationPrincipal AccountUserDetails user, @PathVariable UUID id) {
     return jobs.stop(user.id(), id);
   }
+
+  record FollowUpSubmission(@NotNull UUID requestId, @NotBlank @Size(max = 16000) String prompt) {}
+
+  record EditFollowUp(@NotBlank @Size(max = 16000) String prompt) {}
+
+  @GetMapping("/{id}/follow-ups")
+  java.util.List<WorkspaceJobs.FollowUp> followUps(
+      @AuthenticationPrincipal AccountUserDetails user, @PathVariable UUID id) {
+    return jobs.followUps(user.id(), id);
+  }
+
+  @PostMapping("/{id}/follow-ups")
+  WorkspaceJobs.FollowUp enqueue(
+      @AuthenticationPrincipal AccountUserDetails user,
+      @PathVariable UUID id,
+      @Valid @RequestBody FollowUpSubmission body) {
+    return jobs.enqueue(user.id(), id, body.requestId(), body.prompt());
+  }
+
+  @PutMapping("/{id}/follow-ups/{requestId}")
+  void edit(
+      @AuthenticationPrincipal AccountUserDetails user,
+      @PathVariable UUID id,
+      @PathVariable UUID requestId,
+      @Valid @RequestBody EditFollowUp body) {
+    jobs.editFollowUp(user.id(), id, requestId, body.prompt());
+  }
+
+  @DeleteMapping("/{id}/follow-ups/{requestId}")
+  void remove(
+      @AuthenticationPrincipal AccountUserDetails user,
+      @PathVariable UUID id,
+      @PathVariable UUID requestId) {
+    jobs.removeFollowUp(user.id(), id, requestId);
+  }
 }

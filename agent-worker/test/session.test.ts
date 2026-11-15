@@ -103,7 +103,9 @@ describe('released Pi compatibility', () => {
     const claim: Claim = { id: crypto.randomUUID(), threadId: crypto.randomUUID(), fence: crypto.randomUUID(),
       prompt: 'Synthetic job', deadline: new Date(Date.now() + 10000).toISOString(), revision: 0, snapshot: null };
     const publications: { revision: number; completed: boolean; state: unknown }[] = [];
-    await runClaim(claim, { heartbeat: async () => {}, publish: async (_claim, revision, state, completed) => {
+    await runClaim(claim, { settle: async (_claim, revision, state) => {
+      publications.push({ revision, completed: true, state }); return null;
+    }, heartbeat: async () => {}, publish: async (_claim, revision, state, completed) => {
       publications.push({ revision, completed, state });
     } }, session, { provider: faux.getModel().provider, model: faux.getModel().id, requestAud: 0.1, maxOutputTokens: 1024 });
     expect(publications.at(-1)?.completed).toBe(true);
@@ -113,13 +115,48 @@ describe('released Pi compatibility', () => {
     sessions.splice(sessions.indexOf(session), 1);
   });
 
+  test('durable follow-ups use the same native context and investigation budget', async () => {
+    const { session, faux } = await fixture();
+    faux.setResponses([fauxAssistantMessage('First answer'), context => {
+      expect(JSON.stringify(context)).toContain('First answer');
+      return fauxAssistantMessage('Follow-up answer');
+    }]);
+    const claim: Claim = { id: crypto.randomUUID(), threadId: crypto.randomUUID(), fence: crypto.randomUUID(),
+      prompt: 'First question', deadline: new Date(Date.now() + 10000).toISOString(), revision: 0, snapshot: null };
+    let settled = 0;
+    let finalState: unknown;
+    await runClaim(claim, { heartbeat: async () => {}, publish: async () => {}, settle: async (_claim, _revision, state) => {
+      finalState = state;
+      return settled++ === 0 ? { id: crypto.randomUUID(), prompt: 'Follow-up question', state: 'TAKEN' } : null;
+    } }, session, { provider: faux.getModel().provider, model: faux.getModel().id, requestAud: 2, maxOutputTokens: 1024 });
+    expect(faux.state.callCount).toBe(2);
+    expect(JSON.stringify(finalState)).toContain('Follow-up answer');
+    expect(JSON.stringify(finalState)).toContain('First answer');
+    sessions.splice(sessions.indexOf(session), 1);
+  });
+
+  test('follow-ups cannot reset the per-investigation charge ceiling', async () => {
+    const { session, faux } = await fixture();
+    faux.setResponses([fauxAssistantMessage('First'), fauxAssistantMessage('Second'), fauxAssistantMessage('Must not run')]);
+    const claim: Claim = { id: crypto.randomUUID(), threadId: crypto.randomUUID(), fence: crypto.randomUUID(),
+      prompt: 'First question', deadline: new Date(Date.now() + 10000).toISOString(), revision: 0, snapshot: null };
+    let settlements = 0;
+    await expect(runClaim(claim, { heartbeat: async () => {}, publish: async () => {}, settle: async () => {
+      settlements++;
+      return { id: crypto.randomUUID(), prompt: 'Next question', state: 'TAKEN' };
+    } }, session, { provider: faux.getModel().provider, model: faux.getModel().id, requestAud: 2, maxOutputTokens: 1024 })).rejects.toThrow();
+    expect(faux.state.callCount).toBe(2);
+    expect(settlements).toBe(2);
+    sessions.splice(sessions.indexOf(session), 1);
+  });
+
   test('persistence rejection stops work and never publishes completion', async () => {
     const { session, faux } = await fixture();
     faux.setResponses([fauxAssistantMessage('Provisional answer')]);
     const claim: Claim = { id: crypto.randomUUID(), threadId: crypto.randomUUID(), fence: crypto.randomUUID(),
       prompt: 'Synthetic job', deadline: new Date(Date.now() + 10000).toISOString(), revision: 0, snapshot: null };
     const completed: boolean[] = [];
-    await expect(runClaim(claim, { heartbeat: async () => {}, publish: async (_claim, _revision, _state, done) => {
+    await expect(runClaim(claim, { settle: async () => null, heartbeat: async () => {}, publish: async (_claim, _revision, _state, done) => {
       completed.push(done); throw new Error('stale fence');
     } }, session, { provider: faux.getModel().provider, model: faux.getModel().id, requestAud: 0.1, maxOutputTokens: 1024 })).rejects.toThrow('stale fence');
     expect(completed).not.toContain(true);
@@ -142,7 +179,7 @@ describe('released Pi compatibility', () => {
       prompt: 'Synthetic job', deadline: new Date(Date.now() + 10000).toISOString(), revision: 0, snapshot: null };
     const shutdown = new AbortController();
     const completed: boolean[] = [];
-    const running = runClaim(claim, { heartbeat: async () => {}, publish: async (_claim, _revision, _state, done) => {
+    const running = runClaim(claim, { settle: async () => null, heartbeat: async () => {}, publish: async (_claim, _revision, _state, done) => {
       completed.push(done);
     } }, session, { provider: faux.getModel().provider, model: faux.getModel().id, requestAud: 0.1, maxOutputTokens: 1024 }, shutdown.signal);
     const outcome = running.catch(error => error as Error);

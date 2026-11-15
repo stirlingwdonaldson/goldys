@@ -47,8 +47,10 @@ export async function main(): Promise<void> {
         });
         await runClaim(claim, host, session, { provider, model: modelId, requestAud, maxOutputTokens }, shutdown.signal);
       } catch {
-        // No prompt, model response, token or upstream exception is logged. The expired lease
-        // makes interruption visible in Spring; this attempt is never automatically replayed.
+        // Publish no exception content. If Spring is unreachable, lease expiry remains the fallback.
+        await host.interrupt(claim).catch(() => {
+          console.error('Interruption could not be reported; lease expiry will fence this attempt.');
+        });
         console.error('Workspace investigation interrupted; explicit user retry is required.');
       } finally {
         await rm(cwd, { recursive: true, force: true });

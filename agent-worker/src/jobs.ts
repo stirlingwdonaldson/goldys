@@ -12,7 +12,9 @@ export interface Claim {
   revision: number;
   snapshot: NativeSnapshot | null;
 }
+export interface FollowUp { id: string; prompt: string; state: string }
 export interface JobHost {
+  settle(claim: Claim, revision: number, state: NativeSnapshot): Promise<FollowUp | null>;
   heartbeat(claim: Claim): Promise<void>;
   publish(claim: Claim, revision: number, state: NativeSnapshot, completed: boolean): Promise<void>;
 }
@@ -58,7 +60,7 @@ export async function runClaim(claim: Claim, host: JobHost, session: AgentSessio
     // microtask so the snapshot includes the completed message, not the prior tree.
     if (event.type === 'message_end') queueMicrotask(() => persist(false));
   });
-  const timer = setInterval(() => { void heartbeat(); }, 5000);
+  let timer = setInterval(() => { void heartbeat(); }, 5000);
   const onAbort = () => stop(new Error("Worker stopped"));
   signal?.addEventListener("abort", onAbort, { once: true });
   const deadlineTimer = setTimeout(() => stop(new Error('Investigation deadline ended')), deadline - Date.now());
@@ -66,20 +68,23 @@ export async function runClaim(claim: Claim, host: JobHost, session: AgentSessio
     signal?.throwIfAborted();
     await host.heartbeat(claim);
     signal?.throwIfAborted();
-    await session.prompt(claim.prompt);
-    await publications;
-    if (failure) throw failure;
-    // agent_settled is emitted before prompt resolves; failure/abort must not become success.
-    const last = session.agent.state.messages.at(-1);
-    if (last?.role === 'assistant' && (last.stopReason === 'error' || last.stopReason === 'aborted')) {
-      throw new Error('Pi investigation interrupted');
+    let prompt: string | null = claim.prompt;
+    while (prompt !== null) {
+      await session.prompt(prompt);
+      await publications;
+      if (failure) throw failure;
+      requireCompletedTurn(session);
+      clearInterval(timer);
+      await heartbeatRequest;
+      if (failure) throw failure;
+      // Spring atomically completes or takes a durable command. Pi owns every turn in
+      // this same native session; pending commands are not a second transcript.
+      const next = await host.settle(claim, revision, snapshot(session.sessionManager));
+      revision++;
+      if (failure) throw failure;
+      prompt = next?.prompt ?? null;
+      if (prompt !== null) timer = setInterval(() => { void heartbeat(); }, 5000);
     }
-    clearInterval(timer);
-    await heartbeatRequest;
-    if (failure) throw failure;
-    persist(true);
-    await publications;
-    if (failure) throw failure;
   } finally {
     stopped = true;
     clearInterval(timer);
@@ -89,6 +94,17 @@ export async function runClaim(claim: Claim, host: JobHost, session: AgentSessio
     await stopSession(session);
     session.dispose();
   }
+}
+
+function requireCompletedTurn(session: AgentSession): void {
+  const last = session.agent.state.messages.at(-1);
+  if (last?.role !== 'assistant' || last.stopReason === 'error' || last.stopReason === 'aborted') {
+    throw new Error('Pi investigation interrupted');
+  }
+}
+
+class WorkspaceRequestError extends Error {
+  constructor(readonly status: number) { super(`Workspace request rejected (${status})`); }
 }
 
 /** Fixed private Spring origin; model input can never choose a URL or authorization header. */
@@ -106,7 +122,7 @@ export class SpringJobs implements JobHost {
       headers: { 'Content-Type': 'application/json', 'X-Workspace-Token': this.token },
       body: JSON.stringify(body),
     });
-    if (!response.ok) throw new Error(`Workspace request rejected (${response.status})`);
+    if (!response.ok) throw new WorkspaceRequestError(response.status);
     return response;
   }
   async claim(): Promise<Claim | null> {
@@ -133,14 +149,33 @@ export class SpringJobs implements JobHost {
         name: spec.name, label: spec.name, description: spec.description,
         parameters: Type.Unsafe(spec.parameters),
         execute: async (_callId, arguments_, signal) => {
-          const result = await this.post(`${claim.id}/reporting`, {
-            fence: claim.fence, tool: spec.id, arguments: arguments_,
-          }, signal);
-          const details: unknown = await result.json();
-          return { content: [{ type: 'text' as const, text: JSON.stringify(details) }], details };
+          try {
+            const result = await this.post(`${claim.id}/reporting`, {
+              fence: claim.fence, tool: spec.id, arguments: arguments_,
+            }, signal);
+            const details: unknown = await result.json();
+            return { content: [{ type: 'text' as const, text: JSON.stringify(details) }], details };
+          } catch (error) {
+            if (!(error instanceof WorkspaceRequestError) || error.status !== 403) throw error;
+            return { content: [{ type: 'text' as const, text: 'Not permitted to access this reporting result.' }],
+              details: { status: 'NOT_PERMITTED' } };
+          }
         },
       };
     });
+  }
+  async interrupt(claim: Claim): Promise<void> {
+    await this.post(`${claim.id}/interrupt`, { fence: claim.fence });
+  }
+  async settle(claim: Claim, revision: number, snapshot: NativeSnapshot): Promise<FollowUp | null> {
+    const response = await this.post(`${claim.id}/settle`, { fence: claim.fence, revision, snapshot, completed: false });
+    const body = await response.text();
+    if (!body) return null;
+    const next = JSON.parse(body) as FollowUp;
+    if (typeof next.prompt !== 'string' || !next.prompt.trim() || next.prompt.length > 16000 || next.state !== 'TAKEN') {
+      throw new Error('Invalid workspace follow-up');
+    }
+    return next;
   }
   async heartbeat(claim: Claim): Promise<void> { await this.post(`${claim.id}/heartbeat`, { fence: claim.fence }); }
   async publish(claim: Claim, revision: number, snapshot: NativeSnapshot, completed: boolean): Promise<void> {

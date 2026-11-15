@@ -25,6 +25,10 @@ class WorkspaceWorkerControllerTest {
         .isInstanceOf(AccessDeniedException.class);
     assertThatThrownBy(() -> controller.tools(null, id, null))
         .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> controller.settle(null, id, null))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> controller.interrupt(null, id, null))
+        .isInstanceOf(AccessDeniedException.class);
     verifyNoInteractions(jobs, reporting);
     controller.claim("synthetic-token-at-least-32-characters");
     verify(jobs).claim();

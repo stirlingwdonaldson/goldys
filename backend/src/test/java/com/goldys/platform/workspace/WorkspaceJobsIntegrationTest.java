@@ -25,7 +25,8 @@ class WorkspaceJobsIntegrationTest {
 
   @BeforeEach
   void setup() {
-    jdbc.update("truncate workspace_thread,workspace_job,workspace_daily_budget");
+    jdbc.update(
+        "truncate workspace_follow_up,workspace_thread,workspace_job,workspace_daily_budget");
     owner = account("OWNER");
   }
 
@@ -131,7 +132,7 @@ class WorkspaceJobsIntegrationTest {
     var claim = jobs.claim();
     jobs.publish(claim.id(), claim.fence(), claim.revision(), snapshot(), true);
     assertThat(jobs.read(owner, claim.id()).state()).isEqualTo("COMPLETED");
-    assertThat(jobs.read(owner, claim.id()).snapshot()).isEqualTo(snapshot());
+    assertThat(jobs.read(owner, claim.id()).revision()).isEqualTo(1);
   }
 
   @Test
@@ -143,7 +144,7 @@ class WorkspaceJobsIntegrationTest {
     assertThatThrownBy(() -> jobs.publish(job.id(), claim.fence(), 1, snapshot(), true))
         .isInstanceOf(IllegalStateException.class);
     assertThat(jobs.read(owner, job.id()).state()).isEqualTo("CANCELLED");
-    assertThat(jobs.read(owner, job.id()).snapshot()).isEqualTo(snapshot());
+    assertThat(jobs.read(owner, job.id()).revision()).isEqualTo(1);
   }
 
   @Test
@@ -159,7 +160,7 @@ class WorkspaceJobsIntegrationTest {
     assertThatThrownBy(() -> jobs.heartbeat(job.id(), claim.fence()))
         .isInstanceOf(IllegalStateException.class);
     var retry = submit(thread, UUID.randomUUID());
-    assertThat(retry.snapshot()).isEqualTo(snapshot());
+    assertThat(retry.revision()).isEqualTo(1);
     assertThat(jobs.claim().id()).isEqualTo(retry.id());
   }
 
@@ -201,5 +202,113 @@ class WorkspaceJobsIntegrationTest {
     assertThatThrownBy(() -> jobs.publish(job.id(), claim.fence(), 17, snapshot(), true))
         .isInstanceOf(IllegalStateException.class);
     assertThat(jobs.read(owner, job.id()).state()).isEqualTo("RUNNING");
+  }
+
+  @Test
+  void followUpsAreOrderedEditableIdempotentAndShareAdmission() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    UUID first = UUID.randomUUID(), second = UUID.randomUUID();
+    jobs.enqueue(owner, job.id(), first, "First");
+    jobs.enqueue(owner, job.id(), first, "Duplicate ignored");
+    jobs.enqueue(owner, job.id(), second, "Second");
+    jobs.editFollowUp(owner, job.id(), first, "Edited");
+    var claim = jobs.claim();
+    assertThat(jobs.settle(job.id(), claim.fence(), 0, snapshot()).prompt()).isEqualTo("Edited");
+    assertThatThrownBy(() -> jobs.editFollowUp(owner, job.id(), first, "Too late"))
+        .isInstanceOf(IllegalStateException.class);
+    jobs.removeFollowUp(owner, job.id(), second);
+    assertThat(jobs.settle(job.id(), claim.fence(), 1, snapshot())).isNull();
+    assertThat(jobs.read(owner, job.id()).state()).isEqualTo("COMPLETED");
+    assertThatThrownBy(() -> jobs.enqueue(owner, job.id(), UUID.randomUUID(), "Late"))
+        .isInstanceOf(IllegalStateException.class);
+    assertThat(
+            jdbc.queryForObject("select reserved_aud from workspace_daily_budget", Integer.class))
+        .isEqualTo(5);
+  }
+
+  @Test
+  void stoppedAndInterruptedJobsCancelPendingFollowUpsAndRejectStaleWorkers() {
+    for (boolean stop : new boolean[] {true, false}) {
+      var job = submit(UUID.randomUUID(), UUID.randomUUID());
+      var claim = jobs.claim();
+      jobs.enqueue(owner, job.id(), UUID.randomUUID(), "Pending");
+      if (stop) jobs.stop(owner, job.id());
+      else jobs.interrupt(job.id(), claim.fence());
+      assertThat(jobs.followUps(owner, job.id()))
+          .extracting(WorkspaceJobs.FollowUp::state)
+          .containsExactly("CANCELLED");
+      assertThatThrownBy(() -> jobs.settle(job.id(), claim.fence(), 0, snapshot()))
+          .isInstanceOf(IllegalStateException.class);
+      jobs.interrupt(job.id(), claim.fence());
+      assertThat(jobs.read(owner, job.id()).state()).isEqualTo(stop ? "CANCELLED" : "INTERRUPTED");
+    }
+  }
+
+  @Test
+  void followUpsRequireOwnershipAndCurrentPolicyAndCannotBeSkippedByCompletion() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    UUID request = UUID.randomUUID();
+    jobs.enqueue(owner, job.id(), request, "Pending");
+    assertThatThrownBy(() -> jobs.followUps(account("OWNER"), job.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> jobs.publish(job.id(), claim.fence(), 0, snapshot(), true))
+        .isInstanceOf(IllegalStateException.class);
+    jdbc.update("update user_account set active=false where id=?", owner);
+    assertThatThrownBy(() -> jobs.editFollowUp(owner, job.id(), request, "Changed"))
+        .isInstanceOf(AccessDeniedException.class);
+    jobs.interrupt(job.id(), claim.fence());
+    assertThat(
+            jdbc.queryForObject(
+                "select state from workspace_follow_up where job_id=?", String.class, job.id()))
+        .isEqualTo("CANCELLED");
+  }
+
+  @Test
+  void racingCompletionAndEnqueueCannotStrandAnAcceptedMessage() throws Exception {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    var start = new java.util.concurrent.CountDownLatch(1);
+    try (var pool = Executors.newFixedThreadPool(2)) {
+      var completion =
+          pool.submit(
+              () -> {
+                start.await();
+                return jobs.settle(job.id(), claim.fence(), 0, snapshot());
+              });
+      var enqueue =
+          pool.submit(
+              () -> {
+                start.await();
+                try {
+                  jobs.enqueue(owner, job.id(), UUID.randomUUID(), "Racing follow-up");
+                  return true;
+                } catch (IllegalStateException ended) {
+                  return false;
+                }
+              });
+      start.countDown();
+      var next = completion.get();
+      boolean accepted = enqueue.get();
+      assertThat(accepted).isEqualTo(next != null);
+      assertThat(jobs.read(owner, job.id()).state()).isEqualTo(accepted ? "RUNNING" : "COMPLETED");
+      assertThat(jobs.followUps(owner, job.id())).noneMatch(item -> item.state().equals("QUEUED"));
+    }
+  }
+
+  @Test
+  void leaseExpiryCancelsQueueWithoutReplayingTakenFollowUps() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    jobs.enqueue(owner, job.id(), UUID.randomUUID(), "Taken but not completed");
+    jobs.enqueue(owner, job.id(), UUID.randomUUID(), "Never taken");
+    jobs.settle(job.id(), claim.fence(), 0, snapshot());
+    jdbc.update(
+        "update workspace_job set lease_until=now()-interval '1 second' where id=?", job.id());
+    assertThat(jobs.read(owner, job.id()).state()).isEqualTo("INTERRUPTED");
+    assertThat(jobs.followUps(owner, job.id()))
+        .extracting(WorkspaceJobs.FollowUp::state)
+        .containsExactly("TAKEN", "CANCELLED");
+    assertThat(jobs.claim()).isNull();
   }
 }

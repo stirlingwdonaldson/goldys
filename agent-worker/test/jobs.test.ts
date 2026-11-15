@@ -30,3 +30,20 @@ test('tool bridge binds the authenticated job and fence, never a model-supplied 
     expect(requests[1].init.redirect).toBe('error');
   } finally { globalThis.fetch = original; }
 });
+
+
+test('reporting denials remain explicit without exposing upstream error bodies', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = (async (url: string | URL) => String(url).endsWith('/tools')
+    ? Response.json([{ id: 'GET_METRIC', name: 'goldys_get_metric', description: 'Synthetic', parameters: { type: 'object' } }])
+    : new Response('Sensitive internal upstream detail', { status: 403 })) as typeof fetch;
+  try {
+    const host = new SpringJobs('https://spring.test', 'x'.repeat(32));
+    const [tool] = await host.tools(claim);
+    const result = await tool.execute('call', {}, new AbortController().signal, undefined, {} as never);
+    expect(result.details).toEqual({ status: 'NOT_PERMITTED' });
+    expect(JSON.stringify(result)).toContain('Not permitted');
+    expect(JSON.stringify(result)).not.toContain('Sensitive');
+    await expect(host.heartbeat(claim)).rejects.toThrow('403');
+  } finally { globalThis.fetch = original; }
+});

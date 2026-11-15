@@ -21,9 +21,10 @@ Installation lifecycle scripts remain disabled. The CI lane runs the same checks
 
 `src/main.ts` is a single-slot worker supervisor. It claims an authorized Spring job,
 loads its Pi-native snapshot and Spring-generated reporting schemas, runs Pi and publishes
-serialized native snapshots. A failure leaves the lease to expire as interrupted; it never
-replays the attempt. Spring status polling survives browser disconnection. Stop/revocation
-is observed at the next heartbeat (five seconds) or before another model/tool call.
+serialized native snapshots. A failure reports a fenced interruption immediately; lease expiry
+is the fallback if Spring is unreachable. It never replays the attempt. Spring status polling
+survives browser disconnection. Stop/revocation is observed at the next heartbeat (five seconds)
+or before another model/tool call.
 
 Do not run this worker on the production host or in an application checkout. The accepted
 separate analysis VM, clean process environment and restricted egress remain operational
@@ -49,4 +50,13 @@ accounting are still release gates. Never substitute an optimistic cost estimate
 
 `bun run start` disables automatic dotenv loading. Startup with a deliberately empty process
 environment was checked to fail before contacting any service. No live worker/provider run has
-been performed. Browser-facing UI migration and the remaining proposal slices are outstanding.
+been performed.
+
+Durable follow-ups are picked up in FIFO order at settled Pi turn boundaries using the same
+native session, A$5 reservation ceiling and original deadline. The atomic settle endpoint either
+takes the next pending command or completes the job. Pending messages can be edited/removed;
+Stop, revocation at claim and expiry cancel pending commands. Taken commands are never replayed
+after a crash. A maximum of 20 follow-up submissions (including removed messages) bounds stored
+commands per investigation. This is an engineering safety limit, not a new business spend grant.
+
+Browser-facing UI migration and the remaining proposal slices are outstanding.

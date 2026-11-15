@@ -83,3 +83,60 @@ sandbox/runtime isolation, attachments/extraction/artifacts/retention, controlle
 workspace UI/live-demo/history, reviewed dataset extraction and operational transition. Keep
 workspace activation disabled and manager onboarding blocked. Do not retire Ask's current
 execution path until the replacement and its reporting/permission regressions are accepted.
+
+
+## Continuation: durable follow-ups and browser projections
+
+Continued from `fc4e3aff` in the existing implementation worktree. The initial fetch still
+observed `origin/main` at `fca0b930`; V114/V115 were unused there. No rebase or integration with
+those two newer main commits has been performed.
+
+V115 adds durable follow-up commands under the existing job. Authenticated APIs support FIFO
+queue reads, idempotent enqueue, edit and removal until taken. Commands share the investigation's
+original deadline and charge ceiling. Atomic settlement saves the native snapshot and either takes
+the next command or completes the job under the thread lock, preventing accepted messages from
+being stranded by concurrent completion. Stop/interruption/expiry cancel queued commands; a taken
+command remains visibly taken and is never automatically replayed after failure. Twenty total
+follow-up submissions per investigation bound queue storage, including cancelled submissions.
+
+The worker feeds settled follow-ups into the same Pi-native session and preserves its model-request
+budget across them. Failure reports a fenced interruption without exception content; unreachable
+Spring falls back to lease expiry. Completed/cancelled states cannot be overwritten by stale failure
+reports. Native snapshots remain worker-only: browser job responses derive active-branch messages,
+typed reporting widgets/notices/provenance, and explicit unavailable-result notices. They exclude
+reasoning, compaction internals, inactive branches and arbitrary tool payloads. No second transcript
+is stored. Current-policy authorization still runs before the projection is returned. Reporting
+denials retain an explicit “Not permitted” result without upstream response bodies. Expected
+queue/admission/lease conflicts use HTTP 409 with the stable `WORKSPACE_CONFLICT` envelope.
+
+These changes advance slices 2–3; they do not complete either slice or the migration. Queue UX,
+thread discovery/legacy history, precise dependencies, live/demo migration, sandbox execution,
+files/retention, controlled research, reviewed dataset extraction and operational transition remain.
+The read projection is not a context reconstruction engine and does not change Pi compaction or
+model context. Keep activation off and the existing Ask path in service.
+
+The frozen-lockfile worker install, typecheck, 15 synthetic tests and build pass. Tests cover
+same-session follow-ups, shared request budgets, persistence rejection and shutdown. PostgreSQL
+tests cover FIFO/edit/remove/idempotency, enqueue-versus-completion concurrency, expiry without
+replay, stale failure reports, and ownership/current-policy checks. Projection tests cover branch
+selection, exclusion of reasoning/internal metadata, malformed branches, unsupported widget types,
+and preservation of missing widget values and notices.
+
+Ripwire remains non-clean at `fc4e3aff+dirty`: the final quality check reports 22 gating findings,
+including `runClaim` complexity increasing from 13 to 16, class-size growth, lexical controller
+clones and Spring/JUnit-discovered methods reported as dead. The targeted `WorkspaceJobs` edit
+check reports no incompatible callers, but does not establish that the changed browser `Job`
+record is compatible; it intentionally replaces native `snapshot` with `messages`. The broader
+test gate exits 4 with 19 test files and 140 statically untested symbols (name-based graph with
+2,480 ambiguous and 4,713 unresolved edges); these findings are not a clean safety verdict.
+The full backend regression result for the final code is recorded below.
+
+
+Final continuation verification: `./gradlew spotlessApply test spotlessCheck` passed with
+2,012 tests, 5 skipped, zero failures/errors. The preceding two full runs also passed;
+they preceded the last denial/conflict fixes. No test heap increase was made. Worker frozen install,
+typecheck, 15 tests and build passed. Documentation links, recipe discovery and diff whitespace
+checks pass. No frontend, live provider, separate-VM containment, extraction, backup/restore,
+production operation or remote CI test was performed. Nothing was pushed, merged or deployed.
+This remains an incomplete implementation, with workspace activation off and manager onboarding
+blocked; the remaining delivery slices and acceptance gates above still apply.
