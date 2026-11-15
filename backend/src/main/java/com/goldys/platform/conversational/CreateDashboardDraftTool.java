@@ -57,6 +57,19 @@ public class CreateDashboardDraftTool implements ReportingTool {
   }
 
   @Override
+  public java.util.Set<com.goldys.platform.semantic.catalog.MetricId> referencedMetrics(
+      ToolInput input) {
+    if (!(input instanceof CreateDashboardDraftInput draft)) {
+      throw new IllegalArgumentException("Expected CreateDashboardDraftInput");
+    }
+    // Draft metadata is governed too; no query executes merely to authorize the proposal.
+    return draft.widgets().stream()
+        .flatMap(widget -> widget.queries().stream())
+        .map(com.goldys.platform.semantic.catalog.MetricQuery::metric)
+        .collect(java.util.stream.Collectors.toUnmodifiableSet());
+  }
+
+  @Override
   public ToolResult execute(ToolInput input, UserRole role) {
     DashboardDraft draft = toDraft(input);
     StatWidgetSpec widget =

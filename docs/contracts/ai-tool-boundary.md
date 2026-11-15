@@ -36,7 +36,7 @@ the code is held to.
 | `COMPARE_METRIC_PERIODS` | A catalogue metric across two periods |
 | `RANK_DIMENSION` | A catalogue metric ranked by an allowed dimension |
 | `GET_RECONCILIATION_STATUS` | Open conflicts and resolution state |
-| `CREATE_DASHBOARD_DRAFT` | Proposes a dashboard document for the user to save |
+| `CREATE_DASHBOARD_DRAFT` | Proposes a query-only dashboard document for explicit user confirmation; authorizes every referenced metric, including metadata operands |
 | `GET_RECIPE_COSTING` | Qualified recipe cost summary |
 | `GET_SALES_BY_CATEGORY` | Sales by reviewed category, with coverage qualifications |
 | `GET_RECIPE_INGREDIENTS` | One recipe's ingredient lines (qty/unit, cost, supplier, sub-recipe) |
