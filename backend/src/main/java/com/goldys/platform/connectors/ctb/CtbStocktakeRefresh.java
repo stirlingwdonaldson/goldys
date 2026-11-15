@@ -66,34 +66,37 @@ public class CtbStocktakeRefresh {
   }
 
   private void detail(CtbClient client, IngestionSink sink, StocktakeInput header) {
-    List<StockCountInput> lines = new ArrayList<>();
-    Set<Integer> ids = new HashSet<>();
+    Map<Integer, CtbStocktakeParser.CountLine> lines = new LinkedHashMap<>();
+    int received = 0;
     int total = -1;
     for (int pageIndex = 0; pageIndex < MAX_PAGES; pageIndex++) {
       int start = pageIndex * PAGE_SIZE;
       var page = client.getStocktakeDetail(header.stocktakeId(), start, PAGE_SIZE);
       UUID raw = write(sink, page, "ctb-stocktake-detail", "stocktake:" + header.stocktakeId());
       var parsed =
-          parser.parseStocktakeLines(
+          parser.parseStocktakeLineOccurrences(
               page.json().getBytes(StandardCharsets.UTF_8),
               raw,
               header.stocktakeId(),
               header.stocktakeDate());
       checkPage(page, total, start, parsed.size());
       total = page.totalCount();
+      received += parsed.size();
       for (var line : parsed) {
-        if (!ids.add(line.lineId()))
+        var existing = lines.putIfAbsent(line.value().lineId(), line);
+        // CTB totals count occurrences, including exact copies across or within pages.
+        // Compare original entry text, including fields absent from the canonical model.
+        if (existing != null && !existing.sourceText().equals(line.sourceText()))
           throw new ConnectorFetchException(
-              "CONNECTOR_TRUNCATED",
-              "Stocktake pages repeat a count identity; unique source population is unverified");
-        lines.add(line);
+              "CONNECTOR_SCHEMA_MISMATCH",
+              "Stocktake repeats a count identity with different contents");
       }
       if (start + PAGE_SIZE >= total) break;
     }
-    if (lines.size() != total)
+    if (received != total)
       throw new ConnectorFetchException(
           "CONNECTOR_TRUNCATED", "Stocktake detail population is incomplete");
-    counts.recordAll(lines);
+    counts.recordAll(lines.values().stream().map(CtbStocktakeParser.CountLine::value).toList());
   }
 
   private static void checkPage(CtbClient.CtbPage page, int total, int start, int size) {

@@ -56,7 +56,7 @@ class CtbStocktakeRefreshTest {
   }
 
   @Test
-  void repeatedSourceRowsCannotStandInForACompleteUniqueStocktake() throws Exception {
+  void identicalSourceRowsAcrossPagesArePublishedOnceWithFirstPageLineage() throws Exception {
     var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
     var sample = mapper.readTree(fixture("weekly-stocktake-lines.json")).path("data").get(0);
     var first = mapper.createArrayNode();
@@ -74,11 +74,92 @@ class CtbStocktakeRefreshTest {
             new CtbClient.CtbPage(mapper.createObjectNode().set("data", last).toString(), 209));
     IngestionSink sink = mock(IngestionSink.class);
     when(sink.accept(any())).thenAnswer(i -> UUID.randomUUID());
+    UUID firstPage = UUID.randomUUID();
+    when(sink.accept(argThat(p -> "stocktake:38".equals(p.sourceRecordRef()))))
+        .thenReturn(firstPage, UUID.randomUUID());
+    refresh.fetch(client, sink);
+    verify(sink, times(3)).accept(any());
+    verify(counts)
+        .recordAll(
+            argThat(
+                lines ->
+                    lines.size() == 200
+                        && lines.stream().allMatch(l -> l.rawRecordId().equals(firstPage))));
+  }
+
+  @Test
+  void identicalRowsWithinOnePageCountTowardsDeliveryButArePublishedOnce() throws Exception {
+    String row = "{\"id\":1,\"stockDesc\":\"Crème brûlée\",\"qtyCount\":5,\"subTotal\":12.50}";
+    stubDetail("{\"data\":[" + row + "," + row + "]}", 2);
+    refresh.fetch(client, p -> UUID.randomUUID());
+    verify(counts)
+        .recordAll(
+            argThat(
+                lines ->
+                    lines.size() == 1
+                        && lines.getFirst().lineValue().compareTo(new java.math.BigDecimal("12.50"))
+                            == 0));
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(
+      strings = {
+        "{\"id\":1,\"stockDesc\":\"Oil\",\"qtyCount\":6}",
+        "{\"id\":1,\"stockDesc\":\"Oil\",\"qtyCount\":5,\"unmappedField\":true}",
+        "{\"id\":1, \"stockDesc\":\"Oil\",\"qtyCount\":5}"
+      })
+  void sameIdentityWithDifferentSourceTextIsWithheld(String changed) throws Exception {
+    String original = "{\"id\":1,\"stockDesc\":\"Oil\",\"qtyCount\":5}";
+    stubDetail("{\"data\":[" + original + "," + changed + "]}", 2);
+    IngestionSink sink = mock(IngestionSink.class);
+    when(sink.accept(any())).thenAnswer(i -> UUID.randomUUID());
     assertThatThrownBy(() -> refresh.fetch(client, sink))
         .isInstanceOf(ConnectorFetchException.class)
-        .hasMessageContaining("unique source population is unverified");
-    verify(sink, times(3)).accept(any());
+        .hasMessageContaining("different contents");
+    verify(sink, times(2)).accept(any());
     verifyNoInteractions(counts);
+  }
+
+  @Test
+  void duplicatesCannotHideAShortDelivery() throws Exception {
+    String row = "{\"id\":1,\"stockDesc\":\"Oil\",\"qtyCount\":5}";
+    stubDetail("{\"data\":[" + row + "," + row + "]}", 3);
+    assertThatThrownBy(() -> refresh.fetch(client, p -> UUID.randomUUID()))
+        .isInstanceOf(ConnectorFetchException.class)
+        .hasMessageContaining("differs from advertised population");
+    verifyNoInteractions(counts);
+  }
+
+  @Test
+  void conflictingCopiesAcrossPagesAreWithheld() throws Exception {
+    String row = "{\"id\":1,\"stockDesc\":\"Oil\",\"qtyCount\":5}";
+    stubDetail("{\"data\":[" + String.join(",", Collections.nCopies(200, row)) + "]}", 201);
+    when(client.getStocktakeDetail(38, 200, 200))
+        .thenReturn(
+            new CtbClient.CtbPage(
+                "{\"data\":[{\"id\":1,\"stockDesc\":\"Oil\",\"qtyCount\":6}]}", 201));
+    assertThatThrownBy(() -> refresh.fetch(client, p -> UUID.randomUUID()))
+        .isInstanceOf(ConnectorFetchException.class)
+        .hasMessageContaining("different contents");
+    verifyNoInteractions(counts);
+  }
+
+  @Test
+  void changedTotalStillWithholdsAnOtherwiseIdenticalDelivery() throws Exception {
+    String row = "{\"id\":1,\"stockDesc\":\"Oil\",\"qtyCount\":5}";
+    stubDetail("{\"data\":[" + String.join(",", Collections.nCopies(200, row)) + "]}", 201);
+    when(client.getStocktakeDetail(38, 200, 200))
+        .thenReturn(new CtbClient.CtbPage("{\"data\":[" + row + "," + row + "]}", 202));
+    assertThatThrownBy(() -> refresh.fetch(client, p -> UUID.randomUUID()))
+        .isInstanceOf(ConnectorFetchException.class)
+        .hasMessageContaining("count changed");
+    verifyNoInteractions(counts);
+  }
+
+  private void stubDetail(String json, int total) throws Exception {
+    when(client.searchStocktakes(0, 200))
+        .thenReturn(new CtbClient.CtbPage(fixture("weekly-stocktake-header.json"), 1));
+    when(client.getStocktakeDetail(38, 0, 200)).thenReturn(new CtbClient.CtbPage(json, total));
   }
 
   private String fixture(String name) throws Exception {

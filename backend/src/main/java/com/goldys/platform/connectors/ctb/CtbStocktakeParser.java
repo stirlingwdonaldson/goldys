@@ -1,5 +1,6 @@
 package com.goldys.platform.connectors.ctb;
 
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goldys.platform.canonical.ProductNameKey;
@@ -7,10 +8,10 @@ import com.goldys.platform.canonical.StockCountInput;
 import com.goldys.platform.canonical.StocktakeInput;
 import com.goldys.platform.ingestion.port.ConnectorFetchException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -52,32 +53,65 @@ public class CtbStocktakeParser {
 
   public List<StockCountInput> parseStocktakeLines(
       byte[] json, UUID rawRecordId, int stocktakeId, LocalDate countedDate) {
-    JsonNode data = data(json);
-    if (data == null) {
-      return List.of();
+    // Preserve the legacy replay contract; refresh needs every occurrence for page accounting.
+    return parseStocktakeLineOccurrences(json, rawRecordId, stocktakeId, countedDate).stream()
+        .map(CountLine::value)
+        .distinct()
+        .toList();
+  }
+
+  record CountLine(StockCountInput value, String sourceText) {}
+
+  List<CountLine> parseStocktakeLineOccurrences(
+      byte[] json, UUID rawRecordId, int stocktakeId, LocalDate countedDate) {
+    List<CountLine> out = new ArrayList<>();
+    try (var input = MAPPER.createParser(json)) {
+      if (input.nextToken() != JsonToken.START_OBJECT) return out;
+      while (input.nextToken() != JsonToken.END_OBJECT) {
+        if (input.currentToken() == null)
+          throw new java.io.IOException("Unclosed stocktake object");
+        String field = input.currentName();
+        input.nextToken();
+        if (!"data".equals(field) || input.currentToken() != JsonToken.START_ARRAY) {
+          input.skipChildren();
+          continue;
+        }
+        while (input.nextToken() != JsonToken.END_ARRAY) {
+          if (input.currentToken() != JsonToken.START_OBJECT)
+            throw new java.io.IOException("Expected stocktake line object");
+          int start = Math.toIntExact(input.currentTokenLocation().getByteOffset());
+          JsonNode n = MAPPER.readTree(input);
+          int end = Math.toIntExact(input.currentLocation().getByteOffset());
+          out.add(
+              new CountLine(
+                  stockCount(n, rawRecordId, stocktakeId, countedDate),
+                  new String(json, start, end - start, StandardCharsets.UTF_8)));
+        }
+      }
+      return out;
+    } catch (java.io.IOException e) {
+      throw new ConnectorFetchException("CONNECTOR_SCHEMA_MISMATCH", "Not valid stocktake JSON", e);
     }
-    List<StockCountInput> out = new ArrayList<>();
-    for (JsonNode n : data) {
-      out.add(
-          new StockCountInput(
-              "CTB",
-              stocktakeId,
-              requiredInt(n.get("id"), "id"),
-              countedDate,
-              ProductNameKey.normalize(sanitize(n.get("stockDesc"))),
-              decimal(n.get("qtyCount")),
-              integer(n.get("stockId")),
-              sanitize(n.get("stockCode")),
-              sanitize(n.get("stockUnitOfMeasurementName")),
-              decimal(n.get("stocktakeDetailCost")),
-              decimal(n.get("subTotal")),
-              sanitize(n.get("supplierName")),
-              sanitize(n.get("stocktakeAreaName")),
-              integer(n.get("recipeId")),
-              rawRecordId));
-    }
-    // Collapse exact-duplicate lines so a repeated source row is not double-counted.
-    return new ArrayList<>(new LinkedHashSet<>(out));
+  }
+
+  private static StockCountInput stockCount(
+      JsonNode n, UUID rawRecordId, int stocktakeId, LocalDate countedDate) {
+    return new StockCountInput(
+        "CTB",
+        stocktakeId,
+        requiredInt(n.get("id"), "id"),
+        countedDate,
+        ProductNameKey.normalize(sanitize(n.get("stockDesc"))),
+        decimal(n.get("qtyCount")),
+        integer(n.get("stockId")),
+        sanitize(n.get("stockCode")),
+        sanitize(n.get("stockUnitOfMeasurementName")),
+        decimal(n.get("stocktakeDetailCost")),
+        decimal(n.get("subTotal")),
+        sanitize(n.get("supplierName")),
+        sanitize(n.get("stocktakeAreaName")),
+        integer(n.get("recipeId")),
+        rawRecordId);
   }
 
   private static JsonNode data(byte[] json) {

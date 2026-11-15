@@ -439,11 +439,20 @@ Feed transaction observations retain their source-local timestamp independently.
 Fresh login and stocktake endpoints succeeded: 30 headers and all three pages of
 stocktake 40 (443 lines) parsed with the existing parser. The first deployed refresh
 had not yet run. The user-triggered application **Run now** recovered 23 stocktakes /
-8,575 count lines. Seven older stocktakes remain held: each advertises nine more
-rows than a single large response returns, while normal pages contain nine repeated
-identities. Those responses do not establish a complete unique population. The
-existing guard is retained, with a clearer diagnostic; no deduplication or invented
-stock identities are used to force completeness.
+8,575 count lines. At that audit, seven older stocktakes were held because each
+advertised nine more occurrences than unique identities returned; normal pages
+contained nine exact repetitions. See the [historical audit](../audits/ctb-stock-cogs-2026-11-03/README.md).
+
+On 15 November, read-only inspection of the latest production capture confirmed
+nine byte-identical repeated entries per affected stocktake, with no conflicting
+copies. The owner approved accepting exact repetitions. Stocktake refresh now checks
+page sizes and total delivered occurrences before deduplicating by parent-scoped
+line identity and original entry bytes. Identical copies within or across pages
+publish once, retaining the first copy's raw lineage. Conflicting copies, changing
+totals, short pages and page-limit exhaustion still fail the affected stocktake.
+This does not establish header/detail value agreement or remove previously observed
+lines absent from a later response. Implementation does not deploy this policy or
+replay held production observations automatically.
 
 `Sale/SearchSaleItemsByDateRange` supplies `costPerUnit` and `totalFoodCost` beside
 sold quantities. The complete seven-day real sample has 1,034/1,034 rows parsed and
