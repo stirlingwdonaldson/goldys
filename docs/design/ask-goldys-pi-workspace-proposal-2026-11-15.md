@@ -1,5 +1,7 @@
 # Ask Goldy's agent workspace migration proposal — 15 November 2026
 
+**Implementation progress:** See [local implementation evidence](pi-workspace-implementation-2026-11-15.md) for executed checks and remaining gates. The proposal below describes the target, not completed behavior.
+
 **Status: implementation proposal aligned with owner-confirmed decisions on 15 November 2026; not implemented.** The [accepted workspace decision](../decisions/0002-pi-agent-workspace.md) records the agreed direction and provisional limits. Detailed engineering choices below remain proposals unless explicitly identified as confirmed. Code baseline: `807a4e74` (`origin/main` when fetched). This investigation changed documentation only. It did not inspect credentials or production data, operate production, install an agent runtime, or implement the migration.
 
 ## Recommendation
