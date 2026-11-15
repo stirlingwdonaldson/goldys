@@ -382,9 +382,23 @@ public class QueryCompiler {
         }
         sql.append(selectExprs.get(idx))
             .append(' ')
-            .append(o.direction() == SortDirection.DESC ? "DESC" : "ASC");
+            .append(o.direction() == SortDirection.DESC ? "DESC" : "ASC")
+            .append(" NULLS LAST");
       }
     }
+    // A stable population must not duplicate or omit tied records across limit/offset pages.
+    List<String> ties = new ArrayList<>();
+    if (!groupBy.isEmpty()) {
+      for (GroupField group : groupBy) ties.add(groupExpression(group) + " ASC NULLS LAST");
+    } else if (select.stream().noneMatch(item -> item.aggregate() != null)) {
+      for (Map.Entry<String, DatasetDescriptor> dataset : datasets.entrySet()) {
+        for (String key : registry.identityColumns(dataset.getKey())) {
+          ties.add(aliases.get(dataset.getKey()) + "." + key + " ASC NULLS LAST");
+        }
+      }
+    }
+    if (!ties.isEmpty())
+      sql.append(orderBy.isEmpty() ? " ORDER BY " : ", ").append(String.join(", ", ties));
     sql.append(" LIMIT ? OFFSET ?");
     params.add(limit);
     params.add(offset);

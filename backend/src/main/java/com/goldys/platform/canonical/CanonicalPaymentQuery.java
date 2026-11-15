@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class CanonicalPaymentQuery {
+  @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
+
   private static final int MAX_PAGE_SIZE = 200;
 
   private final CanonicalPaymentRepository repository;
@@ -89,6 +91,54 @@ public class CanonicalPaymentQuery {
         result.getTotalElements(),
         Math.max(page, 0),
         safeSize);
+  }
+
+  public DataPage<PaymentRow> page(
+      String paymentType,
+      String saleNumber,
+      LocalDate from,
+      LocalDate to,
+      int page,
+      int size,
+      com.goldys.platform.semantic.RecordSort sort) {
+    int safeSize = Math.clamp(size, 1, MAX_PAGE_SIZE);
+    int safePage = Math.max(page, 0);
+    var fields =
+        java.util.Map.ofEntries(
+            java.util.Map.entry("tradingDate", "p.tradingDate"),
+            java.util.Map.entry("saleNumber", "p.saleNumber"),
+            java.util.Map.entry("paymentTypeName", "p.paymentTypeName"),
+            java.util.Map.entry("lspayPaymentMode", "p.lspayPaymentMode"),
+            java.util.Map.entry("reconciled", "p.reconciled"),
+            java.util.Map.entry("registerName", "p.registerName"),
+            java.util.Map.entry("staffName", "p.staffName"),
+            java.util.Map.entry("amount", "p.amount"),
+            java.util.Map.entry("tip", "p.tip"),
+            java.util.Map.entry("surcharge", "p.surcharge"),
+            java.util.Map.entry("tendered", "p.tendered"),
+            java.util.Map.entry("paymentCount", "p.paymentCount"));
+    String where =
+        " where p.supersededAt is null and p.tradingDate >= :from and p.tradingDate <= :to and (:saleNumber is null or p.saleNumber = :saleNumber) and (:paymentType is null or p.paymentTypeName = :paymentType)";
+    var query =
+        entityManager.createQuery(
+            "select p from CanonicalPayment p"
+                + where
+                + " order by "
+                + sort.orderBy(fields, "p.id asc"),
+            CanonicalPayment.class);
+    var count =
+        entityManager.createQuery("select count(p) from CanonicalPayment p" + where, Long.class);
+    query.setParameter("from", from).setParameter("to", to).setParameter("saleNumber", saleNumber);
+    query.setParameter("paymentType", paymentType);
+    count.setParameter("from", from).setParameter("to", to).setParameter("saleNumber", saleNumber);
+    count.setParameter("paymentType", paymentType);
+    var rows =
+        query
+            .setFirstResult(Math.toIntExact((long) safePage * safeSize))
+            .setMaxResults(safeSize)
+            .getResultList();
+    return new DataPage<>(
+        rows.stream().map(this::toRow).toList(), count.getSingleResult(), safePage, safeSize);
   }
 
   private PaymentView toView(CanonicalPayment p) {

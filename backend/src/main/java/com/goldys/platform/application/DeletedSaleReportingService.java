@@ -43,7 +43,25 @@ public class DeletedSaleReportingService {
   /** Paged, filterable listing of current deleted sales (canonical browse surface). */
   public DataPage<DeletedSaleRow> list(
       UserRole role, String saleNumber, LocalDate from, LocalDate to, int page, int size) {
+    return list(
+        role,
+        saleNumber,
+        from,
+        to,
+        page,
+        size,
+        new com.goldys.platform.semantic.RecordSort("tradingDate", "desc"));
+  }
+
+  public DataPage<DeletedSaleRow> list(
+      UserRole role,
+      String saleNumber,
+      LocalDate from,
+      LocalDate to,
+      int page,
+      int size,
+      com.goldys.platform.semantic.RecordSort sort) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return deletedSales.page(saleNumber, from, to, page, size);
+    return deletedSales.page(saleNumber, from, to, page, size, sort);
   }
 }

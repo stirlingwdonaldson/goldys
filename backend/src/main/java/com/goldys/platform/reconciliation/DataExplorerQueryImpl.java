@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class DataExplorerQueryImpl implements DataExplorerQuery {
+  @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
+
   private static final int MAX_PAGE_SIZE = 200;
 
   private final RawRecordBrowseQuery raw;
@@ -105,19 +107,208 @@ public class DataExplorerQueryImpl implements DataExplorerQuery {
       case "resolved_daily_sales" ->
           page(dailySales.findAll(pr), page, safeSize, DataExplorerQueryImpl::dailySalesRow);
       case "resolved_product_sales" ->
-          page(productSales.findAll(pr), page, safeSize, DataExplorerQueryImpl::productSalesRow);
+          page(
+              productSales.findAll(pr.withSort(pr.getSort().and(Sort.by("productNameKey")))),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::productSalesRow);
       case "resolved_reservation_day" ->
-          page(reservations.findAll(pr), page, safeSize, DataExplorerQueryImpl::reservationRow);
+          page(
+              reservations.findAll(pr.withSort(pr.getSort().and(Sort.by("servicePeriod")))),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::reservationRow);
       case "resolved_labour_day" ->
-          page(labour.findAll(pr), page, safeSize, DataExplorerQueryImpl::labourRow);
+          page(
+              labour.findAll(pr.withSort(pr.getSort().and(Sort.by("department")))),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::labourRow);
       case "resolved_inventory_day" ->
           page(inventory.findAll(pr), page, safeSize, DataExplorerQueryImpl::inventoryRow);
       case "resolved_payment_day" ->
-          page(payments.findAll(pr), page, safeSize, DataExplorerQueryImpl::paymentRow);
+          page(
+              payments.findAll(pr.withSort(pr.getSort().and(Sort.by("paymentTypeName")))),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::paymentRow);
       case "resolved_deleted_sale_day" ->
           page(deletedSales.findAll(pr), page, safeSize, DataExplorerQueryImpl::deletedSaleRow);
       case "resolved_sale_item_day" ->
-          page(saleItems.findAll(pr), page, safeSize, DataExplorerQueryImpl::saleItemRow);
+          page(
+              saleItems.findAll(pr.withSort(pr.getSort().and(Sort.by("categoryName")))),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::saleItemRow);
+      default -> throw new java.util.NoSuchElementException("Unknown resolved domain: " + domainId);
+    };
+  }
+
+  public DataPage<GenericRow> resolvedRows(
+      String domainId, int page, int size, com.goldys.platform.semantic.RecordSort sort) {
+    int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+    PageRequest pr =
+        PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, "tradingDate"));
+    return switch (domainId) {
+      case "resolved_daily_sales" ->
+          page(
+              sortedPage(
+                  ResolvedDailySales.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("resolution_type", "e.resolutionType"),
+                      Map.entry("authoritative_source", "e.authoritativeSource"),
+                      Map.entry("has_conflict", "e.hasConflict"),
+                      Map.entry("resolved_at", "e.resolvedAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("total_sales", "e.totalSales"),
+                      Map.entry("net_sales", "e.netSales"),
+                      Map.entry("gst", "e.gst")),
+                  "e.tradingDate asc"),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::dailySalesRow);
+      case "resolved_product_sales" ->
+          page(
+              sortedPage(
+                  ResolvedProductSales.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("resolution_type", "e.resolutionType"),
+                      Map.entry("authoritative_source", "e.authoritativeSource"),
+                      Map.entry("has_conflict", "e.hasConflict"),
+                      Map.entry("resolved_at", "e.resolvedAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("product_name_key", "e.productNameKey"),
+                      Map.entry("quantity_sold", "e.quantitySold"),
+                      Map.entry("amount", "e.amount")),
+                  "e.tradingDate asc, e.productNameKey asc"),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::productSalesRow);
+      case "resolved_reservation_day" ->
+          page(
+              sortedPage(
+                  ResolvedReservationDay.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("resolution_type", "e.resolutionType"),
+                      Map.entry("authoritative_source", "e.authoritativeSource"),
+                      Map.entry("has_conflict", "e.hasConflict"),
+                      Map.entry("resolved_at", "e.resolvedAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("service_period", "e.servicePeriod"),
+                      Map.entry("bookings", "e.bookings"),
+                      Map.entry("attended", "e.attended"),
+                      Map.entry("covers", "e.covers"),
+                      Map.entry("cancelled", "e.cancelled"),
+                      Map.entry("no_shows", "e.noShows"),
+                      Map.entry("walk_ins", "e.walkIns")),
+                  "e.tradingDate asc, e.servicePeriod asc"),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::reservationRow);
+      case "resolved_labour_day" ->
+          page(
+              sortedPage(
+                  ResolvedLabourDay.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("resolution_type", "e.resolutionType"),
+                      Map.entry("authoritative_source", "e.authoritativeSource"),
+                      Map.entry("has_conflict", "e.hasConflict"),
+                      Map.entry("resolved_at", "e.resolvedAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("department", "e.department"),
+                      Map.entry("scheduled_hours", "e.scheduledHours"),
+                      Map.entry("actual_hours", "e.actualHours"),
+                      Map.entry("scheduled_cost", "e.scheduledCost"),
+                      Map.entry("actual_cost", "e.actualCost")),
+                  "e.tradingDate asc, e.department asc"),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::labourRow);
+      case "resolved_inventory_day" ->
+          page(
+              sortedPage(
+                  ResolvedInventoryDay.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("resolution_type", "e.resolutionType"),
+                      Map.entry("authoritative_source", "e.authoritativeSource"),
+                      Map.entry("has_conflict", "e.hasConflict"),
+                      Map.entry("resolved_at", "e.resolvedAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("purchases", "e.purchases"),
+                      Map.entry("wastage", "e.wastage"),
+                      Map.entry("stock_on_hand", "e.stockOnHand")),
+                  "e.tradingDate asc"),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::inventoryRow);
+      case "resolved_payment_day" ->
+          page(
+              sortedPage(
+                  ResolvedPaymentDay.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("resolution_type", "e.resolutionType"),
+                      Map.entry("authoritative_source", "e.authoritativeSource"),
+                      Map.entry("has_conflict", "e.hasConflict"),
+                      Map.entry("resolved_at", "e.resolvedAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("payment_type_name", "e.paymentTypeName"),
+                      Map.entry("amount", "e.amount"),
+                      Map.entry("tip", "e.tip"),
+                      Map.entry("payment_count", "e.paymentCount")),
+                  "e.tradingDate asc, e.paymentTypeName asc"),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::paymentRow);
+      case "resolved_deleted_sale_day" ->
+          page(
+              sortedPage(
+                  ResolvedDeletedSaleDay.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("resolution_type", "e.resolutionType"),
+                      Map.entry("authoritative_source", "e.authoritativeSource"),
+                      Map.entry("has_conflict", "e.hasConflict"),
+                      Map.entry("resolved_at", "e.resolvedAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("deleted_count", "e.deletedCount"),
+                      Map.entry("total_inc_tax", "e.totalIncTax"),
+                      Map.entry("total_tax", "e.totalTax")),
+                  "e.tradingDate asc"),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::deletedSaleRow);
+      case "resolved_sale_item_day" ->
+          page(
+              sortedPage(
+                  ResolvedSaleItemDay.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("resolution_type", "e.resolutionType"),
+                      Map.entry("authoritative_source", "e.authoritativeSource"),
+                      Map.entry("has_conflict", "e.hasConflict"),
+                      Map.entry("resolved_at", "e.resolvedAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("category_name", "e.categoryName"),
+                      Map.entry("quantity", "e.quantity"),
+                      Map.entry("amount", "e.amount")),
+                  "e.tradingDate asc, e.categoryName asc"),
+              page,
+              safeSize,
+              DataExplorerQueryImpl::saleItemRow);
       default -> throw new java.util.NoSuchElementException("Unknown resolved domain: " + domainId);
     };
   }
@@ -263,5 +454,31 @@ public class DataExplorerQueryImpl implements DataExplorerQuery {
     }
     resolvedCommon(c, r.resolutionType(), r.authoritativeSource(), r.hasConflict(), r.resolvedAt());
     return row(r.tradingDate() + "|" + r.categoryName(), c);
+  }
+
+  private <T> Page<T> sortedPage(
+      Class<T> type,
+      PageRequest page,
+      com.goldys.platform.semantic.RecordSort sort,
+      Map<String, String> fields,
+      String ties) {
+    String order = sort.orderBy(fields, ties);
+    var rows =
+        entityManager
+            .createQuery("select e from " + type.getSimpleName() + " e order by " + order, type)
+            .setFirstResult(Math.toIntExact(page.getOffset()))
+            .setMaxResults(page.getPageSize())
+            .getResultList();
+    long count =
+        entityManager
+            .createQuery("select count(e) from " + type.getSimpleName() + " e", Long.class)
+            .getSingleResult();
+    return new org.springframework.data.domain.PageImpl<>(rows, page, count);
+  }
+
+  @Override
+  public DataPage<GenericRow> canonicalRows(
+      String entityId, int page, int size, com.goldys.platform.semantic.RecordSort sort) {
+    return canonical.listRows(entityId, page, size, sort);
   }
 }

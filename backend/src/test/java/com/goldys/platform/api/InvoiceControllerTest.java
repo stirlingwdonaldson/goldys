@@ -66,7 +66,7 @@ class InvoiceControllerTest {
   @Test
   void listReturnsPagedSummaries() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(reporting.list(any(), any(), any(), any(), anyInt(), anyInt()))
+    when(reporting.list(any(), any(), any(), any(), anyInt(), anyInt(), any()))
         .thenReturn(
             new DataPage<>(
                 List.of(
@@ -99,7 +99,7 @@ class InvoiceControllerTest {
   @Test
   void listWithoutDateParamsSucceeds() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(reporting.list(any(), any(), any(), any(), anyInt(), anyInt()))
+    when(reporting.list(any(), any(), any(), any(), anyInt(), anyInt(), any()))
         .thenReturn(new DataPage<>(List.of(), 0, 0, 50));
 
     mvc.perform(get("/api/invoices").with(authenticated(owner())))

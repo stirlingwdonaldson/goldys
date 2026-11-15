@@ -5,4 +5,13 @@ import java.time.LocalDate;
 public interface SaleItemListQuery {
   DataPage<SaleItemRow> page(
       String category, String saleNumber, LocalDate from, LocalDate to, int page, int size);
+
+  DataPage<SaleItemRow> page(
+      String category,
+      String saleNumber,
+      LocalDate from,
+      LocalDate to,
+      int page,
+      int size,
+      RecordSort sort);
 }

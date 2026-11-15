@@ -46,33 +46,73 @@ public class InvoiceReportingService {
   }
 
   /**
-   * Paged, filterable listing of current invoice headers. Supplier is an exact match (null matches
-   * any); the invoice date must fall in the inclusive {@code [from, to]} range. Newest date first,
-   * then invoice number ascending, paginated in memory.
+   * Current invoice headers filtered by case-insensitive supplier substring and inclusive dates.
+   * The default order is newest invoice date first, with stable invoice identity ties. Ordering
+   * precedes pagination over the complete authorized matching set.
    */
   public DataPage<InvoiceSummary> list(
       UserRole role, String supplier, LocalDate from, LocalDate to, int page, int size) {
+    return list(
+        role,
+        supplier,
+        from,
+        to,
+        page,
+        size,
+        new com.goldys.platform.semantic.RecordSort("invoiceDate", "desc"));
+  }
+
+  public DataPage<InvoiceSummary> list(
+      UserRole role,
+      String supplier,
+      LocalDate from,
+      LocalDate to,
+      int page,
+      int size,
+      com.goldys.platform.semantic.RecordSort sort) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
 
-    List<InvoiceMetadataView> summaries =
+    List<InvoiceSummary> summaries =
         invoices.currentInvoices().stream()
-            .filter(i -> supplier == null || supplier.equals(i.supplierName()))
+            .filter(
+                i ->
+                    supplier == null
+                        || (i.supplierName() != null
+                            && i.supplierName()
+                                .toLowerCase(java.util.Locale.ROOT)
+                                .contains(supplier.toLowerCase(java.util.Locale.ROOT))))
             .filter(i -> inRange(i.invoiceDate(), from, to))
-            .sorted(
-                Comparator.comparing(InvoiceMetadataView::invoiceDate)
-                    .reversed()
-                    .thenComparing(InvoiceMetadataView::invoiceNumber))
+            .map(i -> toSummary(i, "pdf".equals(sort.field())))
+            .sorted(invoiceOrder(sort))
             .toList();
 
     int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
     int safePage = Math.max(page, 0);
     int fromIndex = safePage * safeSize;
-    List<InvoiceMetadataView> items =
+    List<InvoiceSummary> items =
         fromIndex < 0 || fromIndex >= summaries.size()
             ? List.of()
             : summaries.subList(fromIndex, Math.min(fromIndex + safeSize, summaries.size()));
-    return new DataPage<>(
-        items.stream().map(this::toSummary).toList(), summaries.size(), safePage, safeSize);
+    // Only PDF ordering needs document availability for the entire matching population.
+    // Other sorts resolve that evidence for the selected page only.
+    if (!"pdf".equals(sort.field())) items = items.stream().map(this::withPdf).toList();
+    return new DataPage<>(items, summaries.size(), safePage, safeSize);
+  }
+
+  private Comparator<InvoiceSummary> invoiceOrder(com.goldys.platform.semantic.RecordSort sort) {
+    Comparator<InvoiceSummary> comparator =
+        switch (sort.field()) {
+          case "supplierName" -> sort.comparing(InvoiceSummary::supplierName);
+          case "invoiceNumber" -> sort.comparing(InvoiceSummary::invoiceNumber);
+          case "invoiceDate" -> sort.comparing(InvoiceSummary::invoiceDate);
+          case "dueDate" -> sort.comparing(InvoiceSummary::dueDate);
+          case "totalAmount" -> sort.comparing(InvoiceSummary::totalAmount);
+          case "purchaseNumber" -> sort.comparing(InvoiceSummary::purchaseNumber);
+          case "pdf" -> sort.comparing(InvoiceSummary::hasPdf);
+          default -> throw new IllegalArgumentException("Unsupported invoice sort");
+        };
+    return comparator.thenComparing(
+        InvoiceSummary::invoiceId, Comparator.nullsLast(Comparator.naturalOrder()));
   }
 
   /** One invoice's header plus its lines (newest line total first), or {@code NOT_FOUND}. */
@@ -160,7 +200,22 @@ public class InvoiceReportingService {
         List.copyOf(notices));
   }
 
-  private InvoiceSummary toSummary(InvoiceMetadataView i) {
+  private InvoiceSummary toSummary(InvoiceMetadataView i, boolean includePdf) {
+    String status = includePdf ? pdfLinks.status(i.invoiceId()) : null;
+    return new InvoiceSummary(
+        i.supplierName(),
+        i.invoiceNumber(),
+        i.invoiceDate(),
+        i.dueDate(),
+        i.totalAmount(),
+        i.purchaseNumber(),
+        "AVAILABLE".equals(status),
+        i.invoiceId(),
+        i.supplierId(),
+        status);
+  }
+
+  private InvoiceSummary withPdf(InvoiceSummary i) {
     String status = pdfLinks.status(i.invoiceId());
     return new InvoiceSummary(
         i.supplierName(),

@@ -30,10 +30,20 @@ public class SalesController {
           LocalDate from,
       @RequestParam(value = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate to,
+      @RequestParam(required = false) String source,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size,
+      @RequestParam(defaultValue = "date") String sort,
+      @RequestParam(defaultValue = "desc") String direction,
       @AuthenticationPrincipal AccountUserDetails user) {
-    return salesReporting.dailySales(currentUser.roleOf(user), from, to, page, size);
+    return salesReporting.dailySales(
+        currentUser.roleOf(user),
+        from,
+        to,
+        page,
+        size,
+        source,
+        new com.goldys.platform.semantic.RecordSort(sort, direction));
   }
 
   @GetMapping("/latest")

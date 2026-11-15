@@ -55,6 +55,32 @@ class DeletedSaleListIntegrationTest {
     assertFullFieldSet(sale1.items().get(0));
   }
 
+  @Test
+  void ordersTheEntireFilteredDatasetBeforeThreeRowPages() {
+    for (int i = 0; i < 10; i++) {
+      ingest.record(deletedSale(DAY_1, "SORT-" + i, Integer.toString(i == 9 ? 999 : i / 2)));
+    }
+    for (String direction : java.util.List.of("asc", "desc")) {
+      var sort = new com.goldys.platform.semantic.RecordSort("totalIncTax", direction);
+      var all = new java.util.ArrayList<DeletedSaleRow>();
+      for (int page = 0; page < 4; page++)
+        all.addAll(query.page(null, DAY_1, DAY_2, page, 3, sort).items());
+      assertThat(all).hasSize(10);
+      assertThat(all).extracting(DeletedSaleRow::saleNumber).doesNotHaveDuplicates();
+      var values = all.stream().map(DeletedSaleRow::totalIncTax).toList();
+      assertThat(values)
+          .isSortedAccordingTo(
+              direction.equals("asc")
+                  ? java.util.Comparator.naturalOrder()
+                  : java.util.Comparator.reverseOrder());
+      assertThat(values.get(direction.equals("asc") ? 0 : 9)).isEqualByComparingTo("0");
+      assertThat(values.get(direction.equals("desc") ? 0 : 9)).isEqualByComparingTo("999");
+      int page = 0;
+      assertThat(query.page(null, DAY_1, DAY_2, page, 3, sort).items())
+          .isEqualTo(all.subList(0, 3));
+    }
+  }
+
   private void assertFullFieldSet(DeletedSaleRow r) {
     assertThat(r.tradingDate()).isEqualTo(DAY_1);
     assertThat(r.saleNumber()).isEqualTo("SALE-1");

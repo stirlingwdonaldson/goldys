@@ -807,4 +807,21 @@ public class DatasetRegistry {
       String name, String column, FieldType type, String unit, boolean nullable, FieldKind kind) {
     return new FieldDescriptor(name, column, type, unit, nullable, kind, null);
   }
+
+  /** Physical row identities used only to break ties, never accepted from clients. */
+  List<String> identityColumns(String dataset) {
+    return switch (dataset) {
+      case "resolved_daily_sales", "resolved_deleted_sale_day", "resolved_inventory_day" ->
+          List.of("trading_date");
+      case "resolved_product_sales" -> List.of("trading_date", "product_name_key");
+      case "resolved_payment_day" -> List.of("trading_date", "payment_type_name");
+      case "resolved_sale_item_day" -> List.of("trading_date", "category_name");
+      case "resolved_reservation_day" -> List.of("trading_date", "service_period");
+      case "resolved_recipe" -> List.of("recipe_id");
+      case "resolved_recipe_ingredient", "invoice", "invoice_line", "source_product_sale_fact" ->
+          List.of("id");
+      default ->
+          throw new IllegalArgumentException("Dataset identity is not registered: " + dataset);
+    };
+  }
 }
