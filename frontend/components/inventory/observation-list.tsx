@@ -51,7 +51,7 @@ export function ObservationList({ from: initialFrom, to: initialTo, apiOverride 
       ? <PermissionDenied subject="stock and waste observations" />
       : <ErrorState title="Couldn't load observations" message={result.error.message} onRetry={result.refetch} />
       : result.data ? <>
-        <DataQualifications notices={result.data.notices} />
+        <DataQualifications label="Inventory observation coverage" notices={result.data.notices} />
         {result.data.observations.length === 0 ? <EmptyState title="No recorded observations" description="No observations match this range and kind; this does not establish zero stock or waste." /> :
           <ObservationTable rows={result.data.observations} page={page} />}
         <div className="flex gap-2"><Button variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous observations</Button><Button variant="outline" disabled={!result.data.hasMore} onClick={() => setPage(page + 1)}>Next observations</Button></div>

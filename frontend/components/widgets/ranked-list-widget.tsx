@@ -13,7 +13,7 @@ export function RankedListWidgetView({ widget }: { widget: RankedListWidget }) {
     );
   }
   const values = (item: (typeof widget.items)[number]) =>
-    [item.primary, item.secondary].filter((v): v is string => !!v).join(" × ");
+    [item.primary, item.secondary].filter((v): v is string => !!v).join(" · ");
 
   return (
     <WidgetShell title={widget.title} description={widget.description}>

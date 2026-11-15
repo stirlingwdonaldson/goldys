@@ -106,19 +106,17 @@ export default function KitchenPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <DataQualifications notices={purchaseNotices} />
       <PageHeader
         title="Kitchen"
         description="Invoice purchases, recorded waste, and supplier spend."
       />
 
       <p className="text-sm text-muted-foreground">Food cost % is unavailable until consumed cost and valuation are evidenced. Invoice purchases are not COGS. Unit cost is unavailable for mixed items or unknown conversion bases.</p>
-      <DataQualifications notices={summary.data?.notices} />
       {summary.isPending ? <LoadingState rows={1} /> : null}
       {summary.error ? (
         <InlineError>Couldn&apos;t load the 30-day totals. Refresh the page to try again.</InlineError>
       ) : null}
-      {summary.data ? <SummaryStats s={summary.data} /> : null}
+      {summary.data ? <DataQualifications label="Kitchen totals" scope={`${from} to ${to}`} notices={summary.data.notices}><SummaryStats s={summary.data} /></DataQualifications> : null}
 
       <Section title="Stock count and waste observations"><ObservationList from={from} to={to} /></Section>
 
@@ -165,6 +163,7 @@ export default function KitchenPage() {
 
       {suppliers.length > 0 ? (
         <Section title="Spend by supplier">
+          <DataQualifications label="Supplier spend" scope={`${from} to ${to}`} notices={purchaseNotices}>
           <DataTable
             columns={supplierColumns}
             data={suppliers}
@@ -173,6 +172,7 @@ export default function KitchenPage() {
             initialSorting={[{ id: "lineTotal", desc: true }]}
             getRowId={(r) => r.supplier}
           />
+          </DataQualifications>
         </Section>
       ) : null}
     </div>

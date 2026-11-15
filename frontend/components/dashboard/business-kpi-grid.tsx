@@ -1,4 +1,5 @@
 import { CalendarDays, Percent, Scale, TrendingUp, Trophy, Utensils } from "lucide-react";
+import { DataQualifications } from "@/components/data-display/data-qualifications";
 import { Badge } from "@/components/ui/badge";
 import { AwaitingData } from "@/components/states/awaiting-data";
 import { OwnerOnlyTile } from "@/components/states/owner-only";
@@ -23,6 +24,7 @@ interface BusinessKpiGridProps {
   foodCost?: FoodCost;
   /** The recent top sellers, used for the top-seller tile. */
   topSellers?: TopSeller[];
+  topSellerNotices?: string[];
 }
 
 // Definition from docs/metrics/catalog.md (`sales.net`).
@@ -33,10 +35,10 @@ const NET_SALES_HELP =
  * Compares the latest day against the same weekday a week earlier, when both are
  * resolved. Pubs trade very differently across the week, so day-on-day would mislead.
  */
-function weekOnWeek(latest: { date: string | null; total: number | null }, trend: SalesTrendPoint[]): StatDelta | undefined {
+export function weekOnWeek(latest: { date: string | null; total: number | null }, trend: SalesTrendPoint[]): StatDelta | undefined {
   if (!latest.date || latest.total == null) return undefined;
-  const d = new Date(`${latest.date}T00:00:00`);
-  d.setDate(d.getDate() - 7);
+  const d = new Date(`${latest.date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 7);
   const prior = d.toISOString().slice(0, 10);
   const prev = toNumber(trend.find((p) => p.date === prior)?.total ?? null);
   if (prev == null || prev === 0) return undefined;
@@ -61,6 +63,7 @@ export function BusinessKpiGrid({
   coversToday,
   foodCost,
   topSellers = [],
+  topSellerNotices,
 }: BusinessKpiGridProps) {
   const isOwnerRole = isOwner(seniority) || seniority?.trim().toUpperCase() === "MANAGER";
   const unavailableDays = salesTrend.filter((p) => p.total == null).length;
@@ -134,13 +137,13 @@ export function BusinessKpiGrid({
           icon={Trophy}
         />
       ) : (
-        <StatCard
+        <div><DataQualifications label="Leading product" scope="Trailing 30 days" notices={topSellerNotices}><StatCard
           label="Top sellers"
           value={formatCurrency(topSellers[0].amount)}
           hint={topSellers[0].name}
           icon={Trophy}
-          help="The highest-revenue product over the trailing 30 days."
-        />
+          help="The highest known-revenue product over the trailing 30 days; see coverage for ranking limits."
+        /></DataQualifications></div>
       )}
       {foodCost?.purchases == null ? (
         <AwaitingData

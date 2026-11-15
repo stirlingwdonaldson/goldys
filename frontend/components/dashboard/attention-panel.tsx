@@ -30,7 +30,7 @@ export function AttentionPanel({ items, loading, openConflicts, notices = [] }: 
   if (loading) return <Skeleton className="h-40 rounded-xl" />;
   if (!items || items.length === 0) return (
     <section className="space-y-3">
-      <DataQualifications notices={notices} />
+      <DataQualifications label="Attention checks" notices={notices} />
       <NeedsDecisionBand openCount={openConflicts} />
     </section>
   );
@@ -49,7 +49,7 @@ export function AttentionPanel({ items, loading, openConflicts, notices = [] }: 
           </Link>
         </Button>
       </div>
-      <DataQualifications notices={notices} />
+      <DataQualifications label="Attention checks" notices={notices} />
       <WorkList items={items.slice(0, PREVIEW)} label="Top items needing attention" />
       {items.length > PREVIEW ? (
         <p className="text-xs text-muted-foreground">

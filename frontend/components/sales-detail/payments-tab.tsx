@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable } from "@/components/data-table/data-table";
-import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
+import { TablePagination } from "@/components/data-table/table-pagination";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { currencyColumn, dateColumn, numberColumn } from "@/components/data-table/columns";
 import { EmptyState } from "@/components/states/empty-state";
@@ -15,8 +15,11 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import type { Api } from "@/lib/api";
 import type { PaymentRow } from "@/lib/api/types";
+import { readSort, tableSorting, SORT_FIELDS } from "@/lib/record-sort";
+import { listPage } from "@/lib/list-url";
+import { useInvestigationUrl } from "@/lib/use-investigation-url";
 import { useApi } from "@/lib/demo-mode";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { buildPaymentMixWidget } from "./payment-mix-chart";
 
 interface PaymentsTabProps {
@@ -85,11 +88,20 @@ function paymentColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<Pa
  */
 export function PaymentsTab({ from, to, onViewSale, apiOverride }: PaymentsTabProps) {
   const queryApi = useApi();
-  const { page, setPage, pageSize, setPageSize } = usePageState(`${from}|${to}`);
-  const [paymentType, setPaymentType] = useState("");
+  const sortUrl = useInvestigationUrl();
+  const sort = readSort(sortUrl.params, SORT_FIELDS.payments, "tradingDate", "payments-");
+  const sorting = tableSorting(sort);
+  const paging = new URLSearchParams({ page: sortUrl.params.get("payments-page") ?? "0", size: sortUrl.params.get("payments-size") ?? "10" });
+  const parsedPage = listPage(paging);
+  const page = (sortUrl.params.has("from") && (sortUrl.params.get("from") !== from || sortUrl.params.get("to") !== to)) ? 0 : parsedPage.page;
+  const pageSize = parsedPage.pageSize;
+  const setPage = (value: number) => sortUrl.update({ "payments-page": String(value), from, to });
+  const setPageSize = (value: number) => sortUrl.update({ "payments-size": String(value), "payments-page": null, from, to });
+  const paymentType = (sortUrl.params.get("paymentType") ?? "").slice(0, 200);
+  const setPaymentType = (value: string) => sortUrl.update({ paymentType: value, "payments-page": null, from, to });
 
   const mix = useQuery({ queryKey: ["getPaymentMix", from, to], queryFn: ({ signal }) => (apiOverride ?? queryApi).getPaymentMix(from, to, { signal }) });
-  const rows = useQuery({ queryKey: ["listPayments", { from, to, paymentType }, page, pageSize], queryFn: ({ signal }) => (apiOverride ?? queryApi).listPayments({ from, to, paymentType }, page, pageSize, { signal }) });
+  const rows = useQuery({ placeholderData: keepPreviousData, queryKey: ["listPayments", sort, { from, to, paymentType }, page, pageSize], queryFn: ({ signal }) => (apiOverride ?? queryApi).listPayments({ from, to, paymentType }, page, pageSize, { signal, sort }) });
 
 
   // The dropdown offers exactly the tender types present in the resolved mix.
@@ -169,7 +181,10 @@ export function PaymentsTab({ from, to, onViewSale, apiOverride }: PaymentsTabPr
             pageSize={false}
             // `dateColumn` derives its id from the accessor key, so sort on "tradingDate"
             // (the ruling's "date" refers to no column and silently sorts nothing).
-            initialSorting={[{ id: "tradingDate", desc: true }]}
+            sorting={sorting}
+            manualSorting
+            sortingPending={rows.isPlaceholderData}
+            onSortingChange={(change) => { const next = typeof change === "function" ? change(sorting) : change; sortUrl.update({ "payments-sort": next[0]?.id ?? "tradingDate", "payments-direction": next[0]?.desc ? "desc" : "asc", "payments-page": null, from, to }); }}
             getRowId={(r) => `${r.saleNumber}-${r.paymentTypeName}-${r.tradingDate}`}
           />
         ) : null}

@@ -48,7 +48,7 @@ function formatRangeLabel(value: DateRange): string {
   const from = parseIsoDate(value.from);
   const to = parseIsoDate(value.to);
   if (!from || !to) return "Custom range";
-  const fmt = (d: Date) => d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+  const fmt = (d: Date) => d.toLocaleDateString("en-AU", { day: "numeric", month: "short", ...(from.getFullYear() !== to.getFullYear() ? { year: "numeric" as const } : {}) });
   if (from.getTime() === to.getTime()) return fmt(from);
   return `${fmt(from)} – ${fmt(to)}`;
 }
@@ -69,12 +69,13 @@ export function TimeRangeSelector({ value, onChange, className }: TimeRangeSelec
   const active = matchPreset(value);
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
+    <div className={cn("flex min-w-0 max-w-full flex-wrap items-center gap-1.5", className)}>
       {PRESETS.map((p) => (
         <Button
           key={p.id}
           type="button"
           size="sm"
+          aria-pressed={active === p.id}
           variant={active === p.id ? "default" : "outline"}
           onClick={() => onChange(presetRange(p.id))}
         >
@@ -87,8 +88,8 @@ export function TimeRangeSelector({ value, onChange, className }: TimeRangeSelec
             type="button"
             size="sm"
             variant={active === "custom" ? "default" : "outline"}
-            aria-label="Custom date range"
-            className="gap-1.5"
+            aria-label={`Custom date range: ${parseIsoDate(value.from)?.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })} to ${parseIsoDate(value.to)?.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}, inclusive`}
+            className="h-auto min-h-8 max-w-full gap-1.5 whitespace-normal py-1 text-left"
           >
             <CalendarIcon className="size-4" aria-hidden="true" />
             {formatRangeLabel(value)}

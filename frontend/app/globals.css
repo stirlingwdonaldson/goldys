@@ -30,7 +30,7 @@
     --destructive-soft: 0 82% 96%;
     --border: 50 9% 89%;
     --input: 50 9% 86%;
-    --ring: 45 90% 45%;
+    --ring: 35 78% 30%;
     --radius: 0.75rem;
 
     /* Charts follow the status convention: green is good/healthy, red is bad/failed.
@@ -68,7 +68,7 @@
     --sidebar-accent: 60 6% 91%;
     --sidebar-accent-foreground: 240 6% 10%;
     --sidebar-border: 50 9% 89%;
-    --sidebar-ring: 45 90% 45%;
+    --sidebar-ring: 35 78% 30%;
   }
 }
 

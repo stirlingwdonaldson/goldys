@@ -101,7 +101,7 @@ export function TargetComparison({ week, actions }: { week: WeeklyReportWeek; ac
         return <TableRow key={id}>
           <TableHead scope="row" className="font-medium text-foreground">{row.label}{row.unit === "AUD" ? " (AUD)" : ""}</TableHead>
           <TableCell className="text-right tabular-nums">{reportValue(row, row.total)}</TableCell>
-          <TableCell className="text-right tabular-nums">{reportValue(target, target.total)}<SourceNotes row={target} week={week} target /></TableCell>
+          <TableCell className="text-right tabular-nums"><span className="inline-flex items-center gap-2">{reportValue(target, target.total)}<SourceNotes row={target} week={week} target /></span></TableCell>
           <TableCell><Badge variant={result.tone === "good" ? "success" : result.tone === "bad" ? "conflict" : "missing"}>{result.label}</Badge>{difference ? <span className="ml-2 tabular-nums">{reportValue(difference, difference.total)}</span> : null}</TableCell>
           <TableCell><SourceNotes row={row} week={week} /></TableCell>
         </TableRow>;

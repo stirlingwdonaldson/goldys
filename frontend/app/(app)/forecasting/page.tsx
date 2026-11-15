@@ -454,11 +454,10 @@ export default function ForecastingPage() {
             ) : null}
 
             {activeRun?.status === "SUCCEEDED" && series ? (
-              <>
+              <DataQualifications label="Forecast evidence" scope={`${activeRun.historyTo} · ${activeRun.horizonDays} days`} notices={activeRun.notices}>
                 <Card>
                   <CardHeader>
                     <CardTitle>{metricName(activeRun.targetMetric)} forecast</CardTitle>
-                    <DataQualifications notices={activeRun.notices} />
                     <CardDescription>
                       {activeRun.horizonDays}-day forecast from {activeRun.historyTo}.
                     </CardDescription>
@@ -500,7 +499,7 @@ export default function ForecastingPage() {
                     <ForecastTable rows={series} />
                   </CardContent>
                 </Card>
-              </>
+              </DataQualifications>
             ) : null}
           </div>
         </TabsContent>

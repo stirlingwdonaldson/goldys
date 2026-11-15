@@ -15,7 +15,7 @@ describe("BusinessKpiGrid", () => {
 
   it("shows aggregate labour to managers", () => {
     render(<BusinessKpiGrid seniority="MANAGER" />);
-    expect(screen.getByText(/awaiting deputy reporting/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Labour cost %: incomplete/ })).toBeInTheDocument();
     expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
     expect(screen.getByText("Sales")).toBeInTheDocument();
     expect(screen.getByText("Attendance proxy today")).toBeInTheDocument();
@@ -41,7 +41,7 @@ describe("BusinessKpiGrid", () => {
 
   it("shows a needs-decision placeholder when the latest date is unresolved", () => {
     render(<BusinessKpiGrid seniority="OWNER" latestSales={{ date: "2026-10-05", total: null }} />);
-    expect(screen.getByText(/needs review/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sales: incomplete/ })).toBeInTheDocument();
     expect(screen.queryByText(/\$10,?865/)).not.toBeInTheDocument();
   });
 

@@ -2,6 +2,7 @@
 
 import { invoiceLabel } from "@/lib/invoice-reference";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { KeyboardEvent } from "react";
 import { ChevronDown, ChevronUp, Link2, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,8 @@ function InvoiceSheetContent({
   onNavigate,
   onClose,
 }: InvoiceSheetProps & { invoiceNumber: string }) {
+  const search = useSearchParams();
+  const returnTo = `/invoices?${search.toString()}`;
   const copyLink = useCopyInvoiceLink(invoiceNumber);
   const data = useInvoiceData(invoiceNumber);
   const invoice = data.detail.data;
@@ -125,7 +128,7 @@ function InvoiceSheetContent({
             <Link2 className="size-4" aria-hidden="true" />
           </Button>
           <Button asChild variant="ghost" size="icon" className="size-8" title="Open full page">
-            <Link href={invoiceHref(invoiceNumber)} aria-label="Expand to full page">
+            <Link href={`${invoiceHref(invoiceNumber)}?returnTo=${encodeURIComponent(returnTo)}`} aria-label="Expand to full page">
               <Maximize2 className="size-4" aria-hidden="true" />
             </Link>
           </Button>

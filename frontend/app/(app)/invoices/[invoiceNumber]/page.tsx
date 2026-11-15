@@ -1,7 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
+import { LoadingState } from "@/components/states/loading-state";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, Link2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,12 @@ import {
  * screens so lines can be checked against the supplier's document. Reached from the list's
  * slide-over ("Expand") or a copied link.
  */
-export default function InvoicePage() {
+export default function InvoicePage() { return <Suspense fallback={<LoadingState rows={4} />}><InvoiceContent /></Suspense>; }
+
+function InvoiceContent() {
+  const search = useSearchParams();
+  const returnTo = search.get("returnTo");
+  const listHref = returnTo?.startsWith("/invoices?") ? returnTo : "/invoices";
   const params = useParams<{ invoiceNumber?: string; invoiceId?: string }>();
   const invoiceNumber = params.invoiceId ? `id:${params.invoiceId}` : `number:${decodeURIComponent(params.invoiceNumber ?? "")}`;
   const copyLink = useCopyInvoiceLink(invoiceNumber);
@@ -28,7 +35,7 @@ export default function InvoicePage() {
   return (
     <div className="flex flex-col gap-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2 self-start text-muted-foreground">
-        <Link href="/invoices">
+        <Link href={listHref}>
           <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Invoices
         </Link>

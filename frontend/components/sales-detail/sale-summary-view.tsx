@@ -36,12 +36,11 @@ interface SaleData {
 }
 
 /** Loads one sale's tenders, line items, and (if voided) its deleted order. */
-async function loadSale(api: Api, saleNumber: string, signal: AbortSignal): Promise<SaleData> {
-  const to = todayIso();
+async function loadSale(api: Api, saleNumber: string, signal: AbortSignal, from = DATA_EPOCH, to = todayIso()): Promise<SaleData> {
   const [payments, items, deletedSales] = await Promise.all([
-    api.listPayments({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE, { signal }),
-    api.listSaleItems({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE, { signal }),
-    api.listDeletedSales({ saleNumber, from: DATA_EPOCH, to }, 0, FETCH_SIZE, { signal }),
+    api.listPayments({ saleNumber, from, to }, 0, FETCH_SIZE, { signal }),
+    api.listSaleItems({ saleNumber, from, to }, 0, FETCH_SIZE, { signal }),
+    api.listDeletedSales({ saleNumber, from, to }, 0, FETCH_SIZE, { signal }),
   ]);
   return {
     payments: payments.items,
@@ -70,6 +69,8 @@ const DOT_TONE: Record<Exclude<CheckTone, "info">, "success" | "conflict" | "mis
 
 interface SaleSummaryViewProps {
   saleNumber: string;
+  from?: string;
+  to?: string;
   /** Injected by tests; defaults to the demo/live singleton. */
   apiOverride?: Api;
 }
@@ -80,11 +81,11 @@ interface SaleSummaryViewProps {
  * line items and tenders side by side. Replaces the hub-and-spokes graph, which showed the
  * same rows but left the reader to do the arithmetic.
  */
-export function SaleSummaryView({ saleNumber, apiOverride }: SaleSummaryViewProps) {
+export function SaleSummaryView({ saleNumber, from, to, apiOverride }: SaleSummaryViewProps) {
   const api = useApi();
   const data = useQuery({
-    queryKey: ["sale-summary", saleNumber],
-    queryFn: ({ signal }) => loadSale(apiOverride ?? api, saleNumber, signal),
+    queryKey: ["sale-summary", saleNumber, from, to],
+    queryFn: ({ signal }) => loadSale(apiOverride ?? api, saleNumber, signal, from, to),
   });
   const summary = useMemo(
     () =>
@@ -126,9 +127,9 @@ export function SaleSummaryView({ saleNumber, apiOverride }: SaleSummaryViewProp
   }
 
   return <div className="flex flex-col gap-4">
-    <ReceiptGroupNotice saleNumber={saleNumber} api={apiOverride ?? api} />
+    <ReceiptGroupNotice saleNumber={saleNumber} from={from} to={to} api={apiOverride ?? api} />
     <SaleSummaryBody summary={summary} />
-    {summary.lines.length > 0 ? <SaleCostingPanel saleNumber={saleNumber} api={apiOverride ?? api} /> : null}
+    {summary.lines.length > 0 ? <SaleCostingPanel saleNumber={saleNumber} from={from} to={to} api={apiOverride ?? api} /> : null}
   </div>;
 }
 

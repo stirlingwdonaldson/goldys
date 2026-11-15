@@ -32,7 +32,7 @@ export function SalesTrend({ points, notices, provenance }: {
   return (
     <div className="space-y-3">
       <WidgetRenderer widget={widget} />
-      <DataQualifications notices={notices} />
+      <DataQualifications label="Net sales coverage" scope={provenance ? `${provenance.range.from} to ${provenance.range.to}` : `${points[0]?.date ?? "Unknown start"} to ${points.at(-1)?.date ?? "unknown end"}`} notices={notices} recovery={{ href: "/reconciliation", label: "Review reconciliation" }} />
     </div>
   );
 }

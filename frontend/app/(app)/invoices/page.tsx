@@ -1,15 +1,17 @@
 "use client";
+import { listPage } from "@/lib/list-url";
+import { useInvestigationUrl, investigationRange } from "@/lib/use-investigation-url";
+import { QueryRegion } from "@/components/states/query-region";
 import { invoiceReference, selectedInvoice, withSelectedInvoice } from "@/lib/invoice-reference";
 
 import { Suspense, useCallback, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
+import { readSort, tableSorting, SORT_FIELDS } from "@/lib/record-sort";
 import { useApi } from "@/lib/demo-mode";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { LoadingState } from "@/components/states/loading-state";
-import { ErrorState } from "@/components/states/error-state";
 import { EmptyState } from "@/components/states/empty-state";
-import { PermissionDenied } from "@/components/states/permission-denied";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { currencyColumn, dateColumn } from "@/components/data-table/columns";
@@ -17,7 +19,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { TimeRangeSelector, presetRange, type DateRange } from "@/components/ui/time-range-selector";
+import { TimeRangeSelector, presetRange } from "@/components/ui/time-range-selector";
 import { InvoiceSheet } from "@/components/invoices/invoice-sheet";
 import { formatDay } from "@/lib/format";
 import type { InvoiceSummary } from "@/lib/api/types";
@@ -95,14 +97,17 @@ export default function InvoicesPage() {
 
 function InvoicesContent() {
   const queryApi = useApi();
+  const sortUrl = useInvestigationUrl();
+  const sort = readSort(sortUrl.params, SORT_FIELDS.invoices, "invoiceDate", "");
+  const sorting = tableSorting(sort);
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const [supplier, setSupplier] = useState("");
-  // Defaults to the trailing year: invoices are historical documents, and the CTB
-  // ledger (which starts late Oct 2025) fits within it.
-  const [range, setRange] = useState<DateRange>(() => presetRange("year"));
-  const [page, setPage] = useState(0);
+  const investigation = useInvestigationUrl();
+  const supplier = (params.get("supplier") ?? "").slice(0, 200);
+  const range = investigationRange(new URLSearchParams(params.toString()), presetRange("year"));
+  const { page } = listPage(new URLSearchParams(params.toString()));
+  const setPage = (value: number) => investigation.update({ page: String(value) });
   // Invoice numbers in the order the table currently shows them (follows column sorting).
   const [order, setOrder] = useState<string[]>([]);
 
@@ -114,12 +119,13 @@ function InvoicesContent() {
   const setSelected = useCallback(
     (invoiceNumber: string | null, mode: "push" | "replace") => {
       const next = withSelectedInvoice(new URLSearchParams(params.toString()), invoiceNumber);
+      next.set("from", range.from); next.set("to", range.to);
       const qs = next.toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
       if (mode === "push") router.push(url, { scroll: false });
       else router.replace(url, { scroll: false });
     },
-    [params, pathname, router],
+    [params, pathname, router, range.from, range.to],
   );
 
   const invoiceTrigger = useRef("");
@@ -143,20 +149,8 @@ function InvoicesContent() {
     }
   }
 
-  const invoices = useQuery({ queryKey: ["listInvoices", { supplier: supplier || undefined, from: range.from, to: range.to }, page, PAGE_SIZE], queryFn: ({ signal }) => queryApi.listInvoices({ supplier: supplier || undefined, from: range.from, to: range.to }, page, PAGE_SIZE, { signal }
+  const invoices = useQuery({ placeholderData: keepPreviousData, queryKey: ["listInvoices", sort, { supplier: supplier || undefined, from: range.from, to: range.to }, page, PAGE_SIZE], queryFn: ({ signal }) => queryApi.listInvoices({ supplier: supplier || undefined, from: range.from, to: range.to }, page, PAGE_SIZE, { signal, sort }
       ) });
-
-  if (invoices.isPending) return <LoadingState rows={6} />;
-  if (invoices.isLoadingError) {
-    if (invoices.error.code === "NOT_PERMITTED") return <PermissionDenied subject="supplier invoices" />;
-    return (
-      <ErrorState
-        title="Couldn't load invoices"
-        message={invoices.error.message}
-        onRetry={invoices.refetch}
-      />
-    );
-  }
 
   const items = invoices.data?.items ?? [];
   const total = invoices.data?.total ?? 0;
@@ -175,16 +169,14 @@ function InvoicesContent() {
             placeholder="Filter by supplier"
             value={supplier}
             onChange={(e) => {
-              setSupplier(e.target.value);
-              setPage(0);
+              investigation.update({ supplier: e.target.value, page: null, ...range });
             }}
             className="w-56 max-w-full"
           />
           <TimeRangeSelector
             value={range}
             onChange={(r) => {
-              setRange(r);
-              setPage(0);
+              investigation.update({ ...r, page: null });
             }}
           />
         </div>
@@ -194,6 +186,7 @@ function InvoicesContent() {
           <summary className="cursor-pointer font-medium">How to inspect invoice evidence</summary>
           <p className="mt-2 text-muted-foreground">Open an invoice to inspect its recorded lines and, where available, download the source PDF. Invoice purchases do not establish consumed food cost or current usable stock. Missing PDFs or values remain unavailable; they are not zero.</p>
         </details>
+        <QueryRegion query={invoices} subject="Supplier invoices">
         {items.length === 0 ? (
           <EmptyState
             title="No invoices"
@@ -204,7 +197,10 @@ function InvoicesContent() {
             columns={invoiceColumns(openInvoice)}
             data={items}
             pageSize={false}
-            initialSorting={[{ id: "invoiceDate", desc: true }]}
+            sorting={sorting}
+            manualSorting
+            sortingPending={invoices.isPlaceholderData}
+            onSortingChange={(change) => { const next = typeof change === "function" ? change(sorting) : change; sortUrl.update({ "sort": next[0]?.id ?? "invoiceDate", "direction": next[0]?.desc ? "desc" : "asc", page: null });  }}
             getRowId={(r) => r.invoiceId ?? r.invoiceNumber}
             onRowClick={(r) => openInvoice(invoiceReference(r))}
             isRowSelected={(r) => (invoiceReference(r)) === selected}
@@ -214,6 +210,7 @@ function InvoicesContent() {
         )}
 
         <Pager page={page} total={total} size={PAGE_SIZE} onPage={setPage} />
+        </QueryRegion>
       </div>
 
       <InvoiceSheet
@@ -221,7 +218,7 @@ function InvoicesContent() {
         order={order}
         onNavigate={(n) => setSelected(n, "replace")}
         onClose={closeInvoice}
-        onRestoreFocus={() => document.getElementById(invoiceTrigger.current)?.focus()}
+        onRestoreFocus={() => (document.getElementById(invoiceTrigger.current || `invoice-${encodeURIComponent(selected ?? "")}`) ?? document.getElementById("main-content"))?.focus()}
       />
     </div>
   );

@@ -20,15 +20,14 @@ export function TopSellers({ items, notices, coverage }: {
     description: `Ranked by known sales; full-period ranking unverified.${coverage ? ` ${coverage.from} to ${coverage.to}.` : ""}`,
     items: items.map((t) => ({
       label: t.name,
-      primary: formatNumber(t.quantitySold, 2),
-      secondary: formatCurrency(t.amount),
+      primary: `${formatNumber(t.quantitySold, 2)} sold`,
+      secondary: `${formatCurrency(t.amount)} revenue`,
       badge: t.hasConflict ? "unresolved" : null,
     })),
   };
   return (
     <div className="space-y-3">
-      <WidgetRenderer widget={widget} />
-      <DataQualifications notices={notices} />
+      <DataQualifications label="Top sellers" scope={coverage ? `${coverage.from} to ${coverage.to}` : "Trailing 30 days"} notices={notices} recovery={{ href: "/reconciliation", label: "Review reconciliation" }}><WidgetRenderer widget={widget} /></DataQualifications>
     </div>
   );
 }

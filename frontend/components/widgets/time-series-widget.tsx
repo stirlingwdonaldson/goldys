@@ -59,7 +59,7 @@ export function TimeSeriesWidgetView({ widget }: { widget: TimeSeriesWidget }) {
                   fill={color}
                   fillOpacity={i === 0 ? 0.07 : 0}
                   strokeWidth={2}
-                  dot={false}
+                  dot={{ r: 3, strokeWidth: 0, fill: color, fillOpacity: 1 }}
                   activeDot={{ r: 4, strokeWidth: 0 }}
                 />
               );

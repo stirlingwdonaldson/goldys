@@ -1,3 +1,5 @@
+import { sortQuery } from "@/lib/record-sort";
+import type { RecordReadOptions } from "@/lib/record-sort";
 import { dashboardSchema, renderedWidgetsSchema, threadSchema } from "./dashboard-schema";
 import { fetchApi } from "./client";
 import { getProvenance } from "./provenance";
@@ -200,12 +202,13 @@ export const liveApi: Api = {
       `/api/reconciliation/audit?page=${page}&size=${size}`, { signal: options?.signal }
     ),
   listProducts: (options?: { signal?: AbortSignal }) => fetchApi<string[]>("/api/reconciliation/products", { signal: options?.signal }),
-  listDailySales: (filter: import("./types").SalesFilter, page: number, size: number, options?: { signal?: AbortSignal }) => {
+  listDailySales: (filter: import("./types").SalesFilter, page: number, size: number, options?: RecordReadOptions) => {
     const q = new URLSearchParams({ page: String(page), size: String(size) });
+    if (filter.source) q.set("source", filter.source);
     if (filter.from) q.set("from", filter.from);
     if (filter.to) q.set("to", filter.to);
     return fetchApi<import("./types").DataPage<import("./types").DailySales>>(
-      `/api/sales/daily?${q.toString()}`, { signal: options?.signal }
+      `/api/sales/daily?${q.toString()}${sortQuery(options?.sort)}`, { signal: options?.signal }
     );
   },
   getLatestSales: (options?: { signal?: AbortSignal }) => fetchApi<import("./types").LatestSales>("/api/sales/latest", { signal: options?.signal }),
@@ -234,13 +237,13 @@ export const liveApi: Api = {
   getInvoiceGraphLines,
   getInvoiceGraphInvoicesById,
   getInvoiceGraphLinesById,
-  listInvoices: (filter: import("./types").InvoiceFilter, page: number, size: number, options?: { signal?: AbortSignal }) => {
+  listInvoices: (filter: import("./types").InvoiceFilter, page: number, size: number, options?: RecordReadOptions) => {
     const q = new URLSearchParams({ page: String(page), size: String(size) });
     if (filter.supplier) q.set("supplier", filter.supplier);
     if (filter.from) q.set("from", filter.from);
     if (filter.to) q.set("to", filter.to);
     return fetchApi<import("./types").DataPage<import("./types").InvoiceSummary>>(
-      `/api/invoices?${q.toString()}`, { signal: options?.signal }
+      `/api/invoices?${q.toString()}${sortQuery(options?.sort)}`, { signal: options?.signal }
     );
   },
   getInvoiceById: (id: string, options?: { signal?: AbortSignal }) => fetchApi<import("./types").InvoiceDetail>(`/api/invoices/by-id/${encodeURIComponent(id)}`, { signal: options?.signal }),
@@ -329,46 +332,46 @@ export const liveApi: Api = {
   getRawRecord: (id: string, options?: { signal?: AbortSignal }) =>
     fetchApi<import("./types").RawRecordDetail>(`/api/data/raw/${id}`, { signal: options?.signal }),
   listCanonicalEntities: (options?: { signal?: AbortSignal }) => fetchApi<import("./types").EntityDescriptor[]>("/api/data/canonical", { signal: options?.signal }),
-  listCanonicalRows: (entity: string, page: number, size: number, options?: { signal?: AbortSignal }) =>
+  listCanonicalRows: (entity: string, page: number, size: number, options?: RecordReadOptions) =>
     fetchApi<import("./types").DataPage<import("./types").GenericRow>>(
-      `/api/data/canonical/${entity}?page=${page}&size=${size}`, { signal: options?.signal }
+      `/api/data/canonical/${entity}?page=${page}&size=${size}${sortQuery(options?.sort)}`, { signal: options?.signal }
     ),
   listResolvedDomains: (options?: { signal?: AbortSignal }) => fetchApi<import("./types").EntityDescriptor[]>("/api/data/resolved", { signal: options?.signal }),
-  listResolvedRows: (domain: string, page: number, size: number, options?: { signal?: AbortSignal }) =>
+  listResolvedRows: (domain: string, page: number, size: number, options?: RecordReadOptions) =>
     fetchApi<import("./types").DataPage<import("./types").GenericRow>>(
-      `/api/data/resolved/${domain}?page=${page}&size=${size}`, { signal: options?.signal }
+      `/api/data/resolved/${domain}?page=${page}&size=${size}${sortQuery(options?.sort)}`, { signal: options?.signal }
     ),
-  listPayments: (filter: import("./types").PaymentFilter, page: number, size: number, options?: { signal?: AbortSignal }) => {
+  listPayments: (filter: import("./types").PaymentFilter, page: number, size: number, options?: RecordReadOptions) => {
     const q = new URLSearchParams({ page: String(page), size: String(size) });
     if (filter.from) q.set("from", filter.from);
     if (filter.to) q.set("to", filter.to);
     if (filter.paymentType) q.set("paymentType", filter.paymentType);
     if (filter.saleNumber) q.set("saleNumber", filter.saleNumber);
     return fetchApi<import("./types").DataPage<import("./types").PaymentRow>>(
-      `/api/payments?${q.toString()}`, { signal: options?.signal }
+      `/api/payments?${q.toString()}${sortQuery(options?.sort)}`, { signal: options?.signal }
     );
   },
-  listDeletedSales: (filter: import("./types").DeletedSaleFilter, page: number, size: number, options?: { signal?: AbortSignal }) => {
+  listDeletedSales: (filter: import("./types").DeletedSaleFilter, page: number, size: number, options?: RecordReadOptions) => {
     const q = new URLSearchParams({ page: String(page), size: String(size) });
     if (filter.from) q.set("from", filter.from);
     if (filter.to) q.set("to", filter.to);
     if (filter.saleNumber) q.set("saleNumber", filter.saleNumber);
     return fetchApi<import("./types").DataPage<import("./types").DeletedSaleRow>>(
-      `/api/deleted-sales?${q.toString()}`, { signal: options?.signal }
+      `/api/deleted-sales?${q.toString()}${sortQuery(options?.sort)}`, { signal: options?.signal }
     );
   },
   getSaleCosting: (saleNumber: string, from: string, to: string, options?: { signal?: AbortSignal }) => {
     const query = new URLSearchParams({ saleNumber, from, to });
     return fetchApi<import("./types").SaleCosting>(`/api/sale-items/costing?${query}`, { signal: options?.signal });
   },
-  listSaleItems: (filter: import("./types").SaleItemFilter, page: number, size: number, options?: { signal?: AbortSignal }) => {
+  listSaleItems: (filter: import("./types").SaleItemFilter, page: number, size: number, options?: RecordReadOptions) => {
     const q = new URLSearchParams({ page: String(page), size: String(size) });
     if (filter.from) q.set("from", filter.from);
     if (filter.to) q.set("to", filter.to);
     if (filter.category) q.set("category", filter.category);
     if (filter.saleNumber) q.set("saleNumber", filter.saleNumber);
     return fetchApi<import("./types").DataPage<import("./types").SaleItemRow>>(
-      `/api/sale-items?${q.toString()}`, { signal: options?.signal }
+      `/api/sale-items?${q.toString()}${sortQuery(options?.sort)}`, { signal: options?.signal }
     );
   },
   getPaymentMix: (from: string, to: string, options?: { signal?: AbortSignal }) =>

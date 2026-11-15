@@ -32,10 +32,10 @@ const QUALIFICATIONS: Record<string, string> = {
 };
 
 /** Cost permission/failure is independent of the ordinary sale receipt. */
-export function SaleCostingPanel({ saleNumber, api }: { saleNumber: string; api: Api }) {
+export function SaleCostingPanel({ saleNumber, api, from = "2020-11-23", to = new Date().toISOString().slice(0, 10) }: { saleNumber: string; api: Api; from?: string; to?: string }) {
   const result = useQuery({
-    queryKey: ["sale-costing", saleNumber],
-    queryFn: ({ signal }) => api.getSaleCosting(saleNumber, "2020-11-23", new Date().toISOString().slice(0, 10), { signal }),
+    queryKey: ["sale-costing", saleNumber, from, to],
+    queryFn: ({ signal }) => api.getSaleCosting(saleNumber, from, to, { signal }),
   });
   if (result.isPending) return <p role="status">Loading recipe costing…</p>;
   if (result.error) return <p role="alert" className="text-sm text-muted-foreground">

@@ -9,6 +9,7 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type OnChangeFn,
   type ColumnFiltersState,
   type PaginationState,
   type Row,
@@ -62,6 +63,12 @@ interface DataTableProps<TData, TValue> {
    */
   pageSize?: number | false;
   initialSorting?: SortingState;
+  sorting?: SortingState;
+  onSortingChange?: OnChangeFn<SortingState>;
+  manualSorting?: boolean;
+  sortingPending?: boolean;
+  pagination?: PaginationState;
+  onPaginationChange?: OnChangeFn<PaginationState>;
   /** Shown in the body when there are no rows (or the filter matches none). */
   emptyMessage?: string;
   /** Extra toolbar content, rendered left of the column-visibility menu. */
@@ -110,20 +117,29 @@ export function DataTable<TData, TValue>({
   rowActions,
   selectable = false,
   onSelectedRowsChange,
+  sorting: controlledSorting,
+  onSortingChange,
+  manualSorting = false,
+  sortingPending = false,
+  pagination: controlledPagination,
+  onPaginationChange,
 }: DataTableProps<TData, TValue>) {
   const retained = stateKey ? retainedStates.get(stateKey) : undefined;
-  const [sorting, setSorting] = useState<SortingState>(retained?.sorting ?? initialSorting);
+  const [localSorting, setSorting] = useState<SortingState>(retained?.sorting ?? initialSorting);
+  const sortingKey = JSON.stringify(controlledSorting ?? localSorting);
+  const sorting = useMemo<SortingState>(() => JSON.parse(sortingKey), [sortingKey]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(retained?.columnFilters ?? []);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(retained?.columnVisibility ?? {});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const paginated = pageSize !== false;
-  const [pagination, setPagination] = useState<PaginationState>(() => {
+  const [localPagination, setPagination] = useState<PaginationState>(() => {
     const initial = retained?.pagination ?? {
       pageIndex: 0,
       pageSize: pageSize === false ? DEFAULT_PAGE_SIZE : pageSize,
     };
     return { ...initial, pageIndex: Math.min(initial.pageIndex, Math.max(0, Math.ceil(data.length / initial.pageSize) - 1)) };
   });
+  const pagination = controlledPagination ?? localPagination;
 
   useEffect(() => {
     if (stateKey) retainedStates.set(stateKey, { sorting, columnFilters, columnVisibility, pagination });
@@ -183,19 +199,27 @@ export function DataTable<TData, TValue>({
     ...(rowActions ? [actionsColumn] : []),
   ];
 
+  const displayedData = useMemo(() => sortingPending ? [] : data, [sortingPending, data]);
   const table = useReactTable({
-    data,
+    data: displayedData,
+    autoResetPageIndex: paginated && !controlledPagination,
     columns: allColumns,
+    enableMultiSort: false,
+    defaultColumn: {
+      sortUndefined: false,
+      sortingFn: (a, b, id) => compareTableRows(a, b, id, sorting.find(item => item.id === id)?.desc ?? false),
+    },
+    manualSorting,
     getRowId,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     ...(paginated ? { getPaginationRowModel: getPaginationRowModel() } : {}),
     ...(selectable ? { onRowSelectionChange: setRowSelection } : {}),
-    onSortingChange: setSorting,
+    onSortingChange: onSortingChange ?? setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
+    onPaginationChange: onPaginationChange ?? setPagination,
     state: {
       sorting,
       columnFilters,
@@ -270,13 +294,14 @@ export function DataTable<TData, TValue>({
       </div>
 
       <div className="overflow-hidden rounded-xl border">
-        <Table>
+        <Table aria-busy={sortingPending}>
           <TableHeader>
             {table.getHeaderGroups().map((group) => (
               <TableRow key={group.id} className="hover:bg-transparent">
                 {group.headers.map((header) => (
                   <TableHead
                     key={header.id}
+                    aria-sort={sortingPending || !header.column.getIsSorted() ? undefined : header.column.getIsSorted() === "asc" ? "ascending" : "descending"}
                     className={cn("h-10", alignClass(header.column.columnDef.meta))}
                   >
                     {header.isPlaceholder
@@ -371,4 +396,14 @@ function columnTitle(meta: unknown, fallback: string): string {
 
 function alignClass(meta: unknown): string {
   return asMeta(meta).align === "right" ? "text-right" : "";
+}
+
+/** TanStack reverses descending comparisons, so compensate for fixed null/identity order. */
+function compareTableRows<T>(a: Row<T>, b: Row<T>, id: string, descending: boolean): number {
+  const x = a.getValue<unknown>(id), y = b.getValue<unknown>(id);
+  const reverse = descending ? -1 : 1;
+  const identity = (a.id < b.id ? -1 : a.id > b.id ? 1 : 0) * reverse;
+  if (x == null || y == null) return x == null && y == null ? identity : (x == null ? 1 : -1) * reverse;
+  const value = typeof x === "number" && typeof y === "number" ? x - y : String(x) < String(y) ? -1 : String(x) > String(y) ? 1 : 0;
+  return value || identity;
 }

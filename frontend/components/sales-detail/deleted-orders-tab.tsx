@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table/data-table";
-import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
+import { TablePagination } from "@/components/data-table/table-pagination";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { currencyColumn, dateColumn } from "@/components/data-table/columns";
 import { StatCard } from "@/components/data-display/stat-card";
@@ -16,8 +16,11 @@ import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import type { Api } from "@/lib/api";
 import type { DeletedSaleRow } from "@/lib/api/types";
 import { formatCurrency, formatNumber, toNumber } from "@/lib/format";
+import { readSort, tableSorting, SORT_FIELDS } from "@/lib/record-sort";
+import { listPage } from "@/lib/list-url";
+import { useInvestigationUrl } from "@/lib/use-investigation-url";
 import { useApi } from "@/lib/demo-mode";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { buildDeletedSalesTrend } from "./deleted-sales-trend";
 
 interface DeletedOrdersTabProps {
@@ -92,10 +95,18 @@ function deletedOrderColumns(
  */
 export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedOrdersTabProps) {
   const queryApi = useApi();
-  const { page, setPage, pageSize, setPageSize } = usePageState(`${from}|${to}`);
+  const sortUrl = useInvestigationUrl();
+  const sort = readSort(sortUrl.params, SORT_FIELDS.deleted, "tradingDate", "deleted-");
+  const sorting = tableSorting(sort);
+  const paging = new URLSearchParams({ page: sortUrl.params.get("deleted-page") ?? "0", size: sortUrl.params.get("deleted-size") ?? "10" });
+  const parsedPage = listPage(paging);
+  const page = (sortUrl.params.has("from") && (sortUrl.params.get("from") !== from || sortUrl.params.get("to") !== to)) ? 0 : parsedPage.page;
+  const pageSize = parsedPage.pageSize;
+  const setPage = (value: number) => sortUrl.update({ "deleted-page": String(value), from, to });
+  const setPageSize = (value: number) => sortUrl.update({ "deleted-size": String(value), "deleted-page": null, from, to });
 
   const totals = useQuery({ queryKey: ["getDeletedSaleTotals", from, to], queryFn: ({ signal }) => (apiOverride ?? queryApi).getDeletedSaleTotals(from, to, { signal }) });
-  const rows = useQuery({ queryKey: ["listDeletedSales", { from, to }, page, pageSize], queryFn: ({ signal }) => (apiOverride ?? queryApi).listDeletedSales({ from, to }, page, pageSize, { signal }) });
+  const rows = useQuery({ placeholderData: keepPreviousData, queryKey: ["listDeletedSales", sort, { from, to }, page, pageSize], queryFn: ({ signal }) => (apiOverride ?? queryApi).listDeletedSales({ from, to }, page, pageSize, { signal, sort }) });
 
 
   const columns = useMemo(() => deletedOrderColumns(onViewSale), [onViewSale]);
@@ -167,7 +178,10 @@ export function DeletedOrdersTab({ from, to, onViewSale, apiOverride }: DeletedO
             data={rows.data.items}
             pageSize={false}
             // `dateColumn` derives its id from the accessor key, so sort on "tradingDate".
-            initialSorting={[{ id: "tradingDate", desc: true }]}
+            sorting={sorting}
+            manualSorting
+            sortingPending={rows.isPlaceholderData}
+            onSortingChange={(change) => { const next = typeof change === "function" ? change(sorting) : change; sortUrl.update({ "deleted-sort": next[0]?.id ?? "tradingDate", "deleted-direction": next[0]?.desc ? "desc" : "asc", "deleted-page": null, from, to }); }}
             getRowId={(r) => r.saleNumber}
           />
         ) : null}

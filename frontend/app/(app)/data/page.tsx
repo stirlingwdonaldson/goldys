@@ -5,8 +5,10 @@ import { Table } from "@/components/ui/table";
 import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { tableSorting } from "@/lib/record-sort";
+import type { RecordSort } from "@/lib/record-sort";
 import { useApi } from "@/lib/demo-mode";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { RESOLVED_SCREENS } from "@/lib/data-layers";
 import type { DataPage, GenericRow, RawRecordSummary } from "@/lib/api/types";
 import { GenericTable } from "@/components/data-explorer/generic-table";
@@ -222,7 +224,7 @@ function RawRow({
   return (
     <>
       <tr className="cursor-pointer border-b last:border-0 hover:bg-muted/40" onClick={onToggle}>
-        <td className="px-3 py-2 font-medium">{row.sourceSystem}</td>
+        <td className="px-3 py-2 font-medium"><Button variant="ghost" size="sm" aria-label={`Raw record ${row.id} from ${row.sourceSystem}`} aria-expanded={isOpen} aria-controls={`raw-${row.id}`} onClick={(event) => { event.stopPropagation(); onToggle(); }}>{row.sourceSystem}</Button></td>
         <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{row.fetcherIdentity}</td>
         <td className="px-3 py-2 text-muted-foreground">{row.fetchMethod}</td>
         <td className="px-3 py-2 text-muted-foreground">
@@ -232,7 +234,7 @@ function RawRow({
       </tr>
       {isOpen ? (
         <tr className="border-b bg-muted/20">
-          <td colSpan={5} className="px-3 py-3">
+          <td id={`raw-${row.id}`} colSpan={5} className="px-3 py-3">
             <RawPayload id={row.id} />
           </td>
         </tr>
@@ -267,7 +269,9 @@ function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) 
   const { params, update, page, setPage, pageSize, setPageSize } = useExplorerUrl();
   const entity = params.get("entity") ?? initialEntity ?? "";
   const selected = entity || entities.data?.[0]?.id || "";
-  const rows = useQuery({ queryKey: ["listCanonicalRows", selected, page, pageSize], queryFn: ({ signal }) => (selected ? queryApi.listCanonicalRows(selected, page, pageSize, { signal }) : Promise.resolve(emptyPage())) });
+  const sort: RecordSort = { field: /^[a-z_]+$/.test(params.get("sort") ?? "") ? params.get("sort")! : "", direction: params.get("direction") === "desc" ? "desc" : "asc" };
+  const sorting = tableSorting(sort);
+  const rows = useQuery({ placeholderData: keepPreviousData, queryKey: ["listCanonicalRows", selected, page, pageSize, sort], queryFn: ({ signal }) => (selected ? queryApi.listCanonicalRows(selected, page, pageSize, { signal, sort }) : Promise.resolve(emptyPage())) });
   const descriptor = entities.data?.find((e) => e.id === selected);
 
   if (entities.isPending) return <LoadingState rows={3} />;
@@ -288,7 +292,7 @@ function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) 
         <Select
           value={selected}
           onValueChange={(v) => {
-            update({ entity: v, page: "0" });
+            update({ entity: v, page: "0", sort: null, direction: null });
           }}
         >
           <SelectTrigger aria-label="Entity" className="ml-2 w-56">
@@ -320,7 +324,7 @@ function CanonicalSection({ initialEntity }: { initialEntity?: string | null }) 
         />
       ) : null}
 
-      {rows.data && rows.data.items.length > 0 ? <GenericTable rows={rows.data.items} /> : null}
+      {rows.data && rows.data.items.length > 0 ? <GenericTable rows={rows.data.items} sorting={sorting} pending={rows.isPlaceholderData} onSortingChange={(change) => { const next = typeof change === "function" ? change(sorting) : change; update({ sort: next[0]?.id ?? null, direction: next[0]?.desc ? "desc" : "asc", page: "0" }); }} /> : null}
 
       {rows.data ? (
         <TablePagination
@@ -341,7 +345,9 @@ function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
   const { params, update, page, setPage, pageSize, setPageSize } = useExplorerUrl();
   const domain = params.get("entity") ?? initialDomain ?? "";
   const selected = domain || domains.data?.[0]?.id || "";
-  const rows = useQuery({ queryKey: ["listResolvedRows", selected, page, pageSize], queryFn: ({ signal }) => (selected ? queryApi.listResolvedRows(selected, page, pageSize, { signal }) : Promise.resolve(emptyPage())) });
+  const sort: RecordSort = { field: /^[a-z_]+$/.test(params.get("sort") ?? "") ? params.get("sort")! : "", direction: params.get("direction") === "desc" ? "desc" : "asc" };
+  const sorting = tableSorting(sort);
+  const rows = useQuery({ placeholderData: keepPreviousData, queryKey: ["listResolvedRows", selected, page, pageSize, sort], queryFn: ({ signal }) => (selected ? queryApi.listResolvedRows(selected, page, pageSize, { signal, sort }) : Promise.resolve(emptyPage())) });
   const screen = RESOLVED_SCREENS[selected]?.href;
 
   if (domains.isPending) return <LoadingState rows={3} />;
@@ -363,7 +369,7 @@ function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
           <Select
             value={selected}
             onValueChange={(v) => {
-              update({ entity: v, page: "0" });
+              update({ entity: v, page: "0", sort: null, direction: null });
             }}
           >
             <SelectTrigger aria-label="Domain" className="ml-2 w-56">
@@ -397,7 +403,7 @@ function ResolvedSection({ initialDomain }: { initialDomain?: string | null }) {
         <EmptyState title="No rows" description="No resolved rows for this domain yet." />
       ) : null}
 
-      {rows.data && rows.data.items.length > 0 ? <GenericTable rows={rows.data.items} /> : null}
+      {rows.data && rows.data.items.length > 0 ? <GenericTable rows={rows.data.items} sorting={sorting} pending={rows.isPlaceholderData} onSortingChange={(change) => { const next = typeof change === "function" ? change(sorting) : change; update({ sort: next[0]?.id ?? null, direction: next[0]?.desc ? "desc" : "asc", page: "0" }); }} /> : null}
 
       {rows.data ? (
         <TablePagination

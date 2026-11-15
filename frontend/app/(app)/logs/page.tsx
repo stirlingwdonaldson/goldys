@@ -105,7 +105,7 @@ function FragmentRow({
       >
         <td className="px-4 py-2 font-medium">
           <SourceLabel source={c.source}>
-            <span>{sourceIdentity(c.source).label}</span>
+            <Button variant="ghost" size="sm" aria-label={`Show ${sourceIdentity(c.source).label} log details`} aria-expanded={isOpen} aria-controls={`log-${c.source}`} onClick={(event) => { event.stopPropagation(); onToggle(); }}>{sourceIdentity(c.source).label}</Button>
           </SourceLabel>
         </td>
         <td className="px-4 py-2 text-muted-foreground">{c.connectorName}</td>
@@ -133,11 +133,11 @@ function FragmentRow({
           </Button>
         </td>
       </tr>
-      {isOpen && c.failure?.stackTrace ? (
+      {isOpen ? (
         <tr className="border-b bg-muted/20">
-          <td colSpan={6} className="px-4 py-3">
+          <td id={`log-${c.source}`} colSpan={6} className="px-4 py-3">
             <pre className="whitespace-pre text-xs text-muted-foreground">
-              {c.failure.stackTrace}
+              {c.failure?.stackTrace ?? c.failure?.message ?? "No failure evidence recorded."}
             </pre>
           </td>
         </tr>

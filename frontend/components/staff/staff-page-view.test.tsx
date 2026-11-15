@@ -27,7 +27,7 @@ describe("StaffPageView", () => {
   it("renders roster for everyone and labor cost for an Owner", () => {
     render(<StaffPageView seniority="OWNER" />);
     expect(screen.getByText("Rostering & hours")).toBeInTheDocument();
-    expect(screen.getByText("Labour cost as a % of sales.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Labour cost %: incomplete/ })).toBeInTheDocument();
     expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
   });
 

@@ -1,11 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useRef } from "react";
+import { useInvestigationUrl, investigationRange } from "@/lib/use-investigation-url";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { LoadingState } from "@/components/states/loading-state";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeRangeSelector, defaultRange } from "@/components/ui/time-range-selector";
 import { PaymentsTab } from "@/components/sales-detail/payments-tab";
@@ -41,34 +41,16 @@ export default function SalesDetailPage() {
 }
 
 function SalesDetail() {
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  // The URL seeds the tab once; switching is local and does not rewrite the URL.
-  const [tab, setTab] = useState<Tab>(isTab(tabParam) ? tabParam : "payments");
-  // Hoisted so all three tabs read one window once Tasks 8–10 fill them in.
-  const [range, setRange] = useState(defaultRange);
-  // The sale drilled into from a Payments or Sale items row; null hides the sale summary.
-  const [selectedSale, setSelectedSale] = useState<string | null>(null);
-  // The sale panel sits above the tables, so a "View sale" click lower down a long table would
-  // otherwise swap its contents off-screen and look like nothing happened. Each click (even on
-  // the already-open sale) bumps this, and the effect below scrolls the panel into view.
-  const [viewRequest, setViewRequest] = useState(0);
-  const salePanelRef = useRef<HTMLDivElement>(null);
-
-  function viewSale(saleNumber: string) {
-    setSelectedSale(saleNumber);
-    setViewRequest((n) => n + 1);
-  }
-
-  useEffect(() => {
-    if (viewRequest === 0) return;
-    salePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [viewRequest]);
-
-  // The lineage graph's metric node drills to a tab id; switching is local, as with the tab bar.
-  function switchTab(tabId: string) {
-    if (isTab(tabId)) setTab(tabId);
-  }
+  const { params, update, openPanel, closePanel, restoreFocus } = useInvestigationUrl();
+  const tabParam = params.get("tab");
+  const tab = isTab(tabParam) ? tabParam : "payments";
+  const range = investigationRange(params, defaultRange());
+  const selectedSale = params.get("sale")?.slice(0, 200) || null;
+  const lastSale = useRef(selectedSale);
+  if (selectedSale) lastSale.current = selectedSale;
+  function setTab(value: string) { if (isTab(value)) update({ tab: value }); }
+  function viewSale(sale: string) { openPanel("sale", sale, { tab, ...range }); }
+  function switchTab(value: string) { setTab(value); }
 
   return (
     <div className="flex flex-col gap-6">
@@ -77,7 +59,7 @@ function SalesDetail() {
         description="Payments, deleted orders, and sale items behind the sales totals."
       />
 
-      <TimeRangeSelector value={range} onChange={setRange} />
+      <TimeRangeSelector value={range} onChange={(value) => update({ ...value, "payments-page": null, "deleted-page": null, "items-page": null })} />
 
       <Section
         title="Sales and POS payments"
@@ -96,21 +78,12 @@ function SalesDetail() {
         </TabsList>
       </Tabs>
 
-      {selectedSale ? (
-        <div ref={salePanelRef} className="scroll-mt-4">
-          <Section
-            title={`Sale ${selectedSale}`}
-            description="What was rung up, how it was paid, and whether the two agree."
-            actions={
-              <Button variant="outline" size="sm" onClick={() => setSelectedSale(null)}>
-                Close
-              </Button>
-            }
-          >
-            <SaleSummaryView key={selectedSale} saleNumber={selectedSale} />
-          </Section>
-        </div>
-      ) : null}
+      <Sheet open={selectedSale !== null} onOpenChange={(open) => { if (!open) closePanel("sale"); }}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-5xl" onCloseAutoFocus={(event) => restoreFocus(event, Array.from(document.querySelectorAll<HTMLButtonElement>("button[aria-label]")).find(button => button.getAttribute("aria-label") === `View sale ${lastSale.current}`))}>
+          <SheetHeader><SheetTitle>Sale {selectedSale}</SheetTitle><SheetDescription>{range.from} to {range.to}, inclusive. Recorded merchandise and payments.</SheetDescription></SheetHeader>
+          {selectedSale ? <SaleSummaryView key={selectedSale} saleNumber={selectedSale} from={range.from} to={range.to} /> : null}
+        </SheetContent>
+      </Sheet>
 
       {tab === "payments" ? (
         <PaymentsTab from={range.from} to={range.to} onViewSale={viewSale} />

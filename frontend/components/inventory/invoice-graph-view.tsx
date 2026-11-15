@@ -83,7 +83,7 @@ export function InvoiceGraphView({ from, to, apiOverride }: InvoiceGraphViewProp
           ← Back
         </button>
       ) : null}
-      <DataQualifications notices={[...new Set((suppliers.data ?? []).flatMap(s => s.notices ?? []))]} />
+      <DataQualifications label="Supplier invoice coverage" scope={`${from} to ${to}`} notices={[...new Set((suppliers.data ?? []).flatMap(s => s.notices ?? []))]}>
       {invoices.error || lines.error ? <p role="alert">{invoices.error?.message ?? lines.error?.message}</p> : null}
       <FlowCanvas
         graph={graph}
@@ -91,6 +91,7 @@ export function InvoiceGraphView({ from, to, apiOverride }: InvoiceGraphViewProp
         ariaLabel="Invoices: suppliers, invoices, and line items"
         height={360}
       />
+      </DataQualifications>
     </div>
   );
 }

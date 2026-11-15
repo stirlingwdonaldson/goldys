@@ -35,6 +35,7 @@ export function FeatureImportanceChart({ rows }: { rows: ForecastImportanceRow[]
   // Grow with the feature count so long models don't squash the bars.
   const height = Math.max(220, data.length * 22);
   return (
+    <>
     <div
       role="img"
       aria-label="Feature importance"
@@ -62,5 +63,7 @@ export function FeatureImportanceChart({ rows }: { rows: ForecastImportanceRow[]
         </BarChart>
       </ResponsiveContainer>
     </div>
+    <details className="mt-3 text-sm"><summary className="cursor-pointer">Feature importance values</summary><table className="mt-2 w-full text-left tabular-nums"><caption className="sr-only">Feature importance gains</caption><thead><tr><th scope="col">Feature</th><th scope="col">Gain</th></tr></thead><tbody>{data.map(row => <tr key={row.feature}><th scope="row" className="font-normal">{row.feature}</th><td>{row.importance}</td></tr>)}</tbody></table></details>
+    </>
   );
 }
