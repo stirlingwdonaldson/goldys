@@ -202,6 +202,15 @@ class CtbStocktakeParserTest {
     }
   }
 
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(
+      strings = {"{", "{\"data\":[", "{\"data\":[{\"id\":1}]", "{\"data\":[null]}"})
+  void incompleteOrInvalidDetailJsonFailsExplicitly(String json) {
+    assertThatThrownBy(
+            () -> parser.parseStocktakeLines(bytes(json), RAW, 1, LocalDate.parse("2026-10-05")))
+        .isInstanceOf(ConnectorFetchException.class);
+  }
+
   private static byte[] bytes(String s) {
     return s.getBytes(StandardCharsets.UTF_8);
   }
