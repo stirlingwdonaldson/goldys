@@ -32,7 +32,7 @@ semantic layer.
 | Package | Role | May depend on |
 |---|---|---|
 | `api` | REST controllers (thin adapters: identity + delegation + JSON) | `application`, `auth`, `connectors` (webhook ingest) |
-| `workspace` | Disabled Pi job admission, native snapshot persistence and private worker bridge | `auth`, `reporting`; no source persistence or Spring AI |
+| `workspace` | Disabled Pi job admission, private thread discovery, native snapshot persistence and private worker bridge | `auth`, `reporting`; no source persistence or Spring AI |
 | `conversational` | SSE "Ask Goldy's" endpoint + tool callbacks | `reporting`, `auth`, `api` (shared `NotConfiguredException`), `dashboard` (value records), `semantic` (catalog) |
 | `reporting` | Fixed reporting tools (`ReportingTool`) + dispatch + widget spec | `semantic`, `auth` |
 | `application` | Use-case services: composition + authorization + response mapping | `semantic`, `reconciliation`, `canonical`, `ingestion`, `auth`, `connectors`, `dashboard`, `reporting` |

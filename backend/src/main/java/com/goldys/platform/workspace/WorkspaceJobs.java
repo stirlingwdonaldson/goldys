@@ -21,6 +21,7 @@ public class WorkspaceJobs {
       UUID id,
       UUID threadId,
       String state,
+      String prompt,
       long revision,
       List<WorkspaceHistory.Message> messages) {}
 
@@ -96,6 +97,7 @@ public class WorkspaceJobs {
         id,
         threadId,
         "QUEUED",
+        prompt,
         thread.revision(),
         WorkspaceHistory.project(parse(thread.snapshot()), json));
   }
@@ -111,6 +113,7 @@ public class WorkspaceJobs {
         id,
         threadId,
         state,
+        jdbc.queryForObject("select prompt from workspace_job where id=?", String.class, id),
         thread.revision(),
         WorkspaceHistory.project(parse(thread.snapshot()), json));
   }

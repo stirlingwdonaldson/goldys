@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 class WorkspaceJobsIntegrationTest {
   @Autowired WorkspaceJobs jobs;
   @Autowired WorkspaceReporting reporting;
+  @Autowired WorkspaceThreads threads;
   @Autowired JdbcTemplate jdbc;
   @Autowired ObjectMapper json;
   UUID owner;
@@ -55,6 +56,66 @@ class WorkspaceJobsIntegrationTest {
             "entries",
             json.createArrayNode()
                 .add(json.createObjectNode().put("type", "session").put("id", "synthetic")));
+  }
+
+  @Test
+  void discoveryPaginatesTiedTimestampsWithoutLeakingOtherOwners() {
+    var first = submit(UUID.randomUUID(), UUID.randomUUID());
+    var second = submit(UUID.randomUUID(), UUID.randomUUID());
+    jdbc.update("update workspace_thread set created_at='2026-11-15T00:00:00Z'");
+    UUID other = account("OWNER");
+    var foreign = jobs.submit(other, UUID.randomUUID(), UUID.randomUUID(), "Private question");
+    var page = threads.list(owner, null, 1);
+    assertThat(page.threads()).hasSize(1);
+    assertThat(page.nextCursor()).isEqualTo(page.threads().getFirst().id());
+    var next = threads.list(owner, page.nextCursor(), 1);
+    assertThat(next.nextCursor()).isNull();
+    assertThat(
+            java.util.stream.Stream.concat(page.threads().stream(), next.threads().stream())
+                .map(WorkspaceThreads.Summary::latestJobId)
+                .toList())
+        .containsExactlyInAnyOrder(first.id(), second.id());
+    assertThatThrownBy(() -> threads.list(owner, foreign.threadId(), 1))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> threads.list(owner, UUID.randomUUID(), 1))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> threads.list(owner, null, 51))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(threads.list(account("OWNER"), null, 25).threads()).isEmpty();
+  }
+
+  @Test
+  void discoveryMarksRevokedHistoryAndAllowsFreshThreads() {
+    var old = submit(UUID.randomUUID(), UUID.randomUUID());
+    jdbc.update("update user_account set updated_at=now()+interval '1 second' where id=?", owner);
+    var restricted = threads.list(owner, null, 25).threads().getFirst();
+    assertThat(restricted.id()).isEqualTo(old.threadId());
+    assertThat(restricted.access()).isEqualTo("NOT_PERMITTED");
+    assertThat(restricted.latestJobId()).isNull();
+    assertThatThrownBy(() -> jobs.read(owner, old.id())).isInstanceOf(AccessDeniedException.class);
+    var fresh = submit(UUID.randomUUID(), UUID.randomUUID());
+    assertThat(threads.list(owner, null, 25).threads())
+        .filteredOn(item -> item.access().equals("AVAILABLE"))
+        .extracting(WorkspaceThreads.Summary::latestJobId)
+        .containsExactly(fresh.id());
+    assertThatThrownBy(() -> threads.list(account("MANAGER"), null, 25))
+        .isInstanceOf(AccessDeniedException.class);
+    jdbc.update("update user_account set active=false where id=?", owner);
+    assertThatThrownBy(() -> threads.list(owner, null, 25))
+        .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void discoveryFindsLatestAttemptAndRecoversPromptBeforeFirstCheckpoint() {
+    UUID thread = UUID.randomUUID();
+    var first = submit(thread, UUID.randomUUID());
+    jobs.stop(owner, first.id());
+    var retry = jobs.submit(owner, thread, UUID.randomUUID(), "Explicit retry question");
+    assertThat(threads.list(owner, null, 25).threads().getFirst().latestJobId())
+        .isEqualTo(retry.id());
+    var recovered = jobs.read(owner, retry.id());
+    assertThat(recovered.prompt()).isEqualTo("Explicit retry question");
+    assertThat(recovered.messages()).isEmpty();
   }
 
   @Test
