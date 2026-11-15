@@ -8,8 +8,8 @@ const ASSOCIATIONS: Record<string, string> = {
   TRANSACTION_LIMIT_EXCEEDED: "The transaction evidence exceeds the display limit.",
   TRANSACTION_IDENTITY_UNVERIFIED: "A receipt number groups observations; its relationship to individual transactions remains unverified.",
 };
-export function ReceiptGroupNotice({ api, saleNumber }: { api: Api; saleNumber: string }) {
-  const query = useQuery({ queryKey: ["receipt-group", saleNumber], queryFn: ({ signal }) => api.getReceiptGroup(saleNumber, "2020-11-23", new Date().toISOString().slice(0, 10), { signal }) });
+export function ReceiptGroupNotice({ api, saleNumber, from = "2020-11-23", to = new Date().toISOString().slice(0, 10) }: { api: Api; saleNumber: string; from?: string; to?: string }) {
+  const query = useQuery({ queryKey: ["receipt-group", saleNumber, from, to], queryFn: ({ signal }) => api.getReceiptGroup(saleNumber, from, to, { signal }) });
   return <section aria-label="Receipt association" className="rounded-xl border bg-card p-4 text-sm">
     <h3 className="font-semibold">Receipt-number group</h3>
     {query.isPending ? <p role="status">Checking receipt associations…</p> : query.error ? <p role="alert">{query.error.code === "NOT_PERMITTED" ? "You do not have permission to view transaction evidence." : "Receipt associations could not be checked. Transaction identity remains unverified."}</p> : <>

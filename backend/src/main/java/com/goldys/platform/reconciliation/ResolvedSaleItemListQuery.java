@@ -23,6 +23,19 @@ public class ResolvedSaleItemListQuery implements SaleItemListQuery {
   @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
   public DataPage<SaleItemRow> page(
       String category, String number, LocalDate from, LocalDate to, int page, int size) {
+    return page(category, number, from, to, page, size, new RecordSort("tradingDate", "desc"));
+  }
+
+  @Override
+  @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+  public DataPage<SaleItemRow> page(
+      String category,
+      String number,
+      LocalDate from,
+      LocalDate to,
+      int page,
+      int size,
+      RecordSort sort) {
     int p = Math.max(0, page), limit = Math.clamp(size, 1, 200);
     String where = " where trading_date between ? and ? ";
     List<Object> args = new ArrayList<>(List.of(from, to));
@@ -48,7 +61,23 @@ public class ResolvedSaleItemListQuery implements SaleItemListQuery {
         jdbc.query(
             "select * from resolved_sale_line s"
                 + where
-                + " order by trading_date desc,receipt_line_id limit ? offset ?",
+                + " order by "
+                + sort.orderBy(
+                    Map.ofEntries(
+                        Map.entry("tradingDate", "trading_date"),
+                        Map.entry("saleNumber", "sale_number"),
+                        Map.entry("receiptLineId", "receipt_line_id"),
+                        Map.entry("itemName", "item_name"),
+                        Map.entry("productNumber", "product_number"),
+                        Map.entry("sku", "sku"),
+                        Map.entry("categoryName", "category_name"),
+                        Map.entry("orderType", "order_type"),
+                        Map.entry("quantitySold", "quantity_sold"),
+                        Map.entry("soldPriceIncTax", "sold_price_inc_tax"),
+                        Map.entry("costIncTax", "cost_inc_tax"),
+                        Map.entry("amount", "amount")),
+                    "source_system asc, site_number asc nulls last, trading_date asc, receipt_line_id asc")
+                + " limit ? offset ?",
             (rs, i) -> {
               SaleAdjustment adjustment = null;
               try {

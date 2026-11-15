@@ -163,6 +163,38 @@ class InvoiceReportingServiceTest {
         .isInstanceOf(java.util.NoSuchElementException.class);
   }
 
+  @Test
+  void sortsBeforePagingWithStableTiesAndMissingValues() {
+    var rows = new java.util.ArrayList<InvoiceMetadataView>();
+    for (int i = 0; i < 12; i++)
+      rows.add(
+          invoice("A. Foods", "SORT-" + i, "2026-09-01", Integer.toString(i == 11 ? 999 : i / 2)));
+    rows.add(invoice("A. Foods", "SORT-MISSING", "2026-09-01", null));
+    rows.add(invoice("Excluded", "OTHER", "2026-09-01", "9999"));
+    when(invoices.currentInvoices()).thenReturn(rows);
+    service.list(role(), "a. foo", null, null, 0, 3);
+    org.mockito.Mockito.verify(pdfLinks, org.mockito.Mockito.times(3))
+        .status(org.mockito.ArgumentMatchers.any());
+    for (String direction : List.of("asc", "desc")) {
+      var sort = new com.goldys.platform.semantic.RecordSort("totalAmount", direction);
+      var all = new java.util.ArrayList<InvoiceReportingService.InvoiceSummary>();
+      for (int page = 0; page < 5; page++)
+        all.addAll(service.list(role(), "a. foo", null, null, page, 3, sort).items());
+      assertThat(all).hasSize(13);
+      assertThat(all)
+          .extracting(InvoiceReportingService.InvoiceSummary::invoiceId)
+          .doesNotHaveDuplicates();
+      assertThat(all.stream().map(InvoiceReportingService.InvoiceSummary::totalAmount).toList())
+          .isSortedAccordingTo(
+              java.util.Comparator.nullsLast(
+                  direction.equals("asc")
+                      ? java.util.Comparator.<BigDecimal>naturalOrder()
+                      : java.util.Comparator.<BigDecimal>reverseOrder()));
+      assertThat(service.list(role(), "a. foo", null, null, 0, 3, sort).items())
+          .isEqualTo(all.subList(0, 3));
+    }
+  }
+
   private static InvoiceMetadataView invoice(
       String supplier, String number, String date, String total) {
     return new InvoiceMetadataView(
@@ -170,7 +202,7 @@ class InvoiceReportingServiceTest {
         number,
         LocalDate.parse(date),
         null,
-        new BigDecimal(total),
+        total == null ? null : new BigDecimal(total),
         null,
         null,
         null,

@@ -43,7 +43,9 @@ export function useCopyInvoiceLink(invoiceNumber: string): () => Promise<void> {
   const { toast } = useToast();
   return async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}${invoiceHref(invoiceNumber)}`);
+      const current = new URL(window.location.href);
+      const href = current.pathname === "/invoices" || current.pathname.startsWith("/invoices/") ? current.href : `${current.origin}${invoiceHref(invoiceNumber)}`;
+      await navigator.clipboard.writeText(href);
       toast({ title: "Link copied", tone: "success" });
     } catch {
       toast({ title: "Couldn't copy the link", description: "Copy it from the address bar instead.", tone: "error" });
@@ -89,7 +91,7 @@ export function useInvoiceData(invoiceNumber: string): InvoiceData {
 /** Header figures: total, issue and due dates, purchase number. */
 export function InvoiceSummaryGrid({ invoice }: { invoice: InvoiceDetail }) {
   return (
-    <div><DataQualifications notices={invoice.notices} /><dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+    <div><DataQualifications label={`Invoice ${invoice.invoiceNumber} line subtotal`} scope={`${invoice.supplierName} · ${invoice.invoiceDate}`} notices={invoice.notices}><span className="tabular-nums">Known line subtotal: {formatCurrency(invoice.lineSubtotal)}</span></DataQualifications><dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
       <div className="col-span-2 sm:col-span-1">
         <dt className="text-xs text-muted-foreground">Total</dt>
         <dd className="text-2xl font-semibold tabular-nums">{formatCurrency(invoice.totalAmount)}</dd>

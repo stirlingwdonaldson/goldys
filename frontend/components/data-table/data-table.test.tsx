@@ -139,3 +139,17 @@ describe("DataTable", () => {
     );
   });
 });
+
+it("keeps nulls and undefined last in both directions, with stable ties across pages", () => {
+  const records = Array.from({ length: 33 }, (_, i) => ({ name: String(i).padStart(2, "0"), amount: i === 32 ? undefined : i === 31 ? null : Math.floor(i / 2) }));
+  render(<DataTable columns={columns as ColumnDef<(typeof records)[number]>[]} data={records} pageSize={10} getRowId={row => row.name} />);
+  const sort = screen.getByRole("button", { name: "Sort by Amount" });
+  fireEvent.click(sort);
+  expect(screen.getByRole("columnheader", { name: /Amount/ })).toHaveAttribute("aria-sort", "ascending");
+  expect(bodyNames()).toEqual(records.slice(0, 10).map(row => row.name));
+  fireEvent.click(sort);
+  expect(screen.getByRole("columnheader", { name: /Amount/ })).toHaveAttribute("aria-sort", "descending");
+  expect(bodyNames()[0]).toBe("30");
+  for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+  expect(bodyNames().slice(-2)).toEqual(["31", "32"]);
+});

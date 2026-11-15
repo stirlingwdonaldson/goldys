@@ -203,7 +203,9 @@ class RelationalQueryIntegrationTest {
                 + "\"filter\":{\"predicate\":{\"field\":\"stock_code\",\"op\":\"EQ\",\"value\":\"STK-1\"}},"
                 + "\"limit\":100}");
     assertThat(r.rows()).hasSize(2);
-    assertThat((BigDecimal) r.rows().get(0).get(1)).isEqualByComparingTo("100.0000");
+    assertThat(r.rows().stream().map(row -> ((BigDecimal) row.get(1)).stripTrailingZeros()))
+        .containsExactlyInAnyOrder(
+            new BigDecimal("100").stripTrailingZeros(), new BigDecimal("50").stripTrailingZeros());
   }
 
   @Test

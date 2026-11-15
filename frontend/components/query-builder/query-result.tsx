@@ -116,7 +116,7 @@ export function QueryResultView({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <DataQualifications notices={result.notices} />
+        <DataQualifications label="Query result coverage" scope={result.semantics.grain} notices={result.notices}>
         {result.pagination.truncated ? (
           <p className="text-sm text-muted-foreground">
             The result may be incomplete. Narrow your filters or increase the
@@ -150,6 +150,7 @@ export function QueryResultView({
             </ResponsiveContainer>
           </div>
         )}
+        </DataQualifications>
       </CardContent>
     </Card>
   );

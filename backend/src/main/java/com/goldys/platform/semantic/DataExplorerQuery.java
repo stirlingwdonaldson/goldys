@@ -18,9 +18,13 @@ public interface DataExplorerQuery {
   /** Paged generic rows for one canonical entity type, recent-first. */
   DataPage<GenericRow> canonicalRows(String entityId, int page, int size);
 
+  DataPage<GenericRow> canonicalRows(String entityId, int page, int size, RecordSort sort);
+
   /** The resolved domains the explorer can browse. */
   List<EntityDescriptor> resolvedDomains();
 
   /** Paged generic rows for one resolved domain, recent-first. */
   DataPage<GenericRow> resolvedRows(String domainId, int page, int size);
+
+  DataPage<GenericRow> resolvedRows(String domainId, int page, int size, RecordSort sort);
 }

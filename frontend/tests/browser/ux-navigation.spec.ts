@@ -96,7 +96,7 @@ for (const report of ["sales", "reservations"]) {
     await expect(page.getByRole("dialog")).toHaveCount(0);
     expect(new URL(page.url()).searchParams.get("page")).toBe("1");
     expect(new URL(page.url()).searchParams.has("trace")).toBe(false);
-    if (report === "sales") await expect(page.getByLabel("Filter sources on this page")).toHaveValue("CTB");
+    if (report === "sales") await expect(page.getByLabel("Filter sources")).toHaveValue("CTB");
     await expect(page.getByRole("button", { name: name!, exact: true })).toBeVisible();
   });
 }

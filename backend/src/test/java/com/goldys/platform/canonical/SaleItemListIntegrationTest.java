@@ -26,6 +26,8 @@ class SaleItemListIntegrationTest {
   @Autowired CanonicalSaleItemIngest ingest;
   @Autowired CanonicalSaleItemQuery query;
 
+  @Autowired com.goldys.platform.semantic.SaleItemListQuery sortedQuery;
+
   @BeforeEach
   void clean() {
     jdbc.update("truncate table canonical_sale_item");
@@ -130,6 +132,34 @@ class SaleItemListIntegrationTest {
                 "select adjustment->>'reason' from resolved_sale_line where receipt_line_id='EVIDENCE-1'",
                 String.class))
         .isEqualTo("Manager");
+  }
+
+  @Test
+  void ordersTheEntireFilteredDatasetBeforeThreeRowPages() {
+    for (int i = 0; i < 10; i++) {
+      ingest.record(
+          saleItem(
+              DAY_1, "SORT-" + i, "SORT-LINE-" + i, "BEV", Integer.toString(i == 9 ? 999 : i / 2)));
+    }
+    for (String direction : java.util.List.of("asc", "desc")) {
+      var sort = new com.goldys.platform.semantic.RecordSort("amount", direction);
+      var all = new java.util.ArrayList<SaleItemRow>();
+      for (int page = 0; page < 4; page++)
+        all.addAll(sortedQuery.page("BEV", null, DAY_1, DAY_2, page, 3, sort).items());
+      assertThat(all).hasSize(10);
+      assertThat(all).extracting(SaleItemRow::receiptLineId).doesNotHaveDuplicates();
+      var values = all.stream().map(SaleItemRow::amount).toList();
+      assertThat(values)
+          .isSortedAccordingTo(
+              direction.equals("asc")
+                  ? java.util.Comparator.naturalOrder()
+                  : java.util.Comparator.reverseOrder());
+      assertThat(values.get(direction.equals("asc") ? 0 : 9)).isEqualByComparingTo("0");
+      assertThat(values.get(direction.equals("desc") ? 0 : 9)).isEqualByComparingTo("999");
+      int page = 0;
+      assertThat(sortedQuery.page("BEV", null, DAY_1, DAY_2, page, 3, sort).items())
+          .isEqualTo(all.subList(0, 3));
+    }
   }
 
   private void assertFullFieldSet(SaleItemRow r) {

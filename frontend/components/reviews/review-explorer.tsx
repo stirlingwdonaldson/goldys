@@ -108,15 +108,15 @@ export function ReviewExplorer({ reviews }: { reviews: ReviewView[] }) {
   const sortedReviews = useMemo(
     () => [...reviews].sort((a, b) => {
       if (sort === "highest" || sort === "lowest") {
-        if (a.overallRating == null) return b.overallRating == null ? 0 : 1;
+        if (a.overallRating == null) return b.overallRating == null ? a.reviewId.localeCompare(b.reviewId) : 1;
         if (b.overallRating == null) return -1;
         return sort === "highest"
-          ? b.overallRating - a.overallRating
-          : a.overallRating - b.overallRating;
+          ? (b.overallRating - a.overallRating || a.reviewId.localeCompare(b.reviewId))
+          : (a.overallRating - b.overallRating || a.reviewId.localeCompare(b.reviewId));
       }
       return sort === "oldest"
-        ? a.reviewedAt.localeCompare(b.reviewedAt)
-        : b.reviewedAt.localeCompare(a.reviewedAt);
+        ? (a.reviewedAt.localeCompare(b.reviewedAt) || a.reviewId.localeCompare(b.reviewId))
+        : (b.reviewedAt.localeCompare(a.reviewedAt) || a.reviewId.localeCompare(b.reviewId));
     }),
     [reviews, sort],
   );

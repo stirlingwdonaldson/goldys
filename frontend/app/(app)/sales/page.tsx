@@ -2,8 +2,10 @@
 
 import { Suspense, useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { readSort, tableSorting, SORT_FIELDS } from "@/lib/record-sort";
+import { useInvestigationUrl } from "@/lib/use-investigation-url";
 import { useApi } from "@/lib/demo-mode";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components/data-table/data-table";
 import { currencyColumn, dateColumn, sourceColumn, traceColumn } from "@/components/data-table/columns";
 import { TablePagination } from "@/components/data-table/table-pagination";
@@ -17,7 +19,6 @@ import { Section } from "@/components/layout/section";
 import { useReportUrl } from "@/components/trust/use-report-url";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { sourceIdentity } from "@/lib/sources";
 import { SalesTrend } from "@/components/dashboard/sales-trend";
 
 function salesColumns(onTrace: (row: DailySales) => void): ColumnDef<DailySales>[] {
@@ -37,12 +38,15 @@ export default function SalesPage() {
 
 function SalesContent() {
   const queryApi = useApi();
+  const sortUrl = useInvestigationUrl();
+  const sort = readSort(sortUrl.params, SORT_FIELDS.sales, "date", "");
+  const sorting = tableSorting(sort);
   // The trend must render the reconciled/resolved daily totals, never a client-side
   // sum of competing per-source rows (audit finding F01). The per-source table below
   // stays for source comparison and pages on the server.
   const { params, update, page, pageSize, container, target, openTrace, closeTrace, restoreFocus } = useReportUrl("sales.gross", "Gross sales");
   const source = params.get("source") ?? "";
-  const sales = useQuery({ queryKey: ["listDailySales", {}, page, pageSize], queryFn: ({ signal }) => queryApi.listDailySales({}, page, pageSize, { signal }) });
+  const sales = useQuery({ placeholderData: keepPreviousData, queryKey: ["listDailySales", sort, { source }, page, pageSize], queryFn: ({ signal }) => queryApi.listDailySales({ source: source || undefined }, page, pageSize, { signal, sort }) });
   const trend = useQuery({ queryKey: ["getSalesTrend", undefined, undefined], queryFn: ({ signal }) => queryApi.getSalesTrend(undefined, undefined, { signal }) });
   const columns = useMemo(
     () => salesColumns((r) => openTrace(r.date)),
@@ -63,7 +67,7 @@ function SalesContent() {
       />
     );
   }
-  const rows = (sales.data?.items ?? []).filter(row => `${row.source} ${sourceIdentity(row.source).label}`.toLowerCase().includes(source.toLowerCase()));
+  const rows = sales.data?.items ?? [];
   const total = sales.data?.total ?? 0;
 
   return (
@@ -83,16 +87,19 @@ function SalesContent() {
         />
       ) : (
         <Section title="Daily totals by source">
-          <p className="text-sm text-muted-foreground">All available trading dates, newest first. Source filtering and column sorting apply to this page only; this table is not restricted to the trend range above.</p>
+          <p className="text-sm text-muted-foreground">All authorised matching trading dates. Sorting applies before pagination; this table is not restricted to the trend range above.</p>
           <div className="space-y-1.5">
-            <Label htmlFor="sales-source">Filter sources on this page</Label>
-            <Input id="sales-source" value={source} onChange={(event) => update({ source: event.target.value })} className="w-full sm:w-56" />
+            <Label htmlFor="sales-source">Filter sources</Label>
+            <Input id="sales-source" value={source} onChange={(event) => update({ source: event.target.value, page: null })} className="w-full sm:w-56" />
           </div>
           <DataTable
             columns={columns}
             data={rows}
             pageSize={false}
-            initialSorting={[{ id: "date", desc: true }]}
+            sorting={sorting}
+            manualSorting
+            sortingPending={sales.isPlaceholderData}
+            onSortingChange={(change) => { const next = typeof change === "function" ? change(sorting) : change; sortUrl.update({ "sort": next[0]?.id ?? "date", "direction": next[0]?.desc ? "desc" : "asc", page: null });  }}
             getRowId={(r) => `${r.date}-${r.source}`}
           />
           <TablePagination

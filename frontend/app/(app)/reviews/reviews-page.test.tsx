@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => {
   const api = {
     getReviewOverview: vi.fn(),
     getReviewSentimentTrend: vi.fn(),
+    getReviewRatingTrend: vi.fn().mockResolvedValue([]),
     getReviewAspects: vi.fn(),
     getReviewRatings: vi.fn(),
     getReviewSources: vi.fn(),
@@ -145,12 +146,13 @@ describe("ReviewsPage", () => {
     mocks.api.getReviewOverview.mockResolvedValue({ ...overview, total: 0 });
     render(<ReviewsPage />);
 
-    expect(await screen.findByText("No reviews yet")).toBeInTheDocument();
+    expect(await screen.findByText("Total reviews")).toBeInTheDocument();
+    expect(screen.getAllByText("0").length).toBeGreaterThan(0);
   });
 
   it("returns to the first review page when the search filter changes", async () => {
     mocks.api.getReviews.mockResolvedValue(Array.from({ length: 12 }, (_, index) => ({
-      ...reviews[0], reviewId: `review-${index}`, guestName: `Guest ${index}`,
+      ...reviews[0], reviewId: `review-${String(index).padStart(2, "0")}`, guestName: `Guest ${index}`,
     })));
     render(<ReviewsPage />);
     const explorer = await screen.findByTestId("review-explorer");
@@ -160,7 +162,7 @@ describe("ReviewsPage", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Search reviews" }), {
       target: { value: "service" },
     });
-    const filteredExplorer = screen.getByTestId("review-explorer");
+    const filteredExplorer = await screen.findByTestId("review-explorer");
     expect(await within(filteredExplorer).findByText("Guest 0")).toBeInTheDocument();
     expect(within(filteredExplorer).getByRole("button", { name: "Previous page" })).toBeDisabled();
     expect(mocks.api.getReviews).toHaveBeenLastCalledWith(

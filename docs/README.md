@@ -13,7 +13,7 @@ Read the smallest reference that answers the task.
 | Architecture and constraints | [System context](system-context.md), [current packages](architecture/current-state.md), [backend invariants](../.claude/rules/architecture-invariants.md) |
 | Source access and identity | [Access paths](connectors/source-access.md), [matching](connectors/matching-and-identity.md), [OpenTable](connectors/opentable.md) |
 | Metrics and AI/UI contracts | [Metric catalogue](metrics/catalog.md), [AI tools](contracts/ai-tool-boundary.md), [widgets](contracts/widget-spec.schema.json), [dashboards](contracts/dashboard-document.schema.json) |
-| UI changes | [Design entry](../DESIGN.md), [visual direction](design/ui-direction.md), [interaction system](design/design-system.md) |
+| UI changes | [Design entry](../DESIGN.md), [visual direction](design/ui-direction.md), [interaction system](design/design-system.md), [UI handoff and sorting inventory](design/ui-handoff-implementation.md) |
 | Operations | [Testing](operations/testing.md), [deployment](operations/deployment.md), [weekly-report accuracy reviews](operations/weekly-report-review.md) |
 | Agent workflow | [Skills](agents/skills.md), [GitHub tracker](agents/issue-tracker.md), [domain docs](agents/domain.md), [review commands](agents.md) |
 | Durable choices | [Owner scope decisions](decisions/2026-11-04-product-scope.md), [governed conversational planning](decisions/0001-governed-conversational-planning.md), existing files in `decisions/` |

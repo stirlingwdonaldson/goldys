@@ -61,7 +61,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 vi.mock("@/lib/demo-mode", () => ({ useApi: () => ({ ...state.api, ...state.readApi }) }));
 
 // The taxonomy tree renders React Flow, which reads the router on mount.
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...await importOriginal<typeof import("next/navigation")>(), useRouter: () => ({ push: vi.fn() }) }));
 
 // Distinct sentinel fixtures, one per Api method. Each carries a marker (a category name or
 // product key) that exists only in its own dataset, so the tests assert that the right
@@ -251,7 +252,7 @@ describe("ProductsPage", () => {
     render(<ProductsPage />);
 
     expect(screen.getByRole("button", { name: "Run classification" })).toBeInTheDocument();
-    expect(screen.getByText(/No classification run has produced data yet/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Products: incomplete/ })).toBeInTheDocument();
   });
 
   it("shows the latest run status without opening the Pipeline tab", () => {

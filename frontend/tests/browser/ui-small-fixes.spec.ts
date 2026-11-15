@@ -14,7 +14,7 @@ test("incomplete notice preference defaults off and persists across navigation a
   await expect(page.getByRole("heading", { name: "Home", exact: true })).toBeVisible();
   await expect(page.getByText("Incomplete — known subtotals only.", { exact: true })).toHaveCount(0);
   await page.goto("/settings");
-  const toggle = page.getByRole("switch", { name: "Show incomplete data notices" });
+  const toggle = page.getByRole("switch", { name: "Show incomplete data" });
   await expect(toggle).toHaveAttribute("aria-checked", "false");
   await toggle.click();
   await page.reload();

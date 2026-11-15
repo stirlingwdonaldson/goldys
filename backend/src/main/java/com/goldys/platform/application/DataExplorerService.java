@@ -61,4 +61,24 @@ public class DataExplorerService {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     return explorer.resolvedRows(domainId, page, size);
   }
+
+  public DataPage<GenericRow> canonicalRows(
+      UserRole role,
+      String entityId,
+      int page,
+      int size,
+      com.goldys.platform.semantic.RecordSort sort) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return explorer.canonicalRows(entityId, page, size, sort);
+  }
+
+  public DataPage<GenericRow> resolvedRows(
+      UserRole role,
+      String domainId,
+      int page,
+      int size,
+      com.goldys.platform.semantic.RecordSort sort) {
+    permissions.require(role, RESOURCE, PermissionAction.READ);
+    return explorer.resolvedRows(domainId, page, size, sort);
+  }
 }

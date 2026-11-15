@@ -7,7 +7,8 @@ vi.mock("@/lib/demo-mode", () => ({
   useDemoMode: () => ({ demo: false, setDemo: () => {} }),
 }));
 
-vi.mock("next/navigation", () => ({
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...await importOriginal<typeof import("next/navigation")>(),
   useParams: () => ({ invoiceNumber: "INV%2F1042" }),
 }));
 

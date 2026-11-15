@@ -2,14 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import SalesDetailPage from "./page";
 
-// `useSearchParams` is read once on mount to seed the active tab from the URL,
-// so the deep-link test can point it at `?tab=` before rendering.
-const mockParams = vi.hoisted(() => ({ current: new URLSearchParams() }));
-
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => mockParams.current,
-}));
-
 // The real tabs fetch through the Api context; this page test only covers the shell.
 vi.mock("@/components/sales-detail/payments-tab", () => ({
   PaymentsTab: () => <div data-testid="payments-tab" />,
@@ -38,7 +30,7 @@ vi.mock("@/components/sales-detail/settlement-flow-view", () => ({
 }));
 
 beforeEach(() => {
-  mockParams.current = new URLSearchParams();
+  window.history.replaceState(null, "", "/sales-detail");
 });
 
 describe("SalesDetailPage", () => {
@@ -65,7 +57,7 @@ describe("SalesDetailPage", () => {
   });
 
   it("deep-links the active tab from the ?tab= search param", () => {
-    mockParams.current = new URLSearchParams("tab=sale-items");
+    window.history.replaceState(null, "", "/sales-detail?tab=sale-items");
     render(<SalesDetailPage />);
     expect(screen.getByTestId("sale-items-tab")).toBeInTheDocument();
     expect(screen.queryByTestId("payments-tab")).not.toBeInTheDocument();
@@ -77,7 +69,7 @@ describe("SalesDetailPage", () => {
     expect(screen.getByRole("button", { name: "Past week" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Past month" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Past year" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Custom date range" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Custom date range:/ })).toBeInTheDocument();
   });
 
   it("shows the data lineage section and hides the sale summary until a sale is drilled", () => {

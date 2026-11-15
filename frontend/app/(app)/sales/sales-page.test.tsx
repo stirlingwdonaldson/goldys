@@ -18,8 +18,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
           items: [
             { date: "2026-10-05", source: "CTB", totalSales: 12000, gst: 1000, net: 11000 },
             { date: "2026-10-05", source: "Lightspeed", totalSales: 8000, gst: 700, net: 7300 },
-          ],
-          total: 2,
+          ].filter(row => !navigation.query.includes("source=CTB") || row.source === "CTB"),
+          total: navigation.query.includes("source=CTB") ? 1 : 2,
           page: 0,
           size: 10,
         },

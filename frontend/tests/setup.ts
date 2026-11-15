@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 
 // Recharts' ResponsiveContainer uses ResizeObserver, which jsdom does not provide.
@@ -27,12 +27,16 @@ vi.mock("@testing-library/react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@testing-library/react")>();
   const { QueryClient, QueryClientProvider } = await vi.importActual<typeof import("@tanstack/react-query")>("@tanstack/react-query");
   const { createElement, useState } = await import("react");
+  const { TestNavigation } = await import("./navigation");
   function Wrapper({ children }: { children: import("react").ReactNode }) {
     const [client] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } } }));
-    return createElement(QueryClientProvider, { client }, children);
+    return createElement(TestNavigation, null, createElement(QueryClientProvider, { client }, children));
   }
   return { ...actual,
     render: (ui: import("react").ReactNode, options?: import("@testing-library/react").RenderOptions) => actual.render(ui, { wrapper: Wrapper, ...options }),
     renderHook: (hook: (props: unknown) => unknown, options?: import("@testing-library/react").RenderHookOptions<unknown>) => actual.renderHook(hook, { wrapper: Wrapper, ...options }),
   };
 });
+
+// Each component test starts with a fresh investigation URL.
+beforeEach(() => { if (typeof window !== "undefined") window.history.replaceState(null, "", "/"); });

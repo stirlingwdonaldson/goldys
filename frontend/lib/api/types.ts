@@ -1,3 +1,4 @@
+import type { RecordReadOptions } from "@/lib/record-sort";
 import type { CustomLogic, ResolutionRule, RuleStrategy } from "@/lib/rule-logic";
 
 export type { CustomLogic, ResolutionRule, RuleStrategy };
@@ -992,6 +993,7 @@ export interface SaleItemFilter {
 
 /** Optional filter for the Daily-sales list (from/to are inclusive ISO dates). */
 export interface SalesFilter {
+  source?: string;
   from?: string;
   to?: string;
 }
@@ -1365,7 +1367,7 @@ export interface Api {
   listRuleAudit(options?: { signal?: AbortSignal }): Promise<RuleAuditEntry[]>;
   listReconciliationAudit(page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<ReconciliationAuditEntry>>;
   listProducts(options?: { signal?: AbortSignal }): Promise<string[]>;
-  listDailySales(filter: SalesFilter, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<DailySales>>;
+  listDailySales(filter: SalesFilter, page: number, size: number, options?: RecordReadOptions): Promise<DataPage<DailySales>>;
   getLatestSales(options?: { signal?: AbortSignal }): Promise<LatestSales>;
   getReservationSummary(date: string, options?: { signal?: AbortSignal }): Promise<ReservationSummary | undefined>;
   getInventoryObservations(from: string, to: string, kind: "ALL" | "COUNT" | "WASTE", page: number, size: number, options?: { signal?: AbortSignal }): Promise<InventoryObservationPage>;
@@ -1382,7 +1384,7 @@ export interface Api {
   listInvoices(
     filter: InvoiceFilter,
     page: number,
-    size: number, options?: { signal?: AbortSignal }): Promise<DataPage<InvoiceSummary>>;
+    size: number, options?: RecordReadOptions): Promise<DataPage<InvoiceSummary>>;
   getInvoice(invoiceNumber: string, options?: { signal?: AbortSignal }): Promise<InvoiceDetail>;
   getInvoiceById(invoiceId: string, options?: { signal?: AbortSignal }): Promise<InvoiceDetail>;
   getInvoiceDocuments(invoiceId: string, options?: { signal?: AbortSignal }): Promise<InvoiceDocument[]>;
@@ -1419,16 +1421,16 @@ export interface Api {
     size: number, options?: { signal?: AbortSignal }): Promise<DataPage<RawRecordSummary>>;
   getRawRecord(id: string, options?: { signal?: AbortSignal }): Promise<RawRecordDetail>;
   listCanonicalEntities(options?: { signal?: AbortSignal }): Promise<EntityDescriptor[]>;
-  listCanonicalRows(entity: string, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<GenericRow>>;
+  listCanonicalRows(entity: string, page: number, size: number, options?: RecordReadOptions): Promise<DataPage<GenericRow>>;
   listResolvedDomains(options?: { signal?: AbortSignal }): Promise<EntityDescriptor[]>;
-  listResolvedRows(domain: string, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<GenericRow>>;
-  listPayments(filter: PaymentFilter, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<PaymentRow>>;
+  listResolvedRows(domain: string, page: number, size: number, options?: RecordReadOptions): Promise<DataPage<GenericRow>>;
+  listPayments(filter: PaymentFilter, page: number, size: number, options?: RecordReadOptions): Promise<DataPage<PaymentRow>>;
   listDeletedSales(
     filter: DeletedSaleFilter,
     page: number,
-    size: number, options?: { signal?: AbortSignal }): Promise<DataPage<DeletedSaleRow>>;
+    size: number, options?: RecordReadOptions): Promise<DataPage<DeletedSaleRow>>;
   getSaleCosting(saleNumber: string, from: string, to: string, options?: { signal?: AbortSignal }): Promise<SaleCosting>;
-  listSaleItems(filter: SaleItemFilter, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<SaleItemRow>>;
+  listSaleItems(filter: SaleItemFilter, page: number, size: number, options?: RecordReadOptions): Promise<DataPage<SaleItemRow>>;
   getPaymentMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<PaymentMix[]>;
   getDeletedSaleTotals(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DeletedSaleDay[]>;
   getSaleItemMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<SaleItemMix[]>;

@@ -44,7 +44,7 @@ class SalesControllerTest {
   @Test
   void returnsDailySalesNewestFirst() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(salesReporting.dailySales(any(), any(), any(), anyInt(), anyInt()))
+    when(salesReporting.dailySales(any(), any(), any(), anyInt(), anyInt(), any(), any()))
         .thenReturn(
             new DataPage<>(
                 List.of(
@@ -75,7 +75,7 @@ class SalesControllerTest {
   @Test
   void dailyForwardsDateBoundsAndPagingToTheService() throws Exception {
     when(currentUser.roleOf(any())).thenReturn(ownerRole());
-    when(salesReporting.dailySales(any(), any(), any(), anyInt(), anyInt()))
+    when(salesReporting.dailySales(any(), any(), any(), anyInt(), anyInt(), any(), any()))
         .thenReturn(new DataPage<>(List.of(), 0, 0, 50));
 
     mvc.perform(
@@ -89,7 +89,13 @@ class SalesControllerTest {
 
     verify(salesReporting)
         .dailySales(
-            any(), eq(LocalDate.of(2026, 10, 1)), eq(LocalDate.of(2026, 10, 5)), eq(2), eq(25));
+            any(),
+            eq(LocalDate.of(2026, 10, 1)),
+            eq(LocalDate.of(2026, 10, 5)),
+            eq(2),
+            eq(25),
+            any(),
+            eq(new com.goldys.platform.semantic.RecordSort("date", "desc")));
   }
 
   @Test

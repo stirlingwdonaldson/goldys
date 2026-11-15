@@ -25,6 +25,7 @@ import { RuleAudit } from "@/components/rules/rule-audit";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
 import type { ResolutionRule } from "@/lib/api";
+import { QueryRegion } from "@/components/states/query-region";
 import { PageHeader } from "@/components/layout/page-header";
 
 const ENTITIES = ["daily_sales", "product_sales"];
@@ -66,9 +67,13 @@ export function ResolutionRulesContent() {
   const deleteRule = useMutation({ mutationFn: api.deleteResolutionRule });
   const { demo } = useDemoMode();
   const { data: rules, isPending: loading, error, refetch: reload } = useQuery({ queryKey: ["listResolutionRules"], queryFn: ({ signal }) => queryApi.listResolutionRules({ signal }) });
-  const { data: status } = useQuery({ queryKey: ["getRecomputeStatus"], queryFn: ({ signal }) => queryApi.getRecomputeStatus({ signal }) });
-  const { data: audit } = useQuery({ queryKey: ["listRuleAudit"], queryFn: ({ signal }) => queryApi.listRuleAudit({ signal }) });
-  const { data: products } = useQuery({ queryKey: ["listProducts"], queryFn: ({ signal }) => queryApi.listProducts({ signal }) });
+  const statusQuery = useQuery({ queryKey: ["getRecomputeStatus"], queryFn: ({ signal }) => queryApi.getRecomputeStatus({ signal }) });
+  const auditQuery = useQuery({ queryKey: ["listRuleAudit"], queryFn: ({ signal }) => queryApi.listRuleAudit({ signal }) });
+  const productsQuery = useQuery({ queryKey: ["listProducts"], queryFn: ({ signal }) => queryApi.listProducts({ signal }) });
+
+  const status = statusQuery.data;
+  const audit = auditQuery.data;
+  const products = productsQuery.data;
 
   const [editing, setEditing] = useState<ResolutionRule | null>(null);
   const [creating, setCreating] = useState(false);
@@ -123,7 +128,8 @@ export function ResolutionRulesContent() {
         status={<RulesApplyHelp />}
       />
 
-      {status ? <RecomputeBanner status={status} /> : null}
+      <QueryRegion query={statusQuery} subject="Recompute status">{status ? <RecomputeBanner status={status} /> : null}</QueryRegion>
+      <QueryRegion query={productsQuery} subject="Product options">{null}</QueryRegion>
 
       <RuleList
         rows={rows}
@@ -134,7 +140,7 @@ export function ResolutionRulesContent() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold text-muted-foreground">Change history</h2>
-        <RuleAudit entries={audit ?? []} />
+        <QueryRegion query={auditQuery} subject="Change history"><RuleAudit entries={audit ?? []} /></QueryRegion>
       </section>
 
       <Dialog open={deleting !== null} onOpenChange={(o) => !o && !deleteBusy && setDeleting(null)}>

@@ -3,6 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { CalendarDays } from "lucide-react";
+import { readSort, tableSorting } from "@/lib/record-sort";
 import { useApi } from "@/lib/demo-mode";
 import { useQuery } from "@tanstack/react-query";
 import type { DailyCovers, ReservationSummary } from "@/lib/api";
@@ -16,7 +17,6 @@ import { formatNumber, formatPercent } from "@/lib/format";
 import { EmptyState } from "@/components/states/empty-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { dateColumn, numberColumn, sourceColumn, traceColumn } from "@/components/data-table/columns";
-import { TablePagination } from "@/components/data-table/table-pagination";
 import { useReportUrl } from "@/components/trust/use-report-url";
 import { Badge } from "@/components/ui/badge";
 import { ProvenanceSheet } from "@/components/trust/provenance-sheet";
@@ -76,7 +76,8 @@ function ReservationsContent() {
   const queryApi = useApi();
   const [{ from, to }] = useState(() => last30Days());
   const [summaryDate] = useState(() => today());
-  const { update, page, pageSize, container, target, openTrace, closeTrace, restoreFocus } = useReportUrl("reservations.covers", "Covers");
+  const { params, update, page, pageSize, container, target, openTrace, closeTrace, restoreFocus } = useReportUrl("reservations.covers", "Covers");
+  const sorting = tableSorting(readSort(params, ["date", "covers"], "date"));
   const summary = useQuery({ queryKey: ["getReservationSummary", summaryDate], queryFn: ({ signal }) => queryApi.getReservationSummary(summaryDate, { signal }) });
   const covers = useQuery({ queryKey: ["listDailyCovers", from, to], queryFn: ({ signal }) => queryApi.listDailyCovers(from, to, { signal }) });
   const columns = useMemo(
@@ -119,7 +120,7 @@ function ReservationsContent() {
       )}
 
       <Section title="Covers, last 30 days">
-        <p className="text-sm text-muted-foreground">{from} to {to}, inclusive · browser calendar dates. This range differs from the single-date summary above. Column sorting applies to this page.</p>
+        <p className="text-sm text-muted-foreground">{from} to {to}, inclusive · browser calendar dates. This range differs from the single-date summary above. Column sorting applies to the whole range.</p>
         {covers.isPending ? <LoadingState rows={4} /> : null}
         {covers.error ? (
           <ErrorState
@@ -137,15 +138,15 @@ function ReservationsContent() {
         {covers.data && covers.data.length > 0 ? (
           <DataTable
             columns={columns}
-            data={[...covers.data].sort((a, b) => b.date.localeCompare(a.date)).slice(page * pageSize, (page + 1) * pageSize)}
-            pageSize={false}
-            initialSorting={[{ id: "date", desc: true }]}
+            data={covers.data}
+            pageSize={pageSize}
+            pagination={{ pageIndex: page, pageSize }}
+            onPaginationChange={change => { const next = typeof change === "function" ? change({ pageIndex: page, pageSize }) : change; update({ page: String(next.pageIndex), size: String(next.pageSize) }); }}
+            sorting={sorting}
+            onSortingChange={change => { const next = typeof change === "function" ? change(sorting) : change; update({ sort: next[0]?.id ?? "date", direction: next[0]?.desc ? "desc" : "asc", page: null }); }}
             getRowId={(r) => r.date}
           />
         ) : null}
-        {covers.data ? <TablePagination page={page} pageSize={pageSize} total={covers.data.length}
-          onPageChange={(value) => update({ page: String(value) })}
-          onPageSizeChange={(value) => update({ size: String(value), page: null })} /> : null}
       </Section>
 
       <ProvenanceSheet target={target} onClose={closeTrace} onRestoreFocus={restoreFocus} />

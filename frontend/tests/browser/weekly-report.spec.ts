@@ -20,12 +20,12 @@ for (const width of [1280, 800, 390]) {
     await expect(summary.getByText("4.5 stars", { exact: true })).toBeVisible();
     const targets = page.getByRole("table", { name: "Effective weekly targets", exact: true });
     await expect(targets.getByText("Below target", { exact: true })).toHaveCount(3);
-    await expect(targets.getByText("Incomplete daily values", { exact: true })).toHaveCount(3);
+    await expect(targets.getByText("Incomplete comparison evidence", { exact: true })).toHaveCount(3);
     await page.getByRole("button", { name: "2026-10-19 – 2026-10-25", exact: true }).click();
     await expect(page.getByRole("heading", { name: "2026-10-19 – 2026-10-25", exact: true })).toBeVisible();
     await expect(summary.getByText("$90,000.00", { exact: true })).toBeVisible();
     await expect(targets.getByText("Below target", { exact: true })).toHaveCount(0);
-    await expect(targets.getByText("Incomplete daily values", { exact: true })).toHaveCount(4);
+    await expect(targets.getByText("Incomplete comparison evidence", { exact: true })).toHaveCount(4);
     await expect(page.locator("details")).toHaveCount(0);
     await page.getByRole("button", { name: /Wastage reasons.*recorded lines/ }).click();
     let detail = page.getByRole("dialog", { name: "Report detail", exact: true });
@@ -229,6 +229,7 @@ test("missing values remain explicit and URL week controls still select the repo
     row.total = null;
     row.days = Array(7).fill(null);
     row.status = "UNAVAILABLE";
+    snapshot.weeks[0].assessments[row.id] = { outcome: "UNAVAILABLE", reason: null };
   }
   snapshot.weeks[0].targets = [];
   snapshot.weeks[0].wastage = { lines: 0, valuedLines: 0, value: null, reasonCoverageLines: null, reasonCoverageValue: null, reasons: [] };
@@ -245,7 +246,7 @@ test("missing values remain explicit and URL week controls still select the repo
   const summary = page.getByRole("region", { name: "Selected week summary" });
   await expect(summary.getByText("—", { exact: true })).toHaveCount(3);
   await expect(summary.getByText("$0.00", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("table", { name: "Effective weekly targets", exact: true }).getByText("Actual unavailable", { exact: true })).toHaveCount(6);
+  await expect(page.getByRole("table", { name: "Effective weekly targets", exact: true }).locator("tbody tr > td:nth-child(4)").getByText("Unavailable", { exact: true })).toHaveCount(6);
   await page.getByRole("button", { name: /Wastage reasons.*recorded lines/ }).click();
   await expect(page.getByText("No wastage observations received for this week. This does not establish zero wastage.", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: /^Stock counts/ }).click();

@@ -56,23 +56,6 @@ export default function DashboardPage() {
         actions={<><Button asChild variant="outline" size="sm"><Link href="/my-work">View attention work</Link></Button><FocusSwitcher value={focus} onChange={setFocus} /></>}
       />
 
-      <FocusShortcuts focus={focus} />
-
-      <BusinessKpiGrid
-        seniority={user?.seniority}
-        latestSales={data.latestSales}
-        salesTrend={data.salesTrend.points}
-        coversToday={data.coversToday}
-        foodCost={data.foodCost}
-        topSellers={data.topSellers.items}
-      />
-
-      <section>
-        <SalesTrend points={data.salesTrend.points} notices={data.salesTrend.notices} provenance={data.salesTrend.provenance} />
-      </section>
-
-      <TopSellers items={data.topSellers.items} notices={data.topSellers.notices} coverage={data.topSellers.coverage} />
-
       <AttentionPanel
         notices={[
           ...(queue.data?.unavailable.length ? [`Not checked: ${queue.data.unavailable.join(", ")}.`] : []),
@@ -83,6 +66,26 @@ export default function DashboardPage() {
         loading={queue.isPending}
         openConflicts={data.summary.openConflicts}
       />
+
+      <FocusShortcuts focus={focus} />
+
+      <BusinessKpiGrid
+        seniority={user?.seniority}
+        latestSales={data.latestSales}
+        salesTrend={data.salesTrend.points}
+        coversToday={data.coversToday}
+        foodCost={data.foodCost}
+        topSellers={data.topSellers.items}
+        topSellerNotices={data.topSellers.notices}
+      />
+
+      <section>
+        <SalesTrend points={data.salesTrend.points} notices={data.salesTrend.notices} provenance={data.salesTrend.provenance} />
+      </section>
+
+      <TopSellers items={data.topSellers.items} notices={data.topSellers.notices} coverage={data.topSellers.coverage} />
+
+
     </div>
   );
 }

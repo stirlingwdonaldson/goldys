@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class CanonicalBrowseQuery {
+  @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
+
   private static final int MAX_PAGE_SIZE = 200;
 
   private final CanonicalDailySalesRepository dailySales;
@@ -81,7 +83,10 @@ public class CanonicalBrowseQuery {
   public DataPage<GenericRow> listRows(String entityId, int page, int size) {
     int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
     PageRequest pr =
-        PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, "recordedAt"));
+        PageRequest.of(
+            Math.max(page, 0),
+            safeSize,
+            Sort.by(Sort.Direction.DESC, "recordedAt").and(Sort.by("id")));
     return switch (entityId) {
       case "daily_sales" ->
           page(dailySales.findAll(pr), page, safeSize, CanonicalBrowseQuery::dailySalesColumns);
@@ -106,6 +111,340 @@ public class CanonicalBrowseQuery {
       case "deleted_sale" ->
           page(deletedSales.findAll(pr), page, safeSize, CanonicalBrowseQuery::deletedSaleColumns);
       case "shift" -> page(shifts.findAll(pr), page, safeSize, CanonicalBrowseQuery::shiftColumns);
+      default ->
+          throw new java.util.NoSuchElementException("Unknown canonical entity: " + entityId);
+    };
+  }
+
+  public DataPage<GenericRow> listRows(
+      String entityId, int page, int size, com.goldys.platform.semantic.RecordSort sort) {
+    int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+    PageRequest pr =
+        PageRequest.of(
+            Math.max(page, 0),
+            safeSize,
+            Sort.by(Sort.Direction.DESC, "recordedAt").and(Sort.by("id")));
+    return switch (entityId) {
+      case "daily_sales" ->
+          page(
+              sortedPage(
+                  CanonicalDailySales.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("total_sales", "e.totalSales"),
+                      Map.entry("gst_total", "e.gstTotal"),
+                      Map.entry("net_total", "e.netTotal")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::dailySalesColumns);
+      case "product_sales" ->
+          page(
+              sortedPage(
+                  CanonicalProductSales.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("product_name_key", "e.productNameKey"),
+                      Map.entry("quantity_sold", "e.quantitySold"),
+                      Map.entry("amount", "e.amount")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::productSalesColumns);
+      case "reservation" ->
+          page(
+              sortedPage(
+                  CanonicalReservation.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("reservation_at", "e.reservationAt"),
+                      Map.entry("party_size", "e.partySize"),
+                      Map.entry("status", "e.status")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::reservationColumns);
+      case "invoice" ->
+          page(
+              sortedPage(
+                  CanonicalInvoice.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("supplier_name", "e.supplierName"),
+                      Map.entry("invoice_number", "e.invoiceNumber"),
+                      Map.entry("invoice_date", "e.invoiceDate"),
+                      Map.entry("due_date", "e.dueDate"),
+                      Map.entry("total_amount", "e.totalAmount"),
+                      Map.entry("purchase_number", "e.purchaseNumber"),
+                      Map.entry("pdf_filename", "e.pdfFilename"),
+                      Map.entry("account_number", "e.accountNumber"),
+                      Map.entry("tax_code", "e.taxCode"),
+                      Map.entry("amount_ex_tax", "e.amountExTax"),
+                      Map.entry("gst_amount", "e.gstAmount"),
+                      Map.entry("freight_amount", "e.freightAmount"),
+                      Map.entry("freight_gst_amount", "e.freightGstAmount")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::invoiceColumns);
+      case "invoice_line" ->
+          page(
+              sortedPage(
+                  CanonicalInvoiceLine.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("invoice_number", "e.invoiceNumber"),
+                      Map.entry("invoice_date", "e.invoiceDate"),
+                      Map.entry("product_name_key", "e.productNameKey"),
+                      Map.entry("stock_code", "e.stockCode"),
+                      Map.entry("quantity", "e.quantity"),
+                      Map.entry("unit_cost", "e.unitCost"),
+                      Map.entry("line_total", "e.lineTotal"),
+                      Map.entry("category", "e.category"),
+                      Map.entry("uom", "e.uom"),
+                      Map.entry("unit_quantity", "e.unitQuantity"),
+                      Map.entry("pack_size", "e.packSize"),
+                      Map.entry("wet_amount", "e.wetAmount")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::invoiceLineColumns);
+      case "labour_entry" ->
+          page(
+              sortedPage(
+                  CanonicalLabourEntry.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("staff_ref", "e.staffRef"),
+                      Map.entry("department", "e.department"),
+                      Map.entry("labour_date", "e.labourDate"),
+                      Map.entry("scheduled_hours", "e.scheduledHours"),
+                      Map.entry("actual_hours", "e.actualHours"),
+                      Map.entry("scheduled_cost", "e.scheduledCost"),
+                      Map.entry("actual_cost", "e.actualCost"),
+                      Map.entry("shift_start", "e.shiftStart"),
+                      Map.entry("shift_end", "e.shiftEnd")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::labourColumns);
+      case "stock_count" ->
+          page(
+              sortedPage(
+                  CanonicalStockCount.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("counted_date", "e.countedDate"),
+                      Map.entry("product_name_key", "e.productNameKey"),
+                      Map.entry("quantity_on_hand", "e.quantityOnHand")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::stockCountColumns);
+      case "wastage" ->
+          page(
+              sortedPage(
+                  CanonicalWastage.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("wastage_date", "e.wastageDate"),
+                      Map.entry("product_name_key", "e.productNameKey"),
+                      Map.entry("quantity", "e.quantity"),
+                      Map.entry("reason", "e.reason")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::wastageColumns);
+      case "sale_item" ->
+          page(
+              sortedPage(
+                  CanonicalSaleItem.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("item_name", "e.itemName"),
+                      Map.entry("quantity_sold", "e.quantitySold"),
+                      Map.entry("amount", "e.amount"),
+                      Map.entry("sale_number", "e.saleNumber"),
+                      Map.entry("category_name", "e.categoryName"),
+                      Map.entry("product_number", "e.productNumber"),
+                      Map.entry("sku", "e.sku"),
+                      Map.entry("sold_price_inc_tax", "e.soldPriceIncTax"),
+                      Map.entry("total_tax", "e.totalTax"),
+                      Map.entry("cost_inc_tax", "e.costIncTax"),
+                      Map.entry("order_type", "e.orderType"),
+                      Map.entry("sale_type", "e.saleType"),
+                      Map.entry("staff_name", "e.staffName"),
+                      Map.entry("register_name", "e.registerName"),
+                      Map.entry("table_number", "e.tableNumber")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::saleItemColumns);
+      case "payment" ->
+          page(
+              sortedPage(
+                  CanonicalPayment.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("sale_number", "e.saleNumber"),
+                      Map.entry("payment_type_name", "e.paymentTypeName"),
+                      Map.entry("amount", "e.amount"),
+                      Map.entry("tip", "e.tip"),
+                      Map.entry("payment_count", "e.paymentCount")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::paymentColumns);
+      case "deleted_sale" ->
+          page(
+              sortedPage(
+                  CanonicalDeletedSale.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("trading_date", "e.tradingDate"),
+                      Map.entry("sale_number", "e.saleNumber"),
+                      Map.entry("total_inc_tax", "e.totalIncTax"),
+                      Map.entry("total_tax", "e.totalTax")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::deletedSaleColumns);
+      case "shift" ->
+          page(
+              sortedPage(
+                  CanonicalShift.class,
+                  pr,
+                  sort,
+                  Map.ofEntries(
+                      Map.entry("id", "e.id"),
+                      Map.entry("logical_entity_id", "e.logicalEntityId"),
+                      Map.entry("source_system", "e.sourceSystem"),
+                      Map.entry("source_record_ref", "e.sourceRecordRef"),
+                      Map.entry("raw_record_id", "e.rawRecordId"),
+                      Map.entry("valid_from", "e.validFrom"),
+                      Map.entry("valid_to", "e.validTo"),
+                      Map.entry("recorded_at", "e.recordedAt"),
+                      Map.entry("superseded_at", "e.supersededAt"),
+                      Map.entry("staff_member_ref", "e.staffMemberRef"),
+                      Map.entry("shift_start", "e.shiftStart"),
+                      Map.entry("shift_end", "e.shiftEnd")),
+                  "e.id asc"),
+              page,
+              safeSize,
+              CanonicalBrowseQuery::shiftColumns);
       default ->
           throw new java.util.NoSuchElementException("Unknown canonical entity: " + entityId);
     };
@@ -363,5 +702,25 @@ public class CanonicalBrowseQuery {
       c.put("shift_end", s.shiftEnd().toString());
     }
     return c;
+  }
+
+  private <T> Page<T> sortedPage(
+      Class<T> type,
+      PageRequest page,
+      com.goldys.platform.semantic.RecordSort sort,
+      Map<String, String> fields,
+      String ties) {
+    String order = sort.orderBy(fields, ties);
+    var rows =
+        entityManager
+            .createQuery("select e from " + type.getSimpleName() + " e order by " + order, type)
+            .setFirstResult(Math.toIntExact(page.getOffset()))
+            .setMaxResults(page.getPageSize())
+            .getResultList();
+    long count =
+        entityManager
+            .createQuery("select count(e) from " + type.getSimpleName() + " e", Long.class)
+            .getSingleResult();
+    return new org.springframework.data.domain.PageImpl<>(rows, page, count);
   }
 }

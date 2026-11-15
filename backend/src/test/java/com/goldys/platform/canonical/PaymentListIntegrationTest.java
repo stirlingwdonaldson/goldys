@@ -26,6 +26,47 @@ class PaymentListIntegrationTest {
   @Autowired CanonicalPaymentIngest ingest;
   @Autowired CanonicalPaymentQuery query;
 
+  @Autowired com.goldys.platform.semantic.DataExplorerQuery explorer;
+
+  @Test
+  void explorerOrdersNativeNumbersAndKeepsMissingValuesLast() {
+    for (int i = 0; i < 8; i++)
+      ingest.record(payment(DAY_1, "EXP-" + i, "CASH", "Cash", Integer.toString(i == 7 ? 100 : i)));
+    var sort = new com.goldys.platform.semantic.RecordSort("amount", "desc");
+    var first = explorer.canonicalRows("payment", 0, 3, sort);
+    assertThat(first.items().getFirst().columns().get("amount")).startsWith("100");
+    var all = new java.util.ArrayList<String>();
+    for (int page = 0; page < 3; page++)
+      explorer.canonicalRows("payment", page, 3, sort).items().forEach(row -> all.add(row.id()));
+    assertThat(all).hasSize(8).doesNotHaveDuplicates();
+    jdbc.update("truncate table resolved_daily_sales");
+    for (int i = 0; i < 8; i++)
+      jdbc.update(
+          "insert into resolved_daily_sales(trading_date,total_sales,net_sales,gst,resolution_type,has_conflict,resolved_at) values (?, ?, ?, 0, 'single_source', false, now())",
+          DAY_1.plusDays(i),
+          i == 7 ? null : i == 6 ? 100 : i,
+          i);
+    for (String direction : java.util.List.of("asc", "desc")) {
+      var order = new com.goldys.platform.semantic.RecordSort("total_sales", direction);
+      var rows = new java.util.ArrayList<com.goldys.platform.semantic.GenericRow>();
+      for (int page = 0; page < 3; page++)
+        rows.addAll(explorer.resolvedRows("resolved_daily_sales", page, 3, order).items());
+      assertThat(rows).hasSize(8);
+      assertThat(rows.getLast().columns()).doesNotContainKey("total_sales");
+      assertThat(rows.getFirst().columns().get("total_sales"))
+          .startsWith(direction.equals("asc") ? "0" : "100");
+    }
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () ->
+                explorer.canonicalRows(
+                    "payment",
+                    0,
+                    3,
+                    new com.goldys.platform.semantic.RecordSort(
+                        "amount desc; drop table x", "asc")))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
   @BeforeEach
   void clean() {
     jdbc.update("truncate table canonical_payment");
@@ -52,6 +93,33 @@ class PaymentListIntegrationTest {
     DataPage<PaymentRow> sale1 = query.page(null, "SALE-1", DAY_1, DAY_2, 0, 50);
     assertThat(sale1.total()).isEqualTo(1);
     assertFullFieldSet(sale1.items().get(0));
+  }
+
+  @Test
+  void ordersTheEntireFilteredDatasetBeforeThreeRowPages() {
+    for (int i = 0; i < 10; i++) {
+      ingest.record(
+          payment(DAY_1, "SORT-" + i, "CASH", "Cash", Integer.toString(i == 9 ? 999 : i / 2)));
+    }
+    for (String direction : java.util.List.of("asc", "desc")) {
+      var sort = new com.goldys.platform.semantic.RecordSort("amount", direction);
+      var all = new java.util.ArrayList<PaymentRow>();
+      for (int page = 0; page < 4; page++)
+        all.addAll(query.page("Cash", null, DAY_1, DAY_2, page, 3, sort).items());
+      assertThat(all).hasSize(10);
+      assertThat(all).extracting(PaymentRow::saleNumber).doesNotHaveDuplicates();
+      var values = all.stream().map(PaymentRow::amount).toList();
+      assertThat(values)
+          .isSortedAccordingTo(
+              direction.equals("asc")
+                  ? java.util.Comparator.naturalOrder()
+                  : java.util.Comparator.reverseOrder());
+      assertThat(values.get(direction.equals("asc") ? 0 : 9)).isEqualByComparingTo("0");
+      assertThat(values.get(direction.equals("desc") ? 0 : 9)).isEqualByComparingTo("999");
+      int page = 0;
+      assertThat(query.page("Cash", null, DAY_1, DAY_2, page, 3, sort).items())
+          .isEqualTo(all.subList(0, 3));
+    }
   }
 
   private void assertFullFieldSet(PaymentRow r) {

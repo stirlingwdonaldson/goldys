@@ -44,7 +44,27 @@ public class SaleItemReportingService {
       LocalDate to,
       int page,
       int size) {
+    return list(
+        role,
+        category,
+        saleNumber,
+        from,
+        to,
+        page,
+        size,
+        new com.goldys.platform.semantic.RecordSort("tradingDate", "desc"));
+  }
+
+  public DataPage<SaleItemRow> list(
+      UserRole role,
+      String category,
+      String saleNumber,
+      LocalDate from,
+      LocalDate to,
+      int page,
+      int size,
+      com.goldys.platform.semantic.RecordSort sort) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return saleItems.page(category, saleNumber, from, to, page, size);
+    return saleItems.page(category, saleNumber, from, to, page, size, sort);
   }
 }

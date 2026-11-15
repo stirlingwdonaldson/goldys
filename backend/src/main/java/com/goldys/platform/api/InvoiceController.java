@@ -43,8 +43,17 @@ public class InvoiceController {
           LocalDate to,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size,
+      @RequestParam(defaultValue = "invoiceDate") String sort,
+      @RequestParam(defaultValue = "desc") String direction,
       @AuthenticationPrincipal AccountUserDetails user) {
-    return reporting.list(currentUser.roleOf(user), supplier, from, to, page, size);
+    return reporting.list(
+        currentUser.roleOf(user),
+        supplier,
+        from,
+        to,
+        page,
+        size,
+        new com.goldys.platform.semantic.RecordSort(sort, direction));
   }
 
   @GetMapping("/{invoiceNumber}")

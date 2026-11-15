@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class CanonicalDeletedSaleQuery {
+  @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager entityManager;
+
   private static final int MAX_PAGE_SIZE = 200;
 
   private final CanonicalDeletedSaleRepository repository;
@@ -46,6 +48,52 @@ public class CanonicalDeletedSaleQuery {
         result.getTotalElements(),
         Math.max(page, 0),
         safeSize);
+  }
+
+  public DataPage<DeletedSaleRow> page(
+      String saleNumber,
+      LocalDate from,
+      LocalDate to,
+      int page,
+      int size,
+      com.goldys.platform.semantic.RecordSort sort) {
+    int safeSize = Math.clamp(size, 1, MAX_PAGE_SIZE);
+    int safePage = Math.max(page, 0);
+    var fields =
+        java.util.Map.ofEntries(
+            java.util.Map.entry("tradingDate", "p.tradingDate"),
+            java.util.Map.entry("saleNumber", "p.saleNumber"),
+            java.util.Map.entry("orderType", "p.orderType"),
+            java.util.Map.entry("note", "p.note"),
+            java.util.Map.entry("staffName", "p.staffName"),
+            java.util.Map.entry("deletedByStaffName", "p.deletedByStaffName"),
+            java.util.Map.entry("deletedRegisterName", "p.deletedRegisterName"),
+            java.util.Map.entry("tableNumber", "p.tableNumber"),
+            java.util.Map.entry("totalIncTax", "p.totalIncTax"),
+            java.util.Map.entry("totalExTax", "p.totalExTax"),
+            java.util.Map.entry("totalTax", "p.totalTax"),
+            java.util.Map.entry("totalCost", "p.totalCost"));
+    String where =
+        " where p.supersededAt is null and p.tradingDate >= :from and p.tradingDate <= :to and (:saleNumber is null or p.saleNumber = :saleNumber)";
+    var query =
+        entityManager.createQuery(
+            "select p from CanonicalDeletedSale p"
+                + where
+                + " order by "
+                + sort.orderBy(fields, "p.id asc"),
+            CanonicalDeletedSale.class);
+    var count =
+        entityManager.createQuery(
+            "select count(p) from CanonicalDeletedSale p" + where, Long.class);
+    query.setParameter("from", from).setParameter("to", to).setParameter("saleNumber", saleNumber);
+    count.setParameter("from", from).setParameter("to", to).setParameter("saleNumber", saleNumber);
+    var rows =
+        query
+            .setFirstResult(Math.toIntExact((long) safePage * safeSize))
+            .setMaxResults(safeSize)
+            .getResultList();
+    return new DataPage<>(
+        rows.stream().map(this::toRow).toList(), count.getSingleResult(), safePage, safeSize);
   }
 
   private DeletedSaleView toView(CanonicalDeletedSale d) {

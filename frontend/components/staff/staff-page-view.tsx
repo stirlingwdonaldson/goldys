@@ -72,17 +72,16 @@ export function StaffPageView({ seniority, labour }: StaffPageViewProps) {
     <div className="flex flex-col gap-6">
       {header}
       <p className="text-sm text-muted-foreground">Wages only; super and other employment costs excluded pending confirmation. Per-cover figures use booking-size attendance proxies.</p>
-      <DataQualifications notices={s?.notices} />
 
       {s ? (
-        <Section title="Hours, last 30 days">
+        <Section title="Hours, last 30 days"><DataQualifications label="Hours" scope="Last 30 days" notices={s.notices}>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <StatCard label="Scheduled" value={formatHours(s.scheduledHours)} />
             <StatCard label="Actual" value={formatHours(s.actualHours)} />
             <StatCard label="Over / under roster" value={formatHours(s.variance)} />
             <StatCard label="Hours per attendance proxy" value={formatNumber(s.hoursPerCover, 2)} />
           </div>
-        </Section>
+        </DataQualifications></Section>
       ) : (
         <AwaitingData
           label="Rostering & hours"
@@ -95,14 +94,14 @@ export function StaffPageView({ seniority, labour }: StaffPageViewProps) {
       {!canSeeWageTotals ? (
         <OwnerOnlyTile label="Labour cost %" />
       ) : s ? (
-        <Section title="Labour cost, last 30 days">
+        <Section title="Labour cost, last 30 days"><DataQualifications label="Wages" scope="Last 30 days" notices={s.notices}>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <StatCard label="Labour cost (wages only)" value={formatCurrency(s.labourCost)} />
             <StatCard label="Wages per attendance proxy" value={formatCurrency(s.labourCostPerCover)} />
             <StatCard label="FOH, % of sales" value={formatPercent(s.fohLabourCostPercent)} />
             <StatCard label="BOH, % of sales" value={formatPercent(s.bohLabourCostPercent)} />
           </div>
-        </Section>
+        </DataQualifications></Section>
       ) : (
         <AwaitingData
           label="Labour cost %"

@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable } from "@/components/data-table/data-table";
-import { TablePagination, usePageState } from "@/components/data-table/table-pagination";
+import { TablePagination } from "@/components/data-table/table-pagination";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { currencyColumn, dateColumn, numberColumn } from "@/components/data-table/columns";
 import { EmptyState } from "@/components/states/empty-state";
@@ -15,8 +15,11 @@ import { PermissionDenied } from "@/components/states/permission-denied";
 import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import type { Api } from "@/lib/api";
 import type { SaleItemRow } from "@/lib/api/types";
+import { readSort, tableSorting, SORT_FIELDS } from "@/lib/record-sort";
+import { listPage } from "@/lib/list-url";
+import { useInvestigationUrl } from "@/lib/use-investigation-url";
 import { useApi } from "@/lib/demo-mode";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { buildSaleItemMixWidget } from "./sale-item-mix-chart";
 
 interface SaleItemsTabProps {
@@ -110,11 +113,20 @@ function saleItemColumns(onViewSale?: (saleNumber: string) => void): ColumnDef<S
  */
 export function SaleItemsTab({ from, to, onViewSale, apiOverride }: SaleItemsTabProps) {
   const queryApi = useApi();
-  const { page, setPage, pageSize, setPageSize } = usePageState(`${from}|${to}`);
-  const [category, setCategory] = useState("");
+  const sortUrl = useInvestigationUrl();
+  const sort = readSort(sortUrl.params, SORT_FIELDS.items, "tradingDate", "items-");
+  const sorting = tableSorting(sort);
+  const paging = new URLSearchParams({ page: sortUrl.params.get("items-page") ?? "0", size: sortUrl.params.get("items-size") ?? "10" });
+  const parsedPage = listPage(paging);
+  const page = (sortUrl.params.has("from") && (sortUrl.params.get("from") !== from || sortUrl.params.get("to") !== to)) ? 0 : parsedPage.page;
+  const pageSize = parsedPage.pageSize;
+  const setPage = (value: number) => sortUrl.update({ "items-page": String(value), from, to });
+  const setPageSize = (value: number) => sortUrl.update({ "items-size": String(value), "items-page": null, from, to });
+  const category = (sortUrl.params.get("category") ?? "").slice(0, 200);
+  const setCategory = (value: string) => sortUrl.update({ category: value, "items-page": null, from, to });
 
   const mix = useQuery({ queryKey: ["getSaleItemMix", from, to], queryFn: ({ signal }) => (apiOverride ?? queryApi).getSaleItemMix(from, to, { signal }) });
-  const rows = useQuery({ queryKey: ["listSaleItems", { from, to, category }, page, pageSize], queryFn: ({ signal }) => (apiOverride ?? queryApi).listSaleItems({ from, to, category }, page, pageSize, { signal }) });
+  const rows = useQuery({ placeholderData: keepPreviousData, queryKey: ["listSaleItems", sort, { from, to, category }, page, pageSize], queryFn: ({ signal }) => (apiOverride ?? queryApi).listSaleItems({ from, to, category }, page, pageSize, { signal, sort }) });
 
 
   // The dropdown offers exactly the categories present in the resolved mix.
@@ -193,7 +205,10 @@ export function SaleItemsTab({ from, to, onViewSale, apiOverride }: SaleItemsTab
             data={rows.data.items}
             pageSize={false}
             // `dateColumn` derives its id from the accessor key, so sort on "tradingDate".
-            initialSorting={[{ id: "tradingDate", desc: true }]}
+            sorting={sorting}
+            manualSorting
+            sortingPending={rows.isPlaceholderData}
+            onSortingChange={(change) => { const next = typeof change === "function" ? change(sorting) : change; sortUrl.update({ "items-sort": next[0]?.id ?? "tradingDate", "items-direction": next[0]?.desc ? "desc" : "asc", "items-page": null, from, to }); }}
             getRowId={(r) => r.receiptLineId}
           />
         ) : null}

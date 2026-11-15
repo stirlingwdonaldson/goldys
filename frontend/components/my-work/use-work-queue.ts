@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Api } from "@/lib/api";
 import { useApi } from "@/lib/demo-mode";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/components/app-shell/current-user-provider";
 import { buildWorkQueue, defaultFocus, type Focus, type WorkItem } from "@/lib/work-queue";
 
@@ -19,12 +19,12 @@ export interface WorkQueueResult {
  * who can't read invoice flags still gets their reconciliation decisions, and the page
  * says which part is missing instead of failing outright.
  */
-export async function loadWorkQueue(api: Api, signal?: AbortSignal): Promise<WorkQueueResult> {
+export async function loadWorkQueue(api: Api, signal?: AbortSignal, connectorsRead = () => api.listConnectorStatuses({ signal })): Promise<WorkQueueResult> {
   // shortcut: each decision category reads 200 items; add paging when the queue supports navigation.
   const [daily, product, connectors, flags, recompute] = await Promise.allSettled([
     api.listReconciliationExceptions(0, 200, { signal }),
     api.listProductExceptions(0, 200, { signal }),
-    api.listConnectorStatuses({ signal }),
+    connectorsRead(),
     api.listInvoiceFlags({ signal }),
     api.getRecomputeStatus({ signal }),
   ]);
@@ -54,7 +54,8 @@ export async function loadWorkQueue(api: Api, signal?: AbortSignal): Promise<Wor
 
 export function useWorkQueue() {
   const queryApi = useApi();
-  return useQuery({ queryKey: ["use-work-queue"], queryFn: ({ signal }) => (loadWorkQueue)(queryApi, signal) });
+  const client = useQueryClient();
+  return useQuery({ queryKey: ["use-work-queue"], queryFn: ({ signal }) => loadWorkQueue(queryApi, signal, () => client.fetchQuery({ queryKey: ["listConnectorStatuses"], queryFn: ({ signal: connectorSignal }) => queryApi.listConnectorStatuses({ signal: connectorSignal }), staleTime: 30_000 })) });
 }
 
 const FOCUS_KEY = "goldys.focus";

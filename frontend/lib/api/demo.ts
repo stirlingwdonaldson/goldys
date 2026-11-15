@@ -1,3 +1,6 @@
+import { sourceIdentity } from "@/lib/sources";
+import { SORT_FIELDS, sortRecords } from "@/lib/record-sort";
+import type { RecordReadOptions } from "@/lib/record-sort";
 import { demoWeeklyTargets, saveDemoWeeklyTargets } from "./weekly-report-demo";
 import { demoRecipeComposition } from "./demo-recipe-composition";
 import { demoWeeklyReport } from "./weekly-report-demo";
@@ -1633,7 +1636,7 @@ export const demoApi: Api = {
     return [...DEMO_PRODUCTS];
   },
 
-  async listDailySales(filter: import("./types").SalesFilter, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<DailySales>> {
+  async listDailySales(filter: import("./types").SalesFilter, page: number, size: number, options?: RecordReadOptions): Promise<DataPage<DailySales>> {
     await delay(300, options?.signal);
     const all = [
       { date: "2026-10-05", source: "CTB", totalSales: 10865.72, gst: 985.44, net: 9880.28 },
@@ -1641,9 +1644,9 @@ export const demoApi: Api = {
       { date: "2026-10-03", source: "CTB", totalSales: 43618.92, gst: 3960.39, net: 39658.53 },
     ];
     const items = all.filter(
-      (r) => (!filter.from || r.date >= filter.from) && (!filter.to || r.date <= filter.to),
+      (r) => (!filter.source || `${r.source} ${sourceIdentity(r.source).label}`.toLowerCase().includes(filter.source.toLowerCase())) && (!filter.from || r.date >= filter.from) && (!filter.to || r.date <= filter.to),
     );
-    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
+    return { items: sortRecords(items, validatedDemoSort(options?.sort, SORT_FIELDS.sales, "date"), recordSortValue, row => `${row.date}:${row.source}`).slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async getLatestSales(options?: { signal?: AbortSignal }): Promise<LatestSales> {
@@ -1769,14 +1772,14 @@ export const demoApi: Api = {
     filter: InvoiceFilter,
     page: number,
     size: number,
-  options?: { signal?: AbortSignal }): Promise<DataPage<InvoiceSummary>> {
+  options?: RecordReadOptions): Promise<DataPage<InvoiceSummary>> {
     await delay(300, options?.signal);
     const items = demoInvoiceSummaries.filter(
       (i) =>
-        (!filter.supplier || i.supplierName === filter.supplier) &&
+        (!filter.supplier || i.supplierName.toLowerCase().includes(filter.supplier.toLowerCase())) &&
         inDateRange(i.invoiceDate, filter.from, filter.to),
     );
-    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
+    return { items: sortRecords(items, validatedDemoSort(options?.sort, SORT_FIELDS.invoices, "invoiceDate"), recordSortValue, row => row.invoiceId ?? `${row.supplierName}:${row.invoiceNumber}`).slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async getInvoiceById(id: string, options?: { signal?: AbortSignal }): Promise<InvoiceDetail> {
@@ -2075,10 +2078,10 @@ export const demoApi: Api = {
     return demoCanonicalEntities;
   },
 
-  async listCanonicalRows(entity: string, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<GenericRow>> {
+  async listCanonicalRows(entity: string, page: number, size: number, options?: RecordReadOptions): Promise<DataPage<GenericRow>> {
     await delay(300, options?.signal);
     const items = demoCanonicalRows[entity] ?? [];
-    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
+    return { items: sortRecords(items, options?.sort?.field ? validatedDemoSort(options.sort, [...new Set(items.flatMap(row => Object.keys(row.columns)))], options.sort.field) : undefined, (row, field) => { const value = row.columns[field]; return value != null && /^(amount|total_|net_|gst|quantity|tip|covers|bookings|attended|cancelled|no_shows|walk_ins|payment_count|deleted_count|purchases|wastage|stock_on_hand|.*_cost|.*_hours|party_size)/.test(field) ? Number(value) : value; }, row => row.id).slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async listResolvedDomains(options?: { signal?: AbortSignal }): Promise<EntityDescriptor[]> {
@@ -2086,17 +2089,17 @@ export const demoApi: Api = {
     return demoResolvedDomains;
   },
 
-  async listResolvedRows(domain: string, page: number, size: number, options?: { signal?: AbortSignal }): Promise<DataPage<GenericRow>> {
+  async listResolvedRows(domain: string, page: number, size: number, options?: RecordReadOptions): Promise<DataPage<GenericRow>> {
     await delay(300, options?.signal);
     const items = demoResolvedRows[domain] ?? [];
-    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
+    return { items: sortRecords(items, options?.sort?.field ? validatedDemoSort(options.sort, [...new Set(items.flatMap(row => Object.keys(row.columns)))], options.sort.field) : undefined, (row, field) => { const value = row.columns[field]; return value != null && /^(amount|total_|net_|gst|quantity|tip|covers|bookings|attended|cancelled|no_shows|walk_ins|payment_count|deleted_count|purchases|wastage|stock_on_hand|.*_cost|.*_hours|party_size)/.test(field) ? Number(value) : value; }, row => row.id).slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async listPayments(
     filter: PaymentFilter,
     page: number,
     size: number,
-  options?: { signal?: AbortSignal }): Promise<DataPage<PaymentRow>> {
+  options?: RecordReadOptions): Promise<DataPage<PaymentRow>> {
     await delay(300, options?.signal);
     const items = demoPayments.filter(
       (p) =>
@@ -2104,21 +2107,21 @@ export const demoApi: Api = {
         (!filter.paymentType || p.paymentTypeName === filter.paymentType) &&
         (!filter.saleNumber || p.saleNumber === filter.saleNumber),
     );
-    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
+    return { items: sortRecords(items, validatedDemoSort(options?.sort, SORT_FIELDS.payments, "tradingDate"), recordSortValue, row => JSON.stringify(row)).slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async listDeletedSales(
     filter: DeletedSaleFilter,
     page: number,
     size: number,
-  options?: { signal?: AbortSignal }): Promise<DataPage<DeletedSaleRow>> {
+  options?: RecordReadOptions): Promise<DataPage<DeletedSaleRow>> {
     await delay(300, options?.signal);
     const items = demoDeletedSales.filter(
       (d) =>
         inDateRange(d.tradingDate, filter.from, filter.to) &&
         (!filter.saleNumber || d.saleNumber === filter.saleNumber),
     );
-    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
+    return { items: sortRecords(items, validatedDemoSort(options?.sort, SORT_FIELDS.deleted, "tradingDate"), recordSortValue, row => `${row.siteId}:${row.tradingDate}:${row.saleNumber}`).slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async getSaleCosting(saleNumber: string, from: string, to: string, options?: { signal?: AbortSignal }): Promise<import("./types").SaleCosting> {
@@ -2140,7 +2143,7 @@ export const demoApi: Api = {
     filter: SaleItemFilter,
     page: number,
     size: number,
-  options?: { signal?: AbortSignal }): Promise<DataPage<SaleItemRow>> {
+  options?: RecordReadOptions): Promise<DataPage<SaleItemRow>> {
     await delay(300, options?.signal);
     const items = demoSaleItems.filter(
       (s) =>
@@ -2148,7 +2151,7 @@ export const demoApi: Api = {
         (!filter.category || s.categoryName === filter.category) &&
         (!filter.saleNumber || s.saleNumber === filter.saleNumber),
     );
-    return { items: items.slice(page * size, (page + 1) * size), total: items.length, page, size };
+    return { items: sortRecords(items, validatedDemoSort(options?.sort, SORT_FIELDS.items, "tradingDate"), recordSortValue, row => `${row.siteNumber}:${row.tradingDate}:${row.receiptLineId}`).slice(page * size, (page + 1) * size), total: items.length, page, size };
   },
 
   async getPaymentMix(from: string, to: string, options?: { signal?: AbortSignal }): Promise<PaymentMix[]> {
@@ -2883,3 +2886,14 @@ function demoProvenance(metricId: string, date: string): Provenance {
 }
 
 const demoReportingMappings: import("./types").ReportingMapping[] = [];
+
+function validatedDemoSort(sort: RecordReadOptions["sort"], fields: readonly string[], fallback: string) {
+  if (sort && (!fields.includes(sort.field) || !["asc", "desc"].includes(sort.direction))) throw new ApiError("VALIDATION_FAILED", "Unsupported sort");
+  return sort ?? { field: fallback, direction: "desc" as const };
+}
+const numericSortFields = new Set(["totalSales", "gst", "net", "totalAmount", "amount", "tip", "surcharge", "tendered", "paymentCount", "totalIncTax", "totalExTax", "totalTax", "totalCost", "quantitySold", "soldPriceIncTax", "costIncTax"]);
+function recordSortValue(row: object, field: string): unknown {
+  const values = row as Record<string, unknown>;
+  const value = values[field === "pdf" ? "hasPdf" : field];
+  return value != null && numericSortFields.has(field) ? Number(value) : value;
+}

@@ -1,3 +1,4 @@
+import { DataQualifications } from "@/components/data-display/data-qualifications";
 import type { LucideIcon } from "lucide-react";
 import { Hourglass } from "lucide-react";
 import { IconTile } from "@/components/ui/icon-tile";
@@ -30,8 +31,7 @@ export function AwaitingData({
         </IconTile>
         <span>{label}</span>
       </div>
-      <p className="text-sm text-muted-foreground">{description}</p>
-      <p className="mt-auto text-xs text-muted-foreground/80">{reason}</p>
+      <DataQualifications label={label} notices={[`Incomplete: ${reason}`]}><p className="text-sm text-muted-foreground">{description}</p></DataQualifications>
     </Card>
   );
 }

@@ -42,3 +42,9 @@ describe("TimeRangeSelector", () => {
     expect(onChange).toHaveBeenCalledWith({ from: iso(from), to: iso(now) });
   });
 });
+
+it("announces inclusive cross-year dates before the calendar opens", () => {
+  render(<TimeRangeSelector value={{ from: "2025-11-16", to: "2026-11-15" }} onChange={vi.fn()} />);
+  const range = screen.getByRole("button", { name: /16 November 2025.*15 November 2026.*inclusive/i });
+  expect(range).toHaveTextContent(/2025.*2026/);
+});

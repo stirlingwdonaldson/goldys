@@ -110,7 +110,7 @@ describe("InvoicesPage", () => {
   it("clicking a row puts the invoice in the URL", () => {
     render(<InvoicesPage />);
     fireEvent.click(screen.getByText("INV-1042"));
-    expect(mocks.push).toHaveBeenCalledWith("/invoices?invoice=INV-1042", { scroll: false });
+    expect(mocks.push).toHaveBeenCalledWith(expect.stringContaining("/invoices?invoice=INV-1042"), { scroll: false });
   });
 
   it("opens the slide-over for the invoice in the URL, with close and expand controls", () => {
@@ -122,12 +122,12 @@ describe("InvoicesPage", () => {
     expect(within(sheet).getByText("Chicken breast")).toBeInTheDocument();
     expect(within(sheet).getByRole("link", { name: "Expand to full page" })).toHaveAttribute(
       "href",
-      "/invoices/INV-1042",
+      "/invoices/INV-1042?returnTo=%2Finvoices%3Finvoice%3DINV-1042",
     );
     expect(within(sheet).getByRole("link", { name: "Download" })).toBeInTheDocument();
 
     fireEvent.click(within(sheet).getByRole("button", { name: "Close" }));
-    expect(mocks.replace).toHaveBeenCalledWith("/invoices", { scroll: false });
+    expect(mocks.replace).toHaveBeenCalledWith(expect.stringContaining("/invoices?from="), { scroll: false });
   });
 
   it("annotates lines with flags, price movement and a hidden duplicate stock code", () => {
@@ -148,7 +148,7 @@ describe("InvoicesPage", () => {
     mocks.params = new URLSearchParams("invoice=INV-1042");
     render(<InvoicesPage />);
     fireEvent.keyDown(screen.getByRole("button", { name: "Next invoice" }), { key: "ArrowDown" });
-    expect(mocks.replace).toHaveBeenCalledWith("/invoices?invoice=INV-1091", { scroll: false });
+    expect(mocks.replace).toHaveBeenCalledWith(expect.stringContaining("/invoices?invoice=INV-1091"), { scroll: false });
   });
 
   it("shows no PDF actions for an invoice without a PDF", () => {
@@ -176,6 +176,6 @@ it("selects duplicate invoice numbers by invoice identity", () => {
     headers[1] = {...headers[1],invoiceNumber:"SHARED",invoiceId:"10000000-0000-0000-0000-000000000002"};
     render(<InvoicesPage />);
     fireEvent.click(screen.getAllByText("SHARED")[1]);
-    expect(mocks.push).toHaveBeenCalledWith("/invoices?invoiceId=10000000-0000-0000-0000-000000000002",{scroll:false});
+    expect(mocks.push).toHaveBeenCalledWith(expect.stringContaining("/invoices?invoiceId=10000000-0000-0000-0000-000000000002"),{scroll:false});
   } finally { headers.splice(0,headers.length,...previous); }
 });

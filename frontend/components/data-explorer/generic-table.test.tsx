@@ -5,7 +5,7 @@ import { GenericTable } from "./generic-table";
 describe("GenericTable", () => {
   it("unions columns across rows so a nullable column absent from the first row is still shown", () => {
     render(
-      <GenericTable
+      <GenericTable sorting={[]} onSortingChange={() => {}}
         rows={[
           { id: "1", columns: { source_system: "CTB", trading_date: "2026-10-05" } },
           {

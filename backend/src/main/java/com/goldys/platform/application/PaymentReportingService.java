@@ -47,7 +47,27 @@ public class PaymentReportingService {
       LocalDate to,
       int page,
       int size) {
+    return list(
+        role,
+        paymentType,
+        saleNumber,
+        from,
+        to,
+        page,
+        size,
+        new com.goldys.platform.semantic.RecordSort("tradingDate", "desc"));
+  }
+
+  public DataPage<PaymentRow> list(
+      UserRole role,
+      String paymentType,
+      String saleNumber,
+      LocalDate from,
+      LocalDate to,
+      int page,
+      int size,
+      com.goldys.platform.semantic.RecordSort sort) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
-    return payments.page(paymentType, saleNumber, from, to, page, size);
+    return payments.page(paymentType, saleNumber, from, to, page, size, sort);
   }
 }

@@ -66,8 +66,17 @@ public class DataExplorerController {
       @PathVariable String entity,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size,
+      @RequestParam(required = false) String sort,
+      @RequestParam(defaultValue = "asc") String direction,
       @AuthenticationPrincipal AccountUserDetails user) {
-    return service.canonicalRows(currentUser.roleOf(user), entity, page, size);
+    return sort == null
+        ? service.canonicalRows(currentUser.roleOf(user), entity, page, size)
+        : service.canonicalRows(
+            currentUser.roleOf(user),
+            entity,
+            page,
+            size,
+            new com.goldys.platform.semantic.RecordSort(sort, direction));
   }
 
   @GetMapping("/resolved")
@@ -80,7 +89,16 @@ public class DataExplorerController {
       @PathVariable String domain,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size,
+      @RequestParam(required = false) String sort,
+      @RequestParam(defaultValue = "asc") String direction,
       @AuthenticationPrincipal AccountUserDetails user) {
-    return service.resolvedRows(currentUser.roleOf(user), domain, page, size);
+    return sort == null
+        ? service.resolvedRows(currentUser.roleOf(user), domain, page, size)
+        : service.resolvedRows(
+            currentUser.roleOf(user),
+            domain,
+            page,
+            size,
+            new com.goldys.platform.semantic.RecordSort(sort, direction));
   }
 }

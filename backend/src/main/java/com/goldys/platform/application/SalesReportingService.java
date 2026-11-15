@@ -44,6 +44,24 @@ public class SalesReportingService {
    */
   public DataPage<DailySalesRow> dailySales(
       UserRole role, LocalDate from, LocalDate to, int page, int size) {
+    return dailySales(
+        role,
+        from,
+        to,
+        page,
+        size,
+        null,
+        new com.goldys.platform.semantic.RecordSort("date", "desc"));
+  }
+
+  public DataPage<DailySalesRow> dailySales(
+      UserRole role,
+      LocalDate from,
+      LocalDate to,
+      int page,
+      int size,
+      String source,
+      com.goldys.platform.semantic.RecordSort sort) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     List<DailySalesView> views =
         (from == null && to == null)
@@ -51,18 +69,43 @@ public class SalesReportingService {
             : dailySales.currentDailySalesBetween(from, to);
     List<DailySalesRow> sorted =
         views.stream()
-            .sorted(Comparator.comparing(DailySalesView::tradingDate).reversed())
             .map(SalesReportingService::toRow)
+            .filter(row -> source == null || sourceMatches(row.source(), source))
+            .sorted(salesOrder(sort))
             .toList();
 
     int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
     int safePage = Math.max(page, 0);
     int fromIndex = safePage * safeSize;
     List<DailySalesRow> items =
-        fromIndex >= sorted.size()
+        fromIndex < 0 || fromIndex >= sorted.size()
             ? List.of()
             : sorted.subList(fromIndex, Math.min(fromIndex + safeSize, sorted.size()));
     return new DataPage<>(items, sorted.size(), safePage, safeSize);
+  }
+
+  private static boolean sourceMatches(String source, String query) {
+    String label =
+        switch (source.toUpperCase(java.util.Locale.ROOT)) {
+          case "CTB" -> "Cooking the Books";
+          case "LIGHTSPEED" -> "Lightspeed Kounta";
+          default -> source;
+        };
+    return (source + " " + label)
+        .toLowerCase(java.util.Locale.ROOT)
+        .contains(query.toLowerCase(java.util.Locale.ROOT));
+  }
+
+  private Comparator<DailySalesRow> salesOrder(com.goldys.platform.semantic.RecordSort sort) {
+    Comparator<DailySalesRow> comparator =
+        switch (sort.field()) {
+          case "date" -> sort.comparing(DailySalesRow::date);
+          case "totalSales" -> sort.comparing(DailySalesRow::totalSales);
+          case "gst" -> sort.comparing(DailySalesRow::gst);
+          case "net" -> sort.comparing(DailySalesRow::net);
+          default -> throw new IllegalArgumentException("Unsupported sales sort");
+        };
+    return comparator.thenComparing(DailySalesRow::date).thenComparing(DailySalesRow::source);
   }
 
   /**

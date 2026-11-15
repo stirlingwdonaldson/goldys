@@ -4,9 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useApi } from "@/lib/demo-mode";
 import { useQuery } from "@tanstack/react-query";
 import type { ReviewFilter } from "@/lib/api";
-import { LoadingState } from "@/components/states/loading-state";
-import { ErrorState } from "@/components/states/error-state";
-import { EmptyState } from "@/components/states/empty-state";
+import { QueryRegion } from "@/components/states/query-region";
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/layout/section";
 import { Input } from "@/components/ui/input";
@@ -128,89 +126,51 @@ export default function ReviewsPage() {
     </div>
   );
 
-  if (overview.isPending) {
-    return (
-      <div className="flex flex-col gap-6">
-        {header}
-        {filterBar}
-        <LoadingState rows={5} />
-      </div>
-    );
-  }
-
-  if (overview.isLoadingError) {
-    return (
-      <div className="flex flex-col gap-6">
-        {header}
-        {filterBar}
-        <ErrorState
-          title="Couldn't load reviews"
-          message={overview.error.message}
-          onRetry={overview.refetch}
-        />
-      </div>
-    );
-  }
-
-  const overviewData = overview.data;
-
-  if (overviewData && overviewData.total === 0) {
-    return (
-      <div className="flex flex-col gap-6">
-        {header}
-        {filterBar}
-        <EmptyState
-          title="No reviews yet"
-          description="Guest reviews appear here once OpenTable and Google send their data."
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col gap-6">
       {header}
       {filterBar}
 
-      <OverviewStrip overview={overviewData} />
+      <QueryRegion query={overview} subject="Review overview"><OverviewStrip overview={overview.data ?? null} /></QueryRegion>
 
       <Section
         title="Sentiment trend"
         description="Positive, neutral and negative reviews over time, stacked per week."
       >
-        <SentimentTrend buckets={trend.data ?? []} />
+        <QueryRegion query={trend} subject="Sentiment trend"><SentimentTrend buckets={trend.data ?? []} /></QueryRegion>
       </Section>
 
       <Section
         title="Rating & recommend"
         description="Average star rating and the share of guests who would recommend, over time."
       >
-        <RatingTrend buckets={ratingTrend.data ?? []} />
+        <QueryRegion query={ratingTrend} subject="Rating trend"><RatingTrend buckets={ratingTrend.data ?? []} /></QueryRegion>
       </Section>
 
       <Section
         title="Aspects"
         description="How often each theme is mentioned, and the sentiment behind it."
       >
-        <AspectBreakdown aspects={aspectOptions} />
+        <QueryRegion query={aspects} subject="Aspects and filter options"><AspectBreakdown aspects={aspectOptions} /></QueryRegion>
       </Section>
 
       <Section
         title="Ratings"
         description="The stars guests gave against the classifier's prediction."
       >
-        <RatingDistribution buckets={ratings.data ?? []} />
+        <QueryRegion query={ratings} subject="Ratings"><RatingDistribution buckets={ratings.data ?? []} /></QueryRegion>
       </Section>
 
       <Section title="Sources" description="Reviews and average rating per source.">
-        <SourceComparison sources={sourceOptions} />
+        <QueryRegion query={sources} subject="Sources and filter options"><SourceComparison sources={sourceOptions} /></QueryRegion>
       </Section>
 
       <Section
         title="Review explorer"
         description="Browse full reviews, ratings and per-aspect sentiment, scoped by the filters above."
       >
-        <ReviewExplorer key={JSON.stringify(reviewFilter)} reviews={reviews.data ?? []} />
+        <QueryRegion query={reviews} subject="Review explorer"><ReviewExplorer key={JSON.stringify(reviewFilter)} reviews={reviews.data ?? []} /></QueryRegion>
       </Section>
     </div>
   );

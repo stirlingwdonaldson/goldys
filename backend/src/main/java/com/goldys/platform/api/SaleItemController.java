@@ -43,7 +43,17 @@ public class SaleItemController {
       @RequestParam(required = false) String saleNumber,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size,
+      @RequestParam(defaultValue = "tradingDate") String sort,
+      @RequestParam(defaultValue = "desc") String direction,
       @AuthenticationPrincipal AccountUserDetails user) {
-    return reporting.list(currentUser.roleOf(user), category, saleNumber, from, to, page, size);
+    return reporting.list(
+        currentUser.roleOf(user),
+        category,
+        saleNumber,
+        from,
+        to,
+        page,
+        size,
+        new com.goldys.platform.semantic.RecordSort(sort, direction));
   }
 }
