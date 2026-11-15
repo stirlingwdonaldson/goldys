@@ -11,6 +11,7 @@ const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
+    "./lib/sources.ts",
   ],
   theme: {
     container: {
