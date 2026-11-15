@@ -400,5 +400,20 @@ public class WorkspaceJobs {
         || !value.path("entries").isArray()
         || !"session".equals(value.path("entries").path(0).path("type").asText())
         || !value.has("leafId")) throw new IllegalArgumentException("Invalid Pi snapshot");
+    // Validate tree structure before replacing committed state. Pi still owns its semantics.
+    var ids = new java.util.HashSet<String>();
+    for (int index = 1; index < value.path("entries").size(); index++) {
+      JsonNode entry = value.path("entries").get(index);
+      JsonNode id = entry.path("id");
+      JsonNode parent = entry.path("parentId");
+      if ("session".equals(entry.path("type").asText())
+          || !id.isTextual()
+          || id.asText().isBlank()
+          || (!parent.isNull() && (!parent.isTextual() || !ids.contains(parent.asText())))
+          || !ids.add(id.asText())) throw new IllegalArgumentException("Invalid Pi snapshot tree");
+    }
+    JsonNode leaf = value.path("leafId");
+    if (!leaf.isNull() && (!leaf.isTextual() || !ids.contains(leaf.asText())))
+      throw new IllegalArgumentException("Invalid Pi snapshot leaf");
   }
 }

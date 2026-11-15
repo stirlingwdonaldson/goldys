@@ -33,7 +33,7 @@ public class WorkspaceAuthorization {
     var accounts =
         jdbc.query(
             """
-        select department, seniority, updated_at::text from user_account
+        select department, seniority, workspace_policy_revision::text from user_account
         where id = ? and active and not must_change_password for share
         """,
             (row, index) -> new String[] {row.getString(1), row.getString(2), row.getString(3)},
@@ -41,18 +41,19 @@ public class WorkspaceAuthorization {
     if (accounts.isEmpty()) throw AccessDeniedException.forResource(RESOURCE.value());
     var account = accounts.getFirst();
     var role = new UserRole(new DepartmentCode(account[0]), new SeniorityCode(account[1]));
-    permissions.require(role, RESOURCE, action);
     // shortcut: any grant/account change invalidates the whole context; replace with precise
     // dependency reauthorization only after provenance covers every summary and file.
     var policy =
         jdbc.query(
             """
-        select resource, can_read, can_write from permission
-        where department = ? and seniority = ? order by resource for share
+        select revision::text from workspace_role_policy
+        where department = ? and seniority = ? for share
         """,
-            (row, index) -> row.getString(1) + ":" + row.getBoolean(2) + ":" + row.getBoolean(3),
+            (row, index) -> row.getString(1),
             account[0],
             account[1]);
+    if (policy.isEmpty()) throw AccessDeniedException.forResource(RESOURCE.value());
+    permissions.require(role, RESOURCE, action);
     try {
       return HexFormat.of()
           .formatHex(

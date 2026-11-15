@@ -283,3 +283,26 @@ now exists, but precise dependency/revocation and complete legacy-history handli
 workspace dashboard-draft parity, files/artifacts/retention, controlled research, reviewed
 dataset extraction and operational transition remain. Keep both preview/backend activation
 off for normal builds, and keep the manager rollout blocked on its approved matrix.
+
+
+## Continuation: durable policy invalidation and checkpoint integrity
+
+V116 adds retained per-role policy revisions and database-maintained account revisions.
+The previous hash covered current grant values, allowing revoke/regrant or grant addition
+followed by deletion to recreate a historical stamp. The new revision changes on permission
+insert/update/delete and account update, including changes that leave `updated_at` untouched.
+Role revision rows survive grant deletion. The account and role revision are locked before
+`PermissionService` authorization, and existing thread/lease/revision fences still apply.
+This remains conservative whole-context invalidation, not precise dependency tracking.
+Pre-V116 workspace stamps intentionally fail closed; existing experimental threads require
+a new investigation. No source-ledger data or legacy Ask records are modified.
+
+Checkpoint publication now rejects duplicate IDs, invalid/missing parents, forward/self
+references, repeated session headers and invalid leaf IDs before replacing committed state.
+It checks structure only; Pi still owns native context and session semantics. Rejected
+publication preserves the last committed revision and running state. No Java transcript or
+context reconstruction engine was added.
+
+Regression coverage exercises restored grants, add/delete grant cycles, disable/reactivate
+without changing the account timestamp, stale worker publication, explicit fresh threads,
+and malformed checkpoints preserving committed output. Final verification is recorded below.

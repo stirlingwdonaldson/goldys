@@ -139,6 +139,44 @@ class WorkspaceJobsIntegrationTest {
           "update permission set can_read=? where department='ALL' and seniority='OWNER' and resource='labour.cost'",
           prior);
     }
+    assertThatThrownBy(() -> jobs.read(owner, job.id())).isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> reporting.tools(job.id(), claim.fence()))
+        .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void restoredGrantsNeverReviveContextOrWorkerPublication() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    jobs.publish(job.id(), claim.fence(), 0, snapshot(), false);
+    UUID grant = UUID.randomUUID();
+    // Even an added then deleted grant must leave a durable invalidation.
+    jdbc.update(
+        "insert into permission(id,department,seniority,resource,can_read,can_write) values (?,'ALL','OWNER','workspace.synthetic',true,false)",
+        grant);
+    jdbc.update("delete from permission where id=?", grant);
+    assertThatThrownBy(() -> jobs.read(owner, job.id())).isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> jobs.heartbeat(job.id(), claim.fence()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> jobs.publish(job.id(), claim.fence(), 1, snapshot(), true))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThat(threads.list(owner, null, 25).threads().getFirst().access())
+        .isEqualTo("NOT_PERMITTED");
+    assertThat(submit(UUID.randomUUID(), UUID.randomUUID()).state()).isEqualTo("QUEUED");
+  }
+
+  @Test
+  void reactivatedAccountCannotReuseOldContextEvenWithoutTimestampChange() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    jdbc.update("update user_account set active=false where id=?", owner);
+    jdbc.update("update user_account set active=true where id=?", owner);
+    assertThatThrownBy(() -> jobs.read(owner, job.id())).isInstanceOf(AccessDeniedException.class);
+    assertThat(jobs.claim()).isNull();
+    assertThat(
+            jdbc.queryForObject(
+                "select state from workspace_job where id=?", String.class, job.id()))
+        .isEqualTo("INTERRUPTED");
+    assertThat(submit(UUID.randomUUID(), UUID.randomUUID()).state()).isEqualTo("QUEUED");
   }
 
   @Test
@@ -254,6 +292,33 @@ class WorkspaceJobsIntegrationTest {
         .hasMessageContaining("budget");
     assertThat(jdbc.queryForObject("select count(*) from workspace_job", Integer.class))
         .isEqualTo(10);
+  }
+
+  @Test
+  void malformedCheckpointCannotReplaceCommittedStateOrCompleteJob() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    jobs.publish(job.id(), claim.fence(), 0, snapshot(), false);
+    var broken = (com.fasterxml.jackson.databind.node.ObjectNode) snapshot();
+    broken.put("leafId", "missing");
+    assertThatThrownBy(() -> jobs.publish(job.id(), claim.fence(), 1, broken, true))
+        .isInstanceOf(IllegalArgumentException.class);
+    var saved = jobs.read(owner, job.id());
+    assertThat(saved.revision()).isEqualTo(1);
+    assertThat(saved.state()).isEqualTo("RUNNING");
+    var entries = (com.fasterxml.jackson.databind.node.ArrayNode) broken.path("entries");
+    entries.add(
+        json.createObjectNode()
+            .put("type", "message")
+            .put("id", "missing")
+            .put("parentId", "missing"));
+    assertThatThrownBy(() -> jobs.publish(job.id(), claim.fence(), 1, broken, false))
+        .isInstanceOf(IllegalArgumentException.class);
+    ((com.fasterxml.jackson.databind.node.ObjectNode) entries.get(1)).putNull("parentId");
+    entries.add(entries.get(1).deepCopy());
+    assertThatThrownBy(() -> jobs.publish(job.id(), claim.fence(), 1, broken, false))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(jobs.read(owner, job.id()).revision()).isEqualTo(1);
   }
 
   @Test
