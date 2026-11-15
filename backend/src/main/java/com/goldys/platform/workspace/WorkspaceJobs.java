@@ -42,16 +42,20 @@ public class WorkspaceJobs {
   private final WorkspaceAuthorization authorization;
   private final ObjectMapper json;
   private final WorkspaceBudgets budgets;
+  private final boolean acceptingJobs;
 
   public WorkspaceJobs(
       JdbcTemplate jdbc,
       WorkspaceAuthorization authorization,
       ObjectMapper json,
-      WorkspaceBudgets budgets) {
+      WorkspaceBudgets budgets,
+      @org.springframework.beans.factory.annotation.Value("${app.workspace.accepting-jobs:true}")
+          boolean acceptingJobs) {
     this.jdbc = jdbc;
     this.authorization = authorization;
     this.json = json;
     this.budgets = budgets;
+    this.acceptingJobs = acceptingJobs;
   }
 
   @Transactional
@@ -76,6 +80,7 @@ public class WorkspaceJobs {
         throw new WorkspaceConflict("Request ID already has different content");
       return prior;
     }
+    requireAdmission();
     interruptExpired(threadId);
     Integer active =
         jdbc.queryForObject(
@@ -84,7 +89,8 @@ public class WorkspaceJobs {
             threadId);
     if (active != null && active > 0)
       throw new WorkspaceConflict("An investigation is already active");
-    Instant started = jdbc.queryForObject("select now()", Timestamp.class).toInstant();
+    // PostgreSQL now() is fixed at transaction start, even across lock/query waits.
+    Instant started = jdbc.queryForObject("select clock_timestamp()", Timestamp.class).toInstant();
     Instant deadline = started.plus(Duration.ofMinutes(15));
     budgets.reserve(started, deadline);
     UUID id = UUID.randomUUID();
@@ -153,6 +159,7 @@ public class WorkspaceJobs {
         throw new WorkspaceConflict("Request ID has different or unverifiable original content");
       return existing.get();
     }
+    requireAdmission();
     requireActive(id);
     Integer count =
         jdbc.queryForObject(
@@ -222,6 +229,11 @@ public class WorkspaceJobs {
         == 1) cancelFollowUps(id);
   }
 
+  private void requireAdmission() {
+    if (!acceptingJobs)
+      throw new WorkspaceConflict("New investigations and follow-ups are temporarily paused");
+  }
+
   private void requireActive(UUID id) {
     String state =
         jdbc.queryForObject("select state from workspace_job where id=?", String.class, id);
@@ -257,7 +269,7 @@ public class WorkspaceJobs {
         jdbc.query(
             """
         select t.id from workspace_thread t where exists
-        (select 1 from workspace_job j where j.thread_id=t.id and (j.state='QUEUED' or (j.state='RUNNING' and (j.lease_until<=now() or j.deadline<=now()))))
+        (select 1 from workspace_job j where j.thread_id=t.id and (j.state='QUEUED' or (j.state='RUNNING' and (j.lease_until<=clock_timestamp() or j.deadline<=clock_timestamp()))))
         order by t.created_at,t.id for update skip locked limit 1
         """,
             (row, index) -> row.getObject(1, UUID.class));
@@ -282,7 +294,7 @@ public class WorkspaceJobs {
     }
     UUID fence = UUID.randomUUID();
     jdbc.update(
-        "update workspace_job set state='RUNNING',fence=?,lease_until=now()+interval '30 seconds' where id=?",
+        "update workspace_job set state='RUNNING',fence=?,lease_until=least(clock_timestamp()+interval '30 seconds',deadline) where id=?",
         fence,
         id);
     return jdbc.queryForObject(
@@ -301,13 +313,14 @@ public class WorkspaceJobs {
 
   @Transactional
   public void heartbeat(UUID id, UUID fence) {
+    // Use database wall time at each fence; a transaction may have outlived its lease.
     ThreadRow thread = thread(threadId(id));
     checkPolicy(thread, PermissionAction.READ);
     int changed =
         jdbc.update(
             """
-        update workspace_job set lease_until=least(now()+interval '30 seconds',deadline)
-        where id=? and fence=? and state='RUNNING' and lease_until>now() and deadline>now()
+        update workspace_job set lease_until=least(clock_timestamp()+interval '30 seconds',deadline)
+        where id=? and fence=? and state='RUNNING' and lease_until>clock_timestamp() and deadline>clock_timestamp()
         """,
             id,
             fence);
@@ -335,8 +348,8 @@ public class WorkspaceJobs {
     int valid =
         jdbc.update(
             """
-        update workspace_job set state=?,lease_until=least(now()+interval '30 seconds',deadline)
-        where id=? and fence=? and state='RUNNING' and lease_until>now() and deadline>now()
+        update workspace_job set state=?,lease_until=least(clock_timestamp()+interval '30 seconds',deadline)
+        where id=? and fence=? and state='RUNNING' and lease_until>clock_timestamp() and deadline>clock_timestamp()
         """,
             completed ? "COMPLETED" : "RUNNING",
             id,
@@ -349,6 +362,27 @@ public class WorkspaceJobs {
             threadId,
             revision);
     if (changed != 1) throw new WorkspaceConflict("Stale conversation revision");
+  }
+
+  /** Commit server-observed dependencies before returning any reporting data to the worker. */
+  @Transactional
+  public UUID recordReportingEvidence(
+      UUID id,
+      UUID fence,
+      com.goldys.platform.reporting.ToolId tool,
+      List<com.goldys.platform.auth.PermissionService.Check> checks) {
+    var role = authorizedRole(id, fence);
+    if (checks.isEmpty() || checks.stream().anyMatch(check -> !role.equals(check.role()))) {
+      throw new IllegalArgumentException("Incomplete reporting permission evidence");
+    }
+    UUID evidenceId = UUID.randomUUID();
+    jdbc.update(
+        "insert into workspace_reporting_evidence(id,job_id,tool,checks) values (?,?,?,?::jsonb)",
+        evidenceId,
+        id,
+        tool.name(),
+        json.valueToTree(checks).toString());
+    return evidenceId;
   }
 
   private ThreadRow owned(UUID owner, UUID id, PermissionAction action) {
@@ -394,7 +428,7 @@ public class WorkspaceJobs {
     jdbc.update(
         """
         update workspace_job set state='INTERRUPTED',fence=gen_random_uuid(),lease_until=null
-        where thread_id=? and ((state='RUNNING' and lease_until<=now()) or (state in ('QUEUED','RUNNING') and deadline<=now()))
+        where thread_id=? and ((state='RUNNING' and lease_until<=clock_timestamp()) or (state in ('QUEUED','RUNNING') and deadline<=clock_timestamp()))
         """,
         threadId);
     jdbc.update(

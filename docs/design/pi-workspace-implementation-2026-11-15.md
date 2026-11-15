@@ -450,3 +450,131 @@ sandbox/file/research slices. Do not infer pilot readiness from these regression
 The preview production build also passed with `NEXT_PUBLIC_WORKSPACE_PREVIEW=true`.
 The turn ended before completing the remaining authorized implementation; passing
 these checks and making local commits does not close the migration request.
+
+
+## Continuation: main integration and observed reporting dependencies — 16 November 2026
+
+Reused `/tmp/goldys-pi-workspace-proposal` and rebased the unpublished task branch onto
+`origin/main` at `fca0b930`. The only conflicts were adjacent imports in `demo.ts`,
+`live.ts` and `types.ts`; both the main-branch sorting APIs and workspace APIs were
+retained. The rebased pre-change head is `3694f6bd`. Earlier local commit IDs in this
+record describe the pre-rebase history. No production checkout switch, merge, push
+or deployment occurred. Main's highest migration was still V113; this continuation
+adds V118 after the branch's V114–V117.
+
+V118 stores reporting authorization evidence before a successful governed response
+leaves Spring. `PermissionService.observe` captures the actual synchronous checks,
+including metric operands and denied discovery probes, using a Java 25 scoped value.
+It neither grants access nor replaces the permission lookup. Duplicate checks are
+collapsed; exceptions unwind the scope; concurrent requests cannot share evidence.
+The reporting transaction stores a job-bound record and returns an opaque evidence ID
+in native tool-result details. No prompt, metric values or second transcript are stored
+in that evidence table. Its job FK cascades with job deletion.
+
+A new assertion exposed that `CREATE_DASHBOARD_DRAFT` authorized `dashboards` but did
+not declare the metrics in its query-only proposal. The tool now supplies all referenced
+metrics to the dispatcher's existing operand gate, including derived metric dependencies
+through `MetricCatalog.requiredPermissions`. No queries run just to authorize metadata;
+no worker dashboard save is introduced. This applies to both the legacy and Pi bridge.
+
+These are reporting dependency labels, **not complete precise revocation**. Whole-context
+policy invalidation remains unchanged. Captured checks do not establish lineage for
+arbitrary user prose, uploads, scripts, legacy messages or summaries. Old snapshots and
+unknown dependencies must remain conservatively restricted; do not loosen the policy
+stamp based only on the new evidence IDs. No asynchronous reporting operation may
+claim coverage from the synchronous observation scope.
+
+Verification and the wall-clock lease regression are recorded below after their runs.
+
+
+An independent startup control, `app.workspace.accepting-jobs=false`, now pauses new
+jobs and follow-ups without unregistering history/Stop endpoints. Existing idempotent
+submission IDs still resolve, and conflicting content still conflicts. The pause runs
+before reservations or new durable commands; failed new-thread admission rolls back its
+thread insert. Reads, queue edits/removal and Stop retain normal current authorization.
+The [rollout preparation](../operations/pi-workspace-rollout.md) documents the distinction
+between admission pause, cancellation and complete endpoint deactivation. Existing jobs
+may continue while admission is paused; this is not an emergency process kill switch.
+Both workspace activation flags remain default-off.
+
+The first full rebased backend run with reporting evidence and dashboard operand checks
+passed in 6m 22s. It predates the admission-pause and transaction-time additions and is
+not final verification for this continuation. A previous focused run correctly exposed
+the missing draft operand gate; a subsequent test compilation failure was corrected by
+using the existing mock seam for package-private `PermissionLookup`.
+
+
+Lease/deadline comparisons and renewal now use PostgreSQL `clock_timestamp()`, not
+transaction-start `now()`. Admission also obtains its start from database wall time;
+initial and renewed leases are capped by the original deadline. Four PostgreSQL
+regressions hold a transaction open across the job deadline or lease expiry and then
+attempt heartbeat or snapshot publication. All four failed against the old code
+because the expired operation succeeded. The final full run includes those cases.
+This closes the transaction-time loophole at the reporting post-query/checkpoint
+fences; it is not evidence of physical process termination in a sandbox.
+
+Incremental Ripwire evidence at `3694f6bd8+dirty` is **not clean**: 29 findings, seven
+gating. These include two broad lexical constructor/delegation clone families, one
+lifecycle-test clone match, three short-horizon churn findings and growth of
+`PermissionServiceTest` from 43 to 116 measured lines. The new tests exercise denied
+checks, exception unwinding and concurrent scope isolation; no unrelated constructor
+family was rewritten to suppress lexical matches. The test gate lists 25 test files,
+157 statically untested symbols, 2,483 ambiguous edges, 4,857 unresolved edges and
+136 unindexed files. `WorkspaceJobs` has an intentional constructor change for the
+admission configuration; the targeted check finds no incompatible callers. The Java
+compiler and integration tests verify actual construction. These results do not
+resolve earlier migration-wide findings or prove runtime wire compatibility.
+
+
+Continuation scope remains incomplete. Use this same worktree/branch; current main is
+now incorporated, so do not repeat the old "two commits behind" handoff. Continue with
+complete context/legacy provenance and resource-level revocation (including revoke/regrant
+cycles), keeping the conservative stamp until every relevant dependency is accounted for.
+V118 evidence is not sufficient to relax it. Then complete the separate-VM sandbox,
+quarantine/extraction/artifacts and retention, public-only research and citations,
+reviewed dataset extraction, actual usage reconciliation and remaining live/demo UX.
+The rollout runbook is preparation, not completed packaging or operational acceptance.
+
+No independent implementation blocker was established for all that work. Operational
+acceptance separately needs an authorized analysis VM/runtime and containment exercises,
+approved provider execution/secret injection and verified receipts/pricing, representative
+authorized files and a restore environment/rehearsal. Those were not supplied or exercised
+within this authorization. Manager mapping, sensitive-file reviewer grants and
+issued-report/hold/backup retention decisions remain genuine policy gates. Neither the
+legacy Ask loop nor the other Spring AI consumers have been retired. No live provider,
+real-file extraction, separate-VM containment, actual billing, restore, production operation,
+remote CI, push, merge or deployment occurred in this continuation.
+
+
+Final backend verification for all changes in this continuation passed:
+`./gradlew spotlessApply test spotlessCheck`, 6m 49s, 2,050 tests, five skipped,
+zero failures/errors. All 27 workspace lifecycle cases passed, including the four
+transaction-time regressions and admission pause. Worker frozen install with lifecycle
+scripts disabled, typecheck, all 16 synthetic tests and build passed. Frontend typecheck
+and lint passed; its heavy tests/build run after the backend suite. Final frontend and
+browser outcomes are recorded below.
+
+
+Frontend verification on the rebased tree passed typecheck, lint and all 843 tests
+across 146 files. The test count includes main's newly incorporated UI coverage.
+The preview production build and fixture browser results follow below.
+
+The preview production build passed with `NEXT_PUBLIC_WORKSPACE_PREVIEW=true` set
+only for verification. Playwright passed both existing Ask and workspace fixture flows
+(two tests, 17.5s). All application APIs were intercepted. Desktop and narrow screenshots
+were inspected; visible Stop, queue controls and explicit missing data remain intact.
+These are fixture browser results, not live provider, server-to-sandbox cancellation or
+containment evidence. No persistent activation setting was changed.
+
+All 43 local links in the changed documentation resolve; all six Goldy's recipes remain
+discoverable through canonical and Codex paths; diff whitespace checks pass. Scope
+requirements and architecture invariants are preserved. Current main was fetched again
+at `fca0b930` with highest migration V113, so V118 does not collide with main.
+The draft operand fix is local commit `c8d68f6f`; the evidence/lifecycle/runbook work is
+committed with this record. Nothing was published or CI-verified remotely.
+
+This turn reached its execution budget with substantial independently actionable work
+remaining. It is a handoff, not completion of the requested entire migration. Continue
+from this worktree's latest local commit, following the remaining implementation and
+operational/policy distinctions above; do not discard the rebased implementation or
+mistake passing local checks for deployment readiness.

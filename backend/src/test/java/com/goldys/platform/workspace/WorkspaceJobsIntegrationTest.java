@@ -20,14 +20,17 @@ class WorkspaceJobsIntegrationTest {
   @Autowired WorkspaceJobs jobs;
   @Autowired WorkspaceReporting reporting;
   @Autowired WorkspaceThreads threads;
+  @Autowired com.goldys.platform.auth.WorkspaceAuthorization authorization;
+  @Autowired WorkspaceBudgets budgets;
   @Autowired JdbcTemplate jdbc;
   @Autowired ObjectMapper json;
+  @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
   UUID owner;
 
   @BeforeEach
   void setup() {
     jdbc.update(
-        "truncate workspace_follow_up,workspace_thread,workspace_job,workspace_daily_budget");
+        "truncate workspace_reporting_evidence,workspace_follow_up,workspace_thread,workspace_job,workspace_daily_budget");
     owner = account("OWNER");
   }
 
@@ -195,6 +198,16 @@ class WorkspaceJobsIntegrationTest {
           "range":{"from":"2026-11-02","to":"2026-11-08","calendar":"TRADING"},
           "grain":"TOTAL","dimensions":[],"comparison":null}]}]}
         """));
+    assertThat(result.evidenceId()).isNotNull();
+    var checks =
+        json.readTree(
+            jdbc.queryForObject(
+                "select checks::text from workspace_reporting_evidence where id=? and job_id=? and tool='CREATE_DASHBOARD_DRAFT'",
+                String.class,
+                result.evidenceId(),
+                job.id()));
+    assertThat(checks.findValuesAsText("value")).contains("reconciliation.sales");
+    assertThat(checks).allMatch(check -> check.path("allowed").asBoolean());
     var details = json.valueToTree(result);
     assertThat(details.path("widget").path("schemaVersion").asInt()).isEqualTo(2);
     var saved = (com.fasterxml.jackson.databind.node.ObjectNode) snapshot();
@@ -250,6 +263,90 @@ class WorkspaceJobsIntegrationTest {
                     com.goldys.platform.reporting.ToolId.GET_METRIC,
                     json.createObjectNode()))
         .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void missingOrStaleReportingEvidenceCannotBeCommitted() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    var tool = com.goldys.platform.reporting.ToolId.GET_METRIC;
+    assertThatThrownBy(
+            () -> jobs.recordReportingEvidence(job.id(), claim.fence(), tool, java.util.List.of()))
+        .isInstanceOf(IllegalArgumentException.class);
+    jobs.stop(owner, job.id());
+    assertThatThrownBy(
+            () -> jobs.recordReportingEvidence(job.id(), claim.fence(), tool, java.util.List.of()))
+        .isInstanceOf(WorkspaceConflict.class);
+    assertThat(
+            jdbc.queryForObject("select count(*) from workspace_reporting_evidence", Integer.class))
+        .isZero();
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.CsvSource({
+    "deadline,heartbeat",
+    "lease_until,heartbeat",
+    "deadline,publish",
+    "lease_until,publish"
+  })
+  void elapsedTimeWithinTransactionFencesWorker(String column, String operation) {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    var transaction = new org.springframework.transaction.support.TransactionTemplate(transactions);
+    assertThatThrownBy(
+            () ->
+                transaction.executeWithoutResult(
+                    status -> {
+                      // Column names are fixed test parameters. The transaction timestamp remains
+                      // frozen during sleep.
+                      jdbc.update(
+                          "update workspace_job set "
+                              + column
+                              + "=clock_timestamp()+interval '50 milliseconds' where id=?",
+                          job.id());
+                      jdbc.queryForObject("select 1 from pg_sleep(0.15)", Integer.class);
+                      if (operation.equals("heartbeat")) jobs.heartbeat(job.id(), claim.fence());
+                      else jobs.publish(job.id(), claim.fence(), 0, snapshot(), true);
+                    }))
+        .isInstanceOf(WorkspaceConflict.class);
+    assertThat(jobs.read(owner, job.id()).revision()).isZero();
+  }
+
+  @Test
+  void pausedAdmissionPreservesHistoryStopAndIdempotentDeliveryChecks() {
+    UUID request = UUID.randomUUID();
+    var job = submit(UUID.randomUUID(), request);
+    UUID followUp = UUID.randomUUID();
+    jobs.enqueue(owner, job.id(), followUp, "Already accepted");
+    var paused = new WorkspaceJobs(jdbc, authorization, json, budgets, false);
+    var tx = new org.springframework.transaction.support.TransactionTemplate(transactions);
+    assertThat(
+            tx.execute(
+                    status -> paused.submit(owner, job.threadId(), request, "Synthetic question"))
+                .id())
+        .isEqualTo(job.id());
+    assertThat(
+            tx.execute(status -> paused.enqueue(owner, job.id(), followUp, "Already accepted"))
+                .id())
+        .isEqualTo(followUp);
+    assertThatThrownBy(
+            () ->
+                tx.execute(
+                    status ->
+                        paused.submit(owner, UUID.randomUUID(), UUID.randomUUID(), "New question")))
+        .isInstanceOf(WorkspaceConflict.class)
+        .hasMessageContaining("paused");
+    assertThatThrownBy(
+            () ->
+                tx.execute(
+                    status -> paused.enqueue(owner, job.id(), UUID.randomUUID(), "New follow-up")))
+        .isInstanceOf(WorkspaceConflict.class)
+        .hasMessageContaining("paused");
+    assertThat(jdbc.queryForObject("select count(*) from workspace_thread", Integer.class))
+        .isEqualTo(1);
+    assertThat(tx.execute(status -> paused.read(owner, job.id())).prompt())
+        .isEqualTo("Synthetic question");
+    assertThat(tx.execute(status -> paused.stop(owner, job.id())).state()).isEqualTo("CANCELLED");
   }
 
   @Test

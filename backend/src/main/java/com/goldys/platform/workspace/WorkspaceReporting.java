@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.goldys.platform.auth.PermissionService;
 import com.goldys.platform.conversational.CreateDashboardDraftTool;
 import com.goldys.platform.conversational.DashboardDraft;
 import com.goldys.platform.reporting.ToolDispatcher;
@@ -21,13 +22,19 @@ public class WorkspaceReporting {
   private final ToolRegistry registry;
   private final ToolDispatcher dispatcher;
   private final ObjectMapper json;
+  private final PermissionService permissions;
 
   public WorkspaceReporting(
-      WorkspaceJobs jobs, ToolRegistry registry, ToolDispatcher dispatcher, ObjectMapper json) {
+      WorkspaceJobs jobs,
+      ToolRegistry registry,
+      ToolDispatcher dispatcher,
+      ObjectMapper json,
+      PermissionService permissions) {
     this.jobs = jobs;
     this.registry = registry;
     this.dispatcher = dispatcher;
     this.json = json;
+    this.permissions = permissions;
   }
 
   public record ToolSpec(String id, String name, String description, JsonNode parameters) {}
@@ -67,7 +74,8 @@ public class WorkspaceReporting {
         .toList();
   }
 
-  public record Result(@JsonUnwrapped ToolResult reporting, DashboardDraft draft) {}
+  public record Result(
+      @JsonUnwrapped ToolResult reporting, DashboardDraft draft, UUID evidenceId) {}
 
   @Transactional
   public Result execute(UUID job, UUID fence, ToolId id, JsonNode arguments) {
@@ -86,11 +94,12 @@ public class WorkspaceReporting {
     } catch (java.io.IOException invalid) {
       throw new IllegalArgumentException("Invalid reporting arguments");
     }
-    var result = dispatcher.dispatch(id, input, role);
+    var observed = permissions.observe(() -> dispatcher.dispatch(id, input, role));
     // Recheck lease/deadline after the query; an expired worker receives no data.
     jobs.authorizedRole(job, fence);
     DashboardDraft draft =
         tool instanceof CreateDashboardDraftTool draftTool ? draftTool.toDraft(input) : null;
-    return new Result(result, draft);
+    UUID evidenceId = jobs.recordReportingEvidence(job, fence, id, observed.checks());
+    return new Result(observed.value(), draft, evidenceId);
   }
 }
