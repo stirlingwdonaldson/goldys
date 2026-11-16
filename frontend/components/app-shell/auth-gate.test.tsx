@@ -123,14 +123,20 @@ it("verifies a CSRF denial and redirects if the session has expired", async () =
 
 it.each(["focus", "visibilitychange"])("rechecks the session on %s after a server restart", async event => {
   const target = event === "focus" ? window : document;
-  const listeners = vi.spyOn(target, "addEventListener");
+  const windowListeners = vi.spyOn(window, "addEventListener");
+  const documentListeners = vi.spyOn(document, "addEventListener");
   vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
   server.use(http.get(me, () => HttpResponse.json(owner)));
   renderGate();
   await screen.findByText("The app");
   // DOM visibility can precede the provider's passive effect. Dispatch exactly once
   // after subscription, rather than losing the event or retrying it until it works.
-  await waitFor(() => expect(listeners).toHaveBeenCalledWith(event, expect.any(Function)));
+  // React Query also subscribes to visibility; only the session checker uses the
+  // same callback for both events, so an unrelated listener cannot satisfy this barrier.
+  await waitFor(() => expect(windowListeners.mock.calls.some(([name, listener]) =>
+    name === "focus" && documentListeners.mock.calls.some(([documentName, documentListener]) =>
+      documentName === "visibilitychange" && listener === documentListener),
+  )).toBe(true));
   let release!: () => void;
   const response = new Promise<void>(resolve => { release = resolve; });
   let checks = 0;
