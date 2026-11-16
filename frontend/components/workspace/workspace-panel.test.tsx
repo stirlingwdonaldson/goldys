@@ -8,6 +8,7 @@ import type { WorkspaceApi, WorkspaceJob } from "@/lib/api/workspace";
 const job: WorkspaceJob = { id: "10000000-0000-4000-8000-000000000001", threadId: "20000000-0000-4000-8000-000000000001", state: "RUNNING", prompt: "Original question", revision: 1, messages: [{ id: "text", role: "assistant", text: "Saved private output", reporting: null }] };
 function adapter(): WorkspaceApi {
   return {
+    deleteWorkspaceThread: vi.fn(), listWorkspaceFiles: vi.fn().mockResolvedValue([]), uploadWorkspaceFile: vi.fn(), keepWorkspaceFile: vi.fn(), deleteWorkspaceFile: vi.fn(), workspaceFileDownloadUrl: vi.fn(),
     listWorkspaceThreads: vi.fn().mockResolvedValue({ threads: [], nextCursor: null }),
     getWorkspaceJob: vi.fn().mockResolvedValue(job),
     listWorkspaceFollowUps: vi.fn().mockResolvedValue([]),

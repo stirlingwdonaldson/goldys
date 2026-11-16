@@ -11,7 +11,8 @@ export interface ModelChargeBound {
 /** Conservative reservations include failures/retries; unknown prices never mean free. */
 export class InvestigationBudget {
   private reservedMicros = 0;
-  constructor(private readonly limitMicros = 5_000_000) {
+  exhausted = false;
+  constructor(private readonly limitMicros = 5_000_000, private readonly persist?: (id: string, kind: 'MODEL' | 'SEARCH', aud: number) => Promise<void>) {
     if (!Number.isSafeInteger(limitMicros) || limitMicros < 0 || limitMicros > 5_000_000) {
       throw new Error('Invalid investigation budget');
     }
@@ -20,9 +21,14 @@ export class InvestigationBudget {
     if (!Number.isFinite(aud) || aud <= 0) throw new Error('A reviewed positive charge bound is required');
     const micros = Math.ceil(aud * 1_000_000);
     if (!Number.isSafeInteger(micros) || this.reservedMicros + micros > this.limitMicros) {
+      this.exhausted = true;
       throw new Error('Investigation charge limit reached');
     }
     this.reservedMicros += micros;
+  }
+  async reserveRequest(aud: number, kind: 'MODEL' | 'SEARCH'): Promise<void> {
+    this.reserve(aud);
+    await this.persist?.(crypto.randomUUID(), kind, aud);
   }
   get reservedAud(): number { return this.reservedMicros / 1_000_000; }
 }
@@ -39,7 +45,7 @@ export function guardModelRequests(
     if (model.provider !== bound.provider || model.id !== bound.model) throw new Error('Unpriced model request');
     await authorize();
     options?.signal?.throwIfAborted();
-    budget.reserve(bound.requestAud);
-    return stream(model, context, { ...options, maxTokens: bound.maxOutputTokens });
+    await budget.reserveRequest(bound.requestAud, 'MODEL');
+    return stream(model, context, { ...options, maxTokens: bound.maxOutputTokens, maxRetries: 0 });
   };
 }

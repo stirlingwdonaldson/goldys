@@ -212,7 +212,10 @@ public class WorkspaceJobs {
             (row, index) -> new FollowUp(row.getObject(1, UUID.class), row.getString(2), "TAKEN"),
             id);
     publish(id, fence, revision, snapshot, pending.isEmpty());
-    if (pending.isEmpty()) return null;
+    if (pending.isEmpty()) {
+      budgets.reconcileCompleted(id);
+      return null;
+    }
     FollowUp next = pending.getFirst();
     jdbc.update(
         "update workspace_follow_up set state='TAKEN' where job_id=? and request_id=?",
@@ -222,11 +225,26 @@ public class WorkspaceJobs {
   }
 
   @Transactional
+  public void reserveUsage(
+      UUID id, UUID fence, UUID request, String kind, java.math.BigDecimal aud) {
+    heartbeat(id, fence);
+    budgets.reserveRequest(id, request, kind, aud);
+  }
+
+  @Transactional
   public void interrupt(UUID id, UUID fence) {
+    fail(id, fence, "INTERRUPTED");
+  }
+
+  @Transactional
+  public void fail(UUID id, UUID fence, String outcome) {
+    if (!java.util.Set.of("INTERRUPTED", "FAILED", "BUDGET_EXHAUSTED").contains(outcome))
+      throw new IllegalArgumentException("Invalid terminal outcome");
     thread(threadId(id));
     // Failure reporting carries no data and remains allowed after policy revocation.
     if (jdbc.update(
-            "update workspace_job set state='INTERRUPTED',fence=gen_random_uuid(),lease_until=null where id=? and fence=? and state='RUNNING'",
+            "update workspace_job set state=?,fence=gen_random_uuid(),lease_until=null where id=? and fence=? and state='RUNNING'",
+            outcome,
             id,
             fence)
         == 1) cancelFollowUps(id);

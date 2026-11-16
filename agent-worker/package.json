@@ -6,7 +6,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "build": "bun build src/main.ts src/session.ts src/jobs.ts src/budget.ts --target=bun --outdir=dist --packages=external",
+    "build": "bun build src/main.ts src/session.ts src/jobs.ts src/budget.ts src/provider.ts src/sandbox.ts src/research.ts --target=bun --outdir=dist --packages=external",
     "start": "bun --no-env-file src/main.ts"
   },
   "dependencies": {

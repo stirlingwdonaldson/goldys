@@ -28,6 +28,7 @@ export function AppShell({ children, defaultSidebarOpen = true }: AppShellProps)
           {/* Inset variant: the page sits in a raised panel on the sidebar's canvas. */}
           <SidebarInset className="min-w-0 overflow-hidden">
             <DemoBanner />
+            {process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW === "true" ? <p className="bg-status-info-soft px-6 py-2 text-xs text-status-info">Isolated Pi preview · synthetic data only · use synthetic files for testing</p> : null}
             <AppHeader />
             <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col gap-6 p-4 md:px-8 md:py-7">
               {/* Keying the boundary on the path remounts it per route, so a render

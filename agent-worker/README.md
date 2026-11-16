@@ -1,6 +1,6 @@
 # Ask Goldy's Pi worker
 
-This is a local implementation slice, **not ready to enable for a pilot**. See
+This worker powers the private synthetic preview described in [preview operations](../ops/pi-preview/README.md). **Production activation remains off and unapproved.** See
 [implementation evidence](../docs/design/pi-workspace-implementation-2026-11-15.md).
 The [rollout and rollback preparation](../docs/operations/pi-workspace-rollout.md) describes
 activation gates and the independent admission pause.
@@ -28,19 +28,18 @@ is the fallback if Spring is unreachable. It never replays the attempt. Spring s
 survives browser disconnection. Stop/revocation is observed at the next heartbeat (five seconds)
 or before another model/tool call.
 
-Do not run this worker on the production host or in an application checkout. The accepted
-separate analysis VM, clean process environment and restricted egress remain operational
-gates. No scripts, public-web tools, upload parsing or artifact filesystem are enabled.
+Do not run this worker on the production host or in an application checkout. The analysis VM runs the trusted worker separately from disposable offline gVisor scripts. Its clean environment, restricted egress, termination and file boundary have been exercised with synthetic inputs. Optional analysis/public-research tools are enabled only in the isolated preview.
 The worker has no SQL/database connection and does not discover local Pi credentials,
 project instructions, skills or extensions. Temporary working directories are removed.
 
-The eventual deployment supplies these variables through its approved secret/config mechanism;
-no real environment file is included or read during this implementation task:
+The preview supervisor supplies these variables through its approved secret/config mechanism;
+no credential value is committed or printed:
 
 - `GOLDYS_SPRING_ORIGIN`: fixed HTTPS origin, no credentials, query or path.
 - `GOLDYS_WORKER_TOKEN`: private worker token, at least 32 characters; never exposed to browsers.
 - `GOLDYS_MODEL_PROVIDER`, `GOLDYS_MODEL_ID`: explicit pinned-catalog model.
-- `GOLDYS_MODEL_API_KEY`: isolated model credential, in-memory only.
+- `CREDENTIALS_DIRECTORY`: systemd credentials directory containing `model-api-key` and `worker-token`. The preview uses this instead of ambient environment keys.
+- `GOLDYS_SANDBOX_ENABLED`, `GOLDYS_PUBLIC_RESEARCH_ENABLED`: explicit opt-ins, otherwise disabled.
 - `GOLDYS_MODEL_REQUEST_BOUND_AUD`: reviewed **worst-case** charge for one full-context request,
   including cache pricing, reasoning/output charges and a conservative FX bound. Not an average.
 - `GOLDYS_MODEL_MAX_OUTPUT_TOKENS`: reviewed provider output ceiling.
@@ -48,12 +47,10 @@ no real environment file is included or read during this implementation task:
 The worker rejects absent/invalid pricing and reserves each request's upper bound against A$5,
 including compaction and failed attempts. Spring separately reserves A$5 per job against A$50
 on every Melbourne date touched by the job’s 15-minute admission window. Midnight
-reservations are conservative and atomic; actual receipt reconciliation and provider-specific
-cap verification are still release gates. Never substitute an optimistic cost estimate to enable it.
+reservations are conservative and atomic. Each model/search request also reserves its reviewed bound durably in Spring before dispatch. SDK retries are disabled. Completion releases only unused admission capacity; failed/unknown requests retain their bound. Native responses retain provider token usage. These are not provider invoice receipts; invoice/FX reconciliation remains a production gate. Never substitute an optimistic cost estimate to enable it.
 
 `bun run start` disables automatic dotenv loading. Startup with a deliberately empty process
-environment was checked to fail before contacting any service. No live worker/provider run has
-been performed.
+environment was checked to fail before contacting any service. Real DeepSeek reporting, research, file analysis, cancellation and crash/retry have run in the synthetic preview.
 
 Durable follow-ups are picked up in FIFO order at settled Pi turn boundaries using the same
 native session, A$5 reservation ceiling and original deadline. The atomic settle endpoint either
@@ -74,7 +71,7 @@ An additive Investigations drawer is available only in frontend builds with
 `NEXT_PUBLIC_WORKSPACE_PREVIEW=true` (default off). It reconnects using saved job IDs,
 polls durable status, edits pending follow-ups and sends explicit Stop/Retry commands.
 It does not enable the backend, worker, sandbox or owner pilot. The legacy Ask button
-remains available; workspace file UI is still outstanding. Validated dashboard drafts now survive native
+remains available; private file upload, extraction, Keep, deletion and artifact download are available in the preview. Validated dashboard drafts now survive native
 checkpoints and render an explicit user-confirmed query-only Save action through the
 existing live/demo dashboard APIs. The worker never saves dashboards itself.
 
@@ -91,7 +88,7 @@ invalidation remains mandatory, and old results without evidence stay under that
 The [Dockerfile](Dockerfile) pins Bun by digest and runs the same synthetic checks
 with lifecycle scripts disabled. The final image runs compiled modules as UID/GID `65532`,
 contains only production dependencies, and disables automatic dotenv loading.
-Its [.dockerignore](.dockerignore) allowlists build inputs. The same sixteen synthetic tests also run against the distroless runtime and
+Its [.dockerignore](.dockerignore) allowlists build inputs. The same twenty synthetic tests also run against the distroless runtime and
 production dependencies in an intermediate stage; test/source files do not ship.
 CI builds the image, gates high/critical vulnerability findings, and
 checks missing-configuration startup with no network and a read-only root. This

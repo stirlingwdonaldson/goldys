@@ -79,3 +79,14 @@ metrics. Financial observations require the financial grant; every query operand
 The raw ledger is never exposed to this executor. Saved query widgets retain those qualifications.
 No generic query tool is added to Ask Goldy's. The executor uses a SELECT-only database role in an
 independent read-only transaction; it cannot fall back to the application's normal privileges.
+
+### Private exploratory workspace attachments
+
+ADR 0002 distinguishes private temporary investigation attachments from authoritative
+source ingestion. The disabled Pi workspace may retain their original bytes and
+private generated artifacts in `workspace_file`; no such upload is a business fact or
+source-ledger promotion. A future promotion must use the existing byte-faithful
+`IngestionService` boundary. The raw ledger remains append-only. Files, derived output
+and native context retain the thread's whole-policy restriction; ownership alone does
+not bypass the explicit private-file, wages and account-information permission checks.
+Production sensitive-file classification and hold/backup obligations remain unresolved.

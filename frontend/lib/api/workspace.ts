@@ -4,7 +4,7 @@ import { draftSchema, provenanceSchema } from "./dashboard-schema";
 
 export const workspaceJobSchema = z.object({
   id: z.string().uuid(), threadId: z.string().uuid(),
-  state: z.enum(["QUEUED", "RUNNING", "COMPLETED", "CANCELLED", "INTERRUPTED"]),
+  state: z.enum(["QUEUED", "RUNNING", "COMPLETED", "CANCELLED", "INTERRUPTED", "FAILED", "BUDGET_EXHAUSTED"]),
   prompt: z.string(), revision: z.number().int().nonnegative(),
   messages: z.array(z.object({ id: z.string(), role: z.enum(["user", "assistant", "tool"]), text: z.string(),
     draft: draftSchema.nullable().optional(),
@@ -24,7 +24,15 @@ export type WorkspacePage = z.infer<typeof workspacePageSchema>;
 export type WorkspaceSubmission = { threadId: string; requestId: string; prompt: string };
 export type WorkspaceReadOptions = { signal?: AbortSignal };
 
+export const workspaceFileSchema = z.object({ id: z.string().uuid(), name: z.string(), kind: z.enum(["UPLOAD", "ARTIFACT"]), byteLength: z.number().int().positive(), kept: z.boolean(), expiresAt: z.string(), available: z.boolean() });
+export type WorkspaceFile = z.infer<typeof workspaceFileSchema>;
 export interface WorkspaceApi {
+  deleteWorkspaceThread(id: string): Promise<void>;
+  listWorkspaceFiles(id: string, options?: WorkspaceReadOptions): Promise<WorkspaceFile[]>;
+  uploadWorkspaceFile(id: string, file: File): Promise<WorkspaceFile>;
+  keepWorkspaceFile(id: string, file: string, keep: boolean): Promise<void>;
+  deleteWorkspaceFile(id: string, file: string): Promise<void>;
+  workspaceFileDownloadUrl(id: string, file: string): Promise<string>;
   listWorkspaceThreads(before?: string, limit?: number, options?: WorkspaceReadOptions): Promise<WorkspacePage>;
   submitWorkspaceJob(input: WorkspaceSubmission): Promise<WorkspaceJob>;
   getWorkspaceJob(id: string, options?: WorkspaceReadOptions): Promise<WorkspaceJob>;

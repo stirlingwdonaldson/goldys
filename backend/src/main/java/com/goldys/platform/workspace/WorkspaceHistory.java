@@ -46,10 +46,52 @@ final class WorkspaceHistory {
     if (!"message".equals(entry.path("type").asText())) return null;
     JsonNode message = entry.path("message");
     String role = message.path("role").asText();
-    if ("toolResult".equals(role)) return reporting(id, message, json);
+    if ("toolResult".equals(role)) {
+      if (java.util.Set.of(
+              "goldys_list_files",
+              "goldys_extract_files",
+              "goldys_analyze_python",
+              "goldys_public_research",
+              "goldys_export_sales_dataset")
+          .contains(message.path("toolName").asText())) return exploration(id, message);
+      return reporting(id, message, json);
+    }
     if (!"user".equals(role) && !"assistant".equals(role)) return null;
     String text = text(message.path("content"));
     return text.isEmpty() ? null : new Message(id, role, text, null, null);
+  }
+
+  private static Message exploration(String id, JsonNode message) {
+    var details = message.path("details");
+    String status =
+        message.path("isError").asBoolean() ? "FAILED" : details.path("status").asText("COMPLETED");
+    StringBuilder display =
+        new StringBuilder("Exploratory tool: ")
+            .append(status)
+            .append(". Not a governed reporting result.");
+    for (String field : List.of("notice", "extraction", "stdout")) {
+      String value = details.path(field).asText("");
+      if (!value.isBlank())
+        display
+            .append("\n")
+            .append(value.substring(0, Math.min(value.length(), 8000)))
+            .append(
+                value.length() > 8000
+                    ? "\n[Display shortened; consult the artifact or ask for a bounded extract.]"
+                    : "");
+    }
+    if (details.has("sources")) {
+      display
+          .append("\nPublic sources retrieved ")
+          .append(details.path("retrievedAt").asText("unknown"));
+      for (JsonNode source : details.path("sources"))
+        display
+            .append("\n")
+            .append(source.path("title").asText())
+            .append(" — ")
+            .append(source.path("url").asText());
+    }
+    return new Message(id, "tool", display.toString(), null, null);
   }
 
   private static Message reporting(String id, JsonNode message, ObjectMapper json) {

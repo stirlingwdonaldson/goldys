@@ -20,13 +20,19 @@ public class WorkspaceWorkerController {
   private final WorkspaceJobs jobs;
   private final WorkspaceReporting reporting;
   private final byte[] token;
+  private final WorkspaceFiles files;
+  private final WorkspaceDatasets datasets;
 
   public WorkspaceWorkerController(
       WorkspaceJobs jobs,
       WorkspaceReporting reporting,
+      WorkspaceFiles files,
+      WorkspaceDatasets datasets,
       @Value("${app.workspace.worker-token:}") String token) {
     this.jobs = jobs;
     this.reporting = reporting;
+    this.files = files;
+    this.datasets = datasets;
     this.token = token.getBytes(StandardCharsets.UTF_8);
   }
 
@@ -66,6 +72,37 @@ public class WorkspaceWorkerController {
     return reporting.execute(id, request.fence(), request.tool(), request.arguments());
   }
 
+  record ArtifactRequest(@NotNull UUID fence, @NotNull String name, @NotNull byte[] bytes) {}
+
+  record InputRequest(@NotNull UUID fence, java.util.List<UUID> fileIds) {}
+
+  @PostMapping("/{id}/files")
+  java.util.List<WorkspaceFiles.FileBytes> files(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token,
+      @PathVariable UUID id,
+      @Valid @RequestBody InputRequest body) {
+    authenticate(token);
+    return files.inputs(id, body.fence(), body.fileIds());
+  }
+
+  @PostMapping("/{id}/file-list")
+  java.util.List<WorkspaceFiles.FileInfo> fileList(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token,
+      @PathVariable UUID id,
+      @Valid @RequestBody Lease body) {
+    authenticate(token);
+    return files.workerList(id, body.fence());
+  }
+
+  @PostMapping("/{id}/artifacts")
+  WorkspaceFiles.FileInfo artifact(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token,
+      @PathVariable UUID id,
+      @Valid @RequestBody ArtifactRequest body) {
+    authenticate(token);
+    return files.artifact(id, body.fence(), body.name(), body.bytes());
+  }
+
   @PostMapping("/claim")
   WorkspaceJobs.Claim claim(
       @RequestHeader(value = "X-Workspace-Token", required = false) String token) {
@@ -103,6 +140,44 @@ public class WorkspaceWorkerController {
       @Valid @RequestBody Publication publication) {
     authenticate(token);
     return jobs.settle(id, publication.fence(), publication.revision(), publication.snapshot());
+  }
+
+  record DatasetRequest(
+      @NotNull UUID fence, @NotNull java.time.LocalDate from, @NotNull java.time.LocalDate to) {}
+
+  @PostMapping("/{id}/sales-dataset")
+  WorkspaceDatasets.Dataset dataset(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token,
+      @PathVariable UUID id,
+      @Valid @RequestBody DatasetRequest body) {
+    authenticate(token);
+    return datasets.sales(id, body.fence(), body.from(), body.to());
+  }
+
+  record Usage(
+      @NotNull UUID fence,
+      @NotNull UUID requestId,
+      @NotNull String kind,
+      @NotNull java.math.BigDecimal aud) {}
+
+  @PostMapping("/{id}/usage")
+  void usage(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token,
+      @PathVariable UUID id,
+      @Valid @RequestBody Usage body) {
+    authenticate(token);
+    jobs.reserveUsage(id, body.fence(), body.requestId(), body.kind(), body.aud());
+  }
+
+  record Failure(@NotNull UUID fence, @NotNull String outcome) {}
+
+  @PostMapping("/{id}/failure")
+  void fail(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token,
+      @PathVariable UUID id,
+      @Valid @RequestBody Failure failure) {
+    authenticate(token);
+    jobs.fail(id, failure.fence(), failure.outcome());
   }
 
   @PostMapping("/{id}/interrupt")

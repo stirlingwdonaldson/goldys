@@ -18,6 +18,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Import(PostgresContainerConfiguration.class)
 class WorkspaceJobsIntegrationTest {
   @Autowired WorkspaceJobs jobs;
+  @Autowired WorkspaceFiles files;
+  @Autowired WorkspaceDatasets datasets;
   @Autowired WorkspaceReporting reporting;
   @Autowired WorkspaceThreads threads;
   @Autowired com.goldys.platform.auth.WorkspaceAuthorization authorization;
@@ -32,7 +34,7 @@ class WorkspaceJobsIntegrationTest {
   @BeforeEach
   void setup() {
     jdbc.update(
-        "truncate workspace_reporting_evidence,workspace_follow_up,workspace_thread,workspace_job,workspace_daily_budget");
+        "truncate workspace_request_reservation,workspace_file,workspace_reporting_evidence,workspace_follow_up,workspace_thread,workspace_job,workspace_daily_budget");
     owner = account("OWNER");
   }
 
@@ -61,6 +63,81 @@ class WorkspaceJobsIntegrationTest {
             "entries",
             json.createArrayNode()
                 .add(json.createObjectNode().put("type", "session").put("id", "synthetic")));
+  }
+
+  @Test
+  void boundedSalesDatasetRetainsGovernedValuesAndMissingCells() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    var from = java.time.LocalDate.of(2026, 1, 1);
+    jdbc.update(
+        "insert into resolved_daily_sales(trading_date,total_sales,net_sales,gst,resolution_type,authoritative_source,has_conflict,resolved_at) values (?,110,100,10,'SINGLE_SOURCE','LIGHTSPEED',false,now()) on conflict(trading_date) do update set total_sales=110,net_sales=100,gst=10",
+        from);
+    var dataset = datasets.sales(job.id(), claim.fence(), from, from.plusDays(1));
+    var bytes = files.download(owner, job.id(), dataset.file().id()).bytes();
+    String csv = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+    assertThat(csv).contains("sales.net", "100", "MISSING");
+    assertThat(dataset.reportingEvidenceId()).isNotNull();
+    assertThat(dataset.provenance()).hasSize(3);
+    assertThat(files.inputs(job.id(), claim.fence())).hasSize(1);
+    assertThatThrownBy(() -> datasets.sales(job.id(), claim.fence(), from, from.plusDays(31)))
+        .isInstanceOf(IllegalArgumentException.class);
+    jdbc.update("delete from resolved_daily_sales where trading_date=?", from);
+  }
+
+  @Test
+  void budgetFailureIsDistinctAndFencesLateSuccess() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    jobs.enqueue(owner, job.id(), UUID.randomUUID(), "queued");
+    jobs.fail(job.id(), claim.fence(), "BUDGET_EXHAUSTED");
+    assertThat(jobs.read(owner, job.id()).state()).isEqualTo("BUDGET_EXHAUSTED");
+    assertThat(jobs.followUps(owner, job.id()).getFirst().state()).isEqualTo("CANCELLED");
+    assertThatThrownBy(() -> jobs.publish(job.id(), claim.fence(), 0, snapshot(), true))
+        .isInstanceOf(WorkspaceConflict.class);
+    jobs.fail(job.id(), claim.fence(), "FAILED");
+    assertThat(jobs.read(owner, job.id()).state()).isEqualTo("BUDGET_EXHAUSTED");
+  }
+
+  @Test
+  void privateFilesEnforceOwnershipExpiryKeepAndPolicyChanges() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    byte[] content = "item,value\nsynthetic,42\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    var file = files.upload(owner, job.id(), "sample.csv", content);
+    assertThat(files.download(owner, job.id(), file.id()).bytes()).isEqualTo(content);
+    UUID stranger = account("OWNER");
+    assertThatThrownBy(() -> files.download(stranger, job.id(), file.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    files.keep(owner, job.id(), file.id(), true);
+    jdbc.update(
+        "update workspace_file set expires_at=now()-interval '1 day' where id=?", file.id());
+    assertThat(files.download(owner, job.id(), file.id()).bytes()).isEqualTo(content);
+    files.keep(owner, job.id(), file.id(), false);
+    assertThat(files.list(owner, job.id()).getFirst().available()).isFalse();
+    assertThatThrownBy(() -> files.download(owner, job.id(), file.id()))
+        .isInstanceOf(WorkspaceConflict.class);
+    var second = files.upload(owner, job.id(), "second.txt", content);
+    jdbc.update(
+        "update user_account set workspace_policy_revision=gen_random_uuid() where id=?", owner);
+    assertThatThrownBy(() -> files.download(owner, job.id(), second.id()))
+        .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void privateFileAdmissionRejectsPathsUnsupportedTypesAndExcessCount() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    assertThatThrownBy(() -> files.upload(owner, job.id(), "../secret.txt", new byte[] {1}))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> files.upload(owner, job.id(), "macro.xlsm", new byte[] {1}))
+        .isInstanceOf(IllegalArgumentException.class);
+    for (int index = 0; index < 5; index++)
+      files.upload(owner, job.id(), "sample" + index + ".txt", new byte[] {1});
+    assertThatThrownBy(() -> files.upload(owner, job.id(), "six.txt", new byte[] {1}))
+        .isInstanceOf(WorkspaceConflict.class);
+    var claim = jobs.claim();
+    jobs.stop(owner, job.id());
+    assertThatThrownBy(() -> files.artifact(job.id(), claim.fence(), "stale.csv", new byte[] {1}))
+        .isInstanceOf(WorkspaceConflict.class);
   }
 
   @Test
@@ -622,5 +699,54 @@ class WorkspaceJobsIntegrationTest {
         .extracting(WorkspaceJobs.FollowUp::state)
         .containsExactly("TAKEN", "CANCELLED");
     assertThat(jobs.claim()).isNull();
+  }
+
+  @Test
+  void durableChargeBoundsAreIdempotentFencedAndReconcileOnlyCompletedAttempts() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    var request = UUID.randomUUID();
+    var charge = new java.math.BigDecimal("0.65");
+    jobs.reserveUsage(job.id(), claim.fence(), request, "MODEL", charge);
+    jobs.reserveUsage(job.id(), claim.fence(), request, "MODEL", charge);
+    assertThatThrownBy(
+            () ->
+                jobs.reserveUsage(job.id(), UUID.randomUUID(), UUID.randomUUID(), "MODEL", charge))
+        .isInstanceOf(WorkspaceConflict.class);
+    for (int i = 0; i < 6; i++)
+      jobs.reserveUsage(job.id(), claim.fence(), UUID.randomUUID(), "MODEL", charge);
+    assertThatThrownBy(
+            () -> jobs.reserveUsage(job.id(), claim.fence(), UUID.randomUUID(), "MODEL", charge))
+        .isInstanceOf(WorkspaceConflict.class);
+    jobs.settle(job.id(), claim.fence(), 0, snapshot());
+    assertThat(
+            jdbc.queryForObject(
+                "select reserved_aud from workspace_daily_budget limit 1",
+                java.math.BigDecimal.class))
+        .isEqualByComparingTo("4.55");
+    budgets.reconcileCompleted(job.id());
+    assertThat(
+            jdbc.queryForObject(
+                "select reserved_aud from workspace_daily_budget limit 1",
+                java.math.BigDecimal.class))
+        .isEqualByComparingTo("4.55");
+  }
+
+  @Test
+  void deletingOwnedThreadRemovesRetainedFilesAndFencesRunningWorker() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    files.upload(owner, job.id(), "delete.csv", "v\n42\n".getBytes());
+    var claim = jobs.claim();
+    assertThatThrownBy(() -> threads.delete(account("OWNER"), job.threadId()))
+        .isInstanceOf(AccessDeniedException.class);
+    threads.delete(owner, job.threadId());
+    assertThat(jdbc.queryForObject("select count(*) from workspace_file", Integer.class)).isZero();
+    assertThatThrownBy(() -> jobs.heartbeat(job.id(), claim.fence()))
+        .isInstanceOf(RuntimeException.class);
+    assertThat(
+            jdbc.queryForObject(
+                "select reserved_aud from workspace_daily_budget limit 1",
+                java.math.BigDecimal.class))
+        .isEqualByComparingTo("5");
   }
 }

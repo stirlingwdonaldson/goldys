@@ -16,7 +16,7 @@ export function WorkspaceMessages({ job }: { job: WorkspaceJob }) {
       const widget = result ? parseWidgetSpec(result.widget) : null;
       return <article key={message.id} className="space-y-3">
         <h3 className="text-xs font-medium text-muted-foreground">{message.role === "user" ? "You" : message.role === "tool" ? "Reporting result" : "Goldy’s"}</h3>
-        {message.text ? <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.text}</p> : null}
+        {message.text ? <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{publicCitationText(message.text)}</p> : null}
         {message.draft ? <WorkspaceDraft draft={message.draft} /> : null}
         {result ? <>
           {widget ? <WidgetRenderer widget={widget} /> : <p role="alert">Reporting result unavailable.</p>}
@@ -36,4 +36,16 @@ export function WorkspaceMessages({ job }: { job: WorkspaceJob }) {
 function WorkspaceDraft({ draft }: { draft: DashboardDraft }) {
   const api = useApi();
   return <AnswerBlock api={api} summary="" error={null} answer={{ widgets: [], notices: [], trace: [], asOf: "", draft }} />;
+}
+
+/** No HTML rendering, remote previews, arbitrary schemes or model-controlled fetches. */
+function publicCitationText(text: string) {
+  return text.split(/(https:\/\/[^\s<>"\)\]]+)/g).map((part, index) => {
+    if (!part.startsWith("https://")) return part;
+    try {
+      const url = new URL(part);
+      if (!url.hostname.endsWith(".gov.au") || url.username || url.password || url.port) return part;
+      return <a key={index} href={url.href} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer" className="underline underline-offset-2">{part}</a>;
+    } catch { return part; }
+  });
 }

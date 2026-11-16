@@ -43,7 +43,11 @@ public class CreateDashboardDraftTool implements ReportingTool {
     return "Propose a saved dashboard draft: a title, an optional description, optional "
         + "dashboard-level filters, and an ordered list of widgets. Each widget names a "
         + "renderType, one or more metric queries (metric, date range, grain, dimensions, "
-        + "comparison) and a grid layout. The draft is validated but not saved.";
+        + "comparison) and a grid layout. renderType must be lowercase: stat, time-series, bar-chart, table, or ranked-list. "
+        + "A net-sales total widget example is {id:'net',renderType:'stat',layout:{w:4,h:2},"
+        + "queries:[{metric:'sales.net',range:{from:'2026-11-02',to:'2026-11-08',calendar:'TRADING'},"
+        + "grain:'TOTAL',dimensions:[]}]}. Filters use {dateRange:{from,to,calendar},dimensions:[]}. "
+        + "Omit unused optional fields instead of sending null. Use the requested dates. Never use KPI or LINE as renderType. The draft is validated but not saved.";
   }
 
   @Override

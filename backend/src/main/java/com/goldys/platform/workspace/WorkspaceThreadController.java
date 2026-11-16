@@ -16,6 +16,11 @@ public class WorkspaceThreadController {
     this.threads = threads;
   }
 
+  @DeleteMapping("/{id}")
+  void delete(@AuthenticationPrincipal AccountUserDetails user, @PathVariable UUID id) {
+    threads.delete(user.id(), id);
+  }
+
   @GetMapping
   WorkspaceThreads.Page list(
       @AuthenticationPrincipal AccountUserDetails user,

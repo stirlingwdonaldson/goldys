@@ -78,4 +78,18 @@ class WorkspaceHistoryTest {
     assertThat(message.text()).contains("Not permitted");
     assertThat(message.reporting()).isNull();
   }
+
+  @Test
+  void exploratoryPartialResultsStayDistinctFromGovernedEvidence() throws Exception {
+    var json = new ObjectMapper();
+    var snapshot =
+        json.readTree(
+            """
+      {"leafId":"tool","entries":[{"type":"message","id":"tool","parentId":null,"message":{
+      "role":"toolResult","toolName":"goldys_extract_files","details":{"status":"COMPLETED","extraction":"PARTIAL: 100 page limit"}}}]}
+      """);
+    var message = WorkspaceHistory.project(snapshot, json).getFirst();
+    assertThat(message.text()).contains("Exploratory", "PARTIAL", "Not a governed");
+    assertThat(message.reporting()).isNull();
+  }
 }

@@ -20,10 +20,10 @@ export interface JobHost {
 }
 
 /** One claim, one native session. Failure escapes to supervision; never replay a claim. */
-export async function runClaim(claim: Claim, host: JobHost, session: AgentSession, chargeBound: ModelChargeBound, signal?: AbortSignal): Promise<void> {
+export async function runClaim(claim: Claim, host: JobHost, session: AgentSession, chargeBound: ModelChargeBound, signal?: AbortSignal, budget = new InvestigationBudget()): Promise<void> {
   const lifecycle = new AbortController();
   try {
-    guardModelRequests(session, chargeBound, new InvestigationBudget(), async () => {
+    guardModelRequests(session, chargeBound, budget, async () => {
       lifecycle.signal.throwIfAborted();
       await host.heartbeat(claim);
       lifecycle.signal.throwIfAborted();
@@ -170,6 +170,27 @@ export class SpringJobs implements JobHost {
         },
       };
     });
+  }
+  async reserveUsage(claim: Claim, requestId: string, kind: 'MODEL' | 'SEARCH', aud: number): Promise<void> {
+    await this.post(`${claim.id}/usage`, { fence: claim.fence, requestId, kind, aud });
+  }
+  async salesDataset(claim: Claim, from: string, to: string): Promise<unknown> {
+    const response = await this.post(`${claim.id}/sales-dataset`, { fence: claim.fence, from, to });
+    return response.json();
+  }
+  async fileList(claim: Claim): Promise<unknown> {
+    return (await this.post(`${claim.id}/file-list`, { fence: claim.fence })).json();
+  }
+  async files(claim: Claim, fileIds?: string[]): Promise<{ info: { id: string; name: string }; bytes: string }[]> {
+    const response = await this.post(`${claim.id}/files`, { fence: claim.fence, fileIds });
+    return await response.json() as { info: { id: string; name: string }; bytes: string }[];
+  }
+  async artifact(claim: Claim, name: string, bytes: string): Promise<unknown> {
+    const response = await this.post(`${claim.id}/artifacts`, { fence: claim.fence, name, bytes });
+    return response.json();
+  }
+  async fail(claim: Claim, outcome: 'INTERRUPTED' | 'FAILED' | 'BUDGET_EXHAUSTED'): Promise<void> {
+    await this.post(`${claim.id}/failure`, { fence: claim.fence, outcome });
   }
   async interrupt(claim: Claim): Promise<void> {
     await this.post(`${claim.id}/interrupt`, { fence: claim.fence });

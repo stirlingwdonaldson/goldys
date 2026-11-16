@@ -1,5 +1,5 @@
 import { ApiError } from "./errors";
-import type { WorkspaceApi, WorkspaceFollowUp, WorkspaceJob, WorkspacePage } from "./workspace";
+import type { WorkspaceApi, WorkspaceFile, WorkspaceFollowUp, WorkspaceJob, WorkspacePage } from "./workspace";
 
 const denied = () => new ApiError("NOT_PERMITTED", "Not permitted to access this investigation.", undefined, undefined, { status: 403 });
 const conflict = () => new ApiError("WORKSPACE_CONFLICT", "The investigation or queued message is no longer editable.", undefined, undefined, { status: 409 });
@@ -9,6 +9,7 @@ const validatePrompt = (prompt: string) => {
 
 /** Isolated browser fixtures; no worker, provider, or live API is called. */
 export function createWorkspaceDemo(): WorkspaceApi {
+  const files = new Map<string, { info: WorkspaceFile; data: File }[]>();
   const jobs = new Map<string, WorkspaceJob>();
   const example: WorkspaceJob = {
     id: "10000000-0000-4000-8000-000000000001", threadId: "20000000-0000-4000-8000-000000000001",
@@ -51,6 +52,26 @@ export function createWorkspaceDemo(): WorkspaceApi {
     signal?.throwIfAborted();
   };
   return {
+    async deleteWorkspaceThread(id) {
+      await pause(); const index = threads.findIndex(thread => thread.id === id); if (index < 0) throw denied();
+      threads.splice(index, 1); files.delete(id);
+      for (const [key, job] of jobs) if (job.threadId === id) { jobs.delete(key); queues.delete(key); }
+    },
+    async listWorkspaceFiles(id, options) { await pause(options?.signal); read(id); return structuredClone((files.get(read(id).threadId) ?? []).map(file => file.info)); },
+    async uploadWorkspaceFile(id, file) {
+      await pause(); read(id);
+      const current = files.get(read(id).threadId) ?? [];
+      if (!file.size || file.size > 25 * 1024 * 1024 || current.length >= 5 || current.reduce((sum, item) => sum + item.info.byteLength, 0) + file.size > 100 * 1024 * 1024) throw conflict();
+      const info: WorkspaceFile = { id: crypto.randomUUID(), name: file.name, kind: "UPLOAD", byteLength: file.size, kept: false, expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(), available: true };
+      files.set(read(id).threadId, [...current, { info, data: file }]); return structuredClone(info);
+    },
+    async keepWorkspaceFile(id, file, keep) { await pause(); read(id); const item = files.get(read(id).threadId)?.find(item => item.info.id === file); if (!item?.info.available) throw conflict(); item.info.kept = keep; },
+    async deleteWorkspaceFile(id, file) { await pause(); read(id); const item = files.get(read(id).threadId)?.find(item => item.info.id === file); if (item) item.info.available = false; },
+    async workspaceFileDownloadUrl(id, file) {
+      await pause(); read(id); const item = files.get(read(id).threadId)?.find(item => item.info.id === file);
+      if (!item?.info.available) throw conflict();
+      return new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(conflict()); reader.readAsDataURL(item.data); });
+    },
     async listWorkspaceThreads(before, limit = 25, options) {
       await pause(options?.signal);
       if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new ApiError("VALIDATION_FAILED", "Page size must be 1–50.");

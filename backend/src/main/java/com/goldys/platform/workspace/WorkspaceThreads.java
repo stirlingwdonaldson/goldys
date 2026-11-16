@@ -25,6 +25,21 @@ public class WorkspaceThreads {
     this.authorization = authorization;
   }
 
+  /** Deletion checks write access and ownership without disclosing restricted history. */
+  @Transactional
+  public void delete(UUID owner, UUID id) {
+    authorization.require(owner, PermissionAction.WRITE);
+    var owned =
+        jdbc.queryForList(
+            "select id from workspace_thread where id=? and user_account_id=? for update",
+            UUID.class,
+            id,
+            owner);
+    if (owned.isEmpty()) throw AccessDeniedException.forResource("workspace.investigations");
+    // Cascades remove snapshots, attempts, queue and file bytes. Daily charges remain reserved.
+    jdbc.update("delete from workspace_thread where id=?", id);
+  }
+
   @Transactional
   public Page list(UUID owner, UUID before, int limit) {
     if (limit < 1 || limit > 50) throw new IllegalArgumentException("Page size must be 1–50");

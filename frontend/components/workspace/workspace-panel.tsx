@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { WorkspaceFiles } from "./workspace-files";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { InlineError } from "@/components/states/inline-error";
@@ -14,7 +15,7 @@ import { WorkspaceQueue } from "./workspace-queue";
 import { WorkspacePicker } from "./workspace-picker";
 import { WorkspaceComposer } from "./workspace-composer";
 
-const states = { QUEUED: "Waiting for a worker", RUNNING: "Investigating", COMPLETED: "Completed", CANCELLED: "Stopped", INTERRUPTED: "Interrupted" };
+const states = { QUEUED: "Waiting for a worker", RUNNING: "Investigating", COMPLETED: "Completed", CANCELLED: "Stopped", INTERRUPTED: "Interrupted", FAILED: "Failed", BUDGET_EXHAUSTED: "Budget exhausted" };
 
 /** Mounted only while visible; unmount cancels reads, never server work. */
 export function WorkspacePanel({ api, jobId, select }: { api: WorkspaceApi; jobId: string | null; select: (id: string | null) => void }) {
@@ -30,7 +31,7 @@ export function WorkspacePanel({ api, jobId, select }: { api: WorkspaceApi; jobI
   const unavailable = Boolean(jobId && (!job || !investigation.isFetchedAfterMount || !followUps.isFetchedAfterMount || investigation.error || followUps.error));
   return <div className="flex min-h-0 flex-1 flex-col">
     <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
-      {jobId ? <InvestigationContent api={api} queries={queries} commands={commands} /> : <WorkspacePicker history={history} select={select} />}
+      {jobId ? <InvestigationContent api={api} queries={queries} commands={commands} /> : <WorkspacePicker api={api} history={history} select={select} />}
       {commands.action.error ? <InlineError className={commands.action.error.code === "WORKSPACE_CONFLICT" ? "bg-status-conflict-soft text-status-conflict" : undefined}>{commands.action.error.message} Refresh to see the current queue before trying again.</InlineError> : null}
       {commands.send.error ? <InlineError className={commands.send.error.code === "WORKSPACE_CONFLICT" ? "bg-status-conflict-soft text-status-conflict" : undefined}>{commands.uncertain ? "Delivery is uncertain. Retry sending the same message to check acceptance without duplicating it." : commands.send.error.message}</InlineError> : null}
     </div>
@@ -50,6 +51,7 @@ function InvestigationResult({ api, job, queue, commands }: { api: WorkspaceApi;
   const working = isWorking(job);
   let status = "Completed output is preserved. Findings may be incomplete; queued messages are cancelled.";
   if (working) status = "Work continues if you close this panel. Follow-ups wait for the current turn to finish.";
+  if (job.state === "BUDGET_EXHAUSTED") status = "The next request would exceed the A$5 investigation charge reservation ceiling. Completed results remain available; no further model or search work ran.";
   if (job.state === "COMPLETED") status = "Saved investigation. Data qualifications remain part of each result.";
   return <>
     <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-background py-2">
@@ -58,7 +60,8 @@ function InvestigationResult({ api, job, queue, commands }: { api: WorkspaceApi;
     </div>
     <p role="status" className="text-xs text-muted-foreground">{status}</p>
     <WorkspaceMessages job={job} />
-    {job.state === "INTERRUPTED" ? <div className="space-y-2"><p className="text-sm text-muted-foreground">Retry starts a new attempt with the original question. Taken follow-ups are not replayed.</p><Button variant="outline" disabled={busy || uncertain} onClick={() => submit(job.prompt, true)}>Retry investigation</Button></div> : null}
+    <WorkspaceFiles api={api} jobId={job.id} />
+    {(job.state === "INTERRUPTED" || job.state === "FAILED") ? <div className="space-y-2"><p className="text-sm text-muted-foreground">Retry starts a new attempt with the original question. Taken follow-ups are not replayed.</p><Button variant="outline" disabled={busy || uncertain} onClick={() => submit(job.prompt, true)}>Retry investigation</Button></div> : null}
     <WorkspaceQueue items={queue} busy={busy || uncertain}
       edit={(id, prompt, done) => action.mutate(() => api.editWorkspaceFollowUp(job.id, id, prompt), { onSuccess: done })}
       remove={id => action.mutate(() => api.removeWorkspaceFollowUp(job.id, id))} />
