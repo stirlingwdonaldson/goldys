@@ -334,6 +334,36 @@ class DashboardDraftToolTest {
     assertThat(tool.toDraft(input).widgets().get(0).queries()).hasSize(2);
   }
 
+  @Test
+  void dispatcherDeniesDraftMetadataWhenAnOperandIsDenied() {
+    var permissions = org.mockito.Mockito.mock(com.goldys.platform.auth.PermissionService.class);
+    org.mockito.Mockito.doThrow(
+            com.goldys.platform.auth.AccessDeniedException.forResource("reconciliation.sales"))
+        .when(permissions)
+        .require(
+            org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.eq(
+                new com.goldys.platform.auth.ResourceKey("reconciliation.sales")),
+            org.mockito.ArgumentMatchers.eq(com.goldys.platform.auth.PermissionAction.READ));
+    var dispatcher =
+        new com.goldys.platform.reporting.ToolDispatcher(
+            new com.goldys.platform.reporting.ToolRegistry(java.util.List.of(tool)),
+            permissions,
+            new MetricCatalog(),
+            org.mockito.Mockito.mock(com.goldys.platform.metrics.OperationalMetrics.class));
+    var role =
+        new com.goldys.platform.auth.UserRole(
+            new com.goldys.platform.auth.DepartmentCode("ALL"),
+            new com.goldys.platform.auth.SeniorityCode("OWNER"));
+    assertThatThrownBy(
+            () ->
+                dispatcher.dispatch(
+                    com.goldys.platform.reporting.ToolId.CREATE_DASHBOARD_DRAFT,
+                    validInput(),
+                    role))
+        .isInstanceOf(com.goldys.platform.auth.AccessDeniedException.class);
+  }
+
   private static CreateDashboardDraftInput validInput() {
     return new CreateDashboardDraftInput(
         "My dashboard",

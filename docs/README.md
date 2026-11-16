@@ -14,9 +14,10 @@ Read the smallest reference that answers the task.
 | Source access and identity | [Access paths](connectors/source-access.md), [matching](connectors/matching-and-identity.md), [OpenTable](connectors/opentable.md) |
 | Metrics and AI/UI contracts | [Metric catalogue](metrics/catalog.md), [AI tools](contracts/ai-tool-boundary.md), [widgets](contracts/widget-spec.schema.json), [dashboards](contracts/dashboard-document.schema.json) |
 | UI changes | [Design entry](../DESIGN.md), [visual direction](design/ui-direction.md), [interaction system](design/design-system.md), [UI handoff and sorting inventory](design/ui-handoff-implementation.md) |
-| Operations | [Testing](operations/testing.md), [deployment](operations/deployment.md), [weekly-report accuracy reviews](operations/weekly-report-review.md) |
+| Operations | [Testing](operations/testing.md), [deployment](operations/deployment.md), [Pi workspace rollout preparation](operations/pi-workspace-rollout.md), [weekly-report accuracy reviews](operations/weekly-report-review.md) |
 | Agent workflow | [Skills](agents/skills.md), [GitHub tracker](agents/issue-tracker.md), [domain docs](agents/domain.md), [review commands](agents.md) |
-| Durable choices | [Owner scope decisions](decisions/2026-11-04-product-scope.md), [governed conversational planning](decisions/0001-governed-conversational-planning.md), existing files in `decisions/` |
+| Durable choices | [Owner scope decisions](decisions/2026-11-04-product-scope.md), [governed conversational planning](decisions/0001-governed-conversational-planning.md), [Pi workspace decision](decisions/0002-pi-agent-workspace.md), existing files in `decisions/` |
+| Planned workspace migration | [Ask Goldy’s Pi proposal and evidence](design/ask-goldys-pi-workspace-proposal-2026-11-15.md) (owner-confirmed direction; not implemented) |
 | Dated evidence | [Sales/payment discrepancy audit](audits/sales-payment-2026-11-12/README.md), [CTB stock/cost audit](audits/ctb-stock-cogs-2026-11-03/README.md), [historical archive](archive.md) |
 
 Update definitions in place when approved behaviour changes. GitHub owns delivery

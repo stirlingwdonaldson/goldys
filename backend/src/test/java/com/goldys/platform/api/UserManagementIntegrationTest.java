@@ -39,9 +39,8 @@ class UserManagementIntegrationTest {
 
   @Test
   void anonymousRequestsAreRejected() throws Exception {
-    // Session auth redirects browser requests to the login page; the frontend maps that to
-    // AUTH_REQUIRED. Do not change the app-wide entry point for this one endpoint.
-    mvc.perform(get("/api/users")).andExpect(status().is3xxRedirection());
+    // Anonymous API requests return 401 so the frontend opens its sign-in page.
+    mvc.perform(get("/api/users")).andExpect(status().isUnauthorized());
   }
 
   @Test

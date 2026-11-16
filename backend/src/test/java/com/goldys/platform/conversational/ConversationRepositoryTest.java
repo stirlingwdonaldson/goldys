@@ -33,7 +33,7 @@ class ConversationRepositoryTest {
 
   @BeforeEach
   void clean() {
-    jdbc.update("truncate table conversation_message, conversation_thread, user_account");
+    jdbc.update("truncate table conversation_message, conversation_thread, user_account cascade");
     userId = UUID.randomUUID();
     jdbc.update(
         "insert into user_account "

@@ -35,7 +35,7 @@ class ReceiptEvidenceControllerIntegrationTest {
             multipart("/api/connectors/lightspeed-receipts/transactions/upload")
                 .file(file)
                 .with(csrf()))
-        .andExpect(status().is3xxRedirection());
+        .andExpect(status().isUnauthorized());
     var account =
         new AccountUserDetails(
             UUID.randomUUID(), "owner@example.com", "hash", "Owner", "ALL", "OWNER", true);

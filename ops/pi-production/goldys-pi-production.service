@@ -1,0 +1,28 @@
+[Unit]
+Description=Goldys Pi production reporting worker
+Conflicts=goldys-pi-worker.service
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/goldys-agent/production-worker.conf
+LoadCredential=model-api-key:/etc/goldys-agent/deepseek-api-key
+LoadCredential=worker-token:/etc/goldys-agent/production-worker-token
+RuntimeDirectory=goldys-pi-production
+RuntimeDirectoryMode=0700
+ExecStartPre=/usr/bin/python3 -B /opt/goldys-agent/check-worker.py
+ExecStartPre=/usr/bin/python3 -B /opt/goldys-agent/configure-egress.py
+ExecStartPre=/usr/bin/install -m 0400 -o 65532 -g 65532 %d/model-api-key /run/goldys-pi-production/model-api-key
+ExecStartPre=/usr/bin/install -m 0400 -o 65532 -g 65532 %d/worker-token /run/goldys-pi-production/worker-token
+ExecStart=/usr/bin/docker run --rm --name goldys-pi-worker-production --network=host --read-only --user=65532:65532 --cap-drop=ALL --security-opt=no-new-privileges --memory=768m --memory-swap=768m --cpus=0.75 --pids-limit=64 --log-driver=none --tmpfs=/tmp:rw,nosuid,nodev,size=128m,mode=1777 --mount=type=bind,src=/run/goldys-pi-production/model-api-key,dst=/run/credentials/model-api-key,readonly --mount=type=bind,src=/run/goldys-pi-production/worker-token,dst=/run/credentials/worker-token,readonly --env=CREDENTIALS_DIRECTORY=/run/credentials --mount=type=bind,src=/opt/goldys-agent/production-ca.crt,dst=/opt/goldys-agent/production-ca.crt,readonly --env=NODE_EXTRA_CA_CERTS=/opt/goldys-agent/production-ca.crt --env=GOLDYS_SPRING_ORIGIN --env=GOLDYS_MODEL_PROVIDER=goldys-deepseek --env=GOLDYS_MODEL_ID=deepseek-flash --env=GOLDYS_MODEL_REQUEST_BOUND_AUD=0.65 --env=GOLDYS_MODEL_MAX_OUTPUT_TOKENS=8192 --env=GOLDYS_SANDBOX_ENABLED=false --env=GOLDYS_PUBLIC_RESEARCH_ENABLED=true ${GOLDYS_WORKER_IMAGE}
+ExecStop=/usr/bin/docker stop --time=8 goldys-pi-worker-production
+ExecStopPost=-/usr/bin/docker rm -f goldys-pi-worker-production
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

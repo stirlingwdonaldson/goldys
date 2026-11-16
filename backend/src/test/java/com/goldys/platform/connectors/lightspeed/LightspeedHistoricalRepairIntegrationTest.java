@@ -323,7 +323,7 @@ class LightspeedHistoricalRepairIntegrationTest {
     var file = new MockMultipartFile("file", "december.csv", "text/csv", csv("2025-12-01"));
     long rawBefore = count("raw_record");
     mvc.perform(multipart(path + "preview").file(file).with(csrf()))
-        .andExpect(status().is3xxRedirection());
+        .andExpect(status().isUnauthorized());
     mvc.perform(multipart(path + "preview").file(file).with(asRole("ALL", "OWNER")))
         .andExpect(status().isForbidden());
     for (String action : List.of("preview", "apply"))

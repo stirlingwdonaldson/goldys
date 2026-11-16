@@ -5,7 +5,44 @@ const notices = [
   "Query 1: Gross includes GST. Trading policy: 02:00 Australia/Melbourne every day (simplified).",
 ];
 
+test("legacy history withholds revoked text and provides a route back", async ({ page }) => {
+  const id = "10000000-0000-4000-8000-000000000001";
+  let revoked = false;
+  await page.addInitScript(() => localStorage.setItem("goldys-demo-mode", "false"));
+  await page.route("**/monitoring**", route => route.fulfill({ status: 204 }));
+  await page.route("**/api/**", route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/me") return route.fulfill({ json: { displayName: "Fixture Owner", department: "ALL", seniority: "OWNER" } });
+    if (path === "/api/dashboard/summary") return route.fulfill({ json: { openConflicts: 0 } });
+    if (path === "/api/conversational/threads") return route.fulfill({ json: [{ id,
+      title: revoked ? "Restricted conversation" : "Private sales review",
+      updatedAt: "2026-11-16T00:00:00Z", lastPreview: revoked ? "Historical access cannot be verified." : "Private preview",
+    }] });
+    if (path === `/api/conversational/threads/${id}`) return revoked
+      ? route.fulfill({ status: 403, json: { code: "NOT_PERMITTED", message: "Access changed", correlationId: "fixture" } })
+      : route.fulfill({ json: { id, title: "Private sales review", messages: [{
+        id: "20000000-0000-4000-8000-000000000001", threadId: id, role: "assistant",
+        content: "Private historical result", toolTrace: [], createdAt: "2026-11-16T00:00:00Z",
+      }] } });
+    return route.fulfill({ json: [] });
+  });
+  await page.goto("/conversations");
+  await page.getByRole("button", { name: "Private sales review", exact: true }).click();
+  await expect(page.getByText("Private historical result", { exact: true })).toBeVisible();
+  revoked = true;
+  await expect(page.getByText("You don't have access to this conversation")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText("Private historical result", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Private sales review", { exact: true })).toHaveCount(0);
+  await page.screenshot({ path: "/tmp/goldys-legacy-denied-desktop.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeInViewport();
+  await page.screenshot({ path: "/tmp/goldys-legacy-denied-mobile.png", fullPage: true });
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Restricted conversation", exact: true })).toBeVisible();
+});
+
 test("chat retains exchanges, collapses notes and starts a new thread only on request", async ({ page }) => {
+  test.skip((process.env.NEXT_PUBLIC_WORKSPACE_ENABLED === "true" || process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW === "true"), "The preview replaces this legacy entry point; workspace.spec.ts verifies Pi.");
   const requests: { threadId: string; message: string }[] = [];
   await page.addInitScript(() => localStorage.setItem("goldys-demo-mode", "false"));
   await page.route("**/monitoring**", route => route.fulfill({ status: 204 }));

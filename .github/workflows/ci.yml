@@ -24,12 +24,21 @@ jobs:
       - name: Release preflight regression checks
         run: python3 -m unittest discover -s ops/releases/2026-10-16-data-correctness -p 'test_*.py' -v
 
+      - name: Pi deployment contracts
+        run: python3 -m unittest discover -s ops/pi-production -p 'test_*.py' -v
+
       - name: Test, format check, and build
         working-directory: backend
         run: ./gradlew test spotlessCheck build
 
   frontend:
-    name: Frontend (typecheck, lint, test, build)
+    name: Frontend (Pi ${{ matrix.workspace }})
+    strategy:
+      matrix:
+        workspace: ["false", "true"]
+    env:
+      NEXT_PUBLIC_WORKSPACE_ENABLED: ${{ matrix.workspace }}
+      NEXT_PUBLIC_WORKSPACE_FILES_ENABLED: "false"
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +60,29 @@ jobs:
       - name: Type check, lint, test, and build
         working-directory: frontend
         run: bun run typecheck && bun run lint && bun run test && bun run build
+
+      - name: Install browser
+        working-directory: frontend
+        run: bun x playwright install --with-deps chromium
+
+      - name: Verify Ask entry points and history
+        working-directory: frontend
+        run: bun run test:browser tests/browser/workspace.spec.ts tests/browser/ask-goldys.spec.ts
+
+  agent-worker:
+    name: Pi adapter (synthetic contracts)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - name: Install locked packages without lifecycle scripts
+        working-directory: agent-worker
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Type check, test, and build
+        working-directory: agent-worker
+        run: bun run typecheck && bun run test && bun run build
 
   forecast:
     name: Forecast runtime (CPU tests, fake TimesFM)
@@ -78,8 +110,44 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Private Pi TLS bridge smoke test
+        run: python3 ops/pi-production/smoke_bridge.py
+
       - name: Build backend image
         run: docker build -t goldys-backend:ci ./backend
 
       - name: Build frontend image
-        run: docker build -t goldys-frontend:ci ./frontend
+        run: docker build --build-arg NEXT_PUBLIC_WORKSPACE_ENABLED=true -t goldys-frontend:ci ./frontend
+
+      - name: Build Pi worker image (synthetic tests, no provider credentials)
+        run: docker build -t goldys-agent-worker:ci ./agent-worker
+
+      - name: Worker fails closed without configuration
+        shell: bash
+        run: |
+          set +e
+          docker run --rm --network=none --read-only --cap-drop=ALL \
+            --security-opt=no-new-privileges --pids-limit=64 --memory=512m --cpus=1 \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m \
+            goldys-agent-worker:ci > worker-startup.log 2>&1
+          result=$?
+          set -e
+          test "$result" -eq 1
+          grep -Fq 'Worker unavailable; check private Spring connectivity and runtime configuration.' worker-startup.log
+
+      - name: Scan worker and private bridge for high and critical vulnerabilities
+        shell: bash
+        run: |
+          docker save --output "$RUNNER_TEMP/pi-worker.tar" goldys-agent-worker:ci
+          docker save --output "$RUNNER_TEMP/pi-bridge.tar" goldys-pi-bridge:verification
+          mkdir -p "$RUNNER_TEMP/pi-trivy-cache"
+          for image in pi-worker pi-bridge; do
+          docker run --rm --read-only --cap-drop=ALL --security-opt=no-new-privileges \
+            --pids-limit=64 --memory=1g --cpus=1 --user "$(id -u):$(id -g)" \
+            --tmpfs /tmp:rw,nosuid,nodev,size=512m \
+            --mount "type=bind,src=$RUNNER_TEMP/$image.tar,dst=/image.tar,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP/pi-trivy-cache,dst=/cache" \
+            aquasec/trivy@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb \
+            image --input /image.tar --cache-dir /cache --scanners vuln \
+            --severity HIGH,CRITICAL --exit-code 1
+          done

@@ -36,6 +36,19 @@ class AuthenticationIntegrationTest {
   }
 
   @Test
+  void signedOutApiRequestsReturnJsonInsteadOfRedirectingToTheBackend() throws Exception {
+    for (String path : new String[] {"/api/me", "/api/workspace/jobs"}) {
+      MvcResult result =
+          mvc.perform(get(path).accept(MediaType.APPLICATION_JSON))
+              .andExpect(status().isUnauthorized())
+              .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"))
+              .andReturn();
+      assertThat(result.getResponse().getHeader("Location")).isNull();
+      assertThat(result.getResponse().getContentType()).startsWith("application/json");
+    }
+  }
+
+  @Test
   void loginAndMeAreCaseInsensitiveAndPersistTheSession() throws Exception {
     testAccounts.createStaff("stirling@donaldson.com", "Stirling Donaldson", "password123");
 

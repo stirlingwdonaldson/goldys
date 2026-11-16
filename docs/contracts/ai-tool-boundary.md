@@ -36,7 +36,7 @@ the code is held to.
 | `COMPARE_METRIC_PERIODS` | A catalogue metric across two periods |
 | `RANK_DIMENSION` | A catalogue metric ranked by an allowed dimension |
 | `GET_RECONCILIATION_STATUS` | Open conflicts and resolution state |
-| `CREATE_DASHBOARD_DRAFT` | Proposes a dashboard document for the user to save |
+| `CREATE_DASHBOARD_DRAFT` | Proposes a query-only dashboard document for explicit user confirmation; authorizes every referenced metric, including metadata operands |
 | `GET_RECIPE_COSTING` | Qualified recipe cost summary |
 | `GET_SALES_BY_CATEGORY` | Sales by reviewed category, with coverage qualifications |
 | `GET_RECIPE_INGREDIENTS` | One recipe's ingredient lines (qty/unit, cost, supplier, sub-recipe) |
@@ -104,3 +104,19 @@ Argument deserialization/record-construction failures return a sanitized `ok: fa
 for correction within the same round budget; invalid arguments still never reach the dispatcher.
 Operational failures are not mislabeled as argument errors. Ranked product results label monetary
 amounts and quantities with their own units so the model can distinguish their meanings.
+
+### Pi workspace computation and public research
+
+The separate Pi worker may expose offline Python over authorized private input bytes.
+This is not a reporting query API: Python receives no SQL, database connection,
+provider credential, application checkout or network. Governed metrics still come
+from the fixed Spring reporting registry. Exploratory results cannot redefine those
+metrics. Artifact registration remains a fenced Spring operation after isolated
+format validation; saves to dashboards remain explicit query-only browser actions.
+
+The initial public-research adapter accepts only a closed topic enum mapped to fixed
+public queries (Victorian holidays, Melbourne weather, national hospitality statistics
+and the public hospitality award). No model/user free text or private evidence is
+forwarded to search. Returned text is untrusted; citations carry original HTTPS
+Australian-government URLs and retrieval times. Arbitrary page fetch and other topics
+remain unavailable. Search reservations share the investigation budget.

@@ -58,6 +58,44 @@ class ChatControllerSseTest {
         .andExpect(status().isOk());
   }
 
+  @Test
+  void revocationStopsLaterTextBeforeItLeavesTheServer() throws Exception {
+    when(currentUser.roleOf(any())).thenReturn(ownerRole());
+    when(conversations.contextFor(any(), any(), any()))
+        .thenReturn(new ConversationService.PreparedTurn(UUID.randomUUID(), List.of()));
+    when(assistant.stream(any(), any()))
+        .thenReturn(
+            Flux.just(
+                new com.goldys.platform.conversational.ConversationEvent.TextDelta(
+                    "Already authorized"),
+                new com.goldys.platform.conversational.ConversationEvent.TextDelta(
+                    "Restricted late text")));
+    org.mockito.Mockito.doNothing()
+        .doThrow(new com.goldys.platform.auth.AccessDeniedException("Revoked"))
+        .when(conversations)
+        .authorizeOutput(any(), any());
+    var request =
+        mvc.perform(
+                post("/api/conversational/chat")
+                    .with(authenticated(owner()))
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.TEXT_EVENT_STREAM)
+                    .content("{\"message\":\"hi\"}"))
+            .andReturn();
+    var response =
+        mvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch(
+                    request))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    org.assertj.core.api.Assertions.assertThat(response)
+        .contains("Already authorized", "access changed")
+        .doesNotContain("Restricted late text");
+  }
+
   private static AccountUserDetails owner() {
     return new AccountUserDetails(
         UUID.randomUUID(), "owner@example.com", "hash", "Owner", "ALL", "OWNER", true);

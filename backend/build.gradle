@@ -46,6 +46,8 @@ dependencies {
 	// Spring AI 1.1.x is the Spring Boot 3.5-compatible line (2.x requires Boot 4).
 	implementation platform('org.springframework.ai:spring-ai-bom:1.1.8')
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+	implementation 'com.github.victools:jsonschema-generator:4.38.0'
+	implementation 'com.github.victools:jsonschema-module-jackson:4.38.0'
 	// SFTP drop delivery (transport behind the SftpDrop port, so it is swappable).
 	implementation 'org.springframework.integration:spring-integration-sftp'
 
@@ -58,6 +60,9 @@ dependencies {
 }
 
 tasks.named('test') {
+	// The full suite retains Spring contexts and the ArchUnit graph; Gradle's
+	// 512 MiB default can spend minutes in GC once the workspace contexts load.
+	maxHeapSize = '2g'
 	useJUnitPlatform()
 	// Testcontainers 1.x defaults docker-java to API 1.32, which Docker 29+
 	// rejects. API 1.40 is supported from Docker 19.03 onward and remains

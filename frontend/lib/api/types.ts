@@ -1,4 +1,5 @@
 import type { RecordReadOptions } from "@/lib/record-sort";
+import type { WorkspaceApi } from "./workspace";
 import type { CustomLogic, ResolutionRule, RuleStrategy } from "@/lib/rule-logic";
 
 export type { CustomLogic, ResolutionRule, RuleStrategy };
@@ -1327,7 +1328,7 @@ export interface ClassifiedWasteLine {
   itemRole: string; businessArea: string; lifecycle: string;
 }
 
-export interface Api {
+export interface Api extends WorkspaceApi {
   getReportingReviewQueue(domain: "SALES" | "SALES_BASIS" | "WASTAGE", from: string, to: string, page: number): Promise<ReportingReviewQueue>;
   getReportingMappings(to: string): Promise<ReportingMapping[]>;
   previewReportingMapping(mapping: ReportingMapping, through: string): Promise<ReportingMappingPreview>;

@@ -1,6 +1,7 @@
 import { sourceIdentity } from "@/lib/sources";
 import { SORT_FIELDS, sortRecords } from "@/lib/record-sort";
 import type { RecordReadOptions } from "@/lib/record-sort";
+import { createWorkspaceDemo } from "./workspace-demo";
 import { demoWeeklyTargets, saveDemoWeeklyTargets } from "./weekly-report-demo";
 import { demoRecipeComposition } from "./demo-recipe-composition";
 import { demoWeeklyReport } from "./weekly-report-demo";
@@ -1261,6 +1262,7 @@ let demoUsers: ManagedUser[] = [
 ];
 
 export const demoApi: Api = {
+  ...createWorkspaceDemo(),
   getWeeklyTargets: async week => { await delay(300); return demoWeeklyTargets(week); },
   saveWeeklyTargets: async input => { await delay(300); return saveDemoWeeklyTargets(input); },
   getWeeklyReport: async (from, weeks = 4, options) => {

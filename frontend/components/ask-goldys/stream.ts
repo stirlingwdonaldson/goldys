@@ -71,7 +71,7 @@ export async function streamChat(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Accept: "text/event-stream",
+      Accept: "text/event-stream, application/json",
       ...(csrf ? { "X-XSRF-TOKEN": csrf } : {}),
     },
     credentials: "same-origin",

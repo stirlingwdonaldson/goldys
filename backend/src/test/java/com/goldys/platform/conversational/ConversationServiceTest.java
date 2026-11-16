@@ -7,6 +7,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.goldys.platform.auth.AccessDeniedException;
@@ -40,6 +41,7 @@ class ConversationServiceTest {
   private ObjectProvider<ChatModel> modelProvider;
   private ChatModel model;
   private ConversationService service;
+  private com.goldys.platform.auth.WorkspaceAuthorization authorization;
 
   @SuppressWarnings("unchecked")
   @BeforeEach
@@ -53,7 +55,51 @@ class ConversationServiceTest {
     when(messages.save(any(ConversationMessage.class))).thenAnswer(inv -> inv.getArgument(0));
     when(modelProvider.getIfAvailable()).thenReturn(model);
 
-    service = new ConversationService(threads, messages, modelProvider);
+    authorization = mock(com.goldys.platform.auth.WorkspaceAuthorization.class);
+    when(authorization.require(any(), any(com.goldys.platform.auth.ResourceKey.class), any()))
+        .thenReturn("current-policy");
+    service = new ConversationService(threads, messages, modelProvider, authorization);
+  }
+
+  private static ConversationThread currentThread(
+      UUID user, String title, String summary, Instant now) {
+    var thread = ConversationThread.create(user, title, summary, now);
+    thread.initializePolicy("current-policy");
+    return thread;
+  }
+
+  @Test
+  void unknownLegacyHistoryNeverReachesPreviewModelOrNewPublication() {
+    var thread =
+        ConversationThread.create(USER, "Sensitive title", "Sensitive summary", Instant.now());
+    when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
+    when(threads.findByUserAccountIdOrderByUpdatedAtDesc(USER)).thenReturn(List.of(thread));
+    assertThat(service.list(USER).getFirst().title()).isEqualTo("Restricted conversation");
+    assertThatThrownBy(() -> service.get(USER, thread.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> service.contextFor(USER, thread.id(), "Continue"))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> service.complete(USER, thread.id(), "Late answer", List.of()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> service.authorizeOutput(USER, thread.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    verifyNoInteractions(messages, model);
+    // Existing owned deletion remains available without relabelling or reading unknown content.
+    service.delete(USER, thread.id());
+    verify(threads).deleteById(thread.id());
+  }
+
+  @Test
+  void changedPolicyBlocksEvenPreviouslyValidSummaryAndStream() {
+    var thread = currentThread(USER, "Sensitive title", "Sensitive summary", Instant.now());
+    when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
+    when(authorization.require(any(), any(com.goldys.platform.auth.ResourceKey.class), any()))
+        .thenReturn("changed-policy");
+    assertThatThrownBy(() -> service.authorizeOutput(USER, thread.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> service.contextFor(USER, thread.id(), "Continue"))
+        .isInstanceOf(AccessDeniedException.class);
+    verifyNoInteractions(messages, model);
   }
 
   @Test
@@ -79,8 +125,7 @@ class ConversationServiceTest {
 
   @Test
   void contextForLoadsExistingThreadAndAppendsUserMessage() {
-    ConversationThread thread =
-        ConversationThread.create(USER, "Sales review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Sales review", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
     when(messages.findByThreadIdOrderByCreatedAtAsc(thread.id()))
         .thenReturn(
@@ -134,7 +179,7 @@ class ConversationServiceTest {
 
   @Test
   void contextForCompactsWhenMoreThanKeepRecentMessages() {
-    ConversationThread thread = ConversationThread.create(USER, "Long review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Long review", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
 
     List<ConversationMessage> prior = new ArrayList<>();
@@ -164,7 +209,7 @@ class ConversationServiceTest {
 
   @Test
   void summarizationUsesTemperatureZero() {
-    ConversationThread thread = ConversationThread.create(USER, "Long review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Long review", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
 
     List<ConversationMessage> prior = new ArrayList<>();
@@ -190,7 +235,7 @@ class ConversationServiceTest {
 
   @Test
   void contextForTokenOnlyTriggerKeepsRecentTurnsAndSummarizes() {
-    ConversationThread thread = ConversationThread.create(USER, "Long review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Long review", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
 
     // 5 huge prior messages (over the token threshold, under KEEP_RECENT by count).
@@ -222,7 +267,7 @@ class ConversationServiceTest {
 
   @Test
   void contextForDoesNotDropTurnsWhenSummarizationBlank() {
-    ConversationThread thread = ConversationThread.create(USER, "Long review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Long review", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
 
     List<ConversationMessage> prior = new ArrayList<>();
@@ -251,7 +296,7 @@ class ConversationServiceTest {
 
   @Test
   void contextForDoesNotDropTurnsWhenModelAbsent() {
-    ConversationThread thread = ConversationThread.create(USER, "Long review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Long review", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
     when(modelProvider.getIfAvailable()).thenReturn(null);
 
@@ -279,8 +324,7 @@ class ConversationServiceTest {
 
   @Test
   void contextForDoesNotSummarizeWithinKeepRecent() {
-    ConversationThread thread =
-        ConversationThread.create(USER, "Short review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Short review", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
     when(messages.findByThreadIdOrderByCreatedAtAsc(thread.id()))
         .thenReturn(
@@ -295,8 +339,7 @@ class ConversationServiceTest {
 
   @Test
   void completePersistsAssistantMessageAndBumpsTimestamps() {
-    ConversationThread thread =
-        ConversationThread.create(USER, "Sales review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Sales review", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
 
     List<AnswerPayload.TraceEntry> trace =
@@ -325,8 +368,7 @@ class ConversationServiceTest {
 
   @Test
   void listReturnsSummariesForUser() {
-    ConversationThread thread =
-        ConversationThread.create(USER, "Sales review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Sales review", null, Instant.now());
     when(threads.findByUserAccountIdOrderByUpdatedAtDesc(USER)).thenReturn(List.of(thread));
     when(messages.findByThreadIdOrderByCreatedAtAsc(thread.id()))
         .thenReturn(
@@ -345,8 +387,7 @@ class ConversationServiceTest {
 
   @Test
   void getReturnsThreadView() {
-    ConversationThread thread =
-        ConversationThread.create(USER, "Sales review", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Sales review", null, Instant.now());
     ConversationMessage message =
         ConversationMessage.create(thread.id(), "user", "hello", List.of(), Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
@@ -369,7 +410,7 @@ class ConversationServiceTest {
 
   @Test
   void renameUpdatesTitle() {
-    ConversationThread thread = ConversationThread.create(USER, "Old title", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Old title", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
 
     service.rename(USER, thread.id(), "New title");
@@ -388,7 +429,7 @@ class ConversationServiceTest {
 
   @Test
   void deleteRemovesOwnedThread() {
-    ConversationThread thread = ConversationThread.create(USER, "Doomed", null, Instant.now());
+    ConversationThread thread = currentThread(USER, "Doomed", null, Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
 
     service.delete(USER, thread.id());

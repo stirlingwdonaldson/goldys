@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ApiError } from "@/lib/api/errors";
 import { DemoModeProvider } from "@/lib/demo-mode";
 import { ConversationsScreen } from "./conversations-screen";
 import type {
@@ -55,15 +57,60 @@ function stubApi(initial: ConversationThreadSummary[]): {
   return { api, threads };
 }
 
-function renderScreen(api: Api) {
+function renderScreen(api: Api, client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   return render(
-    <DemoModeProvider>
+    <DemoModeProvider><QueryClientProvider client={client}>
       <ConversationsScreen api={api} />
-    </DemoModeProvider>,
+    </QueryClientProvider></DemoModeProvider>,
   );
 }
 
 describe("ConversationsScreen", () => {
+  it("withholds cached titles and previews until current authorization finishes", async () => {
+    const client = new QueryClient();
+    client.setQueryData(["listThreads"], [thread("t1", "Private cached title")]);
+    const { api } = stubApi([]);
+    let resolve!: (value: ConversationThreadSummary[]) => void;
+    api.listThreads = () => new Promise(done => { resolve = done; });
+    renderScreen(api, client);
+    expect(screen.queryByText("Private cached title")).not.toBeInTheDocument();
+    await act(async () => resolve([thread("t1", "Restricted conversation")]));
+    await screen.findByText("Restricted conversation");
+    expect(screen.queryByText("Private cached title")).not.toBeInTheDocument();
+  });
+
+  it("withholds a cached transcript and hides it after a denied refresh", async () => {
+    const client = new QueryClient();
+    client.setQueryData(["getThread", "t1"], view("t1", "Sales last week"));
+    const { api } = stubApi([thread("t1", "Sales last week")]);
+    let resolve!: (value: ConversationThreadView) => void;
+    const read = vi.fn(() => new Promise<ConversationThreadView>(done => { resolve = done; }));
+    api.getThread = read;
+    renderScreen(api, client);
+    fireEvent.click(await screen.findByRole("button", { name: "Sales last week" }));
+    expect(screen.queryByText("Gross sales were $43,691.48.")).not.toBeInTheDocument();
+    await act(async () => resolve(view("t1", "Sales last week")));
+    await screen.findByText("Gross sales were $43,691.48.");
+    read.mockRejectedValue(new ApiError("NOT_PERMITTED", "Access changed"));
+    await act(async () => { await client.invalidateQueries({ queryKey: ["getThread", "t1"] }); });
+    await waitFor(() => expect(screen.queryByText("Gross sales were $43,691.48.")).not.toBeInTheDocument());
+    expect(screen.getByText(/don.t have access/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    await screen.findByRole("button", { name: "Sales last week" });
+  });
+
+  it("hides cached previews on a failed reauthorization", async () => {
+    const client = new QueryClient();
+    const { api } = stubApi([thread("t1", "Sales last week")]);
+    const read = vi.fn(api.listThreads);
+    api.listThreads = read;
+    renderScreen(api, client);
+    await screen.findByText("Preview of Sales last week");
+    read.mockRejectedValue(new ApiError("NOT_PERMITTED", "Access changed"));
+    await act(async () => { await client.invalidateQueries({ queryKey: ["listThreads"] }); });
+    await waitFor(() => expect(screen.queryByText("Preview of Sales last week")).not.toBeInTheDocument());
+  });
+
   it("lists threads with their title, preview and updated date", async () => {
     const { api } = stubApi([thread("t1", "Sales last week"), thread("t2", "Weekend covers")]);
     renderScreen(api);

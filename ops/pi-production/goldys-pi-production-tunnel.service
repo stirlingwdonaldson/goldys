@@ -1,0 +1,14 @@
+[Unit]
+Description=Private Goldys Pi production bridge to analysis VM
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stiring
+ExecStart=/usr/bin/ssh -F /dev/null -i /home/stiring/.ssh/id_ed25519_goldys_analysis -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -N -R 18444:127.0.0.1:18444 goldys@192.168.5.42
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

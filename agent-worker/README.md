@@ -1,0 +1,110 @@
+# Ask Goldy's Pi worker
+
+This worker powers the private synthetic preview described in [preview operations](../ops/pi-preview/README.md). **Production activation remains off and unapproved.** See
+[implementation evidence](../docs/design/pi-workspace-implementation-2026-11-15.md).
+The [rollout and rollback preparation](../docs/operations/pi-workspace-rollout.md) describes
+activation gates and the independent admission pause.
+It uses the released Pi 1.5.2 SDK and Bun 1.4.2. No Durable or upstream-main APIs.
+
+## Verification
+
+```sh
+bun install --frozen-lockfile --ignore-scripts
+bun run typecheck
+bun test
+bun run build
+```
+
+Tests use Pi's synthetic provider, empty in-memory credentials and disposable synthetic
+working directories. They do not need a provider key, application database or sandbox.
+Installation lifecycle scripts remain disabled. The CI lane runs the same checks.
+
+## Runtime boundary
+
+`src/main.ts` is a single-slot worker supervisor. It claims an authorized Spring job,
+loads its Pi-native snapshot and Spring-generated reporting schemas, runs Pi and publishes
+serialized native snapshots. A failure reports a fenced interruption immediately; lease expiry
+is the fallback if Spring is unreachable. It never replays the attempt. Spring status polling
+survives browser disconnection. Stop/revocation is observed at the next heartbeat (five seconds)
+or before another model/tool call.
+
+Do not run this worker on the production host or in an application checkout. The analysis VM runs the trusted worker separately from disposable offline gVisor scripts. Its clean environment, restricted egress, termination and file boundary have been exercised with synthetic inputs. Optional analysis/public-research tools are enabled only in the isolated preview.
+The worker has no SQL/database connection and does not discover local Pi credentials,
+project instructions, skills or extensions. Temporary working directories are removed.
+
+The preview supervisor supplies these variables through its approved secret/config mechanism;
+no credential value is committed or printed:
+
+- `GOLDYS_SPRING_ORIGIN`: fixed HTTPS origin, no credentials, query or path.
+- `GOLDYS_WORKER_TOKEN`: private worker token, at least 32 characters; never exposed to browsers.
+- `GOLDYS_MODEL_PROVIDER`, `GOLDYS_MODEL_ID`: explicit pinned-catalog model.
+- `CREDENTIALS_DIRECTORY`: systemd credentials directory containing `model-api-key` and `worker-token`. The preview uses this instead of ambient environment keys.
+- `GOLDYS_SANDBOX_ENABLED`, `GOLDYS_PUBLIC_RESEARCH_ENABLED`: explicit opt-ins, otherwise disabled.
+- `GOLDYS_MODEL_REQUEST_BOUND_AUD`: reviewed **worst-case** charge for one full-context request,
+  including cache pricing, reasoning/output charges and a conservative FX bound. Not an average.
+- `GOLDYS_MODEL_MAX_OUTPUT_TOKENS`: reviewed provider output ceiling.
+
+The worker rejects absent/invalid pricing and reserves each request's upper bound against A$5,
+including compaction and failed attempts. Spring separately reserves A$5 per job against A$50
+on every Melbourne date touched by the job’s 15-minute admission window. Midnight
+reservations are conservative and atomic. Each model/search request also reserves its reviewed bound durably in Spring before dispatch. SDK retries are disabled. Completion releases only unused admission capacity; failed/unknown requests retain their bound. Native responses retain provider token usage. These are not provider invoice receipts; invoice/FX reconciliation remains a production gate. Never substitute an optimistic cost estimate to enable it.
+
+`bun run start` disables automatic dotenv loading. Startup with a deliberately empty process
+environment was checked to fail before contacting any service. Real DeepSeek reporting, research, file analysis, cancellation and crash/retry have run in the synthetic preview.
+
+Durable follow-ups are picked up in FIFO order at settled Pi turn boundaries using the same
+native session, A$5 reservation ceiling and original deadline. The atomic settle endpoint either
+takes the next pending command or completes the job. Pending messages can be edited/removed;
+Stop, revocation at claim and expiry cancel pending commands. Taken commands are never replayed
+after a crash. A maximum of 20 follow-up submissions (including removed messages) bounds stored
+commands per investigation. This is an engineering safety limit, not a new business spend grant.
+
+The preview drawer exists below; replacement rollout and the remaining proposal slices are outstanding.
+
+The browser API can rediscover private threads through `GET /api/workspace/threads`
+(keyset `before` cursor, `limit` 1–50). Restricted history is explicit and includes no
+latest job ID. Authorized job reads include the original admission prompt and derived
+messages, never native snapshots. Live/demo frontend adapters exist; the current Ask
+drawer has not yet switched to them.
+
+The existing Ask Goldy’s drawer uses Pi in builds with
+`NEXT_PUBLIC_WORKSPACE_ENABLED=true` (or the synthetic-only `NEXT_PUBLIC_WORKSPACE_PREVIEW=true`). It reconnects using saved job IDs,
+polls durable status, edits pending follow-ups and sends explicit Stop/Retry commands.
+It does not enable the backend, worker, sandbox or owner pilot. Default-off builds retain legacy Ask; private file upload, extraction, Keep, deletion and artifact download are available in the preview. Validated dashboard drafts now survive native
+checkpoints and render an explicit user-confirmed query-only Save action through the
+existing live/demo dashboard APIs. The worker never saves dashboards itself.
+
+Reporting responses carry an opaque `evidenceId` generated by Spring. Its durable record
+contains the actual permission checks performed during synchronous reporting, including
+metric operands and denied discovery checks. The adapter preserves the reference in Pi's
+native result details. It is not a worker-supplied permission label. This does **not** yet
+establish complete context/file/summary lineage: conservative whole-context policy
+invalidation remains mandatory, and old results without evidence stay under that policy.
+
+
+## Image build
+
+The [Dockerfile](Dockerfile) pins Bun by digest and runs the same synthetic checks
+with lifecycle scripts disabled. The final image runs compiled modules as UID/GID `65532`,
+contains only production dependencies, and disables automatic dotenv loading.
+Its [.dockerignore](.dockerignore) allowlists build inputs. The same twenty synthetic tests also run against the distroless runtime and
+production dependencies in an intermediate stage; test/source files do not ship.
+CI builds the image, gates high/critical vulnerability findings, and
+checks missing-configuration startup with no network and a read-only root. This
+packages the reporting worker only; it does not provide an analysis sandbox.
+See the [rollout runbook](../docs/operations/pi-workspace-rollout.md#worker-image-preparation)
+for deployment constraints and outstanding scan/isolation gates.
+
+Reporting evidence is now bound to the server response with a SHA-256 digest and
+registered tool name (V119). Publication verifies both native tool-result details
+and model-visible text, and rejects evidence borrowed from another job. Unchanged
+committed entries can survive an explicit next attempt. Old unbound entries remain
+unknown; the binding does not authorize their content or relax policy invalidation.
+
+## Existing-account production rollout
+
+[Production setup](../ops/pi-production/README.md) wires the existing domain,
+Spring sessions and database to this worker through a private TLS/SSH bridge.
+The separate production service conflicts with the preview worker, uses a
+dedicated token and CA, and disables file/sandbox tools pending policy acceptance.
+Deployment is an operator action; preparation does not activate production.
