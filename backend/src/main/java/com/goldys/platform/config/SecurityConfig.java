@@ -131,6 +131,24 @@ public class SecurityConfig {
 
     http.addFilterAfter(new MustChangePasswordFilter(), AuthorizationFilter.class);
 
+    // API clients need a 401 to open their own sign-in page. A form-login redirect points
+    // at the backend origin, which browsers cannot reach through the frontend's private tunnel.
+    http.exceptionHandling(
+        exceptions ->
+            exceptions.defaultAuthenticationEntryPointFor(
+                (request, response, exception) -> {
+                  response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                  response.setContentType("application/json");
+                  objectMapper.writeValue(
+                      response.getWriter(),
+                      new ApiErrorResponse(
+                          "AUTH_REQUIRED",
+                          "Sign in to continue.",
+                          (String) request.getAttribute(CorrelationIdFilter.ATTRIBUTE),
+                          Map.of()));
+                },
+                AntPathRequestMatcher.antMatcher("/api/**")));
+
     http.formLogin(
         form ->
             form.loginProcessingUrl("/api/auth/login")

@@ -47,3 +47,22 @@ Each model/search dispatch first records its bound durably in Spring. SDK/agent 
 - No manager grant, selective context declassification, production file policy, arbitrary research, general dataset export, owner acceptance, push/merge/deploy or remote CI.
 
 See [preview operations](../../ops/pi-preview/README.md) for access, limits, stop/restart and logs.
+
+## Signed-out access correction
+
+A fresh browser opening `/dashboard` reproduced “Couldn't reach Goldy's”: `/api/me`
+returned a 302 to `https://localhost:18443/login`, outside the frontend SSH tunnel.
+Protected API requests now return JSON `401 AUTH_REQUIRED`, allowing the existing
+frontend session gate to open its own login page. Login, CSRF and permission checks
+remain in place. The preview backend was rebuilt and restarted with synthetic
+fixtures restored.
+
+The authentication integration regression passed. Actual Chromium checks on both
+`http://127.0.0.1:3117` and `http://localhost:3117` passed fresh dashboard-to-login
+navigation, sign-in, authenticated `/api/me`, and recovery after clearing cookies.
+No additional model calls were needed. This verification does not cover the user's
+browser or SSH client.
+
+After this correction, the full backend suite passed: 2,068 tests, five skipped,
+zero failures/errors; Spotless and the executable JAR build passed. Ripwire on this
+increment reported no gating quality findings and an unchanged method signature.
