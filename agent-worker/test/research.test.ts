@@ -25,3 +25,38 @@ test('citation output rejects non-public and non-HTTPS destinations', () => {
   ] });
   expect(results).toEqual([{ title: 'official', url: 'https://www.vic.gov.au/public-holidays', summary: 'Public dates' }]);
 });
+
+
+test('one malformed citation does not discard other valid public evidence', () => {
+  expect(publicResults({ results: [
+    { title: 'malformed', url: 'not a URL' },
+    { title: 'official', url: 'https://www.bom.gov.au/', snippet: 'Public weather' },
+  ] })).toEqual([{ title: 'official', url: 'https://www.bom.gov.au/', summary: 'Public weather' }]);
+});
+
+test('search failure retains the reservation and does not publish sources', async () => {
+  const request = spyOn(globalThis, 'fetch').mockResolvedValue(new Response('private upstream sentinel', { status: 429 }));
+  try {
+    const budget = new InvestigationBudget();
+    const tool = publicResearchTool('synthetic', budget, async () => {});
+    await expect(tool.execute('id', { topic: 'MELBOURNE_WEATHER' }, undefined, undefined, {} as never))
+      .rejects.toThrow('Public research unavailable (429)');
+    expect(budget.reservedAud).toBe(0.002);
+    expect(request).toHaveBeenCalledTimes(1);
+  } finally { request.mockRestore(); }
+});
+
+test('revoked authorization after search prevents citation publication', async () => {
+  const request = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ results: [
+    { title: 'Official', url: 'https://www.bom.gov.au/' },
+  ] })));
+  let checks = 0;
+  try {
+    const tool = publicResearchTool('synthetic', new InvestigationBudget(), async () => {
+      if (++checks === 2) throw new Error('Authorization revoked');
+    });
+    await expect(tool.execute('id', { topic: 'MELBOURNE_WEATHER' }, undefined, undefined, {} as never))
+      .rejects.toThrow('Authorization revoked');
+    expect(checks).toBe(2);
+  } finally { request.mockRestore(); }
+});

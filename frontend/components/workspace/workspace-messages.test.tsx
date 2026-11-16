@@ -29,6 +29,19 @@ describe("workspace dashboard drafts", () => {
     });
     expect(update).not.toHaveBeenCalled();
   });
+  it("renders persisted public citations without enabling unsafe links or HTML", async () => {
+    const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
+    job.messages = [{ id: "citation", role: "assistant", reporting: null,
+      text: "Retrieved 2026-11-16: https://www.fairwork.gov.au/pay https://evil.test/ https://www.fairwork.gov.au.evil.test/ https://user:secret@www.fairwork.gov.au/ https://www.fairwork.gov.au:8443/ <script>alert(1)</script>" }];
+    const view = render(<WorkspaceMessages job={job} />);
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute("href", "https://www.fairwork.gov.au/pay");
+    expect(links[0]).toHaveAttribute("rel", "noopener noreferrer");
+    expect(links[0]).toHaveAttribute("referrerpolicy", "no-referrer");
+    expect(view.container.querySelector("script")).toBeNull();
+    expect(screen.getByText(/Retrieved 2026-11-16/)).toBeInTheDocument();
+  });
   it("routes an existing-dashboard proposal through explicit update", async () => {
     const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
     job.messages[0].draft!.dashboardId = "existing";
