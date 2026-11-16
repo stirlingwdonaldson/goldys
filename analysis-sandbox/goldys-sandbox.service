@@ -1,0 +1,27 @@
+[Unit]
+Description=Goldys isolated analysis broker (analysis VM only)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -I -B /opt/goldys-agent/broker.py
+EnvironmentFile=/etc/goldys-agent/sandbox.conf
+ExecStopPost=/usr/bin/python3 -I -B /opt/goldys-agent/broker.py --cleanup
+RuntimeDirectory=goldys-sandbox
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+Restart=on-failure
+RestartSec=2
+KillMode=control-group
+TimeoutStopSec=10
+MemoryMax=512M
+TasksMax=32
+LimitNOFILE=256
+UMask=0077
+NoNewPrivileges=true
+# Mounts must be visible to the Docker daemon. Do not use PrivateTmp or
+# ProtectSystem (which creates a separate mount namespace) here.
+
+[Install]
+WantedBy=multi-user.target
