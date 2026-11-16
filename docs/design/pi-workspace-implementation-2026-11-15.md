@@ -578,3 +578,136 @@ remaining. It is a handoff, not completion of the requested entire migration. Co
 from this worktree's latest local commit, following the remaining implementation and
 operational/policy distinctions above; do not discard the rebased implementation or
 mistake passing local checks for deployment readiness.
+
+## Continuation: response-bound evidence, legacy history and worker image — 16 November 2026
+
+Reused `/tmp/goldys-pi-workspace-proposal`, branch `codex/pi-workspace-proposal`,
+starting at `b030e0379`. Required fetch/status/main-log/PR inspection confirmed clean
+state, fourteen commits ahead and none behind `origin/main` (`fca0b930`), highest
+main migration V113. This continuation adds V119 and V120 without modifying an
+existing migration. Nothing is pushed, merged, provisioned or deployed.
+
+V119 binds new reporting evidence to the registered tool name and a SHA-256 digest
+of the server response, excluding only its generated evidence ID. Object key order
+and numeric scale are normalized across JSON/JSONB round trips. No second response
+body or transcript is stored. Before snapshot publication, Spring validates newly
+introduced/changed reporting results against evidence from the current job. Both
+Pi's model-visible text and its browser-visible details must match. Altered values,
+unknown/unbound IDs, another job's evidence and mismatched tool names are rejected
+before the committed snapshot/revision is replaced. Unchanged native entries already
+committed to this thread may survive explicit next attempts; copying an older job's
+result into a new entry does not confer a new evidence binding.
+
+This is response integrity and reporting provenance, **not complete dependency
+tracking or selective revocation**. Unchanged old entries keep their unknown status;
+V118 evidence is not retroactively bound. Prose, user-supplied figures, summaries,
+compaction, scripts and files still require conservative dependency treatment.
+Whole-context account/role policy invalidation remains mandatory. No Pi-native
+context reconstruction, automatic replay or browser-supplied snapshot is introduced.
+
+V120 adds nullable legacy conversation policy stamps. New legacy conversations record
+the same retained account/role generations used by workspace authorization, checked
+under their existing `conversational.threads` permission resource. New reads, list
+previews, context reuse, rename, answer persistence and every outgoing SSE event are
+checked. Revoke/regrant and disable/reactivate cycles permanently invalidate earlier
+context. Unknown pre-V120 conversations are restricted, including their titles and
+previews, and cannot be resumed or silently relabelled with today's grants. Migration
+does not delete their bytes. Existing authorized owned deletion remains available.
+Legacy Ask can create fresh conversations; its engine and other Spring AI consumers
+remain present. No legacy transcript is imported into Pi.
+
+The legacy conversation-history screen now forces fresh authorization on mount,
+withholds cached titles/previews/transcripts until that read finishes, hides retained
+query data on any read failure, and rechecks visible history every ten seconds.
+Denied transcript views retain a Back action. The same component/API selection serves
+live and offline demo; no new endpoint or live call from demo is introduced. Already
+delivered content in an open legacy Ask drawer or external copies is not erased by
+this change. That distinction remains relevant to full transition acceptance.
+
+The worker now has a multi-stage image with an allowlisted build context, frozen
+production dependencies, disabled lifecycle scripts, compiled runtime modules,
+unprivileged UID/GID `65532` and disabled dotenv discovery. The Bun 1.4.2 build stage is pinned to
+registry index `sha256:9114c058aeae42162ee16dd5084b95fe9473970bb6bcb5b232ab1630f0546895`.
+The local linux/amd64 build ran typecheck, all sixteen synthetic tests and compilation.
+The empty-configuration image smoke run, with network disabled/read-only root/no host
+mounts/dropped capabilities/resource caps, exited 1 on missing
+`GOLDYS_SPRING_ORIGIN` before service access. This is packaging evidence, **not an
+analysis sandbox, configured-worker run or containment evidence**. CI includes the
+image build and smoke check but has not run remotely. No host-installed scanner was available; a pinned container scan and runtime
+remediation are recorded below. The rollout runbook records the
+separate-VM, supervisor, secret injection and egress requirements.
+
+Verification results and continuation state follow below after final checks.
+
+
+Final backend verification passed `./gradlew test spotlessCheck` in 6m 34s:
+2,060 tests, five skipped, zero failures/errors. This includes the evidence binding,
+PostgreSQL legacy policy/regrant and SSE late-output regressions. The earlier full
+7m 2s run predates the final legacy changes and is not the final evidence. One focused
+compile failed on a missing Mockito test import; it was corrected before the final run.
+Frontend typecheck, lint, all 846 tests across 146 files and the preview production
+build passed sequentially; the heavy frontend suite ran after backend completion.
+Three Playwright fixture flows passed in 29s (legacy revocation, existing Ask and
+workspace). All application APIs were intercepted. Desktop/narrow denied-history
+screenshots were inspected. Early cache tests used the wrong nested query provider;
+correcting the fixture made the tests exercise the actual screen cache.
+
+The final worker runtime is Bun 1.4.2 **distroless**, pinned to registry index
+`sha256:1a0c31c7c5f9d193aedf60fe1cebdeb76ac8f6e29f24be8dd8cbd6df72df26ec`.
+Its production dependencies passed sixteen synthetic tests again on that exact base;
+the final image excludes those test sources. The original Debian runtime scan found
+three critical/64 high findings. The final distroless scan found zero critical/high,
+16 medium, eight low and three unknown findings. Remaining findings are not waived;
+see the [dated scan evidence](../operations/pi-worker-image-scan-2026-11-16.md).
+CI now builds, smoke-tests and scans the worker; remote CI has not run.
+
+Static evidence remains **non-clean**. At `b030e0379+dirty`, Ripwire reports 53
+incremental findings, 20 gating: one dead-code classification on an overloaded
+factory still used by repository tests, twelve lexical clone groups, four
+clone-of-helper findings, two churn findings and SSE-test class growth. Constructor/
+controller/permission-check templates and short test fixtures dominate the clone
+families; no unrelated business code was rewritten to suppress them. This does not
+resolve earlier migration-wide findings. The test gate at that baseline reports 102
+test files, 247 statically untested symbols, 2,489 ambiguous and 4,880 unresolved edges,
+and 138 unindexed files. After the evidence commit, the remaining-diff test gate at
+`4ece80895+dirty` reports 52 test files and 169 untested symbols. Those are different
+comparison scopes, not a claim that static coverage improved. The intentional
+ConversationService constructor change has no incompatible callers in the targeted
+check; actual construction is verified by compilation and integration tests.
+
+Local source commits so far: `4ece8089` (response-bound evidence), `10ed8752`
+(legacy policy/history/cache handling). Packaging is local commit `cc820f61`; this combined evidence is committed separately. Both activation flags remain default-off. No live-provider
+request, authorized real-file extraction, separate-VM containment, actual billing
+reconciliation, restore rehearsal, owner pilot, production operation or remote CI ran.
+
+### Exact continuation boundary
+
+This execution reached its implementation/context budget before completing the entire
+requested migration. This is an incomplete handoff, not deployment readiness. Reuse
+this worktree and its latest commit; main is already incorporated. V119/V120 are now
+used locally, while the last fetched main still ends at V113. Do not discard the
+existing fourteen-commit implementation or repeat the pre-rebase handoff.
+
+Continue with complete dependency labels and conservative unions across context,
+prose, summaries and future files/scripts, keeping whole-context invalidation until
+coverage is proven. Legacy server history is now stamped/restricted, but previously
+delivered output in an already-open legacy Ask drawer is not erased. Then implement
+the still-missing separate-VM script runtime, upload quarantine/bounded extraction
+including scans, artifact/download/Keep/retention/deletion/restore paths, controlled
+public research/citations, reviewed dataset extraction, durable usage/receipt
+reconciliation and remaining live/demo UX. Worker packaging now exists; analysis
+packaging and coordinated operational supervision/observability are still missing.
+Review/apply the remaining available image patches and rescan before release.
+
+These are remaining implementation tasks, not merely unavailable operational tests.
+No blocker preventing all local implementation was established. Operational acceptance
+separately needs the authorized analysis VM/runtime, approved provider secret injection
+and actual receipts/pricing/caps, representative authorized files, isolated coordinated
+restore and owner pilot. Manager mapping, sensitive-file reviewer grants and
+issued-report/hold/backup obligations remain policy decisions. Keep existing Ask
+operational and do not retire it until replacement acceptance permits transition.
+
+Final documentation checks resolved 20 local links, confirmed all six recipes through
+both discovery paths, and passed whitespace, CI YAML and embedded-shell syntax checks.
+Scope/decision documents, permission seeds, activation defaults and applied migrations
+were not changed. The local work is not published or remotely CI-verified.

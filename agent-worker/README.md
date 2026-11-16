@@ -84,3 +84,23 @@ metric operands and denied discovery checks. The adapter preserves the reference
 native result details. It is not a worker-supplied permission label. This does **not** yet
 establish complete context/file/summary lineage: conservative whole-context policy
 invalidation remains mandatory, and old results without evidence stay under that policy.
+
+
+## Image build
+
+The [Dockerfile](Dockerfile) pins Bun by digest and runs the same synthetic checks
+with lifecycle scripts disabled. The final image runs compiled modules as UID/GID `65532`,
+contains only production dependencies, and disables automatic dotenv loading.
+Its [.dockerignore](.dockerignore) allowlists build inputs. The same sixteen synthetic tests also run against the distroless runtime and
+production dependencies in an intermediate stage; test/source files do not ship.
+CI builds the image, gates high/critical vulnerability findings, and
+checks missing-configuration startup with no network and a read-only root. This
+packages the reporting worker only; it does not provide an analysis sandbox.
+See the [rollout runbook](../docs/operations/pi-workspace-rollout.md#worker-image-preparation)
+for deployment constraints and outstanding scan/isolation gates.
+
+Reporting evidence is now bound to the server response with a SHA-256 digest and
+registered tool name (V119). Publication verifies both native tool-result details
+and model-visible text, and rejects evidence borrowed from another job. Unchanged
+committed entries can survive an explicit next attempt. Old unbound entries remain
+unknown; the binding does not authorize their content or relax policy invalidation.

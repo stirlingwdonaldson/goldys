@@ -103,6 +103,25 @@ Resources in use: `reconciliation.sales`, `reconciliation.status`, `connectors`,
 `inventory.stock`, `conversational.chat`, `conversational.threads`, `dashboards`, `users`.
 Each metric in the catalogue names its required resource (`docs/metrics/catalog.md`). Owner grants are explicit. V84 also seeded approved aggregate manager reads and forecasting grants; later account management restricts the supported account flow to owners. Target scope now includes owners/managers, but new manager mappings remain undecided. Do not infer new grants from product scope or historical seeds.
 
+### Conversation policy generations (local migration)
+
+V116 retains account/role policy revisions across revoke/regrant cycles.
+`WorkspaceAuthorization` obtains the current active account and policy under shared
+locks, then enforces the caller's resource through `PermissionService`. Workspace
+threads use `workspace.investigations`; V120 legacy threads use their existing
+`conversational.threads` resource. A changed or unknown stamp blocks historical
+content and model-context reuse. New legacy threads capture a stamp; pre-V120 threads
+are not backfilled. This is whole-context invalidation, not selective revocation.
+
+V118/V119 reporting evidence stores observed permission checks and response bindings,
+not a second transcript. New or changed native reporting results must match the
+current job's evidence, registered tool and response digest in both model-visible text
+and structured details. Unchanged committed entries retain their existing provenance;
+unknown prose/summary/file dependencies never become authorized merely by carrying an
+evidence ID. Pi remains the sole workspace session/context engine. See the
+[implementation record](../design/pi-workspace-implementation-2026-11-15.md) and
+[rollout gates](../operations/pi-workspace-rollout.md).
+
 ## User management
 
 The single role is an owner, represented by the existing `ALL × OWNER` permission pair; there is

@@ -53,6 +53,53 @@ Before those capabilities ship, extend this procedure with independently observe
 sandbox termination, orphan cleanup, artifact revocation and byte-store reconciliation.
 Do not present the job-state checks above as containment or restore evidence.
 
+## Historical content during transition
+
+V120 leaves existing legacy conversation policy stamps NULL. Such history has unknown
+provenance: list entries use a generic restricted title/notice, while message reads,
+context reuse, renaming, answer publication and further streamed output fail closed.
+New legacy conversations capture the current account/role policy revision and retain
+the legacy engine during transition. Revoking and restoring a grant or disabling and
+reactivating an account cannot revive older context. This uses the existing
+`conversational.threads` resource, not a new manager grant or workspace permission.
+Owned deletion retains the existing permission check and remains available.
+
+Do not backfill old stamps with current grants: that would falsely assert historical
+access. The consequence at deployment is that pre-V120 conversations cannot be opened
+or resumed. No historical bytes are deleted by the migration and none are imported into
+Pi. Selective release of unknown legacy content requires proven provenance; the model
+must not redact restricted input after receiving it. Already delivered/downloaded bytes
+cannot be recalled. The conversation-history screen withholds cached titles, previews
+and transcripts until a fresh read completes, hides them on failed reauthorization,
+and rechecks visible history every ten seconds. This does not erase previously
+delivered content from an already-open legacy Ask drawer or external copies.
+
+## Worker image preparation
+
+`agent-worker/Dockerfile` pins the Bun 1.4.2 registry index by digest. Its allowlisted
+build context excludes local environment files, caches, outputs and the application
+checkout. Dependency lifecycle scripts are disabled; the build runs typecheck,
+synthetic tests and compilation. The runtime contains compiled worker modules and
+production dependencies, runs as unprivileged UID/GID `65532`, and disables dotenv
+loading. No provider configuration or credentials are baked into the image.
+
+Build with `docker build -t goldys-agent-worker:verification ./agent-worker`. CI now
+builds this image and verifies that startup without configuration fails before any
+service request, with networking disabled and a read-only root. This smoke check is
+not a sandbox/egress acceptance test. The worker still requires the authorized separate
+analysis VM and an approved supervisor, secret injection, egress policy and process
+termination checks. Do not run a configured worker on the production host.
+
+The dedicated deployment must enforce a read-only root, bounded private temporary
+storage, unprivileged identity, dropped capabilities, no privilege escalation and
+CPU/memory/process ceilings. Mount no app checkout, environment files or Docker socket
+into this worker image. No analysis image or generated-script runtime is packaged yet.
+CI scans an exported worker image with a digest-pinned Trivy container, without a
+Docker socket, and fails on high/critical findings. Database-download or scan failure
+is a failed check, never an empty vulnerability result. The [dated local scan](pi-worker-image-scan-2026-11-16.md) records zero high/critical
+and 27 remaining lower/unknown-severity findings, without accepting them. Current
+scans and the separate-VM deployment rehearsal remain release gates. Updating the pinned base requires repeating the build and acceptance checks.
+
 ## Evidence required before activation
 
 - Finish precise context/history dependency handling and conservative treatment of
