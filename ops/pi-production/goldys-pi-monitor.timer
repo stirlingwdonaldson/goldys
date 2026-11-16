@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Goldys Pi operations every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+AccuracySec=5s
+Unit=goldys-pi-monitor.service
+
+[Install]
+WantedBy=timers.target

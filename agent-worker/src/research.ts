@@ -54,7 +54,8 @@ export function publicResults(body: unknown): { title: string; url: string; summ
   if (!body || typeof body !== 'object' || !('results' in body) || !Array.isArray(body.results)) throw new Error('Invalid public search response');
   return body.results.slice(0, 5).flatMap((item: unknown) => {
     if (!item || typeof item !== 'object' || !('url' in item) || typeof item.url !== 'string') return [];
-    const url = new URL(item.url);
+    let url: URL;
+    try { url = new URL(item.url); } catch { return []; }
     if (url.protocol !== 'https:' || url.username || url.password || url.port || !url.hostname.endsWith('.gov.au')) return [];
     const value = item as { title?: unknown; summary?: unknown; snippet?: unknown };
     if (typeof value.title !== 'string') return [];

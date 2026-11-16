@@ -6,7 +6,7 @@ sha256sum --check SHA256SUMS
 [[ $(id -u) = 0 ]] || { echo 'Run with sudo on the analysis VM.' >&2; exit 1; }
 [[ $(hostname) = svc-goldys-agent ]] || { echo 'This release is for svc-goldys-agent only.' >&2; exit 1; }
 [[ ! -e /etc/goldys-agent/production-worker.conf ]] || {
-  echo 'Existing production configuration is preserved; update the image ID manually after loading the release.' >&2
+  echo 'Existing production configuration is preserved; use update-worker.py after pausing admission and draining.' >&2
   exit 1
 }
 [[ $(cat worker-image-id) =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
@@ -23,6 +23,8 @@ install -m 0644 configure-egress.py /opt/goldys-agent/configure-egress.py
 install -m 0644 production-ca.crt /opt/goldys-agent/production-ca.crt
 install -m 0644 check-worker.py /opt/goldys-agent/check-worker.py
 install -m 0644 goldys-pi-production.service /etc/systemd/system/goldys-pi-production.service
+install -m 0644 monitor.py update-worker.py /opt/goldys-agent/
+install -m 0644 goldys-pi-monitor.service goldys-pi-monitor.timer /etc/systemd/system/
 printf 'GOLDYS_WORKER_IMAGE=%s\nGOLDYS_SPRING_ORIGIN=https://localhost:18444\n' "$image" > /etc/goldys-agent/production-worker.conf
 chmod 0600 /etc/goldys-agent/production-worker.conf
 # Prevent two enabled conflicting workers from racing at the next boot.

@@ -65,3 +65,37 @@ it.each([
   await act(async () => {});
   expect(result.current).toMatchObject({ status, user: null });
 });
+
+
+it("checks once when a visible tab returns, coalesces events, and expires on 401", async () => {
+  const check = deferred<CurrentUser>();
+  const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+  vi.mocked(getCurrentUser).mockResolvedValueOnce(owner).mockReturnValueOnce(check.promise);
+  const { result } = renderHook(() => useCurrentUser(), { wrapper: CurrentUserProvider });
+  await act(async () => {});
+  act(() => window.dispatchEvent(new Event("focus")));
+  expect(getCurrentUser).toHaveBeenCalledTimes(1);
+  visibility.mockReturnValue("visible");
+  act(() => {
+    document.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(new Event("focus"));
+  });
+  expect(getCurrentUser).toHaveBeenCalledTimes(2);
+  expect(result.current.status).toBe("authenticated");
+  await act(async () => check.reject(new ApiError("AUTH_REQUIRED", "expired", undefined, undefined, { status: 401 })));
+  expect(result.current).toMatchObject({ user: null, status: "unauthenticated" });
+  visibility.mockRestore();
+});
+
+it("ignores an obsolete focus rejection after a new identity is verified", async () => {
+  const check = deferred<CurrentUser>();
+  const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+  vi.mocked(getCurrentUser).mockResolvedValueOnce(owner).mockReturnValueOnce(check.promise).mockResolvedValueOnce(junior);
+  const { result } = renderHook(() => useCurrentUser(), { wrapper: CurrentUserProvider });
+  await act(async () => {});
+  act(() => window.dispatchEvent(new Event("focus")));
+  await act(async () => result.current.refresh());
+  await act(async () => check.reject(new ApiError("AUTH_REQUIRED", "obsolete")));
+  expect(result.current).toMatchObject({ user: junior, status: "authenticated" });
+  visibility.mockRestore();
+});

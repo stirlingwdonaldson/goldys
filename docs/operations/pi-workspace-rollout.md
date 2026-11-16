@@ -1,7 +1,13 @@
 # Pi workspace rollout and rollback preparation
 
-**Production activation has not been performed or verified.** A private synthetic pilot now has separate [preview operations](../../ops/pi-preview/README.md). This runbook governs production activation; it is not
-approval to provision infrastructure, access production, push, merge or deploy.
+**Current status — 16 November 2026:** PR #269 is merged at `96c9af4d`.
+The user reports production V123 and confirms normal login and a reporting answer
+at the existing domain, with the worker on the analysis VM. Files/sandbox remain
+disabled and manager grants unchanged. PR CI and the rerun of post-merge CI passed.
+See [production follow-up evidence](pi-production-followup-2026-11-16.md) for exact
+verification boundaries and outstanding operational acceptance. The earlier
+synthetic pilot has separate [preview operations](../../ops/pi-preview/README.md).
+This runbook grants no production-operation or publication authorization.
 The [implementation record](../design/pi-workspace-implementation-2026-11-15.md)
 contains observed verification. The [accepted architecture](../decisions/0002-pi-agent-workspace.md)
 and [proposal acceptance table](../design/ask-goldys-pi-workspace-proposal-2026-11-15.md#verification-plan-and-release-gates)
@@ -13,8 +19,8 @@ The [production setup](../../ops/pi-production/README.md) supplies the same-doma
 frontend/backend flags, private TLS bridge, persistent SSH tunnel, production worker
 unit, token readiness check and release packaging. Reporting uses existing accounts;
 production files/analysis stay off. This supersedes the preview-only wiring notes,
-not the remaining acceptance gates. The operator must complete setup before expecting
-a normal app redeploy to connect the separate worker.
+not the remaining acceptance gates. The deployment handoff reports that this setup is complete. Subsequent updates
+reuse it through the production guide; do not rerun first-install commands blindly.
 
 ## Activation and admission controls
 
@@ -114,7 +120,7 @@ is a failed check, never an empty vulnerability result. The [dated local scan](p
 and 27 remaining lower/unknown-severity findings, without accepting them. Current
 scans and the separate-VM deployment rehearsal remain release gates. Updating the pinned base requires repeating the build and acceptance checks.
 
-## Same-domain production preparation — 16 November 2026
+## Historical same-domain preparation — before deployment on 16 November 2026
 
 The production profile now connects the existing login/session and user ownership
 to Pi. A shared activation flag selects the Pi drawer at build time and enables
@@ -152,7 +158,7 @@ preview stays separate and running until the operator deliberately switches the
 analysis VM to the production worker. Deferred manager and file policies remain
 out of the enabled core scope.
 
-## Production evidence still requiring acceptance
+## Remaining production acceptance (historical preparation checklist below)
 
 The later preview record supersedes earlier absence-of-implementation notes. Synthetic containment, live-provider flows and isolated restore checks do not establish representative business-file accuracy, owner acceptance, manager policy or production readiness. See the latest implementation continuation for exact observed results.
 

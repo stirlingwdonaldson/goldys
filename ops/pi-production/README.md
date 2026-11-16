@@ -3,9 +3,13 @@
 This release replaces Ask Goldy's for the existing owner accounts at
 `https://platform.swd.sh`. It uses the existing Spring user table, password hashes,
 session cookie and PermissionService. There is no Pi login, new user database,
-account import or public Pi website. Default activation remains off until the
-operator completes this one-time setup. These commands are deployment instructions,
-not evidence that production has been changed.
+account import or public Pi website. PR #269 is merged at `96c9af4db0d2ea059de1183bbfc125a6e97b7f6a`.
+On 16 November 2026 the user confirmed production login and a reporting answer;
+production is reported at V123 with the worker on the separate analysis VM.
+Default configuration remains opt-in. The commands below document the original
+setup, not a request to repeat it on the deployed system. See the
+[follow-up evidence](../../docs/operations/pi-production-followup-2026-11-16.md)
+for the boundary between production evidence and local fixtures.
 
 Core scope: governed reporting, follow-ups/queue, Stop, history/retry, explicit
 query-only dashboard saves and the four supported public research topics. Files,
@@ -119,15 +123,9 @@ They prepare dedicated Pi files; do not copy the preview configuration or CA.
 
 ## Subsequent updates and rollback
 
-For updates, pause admission (`APP_WORKSPACE_ACCEPTING_JOBS=false`) and recreate
-only the backend, allow jobs to finish or explicitly Stop them, then stop the
-production worker. Build/transfer a new bundle, verify `SHA256SUMS`, load its image
-and update `GOLDYS_WORKER_IMAGE` in `/etc/goldys-agent/production-worker.conf` to the
-new immutable ID. Preserve the token, CA and application origin. Install changed
-scripts/units deliberately; the first-install helper refuses existing config.
-Restart the worker, verify readiness, then re-enable admission and recreate backend.
-Never run preview and production workers together. The firewall refresh is a
-startup action for the stopped dedicated worker, not a live rule rotation.
+Use the [repeatable update procedure](#repeatable-worker-update-and-worker-rollback)
+below for subsequent worker releases and worker rollback. It preserves admission,
+drain, immutable image, private TLS and single-worker safeguards.
 
 For rollback, pause admission and stop `goldys-pi-production`. Leave backend
 workspace activation on so authorized Pi history remains available through its API.
@@ -148,3 +146,204 @@ Local verification and remaining limitations are recorded in the
 [rollout runbook](../../docs/operations/pi-workspace-rollout.md). Review remaining
 static/image findings and provider data-handling/accounting requirements as part
 of release approval; this wiring does not waive them.
+
+## Read-only monitoring (follow-up release)
+
+The analysis-VM `goldys-pi-monitor.timer` runs every minute, independently of the
+worker. It uses the existing backend Sentry project on `ops-sentry`, as documented
+in [deployment monitoring](../../docs/operations/deployment.md#error-monitoring-sentry).
+It sends four fixed-status cron check-ins: `goldys-pi-worker`, `goldys-pi-bridge`,
+`goldys-pi-investigations`, and `goldys-pi-certificate`. Two failed check-ins open an
+incident; a missed check-in has a three-minute margin. Missing check-ins also detect
+loss of the analysis VM or the timer once the monitors have been registered.
+This follows the [Sentry check-in protocol](https://develop.sentry.dev/sdk/check-ins/).
+
+- Worker: both systemd activity and actual production-container running state.
+- Bridge: token-authenticated `GET /api/workspace-worker/health` through verified
+  private TLS. Tunnel, TLS, backend and token failures all fail this probe closed.
+- Investigations: expired running lease, elapsed 15-minute job deadline, or a job
+  queued for two minutes with no healthy running job occupying the single worker.
+  The endpoint returns only three booleans: acceptingJobs, active, stalled. It does
+  not expire jobs, claim work, renew a lease or return IDs/prompts/business records.
+- Certificate: the certificate actually served through the tunnel expires within
+  30 days. Verification failure also alerts; no insecure TLS fallback exists.
+
+The probes print only fixed status codes. HTTP bodies, subprocess stderr and
+exception details never enter probe logs or alerts. Check-in authentication stays
+in the transport envelope, outside the alert fields. The monitor runs on the host;
+no Sentry credential is mounted into the worker. The existing private HTTP Sentry
+transport is supported; use HTTPS where available. Redirects are rejected.
+
+**Activation dependency:** an authorized operator must provision the existing
+backend-project DSN as root-only `/etc/goldys-agent/production-sentry-dsn`, using the
+normal secret-management process, and verify that these Sentry monitors route to
+the established operations recipient. This change has not read the production DSN
+or inspected recipient configuration, and has not sent a notification. Do not call
+alert delivery accepted until a controlled missed/failed/recovered check-in reaches
+that recipient. No recipient has been invented. No DSN means monitoring cannot start
+and no delivery is claimed.
+
+After the backend health endpoint and worker scripts are deployed, an authorized
+operator enables `goldys-pi-monitor.timer`. Check `systemctl list-timers goldys-pi-monitor.timer`, the fixed-status journal for `goldys-pi-monitor.service`,
+and all four Sentry monitors. Confirm a failed bridge probe during an approved
+maintenance window and recovery afterwards. Automatic worker/tunnel restart is
+unchanged. Mute the four monitors during planned maintenance and unmute afterwards;
+leaving them muted is an operational failure, not a healthy check.
+
+## Repeatable worker update and worker rollback
+
+These steps require separate production-operation approval. Keep the previous
+verified release bundle until the replacement is accepted. The updater supports
+older bundles produced by `package.sh`; run the **new** updater with the old bundle
+to roll back. Checksums protect transfer integrity, not authenticity: review and
+transfer bundles through the established verified SSH path.
+
+1. Deploy the follow-up backend endpoint first. Pause admission by setting
+   `APP_WORKSPACE_ACCEPTING_JOBS=false` through the approved configuration process
+   and recreate only the backend. Leave workspace activation and history enabled.
+2. Let accepted work finish, or use the owning user's explicit Stop action. On the
+   analysis VM verify the drain without claiming work:
+
+   ```sh
+   sudo env GOLDYS_SPRING_ORIGIN=https://localhost:18444 python3 /path/to/reviewed-release/check-worker.py --drained
+   ```
+
+   This refuses until the backend reports both admission paused and no active
+   jobs. Stop/interruption cleanup is a separate authorized operation; this check
+   deliberately cannot turn expired work into a completed drain.
+3. Stop `goldys-pi-production` through systemd. Keep preview stopped and disabled.
+   Package and privately transfer the replacement as above, then run on the analysis VM:
+
+   ```sh
+   sudo python3 /path/to/reviewed-release/update-worker.py /path/to/replacement-bundle
+   ```
+
+   The helper verifies the complete manifest and immutable image ID, checks both
+   units and actual containers are stopped, repeats the drain check, loads the
+   image, backs up installed scripts/config, and installs the release. It preserves
+   the installed CA, origin and all credentials. It never starts a service or changes
+   admission. A lock excludes concurrent updater invocations. Configuration is
+   replaced atomically, last. If any operation fails, leave admission paused and
+   workers stopped; do not assume the partially installed release is ready.
+4. Verify token/TLS readiness with the installed `check-worker.py`, then start only
+   `goldys-pi-production`. Check its unit and container state and run the monitor;
+   the timer runs without a model call. Re-enable admission only after these pass.
+   Verify an authorized reporting answer separately; a ready bridge alone does not
+   prove the provider or investigation loop is healthy.
+5. For a worker rollback, repeat pause/drain/stop and invoke the same reviewed
+   `update-worker.py` with the retained **previous** bundle. It restores that bundle's
+   immutable image and worker scripts while preserving credentials and current CA.
+   For pre-monitoring bundles it retains the installed health/preflight helper,
+   which is compatible with the older worker's unchanged `/ready` contract.
+   Timestamped previous scripts/config also remain under `/opt/goldys-agent/rollback/`
+   for recovery from partial installation. Do not delete images/backups as part of
+   this workflow. The legacy frontend rollback above remains available independently.
+
+The first deployment of this follow-up must install its backend endpoint before
+using `--drained` or the monitor. The old `/ready` contract remains unchanged.
+
+## Bridge certificate renewal
+
+This is a planned, paused/drained maintenance operation; no live certificate reload
+is hidden in a worker update. Stage a fresh pair on the main VM:
+
+```sh
+sudo bash ops/pi-production/renew-certificate.sh /etc/goldys-pi/tls-next
+```
+
+The script refuses an existing output directory, creates a private key and public
+certificate with the existing localhost SANs, and verifies validity/hostname. It
+never changes active files or restarts anything. Keep the private key on the main
+VM. Transfer **only** `server.crt` to the analysis VM over the verified SSH path.
+
+After pausing admission, draining and stopping the production worker as above:
+
+1. Preserve the old active certificate/key pair in a root-only backup directory
+   on the main VM and the old public CA on the analysis VM. Record public
+   certificate SHA-256 fingerprints and expiry dates in the private release record.
+2. Install the staged key as `root:101` mode `0440` and certificate mode `0644`
+   at `/etc/goldys-pi/tls/server.key` and `server.crt`. Recreate only `pi-bridge`
+   using the approved production Compose command. The dedicated tunnel configuration
+   and worker token do not change.
+3. Install the matching public certificate at
+   `/opt/goldys-agent/production-ca.crt` on the analysis VM, mode `0644`.
+   Verify its fingerprint matches the staged public certificate. Run the installed
+   preflight with `GOLDYS_SPRING_ORIGIN=https://localhost:18444`; it checks the
+   actual bridge/token with the new trust root. The certificate probe must pass.
+4. Start the production worker, confirm readiness and monitor recovery, then resume
+   admission. If any check fails, keep admission paused/worker stopped; restore both
+   old bridge files and the old worker CA, recreate only the bridge, and repeat
+   readiness verification before restarting the worker. Never bypass verification.
+
+Renewal and alert delivery have synthetic local coverage only. This session did not
+rotate production certificates, change service configuration or restart services.
+
+
+## Follow-up release approval and acceptance sequence
+
+This sequence is prepared only. Each phase requires the explicit authorization
+listed below; the initial setup commands above must not be replayed on this installation.
+
+1. **Publication:** approve pushing the reviewed task branch, opening its PR into
+   main and publishing the single prepared delivery issue (refresh duplicates again).
+   Watch checks on the actual pushed SHA, including image scanning, and report their
+   observed outcomes. Existing #269 CI and local fixtures do not satisfy this gate.
+   Merging still requires explicit approval and successful required checks.
+2. **Maintenance preparation:** agree the window, operator and existing owner session.
+   Retain the current verified worker bundle and legacy frontend rollback; record
+   deployed app revision and immutable old/new worker IDs privately. The authorized
+   operator provisions the existing Sentry DSN through secret management, without
+   printing/copying credentials into this chat, and verifies the established recipient
+   and all four monitor routes. Preserve files/sandbox off and existing grants.
+3. **Backend first:** with deployment approval, use the normal reviewed deployment
+   process to install the new backend health endpoint with admission paused and
+   history still enabled. Do not run monitor or updater drain checks against the
+   old backend. Confirm the token-authenticated three-boolean health contract through
+   the private bridge. Let existing work complete, or have its owner explicitly Stop;
+   verify drained before stopping the worker. If an expired job blocks drain, stop
+   here for an approved recovery action; do not bypass the guard or erase job rows.
+4. **Worker and monitoring:** follow the repeatable update procedure above using the
+   reviewed complete bundle. Keep both workers stopped until TLS/token preflight passes.
+   Start only production, verify actual container and unit, then enable the monitor
+   timer after DSN/routing is ready. Check all four received healthy check-ins. Restore
+   admission through the approved backend configuration process only after readiness;
+   recheck after that backend recreation and sign in again if required.
+5. **Owner workflow acceptance:** use an existing owner at the normal production URL.
+   Ask a small dated reporting question and compare its figures/coverage to the existing
+   dashboard. During a sufficiently long investigation enqueue a follow-up, edit it
+   before consumption and confirm the edited text executes once in order (an already
+   taken entry must reject editing). Stop running work and verify terminal cancellation
+   and no later answer publication. Use an explicitly approved bounded failure case
+   for Retry, verify a new request in the same thread and no automatic replay. Refresh
+   and reopen history. Confirm no dashboard is saved before an explicit click; save
+   a governed query-only draft and verify it reloads through current permissions.
+   Ask one supported public-research question and verify public HTTPS source/date links
+   survive refresh. Record pass/fail, timestamp and private evidence references for
+   each behaviour; do not paste prompts/business payloads into operational alerts.
+6. **Notification acceptance:** with explicit external-notification approval, agree
+   the recipient is ready for rehearsal. Verify failure and recovery for each monitor
+   using controlled check-ins clearly recorded as a notification rehearsal; this proves
+   delivery/routing, not real outage detection. Also exercise a real failed bridge
+   probe during the approved maintenance outage and its recovery. With the timer
+   deliberately stopped and monitors unmuted, observe a missed check-in after the
+   configured margin, restart the timer and observe recovery at the recipient. Record
+   actual received events, not merely HTTP acceptance. Keep routine maintenance muted
+   except during these agreed delivery tests, and finish with the timer active and
+   all monitors unmuted/healthy. A failed test leaves acceptance open.
+7. **Maintenance rehearsal:** pause admission again, drain, stop and roll back using
+   the retained previous bundle with the new updater. Verify readiness/monitoring and
+   the immutable image ID, then repeat the guarded sequence to restore the candidate.
+   Perform staged certificate renewal and matching CA replacement as described above;
+   verify the served certificate fingerprint/expiry and token readiness. Rehearse
+   restoring both old certificate/key and old CA while paused/stopped, then restore
+   the chosen accepted pair. Never run mixed trust roots or skip TLS verification.
+   Leave admission paused/workers stopped on any failed readiness check; resume only
+   after the final worker, bridge, monitor and approved reporting checks pass.
+8. **Close evidence:** record the actual final app/image/certificate identities, timer
+   state, recipient delivery and each owner acceptance result. Keep the previous bundle,
+   backups and legacy rollback. Provider-bill reconciliation remains blocked on real
+   billing evidence; synthetic budget tests cannot close it. Manager mapping, sensitive
+   files, retention and customer-balance scope remain human decisions.
+
+Publication approval alone authorizes none of the deployment, service operations,
+production dashboard mutations, notification tests or maintenance steps above.

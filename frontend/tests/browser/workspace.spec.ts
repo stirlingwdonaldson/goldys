@@ -22,7 +22,7 @@ test("workspace survives reload, edits queued input, stops server work and hides
       const input = route.request().postDataJSON();
       submissions.push(input);
       job = { id: `10000000-0000-4000-8000-00000000000${submissions.length}`, threadId: input.threadId, state: "RUNNING", prompt: input.prompt, revision: 1,
-        messages: [{ id: "answer", role: "assistant", text: "Saved fixture finding", reporting: null }, { id: "widget", role: "tool", text: "", reporting: { widget: { schemaVersion: 2, type: "stat", id: "missing-sales", title: "Weekly sales", value: null, format: "currency" }, notices: ["Missing source coverage; no total is available."], provenance: [], relatedMetrics: [] } }] };
+        messages: [{ id: "citation", role: "assistant", text: "Public fixture source retrieved 2026-11-16: https://www.bom.gov.au/", reporting: null }, { id: "answer", role: "assistant", text: "Saved fixture finding", reporting: null }, { id: "widget", role: "tool", text: "", reporting: { widget: { schemaVersion: 2, type: "stat", id: "missing-sales", title: "Weekly sales", value: null, format: "currency" }, notices: ["Missing source coverage; no total is available."], provenance: [], relatedMetrics: [] } }] };
       return route.fulfill({ json: job });
     }
     if (job && path === `/api/workspace/jobs/${job.id}`) return route.fulfill({ json: job });
@@ -87,6 +87,8 @@ test("workspace survives reload, edits queued input, stops server work and hides
   await page.goto(deepLink);
   await expect(page.getByText("Compare beverage sales", { exact: true })).toBeVisible();
   expect(submissions).toHaveLength(1);
+  await expect(page.getByRole("link", { name: "https://www.bom.gov.au/", exact: true })).toHaveAttribute("referrerpolicy", "no-referrer");
+  await expect(page.getByText(/Public fixture source retrieved 2026-11-16/)).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL(/settings\?scope=weekly$/);
   expect(stops).toBe(0);

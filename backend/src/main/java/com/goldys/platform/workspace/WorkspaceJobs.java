@@ -61,6 +61,24 @@ public class WorkspaceJobs {
     this.acceptingJobs = acceptingJobs;
   }
 
+  public record Health(boolean acceptingJobs, boolean active, boolean stalled) {}
+
+  /** Aggregate operational state only: no ownership data, cleanup, claims or lease renewal. */
+  @Transactional(readOnly = true)
+  public Health health() {
+    return jdbc.queryForObject(
+        """
+        select exists(select 1 from workspace_job where state in ('QUEUED','RUNNING')) active,
+          exists(select 1 from workspace_job where
+            (state='RUNNING' and (lease_until is null or lease_until<=clock_timestamp()))
+            or (state in ('QUEUED','RUNNING') and deadline<=clock_timestamp())
+            or (state='QUEUED' and created_at<=clock_timestamp()-interval '2 minutes'
+              and not exists(select 1 from workspace_job where state='RUNNING'
+                and lease_until>clock_timestamp() and deadline>clock_timestamp()))) stalled
+        """,
+        (rs, row) -> new Health(acceptingJobs, rs.getBoolean("active"), rs.getBoolean("stalled")));
+  }
+
   @Transactional
   public Job submit(UUID owner, UUID threadId, UUID requestId, String prompt) {
     validatePrompt(prompt);
