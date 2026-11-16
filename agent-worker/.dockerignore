@@ -1,0 +1,10 @@
+# Allowlist the build context. Credentials, dotfiles, local outputs and the app checkout are excluded.
+**
+!Dockerfile
+!package.json
+!bun.lock
+!tsconfig.json
+!src/
+!src/**
+!test/
+!test/**

@@ -98,3 +98,33 @@ jobs:
 
       - name: Build frontend image
         run: docker build -t goldys-frontend:ci ./frontend
+
+      - name: Build Pi worker image (synthetic tests, no provider credentials)
+        run: docker build -t goldys-agent-worker:ci ./agent-worker
+
+      - name: Worker fails closed without configuration
+        shell: bash
+        run: |
+          set +e
+          docker run --rm --network=none --read-only --cap-drop=ALL \
+            --security-opt=no-new-privileges --pids-limit=64 --memory=512m --cpus=1 \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m \
+            goldys-agent-worker:ci > worker-startup.log 2>&1
+          result=$?
+          set -e
+          test "$result" -eq 1
+          grep -Fq 'Missing worker configuration: GOLDYS_SPRING_ORIGIN' worker-startup.log
+
+      - name: Scan worker runtime for high and critical vulnerabilities
+        shell: bash
+        run: |
+          docker save --output "$RUNNER_TEMP/pi-worker.tar" goldys-agent-worker:ci
+          mkdir -p "$RUNNER_TEMP/pi-trivy-cache"
+          docker run --rm --read-only --cap-drop=ALL --security-opt=no-new-privileges \
+            --pids-limit=64 --memory=1g --cpus=1 --user "$(id -u):$(id -g)" \
+            --tmpfs /tmp:rw,nosuid,nodev,size=512m \
+            --mount "type=bind,src=$RUNNER_TEMP/pi-worker.tar,dst=/image.tar,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP/pi-trivy-cache,dst=/cache" \
+            aquasec/trivy@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb \
+            image --input /image.tar --cache-dir /cache --scanners vuln \
+            --severity HIGH,CRITICAL --exit-code 1
