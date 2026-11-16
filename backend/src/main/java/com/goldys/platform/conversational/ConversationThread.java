@@ -27,6 +27,9 @@ public class ConversationThread {
   @Column(name = "summary")
   private String summary;
 
+  @Column(name = "policy_stamp", length = 64)
+  private String policyStamp;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -80,6 +83,16 @@ public class ConversationThread {
 
   public String summary() {
     return summary;
+  }
+
+  public String policyStamp() {
+    return policyStamp;
+  }
+
+  /** Only new threads may capture current policy; old unknown context cannot be relabelled. */
+  void initializePolicy(String stamp) {
+    if (policyStamp != null) throw new IllegalStateException("Conversation policy already set");
+    policyStamp = Objects.requireNonNull(stamp, "stamp");
   }
 
   public Instant createdAt() {

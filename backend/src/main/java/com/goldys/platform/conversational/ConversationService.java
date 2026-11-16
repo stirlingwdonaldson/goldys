@@ -1,6 +1,9 @@
 package com.goldys.platform.conversational;
 
 import com.goldys.platform.auth.AccessDeniedException;
+import com.goldys.platform.auth.PermissionAction;
+import com.goldys.platform.auth.ResourceKey;
+import com.goldys.platform.auth.WorkspaceAuthorization;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -43,14 +46,18 @@ public class ConversationService {
   private final ConversationThreadRepository threads;
   private final ConversationMessageRepository messages;
   private final ObjectProvider<ChatModel> model;
+  private final WorkspaceAuthorization authorization;
+  private static final ResourceKey RESOURCE = new ResourceKey("conversational.threads");
 
   public ConversationService(
       ConversationThreadRepository threads,
       ConversationMessageRepository messages,
-      ObjectProvider<ChatModel> model) {
+      ObjectProvider<ChatModel> model,
+      WorkspaceAuthorization authorization) {
     this.threads = threads;
     this.messages = messages;
     this.model = model;
+    this.authorization = authorization;
   }
 
   /**
@@ -69,15 +76,17 @@ public class ConversationService {
     Objects.requireNonNull(userId, "userId");
     Objects.requireNonNull(message, "message");
     Instant now = CLOCK.instant();
+    String policy = authorization.require(userId, RESOURCE, PermissionAction.WRITE);
 
     List<ConversationMessage> prior = List.of();
     ConversationThread thread;
     if (threadId == null) {
-      thread = threads.save(ConversationThread.create(userId, titleFor(message), null, now));
+      thread = createThread(userId, message, now, UUID.randomUUID(), policy);
     } else {
       Optional<ConversationThread> owned = threads.findByIdAndUserAccountId(threadId, userId);
       if (owned.isPresent()) {
         thread = owned.get();
+        requirePolicy(thread, policy);
         prior = messages.findByThreadIdOrderByCreatedAtAsc(threadId);
       } else if (threads.existsById(threadId)) {
         // The id exists but belongs to another user: deny rather than hijack or leak it.
@@ -85,8 +94,7 @@ public class ConversationService {
       } else {
         // A client-minted id that does not exist yet: adopt it as the new thread's id so the
         // client's first turn and subsequent turns resolve to the same thread.
-        thread =
-            threads.save(ConversationThread.create(userId, titleFor(message), null, now, threadId));
+        thread = createThread(userId, message, now, threadId, policy);
       }
     }
 
@@ -107,6 +115,7 @@ public class ConversationService {
       UUID userId, UUID threadId, String assistantText, List<AnswerPayload.TraceEntry> trace) {
     Objects.requireNonNull(assistantText, "assistantText");
     ConversationThread thread = requireThread(userId, threadId);
+    requirePolicy(thread, authorization.require(userId, RESOURCE, PermissionAction.WRITE));
     Instant now = CLOCK.instant();
     messages.save(ConversationMessage.create(thread.id(), "assistant", assistantText, trace, now));
     thread.touch(now);
@@ -114,15 +123,27 @@ public class ConversationService {
   }
 
   /** Lists the user's threads, newest first, with a preview of the last message. */
+  @Transactional
   public List<ThreadSummary> list(UUID userId) {
+    String policy = authorization.require(userId, RESOURCE, PermissionAction.READ);
     return threads.findByUserAccountIdOrderByUpdatedAtDesc(userId).stream()
-        .map(this::toSummary)
+        .map(
+            thread ->
+                policy.equals(thread.policyStamp())
+                    ? toSummary(thread)
+                    : new ThreadSummary(
+                        thread.id(),
+                        "Restricted conversation",
+                        thread.updatedAt(),
+                        "Historical access cannot be verified. Start a new conversation."))
         .toList();
   }
 
   /** Loads a thread with its full message history for the owning user. */
+  @Transactional
   public ThreadView get(UUID userId, UUID threadId) {
     ConversationThread thread = requireThread(userId, threadId);
+    requirePolicy(thread, authorization.require(userId, RESOURCE, PermissionAction.READ));
     return new ThreadView(
         thread.id(), thread.title(), messages.findByThreadIdOrderByCreatedAtAsc(threadId));
   }
@@ -132,6 +153,7 @@ public class ConversationService {
   public void rename(UUID userId, UUID threadId, String title) {
     Objects.requireNonNull(title, "title");
     ConversationThread thread = requireThread(userId, threadId);
+    requirePolicy(thread, authorization.require(userId, RESOURCE, PermissionAction.WRITE));
     thread.rename(title);
     threads.save(thread);
   }
@@ -139,8 +161,33 @@ public class ConversationService {
   /** Deletes a thread (and its messages, cascaded) owned by the user. */
   @Transactional
   public void delete(UUID userId, UUID threadId) {
+    authorization.require(userId, RESOURCE, PermissionAction.WRITE);
     requireThread(userId, threadId);
     threads.deleteById(threadId);
+  }
+
+  /**
+   * Fence every legacy stream event as well as persistence; already delivered bytes cannot be
+   * recalled.
+   */
+  @Transactional
+  public void authorizeOutput(UUID userId, UUID threadId) {
+    requirePolicy(
+        requireThread(userId, threadId),
+        authorization.require(userId, RESOURCE, PermissionAction.READ));
+  }
+
+  private ConversationThread createThread(
+      UUID userId, String message, Instant now, UUID id, String policy) {
+    var thread = ConversationThread.create(userId, titleFor(message), null, now, id);
+    thread.initializePolicy(policy);
+    return threads.save(thread);
+  }
+
+  private static void requirePolicy(ConversationThread thread, String policy) {
+    if (!policy.equals(thread.policyStamp()))
+      throw new AccessDeniedException(
+          "Historical access cannot be verified. Start a new conversation.");
   }
 
   private List<Message> buildContext(ConversationThread thread, List<ConversationMessage> history) {

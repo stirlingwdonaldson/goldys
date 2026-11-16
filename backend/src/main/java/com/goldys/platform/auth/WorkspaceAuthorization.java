@@ -30,6 +30,11 @@ public class WorkspaceAuthorization {
   }
 
   public String require(UUID accountId, PermissionAction action) {
+    return require(accountId, RESOURCE, action);
+  }
+
+  /** Shared conservative history stamp; each caller retains its own permission resource. */
+  public String require(UUID accountId, ResourceKey resource, PermissionAction action) {
     var accounts =
         jdbc.query(
             """
@@ -38,7 +43,7 @@ public class WorkspaceAuthorization {
         """,
             (row, index) -> new String[] {row.getString(1), row.getString(2), row.getString(3)},
             accountId);
-    if (accounts.isEmpty()) throw AccessDeniedException.forResource(RESOURCE.value());
+    if (accounts.isEmpty()) throw AccessDeniedException.forResource(resource.value());
     var account = accounts.getFirst();
     var role = new UserRole(new DepartmentCode(account[0]), new SeniorityCode(account[1]));
     // shortcut: any grant/account change invalidates the whole context; replace with precise
@@ -52,8 +57,8 @@ public class WorkspaceAuthorization {
             (row, index) -> row.getString(1),
             account[0],
             account[1]);
-    if (policy.isEmpty()) throw AccessDeniedException.forResource(RESOURCE.value());
-    permissions.require(role, RESOURCE, action);
+    if (policy.isEmpty()) throw AccessDeniedException.forResource(resource.value());
+    permissions.require(role, resource, action);
     try {
       return HexFormat.of()
           .formatHex(

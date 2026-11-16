@@ -64,9 +64,16 @@ public class ChatController {
     SseEmitter emitter = new SseEmitter(0L); // no idle timeout
     StringBuilder assistantText = new StringBuilder();
     service.stream(context, role)
+        .doOnNext(event -> conversations.authorizeOutput(user.id(), turn.threadId()))
         .subscribe(
             event -> handle(emitter, event, assistantText, user.id(), turn.threadId()),
-            err -> send(emitter, new ConversationEvent.Error("Something went wrong.")),
+            err -> {
+              send(
+                  emitter,
+                  new ConversationEvent.Error(
+                      "The investigation stopped or access changed. Start a new conversation."));
+              emitter.complete();
+            },
             emitter::complete);
     return emitter;
   }

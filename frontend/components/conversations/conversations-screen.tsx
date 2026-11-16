@@ -46,11 +46,14 @@ function sortThreads(list: ConversationThreadSummary[]): ConversationThreadSumma
  */
 export function ConversationsScreen({ api }: { api: Api }) {
 
-  const list = useQuery({ queryKey: ["listThreads"], queryFn: ({ signal }) => api.listThreads({ signal }) });
+  const list = useQuery({
+    queryKey: ["listThreads"], queryFn: ({ signal }) => api.listThreads({ signal }),
+    refetchOnMount: "always", staleTime: 0, gcTime: 0, retry: false,
+    refetchInterval: query => query.state.error ? false : 10000,
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  if (list.isPending) return <LoadingState rows={3} />;
-  if (list.isLoadingError) {
+  if (list.isError) {
     if (list.error.code === "NOT_PERMITTED") return <PermissionDenied subject="conversations" />;
     return (
       <ErrorState
@@ -61,6 +64,7 @@ export function ConversationsScreen({ api }: { api: Api }) {
       />
     );
   }
+  if (!list.isFetchedAfterMount || list.isPending) return <LoadingState rows={3} />;
 
   if (selectedId) {
     return <ThreadTranscript api={api} threadId={selectedId} onBack={() => setSelectedId(null)} />;
@@ -255,11 +259,21 @@ interface ThreadTranscriptProps {
 /** A thread's full transcript, reached by opening a row. */
 function ThreadTranscript({ api, threadId, onBack }: ThreadTranscriptProps) {
 
-  const thread = useQuery({ queryKey: ["getThread", threadId], queryFn: ({ signal }) => api.getThread(threadId, { signal }) });
+  const thread = useQuery({
+    queryKey: ["getThread", threadId], queryFn: ({ signal }) => api.getThread(threadId, { signal }),
+    refetchOnMount: "always", staleTime: 0, gcTime: 0, retry: false,
+    refetchInterval: query => query.state.error ? false : 10000,
+  });
 
-  if (thread.isPending) return <LoadingState rows={3} />;
-  if (thread.isLoadingError) {
-    if (thread.error.code === "NOT_PERMITTED") return <PermissionDenied subject="this conversation" />;
+  if (thread.isError) {
+    if (thread.error.code === "NOT_PERMITTED") return (
+      <div className="flex flex-col gap-6">
+        <Button variant="ghost" size="sm" className="self-start" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />Back
+        </Button>
+        <PermissionDenied subject="this conversation" message="Historical access cannot be verified. Start a new conversation." />
+      </div>
+    );
     return (
       <ErrorState
         title="Couldn't load this conversation"
@@ -269,6 +283,7 @@ function ThreadTranscript({ api, threadId, onBack }: ThreadTranscriptProps) {
       />
     );
   }
+  if (!thread.isFetchedAfterMount || thread.isPending) return <LoadingState rows={3} />;
 
   const doc = thread.data;
 
