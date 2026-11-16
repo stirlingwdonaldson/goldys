@@ -22,6 +22,8 @@ class WorkspaceJobsIntegrationTest {
   @Autowired WorkspaceThreads threads;
   @Autowired com.goldys.platform.auth.WorkspaceAuthorization authorization;
   @Autowired WorkspaceBudgets budgets;
+  @Autowired WorkspaceEvidence evidence;
+  @Autowired com.goldys.platform.reporting.ToolRegistry registry;
   @Autowired JdbcTemplate jdbc;
   @Autowired ObjectMapper json;
   @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
@@ -212,7 +214,15 @@ class WorkspaceJobsIntegrationTest {
     assertThat(details.path("widget").path("schemaVersion").asInt()).isEqualTo(2);
     var saved = (com.fasterxml.jackson.databind.node.ObjectNode) snapshot();
     saved.put("leafId", "draft");
-    var message = json.createObjectNode().put("role", "toolResult").set("details", details);
+    var message =
+        json.createObjectNode()
+            .put("role", "toolResult")
+            .put("toolName", "goldys_create_dashboard_draft");
+    message.set("details", details);
+    message.set(
+        "content",
+        json.createArrayNode()
+            .add(json.createObjectNode().put("type", "text").put("text", details.toString())));
     ((com.fasterxml.jackson.databind.node.ArrayNode) saved.path("entries"))
         .add(
             json.createObjectNode()
@@ -220,13 +230,39 @@ class WorkspaceJobsIntegrationTest {
                 .put("id", "draft")
                 .putNull("parentId")
                 .set("message", message));
-    jobs.publish(job.id(), claim.fence(), 0, saved, true);
+    verifyReportingBinding(job, claim, saved);
     var draft = jobs.read(owner, job.id()).messages().getFirst().draft();
     assertThat(draft.title()).isEqualTo("Weekly sales");
     assertThat(draft.widgets()).hasSize(1);
     assertThat(draft.widgets().getFirst().queries().getFirst().metric())
         .isEqualTo(com.goldys.platform.semantic.catalog.MetricId.SALES_NET);
     assertThat(draft.dashboardId()).isNull();
+  }
+
+  private void verifyReportingBinding(
+      WorkspaceJobs.Job job,
+      WorkspaceJobs.Claim claim,
+      com.fasterxml.jackson.databind.node.ObjectNode saved) {
+    var altered = saved.deepCopy();
+    ((com.fasterxml.jackson.databind.node.ObjectNode)
+            altered.at("/entries/1/message/details/draft"))
+        .put("title", "Altered title");
+    assertThatThrownBy(() -> jobs.publish(job.id(), claim.fence(), 0, altered, true))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(jobs.read(owner, job.id()).revision()).isZero();
+    assertThat(jobs.read(owner, job.id()).state()).isEqualTo("RUNNING");
+    jobs.publish(job.id(), claim.fence(), 0, saved, true);
+    var next = jobs.submit(owner, job.threadId(), UUID.randomUUID(), "Continue explicitly");
+    var nextClaim = jobs.claim();
+    // Carrying committed native history across an explicit next attempt is permitted.
+    jobs.publish(next.id(), nextClaim.fence(), 1, saved, false);
+    var copied = saved.deepCopy();
+    ((com.fasterxml.jackson.databind.node.ObjectNode) copied.at("/entries/1")).put("id", "copied");
+    copied.put("leafId", "copied");
+    // A newly introduced result cannot borrow the previous job's evidence, even in this thread.
+    assertThatThrownBy(() -> jobs.publish(next.id(), nextClaim.fence(), 2, copied, true))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThat(jobs.read(owner, next.id()).revision()).isEqualTo(2);
   }
 
   @Test
@@ -269,13 +305,17 @@ class WorkspaceJobsIntegrationTest {
   void missingOrStaleReportingEvidenceCannotBeCommitted() {
     var job = submit(UUID.randomUUID(), UUID.randomUUID());
     var claim = jobs.claim();
-    var tool = com.goldys.platform.reporting.ToolId.GET_METRIC;
+    var tool = registry.find(com.goldys.platform.reporting.ToolId.GET_METRIC).orElseThrow();
     assertThatThrownBy(
-            () -> jobs.recordReportingEvidence(job.id(), claim.fence(), tool, java.util.List.of()))
+            () ->
+                jobs.recordReportingEvidence(
+                    job.id(), claim.fence(), tool, java.util.List.of(), json.createObjectNode()))
         .isInstanceOf(IllegalArgumentException.class);
     jobs.stop(owner, job.id());
     assertThatThrownBy(
-            () -> jobs.recordReportingEvidence(job.id(), claim.fence(), tool, java.util.List.of()))
+            () ->
+                jobs.recordReportingEvidence(
+                    job.id(), claim.fence(), tool, java.util.List.of(), json.createObjectNode()))
         .isInstanceOf(WorkspaceConflict.class);
     assertThat(
             jdbc.queryForObject("select count(*) from workspace_reporting_evidence", Integer.class))
@@ -318,7 +358,7 @@ class WorkspaceJobsIntegrationTest {
     var job = submit(UUID.randomUUID(), request);
     UUID followUp = UUID.randomUUID();
     jobs.enqueue(owner, job.id(), followUp, "Already accepted");
-    var paused = new WorkspaceJobs(jdbc, authorization, json, budgets, false);
+    var paused = new WorkspaceJobs(jdbc, authorization, json, budgets, evidence, false);
     var tx = new org.springframework.transaction.support.TransactionTemplate(transactions);
     assertThat(
             tx.execute(

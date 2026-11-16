@@ -99,7 +99,13 @@ public class WorkspaceReporting {
     jobs.authorizedRole(job, fence);
     DashboardDraft draft =
         tool instanceof CreateDashboardDraftTool draftTool ? draftTool.toDraft(input) : null;
-    UUID evidenceId = jobs.recordReportingEvidence(job, fence, id, observed.checks());
+    UUID evidenceId =
+        jobs.recordReportingEvidence(
+            job,
+            fence,
+            tool,
+            observed.checks(),
+            json.valueToTree(new Result(observed.value(), draft, null)));
     return new Result(observed.value(), draft, evidenceId);
   }
 }

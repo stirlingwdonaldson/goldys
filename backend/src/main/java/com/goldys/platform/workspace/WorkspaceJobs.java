@@ -42,6 +42,7 @@ public class WorkspaceJobs {
   private final WorkspaceAuthorization authorization;
   private final ObjectMapper json;
   private final WorkspaceBudgets budgets;
+  private final WorkspaceEvidence evidence;
   private final boolean acceptingJobs;
 
   public WorkspaceJobs(
@@ -49,12 +50,14 @@ public class WorkspaceJobs {
       WorkspaceAuthorization authorization,
       ObjectMapper json,
       WorkspaceBudgets budgets,
+      WorkspaceEvidence evidence,
       @org.springframework.beans.factory.annotation.Value("${app.workspace.accepting-jobs:true}")
           boolean acceptingJobs) {
     this.jdbc = jdbc;
     this.authorization = authorization;
     this.json = json;
     this.budgets = budgets;
+    this.evidence = evidence;
     this.acceptingJobs = acceptingJobs;
   }
 
@@ -339,6 +342,7 @@ public class WorkspaceJobs {
     UUID threadId = threadId(id);
     ThreadRow thread = thread(threadId);
     checkPolicy(thread, PermissionAction.WRITE);
+    evidence.validate(id, parse(thread.snapshot()), snapshot);
     if (completed
         && jdbc.queryForObject(
                 "select count(*) from workspace_follow_up where job_id=? and state='QUEUED'",
@@ -369,19 +373,22 @@ public class WorkspaceJobs {
   public UUID recordReportingEvidence(
       UUID id,
       UUID fence,
-      com.goldys.platform.reporting.ToolId tool,
-      List<com.goldys.platform.auth.PermissionService.Check> checks) {
+      com.goldys.platform.reporting.ReportingTool tool,
+      List<com.goldys.platform.auth.PermissionService.Check> checks,
+      JsonNode response) {
     var role = authorizedRole(id, fence);
     if (checks.isEmpty() || checks.stream().anyMatch(check -> !role.equals(check.role()))) {
       throw new IllegalArgumentException("Incomplete reporting permission evidence");
     }
     UUID evidenceId = UUID.randomUUID();
     jdbc.update(
-        "insert into workspace_reporting_evidence(id,job_id,tool,checks) values (?,?,?,?::jsonb)",
+        "insert into workspace_reporting_evidence(id,job_id,tool,checks,tool_name,response_sha256) values (?,?,?,?::jsonb,?,?)",
         evidenceId,
         id,
-        tool.name(),
-        json.valueToTree(checks).toString());
+        tool.id().name(),
+        json.valueToTree(checks).toString(),
+        "goldys_" + tool.name(),
+        WorkspaceEvidence.digest(response));
     return evidenceId;
   }
 
