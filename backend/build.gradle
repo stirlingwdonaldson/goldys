@@ -60,6 +60,9 @@ dependencies {
 }
 
 tasks.named('test') {
+	// The full suite retains Spring contexts and the ArchUnit graph; Gradle's
+	// 512 MiB default can spend minutes in GC once the workspace contexts load.
+	maxHeapSize = '2g'
 	useJUnitPlatform()
 	// Testcontainers 1.x defaults docker-java to API 1.32, which Docker 29+
 	// rejects. API 1.40 is supported from Docker 19.03 onward and remains

@@ -98,10 +98,12 @@ class ConversationalEvalTest {
 
   @BeforeEach
   void clean() {
+    // Match the scheduled reservation projector's resolved -> canonical lock order.
+    // Otherwise its pending flush can deadlock with fixture cleanup between tests.
     jdbc.update(
-        "truncate table canonical_daily_sales, daily_sales_override, resolution_rule, "
-            + "resolved_daily_sales, reconciliation_exception, "
-            + "canonical_reservation, reservation_override, resolved_reservation_day");
+        "truncate table resolved_reservation_day, canonical_reservation, reservation_override, "
+            + "canonical_daily_sales, daily_sales_override, resolution_rule, "
+            + "resolved_daily_sales, reconciliation_exception");
     agent = new ScriptedAgent(dispatcher);
     schema = new WidgetSchemaValidator(mapper);
   }
