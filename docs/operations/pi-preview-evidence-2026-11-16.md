@@ -1,5 +1,10 @@
 # Synthetic Pi preview evidence — 16 November 2026
 
+**Historical evidence:** observations below describe their original stage of work.
+Later deployment and user-confirmed login/reporting are recorded in the
+[current production follow-up](pi-production-followup-2026-11-16.md). Earlier “not deployed”, incomplete-slice
+and unexecuted-CI statements are retained as history, not current status.
+
 Local integration evidence; no production deployment or remote CI.
 
 ## Runtime image scans

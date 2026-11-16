@@ -1,5 +1,10 @@
 # Pi workspace implementation evidence — 15 November 2026
 
+**Historical evidence:** observations below describe their original stage of work.
+Later deployment and user-confirmed login/reporting are recorded in the
+[current production follow-up](../operations/pi-production-followup-2026-11-16.md). Earlier “not deployed”, incomplete-slice
+and unexecuted-CI statements are retained as history, not current status.
+
 Implementation starts from proposal commit `98b8eef9`, following [ADR 0002](../decisions/0002-pi-agent-workspace.md). Local implementation and commits are authorized by the implementation request; production access, provisioning, push, merge and deployment are not.
 
 ## Released SDK compatibility

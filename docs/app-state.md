@@ -2,7 +2,10 @@
 
 Implementation baseline: `24ed4a70`, 4 November 2026. Repository capability only; live
 configuration, source availability and production acceptance were not verified.
-Update this summary when capabilities change, not for every implementation task.
+Pi update, 16 November 2026: the core workspace is deployed at `96c9af4d`; normal
+login/reporting are user-confirmed. Other operational acceptance is limited to the
+[evidence record](operations/pi-production-followup-2026-11-16.md). This does not
+re-certify the older source/data capability baseline below.
 
 | Area | Exists in the repository | Remaining boundary |
 |---|---|---|
@@ -15,7 +18,7 @@ Update this summary when capabilities change, not for every implementation task.
 | Reservations/reviews | Canonical reservations and reviews; review detail UI and classification code. | Validate metrics, source coverage and summary quality. Reservation covers are a party-size proxy, not verified actual arrivals. |
 | Products/stock | Product classification and reviewed mappings; stock-count/waste/recipe evidence and qualified reporting paths. | Complete supported units/movements/valuation, unexplained variance and replenishment recommendations. |
 | Forecasting | Async persisted TimesFM runs, qualified targets/covariates and comparison to actuals. | Validate revenue and individual-product contracts against actual API capability and source fitness before calling them accepted. |
-| Interaction | Ask Goldy's bounded tools, permission-aware metric definition discovery and compositions of up to six metric queries; saved dashboards rendered from live queries; source diagnostics and evidence-query registry. | Broader approved relationships/filters, persisted structured follow-up plans, live-model evaluation, reusable custom report lifecycle and approved role mapping. |
+| Interaction | Pi-backed Ask Goldy's with existing Spring accounts/permissions, persisted investigations, queued follow-ups, Stop/retry, bounded reporting/public research and explicit query-only dashboard saves. Legacy frontend rollback retained. | Remaining production workflow acceptance; real provider invoice reconciliation; files/sandbox disabled; reusable custom report lifecycle and manager mapping remain separate dependencies. |
 | Users/follow-up | Owner account administration; domain review/curation queues and local data corrections. | Manager grants; general assigned operational follow-up lifecycle. Existing review queues do not establish a complete task workflow. |
 | Automation | Source ingestion schedules. | Business report delivery and condition-based notification/export automation are target gaps, distinct from ingestion scheduling. |
 
