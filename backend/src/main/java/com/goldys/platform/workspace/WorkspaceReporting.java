@@ -13,6 +13,7 @@ import com.goldys.platform.reporting.ToolRegistry;
 import com.goldys.platform.reporting.ToolResult;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Worker-supplied roles, SQL and permission assertions are never accepted. */
@@ -77,7 +78,10 @@ public class WorkspaceReporting {
   public record Result(
       @JsonUnwrapped ToolResult reporting, DashboardDraft draft, UUID evidenceId) {}
 
-  @Transactional
+  // Reporting must not hold the conversation lock while queries run: heartbeats, Stop and
+  // snapshot saves need it too. Suspend dataset callers as well; the jobs methods open short
+  // transactions and recheck authorization/fencing before committing result evidence.
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public Result execute(UUID job, UUID fence, ToolId id, JsonNode arguments) {
     var role = jobs.authorizedRole(job, fence);
     var tool =
