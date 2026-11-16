@@ -45,13 +45,24 @@ class UpdateTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 updater.verify_release(release)
 
+    def test_partial_monitoring_bundle_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            release = bundle(Path(temp))
+            (release / 'monitor.py').unlink()
+            manifest(release)
+            with self.assertRaises(ValueError):
+                updater.verify_release(release)
+
     def test_config_preserves_origin_and_unrelated_values_without_shell_evaluation(self):
         text = 'GOLDYS_WORKER_IMAGE=sha256:old\nGOLDYS_SPRING_ORIGIN=https://localhost:18444\nOTHER=$(must-not-run)\n'
         changed, origin = updater.configuration(text, 'sha256:' + 'b' * 64)
         self.assertIn('OTHER=$(must-not-run)', changed)
         self.assertEqual(origin, 'https://localhost:18444')
-        with self.assertRaises(ValueError):
-            updater.configuration(text + 'GOLDYS_WORKER_IMAGE=duplicate\n', 'unused')
+        for extra in ('GOLDYS_WORKER_IMAGE=duplicate\n',
+                      'GOLDYS_SPRING_ORIGIN=https://elsewhere.test\n',
+                      'GOLDYS_SPRING_ORIGIN=https://localhost:18444\n'):
+            with self.assertRaises(ValueError):
+                updater.configuration(text + extra, 'unused')
 
     def test_active_or_orphan_workers_block_update(self):
         with patch.object(updater.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'active\n')):

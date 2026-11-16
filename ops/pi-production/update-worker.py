@@ -39,7 +39,7 @@ def verify_release(release):
             if hashlib.file_digest(source, 'sha256').hexdigest() != digest:
                 raise ValueError('Release checksum mismatch')
         entries[name] = digest
-    if not REQUIRED <= entries.keys():
+    if not REQUIRED <= entries.keys() or (OPTIONAL & entries.keys() and not OPTIONAL <= entries.keys()):
         raise ValueError('Incomplete release manifest')
     image = (release / 'worker-image-id').read_text().strip()
     if not re.fullmatch('sha256:[0-9a-f]{64}', image):
@@ -51,8 +51,8 @@ def configuration(text, image):
     # Never source a shell file or print it. Preserve every setting except the exact image key.
     if len(re.findall(r'^GOLDYS_WORKER_IMAGE=.*$', text, re.M)) != 1:
         raise ValueError('Expected one existing image setting')
-    origins = re.findall(r'^GOLDYS_SPRING_ORIGIN=(https://localhost:18444)\s*$', text, re.M)
-    if len(origins) != 1:
+    origins = re.findall(r'^GOLDYS_SPRING_ORIGIN=(.*)$', text, re.M)
+    if origins != ['https://localhost:18444']:
         raise ValueError('Expected the private production bridge')
     return re.sub(r'^GOLDYS_WORKER_IMAGE=.*$', f'GOLDYS_WORKER_IMAGE={image}', text, flags=re.M), origins[0]
 

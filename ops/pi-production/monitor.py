@@ -85,10 +85,15 @@ def main():
     delivery = True
     try:
         dsn = (Path(os.environ['CREDENTIALS_DIRECTORY']) / 'sentry-dsn').read_text().strip()
-        for probe, healthy in results.items():
-            checkin(dsn, probe, healthy)
     except Exception:
+        dsn = None
         delivery = False
+    if dsn is not None:
+        for probe, healthy in results.items():
+            try:
+                checkin(dsn, probe, healthy)
+            except Exception:
+                delivery = False
     for probe, healthy in results.items():
         print(f'pi_{probe}={"ok" if healthy else "failed"}')
     print(f'pi_alert_delivery={"ok" if delivery else "failed_or_unconfigured"}')

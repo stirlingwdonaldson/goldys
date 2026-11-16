@@ -59,6 +59,18 @@ class MonitorTest(unittest.TestCase):
             self.assertEqual(envelope[2]['status'], 'error')
             self.assertIsInstance(opener.call_args.args[0], preflight.NoRedirect)
 
+    def test_failed_delivery_does_not_skip_other_monitors(self):
+        states = dict(worker=False, bridge=True, investigations=True, certificate=True)
+        with patch.object(monitor, 'probes', return_value=states), \
+             patch.object(monitor.Path, 'read_text', return_value='http://synthetic@ops-sentry/1'), \
+             patch.dict(monitor.os.environ, {'CREDENTIALS_DIRECTORY': '/synthetic'}), \
+             patch.object(monitor, 'checkin', side_effect=[Exception('private sentinel'), None, None, None]) as send, \
+             patch('builtins.print') as output:
+            self.assertEqual(monitor.main(), 1)
+            self.assertEqual([call.args[1] for call in send.call_args_list], list(states))
+            self.assertNotIn('sentinel', str(output.call_args_list))
+            output.assert_any_call('pi_alert_delivery=failed_or_unconfigured')
+
     def test_failures_never_print_exception_details(self):
         with patch.object(monitor, 'probes', return_value={'worker': False}), \
              patch.object(monitor.Path, 'read_text', side_effect=Exception('secret sentinel')), \
