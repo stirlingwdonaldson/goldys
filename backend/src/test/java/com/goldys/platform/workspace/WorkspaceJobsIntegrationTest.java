@@ -29,6 +29,10 @@ class WorkspaceJobsIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired ObjectMapper json;
   @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
+
+  @org.springframework.test.context.bean.override.mockito.MockitoSpyBean
+  com.goldys.platform.reporting.ToolDispatcher dispatcher;
+
   UUID owner;
 
   @BeforeEach
@@ -391,6 +395,76 @@ class WorkspaceJobsIntegrationTest {
             .orElseThrow();
     assertThat(spec.name()).isEqualTo("goldys_get_metric");
     assertThat(spec.parameters().toString()).contains("sales.net", "date", "string");
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(strings = {"complete", "stop", "revoke"})
+  void reportingReleasesConversationLocksAndRechecksAccess(String outcome) throws Exception {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    var entered = new java.util.concurrent.CountDownLatch(1);
+    var release = new java.util.concurrent.CountDownLatch(1);
+    org.mockito.Mockito.doAnswer(
+            invocation -> {
+              entered.countDown();
+              assertThat(release.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+              return invocation.callRealMethod();
+            })
+        .when(dispatcher)
+        .dispatch(
+            org.mockito.ArgumentMatchers.eq(com.goldys.platform.reporting.ToolId.GET_METRIC),
+            org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.any());
+    var arguments =
+        json.valueToTree(
+            new com.goldys.platform.reporting.GetMetricInput(
+                com.goldys.platform.semantic.catalog.MetricId.SALES_NET,
+                java.time.LocalDate.of(2026, 1, 1),
+                java.time.LocalDate.of(2026, 1, 2),
+                com.goldys.platform.semantic.catalog.TimeGrain.DAY,
+                java.util.Set.of()));
+    try (var executor = Executors.newFixedThreadPool(2)) {
+      // Also exercise a transactional caller, as used by dataset exports.
+      var result =
+          executor.submit(
+              () ->
+                  new org.springframework.transaction.support.TransactionTemplate(transactions)
+                      .execute(
+                          status ->
+                              reporting.execute(
+                                  job.id(),
+                                  claim.fence(),
+                                  com.goldys.platform.reporting.ToolId.GET_METRIC,
+                                  arguments)));
+      try {
+        assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+        executor
+            .submit(
+                () -> {
+                  jobs.heartbeat(job.id(), claim.fence());
+                  jobs.read(owner, job.id());
+                  if (outcome.equals("stop")) jobs.stop(owner, job.id());
+                  if (outcome.equals("revoke"))
+                    jdbc.update("update user_account set active=false where id=?", owner);
+                })
+            .get(2, java.util.concurrent.TimeUnit.SECONDS);
+      } finally {
+        release.countDown();
+      }
+      if (outcome.equals("complete")) {
+        assertThat(result.get(5, java.util.concurrent.TimeUnit.SECONDS).evidenceId()).isNotNull();
+      } else {
+        assertThatThrownBy(() -> result.get(5, java.util.concurrent.TimeUnit.SECONDS))
+            .hasCauseInstanceOf(
+                outcome.equals("stop") ? WorkspaceConflict.class : AccessDeniedException.class);
+      }
+      assertThat(
+              jdbc.queryForObject(
+                  "select count(*) from workspace_reporting_evidence where job_id=?",
+                  Integer.class,
+                  job.id()))
+          .isEqualTo(outcome.equals("complete") ? 1 : 0);
+    }
   }
 
   @Test
