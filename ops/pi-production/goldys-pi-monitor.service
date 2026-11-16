@@ -1,0 +1,15 @@
+[Unit]
+Description=Goldys Pi read-only operational probes
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/goldys-agent/production-worker.conf
+LoadCredential=sentry-dsn:/etc/goldys-agent/production-sentry-dsn
+ExecStart=/usr/bin/python3 -B /opt/goldys-agent/monitor.py
+TimeoutStartSec=120
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+UMask=0077

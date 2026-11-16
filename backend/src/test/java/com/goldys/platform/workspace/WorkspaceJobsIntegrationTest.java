@@ -66,6 +66,44 @@ class WorkspaceJobsIntegrationTest {
   }
 
   @Test
+  void operationalHealthDetectsStallsWithoutChangingJobsOrExposingContent() {
+    assertThat(jobs.health()).isEqualTo(new WorkspaceJobs.Health(true, false, false));
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    assertThat(jobs.health()).isEqualTo(new WorkspaceJobs.Health(true, true, false));
+    jdbc.update(
+        "update workspace_job set created_at=clock_timestamp()-interval '3 minutes' where id=?",
+        job.id());
+    assertThat(jobs.health().stalled()).isTrue();
+    var claim = jobs.claim();
+    assertThat(jobs.health().stalled()).isFalse();
+    jdbc.update(
+        "update workspace_job set lease_until=clock_timestamp()-interval '1 second' where id=?",
+        job.id());
+    var before = jdbc.queryForMap("select * from workspace_job where id=?", job.id());
+    assertThat(jobs.health().stalled()).isTrue();
+    assertThat(jobs.health().stalled()).isTrue();
+    assertThat(jdbc.queryForMap("select * from workspace_job where id=?", job.id()))
+        .isEqualTo(before);
+    jobs.interrupt(job.id(), claim.fence());
+    assertThat(jobs.health()).isEqualTo(new WorkspaceJobs.Health(true, false, false));
+  }
+
+  @Test
+  void healthyRunningWorkDoesNotMakeWaitingJobsStalled() {
+    var running = submit(UUID.randomUUID(), UUID.randomUUID());
+    jobs.claim();
+    var queued = submit(UUID.randomUUID(), UUID.randomUUID());
+    jdbc.update(
+        "update workspace_job set created_at=clock_timestamp()-interval '3 minutes' where id=?",
+        queued.id());
+    assertThat(jobs.health().stalled()).isFalse();
+    jdbc.update(
+        "update workspace_job set deadline=clock_timestamp()-interval '1 second' where id=?",
+        running.id());
+    assertThat(jobs.health().stalled()).isTrue();
+  }
+
+  @Test
   void boundedSalesDatasetRetainsGovernedValuesAndMissingCells() {
     var job = submit(UUID.randomUUID(), UUID.randomUUID());
     var claim = jobs.claim();

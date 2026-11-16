@@ -99,6 +99,17 @@ class WorkspaceSessionIntegrationTest {
     Integer before =
         jdbc.queryForObject(
             "select count(*) from workspace_job where state='RUNNING'", Integer.class);
+    mvc.perform(get("/api/workspace-worker/health")).andExpect(status().isForbidden());
+    mvc.perform(get("/api/workspace-worker/health").header("X-Workspace-Token", "wrong"))
+        .andExpect(status().isForbidden());
+    mvc.perform(
+            get("/api/workspace-worker/health")
+                .header("X-Workspace-Token", "synthetic-production-bridge-token-32-chars"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.acceptingJobs").value(true))
+        .andExpect(jsonPath("$.active").isBoolean())
+        .andExpect(jsonPath("$.stalled").isBoolean())
+        .andExpect(jsonPath("$.prompt").doesNotExist());
     mvc.perform(get("/api/workspace-worker/ready")).andExpect(status().isForbidden());
     mvc.perform(get("/api/workspace-worker/ready").header("X-Workspace-Token", "wrong"))
         .andExpect(status().isForbidden());

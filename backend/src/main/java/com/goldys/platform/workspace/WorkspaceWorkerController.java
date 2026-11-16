@@ -52,6 +52,13 @@ public class WorkspaceWorkerController {
     return java.util.Map.of("status", "UP");
   }
 
+  @GetMapping("/health")
+  WorkspaceJobs.Health health(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token) {
+    authenticate(token);
+    return jobs.health();
+  }
+
   record Lease(@NotNull UUID fence) {}
 
   record Publication(

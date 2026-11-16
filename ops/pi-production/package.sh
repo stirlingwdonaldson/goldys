@@ -12,6 +12,6 @@ docker build --tag goldys-agent-worker:release "$root/agent-worker"
 docker image inspect --format '{{.Id}}' goldys-agent-worker:release > "$out/worker-image-id"
 docker save --output "$out/worker-image.tar" "$(cat "$out/worker-image-id")"
 cp "$root/analysis-sandbox/configure-egress.py" "$out/"
-cp "$root/ops/pi-production/"{check-worker.py,install.sh,goldys-pi-production.service} "$out/"
-(cd "$out" && sha256sum production-ca.crt worker-image.tar worker-image-id configure-egress.py check-worker.py install.sh goldys-pi-production.service > SHA256SUMS)
+cp "$root/ops/pi-production/"{check-worker.py,install.sh,update-worker.py,monitor.py,goldys-pi-production.service,goldys-pi-monitor.service,goldys-pi-monitor.timer} "$out/"
+(cd "$out" && sha256sum production-ca.crt worker-image.tar worker-image-id configure-egress.py check-worker.py install.sh update-worker.py monitor.py goldys-pi-production.service goldys-pi-monitor.service goldys-pi-monitor.timer > SHA256SUMS)
 echo "Release prepared at $out; transfer it privately to the analysis VM."
