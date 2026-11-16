@@ -1,6 +1,6 @@
 # Pi workspace rollout and rollback preparation
 
-**Not deployment-ready.** This runbook prepares the local migration; it is not
+**Not production-ready.** A private synthetic pilot now has separate [preview operations](../../ops/pi-preview/README.md). This runbook governs production activation; it is not
 approval to provision infrastructure, access production, push, merge or deploy.
 The [implementation record](../design/pi-workspace-implementation-2026-11-15.md)
 contains observed verification. The [accepted architecture](../decisions/0002-pi-agent-workspace.md)
@@ -93,14 +93,18 @@ termination checks. Do not run a configured worker on the production host.
 The dedicated deployment must enforce a read-only root, bounded private temporary
 storage, unprivileged identity, dropped capabilities, no privilege escalation and
 CPU/memory/process ceilings. Mount no app checkout, environment files or Docker socket
-into this worker image. No analysis image or generated-script runtime is packaged yet.
+into this worker image. The separate `analysis-sandbox` package supplies the offline gVisor runtime used in the synthetic preview.
 CI scans an exported worker image with a digest-pinned Trivy container, without a
 Docker socket, and fails on high/critical findings. Database-download or scan failure
 is a failed check, never an empty vulnerability result. The [dated local scan](pi-worker-image-scan-2026-11-16.md) records zero high/critical
 and 27 remaining lower/unknown-severity findings, without accepting them. Current
 scans and the separate-VM deployment rehearsal remain release gates. Updating the pinned base requires repeating the build and acceptance checks.
 
-## Evidence required before activation
+## Production evidence still requiring acceptance
+
+The later preview record supersedes earlier absence-of-implementation notes. Synthetic containment, live-provider flows and isolated restore checks do not establish representative business-file accuracy, owner acceptance, manager policy or production readiness. See the latest implementation continuation for exact observed results.
+
+## Original activation checklist (reconcile against latest evidence)
 
 - Finish precise context/history dependency handling and conservative treatment of
   unknown legacy provenance; keep whole-context invalidation until coverage is proven.

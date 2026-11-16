@@ -711,3 +711,121 @@ Final documentation checks resolved 20 local links, confirmed all six recipes th
 both discovery paths, and passed whitespace, CI YAML and embedded-shell syntax checks.
 Scope/decision documents, permission seeds, activation defaults and applied migrations
 were not changed. The local work is not published or remotely CI-verified.
+
+## Continuation — live synthetic website pilot, 16 November 2026
+
+This section supersedes earlier statements that sandboxing, files, research and live
+integration are wholly absent. It does not supersede production activation gates.
+The user directly approved Docker/gVisor installation and service configuration on
+192.168.5.42, selected DeepSeek, and installed the dedicated credential in the
+root-owned file we created. Its value was never printed or committed. No subagent,
+production operation, push, merge or public ingress change was used.
+
+### Implemented integration
+
+- `analysis-sandbox` now provides a single-slot gVisor broker, immutable analysis
+  image selection, offline Python, bounded staging/output, active-content checks,
+  extraction/OCR, cancellation, descendant/orphan cleanup and real VM acceptance.
+- The trusted distroless Pi worker receives only dedicated credentials, its fixed
+  Spring origin, public TLS CA and broker socket. UID-specific IPv4/IPv6 egress
+  allows Spring, DeepSeek and existing DNS resolvers. Scripts receive no network,
+  database credentials, host checkout, provider key or Docker socket.
+- V121 stores private original/artifact bytes and manifests transactionally, with
+  ownership/policy checks, a 1 GiB retained-byte admission ceiling, thirty-day
+  expiry, Keep, private downloads and deletion. Every file inherits the whole
+  thread's conservative policy; arbitrary sensitive uploads require owner-only
+  file access plus wages/users permission. This is not selective declassification.
+- V122 distinguishes failed and budget-exhausted attempts. V123 records reviewed
+  model/search request bounds before dispatch. Automatic SDK/agent retries are
+  disabled. Completed attempts release only unused admission capacity; unknown
+  requests and interrupted attempts retain reservations. Native provider token
+  usage persists in Pi snapshots. Provider invoice/FX reconciliation is still open.
+- Governed dataset export covers daily net/gross/GST sales for 1–31 days through
+  the existing semantic reporting tools. Missing cells stay missing. Files become
+  available for subsequent offline exploration; no generic SQL is exposed.
+- Public research uses four closed topics and official `.gov.au` citations. Search
+  receives no user text, figures, filenames, private context or arbitrary URL.
+  Free-form public queries and other datasets remain explicitly unsupported.
+- Live and offline-demo file APIs/UI are separate. The preview offers upload,
+  extraction, generated artifact download, Keep/delete, exploratory/partial states,
+  citation links and conversation deletion. Drafts require an explicit browser
+  save. Whole-context revocation remains conservative across files, summaries,
+  scripts and prose; precise dependency declassification remains a production gate.
+- Dashboard tool guidance now includes accepted chart names and omits optional
+  null fields, following an observed live model validation failure.
+
+### Actual verification
+
+The detailed record is [preview evidence](../operations/pi-preview-evidence-2026-11-16.md).
+The private test entry point, account retrieval, scenarios and operations are in
+[preview operations](../../ops/pi-preview/README.md).
+
+Observed real integration: governed A$9,100 synthetic sales answer; upload/extract/
+Python sum 42 and private CSV download; browser Keep; governed dataset artifact;
+public research with persisted clickable citations; explicit dashboard save;
+history/reconnect; browser Stop terminated active code in 4.2 seconds and cancelled
+queued input; worker kill produced interruption and explicit Retry completed;
+actual budget exhaustion preserved output and stopped further dispatch; browser
+conversation deletion denied stale access. These are live Spring/Pi/DeepSeek/gVisor
+paths, not mocked evidence. Missing/denied permission cases also have backend and
+browser fixture regressions; those remain distinct from live provider evidence.
+
+Separate-VM checks covered filesystem/identity/environment isolation, IPv4/IPv6,
+DNS/private/metadata/loopback denial, memory and file limits, symlink/hardlink
+rejection, cancellation/deadline/descendants and broker-loss orphan cleanup (0.25s).
+100 MiB input and output passed both the broker and actual worker round trip under
+their configured memory caps. Five synthetic document/image formats recovered 42;
+CSV formula output was rejected. Representative business-file accuracy is unmeasured.
+
+An isolated preview PostgreSQL backup was restored into
+`goldys_pi_restore_verified` in the same dedicated preview container. File-byte and
+native-snapshot hashes and reservation totals matched. The earlier count-only
+rehearsal also passed. This does not establish production backup, legal hold or
+issued-report policy. Both small restore databases remain isolated test resources.
+
+Full backend verification: 2,067 tests, five skipped, no failures/errors; Spotless.
+Frontend: 847 tests, type checking, lint and live-preview build. Worker: 20 tests,
+type checking/build and the same tests inside the exact runtime image. Four Python
+boundary tests and real VM checks passed. Three browser fixture tests passed
+(workspace plus legacy Ask); actual browser flows above were checked separately.
+
+Exact worker/analysis image scans found zero high/critical findings. Worker retains
+16 medium/eight low/three unknown; analysis retains 78 medium/ten low. These are not
+waived. Ripwire remains non-clean: final application-diff quality check reported
+73 gating findings and its name-based test gate 275 untested symbols; framework
+hook ambiguity and actual complexity/size findings both remain. Contract check
+identified the controller constructor change; callers/tests were updated. No
+static-clean, remote-CI or full production-readiness claim is made.
+
+### Runtime and continuation boundary
+
+- Development VM 192.168.4.50: private runtime files `/tmp/goldys-pi-preview`,
+  PostgreSQL `goldys-pi-preview-db` on loopback 5548 with its own volume, Spring
+  HTTPS loopback 18443, Next.js loopback 3117, dedicated user-systemd units and
+  private SSH reverse tunnel. Real production resources were not inspected/changed.
+- Analysis VM 192.168.5.42: `goldys-sandbox` and `goldys-pi-worker` services;
+  `/opt/goldys-agent` fixed scripts/images, `/etc/goldys-agent` root credentials.
+  The worker's model is reviewed `deepseek-flash` via `goldys-deepseek` overlay.
+- User access: `ssh -N -L 3117:127.0.0.1:3117 stiring@192.168.4.50`, then
+  `http://127.0.0.1:3117`. Dedicated account is `pi-owner@example.test`; retrieve
+  its random password privately from `/tmp/goldys-pi-preview/test-account.txt`.
+- `ops/pi-preview/preview.sh` documents/implements existing-preview status,
+  logs, stop/start/restart. It reapplies synthetic resolved fixtures after Spring
+  startup. `/tmp` and transient services are disposable, not reboot-proof hosting.
+- At the accounting checkpoint, A$30.852 of the A$50 venue-day capacity remained
+  reserved, including stopped/unknown work. This is a conservative reservation,
+  not actual billed spend. It was not reset to manufacture acceptance.
+- Production gates remain manager grants, sensitive-file/retention/hold policy,
+  representative extraction, precise dependency declassification, actual invoice/
+  FX reconciliation, owner acceptance, outstanding static/image findings and
+  remote CI. Default activation remains off and legacy Ask remains available.
+
+Reuse this worktree and the local commits. Do not reset to main, publish without
+approval, treat these synthetic results as production acceptance, or read production
+credentials/data. The documented stop/start procedure was rehearsed successfully; after restart Spring health was UP, the login page returned 200, both analysis services were active, and browser sign-in/history/citations/deleted-history denial passed again. The startup helper waits for projection rebuilding before reapplying synthetic fixtures. The next product step is the user's private website pilot.
+
+
+Local implementation commits for this continuation: `59f3b6d0` (analysis runtime)
+and `3a047e98` (Spring/Pi/frontend integration). Operations/evidence are committed
+separately. No commit was pushed. The last fetched main remains `fca0b930`; local
+migrations V121–V123 do not collide with its V113 maximum.
