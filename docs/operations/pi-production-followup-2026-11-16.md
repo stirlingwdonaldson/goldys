@@ -134,7 +134,7 @@ rather than being suppressed to improve the metric.
   new complexity regression is reported. Findings were reviewed, not suppressed;
   this is not a clean static gate. `publicResults` retains its caller contract.
 
-Not checked: new branch remote CI, fresh vulnerability scan of this worker image,
+Not checked in the initial preparation: new branch remote CI, fresh vulnerability scan of this worker image,
 actual production feature acceptance, production update/rollback/renewal, Sentry
 alert delivery/recipient configuration, representative file extraction or actual
 provider invoices. Previously observed scans are historical, not a scan of this image.
@@ -175,3 +175,79 @@ existing-account access and the existing Sentry destination/recipient. Do not cr
 manager grants, enable files/sandbox, settle retention or customer-balance policy,
 remove legacy rollback or claim provider-bill reconciliation without billing evidence.
 This is a proposed publication payload, not a second local task tracker.
+
+
+## Second review and fresh candidate scan
+
+Repository and all open issues were refreshed on 16 November 2026. Main remains
+`96c9af4d`; #269 is merged, and no existing Pi delivery issue was found (including
+an all-state Pi search). #249 still explicitly excludes implementation delivery.
+No issue, comment or PR has been published by this review.
+
+The review corrected four concrete weaknesses:
+
+- A failed Sentry submission no longer prevents the other three check-ins. Delivery
+  remains failed overall, and exception content is still withheld.
+- The updater rejects a partial monitoring extension; complete legacy bundles remain
+  accepted and retain the installed monitoring-compatible preflight.
+- Duplicate origin keys are rejected, including a later conflicting destination.
+  The drain check and preserved service configuration must agree on the private bridge.
+- The auth fixture matches the same callback registered on focus and visibility,
+  rather than accepting React Query's independent visibility listener as the barrier.
+
+Review of the token boundary, aggregate read-only SQL, lease/deadline/queue stall
+conditions, stopped-container guards, legacy bundle retention and staged certificate
+permissions found no additional justified changes. Stopped units alone never prove
+job drain; expired rows still require explicit authorized cleanup/Stop. No production
+session code or worker image content changed during this second review.
+
+Fresh worker scan: **exit 0, zero HIGH/CRITICAL findings** on exact image
+`sha256:03bd25b3e234d9022fe9abd6002d9c830be47cec058285d2bed0599b20f5f317`.
+The scanner was the CI-pinned
+`aquasec/trivy@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb`,
+with the same restricted container flags, archive input, vulnerability-only scanner
+and HIGH/CRITICAL failure threshold. Database updated at 07:10:39 UTC on 16 November,
+freshly downloaded at 09:38:19 UTC (20:38 Melbourne). Debian 13.6 and Node packages
+were scanned. Lower severities and a new bridge-image scan were not included.
+The first attempt failed during DB extraction with disk quota exceeded: it was
+**not** a clean scan. A dedicated disk cache allowed the second attempt to complete.
+Local raw logs: `/tmp/goldys-pi-review-scan/scan.log` (failure) and
+`/tmp/goldys-pi-review-scan/scan-disk-cache.log` (completed scan).
+
+New isolated operations verification passed **18 tests**, including all three new
+failure-path regressions and existing legacy rollback/certificate tests. Backend
+and worker source were unchanged, so their earlier full-suite/image evidence above
+is reused. Frontend typecheck, lint, all **851 tests in 147 files** with two workers, and the production-mode build (workspace on, files/demo off) passed again. No retries or timeout changes were introduced.
+Ripwire contract checks for the three changed operations functions report unchanged
+interfaces and no incompatible callers. Targeted test gates identify the executed
+monitor/updater tests and no untested impacted symbols; their exit 4 requests those
+test runs, rather than asserting tests failed. The second-review quality delta at
+`b7b5df3e9+dirty` additionally flags the monitor test class growing from 53 to 64 lines.
+This is meaningful regression coverage, not a reason to split tests for a metric.
+The earlier two test-clone findings remain part of the branch's evidence: the static
+gate is **not clean**.
+
+
+Final packaging with the reviewed scripts and a newly generated **synthetic**
+certificate passed all 11 manifest checks at `/tmp/goldys-pi-reviewed-release`.
+The build produced a new immutable image identity,
+`sha256:5a0223655edaa9718a022ca157854f275e6c3307f66743ae5e2db8812b2b8701`.
+Therefore the exact final bundle archive was scanned again with the same pinned
+scanner and fresh database at 20:42 Melbourne: **exit 0, zero HIGH/CRITICAL findings**.
+Raw log: `/tmp/goldys-pi-review-scan/final-bundle-scan.log`.
+The synthetic CA is for local verification only: this bundle must not be installed
+as a first production installation or used to replace the current production CA.
+The update helper preserves the installed CA. Any future rebuilt image needs its
+own exact-image scan; this result is bound to the identity above.
+
+Shell syntax and monitor systemd validation passed (the restricted host emitted
+socket-option warnings, not unit errors). All 70 relative documentation targets
+exist, all six Goldy's recipes remain discoverable, and PRD/SRS are unchanged.
+The unchanged production-mode browser fixture evidence is reused; no new production
+browser acceptance is claimed. Publication payloads are prepared at
+`/tmp/goldys-pi-followup-pr.md` and `/tmp/goldys-pi-followup-issue.md`; the latter uses
+one delivery issue outside the decision map and is not an active local tracker.
+
+The final image also passed the network-disabled, no-configuration startup check:
+exit 1 with the fixed fail-closed message. The reviewed updater accepted the final
+11-file synthetic bundle in a read-only manifest check; it was not installed.

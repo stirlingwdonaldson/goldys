@@ -277,3 +277,73 @@ After pausing admission, draining and stopping the production worker as above:
 
 Renewal and alert delivery have synthetic local coverage only. This session did not
 rotate production certificates, change service configuration or restart services.
+
+
+## Follow-up release approval and acceptance sequence
+
+This sequence is prepared only. Each phase requires the explicit authorization
+listed below; the initial setup commands above must not be replayed on this installation.
+
+1. **Publication:** approve pushing the reviewed task branch, opening its PR into
+   main and publishing the single prepared delivery issue (refresh duplicates again).
+   Watch checks on the actual pushed SHA, including image scanning, and report their
+   observed outcomes. Existing #269 CI and local fixtures do not satisfy this gate.
+   Merging still requires explicit approval and successful required checks.
+2. **Maintenance preparation:** agree the window, operator and existing owner session.
+   Retain the current verified worker bundle and legacy frontend rollback; record
+   deployed app revision and immutable old/new worker IDs privately. The authorized
+   operator provisions the existing Sentry DSN through secret management, without
+   printing/copying credentials into this chat, and verifies the established recipient
+   and all four monitor routes. Preserve files/sandbox off and existing grants.
+3. **Backend first:** with deployment approval, use the normal reviewed deployment
+   process to install the new backend health endpoint with admission paused and
+   history still enabled. Do not run monitor or updater drain checks against the
+   old backend. Confirm the token-authenticated three-boolean health contract through
+   the private bridge. Let existing work complete, or have its owner explicitly Stop;
+   verify drained before stopping the worker. If an expired job blocks drain, stop
+   here for an approved recovery action; do not bypass the guard or erase job rows.
+4. **Worker and monitoring:** follow the repeatable update procedure above using the
+   reviewed complete bundle. Keep both workers stopped until TLS/token preflight passes.
+   Start only production, verify actual container and unit, then enable the monitor
+   timer after DSN/routing is ready. Check all four received healthy check-ins. Restore
+   admission through the approved backend configuration process only after readiness;
+   recheck after that backend recreation and sign in again if required.
+5. **Owner workflow acceptance:** use an existing owner at the normal production URL.
+   Ask a small dated reporting question and compare its figures/coverage to the existing
+   dashboard. During a sufficiently long investigation enqueue a follow-up, edit it
+   before consumption and confirm the edited text executes once in order (an already
+   taken entry must reject editing). Stop running work and verify terminal cancellation
+   and no later answer publication. Use an explicitly approved bounded failure case
+   for Retry, verify a new request in the same thread and no automatic replay. Refresh
+   and reopen history. Confirm no dashboard is saved before an explicit click; save
+   a governed query-only draft and verify it reloads through current permissions.
+   Ask one supported public-research question and verify public HTTPS source/date links
+   survive refresh. Record pass/fail, timestamp and private evidence references for
+   each behaviour; do not paste prompts/business payloads into operational alerts.
+6. **Notification acceptance:** with explicit external-notification approval, agree
+   the recipient is ready for rehearsal. Verify failure and recovery for each monitor
+   using controlled check-ins clearly recorded as a notification rehearsal; this proves
+   delivery/routing, not real outage detection. Also exercise a real failed bridge
+   probe during the approved maintenance outage and its recovery. With the timer
+   deliberately stopped and monitors unmuted, observe a missed check-in after the
+   configured margin, restart the timer and observe recovery at the recipient. Record
+   actual received events, not merely HTTP acceptance. Keep routine maintenance muted
+   except during these agreed delivery tests, and finish with the timer active and
+   all monitors unmuted/healthy. A failed test leaves acceptance open.
+7. **Maintenance rehearsal:** pause admission again, drain, stop and roll back using
+   the retained previous bundle with the new updater. Verify readiness/monitoring and
+   the immutable image ID, then repeat the guarded sequence to restore the candidate.
+   Perform staged certificate renewal and matching CA replacement as described above;
+   verify the served certificate fingerprint/expiry and token readiness. Rehearse
+   restoring both old certificate/key and old CA while paused/stopped, then restore
+   the chosen accepted pair. Never run mixed trust roots or skip TLS verification.
+   Leave admission paused/workers stopped on any failed readiness check; resume only
+   after the final worker, bridge, monitor and approved reporting checks pass.
+8. **Close evidence:** record the actual final app/image/certificate identities, timer
+   state, recipient delivery and each owner acceptance result. Keep the previous bundle,
+   backups and legacy rollback. Provider-bill reconciliation remains blocked on real
+   billing evidence; synthetic budget tests cannot close it. Manager mapping, sensitive
+   files, retention and customer-balance scope remain human decisions.
+
+Publication approval alone authorizes none of the deployment, service operations,
+production dashboard mutations, notification tests or maintenance steps above.
