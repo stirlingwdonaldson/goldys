@@ -67,11 +67,10 @@ latest job ID. Authorized job reads include the original admission prompt and de
 messages, never native snapshots. Live/demo frontend adapters exist; the current Ask
 drawer has not yet switched to them.
 
-An additive Investigations drawer is available only in frontend builds with
-`NEXT_PUBLIC_WORKSPACE_PREVIEW=true` (default off). It reconnects using saved job IDs,
+The existing Ask Goldy’s drawer uses Pi in builds with
+`NEXT_PUBLIC_WORKSPACE_ENABLED=true` (or the synthetic-only `NEXT_PUBLIC_WORKSPACE_PREVIEW=true`). It reconnects using saved job IDs,
 polls durable status, edits pending follow-ups and sends explicit Stop/Retry commands.
-It does not enable the backend, worker, sandbox or owner pilot. The legacy Ask button
-remains available; private file upload, extraction, Keep, deletion and artifact download are available in the preview. Validated dashboard drafts now survive native
+It does not enable the backend, worker, sandbox or owner pilot. Default-off builds retain legacy Ask; private file upload, extraction, Keep, deletion and artifact download are available in the preview. Validated dashboard drafts now survive native
 checkpoints and render an explicit user-confirmed query-only Save action through the
 existing live/demo dashboard APIs. The worker never saves dashboards itself.
 
@@ -101,3 +100,11 @@ registered tool name (V119). Publication verifies both native tool-result detail
 and model-visible text, and rejects evidence borrowed from another job. Unchanged
 committed entries can survive an explicit next attempt. Old unbound entries remain
 unknown; the binding does not authorize their content or relax policy invalidation.
+
+## Existing-account production rollout
+
+[Production setup](../ops/pi-production/README.md) wires the existing domain,
+Spring sessions and database to this worker through a private TLS/SSH bridge.
+The separate production service conflicts with the preview worker, uses a
+dedicated token and CA, and disables file/sandbox tools pending policy acceptance.
+Deployment is an operator action; preparation does not activate production.

@@ -42,7 +42,7 @@ test("legacy history withholds revoked text and provides a route back", async ({
 });
 
 test("chat retains exchanges, collapses notes and starts a new thread only on request", async ({ page }) => {
-  test.skip(process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW === "true", "The preview replaces this legacy entry point; workspace.spec.ts verifies Pi.");
+  test.skip((process.env.NEXT_PUBLIC_WORKSPACE_ENABLED === "true" || process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW === "true"), "The preview replaces this legacy entry point; workspace.spec.ts verifies Pi.");
   const requests: { threadId: string; message: string }[] = [];
   await page.addInitScript(() => localStorage.setItem("goldys-demo-mode", "false"));
   await page.route("**/monitoring**", route => route.fulfill({ status: 204 }));

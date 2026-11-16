@@ -1,17 +1,28 @@
 # Pi workspace rollout and rollback preparation
 
-**Not production-ready.** A private synthetic pilot now has separate [preview operations](../../ops/pi-preview/README.md). This runbook governs production activation; it is not
+**Production activation has not been performed or verified.** A private synthetic pilot now has separate [preview operations](../../ops/pi-preview/README.md). This runbook governs production activation; it is not
 approval to provision infrastructure, access production, push, merge or deploy.
 The [implementation record](../design/pi-workspace-implementation-2026-11-15.md)
 contains observed verification. The [accepted architecture](../decisions/0002-pi-agent-workspace.md)
 and [proposal acceptance table](../design/ask-goldys-pi-workspace-proposal-2026-11-15.md#verification-plan-and-release-gates)
 remain the release gates.
 
+## Existing-account deployment preparation
+
+The [production setup](../../ops/pi-production/README.md) supplies the same-domain
+frontend/backend flags, private TLS bridge, persistent SSH tunnel, production worker
+unit, token readiness check and release packaging. Reporting uses existing accounts;
+production files/analysis stay off. This supersedes the preview-only wiring notes,
+not the remaining acceptance gates. The operator must complete setup before expecting
+a normal app redeploy to connect the separate worker.
+
 ## Activation and admission controls
 
 | Setting | Default | Meaning |
 |---|---|---|
 | `app.workspace.enabled` | Absent / off | Registers workspace browser and private worker endpoints only when explicitly true |
+| `NEXT_PUBLIC_WORKSPACE_ENABLED` | Absent / off | Builds the Pi-backed Ask entry point for the existing website |
+| `app.workspace.files-enabled` | Off in production | Keeps unresolved production file handling disabled independently of reporting |
 | `NEXT_PUBLIC_WORKSPACE_PREVIEW` | Absent / off | Routes Ask Goldy’s to the Pi drawer only when explicitly true |
 | `app.workspace.accepting-jobs` | True | When false, rejects new investigations and new follow-ups while leaving enabled workspace endpoints available |
 
@@ -102,6 +113,44 @@ Docker socket, and fails on high/critical findings. Database-download or scan fa
 is a failed check, never an empty vulnerability result. The [dated local scan](pi-worker-image-scan-2026-11-16.md) records zero high/critical
 and 27 remaining lower/unknown-severity findings, without accepting them. Current
 scans and the separate-VM deployment rehearsal remain release gates. Updating the pinned base requires repeating the build and acceptance checks.
+
+## Same-domain production preparation — 16 November 2026
+
+The production profile now connects the existing login/session and user ownership
+to Pi. A shared activation flag selects the Pi drawer at build time and enables
+Spring endpoints. Files are disabled both in the browser and Spring; the production
+worker has no sandbox mounts. The bridge and worker installer are in
+[`ops/pi-production`](../../ops/pi-production/README.md). Activation needs its
+one-time setup as well as the normal app rebuild; no production configuration or
+service was changed while preparing this release.
+
+Local verification:
+
+- Frontend typecheck, lint and production-mode build passed. All 848 unit tests
+  passed: 826 in the isolated full run plus 22 in a rerun after restoring a missing
+  repository fixture to that test copy. Two production-mode browser fixtures passed;
+  the legacy composer fixture was intentionally skipped. These check one Ask entry,
+  no preview banner/upload, shortcuts, queue editing, Stop, reload and revoked history.
+- Existing-password/session ownership, CSRF, signed-out and cross-account denial,
+  disabled files and token-only non-mutating readiness have PostgreSQL integration
+  coverage. The full backend result is recorded in the implementation continuation.
+- Worker typecheck, 20 tests, build and no-configuration container smoke passed.
+  Five deployment contract tests, shell syntax and systemd unit validation passed.
+- The built private proxy passed a real, verified-TLS isolated smoke test with its
+  read-only filesystem, unprivileged user and memory limit; denied paths/tokens
+  failed as expected. Worker and patched proxy image scans found zero HIGH/CRITICAL
+  vulnerabilities. Lower-severity findings are not accepted by this result.
+- Ripwire's working-tree comparison against `0f34727d` reported 28 findings,
+  including four gating clone groups (constructor/controller idioms and MockMvc
+  authentication/readiness tests). This static check is **not clean**. Its other
+  findings include the existing egress logic moved under a callable function and
+  framework-dispatched test/HTTP methods labelled unused. Do not present it as a
+  passed release gate or remove explicit boundary tests merely to suppress clones.
+
+Remote CI and production-account/data acceptance remain unexecuted. The synthetic
+preview stays separate and running until the operator deliberately switches the
+analysis VM to the production worker. Deferred manager and file policies remain
+out of the enabled core scope.
 
 ## Production evidence still requiring acceptance
 

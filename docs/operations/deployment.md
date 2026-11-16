@@ -46,6 +46,15 @@ This builds and runs the full stack — `frontend` (published on `${PORT:-3000}`
 `product-classify` sidecars. Only `frontend` is reachable from the host; it proxies
 `/api` to `backend` over the internal network.
 
+## Replace Ask Goldy's with Pi
+
+Follow the [existing-account Pi rollout](../../ops/pi-production/README.md) once
+before enabling `APP_WORKSPACE_ENABLED=true`. The same flag configures the backend
+and frontend build; the existing login, database and public domain remain in use.
+The `pi` Compose profile adds a loopback-only TLS worker bridge. A separate persistent
+SSH tunnel connects the analysis VM, so no public edge changes are required.
+Files/sandbox tools remain disabled pending their separate production acceptance.
+
 ## Staging / second instance (a different port)
 
 To run an isolated second instance alongside production (e.g. to preview a

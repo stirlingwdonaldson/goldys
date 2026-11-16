@@ -44,6 +44,14 @@ public class WorkspaceWorkerController {
     }
   }
 
+  /** Readiness check authenticates the worker without claiming or changing any job. */
+  @GetMapping("/ready")
+  java.util.Map<String, String> ready(
+      @RequestHeader(value = "X-Workspace-Token", required = false) String token) {
+    authenticate(token);
+    return java.util.Map.of("status", "UP");
+  }
+
   record Lease(@NotNull UUID fence) {}
 
   record Publication(

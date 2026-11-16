@@ -20,6 +20,7 @@ class WorkspaceWorkerControllerTest {
             mock(WorkspaceDatasets.class),
             "synthetic-token-at-least-32-characters");
     UUID id = UUID.randomUUID();
+    assertThatThrownBy(() -> controller.ready(null)).isInstanceOf(AccessDeniedException.class);
     assertThatThrownBy(() -> controller.claim(null)).isInstanceOf(AccessDeniedException.class);
     assertThatThrownBy(() -> controller.claim("wrong")).isInstanceOf(AccessDeniedException.class);
     assertThatThrownBy(() -> controller.heartbeat(null, id, null))

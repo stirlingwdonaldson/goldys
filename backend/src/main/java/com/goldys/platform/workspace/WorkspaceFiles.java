@@ -27,19 +27,28 @@ public class WorkspaceFiles {
   private final WorkspaceAuthorization authorization;
   private final PermissionService permissions;
   private final JdbcTemplate jdbc;
+  private final boolean enabled;
 
   public WorkspaceFiles(
       WorkspaceJobs jobs,
       WorkspaceAuthorization authorization,
       PermissionService permissions,
-      JdbcTemplate jdbc) {
+      JdbcTemplate jdbc,
+      @org.springframework.beans.factory.annotation.Value("${app.workspace.files-enabled:true}")
+          boolean enabled) {
     this.jobs = jobs;
     this.authorization = authorization;
     this.permissions = permissions;
     this.jdbc = jdbc;
+    this.enabled = enabled;
+  }
+
+  private void requireEnabled() {
+    if (!enabled) throw new WorkspaceConflict("Private files are not enabled for this deployment");
   }
 
   private void authorize(UUID owner, UUID job, PermissionAction action) {
+    requireEnabled();
     jobs.read(owner, job);
     permissions.require(
         authorization.role(owner), new ResourceKey("workspace.private-files"), action);
@@ -85,6 +94,7 @@ public class WorkspaceFiles {
 
   @Transactional
   public List<FileBytes> inputs(UUID job, UUID fence, List<UUID> selected) {
+    requireEnabled();
     var role = jobs.authorizedRole(job, fence);
     permissions.require(role, new ResourceKey("workspace.private-files"), PermissionAction.READ);
     permissions.require(role, new ResourceKey("labour.wages"), PermissionAction.READ);
@@ -118,6 +128,7 @@ public class WorkspaceFiles {
 
   @Transactional
   public List<FileInfo> workerList(UUID job, UUID fence) {
+    requireEnabled();
     var role = jobs.authorizedRole(job, fence);
     permissions.require(role, new ResourceKey("workspace.private-files"), PermissionAction.READ);
     permissions.require(role, new ResourceKey("labour.wages"), PermissionAction.READ);
@@ -128,6 +139,7 @@ public class WorkspaceFiles {
 
   @Transactional
   public FileInfo artifact(UUID job, UUID fence, String name, byte[] bytes) {
+    requireEnabled();
     var role = jobs.authorizedRole(job, fence);
     permissions.require(role, new ResourceKey("workspace.private-files"), PermissionAction.WRITE);
     FileInfo info = store(job, name, bytes, "ARTIFACT");

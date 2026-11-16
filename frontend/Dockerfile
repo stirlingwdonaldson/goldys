@@ -23,6 +23,12 @@ ENV BACKEND_ORIGIN=$BACKEND_ORIGIN
 ARG NEXT_PUBLIC_DEMO_MODE=false
 ENV NEXT_PUBLIC_DEMO_MODE=$NEXT_PUBLIC_DEMO_MODE
 
+# Pi replaces Ask inside the same authenticated website; the synthetic banner is separate.
+ARG NEXT_PUBLIC_WORKSPACE_ENABLED=false
+ARG NEXT_PUBLIC_WORKSPACE_FILES_ENABLED=false
+ENV NEXT_PUBLIC_WORKSPACE_ENABLED=$NEXT_PUBLIC_WORKSPACE_ENABLED \
+    NEXT_PUBLIC_WORKSPACE_FILES_ENABLED=$NEXT_PUBLIC_WORKSPACE_FILES_ENABLED
+
 # Sentry. All optional: with no DSN the SDK stays off, and with no auth token the build skips
 # source map upload. The DSN/environment/release are inlined into the browser bundle.
 ARG NEXT_PUBLIC_SENTRY_DSN=

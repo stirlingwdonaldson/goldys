@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import type { WorkspaceFollowUp, WorkspaceJob } from "../../lib/api/workspace";
 
-test.skip(process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW !== "true", "Build with the opt-in workspace preview flag for this fixture flow.");
+test.skip(process.env.NEXT_PUBLIC_WORKSPACE_ENABLED !== "true" && process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW !== "true", "Build with the opt-in workspace preview flag for this fixture flow.");
 
 test("workspace survives reload, edits queued input, stops server work and hides revoked history", async ({ page }) => {
   let job: WorkspaceJob | null = null;
@@ -48,6 +48,9 @@ test("workspace survives reload, edits queued input, stops server work and hides
     return route.fulfill({ json: [] });
   });
   await page.goto("/settings?scope=weekly");
+  if (process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW !== "true") {
+    await expect(page.getByText(/Isolated Pi preview/)).toHaveCount(0);
+  }
   await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)", exact: true })).toHaveCount(1);
   await page.keyboard.press("Control+j");
@@ -64,6 +67,9 @@ test("workspace survives reload, edits queued input, stops server work and hides
   await page.getByLabel("Reporting question", { exact: true }).fill("Compare weekly sales");
   await page.getByRole("button", { name: "Send question", exact: true }).click();
   await expect(page.getByText("Saved fixture finding", { exact: true })).toBeVisible();
+  if (process.env.NEXT_PUBLIC_WORKSPACE_FILES_ENABLED === "false") {
+    await expect(page.getByLabel("Upload a file")).toHaveCount(0);
+  }
   await expect(page.getByText("Missing source coverage; no total is available.")).toBeVisible();
   await page.getByLabel("Queue a follow-up", { exact: true }).fill("Compare food sales");
   await page.getByRole("button", { name: "Queue message", exact: true }).click();

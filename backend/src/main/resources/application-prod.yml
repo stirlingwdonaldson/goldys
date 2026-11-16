@@ -19,3 +19,8 @@ server:
 logging:
   level:
     com.goldys.platform: INFO
+
+# Owner reporting can ship independently of unresolved file/retention policy.
+app:
+  workspace:
+    files-enabled: ${APP_WORKSPACE_FILES_ENABLED:false}

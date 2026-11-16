@@ -96,6 +96,11 @@ services:
       context: ./backend
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      # One switch enables the backend and builds the existing Ask entry point for Pi.
+      APP_WORKSPACE_ENABLED: ${APP_WORKSPACE_ENABLED:-false}
+      APP_WORKSPACE_ACCEPTING_JOBS: ${APP_WORKSPACE_ACCEPTING_JOBS:-true}
+      APP_WORKSPACE_WORKER_TOKEN: ${APP_WORKSPACE_WORKER_TOKEN:-}
+      APP_WORKSPACE_FILES_ENABLED: ${APP_WORKSPACE_FILES_ENABLED:-false}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-goldys}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-goldys}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}
@@ -180,6 +185,30 @@ services:
       postgres:
         condition: service_healthy
 
+  # Private Pi service protocol only. The existing website/login is unchanged.
+  # COMPOSE_PROFILES=pi starts this bridge; it binds loopback and is reached over SSH.
+  pi-bridge:
+    profiles: ["pi"]
+    build:
+      context: ./ops/pi-production
+    image: goldys-pi-bridge:local
+    user: "101:101"
+    entrypoint: ["nginx", "-g", "daemon off;"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 32
+    mem_limit: 128m
+    cpus: 0.25
+    tmpfs: ["/tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777"]
+    volumes:
+      - ${PI_BRIDGE_TLS_DIR:-/etc/goldys-pi/tls}/server.crt:/etc/pi/server.crt:ro
+      - ${PI_BRIDGE_TLS_DIR:-/etc/goldys-pi/tls}/server.key:/etc/pi/server.key:ro
+    ports:
+      - "127.0.0.1:18444:8443"
+    restart: unless-stopped
+    depends_on: [backend]
+
   # Headed Chromium the owner signs in to GuestCenter with, through the app's live view. DevTools
   # is full control of the browser and its OpenTable session: no ports are published and only the
   # backend shares its network. The profile volume holds a live OpenTable login: keep it out of
@@ -200,6 +229,8 @@ services:
       context: ./frontend
       args:
         # NEXT_PUBLIC_* values are inlined into the browser bundle at build time.
+        NEXT_PUBLIC_WORKSPACE_ENABLED: ${APP_WORKSPACE_ENABLED:-false}
+        NEXT_PUBLIC_WORKSPACE_FILES_ENABLED: ${APP_WORKSPACE_FILES_ENABLED:-false}
         NEXT_PUBLIC_SENTRY_DSN: ${SENTRY_FRONTEND_DSN:-}
         NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
         NEXT_PUBLIC_SENTRY_FEEDBACK: ${SENTRY_FEEDBACK:-false}

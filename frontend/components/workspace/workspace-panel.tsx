@@ -60,7 +60,7 @@ function InvestigationResult({ api, job, queue, commands }: { api: WorkspaceApi;
     </div>
     <p role="status" className="text-xs text-muted-foreground">{status}</p>
     <WorkspaceMessages job={job} />
-    <WorkspaceFiles api={api} jobId={job.id} />
+    {process.env.NEXT_PUBLIC_WORKSPACE_FILES_ENABLED !== "false" ? <WorkspaceFiles api={api} jobId={job.id} /> : null}
     {(job.state === "INTERRUPTED" || job.state === "FAILED") ? <div className="space-y-2"><p className="text-sm text-muted-foreground">Retry starts a new attempt with the original question. Taken follow-ups are not replayed.</p><Button variant="outline" disabled={busy || uncertain} onClick={() => submit(job.prompt, true)}>Retry investigation</Button></div> : null}
     <WorkspaceQueue items={queue} busy={busy || uncertain}
       edit={(id, prompt, done) => action.mutate(() => api.editWorkspaceFollowUp(job.id, id, prompt), { onSuccess: done })}

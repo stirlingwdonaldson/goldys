@@ -844,3 +844,35 @@ The existing private preview is running. Sign-in still belongs to the isolated
 Spring backend on the main VM; production accounts/data are not connected.
 Unresolved manager/sensitive-file/retention decisions remain excluded from the
 synthetic owner pilot. No production rollout, push or merge was performed.
+
+
+### Existing production login/domain preparation — 16 November 2026
+
+The user's next requested state is Pi replacing Ask inside the normal production
+website with existing credentials. `ops/pi-production/README.md` now provides the
+one-time activation procedure. It preserves the existing Spring accounts/session,
+DB and public domain; a loopback-only TLS bridge and persistent reverse SSH tunnel
+connect the existing separate analysis VM. The production worker is installed with
+an immutable image ID and a dedicated service token, and conflicts with the preview
+worker. No production setup command has been run.
+
+The shared Compose activation flag enables Spring and the Pi frontend build without
+a synthetic banner. Files are disabled independently in Spring and the browser;
+no script sandbox is available to the production worker. Existing manager grants,
+private history and conservative legacy-history restrictions remain unchanged.
+A token-authenticated readiness endpoint checks connectivity without claiming work.
+PostgreSQL integration tests exercise the ordinary password login through Pi job
+ownership, CSRF enforcement, signed-out/cross-account denial and disabled files.
+
+Local frontend, browser, worker, deployment-contract and private-TLS smoke evidence
+is in the [rollout runbook](../operations/pi-workspace-rollout.md). Production setup,
+remote CI and owner acceptance with actual accounts/data remain unexecuted. The
+private synthetic preview remains running. The branch is prepared for review and
+user-controlled publication; do not infer push, merge or deployment authorization.
+
+Final backend verification passed: `./gradlew test spotlessCheck` completed in
+6m 6s; 2070 tests, 0 failures, 0 errors and 5 skipped. The full suite needed
+a 2 GiB test heap instead of Gradle's 512 MiB default. Its reservation fixture
+cleanup now acquires locks in the scheduled projector's resolved-to-canonical
+order, fixing the deadlock exposed by the earlier run. These are test-runtime
+changes, not production JVM or database settings.
