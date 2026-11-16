@@ -829,3 +829,18 @@ Local implementation commits for this continuation: `59f3b6d0` (analysis runtime
 and `3a047e98` (Spring/Pi/frontend integration). Operations/evidence are committed
 separately. No commit was pushed. The last fetched main remains `fca0b930`; local
 migrations V121–V123 do not collide with its V113 maximum.
+
+### Ask entry-point completion — 16 November 2026
+
+The interrupted UI correction is now complete and verified: the preview's single
+Ask Goldy's button, Ctrl/Cmd+J and command-palette action open Pi, while the
+activation-off build retains legacy Ask. Pre-stream legacy errors accept JSON.
+Frontend verification passed (848 tests, type checking, lint, build), as did two
+preview browser fixtures and a fresh live A$9,100 reporting answer with persisted
+history after reload. See the latest section of the
+[preview evidence](../operations/pi-preview-evidence-2026-11-16.md).
+
+The existing private preview is running. Sign-in still belongs to the isolated
+Spring backend on the main VM; production accounts/data are not connected.
+Unresolved manager/sensitive-file/retention decisions remain excluded from the
+synthetic owner pilot. No production rollout, push or merge was performed.

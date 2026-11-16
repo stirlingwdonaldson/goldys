@@ -50,7 +50,11 @@ Keep that terminal open and visit **http://127.0.0.1:3117**. On the development 
 read `/tmp/goldys-pi-preview/test-account.txt` yourself for the dedicated account's
 password; email is `pi-owner@example.test`. For example, use a second SSH terminal
 and `cat /tmp/goldys-pi-preview/test-account.txt`. Do not paste it into chat.
-Choose **Investigations**. The legacy Ask button is intentionally separate.
+Choose **Ask Goldy’s**. In the preview, this opens the Pi investigation panel; the
+keyboard shortcut and command-palette action use the same panel. Legacy chat history
+remains available. Login and permissions belong to the isolated Spring backend on
+the main VM, using the synthetic preview account; production accounts are not copied
+or connected. The analysis VM runs the private Pi worker and sandbox only.
 
 This is a live Spring/Pi/DeepSeek integration using synthetic sales for 2–15 November
 2026. It has separate loopback ports, PostgreSQL container/volume and TLS identity.

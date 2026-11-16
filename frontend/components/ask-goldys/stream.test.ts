@@ -30,6 +30,17 @@ describe("reporting contracts", () => {
 });
 
 describe("streamChat", () => {
+  it("accepts JSON errors before a stream starts", async () => {
+    const fetch = vi.fn(async () => new Response(JSON.stringify({ code: "NOT_CONFIGURED", message: "Unavailable" }),
+      { status: 503, headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetch);
+    await expect(streamChat("thread", "question", { onText: vi.fn(), onAnswer: vi.fn(), onError: vi.fn() }))
+      .rejects.toMatchObject({ code: "NOT_CONFIGURED", status: 503 });
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+      headers: expect.objectContaining({ Accept: "text/event-stream, application/json" }),
+    }));
+  });
+
   it("accepts the backend-serialized metric discovery and weekly sales answer", async () => {
     const handlers = { onText: vi.fn(), onAnswer: vi.fn(), onError: vi.fn() };
     vi.stubGlobal("fetch", vi.fn(async () => new Response(

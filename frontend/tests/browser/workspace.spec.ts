@@ -49,7 +49,17 @@ test("workspace survives reload, edits queued input, stops server work and hides
   });
   await page.goto("/settings?scope=weekly");
   await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)" })).toBeVisible();
-  await page.getByRole("button", { name: "Investigations", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)", exact: true })).toHaveCount(1);
+  await page.keyboard.press("Control+j");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Control+j");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.keyboard.press("Control+k");
+  await page.getByRole("option", { name: /Ask Goldy's a question/ }).click();
+  await expect(page.getByLabel("Reporting question", { exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByRole("button", { name: "Ask Goldy's (⌘J)", exact: true }).click();
   await expect(page).toHaveURL(/scope=weekly.*investigation=new/);
   await page.getByLabel("Reporting question", { exact: true }).fill("Compare weekly sales");
   await page.getByRole("button", { name: "Send question", exact: true }).click();
@@ -66,7 +76,7 @@ test("workspace survives reload, edits queued input, stops server work and hides
   const deepLink = page.url();
   await page.goBack();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Investigations", exact: true })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)", exact: true })).toBeFocused();
   expect(stops).toBe(0);
   await page.goto(deepLink);
   await expect(page.getByText("Compare beverage sales", { exact: true })).toBeVisible();
@@ -100,5 +110,5 @@ test("workspace survives reload, edits queued input, stops server work and hides
   await expect(page.getByText("Saved fixture finding", { exact: true })).toHaveCount(0);
   seniority = "MANAGER";
   await page.goto("/settings");
-  await expect(page.getByRole("button", { name: "Investigations", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)", exact: true })).toHaveCount(0);
 });

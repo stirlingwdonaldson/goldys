@@ -66,3 +66,37 @@ browser or SSH client.
 After this correction, the full backend suite passed: 2,068 tests, five skipped,
 zero failures/errors; Spotless and the executable JAR build passed. Ripwire on this
 increment reported no gating quality findings and an unchanged method signature.
+
+## Ask entry-point completion
+
+The preview now routes the existing Ask Goldy's header button, Ctrl/Cmd+J and
+command-palette action to Pi. It no longer displays a competing Investigations
+button. The default-off build retains legacy Ask, and legacy history remains
+available. Legacy streaming requests accept JSON error responses as well as SSE,
+so pre-stream failures retain their actual error code.
+
+Verification for this correction:
+
+- Frontend type checking, lint, all 848 tests in 147 files, and the live-preview
+  production build passed. `TMPDIR=/tmp` avoids the expired agent temporary path
+  that prevented the previous test run from executing tests.
+- Two preview browser fixtures passed: legacy history authorization and the Pi
+  workflow (single entry point, keyboard and palette navigation, reload, queue
+  edits/removal, Stop, explicit retry and revocation). The legacy-engine composer
+  fixture is explicitly skipped in Pi builds because its entry point is replaced;
+  it remains enabled in default builds.
+- The actual private website signed in with its synthetic account and submitted
+  a fresh question through Pi, returning A$9,100 for 2–8 November. The completed
+  answer survived reload; no browser JavaScript errors were observed. A typo in
+  the verification script occurred after the live answer assertion; a corrected
+  read-only recovery check verified the saved answer without another model call.
+- The preview web/backend/tunnel and analysis worker/broker were active. Only
+  the preview web process was rebuilt/restarted. No production service changed.
+- Ripwire's frontend delta against the prior local commit reported zero quality
+  regressions; WorkspaceDrawer's contract was unchanged. Its name-based test gate
+  still reports 26 untested impacted symbols (25 in the blast radius); browser and
+  unit evidence above does not make that static gate clean.
+
+Backend/worker/sandbox code was unchanged in this correction; their earlier live
+acceptance and test evidence was not rerun. The outstanding production limitations
+in the preview operating guide remain applicable. Nothing was pushed or merged.

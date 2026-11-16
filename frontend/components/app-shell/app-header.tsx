@@ -59,8 +59,9 @@ export function AppHeader() {
       </Breadcrumb>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <FreshnessChip />
-        <AskGoldysDrawer seniority={user?.seniority} />
-        {process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW === "true" ? <WorkspaceDrawer seniority={user?.seniority} /> : null}
+        {process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW === "true"
+          ? <WorkspaceDrawer seniority={user?.seniority} />
+          : <AskGoldysDrawer seniority={user?.seniority} />}
       </div>
     </header>
   );

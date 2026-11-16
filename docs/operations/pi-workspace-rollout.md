@@ -12,7 +12,7 @@ remain the release gates.
 | Setting | Default | Meaning |
 |---|---|---|
 | `app.workspace.enabled` | Absent / off | Registers workspace browser and private worker endpoints only when explicitly true |
-| `NEXT_PUBLIC_WORKSPACE_PREVIEW` | Absent / off | Builds the additive Investigations drawer only when explicitly true |
+| `NEXT_PUBLIC_WORKSPACE_PREVIEW` | Absent / off | Routes Ask Goldy’s to the Pi drawer only when explicitly true |
 | `app.workspace.accepting-jobs` | True | When false, rejects new investigations and new follow-ups while leaving enabled workspace endpoints available |
 
 The admission switch does not enable either activation flag. It is startup configuration,
@@ -48,10 +48,13 @@ silently send the request to legacy Ask.
    entire application database just to switch execution engines. Resume admission only
    after the defect's regression and the outstanding release gates are accepted.
 
-The current implementation has no generated-code sandbox or artifact store to drain.
-Before those capabilities ship, extend this procedure with independently observed
-sandbox termination, orphan cleanup, artifact revocation and byte-store reconciliation.
-Do not present the job-state checks above as containment or restore evidence.
+The synthetic preview now includes generated-code sandboxes and private file storage.
+After stopping work, verify that the analysis broker has no labelled active or orphan
+containers, and that private file reads still enforce ownership and current permissions.
+File bytes and manifests are stored transactionally in PostgreSQL; preserve both with
+the native snapshots when backing up. The preview containment and restore evidence is
+recorded separately; production termination and restore acceptance still require the
+approved deployment environment.
 
 ## Historical content during transition
 
