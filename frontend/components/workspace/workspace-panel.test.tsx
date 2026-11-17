@@ -27,6 +27,17 @@ function mount(api: WorkspaceApi, id: string | null = job.id, existing?: QueryCl
 }
 
 describe("persisted workspace", () => {
+  it("keeps Shift+Enter and composition local, and sends with Enter", async () => {
+    const api = adapter();
+    mount(api, null);
+    const input = screen.getByLabelText("Reporting question");
+    fireEvent.change(input, { target: { value: "Weekly sales" } });
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    expect(api.submitWorkspaceJob).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() => expect(api.submitWorkspaceJob).toHaveBeenCalledTimes(1));
+  });
   it("reconnects through reads and never stops or replays work on unmount", async () => {
     const api = adapter();
     const view = mount(api);
@@ -49,7 +60,7 @@ describe("persisted workspace", () => {
     await act(async () => resolve(job));
     await screen.findByText("Saved private output");
   });
-  it("does not reopen the drawer when a send finishes after unmount", async () => {
+  it("does not navigate back when a send finishes after unmount", async () => {
     const api = adapter();
     let resolve!: (value: WorkspaceJob) => void;
     vi.mocked(api.submitWorkspaceJob).mockReturnValue(new Promise(done => { resolve = done; }));

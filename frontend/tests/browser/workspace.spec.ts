@@ -51,10 +51,10 @@ test("workspace survives reload, edits queued input, stops server work and hides
   if (process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW !== "true") {
     await expect(page.getByText(/Isolated Pi preview/)).toHaveCount(0);
   }
-  await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "Ask Goldy's (⌘J)" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ask Goldy's (⌘J)", exact: true })).toHaveCount(1);
   await page.keyboard.press("Control+j");
-  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page).toHaveURL(/\/ask-goldys$/);
   await page.keyboard.press("Control+j");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.keyboard.press("Control+k");
@@ -62,8 +62,9 @@ test("workspace survives reload, edits queued input, stops server work and hides
   await expect(page.getByLabel("Reporting question", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page.getByRole("button", { name: "Ask Goldy's (⌘J)", exact: true }).click();
-  await expect(page).toHaveURL(/scope=weekly.*investigation=new/);
+  await page.getByRole("link", { name: "Ask Goldy's (⌘J)", exact: true }).click();
+  await expect(page).toHaveURL(/\/ask-goldys$/);
+  await page.screenshot({ path: "/tmp/goldys-ask-empty-desktop.png" });
   await page.getByLabel("Reporting question", { exact: true }).fill("Compare weekly sales");
   await page.getByRole("button", { name: "Send question", exact: true }).click();
   await expect(page.getByText("Saved fixture finding", { exact: true })).toBeVisible();
@@ -82,14 +83,14 @@ test("workspace survives reload, edits queued input, stops server work and hides
   const deepLink = page.url();
   await page.goBack();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)", exact: true })).toBeFocused();
+  await expect(page).toHaveURL(/\/ask-goldys$/);
   expect(stops).toBe(0);
   await page.goto(deepLink);
   await expect(page.getByText("Compare beverage sales", { exact: true })).toBeVisible();
   expect(submissions).toHaveLength(1);
   await expect(page.getByRole("link", { name: "https://www.bom.gov.au/", exact: true })).toHaveAttribute("referrerpolicy", "no-referrer");
   await expect(page.getByText(/Public fixture source retrieved 2026-11-16/)).toBeVisible();
-  await page.keyboard.press("Escape");
+  await page.goto("/settings?scope=weekly");
   await expect(page).toHaveURL(/settings\?scope=weekly$/);
   expect(stops).toBe(0);
   await page.goto(deepLink);
@@ -111,12 +112,17 @@ test("workspace survives reload, edits queued input, stops server work and hides
   expect(submissions[1].requestId).not.toBe(submissions[0].requestId);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByText("Saved fixture finding", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Queue message", exact: true })).toBeInViewport({ ratio: 1 });
   await page.screenshot({ path: "/tmp/goldys-workspace-narrow.png" });
+  await expect(page.getByLabel("Queue a follow-up", { exact: true })).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   denied = true;
   await page.reload();
   await expect(page.getByText("You don't have access to this investigation", { exact: true })).toBeVisible();
   await expect(page.getByText("Saved fixture finding", { exact: true })).toHaveCount(0);
   seniority = "MANAGER";
   await page.goto("/settings");
-  await expect(page.getByRole("button", { name: "Ask Goldy's (⌘J)", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Ask Goldy's (⌘J)", exact: true })).toHaveCount(0);
+  await page.goto("/ask-goldys");
+  await expect(page.getByText("You don't have access to Ask Goldy's", { exact: true })).toBeVisible();
 });

@@ -8,6 +8,7 @@ import { DemoBanner } from "@/components/demo-banner";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
 import { CommandPaletteProvider } from "./command-palette";
+import { cn } from "@/lib/utils";
 import { ShellStatusProvider } from "./shell-status";
 
 interface AppShellProps {
@@ -22,15 +23,15 @@ export function AppShell({ children, defaultSidebarOpen = true }: AppShellProps)
   return (
     <ShellStatusProvider>
       <CommandPaletteProvider>
-        <SidebarProvider defaultOpen={defaultSidebarOpen}>
+        <SidebarProvider defaultOpen={defaultSidebarOpen} className={pathname === "/ask-goldys" ? "min-h-0 flex-1 overflow-hidden" : undefined}>
           <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-background focus:p-3" onClick={(event) => { event.preventDefault(); document.getElementById("main-content")?.focus(); }}>Skip to main content</a>
           <AppSidebar />
           {/* Inset variant: the page sits in a raised panel on the sidebar's canvas. */}
-          <SidebarInset className="min-w-0 overflow-hidden">
+          <SidebarInset className={cn("min-w-0 overflow-hidden", pathname === "/ask-goldys" && "min-h-0")}>
             <DemoBanner />
             {process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW === "true" ? <p className="bg-status-info-soft px-6 py-2 text-xs text-status-info">Isolated Pi preview · synthetic data only · use synthetic files for testing</p> : null}
             <AppHeader />
-            <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col gap-6 p-4 md:px-8 md:py-7">
+            <div id="main-content" tabIndex={-1} className={cn("flex flex-1 flex-col", pathname === "/ask-goldys" ? "min-h-0 overflow-hidden" : "gap-6 p-4 md:px-8 md:py-7")}>
               {/* Keying the boundary on the path remounts it per route, so a render
                   error on one screen clears when the user navigates to another. */}
               <ScreenErrorBoundary key={pathname}>{children}</ScreenErrorBoundary>

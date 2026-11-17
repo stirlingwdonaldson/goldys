@@ -15,7 +15,7 @@ import {
 import { NAV_GROUPS, SETTINGS_ITEM } from "@/lib/nav";
 import { isOwner } from "@/lib/roles";
 import { useCurrentUser } from "./current-user-provider";
-import { OPEN_ASK_EVENT } from "@/components/ask-goldys/ask-goldys-drawer";
+import { OPEN_ASK_EVENT } from "@/components/ask-goldys/ask-goldys-link";
 
 interface CommandPaletteValue {
   open: boolean;

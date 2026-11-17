@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { History, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerProvider, MessageScrollerViewport } from "@/components/ui/message-scroller";
 import { WorkspaceFiles } from "./workspace-files";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,11 +33,26 @@ export function WorkspacePanel({ api, jobId, select }: { api: WorkspaceApi; jobI
   if (denied) return <div className="space-y-4 p-6"><PermissionDenied subject="this investigation" message="Access has changed. Restricted history is unavailable." /><Button variant="outline" onClick={() => select(null)}>Start a new conversation</Button></div>;
   const unavailable = Boolean(jobId && (!job || !investigation.isFetchedAfterMount || !followUps.isFetchedAfterMount || investigation.error || followUps.error));
   return <div className="flex min-h-0 flex-1 flex-col">
-    <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
-      {jobId ? <InvestigationContent api={api} queries={queries} commands={commands} /> : <WorkspacePicker api={api} history={history} select={select} />}
+    <Collapsible className="shrink-0 border-b">
+      <CollapsibleTrigger asChild><Button variant="ghost" size="sm" className="m-2"><History aria-hidden="true" />Your investigations<ChevronDown aria-hidden="true" /></Button></CollapsibleTrigger>
+      <CollapsibleContent className="max-h-60 overflow-y-auto px-4 pb-4 md:px-6"><WorkspacePicker api={api} history={history} select={select} /></CollapsibleContent>
+    </Collapsible>
+    <MessageScrollerProvider autoScroll key={jobId ?? "new"}>
+    <MessageScroller className="flex-1">
+    <MessageScrollerViewport aria-label="Conversation">
+    <MessageScrollerContent className="mx-auto w-full max-w-3xl gap-6 px-4 py-8 md:px-6">
+      {jobId ? <InvestigationContent api={api} queries={queries} commands={commands} /> : <div className="my-auto space-y-6 py-10">
+        <div className="space-y-3"><h2 className="text-2xl font-semibold tracking-tight">What would you like to know?</h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">Sales, labour and the numbers behind your pub. Ask a question, then explore the detail.</p></div>
+        <div className="flex flex-wrap gap-2">{["What were sales last week?", "Compare sales for the last two weeks", "How much did we sell yesterday?"].map(prompt => <Button key={prompt} variant="outline" className="h-auto whitespace-normal py-3 text-left" onClick={() => { commands.setQuestion(prompt); document.getElementById("workspace-question")?.focus(); }}>{prompt}</Button>)}</div>
+      </div>}
       {commands.action.error ? <InlineError className={commands.action.error.code === "WORKSPACE_CONFLICT" ? "bg-status-conflict-soft text-status-conflict" : undefined}>{commands.action.error.message} Refresh to see the current queue before trying again.</InlineError> : null}
       {commands.send.error ? <InlineError className={commands.send.error.code === "WORKSPACE_CONFLICT" ? "bg-status-conflict-soft text-status-conflict" : undefined}>{commands.uncertain ? "Delivery is uncertain. Retry sending the same message to check acceptance without duplicating it." : commands.send.error.message}</InlineError> : null}
-    </div>
+    </MessageScrollerContent>
+    </MessageScrollerViewport>
+    <MessageScrollerButton />
+    </MessageScroller>
+    </MessageScrollerProvider>
     <WorkspaceComposer commands={commands} working={isWorking(job)} disabled={unavailable} />
   </div>;
 }
@@ -50,7 +68,7 @@ function InvestigationResult({ api, job, queue, commands }: { api: WorkspaceApi;
   const { busy, uncertain, action, submit } = commands;
   const working = isWorking(job);
   let status = "Completed output is preserved. Findings may be incomplete; queued messages are cancelled.";
-  if (working) status = "Work continues if you close this panel. Follow-ups wait for the current turn to finish.";
+  if (working) status = "Work continues if you leave this page. Follow-ups wait for the current turn to finish.";
   if (job.state === "BUDGET_EXHAUSTED") status = "The next request would exceed the A$5 investigation charge reservation ceiling. Completed results remain available; no further model or search work ran.";
   if (job.state === "COMPLETED") status = "Saved investigation. Data qualifications remain part of each result.";
   return <>
