@@ -10,11 +10,11 @@ import type { WorkspaceJob } from "@/lib/api/workspace";
 
 export function WorkspaceMessages({ job }: { job: WorkspaceJob }) {
   return <section aria-label="Investigation history" className="space-y-6">
-    <div className="space-y-1"><h3 className="text-xs font-medium text-muted-foreground">Investigation request</h3><p className="whitespace-pre-wrap break-words text-sm">{job.prompt}</p></div>
+    <div className="ml-auto max-w-full space-y-1 rounded-2xl bg-muted px-4 py-3 sm:max-w-xl"><h3 className="text-xs font-medium text-muted-foreground">Investigation request</h3><p className="whitespace-pre-wrap break-words text-sm">{job.prompt}</p></div>
     {job.messages.map(message => {
       const result = message.reporting;
       const widget = result ? parseWidgetSpec(result.widget) : null;
-      return <article key={message.id} className="space-y-3">
+      return <article key={message.id} className={message.role === "user" ? "ml-auto max-w-full space-y-3 rounded-2xl bg-muted px-4 py-3 sm:max-w-xl" : "min-w-0 space-y-3"}>
         <h3 className="text-xs font-medium text-muted-foreground">{message.role === "user" ? "You" : message.role === "tool" ? "Reporting result" : "Goldy’s"}</h3>
         {message.text ? <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{publicCitationText(message.text)}</p> : null}
         {message.draft ? <WorkspaceDraft draft={message.draft} /> : null}

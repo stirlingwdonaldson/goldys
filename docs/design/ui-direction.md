@@ -70,7 +70,7 @@ doesn't fit, collapse it:
 - **Header:** the breadcrumb drops the section crumb below `md` and
   truncates the page name. The collection chip shows "3/4 runs completed" below `xl`
   and the full sentence at `xl`, with the full text in its tooltip. Ask
-  Goldy's is icon-only below `lg`.
+  Goldy's links to `/ask-goldys` and is icon-only below `lg`.
 - **Tables:** headers and cells never wrap. Use the shared `Table` primitive so
   wide tables scroll inside their container. Keep cell metadata inline; put long
   descriptions and source detail outside the row or in an accessible popover.
@@ -138,6 +138,20 @@ values like `text-[13px]` or raw palette colours like `amber-700`.
   the action next to them.
 - **H10:** Metric definitions are a hover away, and Ask Goldy's is in the
   header and ⌘K.
+
+## Ask Goldy's
+
+Ask Goldy's lives at `/ask-goldys`, reached from the sidebar, header, command
+palette or ⌘J. The page uses a viewport-height conversation with a centred
+`max-w-3xl` reading column and bottom composer, built from shadcn controls and
+MessageScroller. User messages use muted bubbles; answers and their evidence
+stay on the page surface. Enter sends; Shift+Enter inserts a newline.
+
+The Pi feature flags still choose the workspace or legacy chat. Pi investigations
+remain URL-selected with `?investigation=<id>`, with saved investigations behind
+a Collapsible and New chat starting a fresh question. Leaving the page never
+stops server work. Legacy transcripts remain under Conversations. Owner-only
+access and visible denied, missing-data and uncertain-delivery states remain.
 
 ## Not yet done (needs backend or a decision)
 

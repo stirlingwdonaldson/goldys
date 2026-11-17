@@ -1,29 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowUp, MessageSquarePlus, Sparkles } from "lucide-react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useRef, useState } from "react";
+import { ArrowUp, MessageSquarePlus } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerProvider, MessageScrollerViewport } from "@/components/ui/message-scroller";
-import { isOwner } from "@/lib/roles";
 import { useApi } from "@/lib/demo-mode";
 import { useAskGoldys } from "./use-ask-goldys";
 import { ChatExchange } from "./chat-exchange";
 
-interface AskGoldysDrawerProps { seniority?: string }
-
-export const OPEN_ASK_EVENT = "goldys:open-ask";
 const SUGGESTIONS = [
   "What were sales last week?",
   "Show sales for the last 7 days",
   "How much did we sell yesterday?",
 ];
 
-/** Closing the sheet hides the chat; only New chat discards its local exchanges. */
-export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
-  const [open, setOpen] = useState(false);
+export function AskGoldysChat() {
   const [question, setQuestion] = useState("");
   const composer = useRef<HTMLTextAreaElement>(null);
   const api = useApi();
@@ -37,54 +31,29 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
     composer.current?.focus();
   }
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
-        event.preventDefault();
-        setOpen(previous => !previous);
-      }
-    };
-    const onOpen = () => setOpen(true);
-    window.addEventListener("keydown", onKey);
-    window.addEventListener(OPEN_ASK_EVENT, onOpen);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener(OPEN_ASK_EVENT, onOpen);
-    };
-  }, []);
-
-  if (!isOwner(seniority)) return null;
-
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5" aria-label="Ask Goldy's (⌘J)" title="Ask Goldy's (⌘J)">
-          <Sparkles className="h-4 w-4" aria-hidden="true" />
-          <span className="hidden lg:inline">Ask Goldy&apos;s</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl" onOpenAutoFocus={event => { event.preventDefault(); composer.current?.focus(); }}>
-        <SheetHeader className="border-b px-6 py-5 pr-12 text-left">
+    <section aria-label="Ask Goldy's" className="flex min-h-0 flex-1 flex-col">
+        <div className="shrink-0 border-b px-4 py-3 md:px-6">
           <div className="flex items-center justify-between gap-4">
-            <SheetTitle className="flex items-center gap-2"><Sparkles className="size-5" aria-hidden="true" />Ask Goldy&apos;s</SheetTitle>
+            <h1 className="text-lg font-semibold tracking-tight">Ask Goldy&apos;s</h1>
             <Button variant="ghost" size="sm" disabled={!turns.length} onClick={() => { reset(); setQuestion(""); composer.current?.focus(); }}>
               <MessageSquarePlus aria-hidden="true" />New chat
             </Button>
           </div>
-          <SheetDescription>Sales, labour and the numbers behind your pub.</SheetDescription>
-        </SheetHeader>
+          <Link href="/conversations" className="text-xs text-muted-foreground underline underline-offset-4">Chat history</Link>
+        </div>
 
         <MessageScrollerProvider autoScroll key={turns[0]?.id ?? "empty"}>
           <MessageScroller className="flex-1">
             <MessageScrollerViewport aria-label="Conversation">
-              <MessageScrollerContent className="gap-6 px-6 py-6">
+              <MessageScrollerContent className="mx-auto w-full max-w-3xl gap-8 px-4 py-8 md:px-6">
                 {!turns.length ? (
                   <div className="my-auto space-y-6 py-12">
                     <div className="space-y-2">
                       <h3 className="text-2xl font-semibold tracking-tight">What would you like to know?</h3>
                       <p className="text-sm text-muted-foreground">Ask a reporting question, then follow up to explore the detail.</p>
                     </div>
-                    <div className="flex flex-col items-start gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {SUGGESTIONS.map(suggestion => (
                         <Button key={suggestion} variant="outline" className="h-auto whitespace-normal py-3 text-left" onClick={() => submitQuestion(suggestion)}>{suggestion}</Button>
                       ))}
@@ -100,7 +69,7 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
           </MessageScroller>
         </MessageScrollerProvider>
 
-        <div className="border-t bg-background p-4 sm:px-6">
+        <div className="mx-auto w-full max-w-3xl shrink-0 bg-background px-4 pb-4 pt-2 md:px-6">
           <form className="space-y-2 rounded-xl border bg-muted/30 p-3 focus-within:ring-1 focus-within:ring-ring" onSubmit={event => { event.preventDefault(); submitQuestion(question); }}>
             <Label htmlFor="ask-question" className="sr-only">Reporting question</Label>
             <Textarea ref={composer} id="ask-question" name="question" value={question} onChange={event => setQuestion(event.target.value)}
@@ -113,7 +82,6 @@ export function AskGoldysDrawer({ seniority }: AskGoldysDrawerProps) {
             </div>
           </form>
         </div>
-      </SheetContent>
-    </Sheet>
+      </section>
   );
 }

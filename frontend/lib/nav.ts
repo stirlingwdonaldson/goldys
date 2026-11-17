@@ -56,6 +56,7 @@ export const NAV_GROUPS: NavGroup[] = [
         keywords: ["inbox", "tasks", "alerts", "attention", "to do", "queue"],
       },
       { title: "Reconciliation", href: "/reconciliation", icon: Scale, keywords: ["conflicts", "exceptions", "overrides", "decisions"] },
+      { title: "Ask Goldy’s", href: "/ask-goldys", icon: MessagesSquare, keywords: ["ask", "chat", "investigations"] },
       { title: "Conversations", href: "/conversations", icon: MessagesSquare, keywords: ["ask", "chat", "threads"] },
     ],
   },

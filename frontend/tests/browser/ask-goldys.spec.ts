@@ -62,7 +62,7 @@ test("chat retains exchanges, collapses notes and starts a new thread only on re
     });
   });
   await page.goto("/settings");
-  await page.getByRole("button", { name: "Ask Goldy's (⌘J)" }).click();
+  await page.getByRole("link", { name: "Ask Goldy's (⌘J)" }).click();
   await expect(page.getByRole("button", { name: "What were sales last week?", exact: true })).toBeVisible();
   const input = page.getByLabel("Reporting question", { exact: true });
   await input.fill("Sales last week?");
@@ -92,16 +92,20 @@ test("chat retains exchanges, collapses notes and starts a new thread only on re
   await expect(page.locator('[data-slot="message"]')).toHaveCount(4);
   await expect(page.getByText("Gross sales 1", { exact: true })).toBeVisible();
   await expect(page.getByText("Gross sales 2", { exact: true })).toBeVisible();
-  await page.getByRole("dialog").getByRole("region", { name: "Conversation" }).evaluate(element => { element.scrollTop = 0; });
-  await expect(page.getByRole("dialog")).toBeInViewport({ ratio: 1 });
+  // A short desktop viewport ensures the wider page actually needs scrolling.
+  await page.setViewportSize({ width: 1280, height: 600 });
+  const conversation = page.getByRole("region", { name: "Conversation", exact: true });
+  await conversation.hover();
+  await page.mouse.wheel(0, -10000);
+  await expect(page.getByRole("heading", { name: "Ask Goldy's", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Scroll to end", exact: true })).toBeInViewport({ ratio: 1 });
   await page.screenshot({ path: "/tmp/goldys-chat-desktop.png", fullPage: true });
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Ask Goldy's (⌘J)" }).click();
+  await page.getByRole("link", { name: "Ask Goldy's (⌘J)" }).click();
   await expect(page.getByText("Reporting answer 2", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Query notes (2)" }).first()).toHaveAttribute("aria-expanded", "false");
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole("dialog")).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole("heading", { name: "Ask Goldy's", exact: true })).toBeVisible();
   await expect(input).toBeInViewport({ ratio: 1 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: "/tmp/goldys-chat-mobile.png", fullPage: true });
