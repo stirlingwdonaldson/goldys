@@ -98,7 +98,8 @@
     "category": "inline-weekday-comparison",
     "question": "Compare sales for the last two weeks. Show me a line graph comparing the two, both over Monday–Friday on the x axis and sales on the y axis. Show it in this chat, not a saved dashboard.",
     "role": "owner",
-    "expectedTools": ["compare_metric_periods"],
+    "expectedTools": ["run_metric_analysis"],
+    "expectedCharts": ["LINE"],
     "causal": false
   },
   {
