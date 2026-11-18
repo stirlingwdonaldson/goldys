@@ -33,9 +33,11 @@ export function WorkspaceMessages({ job }: { job: WorkspaceJob }) {
 
 function WorkspaceExchange({ messages }: { messages: WorkspaceMessage[] }) {
   const latest = messages.findLast(message => message.role === "assistant" && message.text.trim());
-  const chart = messages.findLast(message => !message.draft &&
+  const supportingCharts = messages.filter(message => message.reporting?.widget.type === "chart");
+  const lastChart = messages.findLast(message => !message.draft &&
     (message.reporting?.widget.type === "time-series" || message.reporting?.widget.type === "bar-chart"));
-  const activity = messages.filter(message => message.role !== "user" && message !== latest && (message.text || (message.reporting && message !== chart)));
+  const charts = supportingCharts.length ? supportingCharts : lastChart ? [lastChart] : [];
+  const activity = messages.filter(message => message.role !== "user" && message !== latest && (message.text || (message.reporting && !charts.includes(message))));
   const qualified = messages.filter(message => message.reporting && (message.reporting.notices.length || message.reporting.provenance.length));
   return <div className="min-w-0 space-y-3">
     {messages.filter(message => message.role === "user").map(message => <p key={message.id} className="ml-auto max-w-full whitespace-pre-wrap break-words rounded-2xl bg-muted px-4 py-3 text-sm sm:max-w-xl">{message.text}</p>)}
@@ -45,12 +47,12 @@ function WorkspaceExchange({ messages }: { messages: WorkspaceMessage[] }) {
         {activity.map(message => <article key={message.id} className="min-w-0 space-y-3">
           <h3 className="text-xs font-medium text-muted-foreground">{message.role === "tool" ? "Reporting result" : "Goldy’s update"}</h3>
           {message.text ? <AnswerMarkdown text={message.text} /> : null}
-          {message.reporting && message !== chart ? <ReportingResult message={message} /> : null}
+          {message.reporting && !charts.includes(message) ? <ReportingResult message={message} /> : null}
         </article>)}
       </CollapsibleContent>
     </Collapsible> : null}
-    {latest ? <article key={latest.id} className="min-w-0 space-y-3"><h3 className="text-xs font-medium text-muted-foreground">Goldy’s</h3><AnswerText text={latest.text} />{latest.reporting && latest !== chart ? <ReportingResult message={latest} /> : null}</article> : null}
-    {chart ? <ReportingResult message={chart} compact /> : null}
+    {latest ? <article key={latest.id} className="min-w-0 space-y-3"><h3 className="text-xs font-medium text-muted-foreground">Goldy’s</h3><AnswerText text={latest.text} />{latest.reporting && !charts.includes(latest) ? <ReportingResult message={latest} /> : null}</article> : null}
+    {charts.map(chart => <ReportingResult key={chart.id} message={chart} compact />)}
     {qualified.length ? <Collapsible className="min-w-0">
       <CollapsibleTrigger asChild><Button variant="ghost" size="sm" className="group gap-2 text-muted-foreground">Data notes<ChevronDown aria-hidden="true" className="size-4 group-data-[state=open]:rotate-180" /></Button></CollapsibleTrigger>
       <CollapsibleContent className="space-y-4 border-l pl-4 pt-3">

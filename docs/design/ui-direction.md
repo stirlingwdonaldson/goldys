@@ -158,8 +158,9 @@ and code blocks. Raw HTML and remote images are inert; clickable public citation
 retain the approved HTTPS government-domain policy. Long responses show a bounded
 plain-text preview with a keyboard-accessible “Read full answer” disclosure; expansion
 retains the complete response. Intermediate updates and reporting evidence sit under
-“Investigation activity” for each user exchange. The latest reporting line/bar chart in each
-exchange appears directly below the answer, with earlier exploratory charts kept in activity.
+“Investigation activity” for each user exchange. Explicit supporting charts from metric analysis appear directly below the answer;
+multiple charts can accompany an answer when units differ. Without these, the latest
+legacy line/bar chart remains visible. Earlier exploratory results stay in activity.
 Multi-series line charts show a persistent date/series legend and expandable data table. Reporting qualifications, missing
 periods and trust indicators sit in a separate, initially collapsed “Data notes”
 disclosure per exchange, including full provenance. Dashboard save actions remain visible
@@ -189,3 +190,10 @@ denial keeps its own explicit state. Enabling the preference shows qualified
 incomplete observations inline as well. Home labels booking-size attendance as a proxy and
 invoice purchases separately from consumed cost. A zero reconciliation count does
 not establish verified or complete evidence.
+
+Ask Goldy's considers a visual for every answer and selects among the shadcn/Recharts
+line, area, bar, pie (including doughnut), radar and radial families. It keeps prose-only,
+single-value and unavailable answers uncharted. Charts use the shared card, colour,
+formatting and disclosure patterns; marks are deterministic, legends persist and exact
+values remain available in “View chart data”. Missing points are gaps, not zero. Radial
+scales explicitly describe their observed maximum rather than implying progress to a target.

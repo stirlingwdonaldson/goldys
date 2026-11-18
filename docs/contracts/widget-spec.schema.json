@@ -10,7 +10,8 @@
     { "$ref": "#/$defs/time-series" },
     { "$ref": "#/$defs/bar-chart" },
     { "$ref": "#/$defs/table" },
-    { "$ref": "#/$defs/ranked-list" }
+    { "$ref": "#/$defs/ranked-list" },
+    { "$ref": "#/$defs/chart" }
   ],
   "$defs": {
     "base": {
@@ -129,6 +130,61 @@
             }
           },
           "required": ["type", "items"]
+        }
+      ]
+    },
+    "chart": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "chart"
+            },
+            "kind": {
+              "enum": [
+                "LINE",
+                "AREA",
+                "BAR",
+                "PIE",
+                "DONUT",
+                "RADAR",
+                "RADIAL"
+              ]
+            },
+            "series": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "$ref": "#/$defs/series"
+              }
+            },
+            "yFormat": {
+              "enum": [
+                "currency",
+                "number",
+                "percent"
+              ]
+            },
+            "stacked": {
+              "type": "boolean"
+            },
+            "horizontal": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "kind",
+            "series",
+            "yFormat",
+            "stacked",
+            "horizontal"
+          ]
         }
       ]
     }

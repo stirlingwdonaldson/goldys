@@ -1,5 +1,6 @@
 "use client";
 
+import { AnalysisChart } from "./analysis-chart";
 import { TrustIndicator } from "@/components/trust/trust-indicator";
 import type { TrustSummary } from "@/lib/api/types";
 import { BarChartWidgetView } from "./bar-chart-widget";
@@ -18,6 +19,7 @@ function widgetValue(widget: WidgetSpec): number | null {
   switch (widget.type) {
     case "stat":
       return widget.value;
+    case "chart":
     case "time-series":
     case "bar-chart":
       for (const series of widget.series) {
@@ -60,6 +62,7 @@ export function WidgetRenderer({ widget, trust = null }: WidgetRendererProps) {
 
 function renderWidget(widget: WidgetSpec) {
   switch (widget.type) {
+    case "chart": return <AnalysisChart widget={widget} />;
     case "stat": return <StatWidgetView widget={widget} />;
     case "time-series": return <TimeSeriesWidgetView widget={widget} />;
     case "bar-chart": return <BarChartWidgetView widget={widget} />;

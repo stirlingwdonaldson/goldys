@@ -1,5 +1,100 @@
 [
   {
+    "category": "automatic-trend",
+    "question": "How have gross sales changed day by day from 2 to 8 November 2026?",
+    "role": "owner",
+    "expectedTools": [
+      "run_metric_analysis"
+    ],
+    "causal": false,
+    "expectedCharts": [
+      "LINE",
+      "AREA"
+    ]
+  },
+  {
+    "category": "automatic-ranking",
+    "question": "Which products brought in the most revenue from 2 to 8 November 2026?",
+    "role": "owner",
+    "expectedTools": [
+      "run_metric_analysis"
+    ],
+    "causal": false,
+    "expectedCharts": [
+      "BAR"
+    ]
+  },
+  {
+    "category": "automatic-no-chart",
+    "question": "What does gross sales mean?",
+    "role": "owner",
+    "expectedTools": [
+      "describe_metrics"
+    ],
+    "causal": false,
+    "expectedCharts": []
+  },
+  {
+    "category": "area-chart",
+    "question": "Show an area chart of daily gross sales from 2 to 8 November 2026.",
+    "role": "owner",
+    "expectedTools": [
+      "run_metric_analysis"
+    ],
+    "causal": false,
+    "expectedCharts": [
+      "AREA"
+    ]
+  },
+  {
+    "category": "pie-chart",
+    "question": "Show the share of gross sales for each day from 2 to 4 November 2026 as a pie chart.",
+    "role": "owner",
+    "expectedTools": [
+      "run_metric_analysis"
+    ],
+    "causal": false,
+    "expectedCharts": [
+      "PIE"
+    ]
+  },
+  {
+    "category": "donut-chart",
+    "question": "Show the share of gross sales for each day from 2 to 4 November 2026 as a doughnut chart.",
+    "role": "owner",
+    "expectedTools": [
+      "run_metric_analysis"
+    ],
+    "causal": false,
+    "expectedCharts": [
+      "DONUT"
+    ]
+  },
+  {
+    "category": "radar-chart",
+    "question": "Compare the gross sales weekday profiles for 2\u20136 and 9\u201313 November 2026 using a radar chart.",
+    "role": "owner",
+    "expectedTools": [
+      "run_metric_analysis"
+    ],
+    "causal": false,
+    "expectedCharts": [
+      "RADAR"
+    ]
+  },
+  {
+    "category": "radial-chart",
+    "question": "Use radial bars to compare gross sales on 2, 3 and 4 November 2026 on a maximum-observed-value scale, not a target.",
+    "role": "owner",
+    "expectedTools": [
+      "run_metric_analysis"
+    ],
+    "causal": false,
+    "expectedCharts": [
+      "RADIAL"
+    ]
+  },
+  {
     "category": "inline-weekday-comparison",
     "question": "Compare sales for the last two weeks. Show me a line graph comparing the two, both over Monday–Friday on the x axis and sales on the y axis. Show it in this chat, not a saved dashboard.",
     "role": "owner",

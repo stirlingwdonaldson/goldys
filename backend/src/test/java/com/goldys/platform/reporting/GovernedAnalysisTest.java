@@ -208,6 +208,49 @@ class GovernedAnalysisTest {
     assertThat(callback.getToolDefinition().inputSchema()).contains("SALES_GROSS", "TOTAL");
   }
 
+  @Test
+  void realCallbackDeserializesChartOptionsAndRecordsChartEvidence() {
+    when(metrics.query(any())).thenAnswer(call -> result(call.getArgument(0), BigDecimal.TEN));
+    var context = new ConversationContext();
+    var callback =
+        new ReportingToolCallbacks()
+            .forTools(tools, OWNER, context, dispatcher, new ObjectMapper()).stream()
+                .filter(c -> c.getToolDefinition().name().equals("run_metric_analysis"))
+                .findFirst()
+                .orElseThrow();
+    String answer =
+        callback.call(
+            """
+        {"queries":[{"metric":"sales.gross","startDate":"2026-11-02","endDate":"2026-11-04","grain":"DAY","dimensions":[]}],
+         "chart":{"kind":"LINE","alignment":"WEEKDAY","stacked":false,"horizontal":false}}
+        """);
+    assertThat(answer).contains("LINE", "Mon");
+    assertThat(context.toAnswerPayload().widgets().getFirst())
+        .isInstanceOf(com.goldys.platform.widget.ChartWidgetSpec.class);
+    assertThat(context.toAnswerPayload().trace().getFirst().provenance()).hasSize(1);
+    assertThat(callback.getToolDefinition().inputSchema()).contains("RADAR", "WEEKDAY");
+  }
+
+  @Test
+  void chartRequestUsesTheSamePermissionBoundaryAndKeepsProvenance() {
+    var request =
+        new RunMetricAnalysisInput(
+            List.of(
+                new GetMetricInput(
+                    MetricId.SALES_GROSS, DATE, DATE.plusDays(2), TimeGrain.DAY, Set.of())),
+            new ChartOptions(com.goldys.platform.widget.ChartKind.LINE, false, false, null));
+    when(metrics.query(any())).thenAnswer(call -> result(call.getArgument(0), BigDecimal.TEN));
+    var output = dispatcher.dispatch(ToolId.RUN_METRIC_ANALYSIS, request, OWNER);
+    assertThat(output.widget()).isInstanceOf(com.goldys.platform.widget.ChartWidgetSpec.class);
+    assertThat(output.notices()).containsExactly("Unverified coverage");
+    assertThat(output.provenance()).hasSize(1);
+    clearInvocations(metrics);
+    deny("reconciliation.sales");
+    assertThatThrownBy(() -> dispatcher.dispatch(ToolId.RUN_METRIC_ANALYSIS, request, OWNER))
+        .isInstanceOf(AccessDeniedException.class);
+    verifyNoInteractions(metrics);
+  }
+
   private void deny(String resource) {
     doThrow(AccessDeniedException.forResource(resource))
         .when(permissions)
