@@ -77,6 +77,10 @@ test("workspace survives reload, edits queued input, stops server work and hides
   await expect(page.getByRole("img", { name: "Gross sales by weekday" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Chart legend" })).toContainText("9 Nov 2026 – 13 Nov 2026");
   await expect(page.getByRole("button", { name: "Save dashboard" })).toHaveCount(0);
+  const chart = page.getByRole("img", { name: "Gross sales by weekday" });
+  await expect(chart.locator(".recharts-area-curve")).toHaveCount(2);
+  await expect(chart.locator(".recharts-xAxis")).toContainText("MonTueWedThuFri");
+  await chart.screenshot({ path: "/tmp/goldys-inline-weekday-chart.png" });
   if (process.env.NEXT_PUBLIC_WORKSPACE_FILES_ENABLED === "false") {
     await expect(page.getByLabel("Upload a file")).toHaveCount(0);
   }
