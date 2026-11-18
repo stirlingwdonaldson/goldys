@@ -1,5 +1,6 @@
 "use client";
 
+import { AnswerText } from "./answer-text";
 import { dashboardWrites } from "@/components/dashboards/dashboard-writes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -176,7 +177,7 @@ export function AnswerBlock({ summary, answer, error, api, onRetry }: AnswerBloc
   if (error) return <AnswerError error={error} onRetry={onRetry} />;
   return (
     <div className="space-y-4">
-      {summary ? <p className="whitespace-pre-wrap text-sm leading-relaxed">{summary}</p> : null}
+      {summary ? <AnswerText text={summary} /> : null}
 
       {answer ? <QueryNotes notices={answer.notices} hasConflict={hasConflict ?? false} /> : null}
 

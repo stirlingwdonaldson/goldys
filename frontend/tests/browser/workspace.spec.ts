@@ -22,7 +22,7 @@ test("workspace survives reload, edits queued input, stops server work and hides
       const input = route.request().postDataJSON();
       submissions.push(input);
       job = { id: `10000000-0000-4000-8000-00000000000${submissions.length}`, threadId: input.threadId, state: "RUNNING", prompt: input.prompt, revision: 1,
-        messages: [{ id: "citation", role: "assistant", text: "Public fixture source retrieved 2026-11-16: https://www.bom.gov.au/", reporting: null }, { id: "answer", role: "assistant", text: "Saved fixture finding", reporting: null }, { id: "widget", role: "tool", text: "", reporting: { widget: { schemaVersion: 2, type: "stat", id: "missing-sales", title: "Weekly sales", value: null, format: "currency" }, notices: ["Missing source coverage; no total is available."], provenance: [], relatedMetrics: [] } }] };
+        messages: [{ id: "citation", role: "assistant", text: "Public fixture source retrieved 2026-11-16: https://www.bom.gov.au/", reporting: null }, { id: "answer", role: "assistant", text: "**Saved fixture finding**\n\n## Sales breakdown\n\n| Category | Total |\n| --- | ---: |\n| Food | $42 |\n\n" + "Supporting reporting detail. ".repeat(30), reporting: null }, { id: "widget", role: "tool", text: "", reporting: { widget: { schemaVersion: 2, type: "stat", id: "missing-sales", title: "Weekly sales", value: null, format: "currency" }, notices: ["Missing source coverage; no total is available."], provenance: [], relatedMetrics: [] } }] };
       return route.fulfill({ json: job });
     }
     if (job && path === `/api/workspace/jobs/${job.id}`) return route.fulfill({ json: job });
@@ -72,6 +72,16 @@ test("workspace survives reload, edits queued input, stops server work and hides
     await expect(page.getByLabel("Upload a file")).toHaveCount(0);
   }
   await expect(page.getByText("Missing source coverage; no total is available.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sales breakdown" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Read full answer" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Sales breakdown" })).toBeVisible();
+  await expect(page.getByRole("table")).toContainText("$42");
+  await page.getByLabel("Conversation", { exact: true }).evaluate(element => { element.scrollTop = 0; });
+  await page.screenshot({ path: "/tmp/goldys-answer-expanded.png" });
+  await page.getByRole("button", { name: "Show less" }).click();
+  await page.getByLabel("Conversation", { exact: true }).evaluate(element => { element.scrollTop = 0; });
+  await page.screenshot({ path: "/tmp/goldys-answer-compact.png" });
   await page.getByLabel("Queue a follow-up", { exact: true }).fill("Compare food sales");
   await page.getByRole("button", { name: "Queue message", exact: true }).click();
   await page.getByRole("button", { name: "Edit message", exact: true }).click();
@@ -88,6 +98,7 @@ test("workspace survives reload, edits queued input, stops server work and hides
   await page.goto(deepLink);
   await expect(page.getByText("Compare beverage sales", { exact: true })).toBeVisible();
   expect(submissions).toHaveLength(1);
+  await page.getByRole("button", { name: "Investigation activity (2)" }).click();
   await expect(page.getByRole("link", { name: "https://www.bom.gov.au/", exact: true })).toHaveAttribute("referrerpolicy", "no-referrer");
   await expect(page.getByText(/Public fixture source retrieved 2026-11-16/)).toBeVisible();
   await page.goto("/settings?scope=weekly");
