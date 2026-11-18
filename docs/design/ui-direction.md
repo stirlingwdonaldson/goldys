@@ -153,6 +153,16 @@ a Collapsible and New chat starting a fresh question. Leaving the page never
 stops server work. Legacy transcripts remain under Conversations. Owner-only
 access and visible denied, missing-data and uncertain-delivery states remain.
 
+Answers use a shared CommonMark/GFM renderer with fixed typography, scrollable tables
+and code blocks. Raw HTML and remote images are inert; clickable public citations
+retain the approved HTTPS government-domain policy. Long responses show a bounded
+plain-text preview with a keyboard-accessible “Read full answer” disclosure; expansion
+retains the complete response. Intermediate updates and reporting evidence sit under
+“Investigation activity” for each user exchange. Reporting qualifications, missing
+periods, trust indicators and dashboard save actions remain outside that disclosure.
+The worker leads with a brief conclusion including material limitations; disclosure
+also bounds older or unexpectedly verbose responses without relying on that prompt.
+
 ## Not yet done (needs backend or a decision)
 
 - **Undo on overrides.** There is no endpoint to remove or supersede an

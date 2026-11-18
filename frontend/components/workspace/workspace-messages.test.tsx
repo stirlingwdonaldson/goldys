@@ -42,6 +42,25 @@ describe("workspace dashboard drafts", () => {
     expect(view.container.querySelector("script")).toBeNull();
     expect(screen.getByText(/Retrieved 2026-11-16/)).toBeInTheDocument();
   });
+  it("collapses activity, keeps each follow-up answer and qualifications visible", async () => {
+    const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
+    const reporting = { widget: { schemaVersion: 2 as const, type: "stat" as const, id: "missing", title: "Sales", value: null, format: "currency" as const }, notices: ["Coverage is incomplete."], provenance: [], relatedMetrics: [] };
+    job.messages = [
+      { id: "progress", role: "assistant", text: "Checking sales.", reporting: null },
+      { id: "tool", role: "tool", text: "", reporting },
+      { id: "answer", role: "assistant", text: "No reliable total is available.", reporting: null },
+      { id: "followup", role: "user", text: "What about labour?", reporting: null },
+      { id: "second", role: "assistant", text: "Labour is unavailable.", reporting: null },
+    ];
+    render(<WorkspaceMessages job={job} />);
+    expect(screen.queryByText("Checking sales.")).not.toBeInTheDocument();
+    expect(screen.getByText("No reliable total is available.")).toBeVisible();
+    expect(screen.getByText("Labour is unavailable.")).toBeVisible();
+    expect(screen.getByText("Coverage is incomplete.")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Investigation activity (2)" }));
+    expect(screen.getByText("Checking sales.")).toBeVisible();
+    expect(screen.getByText("Sales")).toBeVisible();
+  });
   it("routes an existing-dashboard proposal through explicit update", async () => {
     const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
     job.messages[0].draft!.dashboardId = "existing";
