@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceMessages } from "./workspace-messages";
 import { createWorkspaceDemo } from "@/lib/api/workspace-demo";
 import { demoApi } from "@/lib/api/demo";
+import { provenanceSchema } from "@/lib/api/dashboard-schema";
 import { workspaceJobSchema } from "@/lib/api/workspace";
 
 const { save, update } = vi.hoisted(() => ({ save: vi.fn(), update: vi.fn() }));
@@ -42,9 +43,13 @@ describe("workspace dashboard drafts", () => {
     expect(view.container.querySelector("script")).toBeNull();
     expect(screen.getByText(/Retrieved 2026-11-16/)).toBeInTheDocument();
   });
-  it("collapses activity, keeps each follow-up answer and qualifications visible", async () => {
+  it("collapses activity and data notes independently while keeping follow-up answers visible", async () => {
     const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
-    const reporting = { widget: { schemaVersion: 2 as const, type: "stat" as const, id: "missing", title: "Sales", value: null, format: "currency" as const }, notices: ["Coverage is incomplete."], provenance: [], relatedMetrics: [] };
+    const reporting = { widget: { schemaVersion: 2 as const, type: "stat" as const, id: "missing", title: "Sales", value: null, format: "currency" as const }, notices: ["Coverage is incomplete."], provenance: [provenanceSchema.parse({
+      metric: "sales.gross", definitionVersion: "v1", range: { from: "2026-11-01", to: "2026-11-30", calendar: "CALENDAR" },
+      grain: "TOTAL", sourceDomain: "resolved_daily_sales", dataFreshness: null, calculationVersion: "v1", missingPeriods: ["2026-11-19"],
+      trust: { state: "INCOMPLETE", freshness: "SOURCE_FAILURE", authoritativeSource: "LIGHTSPEED", resolvedAt: null, lastIngestionAt: null, threshold: "PT2H" },
+    })], relatedMetrics: [] };
     job.messages = [
       { id: "progress", role: "assistant", text: "Checking sales.", reporting: null },
       { id: "tool", role: "tool", text: "", reporting },
@@ -56,7 +61,17 @@ describe("workspace dashboard drafts", () => {
     expect(screen.queryByText("Checking sales.")).not.toBeInTheDocument();
     expect(screen.getByText("No reliable total is available.")).toBeVisible();
     expect(screen.getByText("Labour is unavailable.")).toBeVisible();
+    expect(screen.queryByText("Coverage is incomplete.")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Missing periods/)).not.toBeInTheDocument();
+    expect(screen.queryByText("source failed")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Data notes" }));
     expect(screen.getByText("Coverage is incomplete.")).toBeVisible();
+    expect(screen.getByText(/Missing periods: 2026-11-19/)).toBeVisible();
+    expect(screen.getByText("Incomplete")).toBeVisible();
+    expect(screen.getByText("source failed")).toBeVisible();
+    expect(screen.queryByText("Checking sales.")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Data notes" }));
+    expect(screen.queryByText("Coverage is incomplete.")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Investigation activity (2)" }));
     expect(screen.getByText("Checking sales.")).toBeVisible();
     expect(screen.getByText("Sales")).toBeVisible();

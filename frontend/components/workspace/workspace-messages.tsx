@@ -34,6 +34,7 @@ export function WorkspaceMessages({ job }: { job: WorkspaceJob }) {
 function WorkspaceExchange({ messages }: { messages: WorkspaceMessage[] }) {
   const latest = messages.findLast(message => message.role === "assistant" && message.text.trim());
   const activity = messages.filter(message => message.role !== "user" && message !== latest && (message.text || message.reporting));
+  const qualified = messages.filter(message => message.reporting && (message.reporting.notices.length || message.reporting.provenance.some(source => source.missingPeriods.length || source.trust)));
   return <div className="min-w-0 space-y-3">
     {messages.filter(message => message.role === "user").map(message => <p key={message.id} className="ml-auto max-w-full whitespace-pre-wrap break-words rounded-2xl bg-muted px-4 py-3 text-sm sm:max-w-xl">{message.text}</p>)}
     {activity.length ? <Collapsible className="min-w-0">
@@ -47,10 +48,13 @@ function WorkspaceExchange({ messages }: { messages: WorkspaceMessage[] }) {
       </CollapsibleContent>
     </Collapsible> : null}
     {latest ? <article key={latest.id} className="min-w-0 space-y-3"><h3 className="text-xs font-medium text-muted-foreground">Goldy’s</h3><AnswerText text={latest.text} />{latest.reporting ? <ReportingResult message={latest} /> : null}</article> : null}
-    {messages.filter(message => message.reporting || message.draft).map(message => <div key={message.id} className="space-y-3">
-      {message.reporting ? <ReportingQualifications message={message} /> : null}
-      {message.draft ? <WorkspaceDraft draft={message.draft} /> : null}
-    </div>)}
+    {qualified.length ? <Collapsible className="min-w-0">
+      <CollapsibleTrigger asChild><Button variant="ghost" size="sm" className="group gap-2 text-muted-foreground">Data notes<ChevronDown aria-hidden="true" className="size-4 group-data-[state=open]:rotate-180" /></Button></CollapsibleTrigger>
+      <CollapsibleContent className="space-y-4 border-l pl-4 pt-3">
+        {qualified.map(message => <ReportingQualifications key={message.id} message={message} />)}
+      </CollapsibleContent>
+    </Collapsible> : null}
+    {messages.map(message => message.draft ? <WorkspaceDraft key={message.id} draft={message.draft} /> : null)}
   </div>;
 }
 
@@ -67,7 +71,7 @@ function ReportingResult({ message }: { message: WorkspaceMessage }) {
   </div>;
 }
 
-/** Qualifications remain visible even when their supporting investigation is collapsed. */
+/** Full qualifications are retained inside the exchange’s separate Data notes disclosure. */
 function ReportingQualifications({ message }: { message: WorkspaceMessage }) {
   const result = message.reporting;
   if (!result) return null;
