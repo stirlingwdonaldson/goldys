@@ -4,6 +4,7 @@ export type { WidgetSpec } from "./parse";
 
 export type WidgetFormat = "currency" | "number" | "percent" | "text";
 export type WidgetType = WidgetSpec["type"];
+export type ChartWidget = Extract<WidgetSpec, { type: "chart" }>;
 export type StatWidget = Extract<WidgetSpec, { type: "stat" }>;
 export type TimeSeriesWidget = Extract<WidgetSpec, { type: "time-series" }>;
 export type BarChartWidget = Extract<WidgetSpec, { type: "bar-chart" }>;

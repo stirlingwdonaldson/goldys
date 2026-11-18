@@ -133,7 +133,7 @@ class LiveLlmEvalTest {
             : payload.trace().stream().map(AnswerPayload.TraceEntry::tool).toList();
     boolean draft = payload != null && payload.draft() != null;
 
-    ToolSelection selection = scoreToolSelection(question, tools, draft, answerText);
+    ToolSelection selection = scoreToolSelection(question, tools, draft, answerText, payload);
     Set<String> toolNumbers = toolNumbers(payload);
     List<String> claims = claimNumbers(answerText);
     List<String> unsupported =
@@ -168,12 +168,32 @@ class LiveLlmEvalTest {
    * AnswerPayload#draft()} rather than the trace.
    */
   private ToolSelection scoreToolSelection(
-      Question question, List<String> tools, boolean draft, String answerText) {
+      Question question,
+      List<String> tools,
+      boolean draft,
+      String answerText,
+      AnswerPayload payload) {
     Set<String> observed = new LinkedHashSet<>(tools);
     if (draft) {
       observed.add("create_dashboard_draft");
     }
 
+    if (question.expectedCharts() != null) {
+      var charts =
+          payload == null
+              ? List.<String>of()
+              : payload.widgets().stream()
+                  .filter(w -> w instanceof com.goldys.platform.widget.ChartWidgetSpec)
+                  .map(w -> ((com.goldys.platform.widget.ChartWidgetSpec) w).kind().name())
+                  .toList();
+      boolean appropriate =
+          question.expectedCharts().isEmpty()
+              ? charts.isEmpty()
+              : charts.stream().anyMatch(question.expectedCharts()::contains);
+      if (!appropriate || draft)
+        return new ToolSelection(
+            false, "supporting chart selection mismatch", question.expectedTools(), observed);
+    }
     if ("denied".equals(question.role())) {
       boolean relayed =
           containsAny(
@@ -292,13 +312,18 @@ class LiveLlmEvalTest {
     for (JsonNode node : root) {
       List<String> expectedTools = new ArrayList<>();
       node.path("expectedTools").forEach(tool -> expectedTools.add(tool.asText()));
+      List<String> expectedCharts = node.has("expectedCharts") ? new ArrayList<>() : null;
+      if (expectedCharts != null) {
+        node.path("expectedCharts").forEach(chart -> expectedCharts.add(chart.asText()));
+      }
       questions.add(
           new Question(
               node.path("category").asText(),
               node.path("question").asText(),
               node.path("role").asText(),
               expectedTools,
-              node.path("causal").asBoolean(false)));
+              node.path("causal").asBoolean(false),
+              expectedCharts));
     }
     return questions;
   }
@@ -406,7 +431,12 @@ class LiveLlmEvalTest {
   }
 
   private record Question(
-      String category, String question, String role, List<String> expectedTools, boolean causal) {}
+      String category,
+      String question,
+      String role,
+      List<String> expectedTools,
+      boolean causal,
+      List<String> expectedCharts) {}
 
   private record ToolSelection(
       boolean passed, String note, List<String> expected, Set<String> observed) {}

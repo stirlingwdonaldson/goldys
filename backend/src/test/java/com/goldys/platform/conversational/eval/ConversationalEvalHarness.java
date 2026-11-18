@@ -125,7 +125,7 @@ public final class ConversationalEvalHarness {
   public static final class WidgetSchemaValidator {
     /** The five discriminated widget variants, in schema {@code oneOf} order. */
     private static final Set<String> ALLOWED_TYPES =
-        Set.of("stat", "time-series", "bar-chart", "table", "ranked-list");
+        Set.of("chart", "stat", "time-series", "bar-chart", "table", "ranked-list");
 
     /** The constrained value formats shared by {@code format} and {@code yFormat}. */
     private static final Set<String> ALLOWED_FORMATS =
@@ -158,7 +158,7 @@ public final class ConversationalEvalHarness {
 
       switch (type) {
         case "stat" -> assertFormat(node, "format");
-        case "time-series", "bar-chart" -> {
+        case "chart", "time-series", "bar-chart" -> {
           assertThat(node.has("series")).as("time-series/bar-chart must carry series").isTrue();
           node.path("series")
               .forEach(

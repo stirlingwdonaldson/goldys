@@ -149,7 +149,7 @@ owner screen; `/change-password` is the forced-change screen.
 ## Shared widget / dashboard runtime
 
 A versioned, typed widget contract (`com.goldys.platform.widget`, schema version 2) is the only
-thing the frontend renders. It is a discriminated union of `stat`, `time-series`, `bar-chart`,
+thing the frontend renders. It is a discriminated union of `stat`, `time-series`, `bar-chart`, `chart`,
 `table`, and `ranked-list` widgets — data, never code. The AI never emits React/JSX/SQL/handlers;
 tools return widget specs built from semantic data.
 

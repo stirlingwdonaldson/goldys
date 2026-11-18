@@ -101,6 +101,21 @@ describe("workspace dashboard drafts", () => {
     expect(screen.getByRole("img", { name: "Exploratory sales" })).toBeVisible();
     expect(screen.getAllByRole("img", { name: "Weekday sales comparison" })).toHaveLength(1);
   });
+  it("keeps every explicit supporting chart inline across restored exchanges", async () => {
+    const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
+    const widget = { schemaVersion: 2 as const, type: "chart" as const, id: "chart", title: "Sales trend", kind: "LINE" as const, yFormat: "currency" as const, stacked: false, horizontal: false,
+      series: [{ key: "sales", label: "Sales", points: [{ x: "Mon", y: 100 }, { x: "Tue", y: 200 }] }] };
+    job.messages = [
+      { id: "chart-one", role: "tool", text: "", reporting: { widget, notices: [], provenance: [], relatedMetrics: [] } },
+      { id: "chart-two", role: "tool", text: "", reporting: { widget: { ...widget, id: "bookings", title: "Bookings trend", yFormat: "number" }, notices: [], provenance: [], relatedMetrics: [] } },
+      { id: "answer", role: "assistant", text: "Sales and bookings both increased.", reporting: null },
+    ];
+    render(<WorkspaceMessages job={workspaceJobSchema.parse(JSON.parse(JSON.stringify(job)))} />);
+    expect(screen.getByRole("img", { name: "Sales trend — line chart" })).toBeVisible();
+    expect(screen.getByRole("img", { name: "Bookings trend — line chart" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Save dashboard" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Investigation activity/ })).not.toBeInTheDocument();
+  });
   it("routes an existing-dashboard proposal through explicit update", async () => {
     const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
     job.messages[0].draft!.dashboardId = "existing";

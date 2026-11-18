@@ -32,7 +32,7 @@ the code is held to.
 | `GET_INVENTORY_SUMMARY` | Purchases, wastage, stock |
 | `GET_METRIC` | Any catalogue metric (`docs/metrics/catalog.md`) at a grain |
 | `DESCRIBE_METRICS` | Approved definitions, units, versions, dimensions and grains; discovery excludes inaccessible operands, explicit selections are denied atomically |
-| `RUN_METRIC_ANALYSIS` | Compose 1–6 explicit catalogue queries; authorize every operand and validate the complete plan before reading; preserve each bucket and scope |
+| `RUN_METRIC_ANALYSIS` | Compose 1–6 explicit catalogue queries; authorize every operand and validate the complete plan before reading; preserve each bucket and scope. Optional `chart` selects LINE, AREA, BAR, PIE, DONUT, RADAR or RADIAL with bounded orientation/stacking and DATE/WEEKDAY/PERIOD alignment |
 | `COMPARE_METRIC_PERIODS` | A catalogue metric across two periods; DAY ranges of up to seven days against the previous week render two date-labelled lines on a shared weekday axis (e.g. Monday–Friday). Other comparisons retain the date axis. |
 | `RANK_DIMENSION` | A catalogue metric ranked by an allowed dimension |
 | `GET_RECONCILIATION_STATUS` | Open conflicts and resolution state |
@@ -120,3 +120,24 @@ and the public hospitality award). No model/user free text or private evidence i
 forwarded to search. Returned text is untrusted; citations carry original HTTPS
 Australian-government URLs and retrieval times. Arbitrary page fetch and other topics
 remain unavailable. Search reservations share the investigation budget.
+
+### Inline analytical charts
+
+Every answer considers whether a visual helps. `run_metric_analysis` without `chart`
+retains its table contract; with `chart`, it returns a schema-v2 `chart` widget computed
+entirely from the same authorized metric results. No model-supplied values, scripts,
+field names, transformations or joins are accepted. All result notices and provenance
+remain attached and evidence-bound in the workspace.
+
+Charts have at most six series and 366 categories. They use one unit/grain; separate
+charts are required for different units. TOTAL buckets remain totals, not daily points.
+DATE keeps dates, WEEKDAY overlays matching <=7-day DAY ranges, and PERIOD overlays
+equal-length DAY ranges by day number. All series have distinct keys and aligned
+categories; absent values remain null. A single value or wholly absent data is not a chart.
+
+PIE/DONUT requires one additive query, complete nonnegative observations and coverage,
+and 2..12 categories. Top-N rankings never imply a whole. RADAR requires 3..12 complete
+nonnegative comparable categories; RADIAL uses 2..12 categories on an explicitly
+labelled maximum-observed-value scale, not an invented target. Stacked AREA/BAR requires
+one additive grouped query and complete nonnegative values. Ratios and stock balances cannot become stacked or part-to-whole charts. Mixed units,
+duplicate labels and oversized charts are rejected rather than silently transformed/truncated. The assistant can use a valid alternative or explain the limit.

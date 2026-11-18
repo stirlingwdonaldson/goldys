@@ -19,7 +19,10 @@ class WidgetSchemaTest {
     assertThat(schema.get("$id").asText())
         .isEqualTo("https://goldys.local/schemas/widget-spec-v2.json");
     assertThat(schema.get("discriminator").get("propertyName").asText()).isEqualTo("type");
-    assertThat(schema.get("oneOf")).hasSize(5);
+    assertThat(schema.get("oneOf")).hasSize(6);
+    assertThat(schema.at("/$defs/chart/allOf/1/properties/kind/enum"))
+        .extracting(JsonNode::asText)
+        .containsExactly("LINE", "AREA", "BAR", "PIE", "DONUT", "RADAR", "RADIAL");
     assertThat(
             schema
                 .path("$defs")

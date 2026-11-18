@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
+  @JsonSubTypes.Type(value = ChartWidgetSpec.class, name = "chart"),
   @JsonSubTypes.Type(value = StatWidgetSpec.class, name = "stat"),
   @JsonSubTypes.Type(value = TimeSeriesWidgetSpec.class, name = "time-series"),
   @JsonSubTypes.Type(value = BarChartWidgetSpec.class, name = "bar-chart"),
@@ -17,7 +18,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
   @JsonSubTypes.Type(value = RankedListWidgetSpec.class, name = "ranked-list"),
 })
 public sealed interface WidgetSpec
-    permits StatWidgetSpec,
+    permits ChartWidgetSpec,
+        StatWidgetSpec,
         TimeSeriesWidgetSpec,
         BarChartWidgetSpec,
         TableWidgetSpec,

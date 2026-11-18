@@ -1,9 +1,9 @@
 import { flattenSeries } from "./flatten";
 import { formatValue } from "./format";
 import { TableWidgetView } from "./table-widget";
-import type { BarChartWidget, TimeSeriesWidget } from "./types";
+import type { BarChartWidget, TimeSeriesWidget, ChartWidget } from "./types";
 
-export function ChartDataTable({ widget }: { widget: BarChartWidget | TimeSeriesWidget }) {
+export function ChartDataTable({ widget }: { widget: BarChartWidget | TimeSeriesWidget | ChartWidget }) {
   return (
     <details className="mt-3">
       <summary className="cursor-pointer text-sm underline">View chart data</summary>
