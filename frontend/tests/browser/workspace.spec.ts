@@ -71,7 +71,12 @@ test("workspace survives reload, edits queued input, stops server work and hides
   if (process.env.NEXT_PUBLIC_WORKSPACE_FILES_ENABLED === "false") {
     await expect(page.getByLabel("Upload a file")).toHaveCount(0);
   }
+  await expect(page.getByText("Missing source coverage; no total is available.")).toHaveCount(0);
+  await page.getByRole("button", { name: "Data notes", exact: true }).focus();
+  await page.keyboard.press("Enter");
   await expect(page.getByText("Missing source coverage; no total is available.")).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Missing source coverage; no total is available.")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Sales breakdown" })).toHaveCount(0);
   await page.getByRole("button", { name: "Read full answer" }).focus();
   await page.keyboard.press("Enter");

@@ -159,7 +159,8 @@ retain the approved HTTPS government-domain policy. Long responses show a bounde
 plain-text preview with a keyboard-accessible “Read full answer” disclosure; expansion
 retains the complete response. Intermediate updates and reporting evidence sit under
 “Investigation activity” for each user exchange. Reporting qualifications, missing
-periods, trust indicators and dashboard save actions remain outside that disclosure.
+periods and trust indicators sit in a separate, initially collapsed “Data notes”
+disclosure per exchange. Dashboard save actions remain visible.
 The worker leads with a brief conclusion including material limitations; disclosure
 also bounds older or unexpectedly verbose responses without relying on that prompt.
 
