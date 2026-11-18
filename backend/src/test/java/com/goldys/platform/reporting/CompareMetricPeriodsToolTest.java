@@ -25,6 +25,8 @@ import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import com.goldys.platform.widget.BarChartWidgetSpec;
+import com.goldys.platform.widget.Point;
+import com.goldys.platform.widget.TimeSeriesWidgetSpec;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -69,8 +71,75 @@ class CompareMetricPeriodsToolTest {
     assertThat(result.relatedMetrics()).isEmpty();
     assertThat(result.notices()).anyMatch(n -> n.contains("vs"));
     assertThat(result.notices()).anyMatch(n -> n.contains("10.0%"));
+    assertThat(result.widget()).isInstanceOf(TimeSeriesWidgetSpec.class);
+    assertThat(((TimeSeriesWidgetSpec) result.widget()).series()).hasSize(2);
+  }
+
+  @Test
+  void alignsMondayToFridayWithDistinctSeriesAndMissingDayGaps() {
+    var monday = LocalDate.of(2026, 11, 9);
+    var friday = monday.plusDays(4);
+    MetricQueryService metrics = mock(MetricQueryService.class);
+    when(metrics.query(any()))
+        .thenReturn(
+            tsResult(
+                MetricId.SALES_GROSS,
+                monday,
+                friday,
+                point(monday, "1100"),
+                point(monday.plusDays(2), "0"),
+                point(friday, "1500")))
+        .thenReturn(
+            tsResult(
+                MetricId.SALES_GROSS,
+                monday.minusWeeks(1),
+                friday.minusWeeks(1),
+                point(monday.minusWeeks(1), "1000"),
+                point(friday.minusWeeks(1), "1200")));
+    var result =
+        tool(metrics)
+            .execute(
+                new CompareMetricPeriodsInput(
+                    MetricId.SALES_GROSS, monday, friday, Comparison.PREVIOUS_WEEK, TimeGrain.DAY),
+                OWNER);
+    var chart = (TimeSeriesWidgetSpec) result.widget();
+    assertThat(chart.yFormat()).isEqualTo("currency");
+    assertThat(chart.series()).extracting(s -> s.key()).doesNotHaveDuplicates();
+    assertThat(chart.series())
+        .extracting(s -> s.label())
+        .containsExactly("9 Nov 2026 – 13 Nov 2026", "2 Nov 2026 – 6 Nov 2026");
+    assertThat(chart.series().getFirst().points())
+        .extracting(Point::x)
+        .containsExactly("Mon", "Tue", "Wed", "Thu", "Fri");
+    assertThat(chart.series().getFirst().points())
+        .extracting(Point::y)
+        .containsExactly(
+            new BigDecimal("1100"), null, BigDecimal.ZERO, null, new BigDecimal("1500"));
+    assertThat(chart.series().get(1).points())
+        .extracting(Point::y)
+        .containsExactly(new BigDecimal("1000"), null, null, null, new BigDecimal("1200"));
+    assertThat(result.provenance().getFirst().range().from()).isEqualTo(monday);
+  }
+
+  @Test
+  void longerRangesRetainDateAxisRatherThanCollapsingRepeatedWeekdays() {
+    MetricQueryService metrics = mock(MetricQueryService.class);
+    when(metrics.query(any()))
+        .thenReturn(tsResult(MetricId.SALES_GROSS, JAN_8, JAN_14.plusDays(1), point(JAN_8, "10")))
+        .thenReturn(tsResult(MetricId.SALES_GROSS, JAN_1, JAN_7.plusDays(1), point(JAN_1, "20")));
+    var result =
+        tool(metrics)
+            .execute(
+                new CompareMetricPeriodsInput(
+                    MetricId.SALES_GROSS,
+                    JAN_8,
+                    JAN_14.plusDays(1),
+                    Comparison.PREVIOUS_WEEK,
+                    TimeGrain.DAY),
+                OWNER);
     assertThat(result.widget()).isInstanceOf(BarChartWidgetSpec.class);
-    assertThat(((BarChartWidgetSpec) result.widget()).series()).hasSize(2);
+    assertThat(((BarChartWidgetSpec) result.widget()).series().getFirst().points().getFirst().x())
+        .isEqualTo(JAN_8.toString());
   }
 
   @Test

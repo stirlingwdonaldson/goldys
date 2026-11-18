@@ -38,7 +38,6 @@ import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.support.PostgresContainerConfiguration;
-import com.goldys.platform.widget.BarChartWidgetSpec;
 import com.goldys.platform.widget.Point;
 import com.goldys.platform.widget.Series;
 import com.goldys.platform.widget.StatWidgetSpec;
@@ -191,7 +190,7 @@ class ConversationalEvalTest {
 
     assertThat(steps).hasSize(1);
     assertThat(steps.get(0).succeeded()).isTrue();
-    BarChartWidgetSpec widget = (BarChartWidgetSpec) steps.get(0).result().widget();
+    TimeSeriesWidgetSpec widget = (TimeSeriesWidgetSpec) steps.get(0).result().widget();
     assertThat(widget.series()).hasSize(2);
     assertThat(sumPoints(widget.series().get(0).points())).isEqualByComparingTo("600.00");
     assertThat(sumPoints(widget.series().get(1).points())).isEqualByComparingTo("300.00");

@@ -33,7 +33,7 @@ the code is held to.
 | `GET_METRIC` | Any catalogue metric (`docs/metrics/catalog.md`) at a grain |
 | `DESCRIBE_METRICS` | Approved definitions, units, versions, dimensions and grains; discovery excludes inaccessible operands, explicit selections are denied atomically |
 | `RUN_METRIC_ANALYSIS` | Compose 1–6 explicit catalogue queries; authorize every operand and validate the complete plan before reading; preserve each bucket and scope |
-| `COMPARE_METRIC_PERIODS` | A catalogue metric across two periods |
+| `COMPARE_METRIC_PERIODS` | A catalogue metric across two periods; DAY ranges of up to seven days against the previous week render two date-labelled lines on a shared weekday axis (e.g. Monday–Friday). Other comparisons retain the date axis. |
 | `RANK_DIMENSION` | A catalogue metric ranked by an allowed dimension |
 | `GET_RECONCILIATION_STATUS` | Open conflicts and resolution state |
 | `CREATE_DASHBOARD_DRAFT` | Proposes a query-only dashboard document for explicit user confirmation; authorizes every referenced metric, including metadata operands |

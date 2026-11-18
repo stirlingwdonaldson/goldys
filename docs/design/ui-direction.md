@@ -158,9 +158,12 @@ and code blocks. Raw HTML and remote images are inert; clickable public citation
 retain the approved HTTPS government-domain policy. Long responses show a bounded
 plain-text preview with a keyboard-accessible “Read full answer” disclosure; expansion
 retains the complete response. Intermediate updates and reporting evidence sit under
-“Investigation activity” for each user exchange. Reporting qualifications, missing
+“Investigation activity” for each user exchange. The latest reporting line/bar chart in each
+exchange appears directly below the answer, with earlier exploratory charts kept in activity.
+Multi-series line charts show a persistent date/series legend and expandable data table. Reporting qualifications, missing
 periods and trust indicators sit in a separate, initially collapsed “Data notes”
-disclosure per exchange. Dashboard save actions remain visible.
+disclosure per exchange, including full provenance. Dashboard save actions remain visible
+when a dashboard is explicitly requested; a graph request uses reporting charts in chat.
 The worker leads with a brief conclusion including material limitations; disclosure
 also bounds older or unexpectedly verbose responses without relying on that prompt.
 
