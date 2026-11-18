@@ -9,6 +9,7 @@ import com.goldys.platform.semantic.catalog.MetricQuery;
 import com.goldys.platform.semantic.catalog.MetricQueryService;
 import com.goldys.platform.semantic.catalog.MetricResult;
 import com.goldys.platform.semantic.catalog.MetricSeries;
+import com.goldys.platform.semantic.catalog.TimeGrain;
 import com.goldys.platform.semantic.catalog.TimeRange;
 import com.goldys.platform.semantic.catalog.TimeSeriesResult;
 import java.math.BigDecimal;
@@ -45,7 +46,11 @@ public class CompareMetricPeriodsTool extends MetricReportingTool {
   @Override
   public String description() {
     return "Compare a metric between a current date range and a reference period (previous day/week, "
-        + "same period last year, rolling windows), returning both series and the percentage delta.";
+        + "same period last year, rolling windows), returning both series and the percentage delta. "
+        + "For an inline line graph comparing weekdays across two weeks, use grain DAY, "
+        + "comparison PREVIOUS_WEEK and the newer week's startDate/endDate (Monday to Friday "
+        + "for Mon–Fri). This returns two date-labelled lines on a shared weekday axis. "
+        + "Use this tool for comparison graphs in chat; no dashboard draft is needed.";
   }
 
   @Override
@@ -60,6 +65,16 @@ public class CompareMetricPeriodsTool extends MetricReportingTool {
 
   @Override
   protected String renderType(List<MetricResult> results) {
+    var current = results.get(0).provenance();
+    var reference = results.get(1).provenance();
+    long days = current.range().to().toEpochDay() - current.range().from().toEpochDay() + 1;
+    if (current.grain() == TimeGrain.DAY
+        && reference.grain() == TimeGrain.DAY
+        && days <= 7
+        && current.range().from().minusWeeks(1).equals(reference.range().from())
+        && current.range().to().minusWeeks(1).equals(reference.range().to())) {
+      return "weekday-comparison";
+    }
     return "bar-chart";
   }
 

@@ -40,7 +40,9 @@ public class CreateDashboardDraftTool implements ReportingTool {
 
   @Override
   public String description() {
-    return "Propose a saved dashboard draft: a title, an optional description, optional "
+    return "Only use when the user explicitly asks to create, save or update a dashboard. "
+        + "A request for a chart or graph in chat is not a dashboard request; use reporting tools instead. "
+        + "Propose a saved dashboard draft: a title, an optional description, optional "
         + "dashboard-level filters, and an ordered list of widgets. Each widget names a "
         + "renderType, one or more metric queries (metric, date range, grain, dimensions, "
         + "comparison) and a grid layout. renderType must be lowercase: stat, time-series, bar-chart, table, or ranked-list. "

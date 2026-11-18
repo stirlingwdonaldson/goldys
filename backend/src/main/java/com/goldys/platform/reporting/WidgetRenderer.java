@@ -18,9 +18,13 @@ import com.goldys.platform.widget.TableWidgetSpec;
 import com.goldys.platform.widget.TimeSeriesWidgetSpec;
 import com.goldys.platform.widget.WidgetSpec;
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.stream.IntStream;
 import org.springframework.stereotype.Component;
 
 /**
@@ -105,6 +109,7 @@ public class WidgetRenderer {
       }
     }
     return switch (type) {
+      case "weekday-comparison" -> weekdayComparison(id, results);
       case "table" ->
           new TableWidgetSpec(
               id, compositeLabel(results), null, columnsOf(results), rowsOf(results), null);
@@ -116,6 +121,48 @@ public class WidgetRenderer {
               id, compositeLabel(results), null, compositeSeries(results), "number", false, null);
       default -> throw new IllegalArgumentException("unsupported composite render type: " + type);
     };
+  }
+
+  /** Align equal weekday ranges without changing the dated semantic results or their provenance. */
+  private TimeSeriesWidgetSpec weekdayComparison(String id, List<MetricResult> results) {
+    var dates = DateTimeFormatter.ofPattern("d MMM uuuu", Locale.forLanguageTag("en-AU"));
+    List<Series> series =
+        IntStream.range(0, results.size())
+            .mapToObj(
+                index -> {
+                  var result = (TimeSeriesResult) results.get(index);
+                  var range = result.provenance().range();
+                  Map<java.time.LocalDate, BigDecimal> values = new LinkedHashMap<>();
+                  result
+                      .series()
+                      .forEach(
+                          s -> s.points().forEach(p -> values.put(p.bucketStart(), p.value())));
+                  // Include absent buckets as null so a missing day never shifts the other week's
+                  // values.
+                  var points =
+                      range
+                          .from()
+                          .datesUntil(range.to().plusDays(1))
+                          .map(
+                              date ->
+                                  new Point(
+                                      date.getDayOfWeek()
+                                          .getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                                      values.get(date)))
+                          .toList();
+                  return new Series(
+                      "period-" + index,
+                      dates.format(range.from()) + " – " + dates.format(range.to()),
+                      points);
+                })
+            .toList();
+    return new TimeSeriesWidgetSpec(
+        id,
+        label(results.getFirst()),
+        "Daily comparison by weekday. Gaps indicate unavailable values.",
+        series,
+        format(results.getFirst()),
+        null);
   }
 
   private List<Series> seriesOf(TimeSeriesResult ts) {

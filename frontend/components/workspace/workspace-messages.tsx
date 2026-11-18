@@ -33,8 +33,10 @@ export function WorkspaceMessages({ job }: { job: WorkspaceJob }) {
 
 function WorkspaceExchange({ messages }: { messages: WorkspaceMessage[] }) {
   const latest = messages.findLast(message => message.role === "assistant" && message.text.trim());
-  const activity = messages.filter(message => message.role !== "user" && message !== latest && (message.text || message.reporting));
-  const qualified = messages.filter(message => message.reporting && (message.reporting.notices.length || message.reporting.provenance.some(source => source.missingPeriods.length || source.trust)));
+  const chart = messages.findLast(message => !message.draft &&
+    (message.reporting?.widget.type === "time-series" || message.reporting?.widget.type === "bar-chart"));
+  const activity = messages.filter(message => message.role !== "user" && message !== latest && (message.text || (message.reporting && message !== chart)));
+  const qualified = messages.filter(message => message.reporting && (message.reporting.notices.length || message.reporting.provenance.length));
   return <div className="min-w-0 space-y-3">
     {messages.filter(message => message.role === "user").map(message => <p key={message.id} className="ml-auto max-w-full whitespace-pre-wrap break-words rounded-2xl bg-muted px-4 py-3 text-sm sm:max-w-xl">{message.text}</p>)}
     {activity.length ? <Collapsible className="min-w-0">
@@ -43,11 +45,12 @@ function WorkspaceExchange({ messages }: { messages: WorkspaceMessage[] }) {
         {activity.map(message => <article key={message.id} className="min-w-0 space-y-3">
           <h3 className="text-xs font-medium text-muted-foreground">{message.role === "tool" ? "Reporting result" : "Goldy’s update"}</h3>
           {message.text ? <AnswerMarkdown text={message.text} /> : null}
-          {message.reporting ? <ReportingResult message={message} /> : null}
+          {message.reporting && message !== chart ? <ReportingResult message={message} /> : null}
         </article>)}
       </CollapsibleContent>
     </Collapsible> : null}
-    {latest ? <article key={latest.id} className="min-w-0 space-y-3"><h3 className="text-xs font-medium text-muted-foreground">Goldy’s</h3><AnswerText text={latest.text} />{latest.reporting ? <ReportingResult message={latest} /> : null}</article> : null}
+    {latest ? <article key={latest.id} className="min-w-0 space-y-3"><h3 className="text-xs font-medium text-muted-foreground">Goldy’s</h3><AnswerText text={latest.text} />{latest.reporting && latest !== chart ? <ReportingResult message={latest} /> : null}</article> : null}
+    {chart ? <ReportingResult message={chart} compact /> : null}
     {qualified.length ? <Collapsible className="min-w-0">
       <CollapsibleTrigger asChild><Button variant="ghost" size="sm" className="group gap-2 text-muted-foreground">Data notes<ChevronDown aria-hidden="true" className="size-4 group-data-[state=open]:rotate-180" /></Button></CollapsibleTrigger>
       <CollapsibleContent className="space-y-4 border-l pl-4 pt-3">
@@ -58,13 +61,13 @@ function WorkspaceExchange({ messages }: { messages: WorkspaceMessage[] }) {
   </div>;
 }
 
-function ReportingResult({ message }: { message: WorkspaceMessage }) {
+function ReportingResult({ message, compact = false }: { message: WorkspaceMessage; compact?: boolean }) {
   const result = message.reporting;
   if (!result) return null;
   const widget = parseWidgetSpec(result.widget);
   return <div className="min-w-0 space-y-3">
     {widget ? <WidgetRenderer widget={widget} /> : <p role="alert">Reporting result unavailable.</p>}
-    {result.provenance.map((source, index) => <div key={index} className="text-xs text-muted-foreground">
+    {!compact && result.provenance.map((source, index) => <div key={index} className="text-xs text-muted-foreground">
       <p>{source.metric} · {source.range.from} to {source.range.to} · {source.sourceDomain}</p>
       <p>Data as of {source.dataFreshness ?? "unknown"} · Calculation {source.calculationVersion}</p>
     </div>)}
@@ -78,6 +81,8 @@ function ReportingQualifications({ message }: { message: WorkspaceMessage }) {
   return <div className="space-y-2 text-xs text-muted-foreground">
     {result.notices.length ? <ul aria-label="Reporting qualifications" className="list-disc space-y-1 pl-5">{result.notices.map((notice, index) => <li key={index}>{notice}</li>)}</ul> : null}
     {result.provenance.map((source, index) => <div key={index}>
+      <p>{source.metric} · {source.range.from} to {source.range.to} · {source.sourceDomain}</p>
+      <p>Data as of {source.dataFreshness ?? "unknown"} · Calculation {source.calculationVersion}</p>
       {source.missingPeriods.length ? <p>{source.metric} — Missing periods: {source.missingPeriods.join(", ")}</p> : null}
       {source.trust ? <span className="inline-flex items-center gap-2">{source.metric}<TrustIndicator trust={source.trust} value={source.trust.state === "NOT_RECEIVED" ? null : 1} /></span> : null}
     </div>)}

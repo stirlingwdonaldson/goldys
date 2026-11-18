@@ -84,7 +84,7 @@ class LiveLlmEvalTest {
   @Autowired ObjectMapper mapper;
 
   @Test
-  void scoresTheTenCategoryQuestionSet() throws IOException {
+  void scoresTheQuestionSet() throws IOException {
     ChatModel model = chatModel.getIfAvailable();
     AssistantService assistant = assistantService.getIfAvailable();
     Assumptions.assumeTrue(
@@ -107,7 +107,7 @@ class LiveLlmEvalTest {
     Files.writeString(reportPath, report);
 
     // Harness mechanics only — never the model's quality, which is non-deterministic.
-    assertThat(scored).hasSize(10);
+    assertThat(scored).hasSize(questions.size());
     assertThat(Files.isRegularFile(reportPath)).isTrue();
   }
 
@@ -193,6 +193,10 @@ class LiveLlmEvalTest {
           observed);
     }
 
+    if ("inline-weekday-comparison".equals(question.category()) && draft) {
+      return new ToolSelection(
+          false, "inline graph request produced a dashboard draft", expected, observed);
+    }
     boolean allPresent = observed.containsAll(expected);
     return new ToolSelection(
         allPresent,

@@ -57,7 +57,7 @@ export function TimeSeriesWidgetView({ widget }: { widget: TimeSeriesWidget }) {
                   connectNulls={false}
                   stroke={color}
                   fill={color}
-                  fillOpacity={i === 0 ? 0.07 : 0}
+                  fillOpacity={widget.series.length === 1 ? 0.07 : 0}
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 0, fill: color, fillOpacity: 1 }}
                   activeDot={{ r: 4, strokeWidth: 0 }}
@@ -67,6 +67,12 @@ export function TimeSeriesWidgetView({ widget }: { widget: TimeSeriesWidget }) {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      {widget.series.length > 1 ? <ul aria-label="Chart legend" className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        {widget.series.map((series, index) => <li key={series.key} className="inline-flex items-center gap-2">
+          <span aria-hidden="true" className="h-0.5 w-4" style={{ backgroundColor: SERIES_COLORS[index % SERIES_COLORS.length] }} />
+          {series.label}
+        </li>)}
+      </ul> : null}
       <ChartDataTable widget={widget} />
     </WidgetShell>
   );

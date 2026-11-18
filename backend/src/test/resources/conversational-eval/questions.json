@@ -1,5 +1,12 @@
 [
   {
+    "category": "inline-weekday-comparison",
+    "question": "Compare sales for the last two weeks. Show me a line graph comparing the two, both over Monday–Friday on the x axis and sales on the y axis. Show it in this chat, not a saved dashboard.",
+    "role": "owner",
+    "expectedTools": ["compare_metric_periods"],
+    "causal": false
+  },
+  {
     "category": "simple-retrieval",
     "question": "What were our gross sales from 1 to 3 February 2026?",
     "role": "owner",

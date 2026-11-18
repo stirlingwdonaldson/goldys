@@ -76,6 +76,31 @@ describe("workspace dashboard drafts", () => {
     expect(screen.getByText("Checking sales.")).toBeVisible();
     expect(screen.getByText("Sales")).toBeVisible();
   });
+  it("shows the final chart inline and retains earlier charts in restored history", async () => {
+    const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
+    const reporting = { widget: { schemaVersion: 2 as const, type: "time-series" as const, id: "comparison", title: "Weekday sales comparison", yFormat: "currency" as const,
+      series: [
+        { key: "period-0", label: "9 Nov 2026 – 13 Nov 2026", points: [{ x: "Mon", y: 1100 }, { x: "Tue", y: null }] },
+        { key: "period-1", label: "2 Nov 2026 – 6 Nov 2026", points: [{ x: "Mon", y: 1000 }, { x: "Tue", y: 0 }] },
+      ] }, notices: ["Tuesday is unavailable."], provenance: [], relatedMetrics: [] };
+    job.messages = [
+      { id: "earlier", role: "tool", text: "", reporting: { ...reporting, widget: { ...reporting.widget, id: "earlier", title: "Exploratory sales" } } },
+      { id: "chart", role: "tool", text: "", reporting },
+      { id: "answer", role: "assistant", text: "Here are the two completed weeks.", reporting: null },
+      { id: "followup", role: "user", text: "Thanks", reporting: null },
+      { id: "reply", role: "assistant", text: "You’re welcome.", reporting: null },
+    ];
+    render(<WorkspaceMessages job={workspaceJobSchema.parse(JSON.parse(JSON.stringify(job)))} />);
+    expect(screen.getByRole("img", { name: "Weekday sales comparison" })).toBeVisible();
+    expect(screen.getByRole("list", { name: "Chart legend" })).toHaveTextContent("9 Nov 2026 – 13 Nov 2026");
+    expect(screen.getByRole("list", { name: "Chart legend" })).toHaveTextContent("2 Nov 2026 – 6 Nov 2026");
+    expect(screen.queryByText("Exploratory sales")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tuesday is unavailable.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save dashboard" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Investigation activity (1)" }));
+    expect(screen.getByRole("img", { name: "Exploratory sales" })).toBeVisible();
+    expect(screen.getAllByRole("img", { name: "Weekday sales comparison" })).toHaveLength(1);
+  });
   it("routes an existing-dashboard proposal through explicit update", async () => {
     const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
     job.messages[0].draft!.dashboardId = "existing";

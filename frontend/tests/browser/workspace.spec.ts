@@ -22,7 +22,13 @@ test("workspace survives reload, edits queued input, stops server work and hides
       const input = route.request().postDataJSON();
       submissions.push(input);
       job = { id: `10000000-0000-4000-8000-00000000000${submissions.length}`, threadId: input.threadId, state: "RUNNING", prompt: input.prompt, revision: 1,
-        messages: [{ id: "citation", role: "assistant", text: "Public fixture source retrieved 2026-11-16: https://www.bom.gov.au/", reporting: null }, { id: "answer", role: "assistant", text: "**Saved fixture finding**\n\n## Sales breakdown\n\n| Category | Total |\n| --- | ---: |\n| Food | $42 |\n\n" + "Supporting reporting detail. ".repeat(30), reporting: null }, { id: "widget", role: "tool", text: "", reporting: { widget: { schemaVersion: 2, type: "stat", id: "missing-sales", title: "Weekly sales", value: null, format: "currency" }, notices: ["Missing source coverage; no total is available."], provenance: [], relatedMetrics: [] } }] };
+        messages: [{ id: "comparison", role: "tool", text: "", reporting: {
+          widget: { schemaVersion: 2, type: "time-series", id: "weekdays", title: "Gross sales by weekday", yFormat: "currency",
+            description: "Daily comparison by weekday. Gaps indicate unavailable values.",
+            series: [
+              { key: "period-0", label: "9 Nov 2026 – 13 Nov 2026", points: [1100, null, 0, 1400, 1500].map((y, i) => ({ x: ["Mon", "Tue", "Wed", "Thu", "Fri"][i], y })) },
+              { key: "period-1", label: "2 Nov 2026 – 6 Nov 2026", points: [1000, 1200, 1300, 1400, 1200].map((y, i) => ({ x: ["Mon", "Tue", "Wed", "Thu", "Fri"][i], y })) },
+            ] }, notices: [], provenance: [], relatedMetrics: [] } }, { id: "citation", role: "assistant", text: "Public fixture source retrieved 2026-11-16: https://www.bom.gov.au/", reporting: null }, { id: "answer", role: "assistant", text: "**Saved fixture finding**\n\n## Sales breakdown\n\n| Category | Total |\n| --- | ---: |\n| Food | $42 |\n\n" + "Supporting reporting detail. ".repeat(30), reporting: null }, { id: "widget", role: "tool", text: "", reporting: { widget: { schemaVersion: 2, type: "stat", id: "missing-sales", title: "Weekly sales", value: null, format: "currency" }, notices: ["Missing source coverage; no total is available."], provenance: [], relatedMetrics: [] } }] };
       return route.fulfill({ json: job });
     }
     if (job && path === `/api/workspace/jobs/${job.id}`) return route.fulfill({ json: job });
@@ -65,9 +71,12 @@ test("workspace survives reload, edits queued input, stops server work and hides
   await page.getByRole("link", { name: "Ask Goldy's (⌘J)", exact: true }).click();
   await expect(page).toHaveURL(/\/ask-goldys$/);
   await page.screenshot({ path: "/tmp/goldys-ask-empty-desktop.png" });
-  await page.getByLabel("Reporting question", { exact: true }).fill("Compare weekly sales");
+  await page.getByLabel("Reporting question", { exact: true }).fill("Compare sales for the last two weeks. Show a line graph for Monday–Friday with sales on the y axis.");
   await page.getByRole("button", { name: "Send question", exact: true }).click();
   await expect(page.getByText("Saved fixture finding", { exact: true })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Gross sales by weekday" })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Chart legend" })).toContainText("9 Nov 2026 – 13 Nov 2026");
+  await expect(page.getByRole("button", { name: "Save dashboard" })).toHaveCount(0);
   if (process.env.NEXT_PUBLIC_WORKSPACE_FILES_ENABLED === "false") {
     await expect(page.getByLabel("Upload a file")).toHaveCount(0);
   }
@@ -103,6 +112,7 @@ test("workspace survives reload, edits queued input, stops server work and hides
   await page.goto(deepLink);
   await expect(page.getByText("Compare beverage sales", { exact: true })).toBeVisible();
   expect(submissions).toHaveLength(1);
+  await expect(page.getByRole("img", { name: "Gross sales by weekday" })).toBeVisible();
   await page.getByRole("button", { name: "Investigation activity (2)" }).click();
   await expect(page.getByRole("link", { name: "https://www.bom.gov.au/", exact: true })).toHaveAttribute("referrerpolicy", "no-referrer");
   await expect(page.getByText(/Public fixture source retrieved 2026-11-16/)).toBeVisible();
@@ -129,6 +139,7 @@ test("workspace survives reload, edits queued input, stops server work and hides
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByText("Saved fixture finding", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Queue message", exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole("img", { name: "Gross sales by weekday" })).toBeVisible();
   await page.screenshot({ path: "/tmp/goldys-workspace-narrow.png" });
   await expect(page.getByLabel("Queue a follow-up", { exact: true })).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
