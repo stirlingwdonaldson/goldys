@@ -119,6 +119,29 @@ export interface SourceGroup {
   syncable: boolean;
 }
 
+/** A qualification is not proof that processing failed or that financial rows are absent. */
+export function connectorIssue(type: string): { title: string; guidance: string; qualification: boolean } {
+  switch (type) {
+    case "SALE_ITEM_METADATA_UNOBSERVED":
+      return { title: "Receipt metadata needs review", qualification: true,
+        guidance: "This warning concerns missing source metadata, not a failed sales import. Review the export fields before retrying." };
+    case "RECEIPT_EVIDENCE_UNVERIFIED":
+      return { title: "Receipt coverage is unverified", qualification: true,
+        guidance: "The delivery does not establish complete receipt coverage. Review the source report scope; retrying unchanged data will not verify it." };
+    case "INVOICE_IDENTITY_WITHHELD":
+    case "INVOICE_REVISION_WITHHELD":
+      return { title: "Some invoices need review", qualification: false,
+        guidance: "The export is retained. Review the held invoices, then retry the invoice files. Other invoices can still be processed." };
+    case "PDF_ENRICHMENT_INCOMPLETE":
+    case "PROCESSING_ENRICHED_FAILED":
+      return { title: "PDF enrichment is incomplete", qualification: false,
+        guidance: "The PDF is retained. Review invoice flags and model access before retrying. This does not establish that the invoice itself is missing." };
+    default:
+      return { title: "Processing needs attention", qualification: false,
+        guidance: "Review the run details before retrying. This status alone does not establish which figures are missing." };
+  }
+}
+
 /**
  * Groups connectors by source system so each source is one card (OpenTable's several
  * exports and Lightspeed's two feeds collapse into one), dropping the deprecated thin

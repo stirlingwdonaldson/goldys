@@ -72,8 +72,7 @@ class CanonicalInvoiceService {
     if (matchingLegacy.isPresent()) {
       if (current.isPresent()
           && !current.get().logicalEntityId().equals(legacy.get().logicalEntityId())) {
-        throw new IllegalArgumentException(
-            "Conflicting legacy and scoped invoice identities require review");
+        throw new InvoiceIdentityWithheldException();
       }
       // Keep the enduring entity ID so already-backfilled children do not become orphans.
       logicalId = legacy.get().logicalEntityId();

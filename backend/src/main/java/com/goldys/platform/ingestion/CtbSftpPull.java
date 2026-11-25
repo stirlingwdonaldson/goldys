@@ -40,18 +40,27 @@ public class CtbSftpPull {
       cron = "${ctb.sftp.cron:0 */15 * * * *}",
       zone = "${app.venue.timezone:Australia/Melbourne}")
   public void pull() {
+    pull(false);
+  }
+
+  /** An explicit operator retry bypasses the automatic cooldown after reviewing the cause. */
+  public void pullNow() {
+    pull(true);
+  }
+
+  private synchronized void pull(boolean forceRetry) {
     try {
       List<SftpDrop.SftpFile> files = drop.list();
       // Phase 1: CSVs first, so canonical lines exist before PDFs try to enrich them.
       for (SftpDrop.SftpFile file : files) {
         if (file.filename().toLowerCase().endsWith(".csv")) {
-          process(file);
+          process(file, forceRetry);
         }
       }
       // Phase 2: PDFs (stored raw + enrichment).
       for (SftpDrop.SftpFile file : files) {
         if (!file.filename().toLowerCase().endsWith(".csv")) {
-          process(file);
+          process(file, forceRetry);
         }
       }
     } catch (RuntimeException e) {
@@ -60,11 +69,15 @@ public class CtbSftpPull {
     }
   }
 
-  private void process(SftpDrop.SftpFile file) {
+  private void process(SftpDrop.SftpFile file, boolean forceRetry) {
     try {
       byte[] bytes = drop.download(file.path());
+      String deliveryRef = "sftp:" + file.path();
+      if (!forceRetry && ingestion.deferSftpRetry(deliveryRef, bytes)) {
+        return;
+      }
       if (file.filename().toLowerCase().endsWith(".csv")) {
-        csvIngest.ingest(bytes);
+        csvIngest.ingest(bytes, deliveryRef);
       } else {
         UUID rawId =
             ingestion.ingestPush(
@@ -74,8 +87,25 @@ public class CtbSftpPull {
                 "application/pdf",
                 bytes,
                 null,
-                "ctb-sftp");
-        pdfEnrichment.enrich(bytes, file.filename(), rawId);
+                "ctb-sftp",
+                deliveryRef);
+        try {
+          boolean enriched = pdfEnrichment.enrich(bytes, file.filename(), rawId);
+          ingestion.recordStage(
+              rawId,
+              IngestionStageKind.ENRICHED,
+              enriched ? IngestionStageOutcome.SUCCESS : IngestionStageOutcome.FAILED);
+          if (!enriched) {
+            ingestion.recordQualification(
+                rawId,
+                "PDF_ENRICHMENT_INCOMPLETE",
+                "PDF retained but enrichment did not complete. Review invoice flags before retrying.");
+            return;
+          }
+        } catch (RuntimeException e) {
+          ingestion.recordStage(rawId, IngestionStageKind.ENRICHED, IngestionStageOutcome.FAILED);
+          throw e;
+        }
       }
       log.info("SFTP drop processed {}", file.filename());
       drop.markProcessed(file.path());

@@ -131,6 +131,7 @@ export const liveApi: Api = {
   listConnectorStatuses: (options?: { signal?: AbortSignal }) => fetchApi<ConnectorStatus[]>("/api/connectors", { signal: options?.signal }),
   runConnector: (source: string) =>
     fetchApi<ConnectorStatus>(`/api/connectors/${source}/run`, { method: "POST" }),
+  retryInvoiceFiles: () => fetchApi<void>("/api/connectors/CTB/sftp/run", { method: "POST" }, { responseType: "void" }),
   uploadLightspeedReceiptCsv: (dataset, file, scope) => {
     const form = new FormData();
     form.append("file", file);

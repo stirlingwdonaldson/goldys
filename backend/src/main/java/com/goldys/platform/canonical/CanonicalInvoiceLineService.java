@@ -122,12 +122,8 @@ class CanonicalInvoiceLineService {
       UUID parent =
           invoiceQuery
               .unambiguousInvoiceLogicalIdForInvoiceNumber(number)
-              .orElseThrow(
-                  () ->
-                      new IllegalArgumentException(
-                          "Ambiguous legacy invoice lines; supplier relationship requires review"));
-      if (!parent.equals(invoice.logicalEntityId()))
-        throw new IllegalArgumentException("Ambiguous invoice parent");
+              .orElseThrow(() -> new InvoiceIdentityWithheldException());
+      if (!parent.equals(invoice.logicalEntityId())) throw new InvoiceIdentityWithheldException();
       existing.addAll(unparented);
     }
     List<CanonicalInvoiceLine> legacyPdf =
@@ -135,7 +131,9 @@ class CanonicalInvoiceLineService {
             .filter(line -> line.invoiceLogicalId() == null)
             .toList();
     if (!legacyPdf.isEmpty()) {
-      invoiceQuery.requireUnambiguousNumber(number);
+      if (invoiceQuery.hasAmbiguousInvoiceNumber(number)) {
+        throw new InvoiceIdentityWithheldException();
+      }
       for (CanonicalInvoiceLine line : legacyPdf) {
         Instant now = CLOCK.instant();
         line.supersede(now);

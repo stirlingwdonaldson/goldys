@@ -1,6 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { demoApi } from "./demo";
 
+it("retrying invoice files does not invent successful connector recovery", async () => {
+  const before = structuredClone(await demoApi.listConnectorStatuses());
+  await demoApi.retryInvoiceFiles();
+  expect(await demoApi.listConnectorStatuses()).toEqual(before);
+});
+
 describe("demoApi sales-detail lists", () => {
   it("filters payments by payment type", async () => {
     const page = await demoApi.listPayments({ paymentType: "Tyro" }, 0, 20);

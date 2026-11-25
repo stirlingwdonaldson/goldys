@@ -12,7 +12,7 @@ import { useToast } from "@/components/feedback/toast";
 import { useShellStatus } from "@/components/app-shell/shell-status";
 import { PageHeader } from "@/components/layout/page-header";
 import { SourceTile } from "@/components/sources/source-tile";
-import { connectorDisplayName, groupConnectors, opentableDatasetLabel, sourceIdentity, type SourceGroup } from "@/lib/sources";
+import { connectorDisplayName, connectorIssue, groupConnectors, uploadTargetFor, opentableDatasetLabel, sourceIdentity, type SourceGroup } from "@/lib/sources";
 import { formatAgo, formatDateTime } from "@/lib/format";
 import { InlineError } from "@/components/states/inline-error";
 import { Section } from "@/components/layout/section";
@@ -40,6 +40,7 @@ export default function DataHealthPage() {
   const api = useApi();
   const queryClient = useQueryClient();
   const runMutation = useMutation({ mutationFn: api.runConnector });
+  const invoiceRetry = useMutation({ mutationFn: api.retryInvoiceFiles });
   const uploadMutation = useMutation({ mutationFn: ({ connectorName, file }: { connectorName: string; file: File }) => api.uploadConnectorCsv(connectorName, file) });
   const connectors = useQuery({ queryKey: ["listConnectorStatuses"], queryFn: ({ signal }) => queryApi.listConnectorStatuses({ signal }) });
   const summary = useQuery({ queryKey: ["getDashboardSummary"], queryFn: ({ signal }) => queryApi.getDashboardSummary({ signal }) });
@@ -72,8 +73,8 @@ export default function DataHealthPage() {
   }, [anyRunning, refreshConnectors]);
   useEffect(() => {
     for (const c of connectors.data ?? []) {
-      if (c.status === "running" || !startedHere.current.has(c.source)) continue;
-      startedHere.current.delete(c.source);
+      if (c.status === "running" || !startedHere.current.has(c.connectorName)) continue;
+      startedHere.current.delete(c.connectorName);
       void invalidateBusinessReads(queryClient);
       refreshShell();
       toast(runOutcomeToast(c));
@@ -85,7 +86,7 @@ export default function DataHealthPage() {
     try {
       const result = await runMutation.mutateAsync(source);
       if (result.status === "running") {
-        startedHere.current.add(source);
+        startedHere.current.add(result.connectorName);
         toast({
           title: `${sourceIdentity(source).label} is running`,
           description: "This can take a few minutes. We'll let you know when it finishes.",
@@ -130,6 +131,17 @@ export default function DataHealthPage() {
     }
   }
 
+  async function retryInvoiceFiles() {
+    try {
+      await invoiceRetry.mutateAsync();
+      await invalidateBusinessReads(queryClient);
+      shell.refresh();
+      toast({ title: "Invoice files checked", description: "Review the updated statuses and invoice flags; unresolved files remain held.", tone: "info" });
+    } catch (e) {
+      toast({ title: "Couldn't retry invoice files", description: isApiError(e) ? e.message : "Check the connection and try again.", tone: "error" });
+    }
+  }
+
   // Every branch renders `<>{body}{syncDialog}</>` so the dialog keeps the same position in the
   // tree: finishing a sync reloads the connector list (briefly showing the loading state), and the
   // open dialog, with its result, must stay mounted through that.
@@ -169,8 +181,8 @@ export default function DataHealthPage() {
     );
   }
 
-  const failing = connectors.data.filter((c) => c.status === "failed" || c.status === "partial").length;
   const groups = groupConnectors(connectors.data);
+  const failing = groups.filter((group) => group.status === "failed" || group.status === "partial").length;
 
   return (
     <>
@@ -224,6 +236,8 @@ export default function DataHealthPage() {
                   fileInputRef.current?.click();
                 }}
                 onSync={group.syncable ? () => setSyncOpen(true) : undefined}
+                onRetryInvoices={group.source.toUpperCase() === "CTB" ? () => void retryInvoiceFiles() : undefined}
+                retryingInvoices={invoiceRetry.isPending}
               />
             );
           })}
@@ -313,6 +327,8 @@ function ConnectorCard({
   onRun,
   onUpload,
   onSync,
+  onRetryInvoices,
+  retryingInvoices,
 }: {
   group: SourceGroup;
   running: boolean;
@@ -321,6 +337,8 @@ function ConnectorCard({
   onRun: () => void;
   onUpload: (connectorName: string) => void;
   onSync: (() => void) | undefined;
+  onRetryInvoices?: () => void;
+  retryingInvoices: boolean;
 }) {
   const failed = group.status === "failed";
   const isSync = onSync !== undefined;
@@ -342,7 +360,7 @@ function ConnectorCard({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {group.connectors.map((c) => (
+          {group.connectors.filter((c) => uploadTargetFor(c.connectorName) !== null).map((c) => (
             <DropdownMenuItem key={c.connectorName} onSelect={() => onUpload(c.connectorName)}>
               {opentableDatasetLabel(c.connectorName)}
             </DropdownMenuItem>
@@ -378,18 +396,25 @@ function ConnectorCard({
         </div>
       </div>
 
-      {group.failure ? (
-        <Alert variant="destructive" className="border-0 bg-destructive-soft">
+      {group.connectors.filter((connector) => connector.failure).map((connector) => {
+        const failure = connector.failure!;
+        const issue = connectorIssue(failure.type);
+        return (
+        <Alert key={connector.connectorName} variant={issue.qualification ? "default" : "destructive"}
+          className={cn("border-0", issue.qualification ? "bg-status-conflict-soft" : "bg-destructive-soft")}>
           <AlertTriangle aria-hidden="true" />
           <AlertTitle className="text-foreground">
-            {group.failure.type} at {formatDateTime(group.failure.at)}
+            {issue.title}
           </AlertTitle>
           <AlertDescription className="text-muted-foreground">
-            {group.failure.message ?? "The source didn't say why."} Figures from {name} after this run
-            are missing until it succeeds. Check the connection, then run it again.
+            <p>{failure.message ?? "The source didn't say why."}</p>
+            <p>{issue.guidance}</p>
+            <p>{connector.connectorName} · {formatDateTime(failure.at)} · <Link href="/logs" className="underline underline-offset-2">View run details</Link></p>
           </AlertDescription>
         </Alert>
-      ) : failed ? (
+        );
+      })}
+      {!group.failure && failed ? (
         <Alert variant="destructive" className="border-0 bg-destructive-soft">
           <AlertTriangle aria-hidden="true" />
           <AlertTitle className="text-foreground">The latest run failed</AlertTitle>
@@ -416,7 +441,13 @@ function ConnectorCard({
         </div>
       </dl>
 
-      <div className="mt-auto flex items-center gap-2">{action}</div>
+      <div className="mt-auto flex flex-wrap items-center gap-2">
+        {action}
+        {onRetryInvoices ? <Button variant="outline" size="sm" onClick={onRetryInvoices} disabled={retryingInvoices || busy}>
+          <RefreshCw aria-hidden="true" className={retryingInvoices ? "animate-spin" : undefined} />
+          {retryingInvoices ? "Retrying invoice files…" : "Retry invoice files"}
+        </Button> : null}
+      </div>
     </Card>
   );
 }

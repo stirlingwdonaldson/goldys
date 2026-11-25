@@ -121,7 +121,8 @@ public class InvoiceIngestFlagService {
             pdfFilename,
             List.of(
                 InvoiceIngestFlagType.LLM_EXTRACTION_FAILED,
-                InvoiceIngestFlagType.PDF_UNPARSEABLE))) {
+                InvoiceIngestFlagType.PDF_UNPARSEABLE,
+                InvoiceIngestFlagType.AMBIGUOUS_PDF))) {
       flag.resolve(Instant.now(CLOCK));
       repository.save(flag);
     }

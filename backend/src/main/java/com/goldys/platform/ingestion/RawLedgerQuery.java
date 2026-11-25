@@ -38,6 +38,18 @@ public class RawLedgerQuery {
     return rawRecords.findById(id).map(RawRecord::payloadBytes).orElse(null);
   }
 
+  /** Bounded recovery must validate the source and content type before invoking a parser. */
+  public RawPayload invoicePdf(UUID id) {
+    RawRecord record =
+        rawRecords
+            .findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Unknown invoice PDF raw record"));
+    if (!record.sourceSystem().equals("CTB") || !record.contentType().equals("application/pdf")) {
+      throw new IllegalArgumentException("Replay requires a retained CTB invoice PDF");
+    }
+    return new RawPayload(record.id(), record.payloadBytes());
+  }
+
   /** Capture metadata for a just-stored response; payload contents are not exposed here. */
   public RawRecordRef rawRecordRef(UUID id) {
     return rawRecords

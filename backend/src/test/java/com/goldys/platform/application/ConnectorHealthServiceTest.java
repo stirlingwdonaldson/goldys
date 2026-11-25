@@ -15,7 +15,7 @@ class ConnectorHealthServiceTest {
   @Test
   void mapsLatestRunsToHealth() {
     IngestionService ingestion = mock(IngestionService.class);
-    when(ingestion.latestRunPerConnector())
+    when(ingestion.connectorHealthRuns())
         .thenReturn(
             List.of(
                 new IngestionRunSummary(

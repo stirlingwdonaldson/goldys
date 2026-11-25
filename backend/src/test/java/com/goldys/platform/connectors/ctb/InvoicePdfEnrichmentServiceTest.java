@@ -81,8 +81,12 @@ class InvoicePdfEnrichmentServiceTest {
         .thenReturn(new PdfExtractedInvoice("INV-1", List.of(), "expired key"))
         .thenReturn(new PdfExtractedInvoice("INV-1", List.of()));
 
-    service().enrich(new byte[] {1}, "a.pdf", PDF_RAW_ID);
-    service().enrich(new byte[] {1}, "a.pdf", PDF_RAW_ID);
+    org.assertj.core.api.Assertions.assertThat(
+            service().enrich(new byte[] {1}, "a.pdf", PDF_RAW_ID))
+        .isFalse();
+    org.assertj.core.api.Assertions.assertThat(
+            service().enrich(new byte[] {1}, "a.pdf", PDF_RAW_ID))
+        .isFalse();
 
     verify(flags, never()).resolveExtractionFailures(any(), any());
   }

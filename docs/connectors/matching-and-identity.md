@@ -89,6 +89,12 @@ so a second source can be added later without re-deriving these decisions.
 ## Invoice metadata (`canonical_invoice`)
 
 - **Source:** CTB Custom Invoice Export CSV. The AJAX invoice feed remains raw-only.
+- **Invalid identity:** the observed CTB placeholder `Unknown` (case-insensitive),
+  blank or absent invoice numbers cannot establish a CSV invoice identity. The
+  invoice is held with raw evidence retained, even before a collision occurs.
+  Expected legacy supplier/line-parent ambiguities also hold only that invoice;
+  unrelated invoices in the file continue. Historical dates alone are not rejected
+  or corrected by inference. See the [recovery procedure](../operations/ingestion-recovery-2026-11-25.md).
 - **Source identity:** supplier source code (fallback `name:<normalised supplier name>` when no
   code exists), followed by `::` and invoice number. A fallback name is visible and unverified;
   no cross-supplier alias or rename is inferred from it. Different known supplier codes remain

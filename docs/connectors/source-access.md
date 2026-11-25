@@ -83,6 +83,12 @@ Notes:
 
 ## Cooking the Books (CTB)
 
+Invoice SFTP failures and bounded recovery are described in the
+[25 November recovery procedure](../operations/ingestion-recovery-2026-11-25.md).
+Identical failed files automatically back off for six hours; corrected bytes and
+the explicit invoice-file retry bypass that delay. Raw delivery references and
+processing outcomes remain visible independently of the daily revenue pull.
+
 Base: `https://web.cookingthebooks.com.au`
 
 ASP.NET MVC + ExtJS single-page app. No documented REST API; every data call is

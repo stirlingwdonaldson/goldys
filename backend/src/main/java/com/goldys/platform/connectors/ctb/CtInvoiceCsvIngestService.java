@@ -82,15 +82,30 @@ public class CtInvoiceCsvIngestService {
   }
 
   public void ingest(byte[] csv) {
+    ingest(csv, null);
+  }
+
+  /** The delivery reference retains the SFTP filename for retry and recovery. */
+  public void ingest(byte[] csv, String deliveryRef) {
     UUID rawId =
-        ingestion.ingestPush(
-            "CTB",
-            "ctb-invoices",
-            FetchMethod.FILE_EXPORT,
-            "text/csv",
-            csv,
-            StandardCharsets.UTF_8.name(),
-            "ctb-invoices");
+        deliveryRef == null
+            ? ingestion.ingestPush(
+                "CTB",
+                "ctb-invoices",
+                FetchMethod.FILE_EXPORT,
+                "text/csv",
+                csv,
+                StandardCharsets.UTF_8.name(),
+                "ctb-invoices")
+            : ingestion.ingestPush(
+                "CTB",
+                "ctb-invoices",
+                FetchMethod.FILE_EXPORT,
+                "text/csv",
+                csv,
+                StandardCharsets.UTF_8.name(),
+                "ctb-invoices",
+                deliveryRef);
 
     List<CtInvoice> invoices;
     try {
@@ -115,6 +130,10 @@ public class CtInvoiceCsvIngestService {
         IngestionStageKind.PARSED,
         invoices.isEmpty() ? IngestionStageOutcome.EMPTY : IngestionStageOutcome.SUCCESS);
 
+    canonicalizeInvoices(invoices, rawId);
+  }
+
+  private void canonicalizeInvoices(List<CtInvoice> invoices, UUID rawId) {
     int withheld = 0;
     try {
       for (int index = 0; index < invoices.size(); index++) {
@@ -122,17 +141,23 @@ public class CtInvoiceCsvIngestService {
         InvoiceIdentity identity;
         try {
           identity = recordHeaderAndLines(invoice, rawId);
-        } catch (InvoiceRevisionWithheldException e) {
+        } catch (InvoiceRevisionWithheldException
+            | com.goldys.platform.canonical.InvoiceIdentityWithheldException e) {
           // recordCsv rolls back this invoice; unrelated invoices in the export can still commit.
           withheld++;
           ingestion.recordQualification(
               rawId,
-              "INVOICE_REVISION_WITHHELD",
+              e instanceof InvoiceRevisionWithheldException
+                  ? "INVOICE_REVISION_WITHHELD"
+                  : "INVOICE_IDENTITY_WITHHELD",
               "Invoice at export position "
                   + (index + 1)
                   + " of "
                   + invoices.size()
-                  + " withheld: line identity or invoice-total change could not be reconciled");
+                  + " withheld. "
+                  + e.getMessage()
+                  + ". Other invoices continue; retained raw record: "
+                  + rawId);
           continue;
         }
         flagPdfAnomalies(invoice);
@@ -159,7 +184,7 @@ public class CtInvoiceCsvIngestService {
             withheld
                 + " of "
                 + invoices.size()
-                + " invoices withheld: line identity or invoice-total change could not be reconciled;"
+                + " invoices withheld: identity or revision requires review;"
                 + " unaffected invoices processed, retained export requires review");
       }
     } catch (RuntimeException e) {

@@ -27,6 +27,38 @@ class CtbSftpPullTest {
   @Mock InvoicePdfEnrichmentService pdfEnrichment;
 
   @Test
+  void automaticCooldownDoesNotArchiveAndManualRetryBypassesIt() {
+    var file = new SftpDrop.SftpFile("in/held.csv", "held.csv");
+    byte[] bytes = {1};
+    when(drop.list()).thenReturn(List.of(file));
+    when(drop.download(file.path())).thenReturn(bytes);
+    when(ingestion.deferSftpRetry("sftp:in/held.csv", bytes)).thenReturn(true);
+    var pull = new CtbSftpPull(drop, ingestion, csvIngest, pdfEnrichment);
+    pull.pull();
+    verify(csvIngest, never()).ingest(any(), any());
+    verify(drop, never()).markProcessed(any());
+    pull.pullNow();
+    verify(csvIngest).ingest(bytes, "sftp:in/held.csv");
+    verify(drop).markProcessed(file.path());
+  }
+
+  @Test
+  void unsuccessfulPdfEnrichmentRemainsInTheDropAndMarksTheRunPartial() {
+    var file = new SftpDrop.SftpFile("in/a.pdf", "a.pdf");
+    byte[] bytes = {2};
+    UUID raw = UUID.randomUUID();
+    when(drop.list()).thenReturn(List.of(file));
+    when(drop.download(file.path())).thenReturn(bytes);
+    when(ingestion.ingestPush(any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(raw);
+    when(pdfEnrichment.enrich(bytes, "a.pdf", raw)).thenReturn(false);
+    new CtbSftpPull(drop, ingestion, csvIngest, pdfEnrichment).pull();
+    verify(drop, never()).markProcessed(file.path());
+    verify(ingestion).recordStage(raw, IngestionStageKind.ENRICHED, IngestionStageOutcome.FAILED);
+    verify(ingestion).recordQualification(eq(raw), eq("PDF_ENRICHMENT_INCOMPLETE"), any());
+  }
+
+  @Test
   void partiallyProcessedCsvRemainsAvailableAndDoesNotBlockOtherFiles() {
     var held = new SftpDrop.SftpFile("in/held.csv", "held.csv");
     var next = new SftpDrop.SftpFile("in/next.csv", "next.csv");
@@ -37,11 +69,11 @@ class CtbSftpPullTest {
     when(drop.download(next.path())).thenReturn(complete);
     doThrow(new ConnectorFetchException("INVOICE_REVISION_WITHHELD", "Invoice revision withheld"))
         .when(csvIngest)
-        .ingest(partial);
+        .ingest(partial, "sftp:in/held.csv");
 
     new CtbSftpPull(drop, ingestion, csvIngest, pdfEnrichment).pull();
 
-    verify(csvIngest).ingest(complete);
+    verify(csvIngest).ingest(complete, "sftp:in/next.csv");
     verify(drop, never()).markProcessed(held.path());
     verify(drop).markProcessed(next.path());
   }
@@ -61,12 +93,14 @@ class CtbSftpPullTest {
             eq("application/pdf"),
             any(byte[].class),
             isNull(),
-            eq("ctb-sftp")))
+            eq("ctb-sftp"),
+            eq("sftp:in/bruno.pdf")))
         .thenReturn(pdfRawId);
 
+    when(pdfEnrichment.enrich(any(), eq("bruno.pdf"), eq(pdfRawId))).thenReturn(true);
     new CtbSftpPull(drop, ingestion, csvIngest, pdfEnrichment).pull();
 
-    verify(csvIngest).ingest(any(byte[].class));
+    verify(csvIngest).ingest(any(byte[].class), eq("sftp:in/inv.csv"));
     verify(pdfEnrichment).enrich(any(byte[].class), eq("bruno.pdf"), eq(pdfRawId));
     verify(ingestion)
         .ingestPush(
@@ -76,7 +110,8 @@ class CtbSftpPullTest {
             eq("application/pdf"),
             any(byte[].class),
             isNull(),
-            eq("ctb-sftp"));
+            eq("ctb-sftp"),
+            eq("sftp:in/bruno.pdf"));
     verify(drop).markProcessed("in/inv.csv");
     verify(drop).markProcessed("in/bruno.pdf");
   }

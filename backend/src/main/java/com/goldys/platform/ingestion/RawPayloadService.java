@@ -66,7 +66,7 @@ class RawPayloadService {
     return recordId;
   }
 
-  private static String sha256Hex(byte[] bytes) {
+  static String sha256Hex(byte[] bytes) {
     try {
       return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
     } catch (NoSuchAlgorithmException e) {
