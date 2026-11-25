@@ -60,8 +60,38 @@ class ConnectorApplicationServiceTest {
           sftpPull);
 
   @Test
+  void successfulRevenueRunCannotHideHeldInvoiceDelivery() {
+    when(ingestion.connectorHealthRuns())
+        .thenReturn(
+            List.of(
+                new IngestionRunSummary("CTB", "ctb-revenue", "SUCCESS", Instant.now(), null, null),
+                new IngestionRunSummary(
+                    "CTB",
+                    "ctb-invoices",
+                    "PARTIAL",
+                    Instant.EPOCH,
+                    "Invoice at position 1325 held",
+                    new FailureDetail(
+                        "INVOICE_IDENTITY_WITHHELD", "Review the identity", Instant.EPOCH, null))));
+    var statuses = service.connectors(OWNER);
+    assertThat(statuses)
+        .anySatisfy(
+            s -> {
+              assertThat(s.connectorName()).isEqualTo("ctb-revenue");
+              assertThat(s.status()).isEqualTo("success");
+            })
+        .anySatisfy(
+            s -> {
+              assertThat(s.connectorName()).isEqualTo("ctb-invoices");
+              assertThat(s.status()).isEqualTo("partial");
+              assertThat(s.failureCount()).isEqualTo(1); // not the invoice/export-position digits
+              assertThat(s.failure().type()).isEqualTo("INVOICE_IDENTITY_WITHHELD");
+            });
+  }
+
+  @Test
   void mergesKnownSourcesWithLatestRunAndFlagsRunnable() {
-    when(ingestion.latestRunPerSource())
+    when(ingestion.connectorHealthRuns())
         .thenReturn(
             List.of(
                 new IngestionRunSummary(
@@ -81,7 +111,7 @@ class ConnectorApplicationServiceTest {
 
   @Test
   void mapsFailureDetailAndFailureCount() {
-    when(ingestion.latestRunPerSource())
+    when(ingestion.connectorHealthRuns())
         .thenReturn(
             List.of(
                 new IngestionRunSummary(
@@ -138,7 +168,7 @@ class ConnectorApplicationServiceTest {
 
   @Test
   void connectorsListsNewSources() {
-    when(ingestion.latestRunPerSource()).thenReturn(List.of());
+    when(ingestion.connectorHealthRuns()).thenReturn(List.of());
     when(ingestion.isRunnable(any())).thenReturn(false);
 
     var statuses = service.connectors(OWNER);
@@ -151,7 +181,7 @@ class ConnectorApplicationServiceTest {
   void preservesDistinctConnectorNamesWhenSourceHasARun() {
     // A source's latest run must not overwrite the other connectors of that source (the four
     // OpenTable exports share source "OPENTABLE"); each tile keeps its own connector name.
-    when(ingestion.latestRunPerSource())
+    when(ingestion.connectorHealthRuns())
         .thenReturn(
             List.of(
                 new IngestionRunSummary(
@@ -215,7 +245,7 @@ class ConnectorApplicationServiceTest {
 
     service.runSftpPull(OWNER);
 
-    verify(pull).pull();
+    verify(pull).pullNow();
   }
 
   @Test

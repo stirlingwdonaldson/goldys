@@ -29,6 +29,12 @@ public class CanonicalInvoiceIngest {
   @Transactional
   public InvoiceIdentity recordCsv(
       InvoiceInput header, List<InvoiceLineInput> inputs, boolean completeSnapshot) {
+    // This observed CTB placeholder is not an enduring invoice key, even without a collision yet.
+    if (header.invoiceNumber() == null
+        || header.invoiceNumber().isBlank()
+        || header.invoiceNumber().trim().equalsIgnoreCase("unknown")) {
+      throw new InvoiceIdentityWithheldException();
+    }
     var observation = service.recordCsvHeader(header);
     InvoiceIdentity identity = observation.identity();
     lines.recordCsvInvoice(

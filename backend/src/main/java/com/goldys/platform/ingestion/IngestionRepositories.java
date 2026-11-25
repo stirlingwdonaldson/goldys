@@ -46,6 +46,30 @@ interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
           + "where r2.sourceSystem = r.sourceSystem and r2.connectorName = r.connectorName)")
   List<IngestionRun> latestPerConnector();
 
+  @Query(
+      value =
+          """
+          select r.* from ingestion_run r join (
+            select distinct on (raw.source_record_ref) raw.ingestion_run_id
+            from raw_record raw join ingestion_run attempt on attempt.id=raw.ingestion_run_id
+            where raw.source_system='CTB' and raw.source_record_ref like 'sftp:%'
+              and raw.fetcher_identity in ('ctb-invoices','ctb-sftp')
+              and attempt.status in ('PARTIAL','FAILED')
+              and not exists (
+                select 1 from raw_record newer
+                join ingestion_run success on success.id=newer.ingestion_run_id
+                join ingestion_stage stage on stage.ingestion_run_id=success.id
+                where newer.source_system=raw.source_system
+                  and newer.fetcher_identity=raw.fetcher_identity
+                  and newer.source_record_ref=raw.source_record_ref
+                  and newer.fetched_at>raw.fetched_at and success.status='SUCCESS'
+                  and stage.stage in ('CANONICALIZED','ENRICHED') and stage.outcome='SUCCESS')
+            order by raw.source_record_ref, raw.fetched_at desc, raw.id desc
+          ) delivery on delivery.ingestion_run_id=r.id order by r.started_at desc
+      """,
+      nativeQuery = true)
+  List<IngestionRun> outstandingSftpRuns();
+
   /**
    * Status distribution for the ingestion-health completeness calculation, excluding one raw-only
    * connector (the PDF-enrichment writes) that is not data delivery.
@@ -67,6 +91,18 @@ interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
 
 interface RawRecordRepository
     extends JpaRepository<RawRecord, UUID>, JpaSpecificationExecutor<RawRecord> {
+  @Query(
+      value =
+          """
+      select rr.payload_sha256 as payloadSha256, rr.fetched_at as fetchedAt, r.status as status
+      from raw_record rr join ingestion_run r on r.id=rr.ingestion_run_id
+      where rr.source_system='CTB' and rr.source_record_ref=:ref
+        and rr.fetcher_identity in ('ctb-invoices','ctb-sftp')
+      order by rr.fetched_at desc, rr.id desc limit 1
+      """,
+      nativeQuery = true)
+  Optional<SftpAttempt> latestSftpAttempt(@Param("ref") String ref);
+
   @Query(
       "select new com.goldys.platform.semantic.RecipeEvidence(r.id,r.sourceSystem,r.fetcherIdentity,:endpoint,r.sourceRecordRef,r.fetchedAt,r.ingestionRunId,r.payloadSha256) from RawRecord r where r.id=:id")
   Optional<com.goldys.platform.semantic.RecipeEvidence> recipeEvidence(UUID id, String endpoint);
@@ -163,4 +199,12 @@ interface RawRecordRefRow {
   String getSourceRecordRef();
 
   Instant getFetchedAt();
+}
+
+interface SftpAttempt {
+  String getPayloadSha256();
+
+  Instant getFetchedAt();
+
+  String getStatus();
 }

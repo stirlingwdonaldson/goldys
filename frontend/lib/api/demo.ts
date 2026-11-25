@@ -1366,6 +1366,11 @@ export const demoApi: Api = {
     return existing;
   },
 
+  async retryInvoiceFiles(): Promise<void> {
+    await delay(300);
+    // Retrying does not prove that a held invoice or missing source field was corrected.
+  },
+
   async uploadLightspeedReceiptCsv() {
     await delay(300);
     return { rawId: "demo-receipt-import", distinctObservations: 2, qualification: "SOURCE_COVERAGE_UNVERIFIED" };

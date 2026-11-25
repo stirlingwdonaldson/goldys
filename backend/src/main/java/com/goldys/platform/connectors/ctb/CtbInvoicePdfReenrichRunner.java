@@ -50,6 +50,7 @@ public class CtbInvoicePdfReenrichRunner implements ApplicationRunner {
   private final InvoiceIngestFlagService flags;
   private final CanonicalInvoiceQuery invoiceQuery;
   private final int concurrency;
+  private final String selectedRawIds;
 
   public CtbInvoicePdfReenrichRunner(
       RawLedgerQuery rawLedger,
@@ -57,23 +58,39 @@ public class CtbInvoicePdfReenrichRunner implements ApplicationRunner {
       CanonicalInvoiceLineEnrichment lineEnrichment,
       InvoiceIngestFlagService flags,
       CanonicalInvoiceQuery invoiceQuery,
-      @Value("${app.ctb-invoice-replay-concurrency:8}") int concurrency) {
+      @Value("${app.ctb-invoice-replay-concurrency:8}") int concurrency,
+      @Value("${app.ctb-invoice-replay-raw-ids:}") String selectedRawIds) {
     this.rawLedger = rawLedger;
     this.pdfEnrichment = pdfEnrichment;
     this.lineEnrichment = lineEnrichment;
     this.flags = flags;
     this.invoiceQuery = invoiceQuery;
     this.concurrency = concurrency;
+    this.selectedRawIds = selectedRawIds;
   }
 
   @Override
   public void run(ApplicationArguments args) {
     reEnrichStoredPdfs();
-    retireResolvedFlags();
+    if (selectedRawIds.isBlank()) retireResolvedFlags();
+  }
+
+  private List<RawLedgerQuery.RawPayload> selectedPdfs() {
+    if (selectedRawIds.isBlank()) return rawLedger.rawPayloadsForSource("CTB", "application/pdf");
+    var ids =
+        java.util.Arrays.stream(selectedRawIds.split(",", -1))
+            .map(String::trim)
+            .map(java.util.UUID::fromString)
+            .distinct()
+            .toList();
+    if (ids.size() > 100)
+      throw new IllegalArgumentException("Select at most 100 invoice PDFs per replay");
+    // Validate the entire selection before applying any enrichment. Unrelated flags stay open.
+    return ids.stream().map(rawLedger::invoicePdf).toList();
   }
 
   private void reEnrichStoredPdfs() {
-    List<RawLedgerQuery.RawPayload> pdfs = rawLedger.rawPayloadsForSource("CTB", "application/pdf");
+    List<RawLedgerQuery.RawPayload> pdfs = selectedPdfs();
     long started = System.currentTimeMillis();
     // Enrichment is per-PDF independent: each line enrichment is its own transaction (a SELECT ...
     // FOR UPDATE on the invoice's lines), so PDFs can be processed concurrently with no shared
@@ -90,7 +107,10 @@ public class CtbInvoicePdfReenrichRunner implements ApplicationRunner {
                   try {
                     // No filename: the raw PDF record does not retain it, so enrichment targets the
                     // invoice via the number parsed from the PDF text.
-                    pdfEnrichment.enrich(pdf.bytes(), null, pdf.id());
+                    if (!pdfEnrichment.enrich(pdf.bytes(), null, pdf.id())) {
+                      failed.incrementAndGet();
+                      return;
+                    }
                     int done = replayed.incrementAndGet();
                     if (done % 100 == 0) {
                       log.info(

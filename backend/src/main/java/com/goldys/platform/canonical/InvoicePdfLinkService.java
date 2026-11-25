@@ -53,6 +53,11 @@ public class InvoicePdfLinkService {
     return repository.existsById(pdfRawRecordId);
   }
 
+  /** Replay uses the filename of this exact document, not a guessed invoice-number match. */
+  public Optional<String> filenameForRaw(UUID pdfRawRecordId) {
+    return repository.findById(pdfRawRecordId).map(InvoicePdfLink::pdfFilename);
+  }
+
   public record Document(java.util.UUID documentId, String filename, java.time.Instant linkedAt) {}
 
   /** Scoped evidence, plus legacy links only when identity history and filename agree uniquely. */

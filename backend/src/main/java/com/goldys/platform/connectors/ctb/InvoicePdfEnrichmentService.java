@@ -58,7 +58,10 @@ public class InvoicePdfEnrichmentService {
     this.gapRecoveryEnabled = gapRecoveryEnabled;
   }
 
-  public void enrich(byte[] pdf, String pdfFilename, UUID pdfRawRecordId) {
+  public boolean enrich(byte[] pdf, String pdfFilename, UUID pdfRawRecordId) {
+    if (pdfFilename == null) {
+      pdfFilename = pdfLinkService.filenameForRaw(pdfRawRecordId).orElse(null);
+    }
     String text = extractor.extractText(pdf, "application/pdf");
     PdfExtractedInvoice parsed = parser.extract(text);
     String invoiceNumber =
@@ -70,7 +73,7 @@ public class InvoicePdfEnrichmentService {
           pdfFilename,
           null,
           "Supplier-qualified invoice identity required; no enrichment or recovery applied");
-      return;
+      return false;
     }
     // A replayed PDF has no filename on its raw record; fall back to the invoice's stored
     // pdf_filename so flag identities stay stable across the live and replay paths.
@@ -94,7 +97,7 @@ public class InvoicePdfEnrichmentService {
           flagFilename,
           null,
           parsed.extractionError());
-      return;
+      return false;
     }
     if (parsed.lines().isEmpty()) {
       flags.flag(
@@ -103,11 +106,11 @@ public class InvoicePdfEnrichmentService {
           flagFilename,
           null,
           (text == null || text.isBlank()) ? "no extractable text" : "no lines parsed");
-      return;
+      return false;
     }
     if (!known) {
       flagUnresolvedInvoice(parsed.invoiceNumber(), pdfFilename);
-      return;
+      return false;
     }
     Set<Integer> unmatchedIndexes = new HashSet<>();
     for (int i = 0; i < parsed.lines().size(); i++) {
@@ -150,6 +153,7 @@ public class InvoicePdfEnrichmentService {
           invoiceNumber, flagFilename, pdf, pdfRawRecordId, parsed.lines(), unmatchedIndexes);
     }
     flags.resolveExtractionFailures(invoiceNumber, flagFilename);
+    return true;
   }
 
   /**

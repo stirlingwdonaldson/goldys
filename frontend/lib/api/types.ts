@@ -1348,6 +1348,7 @@ export interface Api extends WorkspaceApi {
   getProductRecord(date: string, product: string, options?: { signal?: AbortSignal }): Promise<ReconciliationRecord>;
   listConnectorStatuses(options?: { signal?: AbortSignal }): Promise<ConnectorStatus[]>;
   runConnector(source: string): Promise<ConnectorStatus>;
+  retryInvoiceFiles(): Promise<void>;
   /** Uploads a CSV drop for one connector (the OpenTable GuestCenter datasets). */
   uploadConnectorCsv(connectorName: string, file: File): Promise<void>;
   /** Fails with NOT_CONFIGURED when the assisted sync isn't enabled on this deployment. */

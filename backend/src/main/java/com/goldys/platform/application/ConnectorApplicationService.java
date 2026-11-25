@@ -78,27 +78,22 @@ public class ConnectorApplicationService {
   public List<ConnectorStatus> connectors(UserRole role) {
     permissions.require(role, RESOURCE, PermissionAction.READ);
     Map<String, ConnectorStatus> latest = new LinkedHashMap<>();
-    for (IngestionRunSummary run : ingestion.latestRunPerSource()) {
-      latest.putIfAbsent(run.sourceSystem(), toStatus(run));
+    for (ConnectorStatus known : KNOWN_SOURCES) {
+      latest.put(
+          known.connectorName(),
+          new ConnectorStatus(
+              known.source(),
+              known.connectorName(),
+              null,
+              "never_run",
+              0,
+              null,
+              ingestion.isRunnable(known.source())));
     }
-    return KNOWN_SOURCES.stream()
-        .map(
-            known -> {
-              // A source may have several connectors (OpenTable's four exports share the OPENTABLE
-              // source). Preserve the KNOWN_SOURCES entry's own source + connector name as the
-              // tile's stable identity, and take only the run-status fields from the source's
-              // latest run — otherwise every OPENTABLE tile collapses to whichever export ran last.
-              ConnectorStatus current = latest.getOrDefault(known.source(), known);
-              return new ConnectorStatus(
-                  known.source(),
-                  known.connectorName(),
-                  current.lastRunAt(),
-                  current.status(),
-                  current.failureCount(),
-                  current.failure(),
-                  ingestion.isRunnable(known.source()));
-            })
-        .toList();
+    for (IngestionRunSummary run : ingestion.connectorHealthRuns()) {
+      latest.put(run.connectorName(), toStatus(run));
+    }
+    return List.copyOf(latest.values());
   }
 
   public ConnectorStatus run(UserRole role, String source) {
@@ -144,7 +139,7 @@ public class ConnectorApplicationService {
       throw new ConnectorFetchException(
           "CONNECTOR_FETCH_FAILED", "SFTP ingestion is not enabled (ctb.sftp.enabled=false)");
     }
-    pull.pull();
+    pull.pullNow();
   }
 
   private ConnectorStatus toStatus(IngestionRunSummary run) {
@@ -179,9 +174,11 @@ public class ConnectorApplicationService {
       return 0;
     }
     try {
-      return Integer.parseInt(summary.replaceAll("[^0-9]", ""));
+      var count =
+          java.util.regex.Pattern.compile("^(\\d+) failure\\(s\\) recorded$").matcher(summary);
+      return count.matches() ? Integer.parseInt(count.group(1)) : 1;
     } catch (NumberFormatException e) {
-      return 0;
+      return 1;
     }
   }
 

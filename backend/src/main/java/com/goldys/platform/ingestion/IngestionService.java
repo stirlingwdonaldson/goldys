@@ -168,6 +168,27 @@ public class IngestionService {
       byte[] bytes,
       String characterEncoding,
       String fetcherIdentity) {
+    return ingestPush(
+        sourceSystem,
+        connectorName,
+        fetchMethod,
+        contentType,
+        bytes,
+        characterEncoding,
+        fetcherIdentity,
+        null);
+  }
+
+  /** A stable delivery reference lets retries retain the original source filename. */
+  public UUID ingestPush(
+      String sourceSystem,
+      String connectorName,
+      FetchMethod fetchMethod,
+      String contentType,
+      byte[] bytes,
+      String characterEncoding,
+      String fetcherIdentity,
+      String sourceRecordRef) {
     UUID runId = runs.start(sourceSystem, connectorName, null, CLOCK.instant());
     try {
       runs.recordFetched(runId);
@@ -180,8 +201,12 @@ public class IngestionService {
               bytes,
               characterEncoding,
               fetcherIdentity,
-              null);
-      runs.complete(runId, null, CLOCK.instant());
+              sourceRecordRef);
+      // SFTP delivery success requires its processing stage, not merely a durable raw capture.
+      // A crash before that stage leaves RUNNING for the existing startup recovery to expose.
+      if (sourceRecordRef == null || !sourceRecordRef.startsWith("sftp:")) {
+        runs.complete(runId, null, CLOCK.instant());
+      }
       return rawId;
     } catch (RuntimeException e) {
       // Record the failure and close the run so the fault is observable, not a dangling RUNNING.
@@ -216,6 +241,13 @@ public class IngestionService {
     if (outcome == IngestionStageOutcome.FAILED) {
       runs.recordProcessingFailure(record.ingestionRunId(), stage, CLOCK.instant());
     }
+    if (record.sourceRecordRef() != null
+        && record.sourceRecordRef().startsWith("sftp:")
+        && (outcome == IngestionStageOutcome.FAILED
+            || stage == IngestionStageKind.CANONICALIZED
+            || stage == IngestionStageKind.ENRICHED)) {
+      runs.complete(record.ingestionRunId(), null, CLOCK.instant());
+    }
   }
 
   /** Record a safe, operator-facing qualification without rejecting successfully parsed facts. */
@@ -237,6 +269,45 @@ public class IngestionService {
     return runRepository.latestPerConnector().stream().map(this::toSummary).toList();
   }
 
+  /** Latest failed attempt per retained SFTP file; a different successful file cannot hide it. */
+  public List<IngestionRunSummary> outstandingSftpRuns() {
+    return runRepository.outstandingSftpRuns().stream().map(this::toSummary).toList();
+  }
+
+  /** Shared current health: newer unrelated successes cannot conceal held delivery evidence. */
+  public List<IngestionRunSummary> connectorHealthRuns() {
+    Map<String, IngestionRunSummary> current = new LinkedHashMap<>();
+    latestRunPerConnector().forEach(r -> current.put(r.connectorName(), r));
+    Map<String, IngestionRunSummary> held = new LinkedHashMap<>();
+    outstandingSftpRuns().forEach(r -> held.putIfAbsent(r.connectorName(), r));
+    held.forEach(
+        (name, failure) -> {
+          IngestionRunSummary latest = current.get(name);
+          current.put(
+              name,
+              latest != null && latest.status().equals("RUNNING")
+                  ? new IngestionRunSummary(
+                      latest.sourceSystem(),
+                      name,
+                      "RUNNING",
+                      latest.startedAt(),
+                      failure.failureSummary(),
+                      failure.failure())
+                  : failure);
+        });
+    return List.copyOf(current.values());
+  }
+
+  /** Bound automatic retries of identical failed deliveries; corrected bytes retry immediately. */
+  public boolean deferSftpRetry(String deliveryRef, byte[] bytes) {
+    return rawRecords
+        .latestSftpAttempt(deliveryRef)
+        .filter(a -> !a.getStatus().equals("SUCCESS"))
+        .filter(a -> a.getFetchedAt().isAfter(CLOCK.instant().minus(Duration.ofHours(6))))
+        .filter(a -> a.getPayloadSha256().equals(RawPayloadService.sha256Hex(bytes)))
+        .isPresent();
+  }
+
   private IngestionRunSummary toSummary(IngestionRun run) {
     return new IngestionRunSummary(
         run.sourceSystem(),
@@ -254,6 +325,18 @@ public class IngestionService {
       return null;
     }
     IngestionFailure latest = runFailures.get(runFailures.size() - 1);
+    // Only these holds explain a failed canonicalization. A metadata warning must never mask
+    // a later genuine processing failure (for example a sale-item write that rolled back).
+    if (latest.failureType().equals("PROCESSING_CANONICALIZED_FAILED")) {
+      latest =
+          runFailures.stream()
+              .filter(
+                  f ->
+                      f.failureType().equals("INVOICE_IDENTITY_WITHHELD")
+                          || f.failureType().equals("INVOICE_REVISION_WITHHELD"))
+              .reduce((a, b) -> b)
+              .orElse(latest);
+    }
     return new FailureDetail(
         latest.failureType(), latest.detail(), latest.occurredAt(), latest.stackTrace());
   }

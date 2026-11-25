@@ -29,11 +29,92 @@ class SupplierInvoiceIdentityIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired CtInvoiceCsvIngestService csvIngest;
   @Autowired com.goldys.platform.canonical.CanonicalInvoiceLineIngest invoiceLines;
+  @Autowired com.goldys.platform.ingestion.IngestionService ingestion;
 
   @BeforeEach
   void clean() {
     jdbc.update(
         "truncate table stock_item, canonical_invoice_line, canonical_invoice, canonical_supplier, invoice_ingest_flag");
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.ValueSource(strings = {"Unknown", "CLASH"})
+  void legacyIdentityHoldRollsBackOnlyThatInvoiceAndRetainsRawEvidence(String number)
+      throws Exception {
+    csvIngest.ingest(
+        csv(
+            row(
+                "LEGACY-SEED",
+                "Legacy Supplier",
+                "",
+                "2026-07-07",
+                "OLD",
+                "Old item",
+                "1",
+                "224.14")));
+    jdbc.update(
+        "update canonical_invoice set invoice_number=?, source_record_ref=?, supplier_logical_id=null, supplier_source_ref=null where superseded_at is null",
+        number,
+        number);
+    jdbc.update(
+        "update canonical_invoice_line set invoice_number=?, source_record_ref=?, invoice_logical_id=null where superseded_at is null",
+        number,
+        number + ":1");
+    byte[] bytes =
+        java.nio.file.Files.readString(
+                java.nio.file.Path.of("src/test/resources/fixtures/ctb/invoice-identity-hold.csv"))
+            .replace(",Unknown,", "," + number + ",")
+            .getBytes(StandardCharsets.UTF_8);
+    var parsed = new CtInvoiceCsvParser().parse(bytes).invoices();
+    assertThat(parsed).hasSize(2);
+    assertThat(parsed.stream().mapToInt(i -> i.lines().size()).sum()).isEqualTo(9);
+    String ref = "sftp:test/" + java.util.UUID.randomUUID() + ".csv";
+    for (int retry = 0; retry < 2; retry++) {
+      assertThatThrownBy(() -> csvIngest.ingest(bytes, ref))
+          .isInstanceOf(ConnectorFetchException.class);
+    }
+    assertThat(currentLineCount()).isEqualTo(4); // one untouched legacy line + three wine lines
+    assertThat(totalLineVersions()).isEqualTo(4);
+    assertThat(count("canonical_invoice")).isEqualTo(2); // held header/supplier rolled back
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from canonical_supplier where name='Juice Supplier'",
+                Integer.class))
+        .isZero();
+    assertThat(
+            jdbc.queryForObject(
+                "select total_amount from canonical_invoice where invoice_number='INV-WINE' and superseded_at is null",
+                java.math.BigDecimal.class))
+        .isEqualByComparingTo("646.78");
+    assertThat(
+            jdbc.queryForObject(
+                "select payload_bytes from raw_record where source_record_ref=? order by fetched_at desc limit 1",
+                byte[].class,
+                ref))
+        .isEqualTo(bytes);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from ingestion_failure f join raw_record r on r.ingestion_run_id=f.ingestion_run_id where r.source_record_ref=? and f.failure_type='INVOICE_IDENTITY_WITHHELD'",
+                Integer.class,
+                ref))
+        .isEqualTo(2);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from ingestion_run r join raw_record raw on raw.ingestion_run_id=r.id where raw.source_record_ref=? and r.status='PARTIAL'",
+                Integer.class,
+                ref))
+        .isEqualTo(2);
+  }
+
+  @Test
+  void aPlaceholderIsHeldEvenBeforeItCollidesWithLegacyData() {
+    assertThatThrownBy(
+            () ->
+                csvIngest.ingest(
+                    csv(row("unknown", "Supplier", "SUP", "2026-11-20", "A", "Item", "1", "10"))))
+        .isInstanceOf(ConnectorFetchException.class);
+    assertThat(count("canonical_invoice")).isZero();
+    assertThat(currentLineCount()).isZero();
   }
 
   @Test
@@ -216,7 +297,7 @@ class SupplierInvoiceIdentityIntegrationTest {
                             + ",25")
                         .getBytes(StandardCharsets.UTF_8)))
         .isInstanceOf(ConnectorFetchException.class)
-        .hasMessageContaining("could not be reconciled");
+        .hasMessageContaining("identity or revision requires review");
     assertThat(count("raw_record")).isEqualTo(rawBefore + 1);
     assertThat(currentLineCount()).isEqualTo(1);
     assertThat(
@@ -250,7 +331,7 @@ class SupplierInvoiceIdentityIntegrationTest {
     org.mockito.Mockito.when(drop.list()).thenReturn(java.util.List.of(file));
     org.mockito.Mockito.when(drop.download(file.path())).thenReturn(revision);
 
-    new com.goldys.platform.ingestion.CtbSftpPull(drop, null, csvIngest, null).pull();
+    new com.goldys.platform.ingestion.CtbSftpPull(drop, ingestion, csvIngest, null).pullNow();
 
     org.mockito.Mockito.verify(drop).markProcessed(file.path());
     assertThat(
@@ -372,8 +453,12 @@ class SupplierInvoiceIdentityIntegrationTest {
                   "select detail from ingestion_failure where ingestion_run_id=? and failure_type='INVOICE_REVISION_WITHHELD'",
                   String.class,
                   run))
-          .containsExactly(
-              "Invoice at export position 2 of 5 withheld: line identity or invoice-total change could not be reconciled");
+          .singleElement()
+          .asString()
+          .contains(
+              "Invoice at export position 2 of 5 withheld",
+              "could not be reconciled",
+              "retained raw record:");
     }
   }
 

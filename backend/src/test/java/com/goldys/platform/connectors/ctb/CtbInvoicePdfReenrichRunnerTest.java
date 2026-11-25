@@ -33,7 +33,44 @@ class CtbInvoicePdfReenrichRunnerTest {
 
   private CtbInvoicePdfReenrichRunner runner() {
     return new CtbInvoicePdfReenrichRunner(
-        rawLedger, pdfEnrichment, lineEnrichment, flags, invoiceQuery, 2);
+        rawLedger, pdfEnrichment, lineEnrichment, flags, invoiceQuery, 2, "");
+  }
+
+  @Test
+  void boundedReplayDeduplicatesSelectedPdfsAndDoesNotRetireUnrelatedFlags() {
+    UUID id = UUID.randomUUID();
+    byte[] bytes = {1};
+    when(rawLedger.invoicePdf(id)).thenReturn(new RawPayload(id, bytes));
+    when(pdfEnrichment.enrich(bytes, null, id)).thenReturn(true);
+    new CtbInvoicePdfReenrichRunner(
+            rawLedger, pdfEnrichment, lineEnrichment, flags, invoiceQuery, 1, id + "," + id)
+        .run(null);
+    verify(pdfEnrichment).enrich(bytes, null, id);
+    verify(rawLedger, never()).rawPayloadsForSource(any(), any());
+    verify(flags, never()).openPdfOnlyLineFlags();
+    verify(flags, never()).retireDuplicatePdfOnlyLineFlags();
+  }
+
+  @Test
+  void boundedReplayValidatesAllDocumentsBeforeApplyingAny() {
+    UUID valid = UUID.randomUUID();
+    UUID wrongSource = UUID.randomUUID();
+    when(rawLedger.invoicePdf(valid)).thenReturn(new RawPayload(valid, new byte[] {1}));
+    when(rawLedger.invoicePdf(wrongSource))
+        .thenThrow(new IllegalArgumentException("Replay requires a retained CTB invoice PDF"));
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () ->
+                new CtbInvoicePdfReenrichRunner(
+                        rawLedger,
+                        pdfEnrichment,
+                        lineEnrichment,
+                        flags,
+                        invoiceQuery,
+                        1,
+                        valid + "," + wrongSource)
+                    .run(null))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(pdfEnrichment, never()).enrich(any(), any(), any());
   }
 
   @Test
