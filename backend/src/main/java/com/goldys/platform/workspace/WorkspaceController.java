@@ -33,7 +33,7 @@ public class WorkspaceController {
 
   @GetMapping("/{id}")
   WorkspaceJobs.Job read(@AuthenticationPrincipal AccountUserDetails user, @PathVariable UUID id) {
-    return jobs.read(user.id(), id);
+    return jobs.readArchive(user.id(), id);
   }
 
   @PostMapping("/{id}/stop")
@@ -48,7 +48,7 @@ public class WorkspaceController {
   @GetMapping("/{id}/follow-ups")
   java.util.List<WorkspaceJobs.FollowUp> followUps(
       @AuthenticationPrincipal AccountUserDetails user, @PathVariable UUID id) {
-    return jobs.followUps(user.id(), id);
+    return jobs.archiveFollowUps(user.id(), id);
   }
 
   @PostMapping("/{id}/follow-ups")

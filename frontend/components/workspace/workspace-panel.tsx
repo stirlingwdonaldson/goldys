@@ -53,7 +53,7 @@ export function WorkspacePanel({ api, jobId, select }: { api: WorkspaceApi; jobI
     <MessageScrollerButton />
     </MessageScroller>
     </MessageScrollerProvider>
-    <WorkspaceComposer commands={commands} working={isWorking(job)} disabled={unavailable} />
+    {job?.readOnly ? <div className="mx-auto w-full max-w-3xl space-y-2 px-6 py-4"><p className="text-sm text-muted-foreground">Recovered archive · Read only. Previous access cannot be verified for continuing work or opening files.</p><Button variant="outline" onClick={() => select(null)}>Start new chat</Button></div> : <WorkspaceComposer commands={commands} working={isWorking(job)} disabled={unavailable} stop={() => { if (job) commands.action.mutate(() => api.stopWorkspaceJob(job.id)); }} />}
   </div>;
 }
 
@@ -73,14 +73,13 @@ function InvestigationResult({ api, job, queue, commands }: { api: WorkspaceApi;
   if (job.state === "COMPLETED") status = "Saved investigation. Data qualifications remain part of each result.";
   return <>
     <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-background py-2">
-      <Badge variant={working ? "info" : job.state === "COMPLETED" ? "success" : "missing"}>{states[job.state]}</Badge>
-      {working ? <Button variant="outline" disabled={busy} onClick={() => action.mutate(() => api.stopWorkspaceJob(job.id))}>Stop investigation</Button> : null}
+      <Badge variant={working ? "info" : job.state === "COMPLETED" ? "success" : "missing"}>{working ? <span aria-hidden="true" className="mr-2 inline-flex gap-1">{[0, 1, 2].map(index => <span key={index} className="size-1 rounded-full bg-current motion-safe:animate-pulse" style={{ animationDelay: `${index * 180}ms` }} />)}</span> : null}{states[job.state]}</Badge>
     </div>
     <p role="status" className="text-xs text-muted-foreground">{status}</p>
     <WorkspaceMessages job={job} />
-    {process.env.NEXT_PUBLIC_WORKSPACE_FILES_ENABLED !== "false" ? <WorkspaceFiles api={api} jobId={job.id} /> : null}
-    {(job.state === "INTERRUPTED" || job.state === "FAILED") ? <div className="space-y-2"><p className="text-sm text-muted-foreground">Retry starts a new attempt with the original question. Taken follow-ups are not replayed.</p><Button variant="outline" disabled={busy || uncertain} onClick={() => submit(job.prompt, true)}>Retry investigation</Button></div> : null}
-    <WorkspaceQueue items={queue} busy={busy || uncertain}
+    {!job.readOnly && process.env.NEXT_PUBLIC_WORKSPACE_FILES_ENABLED !== "false" ? <WorkspaceFiles api={api} jobId={job.id} /> : null}
+    {!job.readOnly && (job.state === "INTERRUPTED" || job.state === "FAILED") ? <div className="space-y-2"><p className="text-sm text-muted-foreground">Retry starts a new attempt with the original question. Taken follow-ups are not replayed.</p><Button variant="outline" disabled={busy || uncertain} onClick={() => submit(job.prompt, true)}>Retry investigation</Button></div> : null}
+    <WorkspaceQueue items={queue} busy={busy || uncertain || Boolean(job.readOnly)}
       edit={(id, prompt, done) => action.mutate(() => api.editWorkspaceFollowUp(job.id, id, prompt), { onSuccess: done })}
       remove={id => action.mutate(() => api.removeWorkspaceFollowUp(job.id, id))} />
   </>;

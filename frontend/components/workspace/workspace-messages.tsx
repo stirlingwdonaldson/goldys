@@ -11,6 +11,7 @@ import { WidgetRenderer } from "@/components/widgets/widget-renderer";
 import { parseWidgetSpec } from "@/components/widgets/parse";
 import { TrustIndicator } from "@/components/trust/trust-indicator";
 import type { WorkspaceJob } from "@/lib/api/workspace";
+import { ProviderLabel } from "@/components/conversations/provider-label";
 
 type WorkspaceMessage = WorkspaceJob["messages"][number];
 
@@ -26,7 +27,7 @@ function exchanges(messages: WorkspaceMessage[]) {
 
 export function WorkspaceMessages({ job }: { job: WorkspaceJob }) {
   return <section aria-label="Investigation history" className="space-y-6">
-    <div className="ml-auto max-w-full space-y-1 rounded-2xl bg-muted px-4 py-3 sm:max-w-xl"><h3 className="text-xs font-medium text-muted-foreground">Investigation request</h3><p className="whitespace-pre-wrap break-words text-sm">{job.prompt}</p></div>
+    {!job.messages.some(message => message.role === "user" && message.text === job.prompt) ? <div className="ml-auto max-w-full space-y-1 rounded-2xl bg-muted px-4 py-3 sm:max-w-xl"><h3 className="text-xs font-medium text-muted-foreground">You</h3><p className="whitespace-pre-wrap break-words text-sm">{job.prompt}</p></div> : null}
     {exchanges(job.messages).map(group => <WorkspaceExchange key={group[0].id} messages={group} />)}
   </section>;
 }
@@ -51,7 +52,7 @@ function WorkspaceExchange({ messages }: { messages: WorkspaceMessage[] }) {
         </article>)}
       </CollapsibleContent>
     </Collapsible> : null}
-    {latest ? <article key={latest.id} className="min-w-0 space-y-3"><h3 className="text-xs font-medium text-muted-foreground">Goldy’s</h3><AnswerText text={latest.text} />{latest.reporting && !charts.includes(latest) ? <ReportingResult message={latest} /> : null}</article> : null}
+    {latest ? <article key={latest.id} className="min-w-0 space-y-3"><ProviderLabel provider={latest.provider} model={latest.model} /><AnswerText text={latest.text} />{latest.reporting && !charts.includes(latest) ? <ReportingResult message={latest} /> : null}</article> : null}
     {charts.map(chart => <ReportingResult key={chart.id} message={chart} compact />)}
     {qualified.length ? <Collapsible className="min-w-0">
       <CollapsibleTrigger asChild><Button variant="ghost" size="sm" className="group gap-2 text-muted-foreground">Data notes<ChevronDown aria-hidden="true" className="size-4 group-data-[state=open]:rotate-180" /></Button></CollapsibleTrigger>

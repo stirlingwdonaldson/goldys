@@ -90,6 +90,27 @@ class ConversationServiceTest {
   }
 
   @Test
+  void archiveRecoveryAllowsOwnedReadsWithoutAuthorizingModelReuse() {
+    var thread = ConversationThread.create(USER, "Archived sales", "Old summary", Instant.now());
+    when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));
+    when(threads.findByUserAccountIdOrderByUpdatedAtDesc(USER)).thenReturn(List.of(thread));
+    when(messages.findByThreadIdOrderByCreatedAtAsc(thread.id())).thenReturn(List.of());
+    when(authorization.canRecoverArchive(USER)).thenReturn(true);
+    assertThat(service.list(USER).getFirst().title()).isEqualTo("Archived sales");
+    assertThat(service.get(USER, thread.id()).title()).isEqualTo("Archived sales");
+    assertThatThrownBy(() -> service.get(OTHER, thread.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> service.contextFor(USER, thread.id(), "Continue"))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> service.authorizeOutput(USER, thread.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    when(authorization.canRecoverArchive(USER)).thenReturn(false);
+    assertThatThrownBy(() -> service.get(USER, thread.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    verifyNoInteractions(model);
+  }
+
+  @Test
   void changedPolicyBlocksEvenPreviouslyValidSummaryAndStream() {
     var thread = currentThread(USER, "Sensitive title", "Sensitive summary", Instant.now());
     when(threads.findByIdAndUserAccountId(thread.id(), USER)).thenReturn(Optional.of(thread));

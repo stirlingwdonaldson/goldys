@@ -23,7 +23,18 @@ public class WorkspaceJobs {
       String state,
       String prompt,
       long revision,
-      List<WorkspaceHistory.Message> messages) {}
+      List<WorkspaceHistory.Message> messages,
+      boolean readOnly) {
+    public Job(
+        UUID id,
+        UUID threadId,
+        String state,
+        String prompt,
+        long revision,
+        List<WorkspaceHistory.Message> messages) {
+      this(id, threadId, state, prompt, revision, messages, false);
+    }
+  }
 
   public record FollowUp(UUID id, String prompt, String state) {}
 
@@ -137,8 +148,18 @@ public class WorkspaceJobs {
 
   @Transactional
   public Job read(UUID owner, UUID id) {
+    return readWithAccess(owner, id, false);
+  }
+
+  @Transactional
+  public Job readArchive(UUID owner, UUID id) {
+    return readWithAccess(owner, id, true);
+  }
+
+  private Job readWithAccess(UUID owner, UUID id, boolean allowRecovery) {
     UUID threadId = threadId(id);
-    ThreadRow thread = owned(owner, threadId, PermissionAction.READ);
+    ThreadRow thread = thread(threadId);
+    boolean historical = requireHistoryRead(owner, thread, allowRecovery);
     interruptExpired(threadId);
     String state =
         jdbc.queryForObject("select state from workspace_job where id=?", String.class, id);
@@ -148,13 +169,36 @@ public class WorkspaceJobs {
         state,
         jdbc.queryForObject("select prompt from workspace_job where id=?", String.class, id),
         thread.revision(),
-        WorkspaceHistory.project(parse(thread.snapshot()), json));
+        WorkspaceHistory.project(parse(thread.snapshot()), json),
+        historical);
   }
 
   @Transactional
   public List<FollowUp> followUps(UUID owner, UUID id) {
     owned(owner, threadId(id), PermissionAction.READ);
     interruptExpired(threadId(id));
+    return savedFollowUps(id);
+  }
+
+  @Transactional
+  public List<FollowUp> archiveFollowUps(UUID owner, UUID id) {
+    UUID threadId = threadId(id);
+    requireHistoryRead(owner, thread(threadId), true);
+    interruptExpired(threadId);
+    return savedFollowUps(id);
+  }
+
+  private boolean requireHistoryRead(UUID owner, ThreadRow thread, boolean allowRecovery) {
+    if (!owner.equals(thread.owner()))
+      throw AccessDeniedException.forResource("workspace.investigations");
+    boolean historical =
+        !authorization.require(owner, PermissionAction.READ).equals(thread.policy());
+    if (historical && (!allowRecovery || !authorization.canRecoverArchive(owner)))
+      throw new AccessDeniedException("Conversation access changed. Start a new conversation.");
+    return historical;
+  }
+
+  private List<FollowUp> savedFollowUps(UUID id) {
     return jdbc.query(
         "select request_id,prompt,state from workspace_follow_up where job_id=? order by sequence",
         (row, index) ->

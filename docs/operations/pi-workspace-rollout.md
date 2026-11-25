@@ -84,10 +84,20 @@ reactivating an account cannot revive older context. This uses the existing
 `conversational.threads` resource, not a new manager grant or workspace permission.
 Owned deletion retains the existing permission check and remains available.
 
+V124 adds the owner-approved `conversational.archive-recovery` READ grant, seeded only
+for `ALL × OWNER`. With current conversation access, an active account and ownership,
+this explicitly permits reading legacy archives, including pre-V120 history. Without
+that grant the V120 restrictions above remain. It never enables model-context reuse,
+renaming or publication. The owner also approved read-only recovery of owned Pi
+investigations and queued messages. Recovered investigations show a new-chat action;
+worker execution, continuation and private-file access retain the strict stamp checks.
+Adding the recovery grant advances the owner policy revision, as every grant change
+does. Apply V124 with investigations idle: older sessions become read-only archives
+and active workers will be fenced on their next authorization check. New chats capture
+the new revision. This change has not been deployed by the implementation task.
+
 Do not backfill old stamps with current grants: that would falsely assert historical
-access. The consequence at deployment is that pre-V120 conversations cannot be opened
-or resumed. No historical bytes are deleted by the migration and none are imported into
-Pi. Selective release of unknown legacy content requires proven provenance; the model
+access. No historical bytes are deleted and none are imported into Pi. The model
 must not redact restricted input after receiving it. Already delivered/downloaded bytes
 cannot be recalled. The conversation-history screen withholds cached titles, previews
 and transcripts until a fresh read completes, hides them on failed reauthorization,

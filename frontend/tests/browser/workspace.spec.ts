@@ -3,6 +3,45 @@ import type { WorkspaceFollowUp, WorkspaceJob } from "../../lib/api/workspace";
 
 test.skip(process.env.NEXT_PUBLIC_WORKSPACE_ENABLED !== "true" && process.env.NEXT_PUBLIC_WORKSPACE_PREVIEW !== "true", "Build with the opt-in workspace preview flag for this fixture flow.");
 
+test("waiting feedback, provider identity and recovered archives remain accessible", async ({ page }) => {
+  const job: WorkspaceJob = {
+    id: "10000000-0000-4000-8000-000000000001", threadId: "20000000-0000-4000-8000-000000000001",
+    prompt: "Compare weekly sales", state: "QUEUED", revision: 0, messages: [], readOnly: false,
+  };
+  await page.addInitScript(() => localStorage.setItem("goldys-demo-mode", "false"));
+  await page.route("**/monitoring**", route => route.fulfill({ status: 204 }));
+  await page.route("**/api/**", route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/me") return route.fulfill({ json: { displayName: "Fixture Owner", department: "ALL", seniority: "OWNER" } });
+    if (path === `/api/workspace/jobs/${job.id}`) return route.fulfill({ json: job });
+    if (path === "/api/workspace/threads") return route.fulfill({ json: { threads: [], nextCursor: null } });
+    return route.fulfill({ json: [] });
+  });
+  await page.goto(`/ask-goldys?investigation=${job.id}`);
+  await expect(page.getByText("Waiting for a worker", { exact: true })).toBeVisible();
+  await expect(page.getByText(job.prompt, { exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Stop investigation", exact: true })).toBeEnabled();
+  await page.getByLabel("Queue a follow-up", { exact: true }).press("Enter");
+  await page.screenshot({ path: "/tmp/goldys-conversation-waiting.png" });
+  job.state = "COMPLETED";
+  job.messages = [
+    { id: "question", role: "user", text: job.prompt, reporting: null },
+    { id: "answer", role: "assistant", text: "Saved comparison result.", reporting: null, provider: "goldys-deepseek", model: "recorded-model" },
+  ];
+  await expect(page.getByText("DeepSeek · recorded-model", { exact: true })).toBeVisible();
+  await expect(page.getByText(job.prompt, { exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Send question", exact: true })).toBeDisabled();
+  await page.screenshot({ path: "/tmp/goldys-conversation-provider.png" });
+  job.readOnly = true;
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Start new chat", exact: true })).toBeVisible();
+  await expect(page.getByRole("textbox")).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByText("DeepSeek · recorded-model", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: "/tmp/goldys-conversation-archive-mobile.png" });
+});
+
 test("workspace survives reload, edits queued input, stops server work and hides revoked history", async ({ page }) => {
   let job: WorkspaceJob | null = null;
   const queue: WorkspaceFollowUp[] = [];
@@ -22,7 +61,7 @@ test("workspace survives reload, edits queued input, stops server work and hides
       const input = route.request().postDataJSON();
       submissions.push(input);
       job = { id: `10000000-0000-4000-8000-00000000000${submissions.length}`, threadId: input.threadId, state: "RUNNING", prompt: input.prompt, revision: 1,
-        messages: [{ id: "comparison", role: "tool", text: "", reporting: {
+        messages: [{ id: "opening", role: "user", text: input.prompt, reporting: null }, { id: "comparison", role: "tool", text: "", reporting: {
           widget: { schemaVersion: 2, type: "time-series", id: "weekdays", title: "Gross sales by weekday", yFormat: "currency",
             description: "Daily comparison by weekday. Gaps indicate unavailable values.",
             series: [
@@ -142,7 +181,7 @@ test("workspace survives reload, edits queued input, stops server work and hides
   expect(submissions[1].requestId).not.toBe(submissions[0].requestId);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByText("Saved fixture finding", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Queue message", exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole("button", { name: "Stop investigation", exact: true })).toBeInViewport({ ratio: 1 });
   await expect(page.getByRole("img", { name: "Gross sales by weekday" })).toBeVisible();
   await page.screenshot({ path: "/tmp/goldys-workspace-narrow.png" });
   await expect(page.getByLabel("Queue a follow-up", { exact: true })).toBeInViewport();

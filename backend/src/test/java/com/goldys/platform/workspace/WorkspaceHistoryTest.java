@@ -33,6 +33,23 @@ class WorkspaceHistoryTest {
   }
 
   @Test
+  void recordedProviderAndModelArePreservedWithoutInventingMissingMetadata() throws Exception {
+    var json = new ObjectMapper();
+    var snapshot =
+        json.readTree(
+            """
+        {"leafId":"answer","entries":[
+          {"type":"message","id":"question","parentId":null,"message":{"role":"user","content":"Question"}},
+          {"type":"message","id":"answer","parentId":"question","message":{"role":"assistant","content":"Answer","provider":"openai","model":"recorded-model"}}
+        ]}
+        """);
+    var messages = WorkspaceHistory.project(snapshot, json);
+    assertThat(messages.getFirst().provider()).isNull();
+    assertThat(messages.getLast().provider()).isEqualTo("openai");
+    assertThat(messages.getLast().model()).isEqualTo("recorded-model");
+  }
+
+  @Test
   void malformedBranchFailsClosed() throws Exception {
     var snapshot =
         new ObjectMapper()

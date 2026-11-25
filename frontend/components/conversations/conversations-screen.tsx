@@ -26,6 +26,8 @@ import type {
   ConversationThreadSummary,
 } from "@/lib/api/types";
 import { PageHeader } from "@/components/layout/page-header";
+import { ProviderLabel } from "./provider-label";
+import { formatDateTime } from "@/lib/format";
 
 /** A stable, short human-readable date for a thread row. */
 function formatUpdatedAt(iso: string): string {
@@ -165,6 +167,7 @@ function ThreadRow({ thread, api, onOpen, onChanged }: ThreadRowProps) {
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{thread.lastPreview}</p>
         ) : null}
         <p className="mt-1 text-xs text-muted-foreground">Updated {formatUpdatedAt(thread.updatedAt)}</p>
+        <ProviderLabel />
         {error ? (
           <p role="alert" className="mt-1 text-xs text-destructive">
             {error}
@@ -317,6 +320,8 @@ function MessageBlock({ message }: { message: ConversationMessage }) {
     <li className={`flex flex-col gap-1 rounded-lg border p-4 ${isUser ? "bg-muted/40" : ""}`}>
       <div className="flex items-center gap-2">
         <Badge variant={isUser ? "secondary" : "outline"}>{isUser ? "You" : "Goldy's"}</Badge>
+        {!isUser ? <ProviderLabel /> : null}
+        <span className="text-xs tabular-nums text-muted-foreground">{formatDateTime(message.createdAt)}</span>
       </div>
       <p className="whitespace-pre-wrap text-sm">{message.content}</p>
       {message.toolTrace.length ? (

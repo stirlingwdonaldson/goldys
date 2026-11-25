@@ -109,9 +109,17 @@ V116 retains account/role policy revisions across revoke/regrant cycles.
 `WorkspaceAuthorization` obtains the current active account and policy under shared
 locks, then enforces the caller's resource through `PermissionService`. Workspace
 threads use `workspace.investigations`; V120 legacy threads use their existing
-`conversational.threads` resource. A changed or unknown stamp blocks historical
-content and model-context reuse. New legacy threads capture a stamp; pre-V120 threads
-are not backfilled. This is whole-context invalidation, not selective revocation.
+`conversational.threads` resource. A changed or unknown stamp blocks model-context
+reuse. Historical reads are also blocked unless an explicit archive recovery grant applies.
+V124 seeds `conversational.archive-recovery` READ for `ALL × OWNER` only, following
+the owner's 25 November 2026 approval. It permits reading owned legacy titles, previews
+and transcripts after the normal active-account and `conversational.threads` checks.
+It does not authorize context reuse, publication, renaming or access to another user's
+threads. Stamps are never backfilled; revoking recovery immediately restores the
+historical read fence. The same explicit recovery grant permits owned Pi transcript,
+prompt and follow-up reads through the browser archive endpoints; recovered jobs are
+marked `readOnly`. Worker claims, heartbeats, publication, continuation and file access
+retain the original policy checks, including the strict internal job-read method.
 
 V118/V119 reporting evidence stores observed permission checks and response bindings,
 not a second transcript. New or changed native reporting results must match the

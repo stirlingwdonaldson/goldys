@@ -22,7 +22,7 @@ export function WorkspacePicker({ api, history, select }: { api: WorkspaceApi; h
       <Button variant="ghost" size="sm" disabled={remove.isPending} aria-label="Delete investigation" onClick={() => {
         if (window.confirm("Delete this conversation, all attempts and retained files? Running work will stop. This cannot be undone in the preview.")) remove.mutate(thread.id);
       }}>Delete</Button>
-      <span id={`thread-date-${thread.id}`} className="text-sm tabular-nums">{formatDateTime(thread.createdAt)}</span>
+      <div className="min-w-0 flex-1 space-y-1"><p className="truncate text-sm font-medium">{thread.title ?? (thread.access === "NOT_PERMITTED" ? "Restricted investigation" : "Saved investigation")}</p><p id={`thread-date-${thread.id}`} className="text-xs tabular-nums text-muted-foreground">{formatDateTime(thread.createdAt)}{thread.state ? ` · ${thread.state.toLowerCase().replaceAll("_", " ")}` : ""}</p></div>
       {thread.access === "NOT_PERMITTED" ? <Badge variant="missing">Not permitted</Badge> : thread.latestJobId ? <Button variant="outline" size="sm" aria-describedby={`thread-date-${thread.id}`} onClick={() => select(thread.latestJobId)}>Open investigation</Button> : <span className="text-sm text-muted-foreground">No saved attempt</span>}
     </div>)}
     {remove.error ? <InlineError>{remove.error.message}</InlineError> : null}

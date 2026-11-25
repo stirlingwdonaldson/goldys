@@ -45,7 +45,7 @@ export async function main(): Promise<void> {
   try {
     while (!shutdown.signal.aborted) {
       const claim = await host.claim();
-      if (!claim) { await Bun.sleep(2000); continue; }
+      if (!claim) { await Bun.sleep(500); continue; }
       const cwd = await mkdtemp(join(tmpdir(), 'goldys-investigation-'));
       const budget = new InvestigationBudget(5_000_000, (id, kind, aud) => host.reserveUsage(claim, id, kind, aud));
       try {

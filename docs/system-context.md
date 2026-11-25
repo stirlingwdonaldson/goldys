@@ -90,3 +90,10 @@ source-ledger promotion. A future promotion must use the existing byte-faithful
 and native context retain the thread's whole-policy restriction; ownership alone does
 not bypass the explicit private-file, wages and account-information permission checks.
 Production sensitive-file classification and hold/backup obligations remain unresolved.
+
+The owner-approved conversation archive recovery exception (25 November 2026) uses the explicit
+`conversational.archive-recovery` READ permission, seeded only for `ALL × OWNER`.
+Current conversation access, active-account checks and ownership still apply. This permits
+reading older legacy transcripts and owned Pi investigation history with unknown or changed policy stamps; it never re-stamps
+them or permits model-context reuse, publication or private-file access. Revoking the
+recovery permission reinstates the historical-content fence.
