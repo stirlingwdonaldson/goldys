@@ -11,6 +11,25 @@ const { save, update } = vi.hoisted(() => ({ save: vi.fn(), update: vi.fn() }));
 vi.mock("@/lib/demo-mode", () => ({ useApi: () => ({ ...demoApi, saveDashboard: save, updateDashboard: update }) }));
 
 describe("workspace dashboard drafts", () => {
+  it("shows a saved opening prompt once without hiding identical follow-ups", async () => {
+    const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
+    job.messages = [{ id: "opening", role: "user", text: job.prompt, reporting: null }];
+    const view = render(<WorkspaceMessages job={job} />);
+    expect(screen.getAllByText(job.prompt)).toHaveLength(1);
+    view.rerender(<WorkspaceMessages job={{ ...job, messages: [...job.messages, { id: "repeat", role: "user", text: job.prompt, reporting: null }] }} />);
+    expect(screen.getAllByText(job.prompt)).toHaveLength(2);
+  });
+  it("shows the original prompt before the worker has saved any messages", async () => {
+    const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
+    render(<WorkspaceMessages job={{ ...job, messages: [] }} />);
+    expect(screen.getAllByText(job.prompt)).toHaveLength(1);
+  });
+  it("shows the recorded provider and model alongside the answer", async () => {
+    const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));
+    job.messages = [{ id: "answer", role: "assistant", text: "Answer", reporting: null, provider: "openai", model: "recorded-model" }];
+    render(<WorkspaceMessages job={job} />);
+    expect(screen.getByText("OpenAI · recorded-model")).toBeVisible();
+  });
   beforeEach(() => vi.clearAllMocks());
   it("restores a validated draft and saves query configuration only after confirmation", async () => {
     const job = workspaceJobSchema.parse(await createWorkspaceDemo().getWorkspaceJob("10000000-0000-4000-8000-000000000001"));

@@ -37,9 +37,44 @@ class WorkspaceJobsIntegrationTest {
 
   @BeforeEach
   void setup() {
+    recovery(false);
     jdbc.update(
         "truncate workspace_request_reservation,workspace_file,workspace_reporting_evidence,workspace_follow_up,workspace_thread,workspace_job,workspace_daily_budget");
     owner = account("OWNER");
+  }
+
+  @org.junit.jupiter.api.AfterEach
+  void restoreRecoveryGrant() {
+    recovery(true);
+  }
+
+  private void recovery(boolean allowed) {
+    jdbc.update(
+        "update permission set can_read=? where department='ALL' and seniority='OWNER' and resource='conversational.archive-recovery'",
+        allowed);
+  }
+
+  @Test
+  void recoveredArchiveCannotAuthorizeWorkerContextFilesOrOtherOwners() {
+    var job = submit(UUID.randomUUID(), UUID.randomUUID());
+    var claim = jobs.claim();
+    jobs.enqueue(owner, job.id(), UUID.randomUUID(), "Saved follow-up");
+    recovery(true);
+    assertThat(jobs.readArchive(owner, job.id()).readOnly()).isTrue();
+    assertThat(jobs.archiveFollowUps(owner, job.id())).hasSize(1);
+    assertThat(threads.list(owner, null, 25).threads().getFirst().title()).isEqualTo(job.prompt());
+    assertThatThrownBy(() -> jobs.readArchive(account("OWNER"), job.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> jobs.read(owner, job.id())).isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> jobs.heartbeat(job.id(), claim.fence()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> jobs.enqueue(owner, job.id(), UUID.randomUUID(), "Continue"))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> files.list(owner, job.id())).isInstanceOf(AccessDeniedException.class);
+    recovery(false);
+    assertThatThrownBy(() -> jobs.readArchive(owner, job.id()))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThat(threads.list(owner, null, 25).threads().getFirst().title()).isNull();
   }
 
   UUID account(String seniority) {

@@ -15,7 +15,18 @@ import java.util.List;
  * A disposable display projection, never model context or an independently persisted transcript.
  */
 final class WorkspaceHistory {
-  record Message(String id, String role, String text, ToolResult reporting, DashboardDraft draft) {}
+  record Message(
+      String id,
+      String role,
+      String text,
+      ToolResult reporting,
+      DashboardDraft draft,
+      String provider,
+      String model) {
+    Message(String id, String role, String text, ToolResult reporting, DashboardDraft draft) {
+      this(id, role, text, reporting, draft, null, null);
+    }
+  }
 
   private WorkspaceHistory() {}
 
@@ -58,7 +69,16 @@ final class WorkspaceHistory {
     }
     if (!"user".equals(role) && !"assistant".equals(role)) return null;
     String text = text(message.path("content"));
-    return text.isEmpty() ? null : new Message(id, role, text, null, null);
+    return text.isEmpty()
+        ? null
+        : new Message(
+            id,
+            role,
+            text,
+            null,
+            null,
+            message.path("provider").asText(null),
+            message.path("model").asText(null));
   }
 
   private static Message exploration(String id, JsonNode message) {

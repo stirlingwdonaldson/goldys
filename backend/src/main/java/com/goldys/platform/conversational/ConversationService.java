@@ -126,10 +126,11 @@ public class ConversationService {
   @Transactional
   public List<ThreadSummary> list(UUID userId) {
     String policy = authorization.require(userId, RESOURCE, PermissionAction.READ);
+    boolean recovery = authorization.canRecoverArchive(userId);
     return threads.findByUserAccountIdOrderByUpdatedAtDesc(userId).stream()
         .map(
             thread ->
-                policy.equals(thread.policyStamp())
+                (policy.equals(thread.policyStamp()) || recovery)
                     ? toSummary(thread)
                     : new ThreadSummary(
                         thread.id(),
@@ -143,7 +144,8 @@ public class ConversationService {
   @Transactional
   public ThreadView get(UUID userId, UUID threadId) {
     ConversationThread thread = requireThread(userId, threadId);
-    requirePolicy(thread, authorization.require(userId, RESOURCE, PermissionAction.READ));
+    String policy = authorization.require(userId, RESOURCE, PermissionAction.READ);
+    if (!authorization.canRecoverArchive(userId)) requirePolicy(thread, policy);
     return new ThreadView(
         thread.id(), thread.title(), messages.findByThreadIdOrderByCreatedAtAsc(threadId));
   }

@@ -6,6 +6,7 @@ import com.goldys.platform.auth.AccessDeniedException;
 import com.goldys.platform.support.PostgresContainerConfiguration;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ class ConversationPolicyIntegrationTest {
 
   @BeforeEach
   void account() {
+    recovery(false);
     user = UUID.randomUUID();
     jdbc.update(
         """
@@ -30,6 +32,41 @@ class ConversationPolicyIntegrationTest {
         """,
         user,
         user + "@example.test");
+  }
+
+  @AfterEach
+  void restoreRecoveryGrant() {
+    recovery(true);
+  }
+
+  private void recovery(boolean allowed) {
+    jdbc.update(
+        "update permission set can_read=? where department='ALL' and seniority='OWNER' and resource='conversational.archive-recovery'",
+        allowed);
+  }
+
+  @Test
+  void explicitRecoveryReadsOwnedArchivesButCannotResumeOrExposeAnotherOwnersHistory() {
+    UUID thread = conversations.contextFor(user, null, "Archived question").threadId();
+    conversations.complete(user, thread, "Archived answer", List.of());
+    jdbc.update("update conversation_thread set policy_stamp=null where id=?", thread);
+    recovery(true);
+    assertThat(conversations.list(user).getFirst().title()).isEqualTo("Archived question");
+    assertThat(conversations.get(user, thread).messages()).hasSize(2);
+    assertThatThrownBy(() -> conversations.contextFor(user, thread, "Continue"))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThatThrownBy(() -> conversations.get(UUID.randomUUID(), thread))
+        .isInstanceOf(AccessDeniedException.class);
+    assertThat(
+            jdbc.queryForObject(
+                "select policy_stamp from conversation_thread where id=?", String.class, thread))
+        .isNull();
+    jdbc.update("update user_account set active=false where id=?", user);
+    assertThatThrownBy(() -> conversations.get(user, thread))
+        .isInstanceOf(AccessDeniedException.class);
+    jdbc.update("update user_account set active=true where id=?", user);
+    recovery(false);
+    assertRestricted(thread);
   }
 
   @Test

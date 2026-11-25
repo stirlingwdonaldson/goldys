@@ -27,6 +27,31 @@ function mount(api: WorkspaceApi, id: string | null = job.id, existing?: QueryCl
 }
 
 describe("persisted workspace", () => {
+  it("renders recovered history read-only without requesting private files", async () => {
+    const api = adapter();
+    vi.mocked(api.getWorkspaceJob).mockResolvedValue({ ...job, readOnly: true, state: "INTERRUPTED" });
+    mount(api);
+    await screen.findByText("Saved private output");
+    expect(screen.getByRole("button", { name: "Start new chat" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Retry investigation" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(api.listWorkspaceFiles).not.toHaveBeenCalled();
+  });
+  it("starts the queue read without waiting for the investigation response", async () => {
+    const api = adapter();
+    vi.mocked(api.getWorkspaceJob).mockReturnValue(new Promise(() => {}));
+    mount(api);
+    await waitFor(() => expect(api.listWorkspaceFollowUps).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText("Saved private output")).not.toBeInTheDocument();
+  });
+  it("does not stop when Enter is pressed in an empty running composer", async () => {
+    const api = adapter();
+    mount(api);
+    await screen.findByText("Saved private output");
+    fireEvent.keyDown(screen.getByLabelText("Queue a follow-up"), { key: "Enter" });
+    expect(api.stopWorkspaceJob).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Stop investigation" })).toBeEnabled();
+  });
   it("keeps Shift+Enter and composition local, and sends with Enter", async () => {
     const api = adapter();
     mount(api, null);

@@ -33,6 +33,15 @@ public class WorkspaceAuthorization {
     return require(accountId, RESOURCE, action);
   }
 
+  public boolean canRecoverArchive(UUID accountId) {
+    try {
+      require(accountId, new ResourceKey("conversational.archive-recovery"), PermissionAction.READ);
+      return true;
+    } catch (AccessDeniedException denied) {
+      return false;
+    }
+  }
+
   /** Shared conservative history stamp; each caller retains its own permission resource. */
   public String require(UUID accountId, ResourceKey resource, PermissionAction action) {
     var accounts =

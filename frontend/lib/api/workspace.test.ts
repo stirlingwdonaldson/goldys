@@ -34,6 +34,7 @@ describe("workspace demo", () => {
     const job = await api.getWorkspaceJob(page.threads[0].latestJobId!);
     expect(workspaceJobSchema.parse(job).state).toBe("INTERRUPTED");
     expect(job.messages[0].reporting?.widget).toMatchObject({ value: null });
+    expect(job.messages.at(-1)).toMatchObject({ provider: "goldys-deepseek", model: "demo-model" });
     const restricted = await api.listWorkspaceThreads(page.nextCursor!, 1);
     expect(restricted.threads[0]).toMatchObject({ access: "NOT_PERMITTED", latestJobId: null });
     expect(restricted.nextCursor).toBeNull();
@@ -41,7 +42,7 @@ describe("workspace demo", () => {
     const retry = await api.submitWorkspaceJob({ ...input(), threadId: job.threadId });
     expect(retry.messages).toEqual(job.messages);
     retry.messages.length = 0;
-    expect((await api.getWorkspaceJob(retry.id)).messages).toHaveLength(1);
+    expect((await api.getWorkspaceJob(retry.id)).messages).toEqual(job.messages);
     await expect(api.getWorkspaceJob(crypto.randomUUID())).rejects.toMatchObject({ code: "NOT_PERMITTED" });
   });
 });

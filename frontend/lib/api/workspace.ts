@@ -6,7 +6,9 @@ export const workspaceJobSchema = z.object({
   id: z.string().uuid(), threadId: z.string().uuid(),
   state: z.enum(["QUEUED", "RUNNING", "COMPLETED", "CANCELLED", "INTERRUPTED", "FAILED", "BUDGET_EXHAUSTED"]),
   prompt: z.string(), revision: z.number().int().nonnegative(),
+  readOnly: z.boolean().optional(),
   messages: z.array(z.object({ id: z.string(), role: z.enum(["user", "assistant", "tool"]), text: z.string(),
+    provider: z.string().nullable().optional(), model: z.string().nullable().optional(),
     draft: draftSchema.nullable().optional(),
     reporting: z.object({ widget: widgetSchema, notices: z.array(z.string()),
       provenance: z.array(provenanceSchema), relatedMetrics: z.array(z.string()) }).nullable(),
@@ -15,6 +17,7 @@ export const workspaceJobSchema = z.object({
 export const workspaceFollowUpSchema = z.object({ id: z.string().uuid(), prompt: z.string(), state: z.enum(["QUEUED", "TAKEN", "CANCELLED"]) });
 export const workspacePageSchema = z.object({
   threads: z.array(z.object({ id: z.string().uuid(), createdAt: z.string(),
+    title: z.string().nullable().optional(), state: workspaceJobSchema.shape.state.nullable().optional(),
     access: z.enum(["AVAILABLE", "NOT_PERMITTED"]), latestJobId: z.string().uuid().nullable() })),
   nextCursor: z.string().uuid().nullable(),
 });

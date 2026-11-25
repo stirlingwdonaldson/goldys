@@ -152,6 +152,13 @@ remain URL-selected with `?investigation=<id>`, with saved investigations behind
 a Collapsible and New chat starting a fresh question. Leaving the page never
 stops server work. Legacy transcripts remain under Conversations. Owner-only
 access and visible denied, missing-data and uncertain-delivery states remain.
+The composer uses one round send/stop control: empty while working shows Stop;
+typing a follow-up restores Send. Empty Enter never stops work. Waiting and running
+states use staggered dots with reduced-motion support. Recorded providers have local
+brand marks and model labels; unknown historical providers remain explicitly unknown.
+Investigation history shows the saved question, date and state. Owner-authorised
+archive recovery is read-only and offers a new-chat action; files and model-context
+reuse keep their existing access checks.
 
 Answers use a shared CommonMark/GFM renderer with fixed typography, scrollable tables
 and code blocks. Raw HTML and remote images are inert; clickable public citations

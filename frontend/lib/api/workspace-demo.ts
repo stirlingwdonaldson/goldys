@@ -13,7 +13,7 @@ export function createWorkspaceDemo(): WorkspaceApi {
   const jobs = new Map<string, WorkspaceJob>();
   const example: WorkspaceJob = {
     id: "10000000-0000-4000-8000-000000000001", threadId: "20000000-0000-4000-8000-000000000001",
-    prompt: "Demo: compare weekly sales", state: "INTERRUPTED", revision: 1,
+    prompt: "Demo: compare weekly sales", state: "INTERRUPTED", revision: 1, readOnly: false,
     messages: [{ id: "demo-result", role: "tool", text: "", draft: {
       title: "Demo weekly sales", description: "A reusable sales query, not a saved result.", dashboardId: null,
       filters: { dateRange: null, comparison: null, dimensions: [] },
@@ -24,11 +24,11 @@ export function createWorkspaceDemo(): WorkspaceApi {
     }, reporting: {
       widget: { schemaVersion: 2, id: "demo-missing", type: "stat", title: "Demo sales", value: null },
       notices: ["Demo investigation interrupted. Sales coverage is unavailable."], provenance: [], relatedMetrics: [],
-    } }],
+    } }, { id: "demo-answer", role: "assistant", text: "Demo investigation interrupted. Sales coverage is unavailable.", reporting: null, provider: "goldys-deepseek", model: "demo-model" }],
   };
   jobs.set(example.id, example);
   const threads: WorkspacePage["threads"] = [
-    { id: example.threadId, createdAt: "2026-11-15T00:00:00Z", access: "AVAILABLE", latestJobId: example.id },
+    { id: example.threadId, createdAt: "2026-11-15T00:00:00Z", access: "AVAILABLE", latestJobId: example.id, title: example.prompt, state: example.state },
     { id: "20000000-0000-4000-8000-000000000002", createdAt: "2026-11-14T00:00:00Z", access: "NOT_PERMITTED", latestJobId: null },
   ];
   const submissions = new Map<string, string>();
@@ -77,7 +77,10 @@ export function createWorkspaceDemo(): WorkspaceApi {
       if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new ApiError("VALIDATION_FAILED", "Page size must be 1–50.");
       const index = before ? threads.findIndex(thread => thread.id === before) : -1;
       if (before && index < 0) throw denied();
-      const page = threads.slice(index + 1, index + 1 + limit);
+      const page = threads.slice(index + 1, index + 1 + limit).map(thread => {
+        const latest = thread.latestJobId ? jobs.get(thread.latestJobId) : undefined;
+        return { ...thread, title: latest?.prompt ?? null, state: latest?.state ?? null };
+      });
       return structuredClone({ threads: page, nextCursor: index + 1 + limit < threads.length ? page.at(-1)!.id : null });
     },
     async submitWorkspaceJob(input) {
@@ -95,7 +98,7 @@ export function createWorkspaceDemo(): WorkspaceApi {
       if (thread?.access === "NOT_PERMITTED") throw denied();
       const previous = thread?.latestJobId ? read(thread.latestJobId) : null;
       const job: WorkspaceJob = { id: crypto.randomUUID(), threadId: input.threadId, prompt: input.prompt,
-        state: "QUEUED", revision: previous?.revision ?? 0, messages: structuredClone(previous?.messages ?? []) };
+        state: "QUEUED", revision: previous?.revision ?? 0, messages: structuredClone(previous?.messages ?? []), readOnly: false };
       jobs.set(job.id, job);
       queues.set(job.id, []);
       submissions.set(key, job.id);
