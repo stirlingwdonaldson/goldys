@@ -170,7 +170,11 @@ class SaleItemListIntegrationTest {
     ingest.record(saleItem(old, "OLD", "OLD-1", "BEV", "90"));
     ingest.record(saleItem(old, "OLD", "OLD-1", "BEV", "100"));
     ingest.record(saleItem(DAY_1, "NEW", "NEW-1", "FOOD", "20"));
-    var coverage = history.coverage().getFirst();
+    var coverage =
+        history.coverage().stream()
+            .filter(c -> c.dataset().equals("Lightspeed merchandise lines"))
+            .findFirst()
+            .orElseThrow();
     assertThat(coverage.firstDate()).isEqualTo(old);
     assertThat(coverage.lastDate()).isEqualTo(DAY_1);
     assertThat(coverage.observedDays()).isEqualTo(2);
@@ -186,10 +190,83 @@ class SaleItemListIntegrationTest {
 
   @Test
   void emptyHistoryKeepsDateBoundsMissing() {
-    var coverage = history.coverage().getFirst();
+    var coverage =
+        history.coverage().stream()
+            .filter(c -> c.dataset().equals("Lightspeed merchandise lines"))
+            .findFirst()
+            .orElseThrow();
     assertThat(coverage.firstDate()).isNull();
     assertThat(coverage.lastDate()).isNull();
     assertThat(coverage.rows()).isZero();
+  }
+
+  @Autowired com.goldys.platform.reporting.ToolDispatcher dispatcher;
+  @Autowired com.fasterxml.jackson.databind.ObjectMapper json;
+
+  @Test
+  void namedSearchFindsRoastOutsideTopHundredThroughTheAuthorizedReportingTool() throws Exception {
+    LocalDate date = LocalDate.of(2025, 12, 7);
+    for (int i = 0; i < 101; i++) {
+      ingest.record(namedSaleItem(date, "SALE", "HIGH-" + i, "FOOD", "1000", "High seller " + i));
+    }
+    ingest.record(namedSaleItem(date, "SALE", "ROAST", "FOOD", "1", "Sunday Roast"));
+    ingest.record(namedSaleItem(date, "SALE", "ROAST", "FOOD", "3", "Sunday Roast"));
+    assertThat(history.products(date, date, 100))
+        .extracting(p -> p.name())
+        .doesNotContain("Sunday Roast");
+    var input =
+        json.readValue(
+            """
+        {"mode":"SEARCH","startDate":"2025-12-01","endDate":"2025-12-31",
+         "productName":"ROAST","limit":20,"page":0}
+        """,
+            com.goldys.platform.reporting.GetMerchandiseHistoryInput.class);
+    var owner =
+        new com.goldys.platform.auth.UserRole(
+            new com.goldys.platform.auth.DepartmentCode("ALL"),
+            new com.goldys.platform.auth.SeniorityCode("OWNER"));
+    var result =
+        dispatcher.dispatch(
+            com.goldys.platform.reporting.ToolId.GET_MERCHANDISE_HISTORY, input, owner);
+    var rows = ((com.goldys.platform.widget.TableWidgetSpec) result.widget()).rows();
+    assertThat(rows).hasSize(1);
+    assertThat(rows.getFirst())
+        .containsEntry("name", "Sunday Roast")
+        .containsEntry("observedDays", 1L)
+        .containsEntry("firstDate", date)
+        .containsEntry("lastDate", date)
+        .containsEntry("lines", 1L);
+    assertThat((BigDecimal) rows.getFirst().get("quantity")).isEqualByComparingTo("2");
+    assertThat((BigDecimal) rows.getFirst().get("amount")).isEqualByComparingTo("3");
+    assertThat(String.join(" ", result.notices()))
+        .contains(
+            "Matching source product groups: 1",
+            "hasMore: false",
+            "does not make observed quantities unavailable");
+  }
+
+  @Test
+  void parmaSearchKeepsVariantsAndModifiersSeparateAndPaginatesAllMatches() {
+    LocalDate date = LocalDate.of(2025, 7, 25);
+    ingest.record(namedSaleItem(date, "SALE", "CHICKEN", "FOOD", "30", "Chicken Parma"));
+    ingest.record(namedSaleItem(date, "SALE", "EGGPLANT", "FOOD", "20", "Eggplant Parma"));
+    ingest.record(namedSaleItem(date, "SALE", "MODIFIER", "Uncategorised", "0", "No Parma Sauce"));
+    var first = history.products(date, date, "parma", 0, 2);
+    assertThat(first.matchingGroups()).isEqualTo(3);
+    assertThat(first.hasMore()).isTrue();
+    assertThat(first.items())
+        .extracting(p -> p.name())
+        .containsExactly("Chicken Parma", "Eggplant Parma");
+    var last = history.products(date, date, "parma", 1, 2);
+    assertThat(last.matchingGroups()).isEqualTo(3);
+    assertThat(last.hasMore()).isFalse();
+    assertThat(last.items()).extracting(p -> p.name()).containsExactly("No Parma Sauce");
+    var absent = history.products(date.minusDays(1), date.minusDays(1), "parma", 0, 20);
+    assertThat(absent.items()).isEmpty();
+    assertThat(absent.matchingGroups()).isZero();
+    assertThat(history.products(date, date, "%' OR 1=1 --", 0, 20).items()).isEmpty();
+    assertThat(history.products(date, date, "%", 0, 20).items()).isEmpty();
+    assertThat(history.products(date, date, "_", 0, 20).items()).isEmpty();
   }
 
   private void assertFullFieldSet(SaleItemRow r) {
@@ -214,12 +291,17 @@ class SaleItemListIntegrationTest {
 
   private SaleItemInput saleItem(
       LocalDate date, String sale, String line, String category, String amount) {
+    return namedSaleItem(date, sale, line, category, amount, "Espresso");
+  }
+
+  private SaleItemInput namedSaleItem(
+      LocalDate date, String sale, String line, String category, String amount, String name) {
     return new SaleItemInput(
         "LIGHTSPEED",
         line,
         date,
         sale,
-        "Espresso",
+        name,
         "PROD-1",
         "SKU-1",
         category,

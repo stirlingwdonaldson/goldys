@@ -247,5 +247,23 @@
       "describe_metrics"
     ],
     "causal": false
+  },
+  {
+    "category": "historical-named-product",
+    "question": "How many parmas did we sell in 2025? Show any recorded quantities even if the year is incomplete.",
+    "role": "owner",
+    "expectedTools": [
+      "get_merchandise_history"
+    ],
+    "causal": false
+  },
+  {
+    "category": "historical-named-product",
+    "question": "How many roasts did we sell in December 2025? Search the product names, not just the top sellers.",
+    "role": "owner",
+    "expectedTools": [
+      "get_merchandise_history"
+    ],
+    "causal": false
   }
 ]

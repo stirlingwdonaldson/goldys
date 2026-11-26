@@ -154,3 +154,13 @@ any read. Groups retain site, product number, SKU, source name and category; no 
 or addition to reconciled product metrics is implied. Unknown quantities/amounts stay null.
 Results carry the historical audit's missing-line and payment-join inflation limitations.
 This exposes existing observations; it neither repairs history nor certifies completeness.
+
+Named-product questions use `GET_MERCHANDISE_HISTORY` SEARCH with a bounded literal
+`productName` (1–100 characters). Matching is case-insensitive substring search, before
+aggregation and paging; `%`, `_` and SQL-looking text are literal values, never expressions.
+Both SEARCH and PRODUCTS support zero-based `page` (0–10000), return the full matching-group
+count and `hasMore`, and retain first/last matching dates, observed days and line counts.
+A ranking omission never establishes product absence. Results preserve variant/modifier
+names and categories separately. Observed quantities remain reportable with qualifications;
+unknown full-period totals do not erase known partial observations. No matches mean no
+matching retained evidence, not zero sales; matching days do not certify source completeness.

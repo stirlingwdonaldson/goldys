@@ -53,7 +53,12 @@ class ToolDispatcherTest {
                   dispatcher.dispatch(
                       ToolId.GET_MERCHANDISE_HISTORY,
                       new GetMerchandiseHistoryInput(
-                          GetMerchandiseHistoryInput.Mode.COVERAGE, null, null, 20),
+                          GetMerchandiseHistoryInput.Mode.SEARCH,
+                          LocalDate.of(2025, 1, 1),
+                          LocalDate.of(2025, 12, 31),
+                          20,
+                          "parma",
+                          0),
                       OWNER))
           .isInstanceOf(AccessDeniedException.class);
       org.mockito.Mockito.verifyNoInteractions(query);

@@ -17,9 +17,25 @@ public interface MerchandiseHistoryQuery {
       String category,
       BigDecimal quantity,
       BigDecimal amount,
-      long observedDays) {}
+      long observedDays,
+      LocalDate firstDate,
+      LocalDate lastDate,
+      long lines) {}
+
+  record ProductPage(List<Product> items, long matchingGroups, int page, int limit) {
+    public ProductPage {
+      items = List.copyOf(items);
+    }
+
+    public boolean hasMore() {
+      return (long) (page + 1) * limit < matchingGroups;
+    }
+  }
 
   List<Coverage> coverage();
 
   List<Product> products(LocalDate from, LocalDate to, int limit);
+
+  /** Case-insensitive literal name substring, applied before grouping and pagination. */
+  ProductPage products(LocalDate from, LocalDate to, String productName, int page, int limit);
 }
