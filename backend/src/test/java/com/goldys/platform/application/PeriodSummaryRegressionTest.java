@@ -69,7 +69,11 @@ class PeriodSummaryRegressionTest {
             catalog);
     MetricQueryService queries =
         q -> labourExec.ids().contains(q.metric()) ? labourExec.evaluate(q) : derived.evaluate(q);
-    var service = new LabourReportingService(queries, mock(PermissionService.class));
+    var service =
+        new LabourReportingService(
+            queries,
+            mock(PermissionService.class),
+            mock(com.goldys.platform.semantic.LabourMetricsQuery.class));
     var owner = new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
     var summary = service.summary(owner, first, last);
     var series =

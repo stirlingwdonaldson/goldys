@@ -3,19 +3,25 @@
 Owner direction, 26 November 2026: Tanda replaces Deputy. No new Deputy ingest is
 accepted (the old webhook returns 410). Retained historical evidence is unchanged.
 
-## Implemented and not yet accepted
+## Implemented reporting
 
-The read-only `tanda-api` connector captures source bytes through `ConnectorRunner`
-and the immutable ledger. Data health offers the existing owner-authorised Run now
-action. Staff & labour links to connection health and explicitly awaits validated
-Tanda figures. This is **capture readiness, not completed workforce reporting**.
+The GET-only `tanda-api` connector retains source bytes through `ConnectorRunner`,
+then validates the complete captured window before publishing canonical roster and
+worked-shift observations. The labour projector supplies semantic reporting and the
+Staff & labour page, including daily Tanda team figures and the next 14 days of rosters.
+The page preserves the seven native teams; there is no FOH/BOH regrouping.
 
-Public schema access was verified on 26 November 2026 at
-[Tanda OpenAPI](https://my.tanda.co/api/v2/openapi), linked by the
-[official reference](https://my.tanda.co/api/v2/docs). No account token or real account
-samples were available during implementation. Envelope tests are synthetic transport
-tests, not a measured parser hit rate. Canonical publication remains blocked by
-`TANDA_MAPPING_PENDING`; even a fully captured run is PARTIAL, never a reporting success.
+Real-account access was validated on 26 November 2026. A representative capture
+contained 223 roster observations and 6 unique shifts inside the validation window:
+229/229 mapped, including 3 shifts with unknown worked hours. Repeated pay-period
+responses were deduplicated by shift ID. A subsequent full-window probe (28 October–10 December) retained 42 pages and
+validated 239/239 observations: 223 rosters and 16 worked-shift records. The sanitised regression fixture retains
+paid/unpaid breaks, open shifts, zero costs and pagination. These are recorded source
+observations, not acceptance of complete payroll or weekly reporting totals.
+
+The [public OpenAPI](https://my.tanda.co/api/v2/openapi) defines a maximum seven-day
+difference for schedule date filters. Capture uses non-overlapping seven-calendar-day
+windows; the original wide request returned HTTP 400 against the real account.
 
 ## Secure token entry
 
@@ -56,22 +62,37 @@ the configured path, but replacing a token at the same path is read on the next 
   visible partial/failure, without silently skipping pages or retry storms.
 - Raw bytes are persisted before array-shape inspection. Each record retains endpoint,
   query dates and page as source reference. Errors omit source bodies and credentials.
-- Manual capture only while validation is outstanding. No automatic production job.
+- Manual capture remains available. `TANDA_SYNC_ENABLED=true` adds startup and hourly
+  refresh; disabled by default. The runner prevents overlapping runs.
 
-## Required completion evidence
+## Rollout and rollback
 
-After secure setup, capture a representative completed week and an upcoming roster.
-Measure accepted/rejected records against real sanitised fixtures before writing
-canonical mappings. Confirm pay-period boundaries; shift/schedule IDs and linkage;
-paid/unpaid breaks; overnight and DST dates; approvals/deletions/corrections;
-source costs versus wages, super and other oncosts; and coverage of inactive staff.
-Explicitly map Tanda location/team IDs to the pub and approved FOH/BOH reporting
-without guessing from names. Keep wages and full employment costs separate.
+V125 permits unknown hours and records the observation measure. After importing Tanda,
+older binaries with the combined-only labour projector cannot safely rebuild these facts.
+Keep the new projector when disabling sync (`TANDA_SYNC_ENABLED=false`); do not roll back
+to the previous backend image after canonical publication. Refresh begins only after
+startup projection rebuilding completes. A failed source capture leaves published data intact.
 
-Then implement canonical → resolved → semantic reads for staff/shift detail and
-period comparisons, extend typed live/demo APIs and the workforce UI, and validate
-weekly totals against Tanda. Explainable review hints should include roster-hour
-variance, incomplete/open shifts, approval backlog and missing-cost coverage; label
-thresholds and evidence, never infer award breaches or staffing adequacy from totals.
-Leave balances, availability, qualifications and payroll-specific datasets require
-scope/schema review before extending capture. None are represented as delivered here.
+## Identity, hours and qualifications
+
+- `tanda:schedule:<id>` and `tanda:shift:<id>` are independent source-qualified
+  identities. Repeated pay-period envelopes select the latest shift observation.
+- Roster dates use the configured venue zone; worked shifts use Tanda's explicit date.
+  Paid breaks remain in worked hours; unpaid breaks are subtracted once. Open or
+  missing endpoints yield unknown hours and cost, never zero. Source `cost` is used,
+  not `cost_with_oncosts`; super and other oncosts stay excluded.
+- Native team names come from Tanda team IDs. Unknown teams and multi-location accounts
+  fail validation instead of guessing scope. Renaming a team updates its projections.
+- Each fact references its retained raw page. A complete validated capture atomically
+  supersedes facts no longer visible in the same bounded source window and reprojects
+  old and new dates for corrections. Failed/partial captures preserve the previous
+  published window; their retained bytes and failures remain available in Data health.
+- The source includes pending shifts and explicit zero costs. These remain qualified
+  observations; zero cost does not prove payroll completeness. Missing-day coverage and
+  ratio qualifications remain in the semantic layer. FOH/BOH ratios remain unavailable
+  when there are no source teams with those exact names.
+
+Still outside this delivery: individual payroll/award advice, leave balances,
+availability, qualifications and staffing-adequacy recommendations. Weekly reporting
+acceptance needs comparison to an independently supplied completed Tanda payroll/week
+export, particularly salaried employees with source-reported zero shift cost.

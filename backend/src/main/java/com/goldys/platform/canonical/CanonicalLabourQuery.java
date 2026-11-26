@@ -35,6 +35,7 @@ public class CanonicalLabourQuery {
         e.scheduledHours(),
         e.actualHours(),
         e.scheduledCost(),
-        e.actualCost());
+        e.actualCost(),
+        e.measure());
   }
 }

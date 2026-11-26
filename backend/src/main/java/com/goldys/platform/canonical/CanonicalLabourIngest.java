@@ -11,6 +11,14 @@ public class CanonicalLabourIngest {
     this.service = service;
   }
 
+  public void synchronize(
+      String source,
+      java.time.LocalDate from,
+      java.time.LocalDate to,
+      java.util.List<LabourInput> inputs) {
+    service.synchronize(source, from, to, inputs);
+  }
+
   public void record(LabourInput input) {
     service.record(input);
   }

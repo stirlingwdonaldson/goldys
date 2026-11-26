@@ -26,7 +26,7 @@ const loaded = (data: LabourSummary | null, error: ApiError | null = null) => ({
 describe("StaffPageView", () => {
   it("offers Tanda connection guidance without inventing labour figures", () => {
     render(<StaffPageView seniority="OWNER" />);
-    expect(screen.getByRole("heading", { name: "Connect Tanda" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Tanda reporting" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open Tanda connection status" })).toHaveAttribute("href", "/data-health");
     expect(screen.queryByText(/Awaiting Deputy/)).not.toBeInTheDocument();
   });
@@ -34,7 +34,7 @@ describe("StaffPageView", () => {
   it("renders roster for everyone and labor cost for an Owner", () => {
     render(<StaffPageView seniority="OWNER" />);
     expect(screen.getByText("Rostering & hours")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Labour cost %: incomplete/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Labour cost: incomplete/ })).toBeInTheDocument();
     expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
   });
 
@@ -54,14 +54,14 @@ describe("StaffPageView", () => {
   it("shows resolved hours and, for an Owner, labour cost", () => {
     render(<StaffPageView seniority="OWNER" labour={loaded(summary)} />);
     expect(screen.getByText("1,231.5 h")).toBeInTheDocument();
-    expect(screen.getByText("14%")).toBeInTheDocument();
+    expect(screen.getByText("$41,872.40")).toBeInTheDocument();
     expect(screen.queryByText("Rostering & hours")).not.toBeInTheDocument();
   });
 
   it("shows permitted aggregate wages to managers", () => {
     render(<StaffPageView seniority="MANAGER" labour={loaded(summary)} />);
     expect(screen.getByText("1,231.5 h")).toBeInTheDocument();
-    expect(screen.getByText("14%")).toBeInTheDocument();
+    expect(screen.getByText("$41,872.40")).toBeInTheDocument();
     expect(screen.queryByText(/owner only/i)).not.toBeInTheDocument();
   });
 
@@ -82,4 +82,14 @@ describe("StaffPageView", () => {
     );
     expect(screen.getByText(/don.t have access to labour figures/i)).toBeInTheDocument();
   });
+});
+
+it("shows upcoming team rosters even when period totals are missing", () => {
+  render(<StaffPageView seniority="OWNER" labour={loaded({ ...summary,
+    days: [{ date: "2026-10-10", department: "Kitchen", scheduledHours: 8,
+      actualHours: null, scheduledCost: 240, actualCost: null, authoritativeSource: "TANDA", hasConflict: false }]
+  })} />);
+  expect(screen.getByText("Kitchen")).toBeInTheDocument();
+  expect(screen.getByText("2026-10-10 · Upcoming")).toBeInTheDocument();
+  expect(screen.queryByText("Connect Tanda")).not.toBeInTheDocument();
 });

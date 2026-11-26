@@ -34,7 +34,9 @@ public class ResolvedLabourQuery implements LabourMetricsQuery {
   @Override
   public BigDecimal labourCost(LocalDate from, LocalDate to) {
     BigDecimal total = BigDecimal.ZERO;
-    for (ResolvedLabourDay r : rows(from, to)) {
+    var days = rows(from, to);
+    if (days.isEmpty()) return null;
+    for (ResolvedLabourDay r : days) {
       if (r.actualCost() == null) {
         return null; // any unknown day cost makes the period total unknown
       }
@@ -45,7 +47,9 @@ public class ResolvedLabourQuery implements LabourMetricsQuery {
 
   @Override
   public BigDecimal scheduledVsActualVariance(LocalDate from, LocalDate to) {
-    return scheduledHours(from, to).subtract(actualHours(from, to));
+    var scheduled = scheduledHours(from, to);
+    var actual = actualHours(from, to);
+    return scheduled == null || actual == null ? null : scheduled.subtract(actual);
   }
 
   private List<ResolvedLabourDay> rows(LocalDate from, LocalDate to) {
@@ -65,11 +69,11 @@ public class ResolvedLabourQuery implements LabourMetricsQuery {
   }
 
   private static BigDecimal sumHours(List<BigDecimal> values) {
+    if (values.isEmpty()) return null;
     BigDecimal total = BigDecimal.ZERO;
     for (BigDecimal v : values) {
-      if (v != null) {
-        total = total.add(v);
-      }
+      if (v == null) return null;
+      total = total.add(v);
     }
     return total;
   }

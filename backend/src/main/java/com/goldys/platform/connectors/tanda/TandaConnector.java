@@ -17,8 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * Tanda evidence capture. Raw-only until real account samples validate labour mapping and cost
- * basis. Re-fetches the bounded window to retain corrections; absence never deletes prior evidence.
+ * Tanda evidence capture and validated roster/worked observations. Re-fetches the bounded window to
+ * retain corrections; absence never deletes prior evidence.
  */
 @Component
 public class TandaConnector implements SourceConnector {
@@ -27,16 +27,24 @@ public class TandaConnector implements SourceConnector {
   private final String tokenFile;
   private final VenueClock clock;
   private final int historyDays;
+  private final com.goldys.platform.canonical.CanonicalLabourIngest labour;
 
   @org.springframework.beans.factory.annotation.Autowired
   public TandaConnector(
       @Value("${tanda.token-file:}") String tokenFile,
       @Value("${tanda.history-days:30}") int historyDays,
-      VenueClock clock) {
-    this(new TandaClient(), tokenFile, historyDays, clock);
+      VenueClock clock,
+      com.goldys.platform.canonical.CanonicalLabourIngest labour) {
+    this(new TandaClient(), tokenFile, historyDays, clock, labour);
   }
 
-  TandaConnector(TandaClient client, String tokenFile, int historyDays, VenueClock clock) {
+  TandaConnector(
+      TandaClient client,
+      String tokenFile,
+      int historyDays,
+      VenueClock clock,
+      com.goldys.platform.canonical.CanonicalLabourIngest labour) {
+    this.labour = java.util.Objects.requireNonNull(labour);
     if (historyDays < 1 || historyDays > 366)
       throw new IllegalArgumentException("Tanda history days must be 1–366");
     this.client = client;
@@ -58,21 +66,44 @@ public class TandaConnector implements SourceConnector {
   @Override
   public void fetch(String watermark, IngestionSink sink) {
     String token = readToken();
+    var pages = new java.util.ArrayList<TandaLabourMapper.Page>();
+    IngestionSink recordingSink =
+        payload -> {
+          var rawId = sink.accept(payload);
+          try {
+            pages.add(
+                new TandaLabourMapper.Page(
+                    payload.fetcherIdentity().substring(6), JSON.readTree(payload.bytes()), rawId));
+          } catch (IOException e) {
+            throw new ConnectorFetchException(
+                "TANDA_SCHEMA_MISMATCH", "Invalid Tanda JSON; raw evidence retained");
+          }
+          return rawId;
+        };
     LocalDate today = clock.today();
     LocalDate from = today.minusDays(historyDays - 1L);
     String window = "from=" + from + "&to=" + today.plusDays(14);
-    capture("locations", "locations", false, token, sink);
-    capture("departments", "departments", true, token, sink);
-    capture("users?show_inactive=true&show_wages=true", "users", true, token, sink);
-    capture(
-        "schedules?" + window + "&show_costs=true&show_award_interpretation=true",
-        "schedules",
-        true,
-        token,
-        sink);
-    capture("leave?" + window + "&include_inactive=true", "leave", true, token, sink);
+    capture("locations", "locations", false, token, recordingSink);
+    capture("departments", "departments", true, token, recordingSink);
+    capture("users?show_inactive=true&show_wages=true", "users", true, token, recordingSink);
+    // Tanda rejects schedule windows more than seven days apart.
+    for (LocalDate start = from; !start.isAfter(today.plusDays(14)); start = start.plusDays(7)) {
+      LocalDate end = start.plusDays(6);
+      if (end.isAfter(today.plusDays(14))) end = today.plusDays(14);
+      capture(
+          "schedules?from="
+              + start
+              + "&to="
+              + end
+              + "&show_costs=true&show_award_interpretation=true",
+          "schedules",
+          true,
+          token,
+          recordingSink);
+    }
+    capture("leave?" + window + "&include_inactive=true", "leave", true, token, recordingSink);
     // Timesheets are pay-period envelopes. Overlapping dates intentionally remain raw evidence,
-    // never summed. The future mapper must identify shifts, not count these envelopes as days.
+    // never summed. The mapper deduplicates source shift IDs across these envelopes.
     for (LocalDate day = from; !day.isAfter(today); day = day.plusDays(1)) {
       capture(
           "timesheets/on/"
@@ -82,11 +113,10 @@ public class TandaConnector implements SourceConnector {
           "timesheets",
           true,
           token,
-          sink);
+          recordingSink);
     }
-    throw new ConnectorFetchException(
-        "TANDA_MAPPING_PENDING",
-        "Tanda evidence captured. Reporting is withheld until real samples, shift identity, breaks, cost basis and department mappings are validated.");
+    var inputs = new TandaLabourMapper().map(pages, from, today.plusDays(14), clock.zone());
+    labour.synchronize("TANDA", from, today.plusDays(14), inputs);
   }
 
   private void capture(

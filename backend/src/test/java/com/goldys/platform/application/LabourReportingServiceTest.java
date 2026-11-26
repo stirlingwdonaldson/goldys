@@ -45,7 +45,10 @@ class LabourReportingServiceTest {
         .require(any(), any(), any());
 
     LabourReportingService service =
-        new LabourReportingService(mock(MetricQueryService.class), permissions);
+        new LabourReportingService(
+            mock(MetricQueryService.class),
+            permissions,
+            mock(com.goldys.platform.semantic.LabourMetricsQuery.class));
 
     assertThatThrownBy(() -> service.summary(OWNER, FROM, TO))
         .isInstanceOf(AccessDeniedException.class);
@@ -86,7 +89,9 @@ class LabourReportingServiceTest {
             MetricId.SALES_GROSS, new BigDecimal("10000.00"));
 
     PermissionService permissions = mock(PermissionService.class);
-    LabourReportingService service = new LabourReportingService(metrics, permissions);
+    LabourReportingService service =
+        new LabourReportingService(
+            metrics, permissions, mock(com.goldys.platform.semantic.LabourMetricsQuery.class));
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 
@@ -127,7 +132,10 @@ class LabourReportingServiceTest {
             MetricId.SALES_GROSS, new BigDecimal("10000.00"));
 
     LabourReportingService service =
-        new LabourReportingService(metrics, mock(PermissionService.class));
+        new LabourReportingService(
+            metrics,
+            mock(PermissionService.class),
+            mock(com.goldys.platform.semantic.LabourMetricsQuery.class));
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 
@@ -151,7 +159,10 @@ class LabourReportingServiceTest {
             MetricId.SALES_GROSS, new BigDecimal("10000.00"));
 
     LabourReportingService service =
-        new LabourReportingService(metrics, mock(PermissionService.class));
+        new LabourReportingService(
+            metrics,
+            mock(PermissionService.class),
+            mock(com.goldys.platform.semantic.LabourMetricsQuery.class));
 
     LabourReportingService.LabourSummary summary = service.summary(OWNER, FROM, TO);
 

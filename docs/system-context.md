@@ -50,7 +50,7 @@ These are sequencing constraints, not suggestions — building modules out of th
 
 Design assumptions about API access must be checked against what is available. Several sources have no public API or only partial access; current paths and limitations live in `docs/connectors/source-access.md`.
 
-The single current access reference is [`connectors/source-access.md`](connectors/source-access.md). Lightspeed uses scheduled-report webhooks; CTB uses internal AJAX plus invoice SFTP; OpenTable uses assisted-session JSON pulls with CSV fallback; Tanda replaces Deputy (owner direction, 26 November 2026), with manual raw capture pending real-account validation; see [Tanda setup](connectors/tanda.md). MarketMan is a possible one-time history input. Prove real sample/schema access before extending any path; do not treat historical API possibilities as implemented connectors.
+The single current access reference is [`connectors/source-access.md`](connectors/source-access.md). Lightspeed uses scheduled-report webhooks; CTB uses internal AJAX plus invoice SFTP; OpenTable uses assisted-session JSON pulls with CSV fallback; Tanda replaces Deputy (owner direction, 26 November 2026), with validated roster/worked-shift observations and optional hourly refresh; see [Tanda setup](connectors/tanda.md). MarketMan is a possible one-time history input. Prove real sample/schema access before extending any path; do not treat historical API possibilities as implemented connectors.
 
 ## Key System Modules
 
