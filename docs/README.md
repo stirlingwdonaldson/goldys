@@ -18,7 +18,7 @@ Read the smallest reference that answers the task.
 | Agent workflow | [Skills](agents/skills.md), [GitHub tracker](agents/issue-tracker.md), [domain docs](agents/domain.md), [review commands](agents.md) |
 | Durable choices | [Owner scope decisions](decisions/2026-11-04-product-scope.md), [governed conversational planning](decisions/0001-governed-conversational-planning.md), [Pi workspace decision](decisions/0002-pi-agent-workspace.md), existing files in `decisions/` |
 | Pi workspace | [Ask Goldy’s Pi proposal and evidence](design/ask-goldys-pi-workspace-proposal-2026-11-15.md) (implemented/deployed core; [current acceptance evidence](operations/pi-production-followup-2026-11-16.md)) |
-| Dated evidence | [Sales/payment discrepancy audit](audits/sales-payment-2026-11-12/README.md), [CTB stock/cost audit](audits/ctb-stock-cogs-2026-11-03/README.md), [historical archive](archive.md) |
+| Dated evidence | [Historical coverage and recovery plan](../ops/audits/historical-coverage/README.md), [Sales/payment discrepancy audit](audits/sales-payment-2026-11-12/README.md), [CTB stock/cost audit](audits/ctb-stock-cogs-2026-11-03/README.md), [historical archive](archive.md) |
 
 Update definitions in place when approved behaviour changes. GitHub owns delivery
 status; PRD/SRS remain reference contracts. Detailed source snapshots and dated

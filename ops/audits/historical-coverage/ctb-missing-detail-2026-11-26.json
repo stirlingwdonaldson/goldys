@@ -1,0 +1,107 @@
+{
+  "data": [
+    {
+      "amount": "12148.5000",
+      "trading_date": "2026-07-08",
+      "product_totals": 100,
+      "retained_reports": 1
+    },
+    {
+      "amount": "15113.5000",
+      "trading_date": "2026-07-09",
+      "product_totals": 136,
+      "retained_reports": 1
+    },
+    {
+      "amount": "27476.5000",
+      "trading_date": "2026-07-10",
+      "product_totals": 180,
+      "retained_reports": 1
+    },
+    {
+      "amount": "48721.5000",
+      "trading_date": "2026-07-11",
+      "product_totals": 195,
+      "retained_reports": 1
+    },
+    {
+      "amount": "21579.0000",
+      "trading_date": "2026-07-12",
+      "product_totals": 158,
+      "retained_reports": 1
+    },
+    {
+      "amount": "9598.0000",
+      "trading_date": "2026-07-13",
+      "product_totals": 124,
+      "retained_reports": 1
+    },
+    {
+      "amount": "6780.5000",
+      "trading_date": "2026-07-14",
+      "product_totals": 95,
+      "retained_reports": 1
+    },
+    {
+      "amount": "11129.0000",
+      "trading_date": "2026-07-15",
+      "product_totals": 115,
+      "retained_reports": 1
+    },
+    {
+      "amount": "12251.5000",
+      "trading_date": "2026-07-16",
+      "product_totals": 126,
+      "retained_reports": 1
+    },
+    {
+      "amount": "36829.8000",
+      "trading_date": "2026-07-17",
+      "product_totals": 187,
+      "retained_reports": 1
+    },
+    {
+      "amount": "51881.0000",
+      "trading_date": "2026-07-18",
+      "product_totals": 217,
+      "retained_reports": 2
+    },
+    {
+      "amount": "26832.0000",
+      "trading_date": "2026-07-19",
+      "product_totals": 176,
+      "retained_reports": 1
+    },
+    {
+      "amount": "10496.0000",
+      "trading_date": "2026-07-20",
+      "product_totals": 115,
+      "retained_reports": 1
+    },
+    {
+      "amount": "7861.0000",
+      "trading_date": "2026-07-21",
+      "product_totals": 107,
+      "retained_reports": 1
+    },
+    {
+      "amount": "11500.5000",
+      "trading_date": "2026-07-22",
+      "product_totals": 105,
+      "retained_reports": 1
+    },
+    {
+      "amount": "9703.0000",
+      "trading_date": "2026-07-23",
+      "product_totals": 105,
+      "retained_reports": 1
+    },
+    {
+      "amount": "25868.0000",
+      "trading_date": "2026-07-24",
+      "product_totals": 160,
+      "retained_reports": 1
+    }
+  ],
+  "section": "ctb_dates_without_detailed_facts"
+}

@@ -1,0 +1,68 @@
+{
+  "data": [
+    {
+      "sales_year": 2020,
+      "payment_days": 27,
+      "payments_amount": "154528.1400",
+      "merchandise_days": 27,
+      "merchandise_lines": 16431,
+      "merchandise_amount": "209077.44",
+      "payment_days_without_headline": 0
+    },
+    {
+      "sales_year": 2021,
+      "payment_days": 270,
+      "payments_amount": "2331461.8500",
+      "merchandise_days": 270,
+      "merchandise_lines": 204081,
+      "merchandise_amount": "2411065.16",
+      "payment_days_without_headline": 0
+    },
+    {
+      "sales_year": 2022,
+      "payment_days": 302,
+      "payments_amount": "3092580.5300",
+      "merchandise_days": 302,
+      "merchandise_lines": 212308,
+      "merchandise_amount": "3109163.83",
+      "payment_days_without_headline": 0
+    },
+    {
+      "sales_year": 2023,
+      "payment_days": 338,
+      "payments_amount": "4205203.2300",
+      "merchandise_days": 337,
+      "merchandise_lines": 283889,
+      "merchandise_amount": "4216195.52",
+      "payment_days_without_headline": 0
+    },
+    {
+      "sales_year": 2024,
+      "payment_days": 364,
+      "payments_amount": "5438558.7600",
+      "merchandise_days": 364,
+      "merchandise_lines": 361022,
+      "merchandise_amount": "5470936.93",
+      "payment_days_without_headline": 0
+    },
+    {
+      "sales_year": 2025,
+      "payment_days": 363,
+      "payments_amount": "6440790.8900",
+      "merchandise_days": 363,
+      "merchandise_lines": 41743,
+      "merchandise_amount": "185640.24",
+      "payment_days_without_headline": 0
+    },
+    {
+      "sales_year": 2026,
+      "payment_days": 325,
+      "payments_amount": "6696464.4200",
+      "merchandise_days": 325,
+      "merchandise_lines": 409867,
+      "merchandise_amount": "6733076.12",
+      "payment_days_without_headline": 1
+    }
+  ],
+  "section": "sales_year_comparison"
+}

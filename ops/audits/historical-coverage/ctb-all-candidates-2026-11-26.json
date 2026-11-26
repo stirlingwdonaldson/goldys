@@ -1,0 +1,326 @@
+[
+  {
+    "id": "8166975c-09db-446a-82e1-413cb1f6e2a2",
+    "dates": 1,
+    "last_date": "2026-07-08",
+    "first_date": "2026-07-08",
+    "payload_sha256": "f1ec9af5756a9ea52d99cfc56bdafa9afb364c2addbd58fc32e204e7f72aacf6",
+    "product_amount": "12148.5000",
+    "product_totals": 100,
+    "source_record_ref": null,
+    "payload_byte_length": 43197,
+    "advertised_rows": 100,
+    "actual_rows": 100,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 100,
+      "products": 100
+    }
+  },
+  {
+    "id": "89c93c10-65dc-462e-a678-2f51823ff5ca",
+    "dates": 1,
+    "last_date": "2026-07-09",
+    "first_date": "2026-07-09",
+    "payload_sha256": "7cfdb850fb6c5b6ed2e5bcb65936e47409eaff7ec819a497fa50246094973b3f",
+    "product_amount": "15113.5000",
+    "product_totals": 136,
+    "source_record_ref": null,
+    "payload_byte_length": 58961,
+    "advertised_rows": 136,
+    "actual_rows": 136,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 136,
+      "products": 136
+    }
+  },
+  {
+    "id": "badac949-7c35-4a85-b349-10e5e8f7b8fe",
+    "dates": 1,
+    "last_date": "2026-07-10",
+    "first_date": "2026-07-10",
+    "payload_sha256": "cedbf4afc7a968512c2ac82a5afb901b5510477477d2fd7c4d4230a8ededaa81",
+    "product_amount": "27476.5000",
+    "product_totals": 180,
+    "source_record_ref": null,
+    "payload_byte_length": 77908,
+    "advertised_rows": 180,
+    "actual_rows": 180,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 180,
+      "products": 180
+    }
+  },
+  {
+    "id": "253959d6-7bbe-4648-b26b-2a01458c19ff",
+    "dates": 1,
+    "last_date": "2026-07-11",
+    "first_date": "2026-07-11",
+    "payload_sha256": "6e0d92a66a936eb9ae0c585cb09ffc38816a40d8d930ef64cb36044f7815277a",
+    "product_amount": "48721.5000",
+    "product_totals": 195,
+    "source_record_ref": null,
+    "payload_byte_length": 84714,
+    "advertised_rows": 195,
+    "actual_rows": 195,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 195,
+      "products": 195
+    }
+  },
+  {
+    "id": "748c59bd-34bb-4005-a901-c070b095e576",
+    "dates": 1,
+    "last_date": "2026-07-12",
+    "first_date": "2026-07-12",
+    "payload_sha256": "181e5f807dac91f1a5e5356dd69ac7937bb2d3c490a39be44d69b7e9d2b86e52",
+    "product_amount": "21579.0000",
+    "product_totals": 158,
+    "source_record_ref": null,
+    "payload_byte_length": 68547,
+    "advertised_rows": 158,
+    "actual_rows": 158,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 158,
+      "products": 158
+    }
+  },
+  {
+    "id": "80935376-ef7f-47c5-a20d-b16c521d46e4",
+    "dates": 1,
+    "last_date": "2026-07-13",
+    "first_date": "2026-07-13",
+    "payload_sha256": "3a390cf87606a337976c7c845a8787ccb332db51b28d0d3683327031d51ee8d4",
+    "product_amount": "9598.0000",
+    "product_totals": 124,
+    "source_record_ref": null,
+    "payload_byte_length": 53572,
+    "advertised_rows": 124,
+    "actual_rows": 124,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 124,
+      "products": 124
+    }
+  },
+  {
+    "id": "fc69e866-6800-4a66-9af6-bb80dfcc5020",
+    "dates": 1,
+    "last_date": "2026-07-14",
+    "first_date": "2026-07-14",
+    "payload_sha256": "a5b2b583f6c79daf55c67c75acdcdc1bfb5c3821619f74972a7043343c92a6d7",
+    "product_amount": "6780.5000",
+    "product_totals": 95,
+    "source_record_ref": null,
+    "payload_byte_length": 40850,
+    "advertised_rows": 95,
+    "actual_rows": 95,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 95,
+      "products": 95
+    }
+  },
+  {
+    "id": "ced6d142-a1e4-4e4c-b9e4-bc1ef0180240",
+    "dates": 1,
+    "last_date": "2026-07-15",
+    "first_date": "2026-07-15",
+    "payload_sha256": "0c66687e763c0d8794943047c189401afbd97da084bd3c527ea6ab2d9acd9b7b",
+    "product_amount": "11129.0000",
+    "product_totals": 115,
+    "source_record_ref": null,
+    "payload_byte_length": 49577,
+    "advertised_rows": 115,
+    "actual_rows": 115,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 115,
+      "products": 115
+    }
+  },
+  {
+    "id": "533899a2-ccda-482c-9a29-f75e2593de68",
+    "dates": 1,
+    "last_date": "2026-07-16",
+    "first_date": "2026-07-16",
+    "payload_sha256": "aceec222ed4f522fce0fe971a38e8c382b1597695a541f065792b3c1800fbe1b",
+    "product_amount": "12251.5000",
+    "product_totals": 126,
+    "source_record_ref": null,
+    "payload_byte_length": 54644,
+    "advertised_rows": 126,
+    "actual_rows": 126,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 126,
+      "products": 126
+    }
+  },
+  {
+    "id": "2c69aba3-b16b-4f90-8936-b513f710eec3",
+    "dates": 1,
+    "last_date": "2026-07-17",
+    "first_date": "2026-07-17",
+    "payload_sha256": "8339c3ac834355a24312a01295b3b970c334cb6c5c8faf4232cff8a43898e4aa",
+    "product_amount": "36829.8000",
+    "product_totals": 187,
+    "source_record_ref": null,
+    "payload_byte_length": 81112,
+    "advertised_rows": 187,
+    "actual_rows": 187,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 187,
+      "products": 187
+    }
+  },
+  {
+    "id": "0a64edd1-ae14-4b75-97f6-53b221c47132",
+    "dates": 1,
+    "last_date": "2026-07-18",
+    "first_date": "2026-07-18",
+    "payload_sha256": "ae6decbdcdea3edcebb487fe57bf3f168fd5881c0056fb4ee86312203ce9a104",
+    "product_amount": "1510.0000",
+    "product_totals": 17,
+    "source_record_ref": null,
+    "payload_byte_length": 7348,
+    "advertised_rows": 217,
+    "actual_rows": 17,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 17,
+      "products": 17
+    }
+  },
+  {
+    "id": "6199011f-0bbe-45ee-a337-7b11ea81ee57",
+    "dates": 1,
+    "last_date": "2026-07-18",
+    "first_date": "2026-07-18",
+    "payload_sha256": "891caf6f0b965752de86d5657e2dedbcc206f49ea130d771e1d079a10cb8f2f2",
+    "product_amount": "50371.0000",
+    "product_totals": 200,
+    "source_record_ref": null,
+    "payload_byte_length": 87176,
+    "advertised_rows": 217,
+    "actual_rows": 200,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 200,
+      "products": 200
+    }
+  },
+  {
+    "id": "9f83081b-9ad4-41ec-b3ca-d39c7ee8fe1d",
+    "dates": 1,
+    "last_date": "2026-07-19",
+    "first_date": "2026-07-19",
+    "payload_sha256": "715e6cba70f12b5db7ff549b654a648073a2290bece5e7f6986c9ee863d126f6",
+    "product_amount": "26832.0000",
+    "product_totals": 176,
+    "source_record_ref": null,
+    "payload_byte_length": 76100,
+    "advertised_rows": 176,
+    "actual_rows": 176,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 176,
+      "products": 176
+    }
+  },
+  {
+    "id": "2f9bcc24-8f1f-4fab-a205-62e4c7af2702",
+    "dates": 1,
+    "last_date": "2026-07-20",
+    "first_date": "2026-07-20",
+    "payload_sha256": "68b900814839b857dd6b15a1be22e93e8d92750de12e43785e891a944199f870",
+    "product_amount": "10496.0000",
+    "product_totals": 115,
+    "source_record_ref": null,
+    "payload_byte_length": 49613,
+    "advertised_rows": 115,
+    "actual_rows": 115,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 115,
+      "products": 115
+    }
+  },
+  {
+    "id": "9d3410ed-309a-4598-aeda-b220297d28df",
+    "dates": 1,
+    "last_date": "2026-07-21",
+    "first_date": "2026-07-21",
+    "payload_sha256": "741353214ec655b535da2ed186425ae3954cc2c312d0fcea1377a3ea924ba861",
+    "product_amount": "7861.0000",
+    "product_totals": 107,
+    "source_record_ref": null,
+    "payload_byte_length": 46108,
+    "advertised_rows": 107,
+    "actual_rows": 107,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 107,
+      "products": 107
+    }
+  },
+  {
+    "id": "06793666-b192-4c36-acef-4353b94b6556",
+    "dates": 1,
+    "last_date": "2026-07-22",
+    "first_date": "2026-07-22",
+    "payload_sha256": "ea22d08c69b26c67a725d0571e4aa2894bfe5c5798f3eaa703bf09ff7f344c6f",
+    "product_amount": "11500.5000",
+    "product_totals": 105,
+    "source_record_ref": null,
+    "payload_byte_length": 45678,
+    "advertised_rows": 105,
+    "actual_rows": 105,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 105,
+      "products": 105
+    }
+  },
+  {
+    "id": "a2c7cd9f-7ca3-4d95-a8c1-4bced9f9a099",
+    "dates": 1,
+    "last_date": "2026-07-23",
+    "first_date": "2026-07-23",
+    "payload_sha256": "841e92e7e116f03de38f959d46d95d1d89dda0606069f8f685ede768fbba0948",
+    "product_amount": "9703.0000",
+    "product_totals": 105,
+    "source_record_ref": null,
+    "payload_byte_length": 45376,
+    "advertised_rows": 105,
+    "actual_rows": 105,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 105,
+      "products": 105
+    }
+  },
+  {
+    "id": "a8c41807-b047-46b6-91cb-f83dbb205591",
+    "dates": 1,
+    "last_date": "2026-07-24",
+    "first_date": "2026-07-24",
+    "payload_sha256": "3b42decfcab446bd961ea4168cec067e12f0107f18afafb9c913ded7e83c4cd5",
+    "product_amount": "25868.0000",
+    "product_totals": 160,
+    "source_record_ref": null,
+    "payload_byte_length": 69347,
+    "advertised_rows": 160,
+    "actual_rows": 160,
+    "parser_exit": 0,
+    "parser_counts": {
+      "rows": 160,
+      "products": 160
+    }
+  }
+]
