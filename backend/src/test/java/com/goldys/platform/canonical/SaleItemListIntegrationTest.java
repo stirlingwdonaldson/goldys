@@ -242,7 +242,7 @@ class SaleItemListIntegrationTest {
         .contains(
             "Matching source product groups: 1",
             "hasMore: false",
-            "does not make observed quantities unavailable");
+            "Completeness is not verified by this query; that is not evidence that data is missing");
   }
 
   @Test

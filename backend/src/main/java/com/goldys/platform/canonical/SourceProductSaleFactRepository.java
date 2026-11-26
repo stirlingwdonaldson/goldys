@@ -16,6 +16,10 @@ interface SourceProductSaleFactRepository extends BitemporalRepository<SourcePro
       nativeQuery = true)
   long lockReportDay(LocalDate day);
 
+  @Query(
+      "select f from SourceProductSaleFact f where f.sourceSystem='CTB' and f.tradingDate=:day order by f.id")
+  List<SourceProductSaleFact> recoveryHistory(LocalDate day);
+
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query(
       "select f from SourceProductSaleFact f where f.sourceSystem=:source and f.tradingDate=:day and f.stockCode=:code and (f.siteNumber=:site or (f.siteNumber is null and :site is null)) and f.supersededAt is null")

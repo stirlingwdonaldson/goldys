@@ -181,3 +181,10 @@ and the 69-line inspection function; these are not claimed as a warning-free res
 No backend/frontend application code or schema changed, so their full test suites were not run.
 External source completeness, recovery writes, deployment and post-recovery acceptance remain
 outstanding. There is no production-ready blanket backfill or "all data present" certification.
+
+## Implementation follow-up
+
+The local follow-up adds [bounded CTB detail recovery](../../../docs/operations/ctb-product-detail-recovery.md)
+and removes unconditional historical-gap wording from merchandise results. The audit
+findings above describe the inspected production state; implementing these changes does
+not deploy them, replay production data, or establish full historical completeness.

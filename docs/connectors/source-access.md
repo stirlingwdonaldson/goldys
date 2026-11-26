@@ -365,6 +365,8 @@ searchType=1. It captures all complete pages before validating product identity.
 changing or invalid totals and repeated observations reject complete-day publication. Blank codes
 remain unresolved even when `parentStockCode` is present. Legacy replay must not group pages merely
 by adjacent timestamps or day: explicit report membership and completeness are required.
+For explicitly selected complete retained reports, see the permission-gated
+[CTB detail recovery preview/apply procedure](../operations/ctb-product-detail-recovery.md).
 
 The invoice parser retains source `LineUnitCost`, `LineTotal`, `LineTax`, `LineDiscount`,
 `LineTaxFlag`, `InvoiceFreightExTax`, `InvoiceTaxFlag`, `DocumentType` and outlet context without

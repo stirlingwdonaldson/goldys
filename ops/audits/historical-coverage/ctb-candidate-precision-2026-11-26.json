@@ -1,0 +1,21 @@
+{
+  "scope": "16 records in ctb-recovery-candidates.json; original payload_bytes parsed as JSON",
+  "inspection": "read-only production transaction; aggregate counts only",
+  "canonical_storage": "numeric(14,4)",
+  "values_differing_from_round_to_four_decimals": {
+    "amount": 0,
+    "costPerUnit": 0,
+    "discountedAmount": 0,
+    "foodCost": 0,
+    "profit": 0,
+    "quantitySold": 0,
+    "taxAmount": 0,
+    "totalFoodCost": 161,
+    "unitPrice": 90
+  },
+  "measure_type_check": {
+    "rows": 2184,
+    "fields_per_row": 9,
+    "all_measure_values_are_json_numbers": true
+  }
+}

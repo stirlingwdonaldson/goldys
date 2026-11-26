@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 class GetMerchandiseHistoryToolTest {
   @Test
-  void retainsMissingCoverageAndHistoricalQualifications() {
+  void retainsUnknownCoverageWithoutAssertingHistoricalGaps() {
     var query = mock(MerchandiseHistoryQuery.class);
     when(query.coverage())
         .thenReturn(List.of(new MerchandiseHistoryQuery.Coverage("Lightspeed", null, null, 0, 0)));
@@ -24,7 +24,8 @@ class GetMerchandiseHistoryToolTest {
     assertThat(((TableWidgetSpec) result.widget()).rows().getFirst())
         .containsEntry("firstDate", null);
     assertThat(String.join(" ", result.notices()))
-        .contains("2025", "not zero sales", "not certify");
+        .contains("not zero sales", "not certify", "current evidence establishes a gap")
+        .doesNotContain("2025", "12 November", "substantial missing");
   }
 
   @Test

@@ -80,8 +80,7 @@ class SourceProductSaleFactService {
   @Transactional
   void recordAt(SourceProductSaleFactInput input, Instant recordedAt) {
     String sourceRef = input.sourceRecordRef();
-    if (input.sourceSystem().equals("CTB") && !sourceRef.startsWith("ctb-row:"))
-      repository.lockReportDay(input.tradingDate());
+    if (input.sourceSystem().equals("CTB")) repository.lockReportDay(input.tradingDate());
     // Legacy page replay cannot reintroduce the representation replaced by a complete report.
     if (input.sourceSystem().equals("CTB")
         && !sourceRef.startsWith("ctb-row:")
