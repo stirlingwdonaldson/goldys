@@ -120,7 +120,7 @@ public class GetMerchandiseHistoryTool implements ReportingTool {
         List.of(
             selectionNotice(in, page),
             "Report available recorded quantities first, with the matching names and observed-day coverage. "
-                + "An incomplete period prevents a reliable full-period total; it does not make observed quantities unavailable. "
+                + "Completeness is not verified by this query; that is not evidence that data is missing. "
                 + "Days with matching records are not days of complete source coverage. Do not infer missing trading days from them."));
   }
 
@@ -177,8 +177,7 @@ public class GetMerchandiseHistoryTool implements ReportingTool {
     notices.add(
         "Source: resolved Lightspeed merchandise lines; separate from reconciled product/day metrics. "
             + "Amounts retain source tax basis. Missing amounts or quantities remain unknown. "
-            + "The 12 November 2026 historical audit found substantial missing product lines in 2025 and inflated amounts "
-            + "from payment-join duplication in some historical exports. This tool does not certify repairs or completeness; "
+            + "This tool does not certify repairs or completeness. Only describe a period as incomplete when current evidence establishes a gap for that period; "
             + "observed history must not be presented as verified revenue. Empty results are missing evidence, not zero sales.");
     return new ToolResult(
         new TableWidgetSpec(

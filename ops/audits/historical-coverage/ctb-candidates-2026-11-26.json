@@ -1,0 +1,89 @@
+{
+  "data": [
+    {
+      "id": "5c6dca7e-2dd8-4251-bc90-6055d500c1fc",
+      "rows": 176,
+      "amount": 26832.0,
+      "quantity": 1596,
+      "advertised": 176,
+      "missing_code": 0,
+      "payload_sha256": "fc81c761de0dac327e705a48963e476df193e84d9279b772064fd2b0455bca6b",
+      "missing_measure": 0,
+      "published_amount": 26832.0,
+      "source_record_ref": "sale-items:2026-07-19",
+      "payload_byte_length": 76187,
+      "published_product_totals": 176
+    },
+    {
+      "id": "2861d264-4047-4055-ba3a-a17391e3bd94",
+      "rows": 115,
+      "amount": 10496.0,
+      "quantity": 706,
+      "advertised": 115,
+      "missing_code": 0,
+      "payload_sha256": "a1c7ac8192c0a5edaaee3616392f88bf9cdb51dabaeb85793862aaf8b0dd9e8c",
+      "missing_measure": 0,
+      "published_amount": 10496.0,
+      "source_record_ref": "sale-items:2026-07-20",
+      "payload_byte_length": 49662,
+      "published_product_totals": 115
+    },
+    {
+      "id": "7aa51fa2-81c7-4ff7-8fdb-5a9457c66a93",
+      "rows": 107,
+      "amount": 7861.0,
+      "quantity": 571,
+      "advertised": 107,
+      "missing_code": 0,
+      "payload_sha256": "fbe0da1afa2a21a7b3d981254d619e58c1a527cfeac8848578e37e4016a8c200",
+      "missing_measure": 0,
+      "published_amount": 7861.0,
+      "source_record_ref": "sale-items:2026-07-21",
+      "payload_byte_length": 46180,
+      "published_product_totals": 107
+    },
+    {
+      "id": "e643e907-0dac-448d-9b56-15cd2875fb86",
+      "rows": 105,
+      "amount": 11500.5,
+      "quantity": 724,
+      "advertised": 105,
+      "missing_code": 0,
+      "payload_sha256": "bb35dabe87bb73a5d710bc019dc9474c5befa4d71601437a8051017233d4049a",
+      "missing_measure": 0,
+      "published_amount": 11500.5,
+      "source_record_ref": "sale-items:2026-07-22",
+      "payload_byte_length": 45736,
+      "published_product_totals": 105
+    },
+    {
+      "id": "c4818f96-a6bf-42fe-b4f9-ea2759f8c3f3",
+      "rows": 105,
+      "amount": 9703.0,
+      "quantity": 709,
+      "advertised": 105,
+      "missing_code": 0,
+      "payload_sha256": "16b3d0b9c60087da064896719d53ba747f253ee0eff6e056e889cbd2bf025a8a",
+      "missing_measure": 0,
+      "published_amount": 9703.0,
+      "source_record_ref": "sale-items:2026-07-23",
+      "payload_byte_length": 45420,
+      "published_product_totals": 105
+    },
+    {
+      "id": "350668bb-3dce-4f41-b185-1e6834f4f654",
+      "rows": 160,
+      "amount": 25868.0,
+      "quantity": 1690,
+      "advertised": 160,
+      "missing_code": 0,
+      "payload_sha256": "85625b72f25872b6535feeee0dff66ca97b7562614a47921621ecbebfabf5754",
+      "missing_measure": 0,
+      "published_amount": 25868.0,
+      "source_record_ref": "sale-items:2026-07-24",
+      "payload_byte_length": 69478,
+      "published_product_totals": 160
+    }
+  ],
+  "section": "ctb_recovery_candidates"
+}

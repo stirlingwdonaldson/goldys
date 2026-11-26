@@ -1,0 +1,50 @@
+[
+  {
+    "raw_id": "5c6dca7e-2dd8-4251-bc90-6055d500c1fc",
+    "exit_code": 0,
+    "counts": {
+      "rows": 176,
+      "products": 176
+    }
+  },
+  {
+    "raw_id": "2861d264-4047-4055-ba3a-a17391e3bd94",
+    "exit_code": 0,
+    "counts": {
+      "rows": 115,
+      "products": 115
+    }
+  },
+  {
+    "raw_id": "7aa51fa2-81c7-4ff7-8fdb-5a9457c66a93",
+    "exit_code": 0,
+    "counts": {
+      "rows": 107,
+      "products": 107
+    }
+  },
+  {
+    "raw_id": "e643e907-0dac-448d-9b56-15cd2875fb86",
+    "exit_code": 0,
+    "counts": {
+      "rows": 105,
+      "products": 105
+    }
+  },
+  {
+    "raw_id": "c4818f96-a6bf-42fe-b4f9-ea2759f8c3f3",
+    "exit_code": 0,
+    "counts": {
+      "rows": 105,
+      "products": 105
+    }
+  },
+  {
+    "raw_id": "350668bb-3dce-4f41-b185-1e6834f4f654",
+    "exit_code": 0,
+    "counts": {
+      "rows": 160,
+      "products": 160
+    }
+  }
+]

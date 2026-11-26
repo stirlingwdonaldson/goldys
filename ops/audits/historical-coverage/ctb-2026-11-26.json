@@ -1,0 +1,1352 @@
+{
+  "ctb_dated_report_comparison": [
+    {
+      "rows": 176,
+      "pages": 1,
+      "amount": null,
+      "captured": "2026-10-17T04:00:41.904646+11:00",
+      "max_total": 176,
+      "min_total": 176,
+      "trading_date": "2026-07-19",
+      "published_facts": 0
+    },
+    {
+      "rows": 115,
+      "pages": 1,
+      "amount": null,
+      "captured": "2026-10-18T04:01:34.612618+11:00",
+      "max_total": 115,
+      "min_total": 115,
+      "trading_date": "2026-07-20",
+      "published_facts": 0
+    },
+    {
+      "rows": 107,
+      "pages": 1,
+      "amount": null,
+      "captured": "2026-10-19T04:01:32.315376+11:00",
+      "max_total": 107,
+      "min_total": 107,
+      "trading_date": "2026-07-21",
+      "published_facts": 0
+    },
+    {
+      "rows": 105,
+      "pages": 1,
+      "amount": null,
+      "captured": "2026-10-20T04:00:32.352529+11:00",
+      "max_total": 105,
+      "min_total": 105,
+      "trading_date": "2026-07-22",
+      "published_facts": 0
+    },
+    {
+      "rows": 105,
+      "pages": 1,
+      "amount": null,
+      "captured": "2026-10-21T04:01:29.102842+11:00",
+      "max_total": 105,
+      "min_total": 105,
+      "trading_date": "2026-07-23",
+      "published_facts": 0
+    },
+    {
+      "rows": 160,
+      "pages": 1,
+      "amount": null,
+      "captured": "2026-10-22T04:01:29.646439+11:00",
+      "max_total": 160,
+      "min_total": 160,
+      "trading_date": "2026-07-24",
+      "published_facts": 0
+    },
+    {
+      "rows": 186,
+      "pages": 1,
+      "amount": 46429.5,
+      "captured": "2026-10-23T21:16:37.581759+11:00",
+      "max_total": 186,
+      "min_total": 186,
+      "trading_date": "2026-07-25",
+      "published_facts": 186
+    },
+    {
+      "rows": 148,
+      "pages": 1,
+      "amount": 17584.5,
+      "captured": "2026-10-24T13:29:17.543655+11:00",
+      "max_total": 148,
+      "min_total": 148,
+      "trading_date": "2026-07-26",
+      "published_facts": 148
+    },
+    {
+      "rows": 108,
+      "pages": 1,
+      "amount": 9982.0,
+      "captured": "2026-10-25T04:00:30.608819+11:00",
+      "max_total": 108,
+      "min_total": 108,
+      "trading_date": "2026-07-27",
+      "published_facts": 108
+    },
+    {
+      "rows": 109,
+      "pages": 1,
+      "amount": 7923.5,
+      "captured": "2026-10-26T04:00:35.594865+11:00",
+      "max_total": 109,
+      "min_total": 109,
+      "trading_date": "2026-07-28",
+      "published_facts": 109
+    },
+    {
+      "rows": 120,
+      "pages": 1,
+      "amount": 11128.33,
+      "captured": "2026-10-27T04:00:31.920589+11:00",
+      "max_total": 120,
+      "min_total": 120,
+      "trading_date": "2026-07-29",
+      "published_facts": 120
+    },
+    {
+      "rows": 96,
+      "pages": 1,
+      "amount": 6614.8365,
+      "captured": "2026-10-28T04:01:52.480777+11:00",
+      "max_total": 96,
+      "min_total": 96,
+      "trading_date": "2026-07-30",
+      "published_facts": 96
+    },
+    {
+      "rows": 191,
+      "pages": 1,
+      "amount": 32340.34,
+      "captured": "2026-10-29T04:01:32.711209+11:00",
+      "max_total": 191,
+      "min_total": 191,
+      "trading_date": "2026-07-31",
+      "published_facts": 191
+    },
+    {
+      "rows": 197,
+      "pages": 1,
+      "amount": 42193.88,
+      "captured": "2026-10-29T04:01:51.604849+11:00",
+      "max_total": 197,
+      "min_total": 197,
+      "trading_date": "2026-08-01",
+      "published_facts": 197
+    },
+    {
+      "rows": 157,
+      "pages": 1,
+      "amount": 23369.7069,
+      "captured": "2026-10-31T04:00:33.3643+11:00",
+      "max_total": 157,
+      "min_total": 157,
+      "trading_date": "2026-08-02",
+      "published_facts": 157
+    },
+    {
+      "rows": 118,
+      "pages": 1,
+      "amount": 7870.7757,
+      "captured": "2026-11-01T04:00:36.762769+11:00",
+      "max_total": 118,
+      "min_total": 118,
+      "trading_date": "2026-08-03",
+      "published_facts": 118
+    },
+    {
+      "rows": 100,
+      "pages": 1,
+      "amount": 6338.1185,
+      "captured": "2026-11-02T21:59:09.190779+11:00",
+      "max_total": 100,
+      "min_total": 100,
+      "trading_date": "2026-08-04",
+      "published_facts": 100
+    },
+    {
+      "rows": 117,
+      "pages": 1,
+      "amount": 11973.86,
+      "captured": "2026-11-03T23:23:08.259568+11:00",
+      "max_total": 117,
+      "min_total": 117,
+      "trading_date": "2026-08-05",
+      "published_facts": 117
+    },
+    {
+      "rows": 118,
+      "pages": 1,
+      "amount": 11601.1801,
+      "captured": "2026-11-04T04:01:56.719272+11:00",
+      "max_total": 118,
+      "min_total": 118,
+      "trading_date": "2026-08-06",
+      "published_facts": 118
+    },
+    {
+      "rows": 154,
+      "pages": 1,
+      "amount": 23183.471,
+      "captured": "2026-11-05T04:01:02.297465+11:00",
+      "max_total": 154,
+      "min_total": 154,
+      "trading_date": "2026-08-07",
+      "published_facts": 153
+    },
+    {
+      "rows": 193,
+      "pages": 1,
+      "amount": 43127.11,
+      "captured": "2026-11-06T04:01:34.056982+11:00",
+      "max_total": 193,
+      "min_total": 193,
+      "trading_date": "2026-08-08",
+      "published_facts": 193
+    },
+    {
+      "rows": 151,
+      "pages": 1,
+      "amount": 20232.409,
+      "captured": "2026-11-07T04:01:01.450911+11:00",
+      "max_total": 151,
+      "min_total": 151,
+      "trading_date": "2026-08-09",
+      "published_facts": 150
+    },
+    {
+      "rows": 93,
+      "pages": 1,
+      "amount": 8897.7449,
+      "captured": "2026-11-08T04:01:28.122946+11:00",
+      "max_total": 93,
+      "min_total": 93,
+      "trading_date": "2026-08-10",
+      "published_facts": 93
+    },
+    {
+      "rows": 94,
+      "pages": 1,
+      "amount": 7241.22,
+      "captured": "2026-11-09T04:01:02.93642+11:00",
+      "max_total": 94,
+      "min_total": 94,
+      "trading_date": "2026-08-11",
+      "published_facts": 94
+    },
+    {
+      "rows": 116,
+      "pages": 1,
+      "amount": 14134.78,
+      "captured": "2026-11-10T04:01:01.427133+11:00",
+      "max_total": 116,
+      "min_total": 116,
+      "trading_date": "2026-08-12",
+      "published_facts": 116
+    },
+    {
+      "rows": 127,
+      "pages": 1,
+      "amount": 11298.1806,
+      "captured": "2026-11-11T04:01:30.20497+11:00",
+      "max_total": 127,
+      "min_total": 127,
+      "trading_date": "2026-08-13",
+      "published_facts": 127
+    },
+    {
+      "rows": 171,
+      "pages": 1,
+      "amount": 27560.01,
+      "captured": "2026-11-12T04:00:34.909003+11:00",
+      "max_total": 171,
+      "min_total": 171,
+      "trading_date": "2026-08-14",
+      "published_facts": 171
+    },
+    {
+      "rows": 197,
+      "pages": 1,
+      "amount": 52329.64,
+      "captured": "2026-11-13T04:01:34.437525+11:00",
+      "max_total": 197,
+      "min_total": 197,
+      "trading_date": "2026-08-15",
+      "published_facts": 196
+    },
+    {
+      "rows": 165,
+      "pages": 1,
+      "amount": 25593.062,
+      "captured": "2026-11-14T04:01:56.745762+11:00",
+      "max_total": 165,
+      "min_total": 165,
+      "trading_date": "2026-08-16",
+      "published_facts": 165
+    },
+    {
+      "rows": 107,
+      "pages": 1,
+      "amount": 9150.5159,
+      "captured": "2026-11-15T04:01:05.013223+11:00",
+      "max_total": 107,
+      "min_total": 107,
+      "trading_date": "2026-08-17",
+      "published_facts": 107
+    },
+    {
+      "rows": 101,
+      "pages": 1,
+      "amount": 7951.3104,
+      "captured": "2026-11-16T04:01:58.114867+11:00",
+      "max_total": 101,
+      "min_total": 101,
+      "trading_date": "2026-08-18",
+      "published_facts": 101
+    },
+    {
+      "rows": 120,
+      "pages": 1,
+      "amount": 11755.52,
+      "captured": "2026-11-17T04:01:29.77474+11:00",
+      "max_total": 120,
+      "min_total": 120,
+      "trading_date": "2026-08-19",
+      "published_facts": 120
+    },
+    {
+      "rows": 134,
+      "pages": 1,
+      "amount": 14530.0905,
+      "captured": "2026-11-18T04:01:01.580964+11:00",
+      "max_total": 134,
+      "min_total": 134,
+      "trading_date": "2026-08-20",
+      "published_facts": 134
+    },
+    {
+      "rows": 160,
+      "pages": 1,
+      "amount": 24835.61,
+      "captured": "2026-11-19T04:01:56.657779+11:00",
+      "max_total": 160,
+      "min_total": 160,
+      "trading_date": "2026-08-21",
+      "published_facts": 160
+    },
+    {
+      "rows": 185,
+      "pages": 1,
+      "amount": 44268.4401,
+      "captured": "2026-11-20T04:01:00.548888+11:00",
+      "max_total": 185,
+      "min_total": 185,
+      "trading_date": "2026-08-22",
+      "published_facts": 185
+    },
+    {
+      "rows": 147,
+      "pages": 1,
+      "amount": 22201.55,
+      "captured": "2026-11-21T04:01:29.019765+11:00",
+      "max_total": 147,
+      "min_total": 147,
+      "trading_date": "2026-08-23",
+      "published_facts": 147
+    },
+    {
+      "rows": 107,
+      "pages": 1,
+      "amount": 8155.9276,
+      "captured": "2026-11-22T04:01:01.115487+11:00",
+      "max_total": 107,
+      "min_total": 107,
+      "trading_date": "2026-08-24",
+      "published_facts": 107
+    },
+    {
+      "rows": 104,
+      "pages": 1,
+      "amount": 6930.62,
+      "captured": "2026-11-23T04:01:03.253124+11:00",
+      "max_total": 104,
+      "min_total": 104,
+      "trading_date": "2026-08-25",
+      "published_facts": 104
+    },
+    {
+      "rows": 108,
+      "pages": 1,
+      "amount": 10756.7,
+      "captured": "2026-11-24T04:00:58.591352+11:00",
+      "max_total": 108,
+      "min_total": 108,
+      "trading_date": "2026-08-26",
+      "published_facts": 108
+    },
+    {
+      "rows": 115,
+      "pages": 1,
+      "amount": 11353.4625,
+      "captured": "2026-11-25T04:00:35.110445+11:00",
+      "max_total": 115,
+      "min_total": 115,
+      "trading_date": "2026-08-27",
+      "published_facts": 115
+    },
+    {
+      "rows": 173,
+      "pages": 1,
+      "amount": 29513.8903,
+      "captured": "2026-11-26T04:01:29.49319+11:00",
+      "max_total": 173,
+      "min_total": 173,
+      "trading_date": "2026-08-28",
+      "published_facts": 173
+    },
+    {
+      "rows": 190,
+      "pages": 1,
+      "amount": 43667.82,
+      "captured": "2026-11-26T04:01:54.000856+11:00",
+      "max_total": 190,
+      "min_total": 190,
+      "trading_date": "2026-08-29",
+      "published_facts": 190
+    },
+    {
+      "rows": 134,
+      "pages": 1,
+      "amount": 14461.8,
+      "captured": "2026-11-26T04:02:33.64495+11:00",
+      "max_total": 134,
+      "min_total": 134,
+      "trading_date": "2026-08-30",
+      "published_facts": 134
+    },
+    {
+      "rows": 121,
+      "pages": 1,
+      "amount": 10404.3019,
+      "captured": "2026-11-26T04:02:48.885075+11:00",
+      "max_total": 121,
+      "min_total": 121,
+      "trading_date": "2026-08-31",
+      "published_facts": 121
+    },
+    {
+      "rows": 113,
+      "pages": 1,
+      "amount": 9891.0366,
+      "captured": "2026-11-26T04:03:26.75528+11:00",
+      "max_total": 113,
+      "min_total": 113,
+      "trading_date": "2026-09-01",
+      "published_facts": 113
+    },
+    {
+      "rows": 111,
+      "pages": 1,
+      "amount": 11517.59,
+      "captured": "2026-11-26T04:03:39.369888+11:00",
+      "max_total": 111,
+      "min_total": 111,
+      "trading_date": "2026-09-02",
+      "published_facts": 111
+    },
+    {
+      "rows": 128,
+      "pages": 1,
+      "amount": 10600.7611,
+      "captured": "2026-11-26T04:03:53.050801+11:00",
+      "max_total": 128,
+      "min_total": 128,
+      "trading_date": "2026-09-03",
+      "published_facts": 128
+    },
+    {
+      "rows": 178,
+      "pages": 1,
+      "amount": 30409.62,
+      "captured": "2026-11-26T04:04:37.088537+11:00",
+      "max_total": 178,
+      "min_total": 178,
+      "trading_date": "2026-09-04",
+      "published_facts": 178
+    },
+    {
+      "rows": 206,
+      "pages": 2,
+      "amount": 49115.2799,
+      "captured": "2026-11-26T04:05:30.567597+11:00",
+      "max_total": 206,
+      "min_total": 206,
+      "trading_date": "2026-09-05",
+      "published_facts": 205
+    },
+    {
+      "rows": 188,
+      "pages": 1,
+      "amount": 30753.6005,
+      "captured": "2026-11-26T04:05:51.371657+11:00",
+      "max_total": 188,
+      "min_total": 188,
+      "trading_date": "2026-09-06",
+      "published_facts": 188
+    },
+    {
+      "rows": 115,
+      "pages": 1,
+      "amount": 11562.2952,
+      "captured": "2026-11-26T04:06:31.128131+11:00",
+      "max_total": 115,
+      "min_total": 115,
+      "trading_date": "2026-09-07",
+      "published_facts": 115
+    },
+    {
+      "rows": 110,
+      "pages": 1,
+      "amount": 9555.1566,
+      "captured": "2026-11-26T04:06:42.646184+11:00",
+      "max_total": 110,
+      "min_total": 110,
+      "trading_date": "2026-09-08",
+      "published_facts": 110
+    },
+    {
+      "rows": 119,
+      "pages": 1,
+      "amount": 14234.5,
+      "captured": "2026-11-26T04:06:54.56031+11:00",
+      "max_total": 119,
+      "min_total": 119,
+      "trading_date": "2026-09-09",
+      "published_facts": 119
+    },
+    {
+      "rows": 124,
+      "pages": 1,
+      "amount": 10047.3065,
+      "captured": "2026-11-26T04:07:32.498334+11:00",
+      "max_total": 124,
+      "min_total": 124,
+      "trading_date": "2026-09-10",
+      "published_facts": 124
+    },
+    {
+      "rows": 180,
+      "pages": 1,
+      "amount": 27723.2087,
+      "captured": "2026-11-26T04:07:47.227845+11:00",
+      "max_total": 180,
+      "min_total": 180,
+      "trading_date": "2026-09-11",
+      "published_facts": 180
+    },
+    {
+      "rows": 218,
+      "pages": 2,
+      "amount": 58336.657,
+      "captured": "2026-11-26T04:08:41.067938+11:00",
+      "max_total": 218,
+      "min_total": 218,
+      "trading_date": "2026-09-12",
+      "published_facts": 218
+    },
+    {
+      "rows": 146,
+      "pages": 1,
+      "amount": 20990.8348,
+      "captured": "2026-11-26T04:09:28.690389+11:00",
+      "max_total": 146,
+      "min_total": 146,
+      "trading_date": "2026-09-13",
+      "published_facts": 146
+    },
+    {
+      "rows": 131,
+      "pages": 1,
+      "amount": 9520.2211,
+      "captured": "2026-11-26T04:09:43.823166+11:00",
+      "max_total": 131,
+      "min_total": 131,
+      "trading_date": "2026-09-14",
+      "published_facts": 131
+    },
+    {
+      "rows": 111,
+      "pages": 1,
+      "amount": 11339.9551,
+      "captured": "2026-11-26T04:09:56.584606+11:00",
+      "max_total": 111,
+      "min_total": 111,
+      "trading_date": "2026-09-15",
+      "published_facts": 111
+    },
+    {
+      "rows": 116,
+      "pages": 1,
+      "amount": 17571.2882,
+      "captured": "2026-11-26T04:10:33.502094+11:00",
+      "max_total": 116,
+      "min_total": 116,
+      "trading_date": "2026-09-16",
+      "published_facts": 116
+    },
+    {
+      "rows": 139,
+      "pages": 1,
+      "amount": 14414.7859,
+      "captured": "2026-11-26T04:10:46.365462+11:00",
+      "max_total": 139,
+      "min_total": 139,
+      "trading_date": "2026-09-17",
+      "published_facts": 139
+    },
+    {
+      "rows": 183,
+      "pages": 1,
+      "amount": 32911.1001,
+      "captured": "2026-11-26T04:11:01.577212+11:00",
+      "max_total": 183,
+      "min_total": 183,
+      "trading_date": "2026-09-18",
+      "published_facts": 183
+    },
+    {
+      "rows": 198,
+      "pages": 1,
+      "amount": 52637.4147,
+      "captured": "2026-11-26T04:11:34.721719+11:00",
+      "max_total": 198,
+      "min_total": 198,
+      "trading_date": "2026-09-19",
+      "published_facts": 198
+    },
+    {
+      "rows": 171,
+      "pages": 1,
+      "amount": 29824.25,
+      "captured": "2026-11-26T04:11:53.950494+11:00",
+      "max_total": 171,
+      "min_total": 171,
+      "trading_date": "2026-09-20",
+      "published_facts": 171
+    },
+    {
+      "rows": 92,
+      "pages": 1,
+      "amount": 7032.5642,
+      "captured": "2026-11-26T04:12:29.95321+11:00",
+      "max_total": 92,
+      "min_total": 92,
+      "trading_date": "2026-09-21",
+      "published_facts": 92
+    },
+    {
+      "rows": 110,
+      "pages": 1,
+      "amount": 9834.38,
+      "captured": "2026-11-26T04:12:39.56694+11:00",
+      "max_total": 110,
+      "min_total": 110,
+      "trading_date": "2026-09-22",
+      "published_facts": 109
+    },
+    {
+      "rows": 126,
+      "pages": 1,
+      "amount": 15753.7501,
+      "captured": "2026-11-26T04:12:51.32444+11:00",
+      "max_total": 126,
+      "min_total": 126,
+      "trading_date": "2026-09-23",
+      "published_facts": 126
+    },
+    {
+      "rows": 182,
+      "pages": 1,
+      "amount": 30186.42,
+      "captured": "2026-11-26T04:13:31.111144+11:00",
+      "max_total": 182,
+      "min_total": 182,
+      "trading_date": "2026-09-24",
+      "published_facts": 182
+    },
+    {
+      "rows": 200,
+      "pages": 1,
+      "amount": 47303.158,
+      "captured": "2026-11-26T04:13:49.310619+11:00",
+      "max_total": 200,
+      "min_total": 200,
+      "trading_date": "2026-09-25",
+      "published_facts": 200
+    },
+    {
+      "rows": 187,
+      "pages": 1,
+      "amount": 33417.6618,
+      "captured": "2026-11-26T04:14:30.32749+11:00",
+      "max_total": 187,
+      "min_total": 187,
+      "trading_date": "2026-09-26",
+      "published_facts": 187
+    },
+    {
+      "rows": 158,
+      "pages": 1,
+      "amount": 24090.9158,
+      "captured": "2026-11-26T04:14:48.751584+11:00",
+      "max_total": 158,
+      "min_total": 158,
+      "trading_date": "2026-09-27",
+      "published_facts": 158
+    },
+    {
+      "rows": 127,
+      "pages": 1,
+      "amount": 10659.882,
+      "captured": "2026-11-26T04:15:03.156265+11:00",
+      "max_total": 127,
+      "min_total": 127,
+      "trading_date": "2026-09-28",
+      "published_facts": 127
+    },
+    {
+      "rows": 114,
+      "pages": 1,
+      "amount": 9142.45,
+      "captured": "2026-11-26T04:15:30.807093+11:00",
+      "max_total": 114,
+      "min_total": 114,
+      "trading_date": "2026-09-29",
+      "published_facts": 114
+    },
+    {
+      "rows": 121,
+      "pages": 1,
+      "amount": 13661.65,
+      "captured": "2026-11-26T04:15:41.885536+11:00",
+      "max_total": 121,
+      "min_total": 121,
+      "trading_date": "2026-09-30",
+      "published_facts": 121
+    },
+    {
+      "rows": 117,
+      "pages": 1,
+      "amount": 9582.1102,
+      "captured": "2026-11-26T04:15:54.028202+11:00",
+      "max_total": 117,
+      "min_total": 117,
+      "trading_date": "2026-10-01",
+      "published_facts": 117
+    },
+    {
+      "rows": 174,
+      "pages": 1,
+      "amount": 33909.3515,
+      "captured": "2026-11-26T04:16:33.542832+11:00",
+      "max_total": 174,
+      "min_total": 174,
+      "trading_date": "2026-10-02",
+      "published_facts": 174
+    },
+    {
+      "rows": 201,
+      "pages": 2,
+      "amount": 43618.9219,
+      "captured": "2026-11-26T04:16:57.495913+11:00",
+      "max_total": 201,
+      "min_total": 201,
+      "trading_date": "2026-10-03",
+      "published_facts": 201
+    },
+    {
+      "rows": 186,
+      "pages": 1,
+      "amount": 29605.132,
+      "captured": "2026-11-26T04:17:34.629793+11:00",
+      "max_total": 186,
+      "min_total": 186,
+      "trading_date": "2026-10-04",
+      "published_facts": 186
+    },
+    {
+      "rows": 115,
+      "pages": 1,
+      "amount": 10865.7247,
+      "captured": "2026-11-26T04:17:51.351455+11:00",
+      "max_total": 115,
+      "min_total": 115,
+      "trading_date": "2026-10-05",
+      "published_facts": 115
+    },
+    {
+      "rows": 91,
+      "pages": 1,
+      "amount": 6814.6779,
+      "captured": "2026-11-26T04:18:17.109125+11:00",
+      "max_total": 91,
+      "min_total": 91,
+      "trading_date": "2026-10-06",
+      "published_facts": 91
+    },
+    {
+      "rows": 122,
+      "pages": 1,
+      "amount": 12768.8264,
+      "captured": "2026-11-26T04:18:31.899135+11:00",
+      "max_total": 122,
+      "min_total": 122,
+      "trading_date": "2026-10-07",
+      "published_facts": 122
+    },
+    {
+      "rows": 146,
+      "pages": 1,
+      "amount": 16006.704,
+      "captured": "2026-11-26T04:18:44.076729+11:00",
+      "max_total": 146,
+      "min_total": 146,
+      "trading_date": "2026-10-08",
+      "published_facts": 146
+    },
+    {
+      "rows": 183,
+      "pages": 1,
+      "amount": 35888.33,
+      "captured": "2026-11-26T04:18:58.32432+11:00",
+      "max_total": 183,
+      "min_total": 183,
+      "trading_date": "2026-10-09",
+      "published_facts": 183
+    },
+    {
+      "rows": 199,
+      "pages": 1,
+      "amount": 51051.56,
+      "captured": "2026-11-26T04:19:33.88903+11:00",
+      "max_total": 199,
+      "min_total": 199,
+      "trading_date": "2026-10-10",
+      "published_facts": 199
+    },
+    {
+      "rows": 185,
+      "pages": 1,
+      "amount": 44290.4603,
+      "captured": "2026-11-26T04:19:52.034575+11:00",
+      "max_total": 185,
+      "min_total": 185,
+      "trading_date": "2026-10-11",
+      "published_facts": 185
+    },
+    {
+      "rows": 97,
+      "pages": 1,
+      "amount": 8870.7452,
+      "captured": "2026-11-26T04:20:29.52673+11:00",
+      "max_total": 97,
+      "min_total": 97,
+      "trading_date": "2026-10-12",
+      "published_facts": 97
+    },
+    {
+      "rows": 108,
+      "pages": 1,
+      "amount": 7460.68,
+      "captured": "2026-11-26T04:20:39.193825+11:00",
+      "max_total": 108,
+      "min_total": 108,
+      "trading_date": "2026-10-13",
+      "published_facts": 108
+    },
+    {
+      "rows": 133,
+      "pages": 1,
+      "amount": 13177.6972,
+      "captured": "2026-11-26T04:20:50.303741+11:00",
+      "max_total": 133,
+      "min_total": 133,
+      "trading_date": "2026-10-14",
+      "published_facts": 133
+    },
+    {
+      "rows": 138,
+      "pages": 1,
+      "amount": 14815.1208,
+      "captured": "2026-11-26T04:21:27.863829+11:00",
+      "max_total": 138,
+      "min_total": 138,
+      "trading_date": "2026-10-15",
+      "published_facts": 138
+    },
+    {
+      "rows": 160,
+      "pages": 1,
+      "amount": 30277.94,
+      "captured": "2026-11-26T04:21:42.041452+11:00",
+      "max_total": 160,
+      "min_total": 160,
+      "trading_date": "2026-10-16",
+      "published_facts": 160
+    },
+    {
+      "rows": 199,
+      "pages": 1,
+      "amount": 50292.2099,
+      "captured": "2026-11-26T04:21:58.158106+11:00",
+      "max_total": 199,
+      "min_total": 199,
+      "trading_date": "2026-10-17",
+      "published_facts": 199
+    },
+    {
+      "rows": 152,
+      "pages": 1,
+      "amount": 21967.36,
+      "captured": "2026-11-26T04:22:31.740213+11:00",
+      "max_total": 152,
+      "min_total": 152,
+      "trading_date": "2026-10-18",
+      "published_facts": 152
+    },
+    {
+      "rows": 115,
+      "pages": 1,
+      "amount": 9968.2587,
+      "captured": "2026-11-26T04:22:44.761319+11:00",
+      "max_total": 115,
+      "min_total": 115,
+      "trading_date": "2026-10-19",
+      "published_facts": 115
+    },
+    {
+      "rows": 121,
+      "pages": 1,
+      "amount": 11767.57,
+      "captured": "2026-11-26T04:22:55.293998+11:00",
+      "max_total": 121,
+      "min_total": 121,
+      "trading_date": "2026-10-20",
+      "published_facts": 121
+    },
+    {
+      "rows": 149,
+      "pages": 1,
+      "amount": 21609.21,
+      "captured": "2026-11-26T04:23:31.627722+11:00",
+      "max_total": 149,
+      "min_total": 149,
+      "trading_date": "2026-10-21",
+      "published_facts": 149
+    },
+    {
+      "rows": 124,
+      "pages": 1,
+      "amount": 13352.3878,
+      "captured": "2026-11-26T04:23:44.721631+11:00",
+      "max_total": 124,
+      "min_total": 124,
+      "trading_date": "2026-10-22",
+      "published_facts": 124
+    },
+    {
+      "rows": 178,
+      "pages": 1,
+      "amount": 38355.29,
+      "captured": "2026-11-26T04:23:57.753155+11:00",
+      "max_total": 178,
+      "min_total": 178,
+      "trading_date": "2026-10-23",
+      "published_facts": 178
+    },
+    {
+      "rows": 199,
+      "pages": 1,
+      "amount": 54533.9141,
+      "captured": "2026-11-26T04:24:34.66187+11:00",
+      "max_total": 199,
+      "min_total": 199,
+      "trading_date": "2026-10-24",
+      "published_facts": 197
+    },
+    {
+      "rows": 145,
+      "pages": 1,
+      "amount": 20264.73,
+      "captured": "2026-11-26T04:24:52.605753+11:00",
+      "max_total": 145,
+      "min_total": 145,
+      "trading_date": "2026-10-25",
+      "published_facts": 145
+    },
+    {
+      "rows": 139,
+      "pages": 1,
+      "amount": 11733.7386,
+      "captured": "2026-11-26T04:25:30.325299+11:00",
+      "max_total": 139,
+      "min_total": 139,
+      "trading_date": "2026-10-26",
+      "published_facts": 139
+    },
+    {
+      "rows": 111,
+      "pages": 1,
+      "amount": 8596.39,
+      "captured": "2026-11-26T04:25:42.352146+11:00",
+      "max_total": 111,
+      "min_total": 111,
+      "trading_date": "2026-10-27",
+      "published_facts": 111
+    },
+    {
+      "rows": 129,
+      "pages": 1,
+      "amount": 19986.04,
+      "captured": "2026-11-26T04:25:52.728965+11:00",
+      "max_total": 129,
+      "min_total": 129,
+      "trading_date": "2026-10-28",
+      "published_facts": 129
+    },
+    {
+      "rows": 126,
+      "pages": 1,
+      "amount": 14435.9079,
+      "captured": "2026-11-26T04:26:30.575006+11:00",
+      "max_total": 126,
+      "min_total": 126,
+      "trading_date": "2026-10-29",
+      "published_facts": 126
+    },
+    {
+      "rows": 177,
+      "pages": 1,
+      "amount": 36522.8599,
+      "captured": "2026-11-26T04:26:43.673135+11:00",
+      "max_total": 177,
+      "min_total": 177,
+      "trading_date": "2026-10-30",
+      "published_facts": 177
+    },
+    {
+      "rows": 195,
+      "pages": 1,
+      "amount": 41565.8799,
+      "captured": "2026-11-26T04:27:00.208715+11:00",
+      "max_total": 195,
+      "min_total": 195,
+      "trading_date": "2026-10-31",
+      "published_facts": 195
+    },
+    {
+      "rows": 157,
+      "pages": 1,
+      "amount": 22789.45,
+      "captured": "2026-11-26T04:27:32.625714+11:00",
+      "max_total": 157,
+      "min_total": 157,
+      "trading_date": "2026-11-01",
+      "published_facts": 157
+    },
+    {
+      "rows": 154,
+      "pages": 1,
+      "amount": 18243.7389,
+      "captured": "2026-11-26T04:27:46.041729+11:00",
+      "max_total": 154,
+      "min_total": 154,
+      "trading_date": "2026-11-02",
+      "published_facts": 154
+    },
+    {
+      "rows": 165,
+      "pages": 1,
+      "amount": 31959.82,
+      "captured": "2026-11-26T04:28:00.791077+11:00",
+      "max_total": 165,
+      "min_total": 165,
+      "trading_date": "2026-11-03",
+      "published_facts": 165
+    },
+    {
+      "rows": 131,
+      "pages": 1,
+      "amount": 14031.7,
+      "captured": "2026-11-26T04:28:31.070942+11:00",
+      "max_total": 131,
+      "min_total": 131,
+      "trading_date": "2026-11-04",
+      "published_facts": 131
+    },
+    {
+      "rows": 121,
+      "pages": 1,
+      "amount": 12210.1522,
+      "captured": "2026-11-26T04:28:42.566892+11:00",
+      "max_total": 121,
+      "min_total": 121,
+      "trading_date": "2026-11-05",
+      "published_facts": 121
+    },
+    {
+      "rows": 177,
+      "pages": 1,
+      "amount": 29140.4701,
+      "captured": "2026-11-26T04:28:55.187836+11:00",
+      "max_total": 177,
+      "min_total": 177,
+      "trading_date": "2026-11-06",
+      "published_facts": 177
+    },
+    {
+      "rows": 205,
+      "pages": 2,
+      "amount": 54037.39,
+      "captured": "2026-11-26T04:29:39.511157+11:00",
+      "max_total": 205,
+      "min_total": 205,
+      "trading_date": "2026-11-07",
+      "published_facts": 205
+    },
+    {
+      "rows": 168,
+      "pages": 1,
+      "amount": 24020.9,
+      "captured": "2026-11-26T04:29:58.114307+11:00",
+      "max_total": 168,
+      "min_total": 168,
+      "trading_date": "2026-11-08",
+      "published_facts": 168
+    },
+    {
+      "rows": 110,
+      "pages": 1,
+      "amount": 6796.3613,
+      "captured": "2026-11-26T04:30:31.056222+11:00",
+      "max_total": 110,
+      "min_total": 110,
+      "trading_date": "2026-11-09",
+      "published_facts": 110
+    },
+    {
+      "rows": 111,
+      "pages": 1,
+      "amount": 9777.4195,
+      "captured": "2026-11-26T04:30:40.656771+11:00",
+      "max_total": 111,
+      "min_total": 111,
+      "trading_date": "2026-11-10",
+      "published_facts": 111
+    },
+    {
+      "rows": 119,
+      "pages": 1,
+      "amount": 13005.8679,
+      "captured": "2026-11-26T04:30:51.179078+11:00",
+      "max_total": 119,
+      "min_total": 119,
+      "trading_date": "2026-11-11",
+      "published_facts": 119
+    },
+    {
+      "rows": 133,
+      "pages": 1,
+      "amount": 16157.1838,
+      "captured": "2026-11-26T04:31:02.247934+11:00",
+      "max_total": 133,
+      "min_total": 133,
+      "trading_date": "2026-11-12",
+      "published_facts": 133
+    },
+    {
+      "rows": 168,
+      "pages": 1,
+      "amount": 32311.8903,
+      "captured": "2026-11-26T04:31:31.703525+11:00",
+      "max_total": 168,
+      "min_total": 168,
+      "trading_date": "2026-11-13",
+      "published_facts": 168
+    },
+    {
+      "rows": 204,
+      "pages": 2,
+      "amount": 57666.5525,
+      "captured": "2026-11-26T04:31:54.343587+11:00",
+      "max_total": 204,
+      "min_total": 204,
+      "trading_date": "2026-11-14",
+      "published_facts": 204
+    },
+    {
+      "rows": 164,
+      "pages": 1,
+      "amount": 19931.0389,
+      "captured": "2026-11-26T04:32:33.799084+11:00",
+      "max_total": 164,
+      "min_total": 164,
+      "trading_date": "2026-11-15",
+      "published_facts": 164
+    },
+    {
+      "rows": 102,
+      "pages": 1,
+      "amount": 7998.2125,
+      "captured": "2026-11-26T04:32:46.701363+11:00",
+      "max_total": 102,
+      "min_total": 102,
+      "trading_date": "2026-11-16",
+      "published_facts": 102
+    },
+    {
+      "rows": 124,
+      "pages": 1,
+      "amount": 10969.7228,
+      "captured": "2026-11-26T04:32:55.767852+11:00",
+      "max_total": 124,
+      "min_total": 124,
+      "trading_date": "2026-11-17",
+      "published_facts": 124
+    },
+    {
+      "rows": 131,
+      "pages": 1,
+      "amount": 17217.4024,
+      "captured": "2026-11-26T04:33:29.833226+11:00",
+      "max_total": 131,
+      "min_total": 131,
+      "trading_date": "2026-11-18",
+      "published_facts": 131
+    },
+    {
+      "rows": 134,
+      "pages": 1,
+      "amount": 12650.1487,
+      "captured": "2026-11-26T04:33:40.581294+11:00",
+      "max_total": 134,
+      "min_total": 134,
+      "trading_date": "2026-11-19",
+      "published_facts": 134
+    },
+    {
+      "rows": 163,
+      "pages": 1,
+      "amount": 28370.99,
+      "captured": "2026-11-26T04:33:53.448244+11:00",
+      "max_total": 163,
+      "min_total": 163,
+      "trading_date": "2026-11-20",
+      "published_facts": 163
+    },
+    {
+      "rows": 209,
+      "pages": 2,
+      "amount": 47136.0,
+      "captured": "2026-11-26T04:34:46.675301+11:00",
+      "max_total": 209,
+      "min_total": 209,
+      "trading_date": "2026-11-21",
+      "published_facts": 209
+    },
+    {
+      "rows": 165,
+      "pages": 1,
+      "amount": 22030.6659,
+      "captured": "2026-11-26T04:35:30.096747+11:00",
+      "max_total": 165,
+      "min_total": 165,
+      "trading_date": "2026-11-22",
+      "published_facts": 165
+    },
+    {
+      "rows": 123,
+      "pages": 1,
+      "amount": 11059.1812,
+      "captured": "2026-11-26T04:35:43.368268+11:00",
+      "max_total": 123,
+      "min_total": 123,
+      "trading_date": "2026-11-23",
+      "published_facts": 123
+    },
+    {
+      "rows": 105,
+      "pages": 1,
+      "amount": 9445.6697,
+      "captured": "2026-11-26T04:35:53.081259+11:00",
+      "max_total": 105,
+      "min_total": 105,
+      "trading_date": "2026-11-24",
+      "published_facts": 105
+    },
+    {
+      "rows": 157,
+      "pages": 1,
+      "amount": 21894.57,
+      "captured": "2026-11-26T04:36:26.726404+11:00",
+      "max_total": 157,
+      "min_total": 157,
+      "trading_date": "2026-11-25",
+      "published_facts": 157
+    }
+  ],
+  "unresolved_invoice_flags": [
+    {
+      "flags": 1,
+      "flag_type": "AMBIGUOUS_PDF",
+      "last_occurred": "2026-11-21T05:00:12.450877+11:00",
+      "first_occurred": "2026-11-21T05:00:12.450877+11:00"
+    },
+    {
+      "flags": 19,
+      "flag_type": "INVOICE_AMOUNT_BASIS_UNVERIFIED",
+      "last_occurred": "2026-11-26T05:00:09.501749+11:00",
+      "first_occurred": "2026-10-29T05:00:01.926588+11:00"
+    },
+    {
+      "flags": 106,
+      "flag_type": "LLM_EXTRACTION_FAILED",
+      "last_occurred": "2026-11-12T17:44:15.64897+11:00",
+      "first_occurred": "2026-11-03T05:00:05.25045+11:00"
+    },
+    {
+      "flags": 6,
+      "flag_type": "MISSING_PDF",
+      "last_occurred": "2026-10-09T11:19:00.69541+11:00",
+      "first_occurred": "2026-10-09T04:15:16.319944+11:00"
+    },
+    {
+      "flags": 987,
+      "flag_type": "PDF_ONLY_LINE",
+      "last_occurred": "2026-11-26T05:01:41.577247+11:00",
+      "first_occurred": "2026-10-09T04:20:33.459553+11:00"
+    },
+    {
+      "flags": 3,
+      "flag_type": "PDF_UNPARSEABLE",
+      "last_occurred": "2026-11-12T17:39:22.468956+11:00",
+      "first_occurred": "2026-10-12T22:24:31.800015+11:00"
+    }
+  ],
+  "invoice_recovery_targets": [
+    {
+      "invoice_number": "5772205",
+      "current_headers": 1
+    },
+    {
+      "invoice_number": "INV102334",
+      "current_headers": 1
+    }
+  ]
+}

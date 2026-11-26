@@ -1,0 +1,7212 @@
+{
+  "snapshot": [
+    {
+      "isolation": "repeatable read",
+      "read_only": "on",
+      "captured_at": "2026-11-26T15:53:14.832944+11:00",
+      "default_read_only": "on"
+    }
+  ],
+  "raw_sources": [
+    {
+      "bytes": 48799861,
+      "deliveries": 1308,
+      "last_captured": "2026-11-26T09:45:00.343359+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-08T22:09:40.7116+11:00",
+      "fetcher_identity": "ctb-invoices",
+      "distinct_payloads": 40
+    },
+    {
+      "bytes": 90083591,
+      "deliveries": 418,
+      "last_captured": "2026-11-26T04:36:39.297915+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-08T15:46:42.510496+11:00",
+      "fetcher_identity": "ctb-invoices-ajax",
+      "distinct_payloads": 280
+    },
+    {
+      "bytes": 124616,
+      "deliveries": 1,
+      "last_captured": "2026-10-12T21:49:57.994462+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T21:49:57.994462+11:00",
+      "fetcher_identity": "ctb-recipe-cost",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 5796918,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:22.689512+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:54.725107+11:00",
+      "fetcher_identity": "ctb-recipe-definition",
+      "distinct_payloads": 694
+    },
+    {
+      "bytes": 4604846,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:23.034058+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:55.408267+11:00",
+      "fetcher_identity": "ctb-recipe-direct-stocks",
+      "distinct_payloads": 602
+    },
+    {
+      "bytes": 2776279,
+      "deliveries": 560,
+      "last_captured": "2026-10-27T04:33:46.548603+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:34:50.413471+11:00",
+      "fetcher_identity": "ctb-recipe-folder-tree",
+      "distinct_payloads": 115
+    },
+    {
+      "bytes": 1947663,
+      "deliveries": 663,
+      "last_captured": "2026-10-12T21:49:06.494139+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T21:44:23.300206+11:00",
+      "fetcher_identity": "ctb-recipe-ingredients",
+      "distinct_payloads": 608
+    },
+    {
+      "bytes": 1861007,
+      "deliveries": 49,
+      "last_captured": "2026-11-26T04:37:13.693263+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T16:00:49.020707+11:00",
+      "fetcher_identity": "ctb-recipes",
+      "distinct_payloads": 15
+    },
+    {
+      "bytes": 7623642,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:24.837764+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:57.271968+11:00",
+      "fetcher_identity": "ctb-recipe-section-allergens",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 6160387,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:26.28648+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:58.662483+11:00",
+      "fetcher_identity": "ctb-recipe-section-cooking_method",
+      "distinct_payloads": 674
+    },
+    {
+      "bytes": 4229379,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:24.473159+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:56.908769+11:00",
+      "fetcher_identity": "ctb-recipe-section-dietary",
+      "distinct_payloads": 3
+    },
+    {
+      "bytes": 315276,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:27.004124+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:59.371605+11:00",
+      "fetcher_identity": "ctb-recipe-section-dish_type",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 365586,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:23.763291+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:56.173583+11:00",
+      "fetcher_identity": "ctb-recipe-section-equipment",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 7620,
+      "deliveries": 5,
+      "last_captured": "2026-10-27T04:33:48.073941+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:54.033349+11:00",
+      "fetcher_identity": "ctb-recipe-section-equipment_options",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 27401904,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:27.361019+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:59.724273+11:00",
+      "fetcher_identity": "ctb-recipe-section-heading",
+      "distinct_payloads": 674
+    },
+    {
+      "bytes": 379002,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:25.203494+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:57.6383+11:00",
+      "fetcher_identity": "ctb-recipe-section-ingredient_methods",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 315276,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:25.574572+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:57.990141+11:00",
+      "fetcher_identity": "ctb-recipe-section-major_flavour",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 315276,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:25.934261+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:58.323827+11:00",
+      "fetcher_identity": "ctb-recipe-section-major_ingredient",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 962598,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:24.11656+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:56.542244+11:00",
+      "fetcher_identity": "ctb-recipe-section-nutrition",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 315276,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:26.649687+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:59.013771+11:00",
+      "fetcher_identity": "ctb-recipe-section-section",
+      "distinct_payloads": 1
+    },
+    {
+      "bytes": 597528,
+      "deliveries": 3354,
+      "last_captured": "2026-10-27T05:49:23.351576+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-23T21:35:55.75885+11:00",
+      "fetcher_identity": "ctb-recipe-usages",
+      "distinct_payloads": 152
+    },
+    {
+      "bytes": 540040,
+      "deliveries": 294,
+      "last_captured": "2026-11-26T04:46:55.966615+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T16:01:10.944952+11:00",
+      "fetcher_identity": "ctb-reference-data",
+      "distinct_payloads": 9
+    },
+    {
+      "bytes": 324304944,
+      "deliveries": 5491,
+      "last_captured": "2026-11-26T04:36:33.43681+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-06T12:11:45.234165+11:00",
+      "fetcher_identity": "ctb-revenue",
+      "distinct_payloads": 2186
+    },
+    {
+      "bytes": 657300,
+      "deliveries": 2949,
+      "last_captured": "2026-11-26T04:36:33.446489+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-28T04:01:52.564475+11:00",
+      "fetcher_identity": "ctb-sale-items-request",
+      "distinct_payloads": 2949
+    },
+    {
+      "bytes": 8362727,
+      "deliveries": 232,
+      "last_captured": "2026-11-26T04:36:50.949203+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-08T15:46:48.838389+11:00",
+      "fetcher_identity": "ctb-sale-recipe-links",
+      "distinct_payloads": 147
+    },
+    {
+      "bytes": 440924286,
+      "deliveries": 3060,
+      "last_captured": "2026-11-26T05:01:41.945264+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-08T22:09:00.725728+11:00",
+      "fetcher_identity": "ctb-sftp",
+      "distinct_payloads": 1567
+    },
+    {
+      "bytes": 28533653,
+      "deliveries": 49,
+      "last_captured": "2026-11-26T04:46:55.434199+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T16:01:10.83099+11:00",
+      "fetcher_identity": "ctb-statements",
+      "distinct_payloads": 40
+    },
+    {
+      "bytes": 34078982,
+      "deliveries": 167,
+      "last_captured": "2026-11-26T04:46:54.843018+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T16:01:03.486713+11:00",
+      "fetcher_identity": "ctb-stock-orders",
+      "distinct_payloads": 158
+    },
+    {
+      "bytes": 53673573,
+      "deliveries": 343,
+      "last_captured": "2026-11-26T04:37:26.830375+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T16:00:50.321257+11:00",
+      "fetcher_identity": "ctb-stocks",
+      "distinct_payloads": 213
+    },
+    {
+      "bytes": 469108095,
+      "deliveries": 2057,
+      "last_captured": "2026-11-26T04:46:29.321866+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T18:02:14.889632+11:00",
+      "fetcher_identity": "ctb-stocktake-detail",
+      "distinct_payloads": 910
+    },
+    {
+      "bytes": 2599029,
+      "deliveries": 49,
+      "last_captured": "2026-11-26T04:37:28.119621+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T16:00:56.457918+11:00",
+      "fetcher_identity": "ctb-stocktakes",
+      "distinct_payloads": 9
+    },
+    {
+      "bytes": 4353128,
+      "deliveries": 49,
+      "last_captured": "2026-11-26T04:37:27.281125+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T16:00:55.725072+11:00",
+      "fetcher_identity": "ctb-suppliers",
+      "distinct_payloads": 38
+    },
+    {
+      "bytes": 1417339,
+      "deliveries": 54,
+      "last_captured": "2026-11-26T04:46:31.055147+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T16:00:57.246497+11:00",
+      "fetcher_identity": "ctb-wastage",
+      "distinct_payloads": 48
+    },
+    {
+      "bytes": 7660115,
+      "deliveries": 2339,
+      "last_captured": "2026-11-26T04:46:38.100825+11:00",
+      "source_system": "CTB",
+      "first_captured": "2026-10-12T21:43:41.704248+11:00",
+      "fetcher_identity": "ctb-wastage-detail",
+      "distinct_payloads": 296
+    },
+    {
+      "bytes": 129417908,
+      "deliveries": 2,
+      "last_captured": "2026-10-10T19:41:28.087983+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-10-10T19:09:30.610378+11:00",
+      "fetcher_identity": "lightspeed-all-sales",
+      "distinct_payloads": 2
+    },
+    {
+      "bytes": 3019130,
+      "deliveries": 49,
+      "last_captured": "2026-11-26T06:05:31.228451+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-10-10T17:00:59.591521+11:00",
+      "fetcher_identity": "lightspeed-deleted-sales",
+      "distinct_payloads": 37
+    },
+    {
+      "bytes": 4130508,
+      "deliveries": 5,
+      "last_captured": "2026-10-27T20:32:29.316965+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-10-27T20:21:26.11837+11:00",
+      "fetcher_identity": "lightspeed-historical-repair",
+      "distinct_payloads": 5
+    },
+    {
+      "bytes": 1773816,
+      "deliveries": 5,
+      "last_captured": "2026-10-27T20:32:29.345387+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-10-27T20:21:26.177494+11:00",
+      "fetcher_identity": "lightspeed-historical-repair-plan",
+      "distinct_payloads": 5
+    },
+    {
+      "bytes": 370502,
+      "deliveries": 71,
+      "last_captured": "2026-11-26T06:05:27.630941+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-09-22T06:16:08.206575+10:00",
+      "fetcher_identity": "lightspeed-insights",
+      "distinct_payloads": 58
+    },
+    {
+      "bytes": 522981452,
+      "deliveries": 49,
+      "last_captured": "2026-11-26T06:05:22.694601+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-10-10T17:13:13.741475+11:00",
+      "fetcher_identity": "lightspeed-payments",
+      "distinct_payloads": 46
+    },
+    {
+      "bytes": 4187471,
+      "deliveries": 31,
+      "last_captured": "2026-11-26T06:05:26.576474+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-11-02T17:30:05.773904+11:00",
+      "fetcher_identity": "lightspeed-receipt-mapping",
+      "distinct_payloads": 31
+    },
+    {
+      "bytes": 7378,
+      "deliveries": 31,
+      "last_captured": "2026-11-26T06:05:26.634563+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-11-02T17:30:05.79728+11:00",
+      "fetcher_identity": "lightspeed-receipt-mapping-scope",
+      "distinct_payloads": 31
+    },
+    {
+      "bytes": 3118658354,
+      "deliveries": 103,
+      "last_captured": "2026-11-26T06:06:14.149561+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-10-10T17:00:57.303728+11:00",
+      "fetcher_identity": "lightspeed-sale-items",
+      "distinct_payloads": 66
+    },
+    {
+      "bytes": 403316,
+      "deliveries": 4,
+      "last_captured": "2026-11-02T19:24:07.290592+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-11-02T17:30:24.06235+11:00",
+      "fetcher_identity": "lightspeed-sales-feed",
+      "distinct_payloads": 4
+    },
+    {
+      "bytes": 952,
+      "deliveries": 4,
+      "last_captured": "2026-11-02T19:24:07.313469+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_captured": "2026-11-02T17:30:24.086993+11:00",
+      "fetcher_identity": "lightspeed-sales-feed-scope",
+      "distinct_payloads": 4
+    },
+    {
+      "bytes": 3202769,
+      "deliveries": 43,
+      "last_captured": "2026-11-12T21:33:47.594689+11:00",
+      "source_system": "OPENTABLE",
+      "first_captured": "2026-10-13T19:24:50.695615+11:00",
+      "fetcher_identity": "opentable-menu-items",
+      "distinct_payloads": 43
+    },
+    {
+      "bytes": 216702,
+      "deliveries": 2,
+      "last_captured": "2026-11-12T21:33:50.278187+11:00",
+      "source_system": "OPENTABLE",
+      "first_captured": "2026-10-13T19:25:37.006534+11:00",
+      "fetcher_identity": "opentable-menus",
+      "distinct_payloads": 2
+    },
+    {
+      "bytes": 174854539,
+      "deliveries": 272,
+      "last_captured": "2026-11-12T21:32:47.835981+11:00",
+      "source_system": "OPENTABLE",
+      "first_captured": "2026-10-13T18:28:44.050111+11:00",
+      "fetcher_identity": "opentable-reservations",
+      "distinct_payloads": 272
+    },
+    {
+      "bytes": 1623951,
+      "deliveries": 60,
+      "last_captured": "2026-11-12T21:32:59.221224+11:00",
+      "source_system": "OPENTABLE",
+      "first_captured": "2026-10-13T19:23:05.846416+11:00",
+      "fetcher_identity": "opentable-reviews",
+      "distinct_payloads": 60
+    }
+  ],
+  "latest_runs": [
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-10-12T21:39:09.254214+11:00",
+      "completed_at": "2026-10-12T21:49:58.006501+11:00",
+      "fetched_count": 811,
+      "source_system": "CTB",
+      "connector_name": "ctb-detail-backfill",
+      "persisted_count": 811
+    },
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-11-26T05:01:41.934615+11:00",
+      "completed_at": "2026-11-26T05:01:44.683859+11:00",
+      "fetched_count": 1,
+      "source_system": "CTB",
+      "connector_name": "ctb-invoice-pdf",
+      "persisted_count": 1
+    },
+    {
+      "status": "PARTIAL",
+      "started_at": "2026-11-26T09:45:00.329643+11:00",
+      "completed_at": "2026-11-26T09:45:00.435332+11:00",
+      "fetched_count": 1,
+      "source_system": "CTB",
+      "connector_name": "ctb-invoices",
+      "persisted_count": 1
+    },
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-11-26T04:00:00.416239+11:00",
+      "completed_at": "2026-11-26T04:46:55.971269+11:00",
+      "fetched_count": 383,
+      "source_system": "CTB",
+      "connector_name": "ctb-revenue",
+      "persisted_count": 383
+    },
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-10-10T19:41:27.609896+11:00",
+      "completed_at": "2026-10-10T19:41:31.820919+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-all-sales",
+      "persisted_count": 1
+    },
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-11-26T06:05:31.220069+11:00",
+      "completed_at": "2026-11-26T06:05:31.233842+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-deleted-sales",
+      "persisted_count": 1
+    },
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-10-27T20:32:29.300797+11:00",
+      "completed_at": "2026-10-27T20:32:29.318241+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-historical-repair",
+      "persisted_count": 1
+    },
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-10-27T20:32:29.340239+11:00",
+      "completed_at": "2026-10-27T20:32:29.346102+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-historical-repair-plan",
+      "persisted_count": 1
+    },
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-11-26T06:05:27.616427+11:00",
+      "completed_at": "2026-11-26T06:05:27.640038+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-insights",
+      "persisted_count": 1
+    },
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-11-26T06:05:22.675592+11:00",
+      "completed_at": "2026-11-26T06:05:22.708124+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-payments",
+      "persisted_count": 1
+    },
+    {
+      "status": "PARTIAL",
+      "started_at": "2026-11-26T06:05:26.565737+11:00",
+      "completed_at": "2026-11-26T06:05:26.590231+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-receipt-mapping",
+      "persisted_count": 1
+    },
+    {
+      "status": "PARTIAL",
+      "started_at": "2026-11-26T06:05:26.627468+11:00",
+      "completed_at": "2026-11-26T06:05:26.639288+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-receipt-mapping-scope",
+      "persisted_count": 1
+    },
+    {
+      "status": "PARTIAL",
+      "started_at": "2026-11-26T06:06:14.132083+11:00",
+      "completed_at": "2026-11-26T06:06:14.196018+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-sale-items",
+      "persisted_count": 1
+    },
+    {
+      "status": "PARTIAL",
+      "started_at": "2026-11-02T19:24:07.282072+11:00",
+      "completed_at": "2026-11-02T19:24:07.305091+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-sales-feed",
+      "persisted_count": 1
+    },
+    {
+      "status": "PARTIAL",
+      "started_at": "2026-11-02T19:24:07.308907+11:00",
+      "completed_at": "2026-11-02T19:24:07.316558+11:00",
+      "fetched_count": 1,
+      "source_system": "LIGHTSPEED",
+      "connector_name": "lightspeed-sales-feed-scope",
+      "persisted_count": 1
+    },
+    {
+      "status": "SUCCESS",
+      "started_at": "2026-11-12T21:31:03.79222+11:00",
+      "completed_at": "2026-11-12T21:33:50.306539+11:00",
+      "fetched_count": 39,
+      "source_system": "OPENTABLE",
+      "connector_name": "opentable-api",
+      "persisted_count": 39
+    }
+  ],
+  "historical_failures": [
+    {
+      "failures": 10,
+      "failure_type": "CONNECTOR_AUTH_FAILED",
+      "last_occurred": "2026-10-02T23:55:37.099353+10:00",
+      "source_system": "CTB",
+      "first_occurred": "2026-10-02T22:43:10.953427+10:00"
+    },
+    {
+      "failures": 10,
+      "failure_type": "CONNECTOR_FETCH_FAILED",
+      "last_occurred": "2026-10-30T04:00:45.068663+11:00",
+      "source_system": "CTB",
+      "first_occurred": "2026-10-03T00:17:15.457961+10:00"
+    },
+    {
+      "failures": 25,
+      "failure_type": "CONNECTOR_SCHEMA_MISMATCH",
+      "last_occurred": "2026-11-02T04:34:36.034612+11:00",
+      "source_system": "CTB",
+      "first_occurred": "2026-10-08T15:46:58.376911+11:00"
+    },
+    {
+      "failures": 13,
+      "failure_type": "CONNECTOR_TRUNCATED",
+      "last_occurred": "2026-11-15T04:44:09.896388+11:00",
+      "source_system": "CTB",
+      "first_occurred": "2026-11-03T23:52:21.007254+11:00"
+    },
+    {
+      "failures": 3,
+      "failure_type": "INVOICE_IDENTITY_WITHHELD",
+      "last_occurred": "2026-11-26T09:45:00.37257+11:00",
+      "source_system": "CTB",
+      "first_occurred": "2026-11-25T21:24:01.705417+11:00"
+    },
+    {
+      "failures": 924,
+      "failure_type": "INVOICE_REVISION_WITHHELD",
+      "last_occurred": "2026-11-13T14:15:01.399669+11:00",
+      "source_system": "CTB",
+      "first_occurred": "2026-11-08T13:15:01.344398+11:00"
+    },
+    {
+      "failures": 1259,
+      "failure_type": "PROCESSING_CANONICALIZED_FAILED",
+      "last_occurred": "2026-11-26T09:45:00.432446+11:00",
+      "source_system": "CTB",
+      "first_occurred": "2026-11-05T05:00:05.861058+11:00"
+    },
+    {
+      "failures": 3,
+      "failure_type": "RUN_INTERRUPTED",
+      "last_occurred": "2026-10-24T13:47:06.266717+11:00",
+      "source_system": "CTB",
+      "first_occurred": "2026-10-12T18:02:20.199532+11:00"
+    },
+    {
+      "failures": 1,
+      "failure_type": "UNEXPECTED",
+      "last_occurred": "2026-10-12T18:02:21.739273+11:00",
+      "source_system": "CTB",
+      "first_occurred": "2026-10-12T18:02:21.739273+11:00"
+    },
+    {
+      "failures": 14,
+      "failure_type": "PROCESSING_PARSED_FAILED",
+      "last_occurred": "2026-11-02T17:35:56.444544+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_occurred": "2026-10-28T06:03:38.05791+11:00"
+    },
+    {
+      "failures": 70,
+      "failure_type": "RECEIPT_EVIDENCE_UNVERIFIED",
+      "last_occurred": "2026-11-26T06:05:30.651807+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_occurred": "2026-11-02T17:30:05.943346+11:00"
+    },
+    {
+      "failures": 31,
+      "failure_type": "SALE_ITEM_METADATA_UNOBSERVED",
+      "last_occurred": "2026-11-26T06:06:14.383712+11:00",
+      "source_system": "LIGHTSPEED",
+      "first_occurred": "2026-11-02T17:29:37.283667+11:00"
+    },
+    {
+      "failures": 1,
+      "failure_type": "RUN_INTERRUPTED",
+      "last_occurred": "2026-10-13T19:14:37.668637+11:00",
+      "source_system": "OPENTABLE",
+      "first_occurred": "2026-10-13T19:14:37.668637+11:00"
+    }
+  ],
+  "latest_processing_stages": [
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "FAILED",
+      "deliveries": 1259,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-invoices"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "SUCCESS",
+      "deliveries": 35,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-invoices"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "SUCCESS",
+      "deliveries": 1294,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-invoices"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 14,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-invoices"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 418,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-invoices-ajax"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 1,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-cost"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-definition"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-direct-stocks"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 560,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-folder-tree"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 663,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-ingredients"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 49,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipes"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-allergens"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-cooking_method"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-dietary"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-dish_type"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-equipment"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 5,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-equipment_options"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-heading"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-ingredient_methods"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-major_flavour"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-major_ingredient"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-nutrition"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-section-section"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3354,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-recipe-usages"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 294,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-reference-data"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 5491,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-revenue"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 2949,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-sale-items-request"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 232,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-sale-recipe-links"
+    },
+    {
+      "stage": "ENRICHED",
+      "outcome": "SUCCESS",
+      "deliveries": 16,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-sftp"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 3044,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-sftp"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 49,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-statements"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 167,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-stock-orders"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 343,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-stocks"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 2057,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-stocktake-detail"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 49,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-stocktakes"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 49,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-suppliers"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 54,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-wastage"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 2339,
+      "source_system": "CTB",
+      "fetcher_identity": "ctb-wastage-detail"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 2,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-all-sales"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "EMPTY",
+      "deliveries": 6,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-deleted-sales"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "SUCCESS",
+      "deliveries": 43,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-deleted-sales"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "EMPTY",
+      "deliveries": 6,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-deleted-sales"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "SUCCESS",
+      "deliveries": 43,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-deleted-sales"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "SUCCESS",
+      "deliveries": 5,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-historical-repair"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "SUCCESS",
+      "deliveries": 5,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-historical-repair"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "SUCCESS",
+      "deliveries": 5,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-historical-repair-plan"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "SUCCESS",
+      "deliveries": 25,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-insights"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "SUCCESS",
+      "deliveries": 25,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-insights"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 46,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-insights"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "SUCCESS",
+      "deliveries": 44,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-payments"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "FAILED",
+      "deliveries": 4,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-payments"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "SUCCESS",
+      "deliveries": 45,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-payments"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "SUCCESS",
+      "deliveries": 31,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-receipt-mapping"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "SUCCESS",
+      "deliveries": 31,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-receipt-mapping"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 31,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-receipt-mapping-scope"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "EMPTY",
+      "deliveries": 4,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-sale-items"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "FAILED",
+      "deliveries": 1,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-sale-items"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "SUCCESS",
+      "deliveries": 58,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-sale-items"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "EMPTY",
+      "deliveries": 4,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-sale-items"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "FAILED",
+      "deliveries": 36,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-sale-items"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "SUCCESS",
+      "deliveries": 63,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-sale-items"
+    },
+    {
+      "stage": "CANONICALIZED",
+      "outcome": "SUCCESS",
+      "deliveries": 4,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-sales-feed"
+    },
+    {
+      "stage": "PARSED",
+      "outcome": "SUCCESS",
+      "deliveries": 4,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-sales-feed"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 4,
+      "source_system": "LIGHTSPEED",
+      "fetcher_identity": "lightspeed-sales-feed-scope"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 43,
+      "source_system": "OPENTABLE",
+      "fetcher_identity": "opentable-menu-items"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 2,
+      "source_system": "OPENTABLE",
+      "fetcher_identity": "opentable-menus"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 272,
+      "source_system": "OPENTABLE",
+      "fetcher_identity": "opentable-reservations"
+    },
+    {
+      "stage": null,
+      "outcome": null,
+      "deliveries": 60,
+      "source_system": "OPENTABLE",
+      "fetcher_identity": "opentable-reviews"
+    }
+  ],
+  "canonical_daily_sales": [
+    {
+      "rows": 235,
+      "source": "CTB",
+      "last_date": "2026-11-25",
+      "first_date": "2026-04-02",
+      "observed_days": 235
+    },
+    {
+      "rows": 1714,
+      "source": "LIGHTSPEED",
+      "last_date": "2026-11-25",
+      "first_date": "2020-11-23",
+      "observed_days": 1714
+    },
+    {
+      "rows": 89,
+      "source": "LIGHTSPEED_PAYMENTS",
+      "last_date": "2026-03-31",
+      "first_date": "2026-01-01",
+      "observed_days": 89
+    }
+  ],
+  "canonical_daily_sales_monthly": [
+    {
+      "rows": 29,
+      "period": "2026-04",
+      "source": "CTB",
+      "observed_days": 29
+    },
+    {
+      "rows": 31,
+      "period": "2026-05",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 27,
+      "period": "2026-06",
+      "source": "CTB",
+      "observed_days": 27
+    },
+    {
+      "rows": 31,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 31,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 25,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 25
+    },
+    {
+      "rows": 7,
+      "period": "2020-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 20,
+      "period": "2020-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 20
+    },
+    {
+      "rows": 26,
+      "period": "2021-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 26,
+      "period": "2021-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 30,
+      "period": "2021-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 27,
+      "period": "2021-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 28,
+      "period": "2021-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 27,
+      "period": "2021-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 25,
+      "period": "2021-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 13,
+      "period": "2021-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 2,
+      "period": "2021-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 2
+    },
+    {
+      "rows": 12,
+      "period": "2021-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 30,
+      "period": "2021-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 24,
+      "period": "2021-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 12,
+      "period": "2022-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 25,
+      "period": "2022-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 29,
+      "period": "2022-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 25,
+      "period": "2022-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 26,
+      "period": "2022-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 27,
+      "period": "2022-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 28,
+      "period": "2022-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 27,
+      "period": "2022-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 26,
+      "period": "2022-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 27,
+      "period": "2022-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 27,
+      "period": "2022-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 23,
+      "period": "2022-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 19,
+      "period": "2023-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 24,
+      "period": "2023-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 27,
+      "period": "2023-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 27,
+      "period": "2023-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 28,
+      "period": "2023-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 30,
+      "period": "2023-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2023-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 31,
+      "period": "2023-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2023-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2023-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2023-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 30,
+      "period": "2023-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2024-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 28,
+      "period": "2024-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 31,
+      "period": "2024-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2024-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2024-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2024-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2024-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 31,
+      "period": "2024-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2024-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2024-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2024-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 30,
+      "period": "2024-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 30,
+      "period": "2025-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 28,
+      "period": "2025-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 31,
+      "period": "2025-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2025-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2025-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2025-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2025-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 31,
+      "period": "2025-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2025-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2025-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2025-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 30,
+      "period": "2025-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 2,
+      "period": "2026-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 2
+    },
+    {
+      "rows": 23,
+      "period": "2026-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 25,
+      "period": "2026-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 30,
+      "period": "2026-01",
+      "source": "LIGHTSPEED_PAYMENTS",
+      "observed_days": 30
+    },
+    {
+      "rows": 28,
+      "period": "2026-02",
+      "source": "LIGHTSPEED_PAYMENTS",
+      "observed_days": 28
+    },
+    {
+      "rows": 31,
+      "period": "2026-03",
+      "source": "LIGHTSPEED_PAYMENTS",
+      "observed_days": 31
+    }
+  ],
+  "canonical_deleted_sale": [
+    {
+      "rows": 3261,
+      "source": "LIGHTSPEED",
+      "last_date": "2026-11-22",
+      "first_date": "2020-11-23",
+      "observed_days": 1036
+    }
+  ],
+  "canonical_deleted_sale_monthly": [
+    {
+      "rows": 87,
+      "period": "2020-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 8
+    },
+    {
+      "rows": 161,
+      "period": "2020-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 21
+    },
+    {
+      "rows": 127,
+      "period": "2021-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 132,
+      "period": "2021-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 84,
+      "period": "2021-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 124,
+      "period": "2021-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 21
+    },
+    {
+      "rows": 159,
+      "period": "2021-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 21
+    },
+    {
+      "rows": 42,
+      "period": "2021-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 17
+    },
+    {
+      "rows": 55,
+      "period": "2021-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 56,
+      "period": "2021-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 1,
+      "period": "2021-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 1
+    },
+    {
+      "rows": 32,
+      "period": "2021-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 136,
+      "period": "2021-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 139,
+      "period": "2021-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 20
+    },
+    {
+      "rows": 19,
+      "period": "2022-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 4
+    },
+    {
+      "rows": 36,
+      "period": "2022-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 23,
+      "period": "2022-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 43,
+      "period": "2022-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 17
+    },
+    {
+      "rows": 40,
+      "period": "2022-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 201,
+      "period": "2022-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 77,
+      "period": "2022-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 138,
+      "period": "2022-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 27,
+      "period": "2022-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 11
+    },
+    {
+      "rows": 13,
+      "period": "2022-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 27,
+      "period": "2022-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 56,
+      "period": "2022-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 13,
+      "period": "2023-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 23,
+      "period": "2023-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 30,
+      "period": "2023-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 8
+    },
+    {
+      "rows": 38,
+      "period": "2023-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 21,
+      "period": "2023-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 20,
+      "period": "2023-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 55,
+      "period": "2023-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 17
+    },
+    {
+      "rows": 57,
+      "period": "2023-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 24,
+      "period": "2023-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 16,
+      "period": "2023-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 11
+    },
+    {
+      "rows": 17,
+      "period": "2023-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 11
+    },
+    {
+      "rows": 15,
+      "period": "2023-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 10
+    },
+    {
+      "rows": 22,
+      "period": "2024-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 19,
+      "period": "2024-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 22,
+      "period": "2024-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 10,
+      "period": "2024-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 19,
+      "period": "2024-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 22,
+      "period": "2024-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 13,
+      "period": "2024-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 11,
+      "period": "2024-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 16,
+      "period": "2024-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 11
+    },
+    {
+      "rows": 13,
+      "period": "2024-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 25,
+      "period": "2024-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 14,
+      "period": "2024-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 15,
+      "period": "2025-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 12,
+      "period": "2025-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 6
+    },
+    {
+      "rows": 19,
+      "period": "2025-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 42,
+      "period": "2025-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 18,
+      "period": "2025-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 23,
+      "period": "2025-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 21,
+      "period": "2025-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 20,
+      "period": "2025-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 27,
+      "period": "2025-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 18
+    },
+    {
+      "rows": 15,
+      "period": "2025-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 10
+    },
+    {
+      "rows": 42,
+      "period": "2025-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 18
+    },
+    {
+      "rows": 32,
+      "period": "2025-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 39,
+      "period": "2026-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 22,
+      "period": "2026-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 20,
+      "period": "2026-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 23,
+      "period": "2026-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 37,
+      "period": "2026-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 40,
+      "period": "2026-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 66,
+      "period": "2026-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 43,
+      "period": "2026-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 32,
+      "period": "2026-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 54,
+      "period": "2026-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 22
+    },
+    {
+      "rows": 29,
+      "period": "2026-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    }
+  ],
+  "canonical_guest": [
+    {
+      "rows": 186,
+      "source": "OPENTABLE"
+    }
+  ],
+  "canonical_invoice": [
+    {
+      "rows": 1569,
+      "source": "CTB",
+      "last_date": "2026-11-25",
+      "first_date": "1989-10-01",
+      "observed_days": 211
+    }
+  ],
+  "canonical_invoice_monthly": [
+    {
+      "rows": 1,
+      "period": "1989-10",
+      "source": "CTB",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2025-10",
+      "source": "CTB",
+      "observed_days": 1
+    },
+    {
+      "rows": 5,
+      "period": "2026-04",
+      "source": "CTB",
+      "observed_days": 4
+    },
+    {
+      "rows": 176,
+      "period": "2026-05",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 185,
+      "period": "2026-06",
+      "source": "CTB",
+      "observed_days": 27
+    },
+    {
+      "rows": 241,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 243,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 263,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 266,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 188,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 25
+    }
+  ],
+  "canonical_invoice_line": [
+    {
+      "rows": 7892,
+      "source": "CTB",
+      "last_date": "2026-11-25",
+      "first_date": "1989-10-01",
+      "observed_days": 211
+    }
+  ],
+  "canonical_invoice_line_monthly": [
+    {
+      "rows": 12,
+      "period": "1989-10",
+      "source": "CTB",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2025-10",
+      "source": "CTB",
+      "observed_days": 1
+    },
+    {
+      "rows": 10,
+      "period": "2026-04",
+      "source": "CTB",
+      "observed_days": 4
+    },
+    {
+      "rows": 1033,
+      "period": "2026-05",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 1084,
+      "period": "2026-06",
+      "source": "CTB",
+      "observed_days": 27
+    },
+    {
+      "rows": 1312,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 1074,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 1329,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 1164,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 873,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 25
+    }
+  ],
+  "canonical_labour_entry": [],
+  "canonical_labour_entry_monthly": [],
+  "canonical_payment": [
+    {
+      "rows": 1009393,
+      "source": "LIGHTSPEED",
+      "last_date": "2026-11-25",
+      "first_date": "2020-11-23",
+      "observed_days": 1989
+    }
+  ],
+  "canonical_payment_monthly": [
+    {
+      "rows": 224,
+      "period": "2020-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 4890,
+      "period": "2020-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 20
+    },
+    {
+      "rows": 6618,
+      "period": "2021-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 8387,
+      "period": "2021-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 10944,
+      "period": "2021-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 9344,
+      "period": "2021-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 11413,
+      "period": "2021-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 7956,
+      "period": "2021-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 8216,
+      "period": "2021-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 2217,
+      "period": "2021-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 4,
+      "period": "2021-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 2
+    },
+    {
+      "rows": 4884,
+      "period": "2021-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 12191,
+      "period": "2021-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 10020,
+      "period": "2021-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 3308,
+      "period": "2022-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 8124,
+      "period": "2022-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 8873,
+      "period": "2022-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 8903,
+      "period": "2022-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 10132,
+      "period": "2022-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 10613,
+      "period": "2022-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 10851,
+      "period": "2022-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 10341,
+      "period": "2022-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 11475,
+      "period": "2022-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 10810,
+      "period": "2022-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 12026,
+      "period": "2022-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 9809,
+      "period": "2022-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 7613,
+      "period": "2023-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 10351,
+      "period": "2023-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 11521,
+      "period": "2023-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 13236,
+      "period": "2023-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 12404,
+      "period": "2023-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 12961,
+      "period": "2023-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 14109,
+      "period": "2023-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 12446,
+      "period": "2023-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 14650,
+      "period": "2023-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 12971,
+      "period": "2023-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 15534,
+      "period": "2023-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 17028,
+      "period": "2023-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 14600,
+      "period": "2024-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 15193,
+      "period": "2024-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 16340,
+      "period": "2024-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 14401,
+      "period": "2024-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 14526,
+      "period": "2024-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 16041,
+      "period": "2024-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 15476,
+      "period": "2024-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 17288,
+      "period": "2024-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 15930,
+      "period": "2024-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 17102,
+      "period": "2024-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 18426,
+      "period": "2024-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 19410,
+      "period": "2024-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 16977,
+      "period": "2025-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 16446,
+      "period": "2025-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 17911,
+      "period": "2025-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 15967,
+      "period": "2025-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 19193,
+      "period": "2025-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 17197,
+      "period": "2025-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 17041,
+      "period": "2025-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 19447,
+      "period": "2025-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 17578,
+      "period": "2025-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 19859,
+      "period": "2025-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 20881,
+      "period": "2025-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 22801,
+      "period": "2025-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 20740,
+      "period": "2026-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 19249,
+      "period": "2026-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 19817,
+      "period": "2026-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 19035,
+      "period": "2026-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 22601,
+      "period": "2026-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 18506,
+      "period": "2026-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 20121,
+      "period": "2026-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 20699,
+      "period": "2026-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 21926,
+      "period": "2026-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 25216,
+      "period": "2026-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 18055,
+      "period": "2026-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    }
+  ],
+  "canonical_product": [],
+  "canonical_product_sales": [
+    {
+      "rows": 32165,
+      "source": "CTB",
+      "last_date": "2026-11-25",
+      "first_date": "2026-07-08",
+      "observed_days": 141
+    }
+  ],
+  "canonical_product_sales_monthly": [
+    {
+      "rows": 4317,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 24
+    },
+    {
+      "rows": 8544,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 8798,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 6807,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 3699,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 25
+    }
+  ],
+  "canonical_receipt_evidence_batch": [
+    {
+      "rows": 35,
+      "source": "LIGHTSPEED"
+    }
+  ],
+  "canonical_recipe_catalog": [
+    {
+      "rows": 1,
+      "source": "CTB"
+    }
+  ],
+  "canonical_recipe_catalog_allocations": [
+    {
+      "rows": 11714,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "canonical_recipe_catalog_evidence": [
+    {
+      "rows": 560,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "canonical_recipe_catalog_folders": [
+    {
+      "rows": 560,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "canonical_recipe_cost": [
+    {
+      "rows": 663,
+      "source": "CTB"
+    }
+  ],
+  "canonical_recipe_definition": [
+    {
+      "rows": 674,
+      "source": "CTB"
+    }
+  ],
+  "canonical_recipe_definition_stocks": [
+    {
+      "rows": 6395,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "canonical_recipe_definition_usages": [
+    {
+      "rows": 1093,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "canonical_recipe_ingredient": [
+    {
+      "rows": 2630,
+      "source": "CTB"
+    }
+  ],
+  "canonical_recipe_section": [
+    {
+      "rows": 9550,
+      "source": "CTB"
+    }
+  ],
+  "canonical_recipe_section_fields": [
+    {
+      "rows": 2685442,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "canonical_reservation": [
+    {
+      "rows": 25444,
+      "source": "OPENTABLE",
+      "last_date": "2027-05-09",
+      "first_date": "2020-12-05",
+      "observed_days": 1068
+    }
+  ],
+  "canonical_reservation_monthly": [
+    {
+      "rows": 2,
+      "period": "2020-12",
+      "source": "OPENTABLE",
+      "observed_days": 2
+    },
+    {
+      "rows": 2,
+      "period": "2021-01",
+      "source": "OPENTABLE",
+      "observed_days": 2
+    },
+    {
+      "rows": 1,
+      "period": "2021-03",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2021-08",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2021-11",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 2,
+      "period": "2022-04",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2022-10",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2022-12",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 28,
+      "period": "2023-06",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 25,
+      "period": "2023-07",
+      "source": "OPENTABLE",
+      "observed_days": 5
+    },
+    {
+      "rows": 20,
+      "period": "2023-08",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 30,
+      "period": "2023-09",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 30,
+      "period": "2023-10",
+      "source": "OPENTABLE",
+      "observed_days": 5
+    },
+    {
+      "rows": 26,
+      "period": "2023-11",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 13,
+      "period": "2023-12",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 22,
+      "period": "2024-01",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 20,
+      "period": "2024-02",
+      "source": "OPENTABLE",
+      "observed_days": 3
+    },
+    {
+      "rows": 207,
+      "period": "2024-03",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 446,
+      "period": "2024-04",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 502,
+      "period": "2024-05",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 499,
+      "period": "2024-06",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 547,
+      "period": "2024-07",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 511,
+      "period": "2024-08",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 623,
+      "period": "2024-09",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 597,
+      "period": "2024-10",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 620,
+      "period": "2024-11",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 820,
+      "period": "2024-12",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 587,
+      "period": "2025-01",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 556,
+      "period": "2025-02",
+      "source": "OPENTABLE",
+      "observed_days": 28
+    },
+    {
+      "rows": 642,
+      "period": "2025-03",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 599,
+      "period": "2025-04",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 759,
+      "period": "2025-05",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 717,
+      "period": "2025-06",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 745,
+      "period": "2025-07",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 805,
+      "period": "2025-08",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 847,
+      "period": "2025-09",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 778,
+      "period": "2025-10",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 858,
+      "period": "2025-11",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 1021,
+      "period": "2025-12",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 782,
+      "period": "2026-01",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 930,
+      "period": "2026-02",
+      "source": "OPENTABLE",
+      "observed_days": 28
+    },
+    {
+      "rows": 887,
+      "period": "2026-03",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 881,
+      "period": "2026-04",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 1098,
+      "period": "2026-05",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 905,
+      "period": "2026-06",
+      "source": "OPENTABLE",
+      "observed_days": 29
+    },
+    {
+      "rows": 1129,
+      "period": "2026-07",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 1082,
+      "period": "2026-08",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 1248,
+      "period": "2026-09",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 1194,
+      "period": "2026-10",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 600,
+      "period": "2026-11",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 182,
+      "period": "2026-12",
+      "source": "OPENTABLE",
+      "observed_days": 28
+    },
+    {
+      "rows": 5,
+      "period": "2027-01",
+      "source": "OPENTABLE",
+      "observed_days": 5
+    },
+    {
+      "rows": 7,
+      "period": "2027-02",
+      "source": "OPENTABLE",
+      "observed_days": 2
+    },
+    {
+      "rows": 2,
+      "period": "2027-03",
+      "source": "OPENTABLE",
+      "observed_days": 2
+    },
+    {
+      "rows": 1,
+      "period": "2027-05",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    }
+  ],
+  "canonical_review": [
+    {
+      "rows": 1250,
+      "source": "OPENTABLE",
+      "last_date": "2026-11-12",
+      "first_date": "2021-03-05",
+      "observed_days": 848
+    }
+  ],
+  "canonical_review_monthly": [
+    {
+      "rows": 5,
+      "period": "2021-03",
+      "source": "OPENTABLE",
+      "observed_days": 5
+    },
+    {
+      "rows": 5,
+      "period": "2021-04",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 4,
+      "period": "2021-05",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 16,
+      "period": "2021-06",
+      "source": "OPENTABLE",
+      "observed_days": 11
+    },
+    {
+      "rows": 3,
+      "period": "2021-07",
+      "source": "OPENTABLE",
+      "observed_days": 3
+    },
+    {
+      "rows": 6,
+      "period": "2021-08",
+      "source": "OPENTABLE",
+      "observed_days": 5
+    },
+    {
+      "rows": 35,
+      "period": "2021-10",
+      "source": "OPENTABLE",
+      "observed_days": 10
+    },
+    {
+      "rows": 57,
+      "period": "2021-11",
+      "source": "OPENTABLE",
+      "observed_days": 24
+    },
+    {
+      "rows": 15,
+      "period": "2021-12",
+      "source": "OPENTABLE",
+      "observed_days": 8
+    },
+    {
+      "rows": 3,
+      "period": "2022-02",
+      "source": "OPENTABLE",
+      "observed_days": 3
+    },
+    {
+      "rows": 20,
+      "period": "2022-03",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 7,
+      "period": "2022-04",
+      "source": "OPENTABLE",
+      "observed_days": 6
+    },
+    {
+      "rows": 12,
+      "period": "2022-05",
+      "source": "OPENTABLE",
+      "observed_days": 8
+    },
+    {
+      "rows": 10,
+      "period": "2022-06",
+      "source": "OPENTABLE",
+      "observed_days": 10
+    },
+    {
+      "rows": 17,
+      "period": "2022-07",
+      "source": "OPENTABLE",
+      "observed_days": 12
+    },
+    {
+      "rows": 18,
+      "period": "2022-08",
+      "source": "OPENTABLE",
+      "observed_days": 12
+    },
+    {
+      "rows": 22,
+      "period": "2022-09",
+      "source": "OPENTABLE",
+      "observed_days": 16
+    },
+    {
+      "rows": 18,
+      "period": "2022-10",
+      "source": "OPENTABLE",
+      "observed_days": 12
+    },
+    {
+      "rows": 30,
+      "period": "2022-11",
+      "source": "OPENTABLE",
+      "observed_days": 19
+    },
+    {
+      "rows": 18,
+      "period": "2022-12",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 10,
+      "period": "2023-01",
+      "source": "OPENTABLE",
+      "observed_days": 9
+    },
+    {
+      "rows": 19,
+      "period": "2023-02",
+      "source": "OPENTABLE",
+      "observed_days": 11
+    },
+    {
+      "rows": 15,
+      "period": "2023-03",
+      "source": "OPENTABLE",
+      "observed_days": 11
+    },
+    {
+      "rows": 17,
+      "period": "2023-04",
+      "source": "OPENTABLE",
+      "observed_days": 13
+    },
+    {
+      "rows": 29,
+      "period": "2023-05",
+      "source": "OPENTABLE",
+      "observed_days": 18
+    },
+    {
+      "rows": 29,
+      "period": "2023-06",
+      "source": "OPENTABLE",
+      "observed_days": 16
+    },
+    {
+      "rows": 26,
+      "period": "2023-07",
+      "source": "OPENTABLE",
+      "observed_days": 16
+    },
+    {
+      "rows": 18,
+      "period": "2023-08",
+      "source": "OPENTABLE",
+      "observed_days": 15
+    },
+    {
+      "rows": 27,
+      "period": "2023-09",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 21,
+      "period": "2023-10",
+      "source": "OPENTABLE",
+      "observed_days": 18
+    },
+    {
+      "rows": 20,
+      "period": "2023-11",
+      "source": "OPENTABLE",
+      "observed_days": 13
+    },
+    {
+      "rows": 21,
+      "period": "2023-12",
+      "source": "OPENTABLE",
+      "observed_days": 16
+    },
+    {
+      "rows": 14,
+      "period": "2024-01",
+      "source": "OPENTABLE",
+      "observed_days": 11
+    },
+    {
+      "rows": 18,
+      "period": "2024-02",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 7,
+      "period": "2024-03",
+      "source": "OPENTABLE",
+      "observed_days": 6
+    },
+    {
+      "rows": 17,
+      "period": "2024-04",
+      "source": "OPENTABLE",
+      "observed_days": 13
+    },
+    {
+      "rows": 12,
+      "period": "2024-05",
+      "source": "OPENTABLE",
+      "observed_days": 7
+    },
+    {
+      "rows": 11,
+      "period": "2024-06",
+      "source": "OPENTABLE",
+      "observed_days": 9
+    },
+    {
+      "rows": 19,
+      "period": "2024-07",
+      "source": "OPENTABLE",
+      "observed_days": 12
+    },
+    {
+      "rows": 15,
+      "period": "2024-08",
+      "source": "OPENTABLE",
+      "observed_days": 11
+    },
+    {
+      "rows": 17,
+      "period": "2024-09",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 23,
+      "period": "2024-10",
+      "source": "OPENTABLE",
+      "observed_days": 17
+    },
+    {
+      "rows": 23,
+      "period": "2024-11",
+      "source": "OPENTABLE",
+      "observed_days": 15
+    },
+    {
+      "rows": 21,
+      "period": "2024-12",
+      "source": "OPENTABLE",
+      "observed_days": 16
+    },
+    {
+      "rows": 21,
+      "period": "2025-01",
+      "source": "OPENTABLE",
+      "observed_days": 16
+    },
+    {
+      "rows": 20,
+      "period": "2025-02",
+      "source": "OPENTABLE",
+      "observed_days": 10
+    },
+    {
+      "rows": 10,
+      "period": "2025-03",
+      "source": "OPENTABLE",
+      "observed_days": 9
+    },
+    {
+      "rows": 19,
+      "period": "2025-04",
+      "source": "OPENTABLE",
+      "observed_days": 16
+    },
+    {
+      "rows": 43,
+      "period": "2025-05",
+      "source": "OPENTABLE",
+      "observed_days": 20
+    },
+    {
+      "rows": 22,
+      "period": "2025-06",
+      "source": "OPENTABLE",
+      "observed_days": 16
+    },
+    {
+      "rows": 30,
+      "period": "2025-07",
+      "source": "OPENTABLE",
+      "observed_days": 19
+    },
+    {
+      "rows": 26,
+      "period": "2025-08",
+      "source": "OPENTABLE",
+      "observed_days": 17
+    },
+    {
+      "rows": 21,
+      "period": "2025-09",
+      "source": "OPENTABLE",
+      "observed_days": 17
+    },
+    {
+      "rows": 23,
+      "period": "2025-10",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 21,
+      "period": "2025-11",
+      "source": "OPENTABLE",
+      "observed_days": 15
+    },
+    {
+      "rows": 19,
+      "period": "2025-12",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 18,
+      "period": "2026-01",
+      "source": "OPENTABLE",
+      "observed_days": 13
+    },
+    {
+      "rows": 14,
+      "period": "2026-02",
+      "source": "OPENTABLE",
+      "observed_days": 11
+    },
+    {
+      "rows": 16,
+      "period": "2026-03",
+      "source": "OPENTABLE",
+      "observed_days": 12
+    },
+    {
+      "rows": 22,
+      "period": "2026-04",
+      "source": "OPENTABLE",
+      "observed_days": 16
+    },
+    {
+      "rows": 20,
+      "period": "2026-05",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 19,
+      "period": "2026-06",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 18,
+      "period": "2026-07",
+      "source": "OPENTABLE",
+      "observed_days": 13
+    },
+    {
+      "rows": 22,
+      "period": "2026-08",
+      "source": "OPENTABLE",
+      "observed_days": 17
+    },
+    {
+      "rows": 14,
+      "period": "2026-09",
+      "source": "OPENTABLE",
+      "observed_days": 12
+    },
+    {
+      "rows": 28,
+      "period": "2026-10",
+      "source": "OPENTABLE",
+      "observed_days": 19
+    },
+    {
+      "rows": 14,
+      "period": "2026-11",
+      "source": "OPENTABLE",
+      "observed_days": 9
+    }
+  ],
+  "canonical_sale_item": [
+    {
+      "rows": 1529341,
+      "source": "LIGHTSPEED",
+      "last_date": "2026-11-25",
+      "first_date": "2020-11-23",
+      "observed_days": 1988
+    }
+  ],
+  "canonical_sale_item_monthly": [
+    {
+      "rows": 976,
+      "period": "2020-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 15455,
+      "period": "2020-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 20
+    },
+    {
+      "rows": 17890,
+      "period": "2021-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 19679,
+      "period": "2021-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 22302,
+      "period": "2021-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 19478,
+      "period": "2021-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 22442,
+      "period": "2021-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 18686,
+      "period": "2021-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 18605,
+      "period": "2021-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 5368,
+      "period": "2021-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 4,
+      "period": "2021-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 2
+    },
+    {
+      "rows": 10287,
+      "period": "2021-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 27075,
+      "period": "2021-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 22265,
+      "period": "2021-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 7161,
+      "period": "2022-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 16010,
+      "period": "2022-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 17055,
+      "period": "2022-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 16209,
+      "period": "2022-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 17655,
+      "period": "2022-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 19411,
+      "period": "2022-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 18773,
+      "period": "2022-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 18813,
+      "period": "2022-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 20482,
+      "period": "2022-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 19786,
+      "period": "2022-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 21746,
+      "period": "2022-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 19207,
+      "period": "2022-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 13260,
+      "period": "2023-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 19645,
+      "period": "2023-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 21929,
+      "period": "2023-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 24402,
+      "period": "2023-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 22940,
+      "period": "2023-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 23317,
+      "period": "2023-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 25866,
+      "period": "2023-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 22967,
+      "period": "2023-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 26503,
+      "period": "2023-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 24006,
+      "period": "2023-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 27608,
+      "period": "2023-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31446,
+      "period": "2023-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 26711,
+      "period": "2024-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 27843,
+      "period": "2024-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 31488,
+      "period": "2024-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 26981,
+      "period": "2024-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 26875,
+      "period": "2024-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 29261,
+      "period": "2024-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 28070,
+      "period": "2024-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 31034,
+      "period": "2024-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 29079,
+      "period": "2024-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31247,
+      "period": "2024-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 34181,
+      "period": "2024-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 38252,
+      "period": "2024-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 2595,
+      "period": "2025-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 2214,
+      "period": "2025-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 2609,
+      "period": "2025-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 2625,
+      "period": "2025-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 3087,
+      "period": "2025-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 2756,
+      "period": "2025-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 4062,
+      "period": "2025-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 3932,
+      "period": "2025-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 2596,
+      "period": "2025-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 2882,
+      "period": "2025-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 7037,
+      "period": "2025-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 5348,
+      "period": "2025-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 38183,
+      "period": "2026-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 33694,
+      "period": "2026-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 35465,
+      "period": "2026-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 33867,
+      "period": "2026-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 40968,
+      "period": "2026-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 33395,
+      "period": "2026-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 37092,
+      "period": "2026-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 37762,
+      "period": "2026-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 40903,
+      "period": "2026-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 45445,
+      "period": "2026-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 33093,
+      "period": "2026-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    }
+  ],
+  "canonical_sale_recipe_link": [
+    {
+      "rows": 1184,
+      "source": "CTB"
+    }
+  ],
+  "canonical_shift": [],
+  "canonical_shift_monthly": [],
+  "canonical_stock_count": [
+    {
+      "rows": 14417,
+      "source": "CTB",
+      "last_date": "2026-11-24",
+      "first_date": "2026-05-25",
+      "observed_days": 31
+    }
+  ],
+  "canonical_stock_count_monthly": [
+    {
+      "rows": 147,
+      "period": "2026-05",
+      "source": "CTB",
+      "observed_days": 1
+    },
+    {
+      "rows": 1738,
+      "period": "2026-06",
+      "source": "CTB",
+      "observed_days": 4
+    },
+    {
+      "rows": 2671,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 5
+    },
+    {
+      "rows": 3127,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 7
+    },
+    {
+      "rows": 3145,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 6
+    },
+    {
+      "rows": 1817,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 4
+    },
+    {
+      "rows": 1772,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 4
+    }
+  ],
+  "canonical_stocktake": [
+    {
+      "rows": 34,
+      "source": "CTB",
+      "last_date": "2026-11-24",
+      "first_date": "2026-05-25",
+      "observed_days": 31
+    }
+  ],
+  "canonical_stocktake_monthly": [
+    {
+      "rows": 1,
+      "period": "2026-05",
+      "source": "CTB",
+      "observed_days": 1
+    },
+    {
+      "rows": 4,
+      "period": "2026-06",
+      "source": "CTB",
+      "observed_days": 4
+    },
+    {
+      "rows": 6,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 5
+    },
+    {
+      "rows": 7,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 7
+    },
+    {
+      "rows": 8,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 6
+    },
+    {
+      "rows": 4,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 4
+    },
+    {
+      "rows": 4,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 4
+    }
+  ],
+  "canonical_supplier": [
+    {
+      "rows": 77,
+      "source": "CTB"
+    }
+  ],
+  "canonical_wastage": [
+    {
+      "rows": 933,
+      "source": "CTB",
+      "last_date": "2026-11-26",
+      "first_date": "2026-09-10",
+      "observed_days": 61
+    }
+  ],
+  "canonical_wastage_monthly": [
+    {
+      "rows": 45,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 11
+    },
+    {
+      "rows": 493,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 26
+    },
+    {
+      "rows": 395,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 24
+    }
+  ],
+  "resolved_classified_wastage": [
+    {
+      "rows": 933,
+      "source": "CTB",
+      "last_date": "2026-11-26",
+      "first_date": "2026-09-10",
+      "observed_days": 61
+    }
+  ],
+  "resolved_classified_wastage_monthly": [
+    {
+      "rows": 45,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 11
+    },
+    {
+      "rows": 493,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 26
+    },
+    {
+      "rows": 395,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 24
+    }
+  ],
+  "resolved_daily_sales": [
+    {
+      "rows": 202,
+      "source": "CTB",
+      "last_date": "2026-11-20",
+      "first_date": "2026-04-02",
+      "observed_days": 202
+    },
+    {
+      "rows": 1697,
+      "source": "LIGHTSPEED",
+      "last_date": "2026-11-25",
+      "first_date": "2020-11-23",
+      "observed_days": 1697
+    },
+    {
+      "rows": 89,
+      "source": "LIGHTSPEED_PAYMENTS",
+      "last_date": "2026-03-31",
+      "first_date": "2026-01-01",
+      "observed_days": 89
+    }
+  ],
+  "resolved_daily_sales_monthly": [
+    {
+      "rows": 29,
+      "period": "2026-04",
+      "source": "CTB",
+      "observed_days": 29
+    },
+    {
+      "rows": 31,
+      "period": "2026-05",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 27,
+      "period": "2026-06",
+      "source": "CTB",
+      "observed_days": 27
+    },
+    {
+      "rows": 31,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 31,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 19,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 19
+    },
+    {
+      "rows": 4,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 4
+    },
+    {
+      "rows": 7,
+      "period": "2020-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 20,
+      "period": "2020-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 20
+    },
+    {
+      "rows": 26,
+      "period": "2021-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 26,
+      "period": "2021-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 30,
+      "period": "2021-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 27,
+      "period": "2021-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 28,
+      "period": "2021-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 27,
+      "period": "2021-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 25,
+      "period": "2021-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 13,
+      "period": "2021-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 2,
+      "period": "2021-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 2
+    },
+    {
+      "rows": 12,
+      "period": "2021-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 30,
+      "period": "2021-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 24,
+      "period": "2021-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 12,
+      "period": "2022-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 25,
+      "period": "2022-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 29,
+      "period": "2022-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 25,
+      "period": "2022-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 26,
+      "period": "2022-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 27,
+      "period": "2022-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 28,
+      "period": "2022-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 27,
+      "period": "2022-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 26,
+      "period": "2022-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 27,
+      "period": "2022-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 27,
+      "period": "2022-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 23,
+      "period": "2022-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 19,
+      "period": "2023-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 24,
+      "period": "2023-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 27,
+      "period": "2023-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 27,
+      "period": "2023-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 28,
+      "period": "2023-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 30,
+      "period": "2023-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2023-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 31,
+      "period": "2023-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2023-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2023-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2023-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 30,
+      "period": "2023-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2024-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 28,
+      "period": "2024-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 31,
+      "period": "2024-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2024-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2024-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2024-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2024-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 31,
+      "period": "2024-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2024-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2024-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2024-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 30,
+      "period": "2024-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 30,
+      "period": "2025-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 28,
+      "period": "2025-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 31,
+      "period": "2025-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2025-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2025-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2025-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2025-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 31,
+      "period": "2025-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2025-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2025-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2025-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 30,
+      "period": "2025-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 12,
+      "period": "2026-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 21,
+      "period": "2026-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 21
+    },
+    {
+      "rows": 30,
+      "period": "2026-01",
+      "source": "LIGHTSPEED_PAYMENTS",
+      "observed_days": 30
+    },
+    {
+      "rows": 28,
+      "period": "2026-02",
+      "source": "LIGHTSPEED_PAYMENTS",
+      "observed_days": 28
+    },
+    {
+      "rows": 31,
+      "period": "2026-03",
+      "source": "LIGHTSPEED_PAYMENTS",
+      "observed_days": 31
+    }
+  ],
+  "resolved_deleted_sale_day": [
+    {
+      "rows": 1036,
+      "source": "LIGHTSPEED",
+      "last_date": "2026-11-22",
+      "first_date": "2020-11-23",
+      "observed_days": 1036
+    }
+  ],
+  "resolved_deleted_sale_day_monthly": [
+    {
+      "rows": 8,
+      "period": "2020-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 8
+    },
+    {
+      "rows": 21,
+      "period": "2020-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 21
+    },
+    {
+      "rows": 25,
+      "period": "2021-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 23,
+      "period": "2021-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 26,
+      "period": "2021-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 21,
+      "period": "2021-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 21
+    },
+    {
+      "rows": 21,
+      "period": "2021-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 21
+    },
+    {
+      "rows": 17,
+      "period": "2021-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 17
+    },
+    {
+      "rows": 15,
+      "period": "2021-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 9,
+      "period": "2021-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 1,
+      "period": "2021-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 1
+    },
+    {
+      "rows": 9,
+      "period": "2021-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 23,
+      "period": "2021-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 20,
+      "period": "2021-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 20
+    },
+    {
+      "rows": 4,
+      "period": "2022-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 4
+    },
+    {
+      "rows": 13,
+      "period": "2022-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 15,
+      "period": "2022-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 17,
+      "period": "2022-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 17
+    },
+    {
+      "rows": 15,
+      "period": "2022-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 14,
+      "period": "2022-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 16,
+      "period": "2022-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 16,
+      "period": "2022-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 11,
+      "period": "2022-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 11
+    },
+    {
+      "rows": 9,
+      "period": "2022-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 15,
+      "period": "2022-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 12,
+      "period": "2022-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 9,
+      "period": "2023-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 13,
+      "period": "2023-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 8,
+      "period": "2023-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 8
+    },
+    {
+      "rows": 14,
+      "period": "2023-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 12,
+      "period": "2023-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 13,
+      "period": "2023-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 17,
+      "period": "2023-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 17
+    },
+    {
+      "rows": 19,
+      "period": "2023-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 12,
+      "period": "2023-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 11,
+      "period": "2023-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 11
+    },
+    {
+      "rows": 11,
+      "period": "2023-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 11
+    },
+    {
+      "rows": 10,
+      "period": "2023-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 10
+    },
+    {
+      "rows": 14,
+      "period": "2024-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 15,
+      "period": "2024-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 14,
+      "period": "2024-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 7,
+      "period": "2024-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 14,
+      "period": "2024-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 15,
+      "period": "2024-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 9,
+      "period": "2024-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 7,
+      "period": "2024-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 11,
+      "period": "2024-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 11
+    },
+    {
+      "rows": 9,
+      "period": "2024-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 14,
+      "period": "2024-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 9,
+      "period": "2024-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 9
+    },
+    {
+      "rows": 12,
+      "period": "2025-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 6,
+      "period": "2025-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 6
+    },
+    {
+      "rows": 14,
+      "period": "2025-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 19,
+      "period": "2025-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 12,
+      "period": "2025-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 14,
+      "period": "2025-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    },
+    {
+      "rows": 16,
+      "period": "2025-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 13,
+      "period": "2025-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 18,
+      "period": "2025-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 18
+    },
+    {
+      "rows": 10,
+      "period": "2025-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 10
+    },
+    {
+      "rows": 18,
+      "period": "2025-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 18
+    },
+    {
+      "rows": 16,
+      "period": "2025-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 16,
+      "period": "2026-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 15,
+      "period": "2026-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 15,
+      "period": "2026-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 15
+    },
+    {
+      "rows": 13,
+      "period": "2026-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 16,
+      "period": "2026-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 16,
+      "period": "2026-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 23,
+      "period": "2026-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 19,
+      "period": "2026-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 16,
+      "period": "2026-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 16
+    },
+    {
+      "rows": 22,
+      "period": "2026-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 22
+    },
+    {
+      "rows": 14,
+      "period": "2026-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 14
+    }
+  ],
+  "resolved_inventory_day": [
+    {
+      "rows": 211,
+      "source": "CTB",
+      "last_date": "2026-11-25",
+      "first_date": "1989-10-01",
+      "observed_days": 211
+    }
+  ],
+  "resolved_inventory_day_monthly": [
+    {
+      "rows": 1,
+      "period": "1989-10",
+      "source": "CTB",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2025-10",
+      "source": "CTB",
+      "observed_days": 1
+    },
+    {
+      "rows": 4,
+      "period": "2026-04",
+      "source": "CTB",
+      "observed_days": 4
+    },
+    {
+      "rows": 31,
+      "period": "2026-05",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 27,
+      "period": "2026-06",
+      "source": "CTB",
+      "observed_days": 27
+    },
+    {
+      "rows": 30,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 30,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 31,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 25,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 25
+    }
+  ],
+  "resolved_inventory_observation": [
+    {
+      "rows": 15350,
+      "source": "CTB",
+      "last_date": "2026-11-26",
+      "first_date": "2026-05-25",
+      "observed_days": 84
+    }
+  ],
+  "resolved_inventory_observation_monthly": [
+    {
+      "rows": 147,
+      "period": "2026-05",
+      "source": "CTB",
+      "observed_days": 1
+    },
+    {
+      "rows": 1738,
+      "period": "2026-06",
+      "source": "CTB",
+      "observed_days": 4
+    },
+    {
+      "rows": 2671,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 5
+    },
+    {
+      "rows": 3127,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 7
+    },
+    {
+      "rows": 3190,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 16
+    },
+    {
+      "rows": 2310,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 27
+    },
+    {
+      "rows": 2167,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 24
+    }
+  ],
+  "resolved_labour_day": [],
+  "resolved_labour_day_monthly": [],
+  "resolved_payment_day": [
+    {
+      "rows": 7347,
+      "source": "LIGHTSPEED",
+      "last_date": "2026-11-25",
+      "first_date": "2020-11-23",
+      "observed_days": 1989
+    }
+  ],
+  "resolved_payment_day_monthly": [
+    {
+      "rows": 10,
+      "period": "2020-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 95,
+      "period": "2020-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 20
+    },
+    {
+      "rows": 100,
+      "period": "2021-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 80,
+      "period": "2021-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 111,
+      "period": "2021-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 95,
+      "period": "2021-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 101,
+      "period": "2021-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 115,
+      "period": "2021-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 112,
+      "period": "2021-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 40,
+      "period": "2021-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 2,
+      "period": "2021-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 2
+    },
+    {
+      "rows": 41,
+      "period": "2021-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 119,
+      "period": "2021-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 99,
+      "period": "2021-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 39,
+      "period": "2022-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 89,
+      "period": "2022-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 104,
+      "period": "2022-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 97,
+      "period": "2022-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 96,
+      "period": "2022-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 102,
+      "period": "2022-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 105,
+      "period": "2022-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 103,
+      "period": "2022-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 96,
+      "period": "2022-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 90,
+      "period": "2022-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 92,
+      "period": "2022-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 77,
+      "period": "2022-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 63,
+      "period": "2023-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 88,
+      "period": "2023-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 104,
+      "period": "2023-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 103,
+      "period": "2023-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 102,
+      "period": "2023-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 112,
+      "period": "2023-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 116,
+      "period": "2023-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 110,
+      "period": "2023-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 107,
+      "period": "2023-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 121,
+      "period": "2023-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 124,
+      "period": "2023-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 124,
+      "period": "2023-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 112,
+      "period": "2024-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 99,
+      "period": "2024-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 111,
+      "period": "2024-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 108,
+      "period": "2024-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 113,
+      "period": "2024-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 106,
+      "period": "2024-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 107,
+      "period": "2024-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 108,
+      "period": "2024-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 109,
+      "period": "2024-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 112,
+      "period": "2024-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 115,
+      "period": "2024-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 118,
+      "period": "2024-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 106,
+      "period": "2025-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 100,
+      "period": "2025-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 114,
+      "period": "2025-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 109,
+      "period": "2025-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 127,
+      "period": "2025-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 105,
+      "period": "2025-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 113,
+      "period": "2025-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 104,
+      "period": "2025-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 106,
+      "period": "2025-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 116,
+      "period": "2025-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 112,
+      "period": "2025-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 122,
+      "period": "2025-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 119,
+      "period": "2026-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 97,
+      "period": "2026-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 120,
+      "period": "2026-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 101,
+      "period": "2026-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 111,
+      "period": "2026-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 98,
+      "period": "2026-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 116,
+      "period": "2026-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 113,
+      "period": "2026-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 125,
+      "period": "2026-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 116,
+      "period": "2026-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 95,
+      "period": "2026-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    }
+  ],
+  "resolved_product_sales": [
+    {
+      "rows": 20338,
+      "source": "CTB",
+      "last_date": "2026-11-25",
+      "first_date": "2026-07-08",
+      "observed_days": 141
+    }
+  ],
+  "resolved_product_sales_monthly": [
+    {
+      "rows": 3359,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 24
+    },
+    {
+      "rows": 4270,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 4398,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 4612,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 3699,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 25
+    }
+  ],
+  "resolved_recipe": [
+    {
+      "rows": 663,
+      "source": "CTB"
+    }
+  ],
+  "resolved_recipe_catalog": [
+    {
+      "rows": 1,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "resolved_recipe_definition": [
+    {
+      "rows": 674,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "resolved_recipe_ingredient": [
+    {
+      "rows": 2630,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "resolved_recipe_section": [
+    {
+      "rows": 9550,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "resolved_reporting_cost": [
+    {
+      "rows": 17933,
+      "source": "UNSPECIFIED",
+      "last_date": "2026-11-25",
+      "first_date": "2026-07-25",
+      "observed_days": 124
+    }
+  ],
+  "resolved_reporting_cost_monthly": [
+    {
+      "rows": 958,
+      "period": "2026-07",
+      "source": "UNSPECIFIED",
+      "observed_days": 7
+    },
+    {
+      "rows": 4269,
+      "period": "2026-08",
+      "source": "UNSPECIFIED",
+      "observed_days": 31
+    },
+    {
+      "rows": 4396,
+      "period": "2026-09",
+      "source": "UNSPECIFIED",
+      "observed_days": 30
+    },
+    {
+      "rows": 4612,
+      "period": "2026-10",
+      "source": "UNSPECIFIED",
+      "observed_days": 31
+    },
+    {
+      "rows": 3698,
+      "period": "2026-11",
+      "source": "UNSPECIFIED",
+      "observed_days": 25
+    }
+  ],
+  "resolved_reporting_pos_evidence": [
+    {
+      "rows": 2650,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "resolved_reporting_review_sale": [
+    {
+      "rows": 17937,
+      "source": "CTB",
+      "last_date": "2026-11-25",
+      "first_date": "2026-07-25",
+      "observed_days": 124
+    },
+    {
+      "rows": 2401,
+      "source": "RESOLVED",
+      "last_date": "2026-07-24",
+      "first_date": "2026-07-08",
+      "observed_days": 17
+    }
+  ],
+  "resolved_reporting_review_sale_monthly": [
+    {
+      "rows": 958,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 7
+    },
+    {
+      "rows": 4270,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 4398,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 4612,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 3699,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 25
+    },
+    {
+      "rows": 2401,
+      "period": "2026-07",
+      "source": "RESOLVED",
+      "observed_days": 17
+    }
+  ],
+  "resolved_reporting_sales": [
+    {
+      "rows": 20338,
+      "source": "CTB",
+      "last_date": "2026-11-25",
+      "first_date": "2026-07-08",
+      "observed_days": 141
+    }
+  ],
+  "resolved_reporting_sales_monthly": [
+    {
+      "rows": 3359,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 24
+    },
+    {
+      "rows": 4270,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 4398,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 4612,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 3699,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 25
+    }
+  ],
+  "resolved_reservation_day": [
+    {
+      "rows": 1473,
+      "source": "OPENTABLE",
+      "last_date": "2027-05-09",
+      "first_date": "2020-12-05",
+      "observed_days": 1068
+    }
+  ],
+  "resolved_reservation_day_monthly": [
+    {
+      "rows": 2,
+      "period": "2020-12",
+      "source": "OPENTABLE",
+      "observed_days": 2
+    },
+    {
+      "rows": 2,
+      "period": "2021-01",
+      "source": "OPENTABLE",
+      "observed_days": 2
+    },
+    {
+      "rows": 1,
+      "period": "2021-03",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2021-08",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2021-11",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2022-04",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2022-10",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 1,
+      "period": "2022-12",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    },
+    {
+      "rows": 4,
+      "period": "2023-06",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 5,
+      "period": "2023-07",
+      "source": "OPENTABLE",
+      "observed_days": 5
+    },
+    {
+      "rows": 4,
+      "period": "2023-08",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 4,
+      "period": "2023-09",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 5,
+      "period": "2023-10",
+      "source": "OPENTABLE",
+      "observed_days": 5
+    },
+    {
+      "rows": 4,
+      "period": "2023-11",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 4,
+      "period": "2023-12",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 4,
+      "period": "2024-01",
+      "source": "OPENTABLE",
+      "observed_days": 4
+    },
+    {
+      "rows": 3,
+      "period": "2024-02",
+      "source": "OPENTABLE",
+      "observed_days": 3
+    },
+    {
+      "rows": 19,
+      "period": "2024-03",
+      "source": "OPENTABLE",
+      "observed_days": 14
+    },
+    {
+      "rows": 40,
+      "period": "2024-04",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 39,
+      "period": "2024-05",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 41,
+      "period": "2024-06",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 39,
+      "period": "2024-07",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 40,
+      "period": "2024-08",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 40,
+      "period": "2024-09",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 39,
+      "period": "2024-10",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 40,
+      "period": "2024-11",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 44,
+      "period": "2024-12",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 45,
+      "period": "2025-01",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 39,
+      "period": "2025-02",
+      "source": "OPENTABLE",
+      "observed_days": 28
+    },
+    {
+      "rows": 44,
+      "period": "2025-03",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 42,
+      "period": "2025-04",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 45,
+      "period": "2025-05",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 42,
+      "period": "2025-06",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 43,
+      "period": "2025-07",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 45,
+      "period": "2025-08",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 42,
+      "period": "2025-09",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 43,
+      "period": "2025-10",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 45,
+      "period": "2025-11",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 42,
+      "period": "2025-12",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 45,
+      "period": "2026-01",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 39,
+      "period": "2026-02",
+      "source": "OPENTABLE",
+      "observed_days": 28
+    },
+    {
+      "rows": 45,
+      "period": "2026-03",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 43,
+      "period": "2026-04",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 46,
+      "period": "2026-05",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 42,
+      "period": "2026-06",
+      "source": "OPENTABLE",
+      "observed_days": 29
+    },
+    {
+      "rows": 44,
+      "period": "2026-07",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 44,
+      "period": "2026-08",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 42,
+      "period": "2026-09",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 45,
+      "period": "2026-10",
+      "source": "OPENTABLE",
+      "observed_days": 31
+    },
+    {
+      "rows": 43,
+      "period": "2026-11",
+      "source": "OPENTABLE",
+      "observed_days": 30
+    },
+    {
+      "rows": 38,
+      "period": "2026-12",
+      "source": "OPENTABLE",
+      "observed_days": 28
+    },
+    {
+      "rows": 5,
+      "period": "2027-01",
+      "source": "OPENTABLE",
+      "observed_days": 5
+    },
+    {
+      "rows": 4,
+      "period": "2027-02",
+      "source": "OPENTABLE",
+      "observed_days": 2
+    },
+    {
+      "rows": 2,
+      "period": "2027-03",
+      "source": "OPENTABLE",
+      "observed_days": 2
+    },
+    {
+      "rows": 1,
+      "period": "2027-05",
+      "source": "OPENTABLE",
+      "observed_days": 1
+    }
+  ],
+  "resolved_sale_item_day": [
+    {
+      "rows": 19716,
+      "source": "LIGHTSPEED",
+      "last_date": "2026-11-25",
+      "first_date": "2020-11-23",
+      "observed_days": 1988
+    }
+  ],
+  "resolved_sale_item_day_monthly": [
+    {
+      "rows": 28,
+      "period": "2020-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 119,
+      "period": "2020-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 20
+    },
+    {
+      "rows": 200,
+      "period": "2021-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 197,
+      "period": "2021-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 253,
+      "period": "2021-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 245,
+      "period": "2021-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 246,
+      "period": "2021-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 205,
+      "period": "2021-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 212,
+      "period": "2021-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 79,
+      "period": "2021-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 2,
+      "period": "2021-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 2
+    },
+    {
+      "rows": 98,
+      "period": "2021-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 261,
+      "period": "2021-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 232,
+      "period": "2021-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 109,
+      "period": "2022-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 261,
+      "period": "2022-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 292,
+      "period": "2022-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 236,
+      "period": "2022-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 249,
+      "period": "2022-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 265,
+      "period": "2022-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 279,
+      "period": "2022-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 286,
+      "period": "2022-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 294,
+      "period": "2022-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 308,
+      "period": "2022-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 342,
+      "period": "2022-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 280,
+      "period": "2022-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 226,
+      "period": "2023-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 291,
+      "period": "2023-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 332,
+      "period": "2023-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 338,
+      "period": "2023-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 312,
+      "period": "2023-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 346,
+      "period": "2023-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 350,
+      "period": "2023-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 346,
+      "period": "2023-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 350,
+      "period": "2023-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 354,
+      "period": "2023-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 372,
+      "period": "2023-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 379,
+      "period": "2023-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 389,
+      "period": "2024-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 350,
+      "period": "2024-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 398,
+      "period": "2024-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 377,
+      "period": "2024-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 386,
+      "period": "2024-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 373,
+      "period": "2024-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 388,
+      "period": "2024-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 392,
+      "period": "2024-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 379,
+      "period": "2024-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 389,
+      "period": "2024-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 382,
+      "period": "2024-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 392,
+      "period": "2024-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 92,
+      "period": "2025-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 73,
+      "period": "2025-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 92,
+      "period": "2025-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 88,
+      "period": "2025-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 91,
+      "period": "2025-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 85,
+      "period": "2025-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 95,
+      "period": "2025-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 99,
+      "period": "2025-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 89,
+      "period": "2025-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 91,
+      "period": "2025-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 114,
+      "period": "2025-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 97,
+      "period": "2025-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 427,
+      "period": "2026-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 402,
+      "period": "2026-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 434,
+      "period": "2026-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 411,
+      "period": "2026-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 417,
+      "period": "2026-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 356,
+      "period": "2026-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 421,
+      "period": "2026-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 397,
+      "period": "2026-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 406,
+      "period": "2026-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 425,
+      "period": "2026-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 345,
+      "period": "2026-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    }
+  ],
+  "resolved_sale_line": [
+    {
+      "rows": 1529341,
+      "source": "LIGHTSPEED",
+      "last_date": "2026-11-25",
+      "first_date": "2020-11-23",
+      "observed_days": 1988
+    }
+  ],
+  "resolved_sale_line_monthly": [
+    {
+      "rows": 976,
+      "period": "2020-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 7
+    },
+    {
+      "rows": 15455,
+      "period": "2020-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 20
+    },
+    {
+      "rows": 17890,
+      "period": "2021-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 19679,
+      "period": "2021-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 22302,
+      "period": "2021-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 19478,
+      "period": "2021-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 22442,
+      "period": "2021-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 18686,
+      "period": "2021-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 18605,
+      "period": "2021-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 5368,
+      "period": "2021-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 13
+    },
+    {
+      "rows": 4,
+      "period": "2021-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 2
+    },
+    {
+      "rows": 10287,
+      "period": "2021-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 27075,
+      "period": "2021-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 22265,
+      "period": "2021-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 7161,
+      "period": "2022-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 12
+    },
+    {
+      "rows": 16010,
+      "period": "2022-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 17055,
+      "period": "2022-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 16209,
+      "period": "2022-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    },
+    {
+      "rows": 17655,
+      "period": "2022-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 19411,
+      "period": "2022-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 18773,
+      "period": "2022-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 18813,
+      "period": "2022-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 20482,
+      "period": "2022-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 26
+    },
+    {
+      "rows": 19786,
+      "period": "2022-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 21746,
+      "period": "2022-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 19207,
+      "period": "2022-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 23
+    },
+    {
+      "rows": 13260,
+      "period": "2023-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 19
+    },
+    {
+      "rows": 19645,
+      "period": "2023-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 24
+    },
+    {
+      "rows": 21929,
+      "period": "2023-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 24402,
+      "period": "2023-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 22940,
+      "period": "2023-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 23317,
+      "period": "2023-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 25866,
+      "period": "2023-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 22967,
+      "period": "2023-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 26503,
+      "period": "2023-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 24006,
+      "period": "2023-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 27608,
+      "period": "2023-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31446,
+      "period": "2023-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 29
+    },
+    {
+      "rows": 26711,
+      "period": "2024-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 27843,
+      "period": "2024-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 31488,
+      "period": "2024-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 26981,
+      "period": "2024-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 26875,
+      "period": "2024-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 29261,
+      "period": "2024-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 28070,
+      "period": "2024-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 31034,
+      "period": "2024-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 29079,
+      "period": "2024-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 31247,
+      "period": "2024-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 34181,
+      "period": "2024-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 38252,
+      "period": "2024-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 2595,
+      "period": "2025-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 2214,
+      "period": "2025-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 2609,
+      "period": "2025-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 2625,
+      "period": "2025-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 3087,
+      "period": "2025-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 2756,
+      "period": "2025-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 4062,
+      "period": "2025-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 3932,
+      "period": "2025-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 2596,
+      "period": "2025-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 2882,
+      "period": "2025-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 7037,
+      "period": "2025-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 5348,
+      "period": "2025-12",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 38183,
+      "period": "2026-01",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 33694,
+      "period": "2026-02",
+      "source": "LIGHTSPEED",
+      "observed_days": 28
+    },
+    {
+      "rows": 35465,
+      "period": "2026-03",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 33867,
+      "period": "2026-04",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 40968,
+      "period": "2026-05",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 33395,
+      "period": "2026-06",
+      "source": "LIGHTSPEED",
+      "observed_days": 27
+    },
+    {
+      "rows": 37092,
+      "period": "2026-07",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 37762,
+      "period": "2026-08",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 40903,
+      "period": "2026-09",
+      "source": "LIGHTSPEED",
+      "observed_days": 30
+    },
+    {
+      "rows": 45445,
+      "period": "2026-10",
+      "source": "LIGHTSPEED",
+      "observed_days": 31
+    },
+    {
+      "rows": 33093,
+      "period": "2026-11",
+      "source": "LIGHTSPEED",
+      "observed_days": 25
+    }
+  ],
+  "resolved_sale_recipe_link": [
+    {
+      "rows": 1184,
+      "source": "UNSPECIFIED"
+    }
+  ],
+  "source_product": [
+    {
+      "rows": 645,
+      "source": "CTB"
+    }
+  ],
+  "source_product_sale_fact": [
+    {
+      "rows": 17941,
+      "source": "CTB",
+      "last_date": "2026-11-25",
+      "first_date": "2026-07-25",
+      "observed_days": 124
+    }
+  ],
+  "source_product_sale_fact_monthly": [
+    {
+      "rows": 958,
+      "period": "2026-07",
+      "source": "CTB",
+      "observed_days": 7
+    },
+    {
+      "rows": 4271,
+      "period": "2026-08",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 4400,
+      "period": "2026-09",
+      "source": "CTB",
+      "observed_days": 30
+    },
+    {
+      "rows": 4612,
+      "period": "2026-10",
+      "source": "CTB",
+      "observed_days": 31
+    },
+    {
+      "rows": 3700,
+      "period": "2026-11",
+      "source": "CTB",
+      "observed_days": 25
+    }
+  ],
+  "sale_projection_identity": [
+    {
+      "differing_rows": 0,
+      "orphan_projection_rows": 0,
+      "missing_projection_rows": 0
+    }
+  ],
+  "limitations": [
+    "Observed dates and counts do not prove complete source populations.",
+    "Current bitemporal versions only; intentionally raw-only datasets are not failed imports.",
+    "Run-level stages can describe multiple raw deliveries; counts are not rejected source-row counts.",
+    "Historical failure records do not establish a currently unresolved failure.",
+    "Schema metadata was read immediately before the repeatable-read aggregate snapshot."
+  ]
+}
