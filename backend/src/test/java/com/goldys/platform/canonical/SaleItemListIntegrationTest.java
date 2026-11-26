@@ -162,6 +162,36 @@ class SaleItemListIntegrationTest {
     }
   }
 
+  @Autowired com.goldys.platform.semantic.MerchandiseHistoryQuery history;
+
+  @Test
+  void merchandiseHistoryFindsOldLinesIndependentlyOfProductMetrics() {
+    LocalDate old = LocalDate.of(2020, 11, 24);
+    ingest.record(saleItem(old, "OLD", "OLD-1", "BEV", "90"));
+    ingest.record(saleItem(old, "OLD", "OLD-1", "BEV", "100"));
+    ingest.record(saleItem(DAY_1, "NEW", "NEW-1", "FOOD", "20"));
+    var coverage = history.coverage().getFirst();
+    assertThat(coverage.firstDate()).isEqualTo(old);
+    assertThat(coverage.lastDate()).isEqualTo(DAY_1);
+    assertThat(coverage.observedDays()).isEqualTo(2);
+    assertThat(coverage.rows()).isEqualTo(2);
+    var products = history.products(old, old, 20);
+    assertThat(products).hasSize(1);
+    assertThat(products.getFirst().name()).isEqualTo("Espresso");
+    assertThat(products.getFirst().amount()).isEqualByComparingTo("100");
+    assertThat(products.getFirst().quantity()).isEqualByComparingTo("2");
+    assertThat(history.products(old.minusDays(1), old.minusDays(1), 20)).isEmpty();
+    assertThat(history.products(old, DAY_1, 1)).hasSize(1);
+  }
+
+  @Test
+  void emptyHistoryKeepsDateBoundsMissing() {
+    var coverage = history.coverage().getFirst();
+    assertThat(coverage.firstDate()).isNull();
+    assertThat(coverage.lastDate()).isNull();
+    assertThat(coverage.rows()).isZero();
+  }
+
   private void assertFullFieldSet(SaleItemRow r) {
     assertThat(r.tradingDate()).isEqualTo(DAY_1);
     assertThat(r.saleNumber()).isEqualTo("SALE-1");

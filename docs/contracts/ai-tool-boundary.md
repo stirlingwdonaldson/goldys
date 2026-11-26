@@ -26,6 +26,7 @@ the code is held to.
 | `ToolId` | Purpose |
 |---|---|
 | `GET_SALES_BY_PERIOD` | Resolved daily sales over a range |
+| `GET_MERCHANDISE_HISTORY` | Discover retained merchandise/product date bounds or rank Lightspeed merchandise over an explicit bounded range; source-qualified, not reconciled revenue |
 | `GET_TOP_PRODUCTS` | Ranked products by resolved amount |
 | `GET_RESERVATION_SUMMARY` | Bookings, covers, no-shows |
 | `GET_LABOUR_VARIANCE` | Scheduled vs actual hours (cost is permission-gated) |
@@ -141,3 +142,15 @@ nonnegative comparable categories; RADIAL uses 2..12 categories on an explicitly
 labelled maximum-observed-value scale, not an invented target. Stacked AREA/BAR requires
 one additive grouped query and complete nonnegative values. Ratios and stock balances cannot become stacked or part-to-whole charts. Mixed units,
 duplicate labels and oversized charts are rejected rather than silently transformed/truncated. The assistant can use a valid alternative or explain the limit.
+
+## Historical merchandise access
+
+`GET_MERCHANDISE_HISTORY` reads the existing `resolved_sale_line` view through a semantic
+port. COVERAGE discovers current date bounds and observed-day counts for merchandise and
+reconciled product/day data independently; it never assumes continuous coverage. PRODUCTS
+ranks at most 100 source product groups over an inclusive range of at most 3661 days.
+Both modes require `sale-items.metrics` and `reconciliation.sales` READ permissions before
+any read. Groups retain site, product number, SKU, source name and category; no identity join
+or addition to reconciled product metrics is implied. Unknown quantities/amounts stay null.
+Results carry the historical audit's missing-line and payment-join inflation limitations.
+This exposes existing observations; it neither repairs history nor certifies completeness.

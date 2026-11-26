@@ -220,5 +220,32 @@
     "role": "owner",
     "expectedTools": ["run_metric_analysis"],
     "causal": false
+  },
+  {
+    "category": "merchandise-history",
+    "question": "How far back does our product-level sales data go?",
+    "role": "owner",
+    "expectedTools": [
+      "get_merchandise_history"
+    ],
+    "causal": false
+  },
+  {
+    "category": "merchandise-history",
+    "question": "Show the top 20 observed Lightspeed merchandise products in November 2020, with data quality limitations.",
+    "role": "owner",
+    "expectedTools": [
+      "get_merchandise_history"
+    ],
+    "causal": false
+  },
+  {
+    "category": "merchandise-history-negative",
+    "question": "What does reconciled product.sales_amount mean?",
+    "role": "owner",
+    "expectedTools": [
+      "describe_metrics"
+    ],
+    "causal": false
   }
 ]
