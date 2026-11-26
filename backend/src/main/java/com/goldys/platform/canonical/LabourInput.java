@@ -18,4 +18,34 @@ public record LabourInput(
     BigDecimal actualCost,
     Instant shiftStart,
     Instant shiftEnd,
-    UUID rawRecordId) {}
+    UUID rawRecordId,
+    LabourMeasure measure) {
+  public LabourInput(
+      String sourceSystem,
+      String sourceRecordRef,
+      String staffRef,
+      String department,
+      LocalDate labourDate,
+      BigDecimal scheduledHours,
+      BigDecimal actualHours,
+      BigDecimal scheduledCost,
+      BigDecimal actualCost,
+      Instant shiftStart,
+      Instant shiftEnd,
+      UUID rawRecordId) {
+    this(
+        sourceSystem,
+        sourceRecordRef,
+        staffRef,
+        department,
+        labourDate,
+        scheduledHours,
+        actualHours,
+        scheduledCost,
+        actualCost,
+        shiftStart,
+        shiftEnd,
+        rawRecordId,
+        LabourMeasure.COMBINED);
+  }
+}

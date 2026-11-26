@@ -76,16 +76,20 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Labour entry (`canonical_labour_entry`)
 
-- **Source:** `TANDA` replaces Deputy (owner direction, 26 November 2026).
-  Capture is raw-only pending measured real-account mapping validation; see [Tanda](tanda.md).
-- **Logical identity:** existing legacy labour UUIDs are unchanged. A Tanda identity
-  must be source-qualified and based on verified shift IDs, not pay-period envelopes,
-  staff names or array positions. No Tanda canonical records are published yet.
-- **Source identity:** pending verification of shift/schedule linkage and correction semantics.
-- **Matching strategy:** deterministic single source.
-- **Confidence:** n/a.
-- **Manual resolution path:** `LabourOverrideService.save(...)` sets an override for a
-  `(trading_date, department)`, replacing the computed actual hours.
+- **Source:** `TANDA` replaces Deputy. Existing historical identities are unchanged.
+- **Logical/source identity:** `tanda:schedule:<id>` and `tanda:shift:<id>`, derived
+  from verified source IDs, never names or pay-period array positions.
+- **Measures:** roster and worked observations are separate. A missing counterpart
+  does not contribute a fabricated zero. Unknown hours/cost propagate within each
+  measure. Team names remain Tanda's native names; no FOH/BOH regrouping.
+- **Refresh:** only a fully captured, validated window may atomically supersede its
+  previous observations, including entries no longer visible in that window. Source
+  corrections reproject both old and new dates. Raw evidence remains immutable.
+- **Matching strategy:** deterministic single source; repeated timesheet envelopes
+  deduplicate by shift ID and latest source update timestamp.
+- **Manual resolution:** `LabourOverrideService.save(...)` replaces actual hours for
+  `(trading_date, department)`; permissions remain unchanged.
+- **Validation/limits:** [Tanda reporting](tanda.md).
 
 ## Invoice metadata (`canonical_invoice`)
 

@@ -196,4 +196,5 @@ opentable:
 # Tanda secrets are mounted separately; no token value is stored in configuration.
 tanda:
   token-file: ${TANDA_TOKEN_FILE:}
+  sync-enabled: ${TANDA_SYNC_ENABLED:false}
   history-days: ${TANDA_HISTORY_DAYS:30}

@@ -32,7 +32,8 @@ class ConnectorRunnerTest {
             "",
             1,
             com.goldys.platform.config.VenueClock.system(
-                java.time.ZoneId.of("Australia/Melbourne")));
+                java.time.ZoneId.of("Australia/Melbourne")),
+            org.mockito.Mockito.mock(com.goldys.platform.canonical.CanonicalLabourIngest.class));
     UUID runId = runner.run(connector, null);
     assertThat(awaitTerminal(runId)).isEqualTo(IngestionStatus.FAILED);
     assertThat(rawRecords.findByIngestionRunId(runId)).isEmpty();

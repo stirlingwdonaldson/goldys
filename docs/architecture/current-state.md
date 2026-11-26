@@ -278,5 +278,7 @@ The existing merchandise payment-join guard remains unchanged. See
 
 `connectors.tanda` is a fixed-origin, read-only `SourceConnector`. The existing
 connector permission gate and runner own manual capture; bytes enter the ledger
-before shape validation. No canonical mapping, semantic publication or scheduler
-is enabled pending real samples. See [setup and validation](../connectors/tanda.md).
+before shape validation. A fully captured, validated window publishes independent roster
+and worked observations through the canonical facade, then resolved daily team totals.
+Native Tanda teams remain unchanged. An opt-in startup/hourly refresh uses the same
+runner. See [setup and validation](../connectors/tanda.md).

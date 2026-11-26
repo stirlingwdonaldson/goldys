@@ -26,10 +26,10 @@ class CanonicalLabourEntry extends BitemporalEntity {
   @Column(name = "labour_date", nullable = false, updatable = false)
   private LocalDate labourDate;
 
-  @Column(name = "scheduled_hours", nullable = false, updatable = false, precision = 10, scale = 2)
+  @Column(name = "scheduled_hours", updatable = false, precision = 10, scale = 4)
   private BigDecimal scheduledHours;
 
-  @Column(name = "actual_hours", nullable = false, updatable = false, precision = 10, scale = 2)
+  @Column(name = "actual_hours", updatable = false, precision = 10, scale = 4)
   private BigDecimal actualHours;
 
   @Column(name = "scheduled_cost", updatable = false, precision = 14, scale = 4)
@@ -43,6 +43,18 @@ class CanonicalLabourEntry extends BitemporalEntity {
 
   @Column(name = "shift_end", updatable = false)
   private Instant shiftEnd;
+
+  @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+  @Column(name = "measure", nullable = false, updatable = false)
+  private LabourMeasure measure = LabourMeasure.COMBINED;
+
+  void measure(LabourMeasure value) {
+    this.measure = Objects.requireNonNull(value);
+  }
+
+  LabourMeasure measure() {
+    return measure;
+  }
 
   protected CanonicalLabourEntry() {}
 
@@ -109,7 +121,8 @@ class CanonicalLabourEntry extends BitemporalEntity {
   }
 
   boolean sameFact(LabourInput input) {
-    return Objects.equals(staffRef, input.staffRef())
+    return measure == input.measure()
+        && Objects.equals(staffRef, input.staffRef())
         && Objects.equals(department, input.department())
         && Objects.equals(labourDate, input.labourDate())
         && sameAmount(scheduledHours, input.scheduledHours())

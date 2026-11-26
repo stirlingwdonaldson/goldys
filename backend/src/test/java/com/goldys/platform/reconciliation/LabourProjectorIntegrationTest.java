@@ -64,6 +64,54 @@ class LabourProjectorIntegrationTest {
     assertThat(foh.actualCost()).isNull();
   }
 
+  @Test
+  void independentObservationsPreserveMissingHoursAndSnapshotRetiresRemovedShifts() {
+    LocalDate date = LocalDate.of(2026, 11, 26);
+    var roster =
+        new LabourInput(
+            "TANDA",
+            "tanda:schedule:1",
+            "staff-1",
+            "Bar",
+            date,
+            new BigDecimal("8"),
+            null,
+            new BigDecimal("200"),
+            null,
+            null,
+            null,
+            rawRecord(),
+            com.goldys.platform.canonical.LabourMeasure.ROSTER);
+    var worked =
+        new LabourInput(
+            "TANDA",
+            "tanda:shift:1",
+            "staff-1",
+            "Bar",
+            date,
+            null,
+            new BigDecimal("7.5"),
+            null,
+            new BigDecimal("190"),
+            null,
+            null,
+            rawRecord(),
+            com.goldys.platform.canonical.LabourMeasure.WORKED);
+    ingest.synchronize("TANDA", date, date, List.of(roster, worked));
+    assertThat(row(date, "Bar").scheduledHours()).isEqualByComparingTo("8");
+    assertThat(row(date, "Bar").actualHours()).isEqualByComparingTo("7.5");
+    assertThat(row(date, "Bar").actualCost()).isEqualByComparingTo("190");
+    assertThat(row(date, "Bar").authoritativeSource()).isEqualTo("TANDA");
+    ingest.synchronize("TANDA", date, date, List.of(roster));
+    assertThat(row(date, "Bar").actualHours()).isNull();
+    assertThat(row(date, "Bar").actualCost()).isNull();
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from canonical_labour_entry where source_system='TANDA' and superseded_at is not null",
+                Integer.class))
+        .isEqualTo(1);
+  }
+
   private ResolvedLabourDay row(LocalDate date, String department) {
     List<ResolvedLabourDay> rows =
         resolved.findByTradingDateBetweenOrderByTradingDateAscDepartmentAsc(date, date);

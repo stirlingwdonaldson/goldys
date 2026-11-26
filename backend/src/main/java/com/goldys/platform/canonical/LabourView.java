@@ -13,4 +13,24 @@ public record LabourView(
     BigDecimal scheduledHours,
     BigDecimal actualHours,
     BigDecimal scheduledCost,
-    BigDecimal actualCost) {}
+    BigDecimal actualCost,
+    LabourMeasure measure) {
+  public LabourView(
+      String sourceSystem,
+      String department,
+      LocalDate labourDate,
+      BigDecimal scheduledHours,
+      BigDecimal actualHours,
+      BigDecimal scheduledCost,
+      BigDecimal actualCost) {
+    this(
+        sourceSystem,
+        department,
+        labourDate,
+        scheduledHours,
+        actualHours,
+        scheduledCost,
+        actualCost,
+        LabourMeasure.COMBINED);
+  }
+}

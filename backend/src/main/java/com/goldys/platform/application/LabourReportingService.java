@@ -25,10 +25,15 @@ public class LabourReportingService {
 
   private final MetricQueryService metrics;
   private final PermissionService permissions;
+  private final com.goldys.platform.semantic.LabourMetricsQuery labour;
 
-  public LabourReportingService(MetricQueryService metrics, PermissionService permissions) {
+  public LabourReportingService(
+      MetricQueryService metrics,
+      PermissionService permissions,
+      com.goldys.platform.semantic.LabourMetricsQuery labour) {
     this.metrics = metrics;
     this.permissions = permissions;
+    this.labour = labour;
   }
 
   /** Period aggregates and ratios share catalogue semantics and retain qualifications. */
@@ -53,6 +58,9 @@ public class LabourReportingService {
         "Wages only; super and other employment costs excluded pending source-basis confirmation");
     notices.add(
         "Per-cover figures use stated party size of attended bookings, not verified actual arrivals");
+    notices.add(
+        "Tanda source observations: missing days and open shifts remain unavailable. Completed pending shifts may be included; zero source costs are not an assurance of complete payroll.");
+    notices.add("Teams retain their Tanda names without FOH/BOH regrouping.");
     return new LabourSummary(
         from.toString(),
         to.toString(),
@@ -64,7 +72,8 @@ public class LabourReportingService {
         costPerCover,
         foh,
         boh,
-        List.copyOf(notices));
+        List.copyOf(notices),
+        labour.dailyLabour(from, to.plusDays(14)));
   }
 
   public record LabourSummary(
@@ -78,5 +87,6 @@ public class LabourReportingService {
       BigDecimal labourCostPerCover,
       BigDecimal fohLabourCostPercent,
       BigDecimal bohLabourCostPercent,
-      List<String> notices) {}
+      List<String> notices,
+      List<com.goldys.platform.semantic.LabourMetric> days) {}
 }

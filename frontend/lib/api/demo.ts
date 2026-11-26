@@ -1815,6 +1815,10 @@ export const demoApi: Api = {
   async getLabourSummary(from: string, to: string, options?: { signal?: AbortSignal }): Promise<LabourSummary> {
     await delay(300, options?.signal);
     return {
+      days: [
+        { date: to, department: "Bar", scheduledHours: 24, actualHours: null, scheduledCost: 850, actualCost: null, authoritativeSource: "TANDA", hasConflict: false },
+        { date: from, department: "Kitchen", scheduledHours: 32, actualHours: 31.5, scheduledCost: 1100, actualCost: 1080, authoritativeSource: "TANDA", hasConflict: false },
+      ],
       from,
       to,
       scheduledHours: 1184,

@@ -175,6 +175,17 @@ export interface DailyCovers {
  * Every figure is null when nothing resolved for the period — never a fabricated zero. The
  * department percentages are fractions (0.28 = 28%) of gross sales.
  */
+export interface LabourDay {
+  date: string;
+  department: string;
+  scheduledHours: number | null;
+  actualHours: number | null;
+  scheduledCost: number | null;
+  actualCost: number | null;
+  authoritativeSource: string;
+  hasConflict: boolean;
+}
+
 export interface LabourSummary {
   from: string;
   to: string;
@@ -187,6 +198,7 @@ export interface LabourSummary {
   fohLabourCostPercent: number | null;
   bohLabourCostPercent: number | null;
   notices?: string[];
+  days?: LabourDay[];
 }
 
 /**

@@ -19,9 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
  * Maintains the labour read model ({@code resolved_labour_day}) from canonical labour facts and
  * manual overrides.
  *
- * <p>Labour is single-source (Deputy), so there is no multi-source conflict; the projector sums
- * hours/cost per day × department and applies any manual override. Cost is null-propagating: if any
- * entry in a day/department has an unknown cost, the day's cost is unknown.
+ * <p>Labour is single-source (Tanda, with retained legacy observations), so there is no
+ * multi-source conflict; the projector sums hours/cost per day × department and applies any manual
+ * override. Cost is null-propagating: if any entry in a day/department has an unknown cost, the
+ * day's cost is unknown.
  */
 @Service
 public class LabourProjector {
@@ -84,7 +85,7 @@ public class LabourProjector {
             new ResolvedLabourDay(
                 key.date(),
                 key.department(),
-                m.scheduledHours,
+                m.scheduledHours(),
                 overridden,
                 m.scheduledCost(),
                 m.actualCost(),
@@ -97,12 +98,12 @@ public class LabourProjector {
             new ResolvedLabourDay(
                 key.date(),
                 key.department(),
-                m.scheduledHours,
-                m.actualHours,
+                m.scheduledHours(),
+                m.actualHours(),
                 m.scheduledCost(),
                 m.actualCost(),
                 "single",
-                "DEPUTY",
+                String.join(",", m.sources),
                 false,
                 now));
       }
@@ -113,32 +114,54 @@ public class LabourProjector {
   private record Key(LocalDate date, String department) {}
 
   private static final class Mutable {
-    BigDecimal scheduledHours = BigDecimal.ZERO;
-    BigDecimal actualHours = BigDecimal.ZERO;
-    BigDecimal scheduledCost = BigDecimal.ZERO;
-    BigDecimal actualCost = BigDecimal.ZERO;
-    boolean scheduledCostUnknown;
-    boolean actualCostUnknown;
+    final Amount scheduled = new Amount();
+    final Amount actual = new Amount();
+    final Amount scheduledCost = new Amount();
+    final Amount actualCost = new Amount();
+    final Set<String> sources = new java.util.TreeSet<>();
 
     void add(LabourView v) {
-      scheduledHours = scheduledHours.add(v.scheduledHours());
-      actualHours = actualHours.add(v.actualHours());
-      scheduledCostUnknown |= v.scheduledCost() == null;
-      if (v.scheduledCost() != null) {
-        scheduledCost = scheduledCost.add(v.scheduledCost());
+      sources.add(v.sourceSystem());
+      if (v.measure() != com.goldys.platform.canonical.LabourMeasure.WORKED) {
+        scheduled.add(v.scheduledHours());
+        scheduledCost.add(v.scheduledCost());
       }
-      actualCostUnknown |= v.actualCost() == null;
-      if (v.actualCost() != null) {
-        actualCost = actualCost.add(v.actualCost());
+      if (v.measure() != com.goldys.platform.canonical.LabourMeasure.ROSTER) {
+        actual.add(v.actualHours());
+        actualCost.add(v.actualCost());
       }
+    }
+
+    BigDecimal scheduledHours() {
+      return scheduled.value();
+    }
+
+    BigDecimal actualHours() {
+      return actual.value();
     }
 
     BigDecimal scheduledCost() {
-      return scheduledCostUnknown ? null : scheduledCost;
+      return scheduledCost.value();
     }
 
     BigDecimal actualCost() {
-      return actualCostUnknown ? null : actualCost;
+      return actualCost.value();
+    }
+  }
+
+  private static final class Amount {
+    BigDecimal total = BigDecimal.ZERO;
+    boolean seen;
+    boolean unknown;
+
+    void add(BigDecimal value) {
+      seen = true;
+      if (value == null) unknown = true;
+      else total = total.add(value);
+    }
+
+    BigDecimal value() {
+      return !seen || unknown ? null : total;
     }
   }
 }

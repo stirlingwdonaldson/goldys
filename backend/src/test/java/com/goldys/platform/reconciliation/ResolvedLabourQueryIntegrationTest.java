@@ -63,6 +63,27 @@ class ResolvedLabourQueryIntegrationTest {
     assertThat(query.dailyLabour(d, d)).hasSize(2);
   }
 
+  @Test
+  void missingWorkedHoursAndEmptyPeriodsNeverBecomeZero() {
+    LocalDate date = LocalDate.of(2026, 11, 26);
+    assertThat(query.actualHours(date, date)).isNull();
+    assertThat(query.labourCost(date, date)).isNull();
+    repository.save(
+        new ResolvedLabourDay(
+            date,
+            "Bar",
+            BigDecimal.TEN,
+            null,
+            null,
+            null,
+            "single",
+            "TANDA",
+            false,
+            Instant.EPOCH));
+    assertThat(query.actualHours(date, date)).isNull();
+    assertThat(query.scheduledVsActualVariance(date, date)).isNull();
+  }
+
   private static ResolvedLabourDay day(
       LocalDate date, String department, String scheduled, String actual, String cost) {
     return new ResolvedLabourDay(
