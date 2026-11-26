@@ -45,7 +45,7 @@ public class ConnectorApplicationService {
           new ConnectorStatus("OPENTABLE", "opentable-reviews", null, "never_run", 0, null, false),
           new ConnectorStatus(
               "OPENTABLE", "opentable-menu-items", null, "never_run", 0, null, false),
-          new ConnectorStatus("DEPUTY", "deputy-api", null, "never_run", 0, null, false));
+          new ConnectorStatus("TANDA", "tanda-api", null, "never_run", 0, null, false));
 
   private final IngestionService ingestion;
   private final OpenTableCsvIngestService openTableCsvIngest;

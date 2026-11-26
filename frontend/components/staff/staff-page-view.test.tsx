@@ -24,6 +24,13 @@ const loaded = (data: LabourSummary | null, error: ApiError | null = null) => ({
 });
 
 describe("StaffPageView", () => {
+  it("offers Tanda connection guidance without inventing labour figures", () => {
+    render(<StaffPageView seniority="OWNER" />);
+    expect(screen.getByRole("heading", { name: "Connect Tanda" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open Tanda connection status" })).toHaveAttribute("href", "/data-health");
+    expect(screen.queryByText(/Awaiting Deputy/)).not.toBeInTheDocument();
+  });
+
   it("renders roster for everyone and labor cost for an Owner", () => {
     render(<StaffPageView seniority="OWNER" />);
     expect(screen.getByText("Rostering & hours")).toBeInTheDocument();

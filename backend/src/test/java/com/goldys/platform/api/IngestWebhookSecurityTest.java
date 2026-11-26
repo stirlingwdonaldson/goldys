@@ -101,7 +101,7 @@ class IngestWebhookSecurityTest {
                   .contentType(MediaType.APPLICATION_JSON)
                   .header("X-Webhook-Token", "wrong-token")
                   .content("{}"))
-          .andExpect(status().isUnauthorized());
+          .andExpect(status().is(path.equals("/api/ingest/deputy") ? 410 : 401));
     }
   }
 

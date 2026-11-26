@@ -192,7 +192,7 @@ describe("demoApi platform map", () => {
     const tones = Object.fromEntries(
       map.nodes.filter((n) => n.kind === "source").map((n) => [n.id, n.tone]),
     );
-    expect(tones).toMatchObject({ "source:CTB": "fail", "source:OPENTABLE": "warn", "source:DEPUTY": "missing" });
+    expect(tones).toMatchObject({ "source:CTB": "fail", "source:OPENTABLE": "warn", "source:TANDA": "missing" });
     const ids = new Set(map.nodes.map((n) => n.id));
     expect(ids.size).toBe(map.nodes.length);
     for (const e of map.edges) {

@@ -128,7 +128,7 @@ app:
       resolved_reservation_day:
         - OPENTABLE
       resolved_labour_day:
-        - DEPUTY
+        - TANDA
       resolved_inventory_day:
         - CTB
       resolved_payment_day:
@@ -192,3 +192,8 @@ ctb:
 # back-compat: an operator can override it with OPENTABLE_TIMEZONE without moving the whole venue.
 opentable:
   timezone: ${app.venue.timezone:Australia/Melbourne}
+
+# Tanda secrets are mounted separately; no token value is stored in configuration.
+tanda:
+  token-file: ${TANDA_TOKEN_FILE:}
+  history-days: ${TANDA_HISTORY_DAYS:30}

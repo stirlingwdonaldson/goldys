@@ -54,7 +54,7 @@ export function weekOnWeek(latest: { date: string | null; total: number | null }
 /**
  * The dashboard's five business KPI tiles. The Sales tile shows the latest resolved daily total
  * once data lands; the rest show resolved figures once their reporting data lands, or a
- * placeholder until then. Labour cost stays a placeholder until Deputy is connected.
+ * placeholder until then. Labour cost stays a placeholder until Tanda is connected.
  */
 export function BusinessKpiGrid({
   seniority,
@@ -107,7 +107,7 @@ export function BusinessKpiGrid({
         <AwaitingData
           label="Labour cost %"
           description="Scheduled vs. actual hours and labour % of sales."
-          reason="Awaiting Deputy reporting."
+          reason="Awaiting Tanda reporting."
           icon={Percent}
         />
       ) : (

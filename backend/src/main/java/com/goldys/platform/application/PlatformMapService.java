@@ -63,7 +63,7 @@ public class PlatformMapService {
           "LIGHTSPEED", "Lightspeed",
           "CTB", "Cooking the Books",
           "OPENTABLE", "OpenTable",
-          "DEPUTY", "Deputy");
+          "TANDA", "Tanda");
 
   private final PermissionService permissions;
   private final MetricCatalog catalog;

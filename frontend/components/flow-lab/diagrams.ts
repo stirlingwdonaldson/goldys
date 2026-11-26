@@ -211,7 +211,7 @@ export const DIAGRAMS: ConceptDiagram[] = [
         n("s1", Plug, "ok", "Lightspeed", "Scheduled-report webhook"),
         n("s2", Plug, "warn", "Cooking the Books", "AJAX pull + SFTP drop", "Last run partial: 3 invoice PDFs missing."),
         n("s3", Plug, "missing", "OpenTable", "Manual CSV drop", "No file uploaded this week."),
-        n("s4", Plug, "fail", "Deputy", "Webhook · raw only", "Signature check failing since 19 Sep."),
+        n("s4", Plug, "fail", "Tanda", "Webhook · raw only", "Signature check failing since 19 Sep."),
       ],
       [n("raw", Database, "ok", "Raw ledger", "Immutable · 182,410 records", "Every payload stored byte-for-byte with its SHA-256.")],
       [
@@ -251,7 +251,7 @@ export const DIAGRAMS: ConceptDiagram[] = [
       "From a figure on a dashboard back through its definition, its inputs and the source records, with each input's trust state. Answers \"can I believe this number?\" in one view.",
     columns: [
       [
-        n("l1", Plug, "ok", "Deputy timesheets", "412 shifts"),
+        n("l1", Plug, "ok", "Tanda timesheets", "412 shifts"),
         n("l2", KeyRound, "ok", "Award rates", "Effective 1 Jul"),
         n("l3", Plug, "ok", "Lightspeed sales", "7 daily reports"),
       ],

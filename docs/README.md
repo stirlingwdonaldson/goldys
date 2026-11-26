@@ -24,3 +24,5 @@ Update definitions in place when approved behaviour changes. GitHub owns deliver
 status; PRD/SRS remain reference contracts. Detailed source snapshots and dated
 audits preserve evidence, not current approvals. Current code never overrides an
 architectural invariant merely by disagreeing with it.
+
+- [Tanda setup and validation](connectors/tanda.md) — replaces Deputy; secure token entry and capture limits.

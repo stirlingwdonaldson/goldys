@@ -2,13 +2,13 @@ import type { NetworkEdgeDto, NetworkGraphDto, NetworkNodeDto } from "./types";
 
 /**
  * Demo platform map. Mirrors the real catalogue's shape, with the hard states on show: CTB's last
- * run failed, OpenTable is stale and Deputy has never run, so the blast radius is visible.
+ * run failed, OpenTable is stale and Tanda has never run, so the blast radius is visible.
  */
 const SOURCES: [id: string, label: string, tone: string, subtitle: string, domains: string[]][] = [
   ["LIGHTSPEED", "Lightspeed", "ok", "Up to date", ["resolved_daily_sales", "resolved_product_sales", "resolved_payment_day", "resolved_sale_item_day"]],
   ["CTB", "Cooking the Books", "fail", "Last run failed", ["resolved_daily_sales", "resolved_product_sales", "resolved_inventory_day"]],
   ["OPENTABLE", "OpenTable", "warn", "Stale", ["resolved_reservation_day"]],
-  ["DEPUTY", "Deputy", "missing", "Never run", ["resolved_labour_day"]],
+  ["TANDA", "Tanda", "missing", "Never run", ["resolved_labour_day"]],
 ];
 
 const DOMAIN_LABELS: Record<string, string> = {

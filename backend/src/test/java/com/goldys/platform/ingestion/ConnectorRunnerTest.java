@@ -25,6 +25,58 @@ class ConnectorRunnerTest {
   @Autowired RawRecordRepository rawRecords;
   @Autowired IngestionFailureRepository failures;
 
+  @Test
+  void tandaMissingCredentialCreatesDurableFailedRun() {
+    var connector =
+        new com.goldys.platform.connectors.tanda.TandaConnector(
+            "",
+            1,
+            com.goldys.platform.config.VenueClock.system(
+                java.time.ZoneId.of("Australia/Melbourne")));
+    UUID runId = runner.run(connector, null);
+    assertThat(awaitTerminal(runId)).isEqualTo(IngestionStatus.FAILED);
+    assertThat(rawRecords.findByIngestionRunId(runId)).isEmpty();
+    assertThat(failures.findByIngestionRunIdOrderByOccurredAtAsc(runId))
+        .extracting(IngestionFailure::failureType)
+        .containsExactly("TANDA_NOT_CONFIGURED");
+  }
+
+  @Test
+  void tandaMappingGateKeepsRawEvidenceAndPartialRun() {
+    byte[] bytes = "[ { \"id\": 1 } ]\n".getBytes(UTF_8);
+    SourceConnector connector =
+        new SourceConnector() {
+          public String sourceSystem() {
+            return "TANDA";
+          }
+
+          public String connectorName() {
+            return "tanda-api";
+          }
+
+          public void fetch(String watermark, IngestionSink sink) {
+            sink.accept(
+                new FetchedPayload(
+                    FetchMethod.API,
+                    "application/json",
+                    bytes,
+                    "UTF-8",
+                    "tanda-timesheets",
+                    "timesheets/on/2026-11-26?page=1&page_size=100"));
+            throw new ConnectorFetchException(
+                "TANDA_MAPPING_PENDING", "Evidence requires validation");
+          }
+        };
+    UUID runId = runner.run(connector, null);
+    assertThat(awaitTerminal(runId)).isEqualTo(IngestionStatus.PARTIAL);
+    assertThat(rawRecords.findByIngestionRunId(runId))
+        .singleElement()
+        .satisfies(record -> assertThat(record.payloadBytes()).isEqualTo(bytes));
+    assertThat(failures.findByIngestionRunIdOrderByOccurredAtAsc(runId))
+        .extracting(IngestionFailure::failureType)
+        .containsExactly("TANDA_MAPPING_PENDING");
+  }
+
   private static FetchedPayload page(String html) {
     return new FetchedPayload(
         FetchMethod.SCRAPE, "text/html", html.getBytes(UTF_8), "UTF-8", "fixture", null);

@@ -192,7 +192,7 @@ const connectorStatuses: ConnectorStatus[] = [
   { source: "OPENTABLE", connectorName: "opentable-reservations", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
   { source: "OPENTABLE", connectorName: "opentable-reviews", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
   { source: "OPENTABLE", connectorName: "opentable-menu-items", lastRunAt: null, status: "never_run", failureCount: 0, runnable: false },
-  { source: "DEPUTY", connectorName: "deputy-api", lastRunAt: "2026-09-19T22:30:00Z", status: "failed", failureCount: 2, runnable: false },
+  { source: "TANDA", connectorName: "tanda-api", lastRunAt: "2026-09-19T22:30:00Z", status: "failed", failureCount: 2, runnable: false },
 ];
 
 let productExceptions: ReconciliationException[] = [
@@ -409,8 +409,8 @@ const demoRawRecords: RawRecordSummary[] = [
 
 demoRawRecords.push({
   id: "raw-3",
-  sourceSystem: "DEPUTY",
-  fetcherIdentity: "deputy-timesheets",
+  sourceSystem: "TANDA",
+  fetcherIdentity: "tanda-timesheets",
   fetchMethod: "API",
   contentType: "application/json",
   characterEncoding: "UTF-8",
