@@ -34,7 +34,7 @@ This is the core invariant of the whole system. Every module description below s
 - **Restricted, tool-mediated AI access:** the conversational AI assistant answers questions through registered tools over the semantic layer, including approved metric discovery and bounded compositions of existing metric queries. It never generates freeform SQL or submits arbitrary fields, filters or joins. [Governed conversational planning](decisions/0001-governed-conversational-planning.md) records the accepted direction and remaining semantic work before broader relational exploration; the current tool contract remains enforced.
 - **JSON-driven UI generation:** when building dashboards, the assistant outputs standard JSON widget specifications for the frontend to render, rather than generating executable frontend code directly.
 - **Connector isolation:** each vendor integration lives behind a common port interface; swapping or adding a source should never require changes outside its adapter.
-- **No write-back to source systems:** every connector is one-way, source → platform, permanently — at no phase does the platform write corrected data, updates, or any other payload back into Lightspeed, CTB, OpenTable, or Deputy. Automation Hub's outbound actions (e.g. Slack alerts, exports) are not write-backs to a connected source system and remain the only write path this platform has. This is a permanent architectural constraint, not an MVP-only deferral (see `prd.md` Non-Goals).
+- **No write-back to source systems:** every connector is one-way, source → platform, permanently — at no phase does the platform write corrected data, updates, or any other payload back into Lightspeed, CTB, OpenTable, or Tanda. Automation Hub's outbound actions (e.g. Slack alerts, exports) are not write-backs to a connected source system and remain the only write path this platform has. This is a permanent architectural constraint, not an MVP-only deferral (see `prd.md` Non-Goals).
 
 ## Build Order & Design Prerequisites
 
@@ -50,7 +50,7 @@ These are sequencing constraints, not suggestions — building modules out of th
 
 Design assumptions about API access must be checked against what is available. Several sources have no public API or only partial access; current paths and limitations live in `docs/connectors/source-access.md`.
 
-The single current access reference is [`connectors/source-access.md`](connectors/source-access.md). Lightspeed uses scheduled-report webhooks; CTB uses internal AJAX plus invoice SFTP; OpenTable uses assisted-session JSON pulls with CSV fallback; Deputy is raw-only pending schema confirmation. MarketMan is a possible one-time history input. Prove real sample/schema access before extending any path; do not treat historical API possibilities as implemented connectors.
+The single current access reference is [`connectors/source-access.md`](connectors/source-access.md). Lightspeed uses scheduled-report webhooks; CTB uses internal AJAX plus invoice SFTP; OpenTable uses assisted-session JSON pulls with CSV fallback; Tanda replaces Deputy (owner direction, 26 November 2026), with manual raw capture pending real-account validation; see [Tanda setup](connectors/tanda.md). MarketMan is a possible one-time history input. Prove real sample/schema access before extending any path; do not treat historical API possibilities as implemented connectors.
 
 ## Key System Modules
 

@@ -1,4 +1,6 @@
 import { Percent, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AwaitingData } from "@/components/states/awaiting-data";
 import { ErrorState } from "@/components/states/error-state";
 import { LoadingState } from "@/components/states/loading-state";
@@ -73,6 +75,24 @@ export function StaffPageView({ seniority, labour }: StaffPageViewProps) {
       {header}
       <p className="text-sm text-muted-foreground">Wages only; super and other employment costs excluded pending confirmation. Per-cover figures use booking-size attendance proxies.</p>
 
+      {!s && isOwner(seniority) && (
+        <section aria-label="Tanda connection" className="rounded-lg border p-5">
+          <h2 className="text-base font-semibold">Connect Tanda</h2>
+          <p className="mt-2 max-w-prose text-sm text-muted-foreground">Bring rosters, timesheets, teams and leave into Goldy’s. Source capture and reporting readiness are tracked separately; missing hours and costs stay unavailable.</p>
+          <p className="mt-2 max-w-prose text-sm text-muted-foreground">Use the private token prompt on the server, then open Data health to run Tanda and review access or validation issues. Your token is never entered into chat or this page.</p>
+          <div className="mt-3"><Popover>
+            <PopoverTrigger asChild><Button variant="outline" size="sm">Secure token setup</Button></PopoverTrigger>
+            <PopoverContent align="start" className="max-h-[70vh] w-[32rem] max-w-[calc(100vw-2rem)] overflow-y-auto text-sm">
+            <h3 className="font-semibold">Secure token setup</h3>
+            <p className="mt-2 max-w-prose text-muted-foreground">On the backend host, run this from the Goldy’s checkout. Input is hidden and the file is readable only by its owner.</p>
+            <code className="mt-2 block overflow-x-auto rounded bg-muted p-3 text-xs">python3 ops/tanda-token.py ~/.config/goldys-secrets/tanda-token</code>
+            <p className="mt-2 max-w-prose text-muted-foreground">A server operator must mount that file read-only and configure TANDA_TOKEN_FILE before the first capture. Reporting stays unavailable until the captured data is validated.</p>
+            </PopoverContent>
+          </Popover></div>
+          <a href="/data-health" className="mt-3 inline-flex text-sm font-medium underline underline-offset-4">Open Tanda connection status</a>
+        </section>
+      )}
+
       {s ? (
         <Section title="Hours, last 30 days"><DataQualifications label="Hours" scope="Last 30 days" notices={s.notices}>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -86,7 +106,7 @@ export function StaffPageView({ seniority, labour }: StaffPageViewProps) {
         <AwaitingData
           label="Rostering & hours"
           description="Scheduled vs. actual hours."
-          reason="Awaiting Deputy reporting."
+          reason="Awaiting validated Tanda reporting."
           icon={Users}
         />
       )}
@@ -106,7 +126,7 @@ export function StaffPageView({ seniority, labour }: StaffPageViewProps) {
         <AwaitingData
           label="Labour cost %"
           description="Labour cost as a % of sales."
-          reason="Awaiting Deputy reporting."
+          reason="Awaiting validated Tanda reporting."
           icon={Percent}
         />
       )}

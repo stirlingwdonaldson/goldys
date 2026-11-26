@@ -14,6 +14,7 @@ export interface SourceIdentity {
 }
 
 const KNOWN: { match: RegExp; identity: SourceIdentity }[] = [
+  { match: /tanda/i, identity: { label: "Tanda", initials: "TA", className: "bg-source-deputy-soft text-source-deputy" } },
   {
     match: /lightspeed|kounta/i,
     identity: { label: "Lightspeed", initials: "LS", className: "bg-source-lightspeed-soft text-source-lightspeed" },
@@ -122,6 +123,11 @@ export interface SourceGroup {
 /** A qualification is not proof that processing failed or that financial rows are absent. */
 export function connectorIssue(type: string): { title: string; guidance: string; qualification: boolean } {
   switch (type) {
+    case "TANDA_MAPPING_PENDING":
+      return { title: "Tanda reporting awaits validation", qualification: true, guidance: "Source evidence is retained. Validate shift identity, breaks, costs and team mappings before publishing labour figures." };
+    case "TANDA_NOT_CONFIGURED":
+    case "TANDA_TOKEN_FILE":
+      return { title: "Connect Tanda", qualification: false, guidance: "Use the hidden token prompt in ops/tanda-token.py, configure TANDA_TOKEN_FILE, then run Tanda again." };
     case "SALE_ITEM_METADATA_UNOBSERVED":
       return { title: "Receipt metadata needs review", qualification: true,
         guidance: "This warning concerns missing source metadata, not a failed sales import. Review the export fields before retrying." };

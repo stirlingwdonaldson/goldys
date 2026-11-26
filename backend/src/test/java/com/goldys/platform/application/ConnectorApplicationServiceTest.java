@@ -199,7 +199,7 @@ class ConnectorApplicationServiceTest {
             "opentable-reservations",
             "opentable-reviews",
             "opentable-menu-items",
-            "deputy-api");
+            "tanda-api");
   }
 
   @Test

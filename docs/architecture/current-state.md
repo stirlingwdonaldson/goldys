@@ -273,3 +273,10 @@ are semantic ports; application services authorize their reads. Receipt-number q
 return groups, with transaction-specific costing withheld without a source identity bridge.
 The existing merchandise payment-join guard remains unchanged. See
 [operations](../operations/lightspeed-separated-feeds.md) for the manual import and qualification contract.
+
+## Tanda capture (26 November 2026)
+
+`connectors.tanda` is a fixed-origin, read-only `SourceConnector`. The existing
+connector permission gate and runner own manual capture; bytes enter the ledger
+before shape validation. No canonical mapping, semantic publication or scheduler
+is enabled pending real samples. See [setup and validation](../connectors/tanda.md).

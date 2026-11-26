@@ -43,6 +43,22 @@ import com.tngtech.archunit.lang.ArchRule;
     importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureBoundariesTest {
   @ArchTest
+  static final ArchRule tandaRemainsAnIsolatedReadOnlyAdapter =
+      noClasses()
+          .that()
+          .resideInAPackage("..connectors.tanda..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "..api..",
+              "..application..",
+              "..reconciliation..",
+              "..reporting..",
+              "..connectors.ctb..",
+              "..connectors.opentable..",
+              "..connectors.lightspeed..");
+
+  @ArchTest
   static final ArchRule workspaceNeverReadsSourcePersistence =
       noClasses()
           .that()

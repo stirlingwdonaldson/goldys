@@ -61,7 +61,7 @@ class PlatformMapServiceTest {
               "resolved_daily_sales", List.of("LIGHTSPEED", "CTB"),
               "resolved_product_sales", List.of("LIGHTSPEED", "CTB"),
               "resolved_reservation_day", List.of("OPENTABLE"),
-              "resolved_labour_day", List.of("DEPUTY"),
+              "resolved_labour_day", List.of("TANDA"),
               "resolved_inventory_day", List.of("CTB")));
 
   private PlatformMapService service() {
@@ -157,14 +157,14 @@ class PlatformMapServiceTest {
                 // OpenTable: 3h old but its domain has the 1-day default → fine.
                 new ConnectorHealth(
                     "OPENTABLE", "opentable", NOW.minusSeconds(3 * 3600), "SUCCESS")));
-    // Deputy has never run.
+    // Tanda has never run.
 
     Map<String, NetworkNodeDto> nodes = byId(service().map(role(), EMAIL));
 
     assertThat(nodes.get("source:CTB").tone()).isEqualTo("fail");
     assertThat(nodes.get("source:LIGHTSPEED").tone()).isEqualTo("warn");
     assertThat(nodes.get("source:OPENTABLE").tone()).isEqualTo("ok");
-    assertThat(nodes.get("source:DEPUTY").tone()).isEqualTo("missing");
+    assertThat(nodes.get("source:TANDA").tone()).isEqualTo("missing");
   }
 
   @Test

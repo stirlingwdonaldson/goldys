@@ -76,11 +76,12 @@ so a second source can be added later without re-deriving these decisions.
 
 ## Labour entry (`canonical_labour_entry`)
 
-- **Source:** `DEPUTY` (raw webhook; canonicalization deferred until the payload schema is
-  confirmed).
-- **Logical identity:** `UUID.nameUUIDFromBytes("labour:" + sourceRecordRef)`.
-- **Source identity:** `(source_system = DEPUTY, source_record_ref = Deputy shift/timesheet id)`.
-  Provisional until the first payload is observed.
+- **Source:** `TANDA` replaces Deputy (owner direction, 26 November 2026).
+  Capture is raw-only pending measured real-account mapping validation; see [Tanda](tanda.md).
+- **Logical identity:** existing legacy labour UUIDs are unchanged. A Tanda identity
+  must be source-qualified and based on verified shift IDs, not pay-period envelopes,
+  staff names or array positions. No Tanda canonical records are published yet.
+- **Source identity:** pending verification of shift/schedule linkage and correction semantics.
 - **Matching strategy:** deterministic single source.
 - **Confidence:** n/a.
 - **Manual resolution path:** `LabourOverrideService.save(...)` sets an override for a

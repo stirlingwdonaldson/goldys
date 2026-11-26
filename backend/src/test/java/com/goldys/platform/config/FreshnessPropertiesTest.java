@@ -40,7 +40,7 @@ class FreshnessPropertiesTest {
               .containsEntry("resolved_daily_sales", List.of("LIGHTSPEED", "CTB"))
               .containsEntry("resolved_product_sales", List.of("LIGHTSPEED", "CTB"))
               .containsEntry("resolved_reservation_day", List.of("OPENTABLE"))
-              .containsEntry("resolved_labour_day", List.of("DEPUTY"))
+              .containsEntry("resolved_labour_day", List.of("TANDA"))
               .containsEntry("resolved_inventory_day", List.of("CTB"));
         });
   }

@@ -27,7 +27,7 @@ remain in external systems. Architectural safeguards remain in
 | Replenishment | Warn about shortages before the next delivery and suggest explainable quantities for human review; never place orders. |
 | Cost and profit | Distinguish purchases, theoretical recipe costs, actual inventory-based COGS, gross margin and operating profit. Prime cost requires validated actual COGS and labour cost on comparable bases. Publish each only with supported meaning and inputs. |
 | Supplier oversight | Explain orders, deliveries, invoices and credits; show payment status where evidence supports it. |
-| Labour | Roster, hours and cost analysis. Wages and full employment cost are separate. Weekly-report inclusion awaits reliable data and validated meaning. |
+| Labour | Tanda is the workforce source, replacing Deputy (owner direction, 26 November 2026). Roster, hours and cost analysis. Wages and full employment cost are separate. Weekly-report inclusion awaits reliable data and validated meaning. |
 | Reservations | Bookings and recorded reservation outcomes; booked party size is not independently verified attendance. |
 | Reviews | Ratings, full text, themes and sentiment, traceable to source reviews. |
 | Business interaction | Existing Ask Goldy's and saved-dashboard capabilities remain; reusable reports and operational workflows build on governed data rather than creating a second calculation path. |

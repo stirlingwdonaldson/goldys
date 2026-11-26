@@ -9,6 +9,7 @@ describe("sourceIdentity", () => {
     expect(sourceIdentity("Cooking the Books").initials).toBe("CB");
     expect(sourceIdentity("opentable").label).toBe("OpenTable");
     expect(sourceIdentity("deputy").initials).toBe("DP");
+    expect(sourceIdentity("TANDA").initials).toBe("TA");
   });
   it("falls back to initials and a neutral tile for unknown sources", () => {
     const s = sourceIdentity("Square POS");
