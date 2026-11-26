@@ -33,6 +33,38 @@ class ToolDispatcherTest {
   private static final UserRole OWNER =
       new UserRole(new DepartmentCode("ALL"), new SeniorityCode("OWNER"));
 
+  @Test
+  void merchandiseHistoryDeniesBeforeAnyReadForEitherRequiredResource() {
+    for (String resource : List.of("sale-items.metrics", "reconciliation.sales")) {
+      var query = mock(com.goldys.platform.semantic.MerchandiseHistoryQuery.class);
+      var t = new GetMerchandiseHistoryTool(query);
+      var permissions = mock(PermissionService.class);
+      doThrow(new AccessDeniedException("denied"))
+          .when(permissions)
+          .require(OWNER, new ResourceKey(resource), PermissionAction.READ);
+      var dispatcher =
+          new ToolDispatcher(
+              new ToolRegistry(List.of(t)),
+              permissions,
+              new MetricCatalog(),
+              mock(OperationalMetrics.class));
+      assertThatThrownBy(
+              () ->
+                  dispatcher.dispatch(
+                      ToolId.GET_MERCHANDISE_HISTORY,
+                      new GetMerchandiseHistoryInput(
+                          GetMerchandiseHistoryInput.Mode.SEARCH,
+                          LocalDate.of(2025, 1, 1),
+                          LocalDate.of(2025, 12, 31),
+                          20,
+                          "parma",
+                          0),
+                      OWNER))
+          .isInstanceOf(AccessDeniedException.class);
+      org.mockito.Mockito.verifyNoInteractions(query);
+    }
+  }
+
   private static ToolResult okResult() {
     return new ToolResult(
         new StatWidgetSpec("id", "Sales", null, null, null, null, null),

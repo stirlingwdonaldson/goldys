@@ -220,5 +220,50 @@
     "role": "owner",
     "expectedTools": ["run_metric_analysis"],
     "causal": false
+  },
+  {
+    "category": "merchandise-history",
+    "question": "How far back does our product-level sales data go?",
+    "role": "owner",
+    "expectedTools": [
+      "get_merchandise_history"
+    ],
+    "causal": false
+  },
+  {
+    "category": "merchandise-history",
+    "question": "Show the top 20 observed Lightspeed merchandise products in November 2020, with data quality limitations.",
+    "role": "owner",
+    "expectedTools": [
+      "get_merchandise_history"
+    ],
+    "causal": false
+  },
+  {
+    "category": "merchandise-history-negative",
+    "question": "What does reconciled product.sales_amount mean?",
+    "role": "owner",
+    "expectedTools": [
+      "describe_metrics"
+    ],
+    "causal": false
+  },
+  {
+    "category": "historical-named-product",
+    "question": "How many parmas did we sell in 2025? Show any recorded quantities even if the year is incomplete.",
+    "role": "owner",
+    "expectedTools": [
+      "get_merchandise_history"
+    ],
+    "causal": false
+  },
+  {
+    "category": "historical-named-product",
+    "question": "How many roasts did we sell in December 2025? Search the product names, not just the top sellers.",
+    "role": "owner",
+    "expectedTools": [
+      "get_merchandise_history"
+    ],
+    "causal": false
   }
 ]
